@@ -1169,8 +1169,10 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         
+        //TODO: Remove The user preferences flag before release?
+        // -Zach 
         // ----------------------------------------------------------
-        // DICOM
+        // DICOM 
         // ----------------------------------------------------------
         userPreferences.safeGetItem("internal").then( (f) =>  {
             if (f) {

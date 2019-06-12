@@ -3,68 +3,69 @@ const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const DicomModule = require('dicommodule.js');
-const BisWebPanel = require('bisweb_panel.js');
 
 
 class DicomImportElement extends HTMLElement {
     constructor() {
         super();
-        this.panel=null;
+        this.rendered = false;
     }
 
     show() {
-        if (this.panel)
-            this.panel.show();
+        this.filetreepanel.showTreePanel();
+        if (!this.rendered) { 
+            this.createFileImportCollapseElement(); 
+            this.filetreepanel.createFileDisplayElements();
+            this.rendered = true;
+        }
     }
     
     connectedCallback() {
-        
         let viewerid = this.getAttribute('bis-viewerid');
         let viewerid2 = this.getAttribute('bis-viewerid2');
         let layoutid = this.getAttribute('bis-layoutwidgetid');
         let filetreepanelid = this.getAttribute('bis-filetreepanelid');
 
-        this.viewers = [
-            document.querySelector(viewerid),
-            document.querySelector(viewerid2)
-        ];
+        bis_webutil.runAfterAllLoaded( () => {
+            this.filetreepanel = document.querySelector(filetreepanelid);
+            this.layoutcontroller=document.querySelector(layoutid);
 
-        
-        this.layoutcontroller=document.querySelector(layoutid);
-        this.panel=new BisWebPanel(this.layoutcontroller,
-                                   { name : "DICOM Import",
-                                     permanent : false,
-                                     dual : false
-                                   });
-        this.parentDomElement=this.panel.getWidget();
-        let basediv=$('<div></div>');
-        this.parentDomElement.append(basediv);
+            this.viewers = [
+                document.querySelector(viewerid),
+                document.querySelector(viewerid2)
+            ];
+        });    
+    }
+    
+    createFileImportCollapseElement() {
+        let treePanelBody = this.filetreepanel.panel.getWidget();
+        let importButtonsContainer = bis_webutil.createCollapseElement(treePanelBody, 'Import DICOM Files', false);
 
-        
+        console.log('import buttons container', importButtonsContainer);
 
-        let a=`<P> This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.`;
+        /* let a=`<P> This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.`;
         
         if (bis_genericio.getmode()==='browser')
             a+=`<EM> You need to use <a target="_blank" href="https://bioimagesuiteweb.github.io/bisweb-manual/tools/fileserver.html"> the BISWEB File Server</a> for this to work as we need direct filesystem access for this task.</EM>`;
+        */
 
-        basediv.append($(a+'</p><HR>'));
-        this.filetreepanel = document.querySelector(filetreepanelid);
+        //basediv.append($(a+'</p><HR>'));
 
-        bis_webutil.createbutton({
+        /*bis_webutil.createbutton({
             type: 'info',
             name: 'Open Study File Panel',
             tooltip: 'Opens a panel which can display DICOM studies.',
-            parent: basediv,
+            parent: importButtonsContainer,
             css: { 'width': '90%', 'margin': '3px' },
             callback: () => {
                 this.filetreepanel.showTreePanel();
             },
-        });
+        });*/
       
         bis_webfileutil.createFileButton({ 
             type : 'info',
             name : 'Convert DICOM Images',
-            parent : basediv,
+            parent : importButtonsContainer,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
@@ -90,7 +91,7 @@ class DicomImportElement extends HTMLElement {
         bis_webfileutil.createFileButton({ 
             type : 'danger',
             name : 'Import DICOM Images as BIDS',
-            parent : basediv,
+            parent : importButtonsContainer,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
@@ -113,11 +114,7 @@ class DicomImportElement extends HTMLElement {
             save : false,
             serveronly : true,
         });
-        
-        //console.log('show');
-        //this.show();
     }
-    
 
 
     /**
@@ -134,8 +131,6 @@ class DicomImportElement extends HTMLElement {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
         }
-
-        
 
         let a='';
         if (doBIDS)

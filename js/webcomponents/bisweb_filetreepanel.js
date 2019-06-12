@@ -61,7 +61,7 @@ class FileTreePanel extends HTMLElement {
             });
 
 
-            let listElement = this.panel.getWidget();
+            /*let listElement = this.panel.getWidget();
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
             biswebElementMenu.css({ 'margin-top': '15px' });
 
@@ -73,6 +73,7 @@ class FileTreePanel extends HTMLElement {
 
             listElement.append(biswebElementMenu);
             this.makeStaticButtons(listElement);
+            */
 
             this.setHelpModalMessage();
 
@@ -140,6 +141,24 @@ class FileTreePanel extends HTMLElement {
      */
     showTreePanel() {
         this.panel.show();
+    }
+
+    /**
+     * Creates the jstree container elements and buttons that will load and save DICOM studies to disk. 
+     */
+    createFileDisplayElements() {
+        let listElement = this.panel.getWidget();
+        let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
+        biswebElementMenu.css({ 'margin-top': '15px' });
+
+        let listContainer = $(`<div class='file-container biswebpanel2'></div>`);
+        listContainer.css({ 'height': '100px', 'width': '100%' });
+        listElement.append(listContainer);
+        listElement.append($('<HR>'));
+
+
+        listElement.append(biswebElementMenu);
+        this.makeStaticButtons(listElement);
 
         if (!this.fileTreePipeline) {
             this.createFileTreePipelinePanel();
