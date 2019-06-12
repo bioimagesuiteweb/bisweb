@@ -205,7 +205,9 @@ class GrapherModule extends HTMLElement {
         let bbar = bis_webutil.createbuttonbar({ 'css' : 'width: 80%;'});
 
         //settings button should be attached next to close button
-        let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
+        //TODO: Revisit settings menu? 
+        // -Zach
+        let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none; visibility: hidden'></button>'`);
         let dropdownButton = $(`
         <div class='btn-group dropleft' style='float: right;'>
             <button type='button dropdown-toggle' data-toggle='dropdown' class='bistoggle task-selector' style='float: right; visibility: hidden; -webkit-user-drag: none;'>
@@ -236,24 +238,31 @@ class GrapherModule extends HTMLElement {
             position: "right",
         }).click(() => { this.replotGraph(false).catch(() => { }); });
 
-        let singleFrameButton = bis_webutil.createbutton({
-            name: 'Plot Single Frame',
-            type: "default",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "left",
-        }).click(() => {
-            let cb = (frame) => {
-                this.replotGraph(frame).catch(() => { });
-            };
 
-            this.createFrameSelectorModal(cb);
-        });
+        console.log('settings', settings);
+        //Add button to look at a single frame of data if data is a timecourse
+        if (settings.chartType === 'line') {
+            let singleFrameButton = bis_webutil.createbutton({
+                name: 'Plot Single Frame',
+                type: "default",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+            }).click(() => {
+                let cb = (frame) => {
+                    this.replotGraph(frame).catch(() => { });
+                };
+
+                this.createFrameSelectorModal(cb);
+            });
+
+
+            bbar.append(singleFrameButton);
+        }
 
         bbar.append(timecourseButton);
-        bbar.append(singleFrameButton);
 
         //check to see if current data exists and isn't an empty object
         if (this.currentdata && Object.entries(this.currentdata).length !== 0) {
@@ -296,8 +305,6 @@ class GrapherModule extends HTMLElement {
             bbar.append(exportButton);
         }
        
-        //TODO: this only loads the first time I open the frame? not sure why. 
-        //console.log('get image', this.viewer.getimage());
         if (this.viewer.getimage() || (this.viewer2 && this.viewer2.getimage())) {
             let screenshotButton = bis_webutil.createbutton({
                 name: 'Save Snapshot',
@@ -309,7 +316,9 @@ class GrapherModule extends HTMLElement {
                 position: "left",
             }).click(() => { this.saveTauchartsSnapshot(); });
 
-            bbar.append(screenshotButton);
+            //TODO: Removed until I work out saving a snapshot with Taucharts
+            // -Zach
+            //bbar.append(screenshotButton);
         }
         
         bbar.tooltip();
@@ -327,6 +336,8 @@ class GrapherModule extends HTMLElement {
      */
     parsePaintedAreaAverageTimeSeries(orthoElement = null, imgdata = null) {
 
+        //TODO: Work out the issue with chartType not being specified in these settings but the correct chart being created anyway.
+        // -Zach
         let self = this;
         if (!orthoElement && !imgdata)
             return;
@@ -563,7 +574,7 @@ class GrapherModule extends HTMLElement {
         if (settings === null) { settings = this.settings; }
         else { this.settings = settings; }
 
-        this.renderGraphFrame(settings.chartSettings);
+        this.renderGraphFrame(settings);
         let frame = document.getElementById(this.graphcanvasid);
 
         //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
@@ -646,7 +657,7 @@ class GrapherModule extends HTMLElement {
                     'align': 'right'
                 }),
                 Taucharts.api.plugins.get('export-to')({
-                    'visible' : true,
+                    'visible' : false,
                     'paddingTop' : '20px'
                 })],
             data: data,
