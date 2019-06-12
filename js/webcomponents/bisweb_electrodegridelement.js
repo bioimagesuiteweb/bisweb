@@ -30,6 +30,8 @@ const $=require('jquery');
 const webfileutil = require('bis_webfileutil');
 const BisWebPanel = require('bisweb_panel.js');
 const dat = require('bisweb_datgui');
+const JSZip = require('jszip');
+const filesaver = require('FileSaver');
 
 const loaderror = function(msg) {
     console.log(msg);
@@ -38,6 +40,9 @@ const loaderror = function(msg) {
 
 const MAXGRIDS=30;
 const PROPERTIES=[ "Motor", "Sensory", "Visual", "Language", "Auditory", "User1", "SeizureOnset", "SpikesPresent" ];
+
+//const sleep=function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));};
+
 // -------------------------------------------------------------------------
 
 /** 
@@ -500,6 +505,7 @@ class ElectrodeGridElement extends HTMLElement {
         
         //          this.internal.data.enabled=false;
         this.internal.currentgridindex=ind;
+        this.internal.currentelectrode=0;
         
         // No carryover pick
         this.centerOnElectrode();
@@ -720,6 +726,28 @@ class ElectrodeGridElement extends HTMLElement {
                                          suffix : ".bisgrid,.mgrid",
                                          initialCallback : () => { return this.getInitialSaveFilename(); },
                                      });
+
+        
+        webutil.createbutton({ type : "danger",
+                               name : "Multisnapshot->PNG",
+                               parent : bbar0,
+                               css : {
+                                   'margin-top': '20px',
+                                   'margin-left': '10px'
+                               },
+                               callback : () => { this.multisnapshot(false).catch( (e) => { console.log(e);});}
+                             });
+
+        webutil.createbutton({ type : "danger",
+                               name : "Multisnapshot->ZIP",
+                               parent : bbar0,
+                               css : {
+                                   'margin-top': '20px',
+                                   'margin-left': '10px'
+                               },
+                               callback : () => { this.multisnapshot(true).catch( (e) => { console.log(e);});}
+                             });
+
         
         webutil.tooltip(this.internal.parentDomElement);
         
@@ -858,6 +886,100 @@ class ElectrodeGridElement extends HTMLElement {
             this.panel.hide();
         }
         this.enablemouse(false);
+    }
+
+    
+    async multisnapshot(dozip=false) {
+        
+        if (this.internal.multigrid.getNumGrids()===0) {
+            console.log('No Grids');
+            return Promise.reject('None');
+        }
+        
+        let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);
+        let numelectrodes=grid.electrodes.length;
+        if (numelectrodes<1) {
+            console.log('No Electrodes');
+            return Promise.reject('None');
+        }
+
+        console.log('Num Electrodes=',numelectrodes);
+        let snapshotElement=this.internal.orthoviewer.getSnapShotController();
+        snapshotElement.data.dowhite=false;
+        
+        let canvaslist=[];
+        let names=[];
+        
+        for (let i=0;i<numelectrodes;i++) {
+            let electrode=this.internal.multigrid.getElectrode(this.internal.currentgridindex,i);
+            let mm = electrode.position;
+            console.log('i=',i,mm);
+            this.internal.orthoviewer.updatemousecoordinates(mm,-1,0);
+            let canvas=await snapshotElement.getTestImage();
+            let name=`${grid.description}:${i+1}`;
+            names.push(name);
+            let context=canvas.getContext("2d");
+            context.font='24px Arial';
+            context.fillStyle = "#ffffff";
+            context.textAlign="left";
+            context.textBaseline="bottom";
+            context.fillText(name,5,canvas.height-5);
+            canvaslist.push(canvas);
+
+        }
+
+        if (!dozip) {
+            
+            let wd = canvaslist[0].width;
+            let ht = canvaslist[0].height;
+            for (let i=0;i<canvaslist.length;i++) {
+                if (wd< canvaslist[i].width)
+                    wd = canvaslist[i].width;
+                if (ht< canvaslist[i].height)
+                    ht = canvaslist[i].height;
+            }
+            
+            let outcanvas = document.createElement("canvas");
+            outcanvas.height = ht;
+            outcanvas.width = wd*canvaslist.length;
+            
+            let fillcolor = "#000000";
+            let ctx = outcanvas.getContext('2d');
+            ctx.fillStyle = fillcolor;
+            ctx.globalCompositeOperation = "source-over";
+            ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
+            
+            for (let i=0;i<canvaslist.length;i++) {
+                let w = canvaslist[i].width;
+                let h = canvaslist[i].height;
+                let imgdata = canvaslist[i].getContext("2d").getImageData(0, 0, w, h);
+                let x0=Math.floor(wd-w)/2+wd*i;
+                let y0=Math.floor(ht-h)/2;
+                let context=outcanvas.getContext("2d");
+                context.putImageData(imgdata, x0, y0);
+            }
+            
+            snapshotElement.createsnapshot_internal(outcanvas);
+            return Promise.resolve('Done');
+        }
+
+        const zip = new JSZip();
+        zip.file("README.txt", "Electrode Snapshots");
+        
+        for (let i=0;i<canvaslist.length;i++) {
+            let outimg=canvaslist[i].toDataURL("image/png");
+            let blob = bisgenericio.dataURLToBlob(outimg);
+            zip.file(names[i]+".png", blob, {base64: true});
+        }
+        try {
+            let content=await zip.generateAsync({type:"blob"});
+            console.log(content);
+            filesaver(content, "snapshots.zip");
+            return Promise.resolve('Done');
+        } catch (e)  {
+            console.log('Error'+e);
+        }
+        return Promise.reject('Failed to make zip');
     }
 
 }
