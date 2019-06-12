@@ -35,6 +35,7 @@ require('bootstrap-slider');
 require('../../node_modules/taucharts/dist/plugins/tooltip.js');
 require('../../node_modules/taucharts/dist/plugins/legend.js');
 require('../../node_modules/taucharts/dist/plugins/annotations.js');
+require('../../node_modules/taucharts/dist/plugins/export-to.js');
 
 Chart.defaults.global.defaultFontColor = 'white';
 Chart.defaults.global.defaultFontSize = '16';
@@ -306,7 +307,7 @@ class GrapherModule extends HTMLElement {
                     'margin-left': '10px',
                 },
                 position: "left",
-            }).click(() => { this.saveSnapshot(); });
+            }).click(() => { this.saveTauchartsSnapshot(); });
 
             bbar.append(screenshotButton);
         }
@@ -643,6 +644,10 @@ class GrapherModule extends HTMLElement {
                 Taucharts.api.plugins.get('tooltip')({
                     'fields': ['intensity', 'label'],
                     'align': 'right'
+                }),
+                Taucharts.api.plugins.get('export-to')({
+                    'visible' : true,
+                    'paddingTop' : '20px'
                 })],
             data: data,
         });
@@ -975,6 +980,14 @@ class GrapherModule extends HTMLElement {
             }
         });
         return false;
+    }
+
+    saveTauchartsSnapshot() {
+        //click hidden 'Export' button
+        let frame = document.getElementById(this.graphcanvasid);
+        let exportButton = $(frame).find('.tau-chart__export');
+        console.log('export button', exportButton);
+        exportButton.trigger('click');
     }
 
     /** save the last data to csv */
