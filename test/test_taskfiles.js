@@ -41,7 +41,7 @@ const tsvPath2_2 = path.normalize(path.resolve('./testdata/tasks2/task-sample_ru
    
    if seconds 10, durations=1.0
    if frames  10-0.5TR, 11+0.5*TR
-
+*/
 
 let errFn = (e, done) => {
     console.log(colors.red('---- An error occured while reading', e)); 
