@@ -514,17 +514,24 @@ namespace bisfMRIAlgorithms {
     // First normalize
     double sumw=0.0;
 
-    for (int row=0;row<sz[0];row++)
-      sumw+=(weights(row)>0);
-
-    for (int row=0;row<sz[0];row++)
-      weights(row)=(float)(weights(row)/sumw);
+    for (int row=0;row<sz[0];row++) {
+      if (weights(row)>0.0)
+        weights(row)=1.0;
+      else
+        weights(row)=0.0;
+      sumw+=weights(row);
+    }
+    
     
     if (sumw<0.00001)
       {
 	std::cerr << "bad weights, must have a positive sum!" <<std::endl;
 	return 0;
       }
+
+    for (int row=0;row<sz[0];row++) {
+      weights(row)=(float)(weights(row)/sumw);
+    }
 
     for (int col=0;col<sz[1];col++)
       {
@@ -574,6 +581,150 @@ namespace bisfMRIAlgorithms {
     return 1;
   }
 
+
+  /** This function computes a correlation matrix from a set of timeseries. Weights are binary either use or do not use frame (>0.01 = use)
+   * @alias BisfMRIMatrixConnectivity.computeSeedMapImage
+   * @param {Image} input - the input timeseries vectors as image
+   * @param {Matrix} seedtime series -- seed timeseries vectors as matrix (rows = frames);
+   * @param {boolean} toz - if true compute r->z transform and return z-values else r's (default = false)
+   * @param {array} weights - the input regressors vectors (weights for each row)
+   * @returns {Matrix} seed map image
+   */
+  int computeSeedMapImage(bisSimpleImage<float>* input,Eigen::MatrixXf& roi,int toz,Eigen::VectorXf& weights,bisSimpleImage<float>* output)
+  {
+
+    int dim[5]; input->getDimensions(dim);
+    int sz[2]; bisEigenUtil::getMatrixDimensions(roi,sz);
+
+
+    if (dim[3]!=sz[0]) {
+      std::cerr << "Bad roi numframes size. Image frames=" << dim[3] << " roimatrix frames=" << sz[0] << ". Not Equal!" << std::endl;
+      return 0;
+    }
+
+    // ---------------------------------------------------
+    // Weights stuff
+    // ---------------------------------------------------
+    int sw=weights.rows();
+    if (sw<=2)
+      {
+	weights=Eigen::VectorXf::Zero(sz[0]);
+	for (int ia=0;ia<sz[0];ia++)
+	  weights(ia)=1.0;
+      }
+    else if (sw!=sz[0])
+      {
+	std::cerr << "Bad weight size. Must be a vector of size " << sz[1] << std::endl;
+	return 0;
+      }
+
+    for (int ia=0;ia<sz[0];ia++) {
+      if (weights(ia)>0.0)
+        weights(ia)=1.0;
+      else
+        weights(ia)=0.0;
+    }
+
+    double sumw=0.0;
+    for (int row=0;row<sz[0];row++) {
+      sumw+=weights(row);
+    }
+    
+    std::cout << "Sumw=" << sumw << std::endl;
+
+    if (sumw<0.00001)
+      {
+	std::cerr << "bad weights, must have a positive sum!" <<std::endl;
+	return 0;
+      }
+
+    for (int row=0;row<sz[0];row++) 
+      weights(row)=weights(row)/sumw;
+    
+
+
+    // ---------------------------------------------------
+    // Normalize ROI Time cources
+    // ---------------------------------------------------
+    Eigen::MatrixXf norm=Eigen::MatrixXf::Zero(sz[0],sz[1]);
+
+    for (int col=0;col<sz[1];col++)
+      {
+	double sum=0.0;
+	double sum2=0.0;
+	
+	for (int row=0;row<sz[0];row++)
+	  {
+	    float v=roi(row,col);
+	    sum=sum+v*weights(row);
+	    sum2=sum2+v*v*weights(row);
+	  }
+	double mean=sum;
+	double sigma=sqrt(sum2-mean*mean);
+	if (sigma>0.0)
+	  {
+	    for (int row=0;row<sz[0];row++)
+	      norm(row,col)=(float)((roi(row,col)-mean)/sigma);
+	  }
+
+      }
+
+  
+    // Now compute for each pixel
+    // --------------------------
+    float* imagedata=input->getImageData();
+    Eigen::VectorXf img_matrix=Eigen::VectorXf::Zero(sz[0]);
+    int numvoxels=dim[0]*dim[1]*dim[2];
+    int numframes=sz[0];
+
+    
+    int outdim[5] = { dim[0],dim[1],dim[2],sz[1],1};
+    float spa[5]; input->getSpacing(spa);
+    output->allocate(outdim,spa);
+    output->fill(0.0f);
+    float* outimagedata=output->getImageData();
+
+    
+    
+    for (int voxel=0;voxel<numvoxels;voxel++) {
+      double sum=0.0;
+      double sum2=0.0;
+      
+      for (int frame=0;frame<numframes;frame++)
+        {
+          float v=imagedata[voxel+frame*numvoxels];
+          sum=sum+v*weights(frame);
+          sum2=sum2+v*v*weights(frame);
+        }
+
+      double mean=sum;
+      double sigma=sqrt(sum2-mean*mean);
+      if (sigma>0.0) {
+        for (int frame=0;frame<numframes;frame++) {
+          img_matrix(frame)=(float)((imagedata[voxel+frame*numvoxels]-mean)/sigma);
+        }
+      } else {
+        for (int frame=0;frame<numframes;frame++) {
+          img_matrix(frame)=0.0;
+        }
+      }
+        
+      for (int seed=0;seed<sz[1];seed++) {
+        float sum=0.0;
+        for (int frame=0;frame<numframes;frame++) {
+          sum=sum+norm(frame,seed)*img_matrix(frame)*weights(frame);
+        }
+
+
+        if (toz)
+          sum=bisUtil::rhoToZConversion(sum);
+	
+        outimagedata[voxel+seed*numvoxels]=(float)sum;
+      }
+    }
+    return 1;
+
+  }
 
   // End of namespace
   }

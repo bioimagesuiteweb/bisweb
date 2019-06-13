@@ -92,7 +92,7 @@ class BisFileServerClient extends BisBaseServerClient {
     connectToServer(address = 'ws://localhost:'+wsUtilInitialPort) {
         if (this.socket) {
             console.log('closing connection connect to server');
-            //this.closeConnection();
+            this.closeConnection();
         }
 
         if (address.indexOf('ws://')!==0)

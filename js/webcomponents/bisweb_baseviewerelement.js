@@ -89,7 +89,7 @@ class BaseViewerElement extends HTMLElement {
             // colormaps
             colormapControllerPayload : null,
             objectmaptransferfunction : util.mapobjectmapfactory(255),
-            objectmaptransferinfo : { isfunctional : false, colormode : 'Overlay' },
+            objectmaptransferinfo : { 'showcolorbar' : false, colormode : 'Overlay' },
 
             // movie playing
             framecontroller : null,
@@ -107,6 +107,7 @@ class BaseViewerElement extends HTMLElement {
         // save state stuff
         this.internal.saveState=null;
         this.internal.viewerleft=null;
+        this.minLabelWidth=150;
     }
 
 
@@ -123,6 +124,21 @@ class BaseViewerElement extends HTMLElement {
      */
     getName() {
         return this.internal.name;
+    }
+    
+    // ------------------------------------------------------------------------------------
+    /* set the minimum width to draw labels
+     * @param{Number} width 
+     */
+    setMinLabelWidth(n) {
+        this.minLabelWidth=n || 150;
+    }
+
+    /* return the min Label Width
+     * @returns{Number} -- the label width
+     */
+    getMinLabelWidth() {
+        return this.minLabelWidth;
     }
 
     /* returns last cross hairs (null) */
@@ -230,7 +246,7 @@ class BaseViewerElement extends HTMLElement {
         
         for (let i=0;i<l;i++) {
             if (this.internal.overlayslices[i]!==null) {
-                this.internal.overlayslices[i].removefromscene(this.internal.subviewers[i].scene);
+                this.internal.overlayslices[i].removefromscene(this.internal.subviewers[i].getScene());
                 this.internal.overlayslices[i].cleanup();
                 this.internal.overlayslices[i]=null;
             }
@@ -258,15 +274,12 @@ class BaseViewerElement extends HTMLElement {
             
             if (this.internal.subviewers[i]!==null) {
                 if (this.internal.slices[i]!==null) {
-                    this.internal.slices[i].removefromscene(this.internal.subviewers[i].scene);
+                    this.internal.slices[i].removefromscene(this.internal.subviewers[i].getScene());
                     this.internal.slices[i].cleanup();
                     this.internal.slices[i]=null;
                 }
                 if (samesize===false) {
-                    this.internal.subviewers[i].controls.remove();
-                    this.internal.subviewers[i].controls=null;
-                    this.internal.subviewers[i].scene=null;
-                    this.internal.subviewers[i].camera=null;
+                    this.internal.subviewers[i].remove();
                     this.internal.subviewers[i]=null;
                 }
             }
@@ -352,15 +365,10 @@ class BaseViewerElement extends HTMLElement {
                 renderer.clear();
             for (let i=0;i<subviewers.length;i++) {
                 if (this.internal.subviewers[i]!==null) {
-                    let vp  =this.internal.subviewers[i].controls.normViewport;
-                    if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&
-                        subviewers[i].controls.update(this.internal.layoutcontroller.renderer)===true &&
-                        i<numviewers)  {
-                        renderer.render( subviewers[i].scene,
-                                         subviewers[i].camera);
-                        subviewers[i].controls.enabled=true;
+                    if (i<numviewers) {
+                        this.renderSubViewer(i);
                     } else {
-                        subviewers[i].controls.enabled=false;
+                        subviewers[i].enabled=false;
                     }
                 }
             }
@@ -384,6 +392,14 @@ class BaseViewerElement extends HTMLElement {
         return 0;
     }
 
+    /** render an individual subviewer 
+     * @param{number} index - subviewer index
+     */
+    renderSubViewer(index) {
+        if (this.internal.subviewers[index])
+            this.internal.subviewers[index].render();
+    }
+    
     /** removes the colorscale */
     clearcolorscale() {
 
@@ -417,8 +433,8 @@ class BaseViewerElement extends HTMLElement {
     drawcolorscale() {
         
         this.clearcolorscale();
-        
-        if (this.internal.objectmap===null || this.internal.objectmaptransferinfo.isfunctional!==true)
+
+        if (this.internal.objectmap===null || this.internal.objectmaptransferinfo.showcolorbar!==true)
             return;
 
         let context=this.internal.layoutcontroller.overlaycontext;
@@ -432,8 +448,8 @@ class BaseViewerElement extends HTMLElement {
         let y0=0.92*dh;
 
         let fnsize=webutil.getfontsize(context.canvas);
-        if (dw<1700)
-            fnsize=Math.round((dw/1700)*fnsize);
+        if (dw<1000)
+            fnsize=Math.round((dw/1000)*fnsize);
         
         let colorfunction=this.internal.objectmaptransferfunction;
         if (this.internal.objectmaptransferinfo.clustersize > 0) 
@@ -487,6 +503,7 @@ class BaseViewerElement extends HTMLElement {
         context.textAlign="center";
         context.textBaseline="top";
 
+
         for (let pass=0;pass<numpass;pass++) {
             context.fillStyle="#888888";
             context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,ht+4);
@@ -498,7 +515,9 @@ class BaseViewerElement extends HTMLElement {
                     data[0]=-(maxv-dv*i);
                 }
                 colorfunction(data,0,map);
-                context.fillStyle=(util.rgbToHex(map[0],map[1],map[2]));
+                let cl=util.rgbToHex(map[0],map[1],map[2]);
+                context.fillStyle=cl;
+                
                 context.fillRect(x0+1,y0,wd-2,ht);
 
                 if (i===0 || i===numsteps || i===numsteps/2) {
@@ -519,6 +538,7 @@ class BaseViewerElement extends HTMLElement {
             }
             x0+=wd;
         }
+
     }
     
     
@@ -542,7 +562,7 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.subviewers !== null) {
             for (let i=0;i<this.internal.subviewers.length;i++) {
                 if (this.internal.subviewers[i] !== null)
-                    this.internal.subviewers[i].controls.handleResize();
+                    this.internal.subviewers[i].handleResize(false);
             }
         }
     }
@@ -558,28 +578,34 @@ class BaseViewerElement extends HTMLElement {
      */
     updatetransferfunctions(input) {
 
-        let num=this.internal.slices.length;
+
 
         this.internal.colormapControllerPayload=input;
+        let num=this.internal.slices.length;
         
         if (input.image!==null) {
             this.internal.imagetransferfunction=input.image;
-            for (let pl=0;pl<num;pl++) 
-                this.internal.slices[pl].setnexttimeforce(); 
+            for (let pl=0;pl<num;pl++)  {
+                if (this.internal.slices[pl])
+                    this.internal.slices[pl].setnexttimeforce();
+            }
         }
-        for (let pl=0;pl<num;pl++)
-            this.internal.slices[pl].interpolate(input.interpolate);
-        
+        for (let pl=0;pl<num;pl++) {
+            if (this.internal.slices[pl])
+                this.internal.slices[pl].interpolate(input.interpolate);
+        }
+
+        let numov=this.internal.overlayslices.length;
         if (this.internal.overlayslices[0]!==null) {
             if (input.objectmap!==null) {
                 this.internal.objectmaptransferfunction=input.objectmap;
                 this.internal.objectmaptransferinfo=input.functionalparams;
-                for (let pl=0;pl<num;pl++) {
+                for (let pl=0;pl<numov;pl++) {
                     if (this.internal.overlayslices[pl]!==null)
                         this.internal.overlayslices[pl].setnexttimeforce();
                 }
             }
-            for (let pl=0;pl<num;pl++) {
+            for (let pl=0;pl<numov;pl++) {
                 if (this.internal.overlayslices[pl]!==null)
                     this.internal.overlayslices[pl].interpolate(input.objinterpolate);
             }
@@ -591,7 +617,7 @@ class BaseViewerElement extends HTMLElement {
         this.drawcolorscale();
     }
     
-    
+
     // ------------------------------------------------------------------------
     // get/set image
     // ------------------------------------------------------------------------
@@ -666,7 +692,7 @@ class BaseViewerElement extends HTMLElement {
     }
     
     /** update all mouse observers with new coordinates 
-     *  Called from {@link BisWebOrthogonalViewerElementElementThis.Internal.updatescene}.
+     *  Called from {@link BisWebOrthogonalViewerElementElement.updatescene}.
      * @param {array} mm - [ x,y,z ] array with current position in mm
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
      * @param {number} mousestate - 0=click 1=move 2=release
@@ -874,7 +900,7 @@ class BaseViewerElement extends HTMLElement {
     resetViewers() {
         this.internal.subviewers.forEach(function(f) {
             if (f!==null) {
-                f.controls.reset();
+                f.reset();
             }
         });
     }
@@ -882,8 +908,8 @@ class BaseViewerElement extends HTMLElement {
     zoomViewers(factor=0.9) {
         this.internal.subviewers.forEach(function(f) {
             if (f!==null) {
-                f.controls.zoomCamera(factor);
-                f.controls.update();
+                f.zoomCamera(factor);
+                f.render();
             }
         });
     }
@@ -1028,7 +1054,7 @@ class BaseViewerElement extends HTMLElement {
                 obj.subviewers = [];
                 for (let i=0;i<n;i++) {
                     if (this.internal.subviewers[i]) {
-                        let controls=this.internal.subviewers[i].controls;
+                        let controls=this.internal.subviewers[i];
                         let p=controls.serializeCamera();
                         obj.subviewers.push(p);
                     }
@@ -1096,11 +1122,10 @@ class BaseViewerElement extends HTMLElement {
             let num=subviewers.length;
             if (dt.subviewers.length<num)
                 num=dt.subviewers.length;
-            let renderer=this.internal.layoutcontroller.renderer;
             for (let i=0;i<num;i++) {
                 if (dt.subviewers[i] && subviewers[i]) {
-                    subviewers[i].controls.parseCamera(dt.subviewers[i]);
-                    renderer.render( subviewers[i].scene, subviewers[i].camera);
+                    subviewers[i].parseCamera(dt.subviewers[i]);
+                    subviewers[i].render();
                 }
             }
         } 

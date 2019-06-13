@@ -166,6 +166,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         const controlid=this.getAttribute('bis-connectivitycontrolid');
         
         VIEWER.viewer=document.querySelector(viewerid);
+        VIEWER.viewer.setMinLabelWidth(150);
         VIEWER.viewer.finalizeTools();
 
         var viewer=VIEWER.viewer;
@@ -240,8 +241,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(viewmenu,'Set 3D View To Top',function() { viewer.set3dview(2,false); });
         webutil.createMenuItem(viewmenu,'Set 3D View To Bottom',function() { viewer.set3dview(2,true); });
         webutil.createMenuItem(viewmenu,''); // separator
-        webutil.createMenuItem(viewmenu,'Set 3D View To Left',function() { viewer.set3dview(0,false); });
-        webutil.createMenuItem(viewmenu,'Set 3D View To Right',function() { viewer.set3dview(0,true); });
+        webutil.createMenuItem(viewmenu,'Set 3D View To Left',function() { viewer.set3dview(0,true); });
+        webutil.createMenuItem(viewmenu,'Set 3D View To Right',function() { viewer.set3dview(0,false); });
         
 
         // ------------------------------------ Parcellations Menu ----------------------------
@@ -262,6 +263,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                        control.importparcellation(img,'AAL Atlas');
                                    });
                                });
+        webutil.createMenuItem(imenu,''); // separator
+        webutil.createMenuItem(imenu,'Use the Yale Network Definitions', function() {
+            control.setNetworksToYale(true);
+        });
+        webutil.createMenuItem(imenu,'Use the WSHU Network Definitions', function() {
+            control.setNetworksToYale(false);
+        });
+        
         // ------------------------------------ Advanced Menu ----------------------------
         
         var advmenu=webutil.createTopMenuBarMenu("Advanced",menubar);

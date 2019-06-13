@@ -247,7 +247,7 @@ class BisHeader {
                 this.extensions[kk]=_inbytes[kk];
         }
         
-        // Check bit pix
+        // Check bit pix to correct common mismatch
         let dt=this.struct['datatype'];
         let name=niftitypes[dt][0];
         let bitpix=typesizes[name][0]*8;
@@ -256,6 +256,22 @@ class BisHeader {
             this.struct['bitpix']=bitpix;
         }
 
+        // Fix spacing and dimensions to correct standard issues
+        let pixdim=this.struct['pixdim'];
+        for (let i=0;i<pixdim.length;i++) {
+            if (pixdim[i]<0.00001)
+                pixdim[i]=1.0;
+        }
+
+        let dim=this.struct['dim'];
+        let num=1;
+        for (let i=1;i<dim.length;i++) {
+            if (dim[i]<1)
+                dim[i]=1;
+            if (dim[i]>1)
+                num=i;
+        }
+        dim[0]=num;
     }
     
     
@@ -524,9 +540,10 @@ class BisHeader {
 
     /** returns a rich dDescription of the header ala bis_headerinfo --detail full 
      * from BioImage Suite
+     * @returns {Boolean} extensions -- if true include extensions
      * @returns {String} -- full header descriptions 
      */
-    getDescription() {
+    getDescription(extensions=true) {
         
         let dt=this.struct.datatype;
         let typename=this.getniftitype(dt);
@@ -562,7 +579,7 @@ class BisHeader {
         }
 
         let cmt=this.parseExtensionsToArray();
-        if (cmt.length>0) {
+        if (cmt.length>0 && extensions) {
             s.push('\tExtensions:\n\t-----------');
             let s2=[];
             for (let i=0;i<cmt.length;i++) {

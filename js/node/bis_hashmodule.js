@@ -39,7 +39,8 @@ class HashModule extends BaseModule {
                     "advanced": false,
                     "type": "string",
                     "varname": "url",
-                    "default": "Error: no image specified"
+                    "required" : true,
+                    "default": ""
                 },
                 baseutils.getDebugParam()
             ]
@@ -47,6 +48,11 @@ class HashModule extends BaseModule {
     }
 
     directInvokeAlgorithm(vals) {
+
+        if (vals.url==="") {
+            return Promise.reject(': No input filename specified');
+        }
+        
         return new Promise((resolve, reject) => {
             const bufs = [];
             const readStream = fs.createReadStream(vals.url);
@@ -66,7 +72,7 @@ class HashModule extends BaseModule {
             });
 
             gunzip.on('finish', () => {
-                console.log('Done reading buffered unzipped chunks');
+                console.log('Done reading buffered unzipped chunks', bufs.length);
                 let image = Buffer.concat(bufs);
                 let hash = bis_util.SHA256(image);
                 console.log('Calculated hash', hash);

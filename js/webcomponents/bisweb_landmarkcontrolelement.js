@@ -136,7 +136,7 @@ class LandmarkControlElement extends HTMLElement {
                 for ( i=0;i<this.internal.subviewers.length;i++)  {
                     if (this.internal.subviewers[i]!==null && this.internal.mesh[st][i]!==null) {
                         this.internal.mesh[st][i].visible=false;
-                        this.internal.subviewers[i].scene.remove(this.internal.mesh[st][i]);
+                        this.internal.subviewers[i].getScene().remove(this.internal.mesh[st][i]);
                         this.internal.mesh[st][i]=null;
                     }
                 }
@@ -147,8 +147,10 @@ class LandmarkControlElement extends HTMLElement {
         if (docursor) {
             for (i=0;i<this.internal.subviewers.length;i++)  {
                 if (this.internal.cursormesh[i]!==null) {
-                    if (this.internal.subviewers[i]!==null) 
-                        this.internal.subviewers[i].scene.remove(this.internal.cusormesh[i]);
+                    if (this.internal.subviewers[i]!==null) {
+                        let scene=this.internal.subviewers[i].getScene();
+                        scene.remove(this.internal.cursormesh[i]);
+                    }
                     this.internal.cursormesh[i].visible=false;
                     this.internal.cursormesh[i]=null;
                 }
@@ -209,7 +211,7 @@ class LandmarkControlElement extends HTMLElement {
         for (var i=0;i<this.internal.subviewers.length;i++) {
             this.internal.cursormesh[i]=new THREE.Mesh(cursorgeom, gmat);
             this.internal.cursormesh[i].visible=false;
-            this.internal.subviewers[i].scene.add(this.internal.cursormesh[i]);
+            this.internal.subviewers[i].getScene().add(this.internal.cursormesh[i]);
         }
     }
 
@@ -245,7 +247,7 @@ class LandmarkControlElement extends HTMLElement {
                 this.internal.mesh[st][i]=new THREE.Mesh(geometry,mat);
             
             this.internal.mesh[st][i].visible=false;
-            this.internal.subviewers[i].scene.add(this.internal.mesh[st][i]);
+            this.internal.subviewers[i].getScene().add(this.internal.mesh[st][i]);
         }
         return;
     }
@@ -563,21 +565,30 @@ class LandmarkControlElement extends HTMLElement {
         return false;
     }
 
+    /** Set landmarks from string
+     * @param {string} filename - filename
+     * @param {string} data - the file
+     */
+    setlandmarks(filename,data) {
+        let pset=this.internal.landmarkset[this.internal.currentsetindex];
+        let ok=pset.deserialize(data,filename,loaderror);
+        if (ok) {
+            pset.filename=filename;
+            this.updatedisplay(true);
+            this.updategui();
+            this.picklandmark(false);
+        }
+        return ok;
+    }
+
     /** Load landmarks. Called from input=File element 
      * @param {string} filename - filename
      */
     loadlandmarks(filename) {
 
-        const self=this;
-
         bisgenericio.read(filename).then( (obj) => {
-            let pset=this.internal.landmarkset[this.internal.currentsetindex];
-            var ok=pset.deserialize(obj.data,obj.filename,loaderror);
-            if (ok) {
-                pset.filename=obj.filename;
-                self.updatedisplay(true);
-                self.updategui();
-                self.picklandmark(false);
+            if (this.setlandmarks(obj.filename,obj.data)) {
+                let pset=this.internal.landmarkset[this.internal.currentsetindex];
                 webutil.createAlert('Landmarks loaded from' +pset.filename+' numpoints='+pset.getnumpoints());
             }
         }).catch( (e) => { loaderror(e) ; });
@@ -952,7 +963,7 @@ class LandmarkControlElement extends HTMLElement {
     }
     
     /** initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
-     * @param {Bis_SubViewer} subviewers - subviewers to place info in
+     * @param {BisWebSubViewer[]} subviewers - subviewers to place info in
      * @param {BisImage} volume - new image
      */
     connectedCallback() {
@@ -1014,7 +1025,7 @@ class LandmarkControlElement extends HTMLElement {
                 
             }
             this.internal.data.currentname=this.internal.data.allnames[0];
-            this.internal.subviewers=subviewers;
+            this.internal.subviewers=[ subviewers[0],subviewers[1], subviewers[2], subviewers[3] ];
             this.internal.volume=volume;
 
         }

@@ -20,6 +20,8 @@
 const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
+const fmrimatrix   =require('bis_fmrimatrixconnectivity');
+const BisWebMatrix   =require('bisweb_matrix');
 
 // Three Matrix to Matrix 
 // Input + Regressor + Weights --> Output = Input Orthogonalized to Regressor
@@ -44,6 +46,17 @@ class WeightedRegressOutModule extends BaseModule {
             "buttonName": "Regress",
             "shortname" : "rgr",
             "params": [
+                {
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "usejs",
+                    "type": 'boolean',
+                    "default": false,
+                    "jsonly" : true,
+                },
                 baseutils.getDebugParam()
             ],
         };
@@ -55,11 +68,30 @@ class WeightedRegressOutModule extends BaseModule {
     
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: regressOut with vals', JSON.stringify(vals));
-        return new Promise((resolve, reject) => {
-            let input = this.inputs['input'];
-            let regressor = this.inputs['regressor'] || 0;
-            let weight = this.inputs['weight'] || 0;
+
+        let input = this.inputs['input'];
+        let regressor = this.inputs['regressor'] || 0;
+        let weight = this.inputs['weight'] || 0;
+        
+        if (super.parseBoolean(vals.usejs)) {
+            console.log('____ Using the JS Implementation of regressOut');
+            if (weight)
+                weight=weight.getNumericMatrix();
+            else
+                weight= null; // js code needs null not 0
+
+            let out=fmrimatrix.weightedregressout(input.getNumericMatrix(),regressor.getNumericMatrix(),weight);
             
+            this.outputs['output']=new BisWebMatrix();
+            try {
+                this.outputs['output'].setFromNumericMatrix(out);
+            } catch(e) {
+                console.log(e);
+            }
+            return Promise.resolve('done');
+        }
+        
+        return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.weightedRegressOutWASM(input, regressor, weight, super.parseBoolean(vals.debug));
                 resolve();

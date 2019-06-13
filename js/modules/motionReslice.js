@@ -170,15 +170,22 @@ class MotionResliceModule extends BaseModule {
             let reference = this.inputs['reference'] || input_image;
             let matrices = this.inputs['motionparam'] || null;
 
+            if (!reference.hasSameOrientation(input_image,'reference image','input image',true)) {
+                reject('Failed');
+                return;
+            }
+            
             
             if (!input_image || !matrices ) {
                 reject("Either input or motion params is not specified");
+                return;
             }
 
             let numframes=matrices.getNumberOfItems();
             
             if (input_image.getDimensions()[3]!==numframes) {
                 reject("Either input has different number of frames than motion parameters");
+                return;
             }
 
             console.log('oooo Motion Parameters=',matrices.getDescription());

@@ -1,0 +1,229 @@
+{
+    "app": "biswebdisplaytest",
+    "params": {
+        "viewer1": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 0,
+                "minintensity": 1,
+                "maxintensity": 2530.0549019607843,
+                "funcmode": "Objectmap",
+                "outmode": "Both",
+                "minth": 1,
+                "showcolorbar": false,
+                "maxth": 100,
+                "clustersize": 0,
+                "mip": false,
+                "volquality": 2,
+                "isothreshold": 355.06768627450987,
+                "volcropimin": 0,
+                "volcropimax": 180,
+                "volcropjmin": 0,
+                "volcropjmax": 216,
+                "volcropkmin": 0,
+                "volcropkmax": 180
+            },
+            "snapshotcontroller": {
+                "scale": 1,
+                "dowhite": false,
+                "crop": false
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": 398,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1.5058330890556522,
+                    "bottom": 218.34579791306956,
+                    "top": -218.34579791306956,
+                    "left": -218.34579791306956,
+                    "right": 218.34579791306956
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": -217,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1.5058330890556522,
+                    "bottom": 218.34579791306956,
+                    "top": -218.34579791306956,
+                    "left": -218.34579791306956,
+                    "right": 218.34579791306956
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 398
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": -1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1.5058330890556522,
+                    "bottom": 218.34579791306956,
+                    "top": -218.34579791306956,
+                    "left": -218.34579791306956,
+                    "right": 218.34579791306956
+                },
+                {
+                    "position": {
+                        "x": 390.3110467041571,
+                        "y": 212.1973313567679,
+                        "z": 157.68449870968558
+                    },
+                    "up": {
+                        "x": 0.17887694401318713,
+                        "y": 0.11887327124001004,
+                        "z": -0.9766638030997161
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1.2136506997339342,
+                    "bottom": 253.5435796819571,
+                    "top": -253.5435796819571,
+                    "left": -253.5435796819571,
+                    "right": 253.5435796819571
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Simple + 3D",
+                "show3dslices": true,
+                "decorations": true,
+                "xcoord": 90,
+                "ycoord": 108,
+                "zcoord": 90,
+                "tcoord": 0,
+                "rate": 25
+            }
+        },
+        "viewer2": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 0,
+                "minintensity": 1,
+                "maxintensity": 2530.0549019607843,
+                "funcmode": "Objectmap",
+                "outmode": "Both",
+                "minth": 1,
+                "showcolorbar": false,
+                "maxth": 100,
+                "clustersize": 0,
+                "mip": false,
+                "volquality": 2,
+                "isothreshold": 355.06768627450987,
+                "volcropimin": 0,
+                "volcropimax": 180,
+                "volcropjmin": 0,
+                "volcropjmax": 216,
+                "volcropkmin": 0,
+                "volcropkmax": 180
+            },
+            "snapshotcontroller": {
+                "scale": 1,
+                "dowhite": true,
+                "crop": true
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 398
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": -1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 130,
+                    "top": -130,
+                    "left": -130,
+                    "right": 130
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 398
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": -1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 130,
+                    "top": -130,
+                    "left": -130,
+                    "right": 130
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Axial",
+                "first": 91,
+                "numrows": 1,
+                "numcols": 2,
+                "increment": 1,
+                "tcoord": 0,
+                "decorations": true,
+                "rate": 20
+            }
+        },
+        "sidetools": {},
+        "activeViewer": 1
+    }
+}

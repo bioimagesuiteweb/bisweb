@@ -76,16 +76,6 @@ let iosFileDialog=null;
 const webfileutils = {
 
     /**
-     * Checks whether one of Google Drive, Dropbox, or OneDrive has usable keys in the current configuration.
-     * These keys live in the 'internal' directory outside of the rest of the codebase. 
-     */
-    needModes : function() {
-        if (dkey.length>0 || gkey.length>0 || mkey.length>0)
-            return true;
-        return false;
-    },
-
-    /**
      * Returns the current file mode of the application. May be one of Google Drive, Dropbox, OneDrive, Amazon AWS, Local Server, or standard File I/O (<input type='file'>)
      */
     getMode: function() {
@@ -626,7 +616,7 @@ const webfileutils = {
      * @param {String} name - The name for the dropdown button. 
      * @param {Boolean} separator - Whether or not the dropdown should be followed by a separator line in the menu. True by default.
      */
-    createFileSourceSelector : function(bmenu,name="Set File Source",separator=true) {
+    createFileSourceSelector : function(bmenu,name="Set File Source",separator=false) {
 
         const self=this;
         
@@ -636,8 +626,7 @@ const webfileutils = {
                 let extra="";
                 if (enableserver) {
                    extra=`
-                        <HR><p>You may download the bisweb fileserver using npm. Type <B>npm install biswebnode</B>. Once this is installed look into the <B>biswebnode/serverconfig</B> directory for instructions.
-                        Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 10.x</a>
+                        <HR><p>You may download the bisweb fileserver using npm. Type <BR><TT>sudo npm install -g biswebnode</TT><BR> Once this is installed look into the <B>biswebnode/serverconfig</B> directory for instructions. <B> To Start type:</B><TT> biswebnode bisserver -h </TT>. (The -h flag prints help info). Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 10.x</a>
                         </p>`;
                 }
                 
@@ -652,11 +641,9 @@ const webfileutils = {
                                                      });
             });
         };
-
-        //TODO: debug dropbox, googledrive and one dirve to make sure they work
         
-
-        if (!webutil.inElectronApp() && this.needModes()) {
+        //TODO: debug dropbox, googledrive and one dirve to make sure they work
+        if (!webutil.inElectronApp()) {
             if (separator)
                 webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, name, fn);

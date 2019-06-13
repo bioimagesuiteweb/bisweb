@@ -61,13 +61,14 @@ class SnapshotElement extends HTMLElement {
         this.data = {
             scale: 3.0,
             dowhite: false,
-            crop: true
+            crop: true,
         };
 
         this.testingResolve=null;
         this.testingReject=null;
         this.simplemode=false;
         this.colorselector=null;
+        this.enablepanorama=false;
     }
 
 
@@ -325,12 +326,22 @@ class SnapshotElement extends HTMLElement {
     createsnapshot(img, hasOverlayColorbar = false) {
 
         // Store scale
+
         userPreferences.setItem('snapshotscale', this.data.scale);
         if (!this.simplemode)
             userPreferences.setItem('snapshotdowhite', this.data.dowhite);
-        userPreferences.storeUserPreferences();
+        userPreferences.storeUserPreferences().catch( (e) => {
+            console.log('Failed to save userprefs '+e);
+        });
+        
 
         let outcanvas=this.createOutputCanvas(img,hasOverlayColorbar,this.data.scale,this.data.dowhite,this.data.crop);
+        this.createsnapshot_internal(outcanvas);
+    }
+
+    createsnapshot_internal(outcanvas) {
+        
+    
         let outimg=outcanvas.toDataURL("image/png");
         
         let dispimg = $('<img id="dynamic">');
@@ -386,12 +397,17 @@ class SnapshotElement extends HTMLElement {
         return false;
     }
 
+
     connectedCallback() {
 
 
         if (this.getAttribute('bis-dowhite') === 'true')
             this.data.dowhite = true;
 
+
+        if (this.getAttribute('bis-enablepanorama') === 'true')
+            this.enablepanorama=true;
+        
         let viewerid = this.getAttribute('bis-viewerid');
         let layoutid = this.getAttribute('bis-layoutwidgetid');
         let viewer = document.querySelector(viewerid);
@@ -492,6 +508,23 @@ class SnapshotElement extends HTMLElement {
             parent: elem2,
             callback: upd,
         });
+
+
+        if (this.enablepanorama) { 
+            webutil.createbutton({
+                name: "Take Panorama",
+                type: "danger",
+                css: {
+                    'padding': '5px',
+                    'margin-left': '5px',
+                    'margin-top': '5px'
+                },
+                parent: elem2,
+                callback: () => { self.createpanorama(); },
+            });
+        }
+
+
         webutil.tooltip(inlineform);
 
         
@@ -641,6 +674,105 @@ class SnapshotElement extends HTMLElement {
             self.viewer.savenextrender(self);
         });
     }
+
+    // Panorama stuff
+    createpanorama() {
+
+        let oldrmode=this.viewer.internal.rendermode;
+        let controlid=this.getAttribute('bis-conncontrol') || null;
+        let conncontrol=null;
+
+        if (controlid) {
+            conncontrol=document.querySelector(controlid);
+            oldrmode=conncontrol.getRenderMode();
+        }
+        console.log('Conn control=',conncontrol);
+
+
+        const self=this;
+        let pairs = [ [ 1,true ], [ 1,false ], [ 2,false] , [ 2,true ] , [ 0,false ], [ 0,true ] ];
+        let canvaslist = [];
+
+        let index=-1;
+
+        let compilepanorama= (() => {
+            console.log('Compiling panorama',canvaslist);
+            if (conncontrol)
+                conncontrol.setRenderMode(oldrmode);
+            else
+                this.viewer.setRenderMode(oldrmode);
+            
+            let wd = canvaslist[0].width;
+            let ht = canvaslist[0].height;
+            for (let i=0;i<canvaslist.length;i++) {
+                if (wd< canvaslist[i].width)
+                    wd = canvaslist[i].width;
+                if (ht< canvaslist[i].height)
+                    ht = canvaslist[i].height;
+            }
+            let outcanvas = document.createElement("canvas");
+            outcanvas.height = ht;
+            outcanvas.width = wd*canvaslist.length;
+
+            let fillcolor = "#000000";
+            if (this.data.dowhite)
+                fillcolor = "#ffffff";
+            let ctx = outcanvas.getContext('2d');
+            ctx.fillStyle = fillcolor;
+            ctx.globalCompositeOperation = "source-over";
+            ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
+                        
+            for (let i=0;i<canvaslist.length;i++) {
+                let w = canvaslist[i].width;
+                let h = canvaslist[i].height;
+
+                let imgdata = canvaslist[i].getContext("2d").getImageData(0, 0, w, h);
+                let x0=Math.floor(wd-w)/2+wd*i;
+                let y0=Math.floor(ht-h)/2;
+                outcanvas.getContext("2d").putImageData(imgdata, x0, y0);
+            }
+            this.createsnapshot_internal(outcanvas);
+            
+        });
+
+        let failed= ( () => {
+            if (conncontrol)
+                conncontrol.setRenderMode(oldrmode);
+            else
+                this.viewer.setRenderMode(oldrmode);
+        });
+        
+        let addnext= (() => {
+            index=index+1;
+            if (index>=pairs.length)
+                return compilepanorama();
+
+            this.viewer.set3dview(pairs[index][0],pairs[index][1]);
+
+            let finalResolve=( (dat) => {
+                self.testingResolve=null;
+                self.testingReject=null;
+                canvaslist.push(dat);
+                addnext();
+            });
+
+            this.testingResolve=finalResolve;
+            this.testingReject=failed;
+            this.viewer.savenextrender(self);
+        });
+
+
+        //internal.layoutmanager.getcanvas();
+        //        internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
+        //      internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
+
+        conncontrol.setRenderMode(5);
+        addnext();
+        
+        return false;
+
+    }
+
     
 }
 

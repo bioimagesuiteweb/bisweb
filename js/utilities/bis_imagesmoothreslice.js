@@ -56,7 +56,7 @@ var generateKernel = function (sigma,radius) {
 };
 
 // axis=0 (X),1=Y, 2=Z
-var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis) {
+var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis,vtkboundary=false) {
 
     var sum,index=0,coord,ia,ib,ic,tau,fixedtau;
     var slicesize=dim[0]*dim[1];
@@ -91,7 +91,7 @@ var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis
                             var v=kernel[tau+radius]*imagedata_in[index+tau*newoffsets[0]];
                             sum+=v;
                         }
-                    } else {
+                    } else if (vtkboundary===false) {
                         for (tau=-radius;tau<=radius;tau++) {
                             coord=tau+ia;
                             fixedtau=tau;
@@ -103,8 +103,20 @@ var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis
                             
                             sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*newoffsets[0]];
                         }
+                    } else {
+                        let sumw=0.0;
+                        for (let tau=-radius;tau<=radius;tau++) {
+                            coord=tau+ia;
+                            if (coord>=0 && coord<=newdim0minus)  {
+                                let fixedtau=tau;
+                                sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*newoffsets[0]];
+                                sumw+=kernel[tau+radius];
+                            }
+                        }
+                        if (sumw>0.0)
+                            sum=sum/sumw;
                     }
-                    imagedata_out[index]=sum;
+                    imagedata_out[index]=sum; 
                     index=index+newoffsets[0];
                 }
             }
@@ -122,13 +134,15 @@ var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis
  * @param {object} outdata - diagnostic output data
  * @returns {BisImage} out - Smooth image
  */
-var smoothImage = function(input, sigmas, inmm, radiusfactor,outdata) {
+var smoothImage = function(input, sigmas, inmm, radiusfactor,outdata,vtkboundary=false) {
 
     sigmas = sigmas || [ 1.0,1.0,1.0 ];
     inmm = inmm || false;
     radiusfactor = radiusfactor || 1.5;
     outdata = outdata || { };
 
+    console.log('Sigmas=',sigmas,inmm,radiusfactor,vtkboundary);
+    
     let output=new BisWebImage();
     let temp=new BisWebImage();
     output.cloneImage(input,{ type : 'float'});
@@ -161,13 +175,13 @@ var smoothImage = function(input, sigmas, inmm, radiusfactor,outdata) {
     var kernely=generateKernel(stdev[1],radii[1]);
     var kernelz=generateKernel(stdev[2],radii[2]);
 
-    oneDConvolution(input_data,temp_data,dim,kernelx,radii[0],0);
-    oneDConvolution(temp_data,output_data,dim,kernely,radii[1],1);
+    oneDConvolution(input_data,temp_data,dim,kernelx,radii[0],0,vtkboundary);
+    oneDConvolution(temp_data,output_data,dim,kernely,radii[1],1,vtkboundary);
 
     if (dim[2]>1) {
         for(var j=0;j<len;j++)
             temp_data[j]=output_data[j];
-        oneDConvolution(temp_data,output_data,dim,kernelz,radii[2],2);
+        oneDConvolution(temp_data,output_data,dim,kernelz,radii[2],2,vtkboundary);
     } else {
         console.log('2d smoothing ...');
     }
@@ -463,9 +477,10 @@ var cubicInterpolationFunction = function(cache) {
  * @param {BisTransformation} transformation - the transformation 
  * @param {number} interpolation - 0=NN, 3=Cubic, else linear
  * @param {array} bounds - 6 array for specifying a piece to reslice (in-place). Default = [ 0,odim[0]-1,0,odim[1]-1,0,odim[2]-1 ], where odim=output.getDimensions().
+ * @param {Number} background - fill in outside the range
  */
 
-var resliceImage = function(input, output, transformation, interpolation,bounds) {
+var resliceImage = function(input, output, transformation, interpolation,bounds,background=0) {
     
     bounds = bounds || null;
     transformation = transformation || null;
@@ -497,6 +512,8 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
     if (bounds===null) 
         bounds = [ 0,newdim[0]-1,0,newdim[1]-1,0,newdim[2]-1 ];
 
+    console.log('Using bounds=',bounds,'interp=',interpolation,'back=',background,'outspa=',newspa,'outdim=',newdim);
+    
     var interpolateFunction=linearInterpolationFunction;
     if (dim[2]<2)
         interpolateFunction=linearInterpolationFunction2D;
@@ -510,7 +527,11 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
     if (interpolation === 0)
         interpolateFunction=nearestInterpolationFunction;
 
-    transformation.optimize(spa);
+    try {
+        transformation.optimize(spa);
+    } catch(e) {
+        console.log('');
+    }
     var X=[0,0,0],i,j,k,outindex=0,outbase,frame;
 
 
@@ -524,8 +545,6 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
                 for (i=bounds[0];i<=bounds[1];i++) {
                     X[0]=i*newspa[0];
                     transformation.transformPointToVoxel(X,cache.TX,spa);
-
-                    
                     if (cache.TX[2]>=0 && cache.TX[2] < maxdvox[2] &&
                         cache.TX[1]>=0 && cache.TX[1] < maxdvox[1] &&
                         cache.TX[0]>=0 && cache.TX[0] < maxdvox[0]) {
@@ -548,7 +567,7 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
                         }
                     } else {
                         for (frame=0;frame<dim[3];frame++)
-                            output_data[outindex+frame*newvolsize]=0;
+                            output_data[outindex+frame*newvolsize]=background;
                     }
                     outindex++;
                 }
@@ -579,7 +598,7 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
                             cache.TX[2]=cache.TX[2]-0.00001;
                         output_data[outindex]=interpolateFunction(cache);
                     } else  {
-                        output_data[outindex]=0;
+                        output_data[outindex]=background;
                     }
                     outindex++;
                 }
@@ -600,9 +619,10 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
  * @param {BisImage} input - the input image
  * @param {array} newspa - the new spacing of the image
  * @param {number} interpolation - 0=NN, 3=Cubic, else linear
+ * @param {Number} background - fill in outside the range
  * @returns {BisImage} out - resampled image
  */
-var resampleImage = function(input, newspa, interpolation) {
+var resampleImage = function(input, newspa, interpolation,background=0) {
 
     var dim=input.getDimensions();
     var spa=input.getSpacing();
@@ -614,7 +634,7 @@ var resampleImage = function(input, newspa, interpolation) {
     var output=new BisWebImage();   output.cloneImage(input, { dimensions : newdim,  spacing : newspa });
     resliceImage(input,output,
                  transformationFactory.createLinearTransformation(),
-                 interpolation);
+                 interpolation,background);
     return output;
 };
 

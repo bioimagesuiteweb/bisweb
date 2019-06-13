@@ -908,7 +908,7 @@ class ViewerApplicationElement extends HTMLElement {
         webfileutil.createFileSourceSelector(hmenu);
 
         if (!webutil.inElectronApp()) { 
-            userPreferences.safeGetItem("internal").then( (f) =>  {
+            userPreferences.safeGetItem("enables3").then( (f) =>  {
                 if (f) {
                     webutil.createMenuItem(hmenu, ''); // separator
                     webutil.createMenuItem(hmenu, 'Open AWS Selector', 
@@ -1509,22 +1509,19 @@ class ViewerApplicationElement extends HTMLElement {
             if (painttoolid !== null || landmarkcontrolid !==null) {
                 
                 let toolmenu = webutil.createTopMenuBarMenu('Tools', menubar);
-                let p=Promise.resolve();
                 if (painttoolid) {
                     let painttool = document.querySelector(painttoolid);
-                    p=painttool.addTools(toolmenu);
+                    painttool.addTools(toolmenu);
                 }
                 if (landmarkcontrolid) {
                     let landmarkcontrol=document.querySelector(landmarkcontrolid);
-                    p.then( () => {
-                        if (painttoolid)
-                            webutil.createMenuItem(toolmenu,'');
-                        
-                        webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
-                            landmarkcontrol.show();
-                        });
+                    if (painttoolid)
+                        webutil.createMenuItem(toolmenu,'');
+                    
+                    webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
+                        landmarkcontrol.show();
                     });
-                }   
+                }
             }
         } else {
             editmenu=webutil.createTopMenuBarMenu("Edit", menubar);

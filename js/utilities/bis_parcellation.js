@@ -33,7 +33,7 @@ try {
     console.log('.... running in commandline probably a regression test as I can not load bis_webutil.');
 }
 
-
+const DEBUG=false;
 
 const computemode=function(array,debug) {
     debug= debug || false;
@@ -66,7 +66,7 @@ const comparerois=function(a,b) {
     
     let computeroivalue=function(r) {
         let sum=r.index*0.001; // Add a small bias to existing order
-        for (let i=0;i<r.attr.length;i++)
+        for (let i=0;i<4;i++)
             sum+=r.attr[i]*Math.pow(1000,(r.attr.length-i));
         return sum;
     };
@@ -218,7 +218,7 @@ class BisParcellation {
         var numpoints=obj.numpoints;
         var numattr=obj.numattr;
         this.description=obj.description;
-        console.log('++++ Parcellation created from jsonfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
+        if (DEBUG) console.log('++++ Parcellation created from jsonfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
 
         this.rois= new Array(numpoints);
         var i,j;
@@ -295,7 +295,7 @@ class BisParcellation {
         else
             this.description="unknown";
 
-        console.log('++++ Node definition created from textfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
+        if (DEBUG) console.log('++++ Node definition created from textfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
         return numpoints;
     }
     
@@ -332,6 +332,7 @@ class BisParcellation {
 
         var i;
         var numpoints=this.rois.length;
+
         this.rois.sort(comparerois);
         this.indexmap = { };
         for (i=0;i<numpoints;i++) {
@@ -339,7 +340,7 @@ class BisParcellation {
             this.indexmap[idx]=i;
         }
 
-        console.log("++++ Node definition mapping to lobes: Number of rois="+this.rois.length);
+        if (DEBUG) console.log("++++ Node definition mapping to lobes: Number of rois="+this.rois.length);
         var maxv=this.rois[0].attr[0];
         for (i=1;i<this.rois.length;i++) {
             var a=this.rois[i].attr[0];
@@ -377,6 +378,18 @@ class BisParcellation {
             count++;
         }
         this.maxpoint=this.lobeStats[this.lobeStats.length-1][1];
+
+
+        let num=0;
+        let keys=Object.keys(this.indexmap);
+        for (let i=0;i<keys.length;i++) {
+            let a=Math.floor(keys[i]);
+            let b=this.indexmap[keys[i]];
+            if (a!==b) {
+                num++;
+            }
+        }
+        console.log('**** Node rearrange order=',num,' >0 is OK if this is not the Shen atlas');
     }
 
     /** Get the location of the center of the "circles" as [x,y] array
@@ -819,7 +832,7 @@ class BisParcellation {
         if (r[1]>999 || r[0] < 0 || r[1]<2) 
             throw new Error('Bad Node definition image. It has largest value > 999 (max='+r[1]+') or max value < 2 or min value <0 ( min='+r[0]+')');
 
-        console.log('++++ Image range ='+r+' data type='+dt);
+        if (DEBUG) console.log('++++ Image range ='+r+' data type='+dt);
         var maxvoi=r[1];
 
         var volsize=dim_a[0]*dim_a[1]*dim_a[2];
@@ -1036,6 +1049,7 @@ class BisParcellation {
             }
             if (attr[pt][0]===0) 
                 bad.push(pt);
+            //            console.log('attr',pt,'=',attr[pt]);
         }
         
         // Fix bad lobes
@@ -1058,7 +1072,10 @@ class BisParcellation {
             if (bestnode!==-1)  {
                 console.log('+++++ \t\t\t Mapped voi '+badnode+' to lobe '+attr[bestnode][0] +
                             ' by using the value from its closest good node ('+bestnode+' dist='+Math.sqrt(bestdist)+')');
-                attr[badnode][0]=attr[bestnode][0];
+                for (let i=0;i<attr[badnode].length;i++) {
+                    if (attr[badnode][i]<1)
+                        attr[badnode][i]=attr[bestnode][i];
+                }
                 //                  if (attr[badnode][1]===0)
                 //                      attr[badnode][1]=attr[bestnode][1];
             } else {

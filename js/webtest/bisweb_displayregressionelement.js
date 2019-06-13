@@ -71,6 +71,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
         if (viewerstate) {
             await globalParams.application.loadApplicationState(viewerstate);
             console.log('Viewer  state read from ',viewerstate);
+            globalParams.resdiv.append('<p>Viewer state from '+viewerstate+'</p>');
         }
         if (!isconnviewer) {
             globalParams.currentViewer=globalParams.application.getViewer(globalParams.application.getVisibleTab()-1);
@@ -137,7 +138,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
                       
                     globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                     resolve(tst);
-                },500);
+                },300);
             }).catch( (e) => {
                 reject(e);
             });

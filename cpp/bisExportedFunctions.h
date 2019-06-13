@@ -199,7 +199,7 @@ extern "C" {
 
   /** Smooth image using \link bisImageAlgorithms::gaussianSmoothImage \endlink
    * @param input serialized input as unsigned char array 
-   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 },
+   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 , "vtkboundary": false},
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
@@ -348,11 +348,12 @@ extern "C" {
   /** Computes ROI Mean for a timeseries
    * @param input input image time series as serialized array
    * @param roi   input roi image
+   * @param jsonstring  the parameter string for the algorithm { "storecentroids" : 0 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to the roi matrix (rows=frames,cols=rois)
    */
-  // BIS: { 'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage',  'debug' ] } 
-  BISEXPORT unsigned char* computeROIWASM(unsigned char* input,unsigned char* roi,int debug);
+  // BIS: { 'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ] } 
+  BISEXPORT unsigned char* computeROIWASM(unsigned char* input,unsigned char* roi,const char* jsonstring,int debug);
 
   /** Compute butterworthFilter Output 
    * @param input the input matrix to filter (time = rows)
@@ -363,11 +364,11 @@ extern "C" {
   // BIS: { 'butterworthFilterWASM', 'Matrix', [ 'Matrix', 'ParamObj',  'debug' ] } 
   BISEXPORT  unsigned char* butterworthFilterWASM(unsigned char* input,const char* jsonstring,int debug);
 
-  /** Compute butterworthFilter Output 
-   * @param input the input image to filter (time = rows)
+  /** Compute butterworthFilter Output applied to images
+   * @param input the input image to filter
    * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5 };
    * @param debug if > 0 print debug messages
-   * @returns a pointer to the filtered image (rows=frames,cols=rois)
+   * @returns a pointer to the filtered image
    */
   // BIS: { 'butterworthFilterImageWASM', 'bisImage', [ 'bisImage', 'ParamObj',  'debug' ] } 
   BISEXPORT  unsigned char* butterworthFilterImageWASM(unsigned char* input,const char* jsonstring,int debug);
@@ -392,6 +393,16 @@ extern "C" {
   // BIS: { 'weightedRegressOutWASM', 'Matrix', [ 'Matrix', 'Matrix', 'Vector_opt',  'debug' ] } 
   BISEXPORT  unsigned char* weightedRegressOutWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug);
 
+  /** Regress out a time series from another (with optional weights)
+   * @param input_ptr the input timeseries image
+   * @param regressor_ptr the regression timeseries matrix (roi output, rows=frames);
+   * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the filtered image
+   */
+  // BIS: { 'weightedRegressOutImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'debug' ] } 
+  BISEXPORT  unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug);
+
   /** Regress out global signal from a  time series (with optional weights)
    * @param input_ptr the input timeseries matrix (roi output, rows=frames);
    * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
@@ -400,7 +411,18 @@ extern "C" {
    */
   // BIS: { 'weightedRegressGlobalSignalWASM', 'Matrix', [ 'Matrix', 'Vector_opt',  'debug' ] } 
   BISEXPORT  unsigned char* weightedRegressGlobalSignalWASM(unsigned char* input_ptr,unsigned char* weights_ptr,int debug);
-  
+
+  /** Compute Seed map correlation image
+   * @param input_ptr the input image
+   * @param roi_ptr the input roi timeseries matrix (roi output, rows=frames) (the seed timecourses)
+   * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
+   * @param jsonstring the parameters { "zscore": "false" }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the seed map image 
+   */
+  // BIS: { 'computeSeedCorrelationImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'ParamObj', 'debug' ] } 
+  BISEXPORT  unsigned char* computeSeedCorrelationImageWASM(unsigned char* input_ptr,unsigned char* roi_ptr,unsigned char* weights_ptr,const char* jsonstring,int debug);
+
     
 #ifdef __cplusplus
 }

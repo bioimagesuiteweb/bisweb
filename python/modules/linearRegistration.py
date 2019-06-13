@@ -46,6 +46,9 @@ class linearRegistration(bis_basemodule.baseModule):
         reference = self.inputs['reference'];
         transform = self.inputs['initial'];
 
+        if (reference.hasSameOrientation(target,'Reference Image','Target Image',True)==False):
+            return False;
+
         try:
             out=libbis.runLinearRegistrationWASM(reference, target, transform, {
                 'intscale' : vals['intscale'],

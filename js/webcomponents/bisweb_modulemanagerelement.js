@@ -23,7 +23,6 @@ const webutil = require('bis_webutil');
 
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
-const biswrap = require('libbiswasm_wrapper');
 const userPreferences = require('bisweb_userpreferences.js');
 
 /**
@@ -146,49 +145,38 @@ class ModuleManagerElement extends HTMLElement {
 
     initializeElements(menubar, viewers = []) {
 
-        return new Promise( (resolve,reject) => {
-            
-            if (!this.algorithmController) {
-                reject('No algorithm controller');
-            }
+        if (!this.algorithmController) {
+            return null;
+        }
         
-            this.viewers = viewers;
-            let numviewers = this.viewers.length;
-            for (let i = 0; i < numviewers; i++)
-                this.viewers[i].addImageChangedObserver(this);
-
-            let moduleoptions = { 'numViewers': numviewers, 'dual' : false };
-            if (numviewers>1)
-                moduleoptions.dual=true;
-            
-            this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
-            
-            if (this.mode !== 'paravision')
-                this.moduleMenu[2] = webutil.createTopMenuBarMenu('Segmentation', menubar);
-            else
-                this.moduleMenu[2] = this.moduleMenu[1];
-            
-            if (this.mode!=='single') {
-                this.moduleMenu[3] = webutil.createTopMenuBarMenu('Registration', menubar);
-            }
-            
-            biswrap.initialize().then( () => {
-                this.initializeElementsInternal(menubar,moduleoptions);
-                resolve(this.moduleMenu);
-            }).catch( (e) => {
-                reject(e+' '+e.stack);
-            });
-        });
+        this.viewers = viewers;
+        let numviewers = this.viewers.length;
+        for (let i = 0; i < numviewers; i++)
+            this.viewers[i].addImageChangedObserver(this);
+        
+        let moduleoptions = { 'numViewers': numviewers, 'dual' : false };
+        if (numviewers>1)
+            moduleoptions.dual=true;
+        
+        this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
+        
+        if (this.mode !== 'paravision')
+            this.moduleMenu[2] = webutil.createTopMenuBarMenu('Segmentation', menubar);
+        else
+            this.moduleMenu[2] = this.moduleMenu[1];
+        
+        if (this.mode!=='single') {
+            this.moduleMenu[3] = webutil.createTopMenuBarMenu('Registration', menubar);
+        }
+        
+        this.initializeElementsInternal(menubar,moduleoptions);
+        return this.moduleMenu;
     }
 
     
     initializeElementsInternal(menubar,moduleoptions) {
 
-        let usesgpl=biswrap.uses_gpl();
-        if (usesgpl)
-            usesgpl=true;
-        else
-            usesgpl=false;
+        let usesgpl=window.bioimagesuitewasmpack.usesgpl;
 
         this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
         userPreferences.safeGetItem("internal").then( (f) => {
@@ -197,6 +185,7 @@ class ModuleManagerElement extends HTMLElement {
                 this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
+                this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);
@@ -217,6 +206,8 @@ class ModuleManagerElement extends HTMLElement {
         
         this.createModule('Combine Images',1, false, modules.getModule('combineImages'), moduleoptions);
         this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
+        this.createModule('Drift Correct 4D Image',1, dosep, modules.getModule('driftCorrectImage'), moduleoptions);
+        this.createModule('Temporal Filter 4D Image',1, dosep, modules.getModule('butterworthFilterImage'), moduleoptions);
         this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {

@@ -35,6 +35,7 @@ class bisBaseObject:
 
     def __init__(self):
         self.data_array=0;
+        self.filename='';
 
     def serializeWasm(self):
         raise ValueError('serializeWasm Not Implemented');
@@ -149,6 +150,7 @@ class bisMatrix(bisBaseObject):
             self.data_array = np.genfromtxt(fname, delimiter= ",") 
         elif (ext==".matr"):
             self.data_array=libbis.parseMatrixTextFileWASM(text,0);
+        self.filename=fname;
         return True;
     
     def save(self,fname):
@@ -178,10 +180,13 @@ class bisMatrix(bisBaseObject):
                 e = sys.exc_info()[0]
                 print('----\t failed to save image',e);
                 return False
+
+            self.filename=fname;
             return True
         
         try: 
             np.savetxt(fname, self.data_array, delimiter=',')
+            self.filename=fname;
         except:
             return False
 
@@ -197,7 +202,7 @@ class bisImage(bisBaseObject):
         super().__init__();
         self.spacing = [ 1.0,1.0,1.0,1.0,1.0 ];
         self.dimensions = [ 1,1,1,1,1];
-        self.affine = 0;
+        self.affine = np.eye(4);
 
     def getRawSize():
         return 16+40+np.dtype(self.data_array).itemsize*len(self.data_array);
@@ -243,6 +248,9 @@ class bisImage(bisBaseObject):
         try:
             tmp = nib.load(fname);
             self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
+            self.filename=fname;
+            print('++++ loaded ',self.getDescription());
+
             return self;
         except:
             e = sys.exc_info()[0]
@@ -263,6 +271,7 @@ class bisImage(bisBaseObject):
         try:
             out_image = nib.Nifti1Image(self.data_array, self.affine);
             nib.save(out_image, fname)
+            self.filename=fname;
             print('++++\t saved image in ',fname);
         except:
             e = sys.exc_info()[0]
@@ -270,7 +279,32 @@ class bisImage(bisBaseObject):
             return False;
         
         return True
-            
+
+    def getOrientationName(self):
+        a=nib.aff2axcodes(self.affine);
+        b=a[0]+a[1]+a[2];
+        return b;
+
+    def getDescription(self):
+        return self.filename+'dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName();
+
+    def hasSameOrientation(self,otherimage,name1='',name2='',debug=False):
+
+        o1=self.getOrientationName();
+        o2=otherimage.getOrientationName();
+
+        same=False;
+        if (o1==o2):
+            same=True;
+
+        if (debug):
+            if (same):
+                print('++++ '+name1+' and '+name2+' have the same orientation '+o1+' == '+o2+'. Good!');
+            else:
+                print('---- '+name1+' and '+name2+' have different orientations '+o1+' vs '+o2);
+        return same;
+
+        
 # --------------------------------------
 # bisLinearTransformation
 # --------------------------------------
@@ -333,6 +367,7 @@ class bisLinearTransformation(bisMatrix):
                 ok=self.parse(text);
                 if (ok==4):
                     print('++++\t Loaded matrix transform from ',filename);
+                    self.filename=filename;
                     return self;
         except:
             print('Failed to load matrix transformation');
@@ -342,6 +377,7 @@ class bisLinearTransformation(bisMatrix):
     def save(self,filename):
         try:
             np.savetxt(filename, self.data_array, delimiter=' ')
+            self.filename=filename;
             print('++++\t saved matrix transformation in ',filename);
         except:
             print('----\t failed to save transformation matrix in',filename);
@@ -588,7 +624,7 @@ class bisComboTransformation(bisBaseObject):
             else:
                 return False;
 
-
+        self.filename=filename;
         return True;
 
     def save(self,filename):
@@ -597,7 +633,8 @@ class bisComboTransformation(bisBaseObject):
             out=libbis.createComboTransformationTextFileWASM(self,0);
             with open(filename, 'w') as fp:
                 fp.write(out);
-                print('++++\t Saved ComboTransformation in ',filename);
+            print('++++\t Saved ComboTransformation in ',filename);
+            self.filename=filename;
             return True;
         except:
             print('---- Failed to save in',filename);

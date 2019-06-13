@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/*global describe, it */
+/*global describe, it,before */
 "use strict";
 
 require('../config/bisweb_pathconfig.js');
@@ -24,9 +24,26 @@ const util = require('bis_util.js');
 const genericio=require('bis_genericio');
 const path=require('path');
 
+let data=[];
+
 describe('Testing Checksum (from js/bisweb_checksum.js)\n', function() {
 
     this.timeout(500000);
+
+    before(function(done) {
+
+        const name = path.resolve(__dirname,'./testdata/shen_lobes.csv');
+        const name2 = path.resolve(__dirname,'./testdata/MNI_2mm_orig.nii.gz');
+        Promise.all( [
+            genericio.read(name,false),
+            genericio.read(name2,true)]).then( (dat) => {
+                data=dat;
+                done();
+            }).catch( (e) => {
+                console.log(e);
+                process.exit(1);
+            });
+    });
     
     it('checksums an empty array \n', function() {
         let empty = new Uint8Array();
@@ -42,34 +59,19 @@ describe('Testing Checksum (from js/bisweb_checksum.js)\n', function() {
         assert.equal(hash, '74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0');
     });
 
-    it('checksums a csv file \n', function(done) {
-        const name = path.resolve(__dirname,'./testdata/shen_lobes.csv');
-        
-        genericio.read(name,true).then( (obj) => {
-            let hash=util.SHA256(obj.data);
-            console.log(`Computed hash for ${obj.filename} = ${hash}`);
-            assert.equal(hash, '418014e3215a54c40db91f17e8b98c5b645a4b58a08effbc5b03eb39b7cc148e');
-            done();
-        }).catch( (e) => {
-            console.log(e);
-            assert.equal(true,false);
-            done();
-        });
-    });
+    it('checksums a csv file \n', function() {
 
-    it('ungzips and checksums a nifti file \n', function(done) {
-        const name = path.resolve(__dirname,'./testdata/MNI_2mm_orig.nii.gz');
-        genericio.read(name,true).then( (obj) => {
-            
-            let hash=util.SHA256(obj.data);
-            console.log(`Computed hash for ${obj.filename} = ${hash}`);
-            assert.equal(hash, '06842bb57058243e4b9772949f9ec38e56821238be8ea40419c766d0a10975d3');
-            done();
-        }).catch( (e) => {
-            console.log(e);
-            assert.equal(true,false);
-            done();
-        });
+        let obj=data[0];
+        let hash=util.SHA256(obj.data);
+        console.log(`Computed hash for ${obj.filename} = ${hash}`);
+        assert.equal(hash,'418014e3215a54c40db91f17e8b98c5b645a4b58a08effbc5b03eb39b7cc148e');
+    });
+    
+    it('ungzips and checksums a nifti file \n', function() {
+        let obj=data[1];
+        let hash=util.SHA256(obj.data);
+        console.log(`Computed hash for ${obj.filename} = ${hash}`);
+        assert.equal(hash, '06842bb57058243e4b9772949f9ec38e56821238be8ea40419c766d0a10975d3');
     });
 
 });

@@ -83,6 +83,12 @@ class MotionCorrectionModule extends BaseModule {
             if (reference===0) 
                 reference=target;
 
+            if (!reference.hasSameOrientation(target,'reference image','target image',true)) {
+                reject('Failed');
+                return;
+            }
+
+
             biswrap.initialize().then(() => {
                 //Open input file
 
@@ -99,6 +105,11 @@ class MotionCorrectionModule extends BaseModule {
         });
     }
 
+    // Get a Single Frame
+    getFrame(InputImage,frame) {
+        return smoothreslice.imageExtractFrame(InputImage,frame);
+    }
+
     run_registrations(vals, ReferenceImage, InputImage, refno = 0) {
 
         let RefFrameImage = smoothreslice.imageExtractFrame(ReferenceImage,refno);
@@ -112,7 +123,7 @@ class MotionCorrectionModule extends BaseModule {
             let debug=false;
             if (frame===1)
                 debug=true;
-            let InputFrame = smoothreslice.imageExtractFrame(InputImage,frame);
+            let InputFrame = this.getFrame(InputImage,frame);
             let xform = biswrap.runLinearRegistrationWASM(RefFrameImage, InputFrame, 0, {
                 'intscale' : parseInt(vals.intscale),
                 'numbins' : parseInt(vals.numbins),
@@ -154,7 +165,7 @@ class MotionCorrectionModule extends BaseModule {
         let outdata = output_image.getImageData();
         
         for (let frame = 0; frame < numframes; frame++) {
-            let InputFrame = smoothreslice.imageExtractFrame(inputimage,frame);
+            let InputFrame = this.getFrame(inputimage,frame);
             let resliceW = biswrap.resliceImageWASM(InputFrame, matrices.getItemData(frame), {
                 "interpolation": 3,
                 "dimensions": dimensions,

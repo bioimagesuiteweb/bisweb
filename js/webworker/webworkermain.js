@@ -10,7 +10,7 @@ genericio.setWebWorkerScope( { atob : atob.bind(self),
                            });
 
 const biswrap = require('libbiswasm_wrapper');
-const wasmlib = require('../../build/web/libbiswasm_wasm.js');
+const wasmlib = require('../../build/wasm/libbiswasm.js');
 
 let initialized=false;
 let bis_webworker=require("webworkermoduleutil.js");

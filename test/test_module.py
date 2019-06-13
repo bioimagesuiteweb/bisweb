@@ -158,11 +158,17 @@ for i in range(begin_test,end_test+1):
                                                            testtype.strip(),
                                                            float(testopts['test_threshold']),
                                                            testopts['test_comparison']);
+            else:
+                print('____ test returned failed to execute code');
 
             if (exitcode==0 and testpass==expected_result):
                 print('++++ returning testpass=',testpass,' expected=', expected_result,' exitcode=',exitcode);
                 numgood=numgood+1;
                 print('++++\n++++ Test ',i,'  p a s s e d\n++++');
+                testpass=True;
+            elif (exitcode!=0 and expected_result==False):
+                print('++++\n++++ Test ',i,'  i n t e n i o n a l  f a i l  --> p a s s e d\n++++');
+                numgood=numgood+1;
                 testpass=True;
             else:
                 print('----\t returning testpass=',testpass,' expected=', expected_result,' exitcode=',exitcode);

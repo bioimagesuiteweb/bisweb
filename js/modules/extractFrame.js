@@ -65,14 +65,15 @@ class ExtractFrameModule extends BaseModule {
                     "default" : 0,
                 },
                 {
-                    "name": "UseWASM",
-                    "description": "If true (default) use Web-assembly implementation, else pure JS",
-                    "priority": 1001,
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
                     "advanced": true,
                     "gui": "check",
-                    "varname": "usewasm",
+                    "varname": "usejs",
                     "type": 'boolean',
-                    "default" : true,
+                    "default": false,
+                    "jsonly" : true,
                 },
                 baseutils.getDebugParam()
             ],
@@ -84,7 +85,7 @@ class ExtractFrameModule extends BaseModule {
         console.log('oooo invoking: extractFrame with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
 
-        if (vals['usewasm']) {
+        if (!super.parseBoolean(vals.usejs)) {
             return new Promise((resolve, reject) => {
                 
                 biswrap.initialize().then(() => {

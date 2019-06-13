@@ -32,7 +32,7 @@ let initialError = function (extra) {
     console.log(` Type 'node bisweb [function name] --help' for more information`);
     let outstring = modules.getModuleNames().join("\n");
 
-    console.log('\tThe list of available modules is :\n', outstring);
+    console.log('\tThe list of available modules is :\n\n'+outstring);
 };
 
 
@@ -221,6 +221,9 @@ let loadParse = function (args, toolname,basedirectory='') {
                 } else {
                     reject('---- Type checking of Arguements failed');
                 }
+            }).catch( (e) => {
+                console.log('----- error loading inputs');
+                reject(e);
             });
         }).catch((e) => {
             console.log('error');

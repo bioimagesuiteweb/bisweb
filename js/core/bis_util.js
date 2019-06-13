@@ -172,7 +172,7 @@ const util = {
             return hex.length == 1 ? "0" + hex : hex;
         }
         
-        return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+        return "#" + componentToHex(Math.floor(r)) + componentToHex(Math.floor(g)) + componentToHex(Math.floor(b));
     },
 
     /** This functions converts hex to rgb. 
@@ -604,9 +604,102 @@ const util = {
         return  hour + ":" + min + ":" + sec ;
     },
 
-    sleep : function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));}
-};
 
+    /** Sleep for some time
+     * @param{number} ms - time to sleep in ms
+     * @returns{Promise} - resolved when done
+     */
+    sleep : function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));},
+    
+    /** Colormap factory. 
+     * This creates a function to perform constant hue colormap mapping.
+     * @alias Util.constanthuefactory
+     * @param {number} minint - any intensity below this is set to minint
+     * @param {number} maxint - any intensity above this is set to maxint
+     * @param {number} intensity - any intensity value
+     * @param {number} hue - positive hue
+     * @param {number} opacity - a value from 0 to 255 to set the opacity
+     * @returns {BisF.ColorMapperFunction} - function to perform colormapping
+     */
+    mapconstanthuecolormap : function(minint,maxint,intensity,hue,opacity=1.0) {
+        
+        opacity=util.range(opacity,0,255);
+        hue=util.range(hue,0,1);
+        intensity=util.range(intensity,0,255);
+        
+        
+        if (maxint==minint) {
+            maxint=maxint+1.0;
+        } else if (maxint<minint) {
+            var a=maxint;
+            maxint=minint;
+            maxint=a;
+        }
+        
+        let params = {
+            shift : minint,
+            scale : 255.0/(maxint-minint),
+            opacity : opacity,
+            hue : hue,
+            intensity : intensity
+        };
+
+
+        console.log('Params=',params);
+        
+        var internalmapfunction = function(data,index,map) {
+
+            if (index<0)
+                index=0;
+            
+            let val=data[index],s=0.0;
+            if (val>params.shift)
+                s=util.range(Math.round(params.scale*(val-params.shift)),0.0,255.0)/255.0;
+
+
+            let v=params.intensity;
+            let h=params.hue*6.0;
+            let i=Math.floor(h);
+
+            let f=h-i;
+            
+            let aa= v*(1.0-s);
+            let bb= v*(1.0- (s*f));
+            let cc= v*(1.0- (s* (1.0-f)));
+            let r=0,g=0,b=0;
+             
+            switch (i) {
+            case 0:
+                r=v; g=cc; b=aa;
+                break;
+            case 1:
+                r=bb; g=v; b=aa;
+                break;
+            case 2:
+                r=aa; g=v; b=cc;
+                break;
+            case 3:
+                r=aa; g=bb; b=v;
+                break;
+            case 4:
+                r=cc; g=aa; b=v;
+                break;
+            case 5:
+                r=v;  g=aa; b=bb;
+                break;
+            }
+
+            map[0]=Math.round(255*r); map[1]=Math.round(255*g); map[2]=Math.round(255*b); map[3]=Math.round(opacity*255.0);
+            if (s<0.0001)
+                map[3]=0.0;
+            
+        };
+
+        return internalmapfunction;
+    }
+
+
+};
 
 module.exports = util;
 

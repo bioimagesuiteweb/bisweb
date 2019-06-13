@@ -157,9 +157,10 @@ var checkimages = function(image1,image2,checksameframes) {
  * @alias BisfMRIMatrixConnectivity.roimean
  * @param {BisImage} input - the input (4D potentially image)
  * @param {BisImage} roi - the input ROI Definition
+ * @param {Boolean} debug - if true print messages
  * @returns {Matrix} - numrows=numframes, numcols=numrois
  */
-var roimean=function(input,roi) {
+var roimean=function(input,roi,debug=true) {
 
     try { 
         checkimages(input,roi);
@@ -196,7 +197,8 @@ var roimean=function(input,roi) {
     var inpdata= input.getImageData();
     var roidata= roi.getImageData();
     var voxel=0,region=0,frame=0;
-    console.log('+++++ Computing ROI: volsize=',volsize,' numrois=',numrois,' numframes=',numframes,' range=',r);
+    if (debug)
+        console.log('++++ Computing ROI: volsize=',volsize,' numrois=',numrois,' numframes=',numframes,' range=',r);
 
     for (voxel=0;voxel<volsize;voxel++) {
         region=Math.floor(roidata[voxel])-1;

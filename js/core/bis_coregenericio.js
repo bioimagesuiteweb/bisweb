@@ -975,6 +975,15 @@ var getfsmodule = function () {
 };
 
 
+/** Return the zlib package to use
+ * @alias BisCoreGenericIO#getzlibmodule
+ * @returns{Module} 
+ */
+var getzlibmodule = function () {
+    return zlib;
+};
+
+
 
 /** Return the path package to use
  * @alias BisCoreGenericIO#getpathmodule
@@ -1060,7 +1069,7 @@ let getimagepath=function() {
 
     } else {
         const path=getpathmodule();
-        console.log('Dirname=',__dirname);
+        //console.log('++++ Image Dirname=',__dirname);
         imagepath=path.resolve(__dirname, '../../web/images');
         if (!fs.existsSync(imagepath))
             imagepath=path.resolve(__dirname, '../images');
@@ -1078,6 +1087,7 @@ const biscoregenericio = {
     getenvironment : function() { return environment;},
     createBuffer : createBuffer,
     getfsmodule : getfsmodule,
+    getzlibmodule : getzlibmodule,
     getpathmodule : getpathmodule,
     getosmodule : getosmodule,
     getglobmodule : getglobmodule,

@@ -121,7 +121,7 @@ class CombineImageModule extends BaseModule {
         if (mode !== "append" && mode!=="scaledappend") {
         
             if (!first.hasSameSizeAndOrientation(second,0.01))
-                return Promise.reject("Images have different sizes");
+                return Promise.reject("Images have different sizes or orientations.");
             
             let output=new BisWebImage();
             output.cloneImage(first, { "type" : "float" });

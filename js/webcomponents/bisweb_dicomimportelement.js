@@ -107,6 +107,7 @@ class DicomImportElement extends HTMLElement {
         });
 
         inputGroup.prepend(convertDicomButton);
+
     }
 
 
