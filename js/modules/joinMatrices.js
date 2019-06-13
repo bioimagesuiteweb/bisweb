@@ -88,6 +88,11 @@ class JoinMatricesModule extends BaseModule {
         let matr1 = this.inputs['matr1'], matr2 = this.inputs['matr2'], outmatr; 
         let numericmatr1 = matr1.getNumericMatrix(),  numericmatr2 = matr2.getNumericMatrix(); 
 
+        if (numericmatr1.length === 0 || numericmatr2.length === 0) {
+            console.log('---- Error: One or more arrays specified are empty. Please double-check your inputs.');
+            reject();
+        }
+
         console.log('numeric matr 1', numericmatr1.length, numericmatr1[0].length, 'numeric matr 2', numericmatr2.length, numericmatr2[0].length);
 
         //Perform operation with user-defined dimension if possible, otherwise try to infer which operation to perform by array dimensions
@@ -136,7 +141,6 @@ class JoinMatricesModule extends BaseModule {
             concatMatrix[i] = concatMatrix[i].concat(m2[i]);
         }
 
-        console.log('concat matrix', concatMatrix);
         return concatMatrix;
     }
 }}
