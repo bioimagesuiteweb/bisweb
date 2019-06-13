@@ -15,6 +15,10 @@
  
  ENDLICENSE */
 
+// TODO:
+// Show Grid lines for time units in s
+
+
 "use strict";
 
 const $ = require('jquery');
@@ -213,7 +217,7 @@ class TaskPlotterModule extends HTMLElement {
      * @param {Array} numVoxels - Number of voxels included in a painted region. Also used to designate which regions should be included in the chart.
      * @param {Array} labelsArray - Names to use for each region. Should be arranged in the same order as the data array.
      */
-    formatChartData(y, numVoxels, labelsArray) { //, singleFrame=false, setCurrentData=false) {
+    formatChartData(y, numVoxels, labelsArray,dt=1.0) { //, singleFrame=false, setCurrentData=false) {
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
         this.numframes = dim[1];
@@ -253,7 +257,7 @@ class TaskPlotterModule extends HTMLElement {
                     
                     //if labels are already generated then it will include regions with no voxels, if not then they will be created above. 
                     //this will create a disparity in which labelsArray[i] will not exist for the generated labels and the correct label will be at the end
-                    parsedDataSet.push({ 'intensity': intensity, 'frame': j, 'label': labelsArray[i] || labelsArray[labelsArray.length - 1], 'color': cl });
+                    parsedDataSet.push({ 'stimulus': intensity, 'time': j*dt, 'label': labelsArray[i] || labelsArray[labelsArray.length - 1], 'color': cl });
                 }
                 
             }
@@ -275,7 +279,6 @@ class TaskPlotterModule extends HTMLElement {
     }
 
     createChart(settings = null) {
-
 
         
         //if no settings are provided, the graph should use the last available settings when redrawing
@@ -316,17 +319,7 @@ class TaskPlotterModule extends HTMLElement {
             $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden');
         }
 
-        let chartType = settings.chartType || chartData.chartType;  
-        if (settings.makeTaskChart && chartType === 'line') {
-            this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
-        } else if (chartType === 'bar') {
-            this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
-        } else if (chartType === 'line') {
-            this.createLineChart(chartData.datasets, chartData.colors, frame, settings); 
-        } else {
-            console.log('Error: unrecognized chart type', chartType);
-        }
-
+        this.createLineChart(chartData.datasets, chartData.colors, frame, settings); 
         
         function addItemToFooter(key) {
 
@@ -350,54 +343,6 @@ class TaskPlotterModule extends HTMLElement {
     }
 
 
-    createBarChart(data, colors, frame, /* settings --currently unused */) {
-
-        let chart = new Taucharts.Chart({
-            guide: {
-                showAnchors: true,
-                x: {
-                    padding: 0,
-                    label: { text: 'region' }
-                },
-                y: {
-                    padding: 0,
-                    rotate: -90,
-                    label: { text: 'intensity (average per-pixel value)' },
-                },
-                color: {
-                    brewer: colors
-                }
-            },
-            type: 'bar',
-            x: 'index',
-            y: 'intensity',
-            color: 'label',
-            size : 'size',
-            settings: {
-                fitModel: 'fill-height'
-            },
-            plugins: [
-                Taucharts.api.plugins.get('legend')({
-                    'position': 'top'
-                }),
-                Taucharts.api.plugins.get('tooltip')({
-                    'fields': ['intensity', 'label'],
-                    'align': 'right'
-                }),
-                Taucharts.api.plugins.get('export-to')({
-                    'visible' : false,
-                    'paddingTop' : '20px'
-                })],
-            data: data,
-        });
-
-        chart.renderTo(frame);
-
-        let layout = $(frame).find('.tau-chart__layout');
-        layout.addClass('single-chart');
-
-        chart.refresh();
-    }
 
     createLineChart(data, colors, frame, settings) {
 
@@ -429,23 +374,21 @@ class TaskPlotterModule extends HTMLElement {
                 },
             },
             type: 'line',
-            x: 'frame',
-            y: (this.usesmoothdata ? 'smoothedintensity' : 'intensity'),
+            x: 'time',
+            y: 'stimulus',
             color: 'label',
             settings: {
                 fitModel: 'fill-height',
             },
             plugins: [
-                this.fillPlugin({
-                    'frame' : frame
-                }),
                 Taucharts.api.plugins.get('legend')({
                     'position': 'top'
                 }),
-                Taucharts.api.plugins.get('tooltip')({
-                    'fields': ['intensity', 'frame', 'label'],
+                /*Taucharts.api.plugins.get('tooltip')({
+                    'fields': ['time' ],
                     'align': 'right'
-                })],
+                }),*/
+            ],
             data: data
         };
       
@@ -463,122 +406,6 @@ class TaskPlotterModule extends HTMLElement {
         if (settings.displayChart) {
             let selectedItemLabel = $(`<div class='tau-chart__label'><label><i>Currently displayed — ${settings.displayChart}</i></label></div>`);
             $('.bisweb-taucharts-container').append(selectedItemLabel);
-        }
-    }
-
-    createTaskChart(data, colors, frame, tasks, settings) {
-
-        //find data corresponding to the chart to be displayed and highlight selected item in dropdown
-        if (settings.displayChart) {
-            let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
-            data = settings.charts[settings.displayChart].datasets;
-
-            let selectedItem = dropdownMenu.find(`li:contains(${settings.displayChart})`);
-            selectedItem.addClass('bs-dropdown-selected');
-        }
-
-        //construct task labels and regions for tauchart
-        for (let task of tasks.formattedTasks) {
-            for (let item of data) {
-                if (task.data[item.frame] === 1) { item.task = task.label; }
-            }
-        }
-        //find task regions corresponding to the labeled image
-        let taskIndex = null, taskLabel = null, annotations = [];
-        for (let i = 0; i < tasks.formattedTasks.length; i++) {
-            if (tasks.formattedTasks[i].label === settings.displayChart) { taskIndex = i; taskLabel = settings.displayChart; break; }
-        }
-
-        //if there's a valid task region paint it in the image, otherwise ignore it
-        if (taskIndex !== null) {
-            //convert underscore separated task name back to work with raw task index
-            let convertedLabel = taskLabel.indexOf('_') ? taskLabel.split('_').join('') : taskLabel;
-            let keys = Object.keys(tasks.rawTasks.runs[convertedLabel]), index = 1;
-            for (let key of keys) {
-                let task = tasks.formattedTasks[taskIndex].regions[key];
-                let cl = util.objectmapcolormap[index];
-                cl = 'rgba(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ', 0.2)';
-
-                if (Array.isArray(task)) { 
-                    for (let subTask of task) {
-                        annotations.push({
-                            'dim' : 'frame',
-                            'val' : parseTask(subTask),
-                            'text' : key,
-                            'color' : cl
-                        });
-                    }
-                } else {
-                    annotations.push({
-                        'dim' : 'frame', 
-                        'val' : parseTask(task),
-                        'text' : key,
-                        'color' : cl
-                    });
-                }
-
-                index = index + 1;
-            }
-        }
-
-        let chart = new Taucharts.Chart({
-            guide: {
-                showAnchors: 'hover',
-                showGridLines: 'xy',
-                interpolate: 'linear',
-                x: {
-                    padding: 10,
-                    label: { text: settings.xaxisLabel },
-                },
-                y: {
-                    padding: 10,
-                    label: { text: settings.yaxisLabel },
-                },
-                color: {
-                    brewer: colors
-                },
-            },
-            type: 'line',
-            x: 'frame',
-            y: (this.usesmoothdata ? 'smoothedintensity' : 'intensity'),
-            color: 'label',
-            settings: {
-                fitModel: 'entire-view',
-            },
-            plugins: [
-                this.fillPlugin({
-                    'frame' : frame
-                }),
-                Taucharts.api.plugins.get('legend')({
-                    'position' : 'top'
-                }),
-                Taucharts.api.plugins.get('tooltip')({
-                    'fields': ['intensity', 'frame', 'label', 'task'],
-                    'align': 'right'
-                }),
-                Taucharts.api.plugins.get('annotations')({
-                    items : annotations
-                })],
-            data: data
-        });
-        
-        chart.renderTo(frame);
-
-        let layout = $(frame).find('.tau-chart__layout');
-        layout.addClass('short-chart');
-
-        chart.refresh();
-
-        if (settings.displayChart) {
-            let selectedItemLabel = $(`<div class='tau-chart__label'><label><i>Currently displayed — ${settings.displayChart}</i></label></div>`);
-            $('.bisweb-taucharts-container').append(selectedItemLabel);
-        }
-       
-        function parseTask(task) {
-            let parsedTask = task.split('-');
-            parsedTask[0] = parseInt(parsedTask[0]);
-            parsedTask[1] = parseInt(parsedTask[1]);
-            return parsedTask;
         }
     }
 

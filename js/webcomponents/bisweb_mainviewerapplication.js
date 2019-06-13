@@ -1168,30 +1168,26 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM 
         // ----------------------------------------------------------
-        userPreferences.safeGetItem("internal").then( (f) =>  {
-            if (f) {
-                const dicomid = this.getAttribute('bis-dicomimportid') || null;
-                if (dicomid) {
-                    let dicommodule = document.querySelector(dicomid) || null;
-                    webutil.createMenuItem(bmenu,'');
-                    webutil.createMenuItem(bmenu, 'Import DICOM', () => {
-                        dicommodule.show();
-                    });
-                    dicommodule.show();
-                }
-            }
-                                                              
+        const dicomid = this.getAttribute('bis-dicomimportid') || null;
+        if (dicomid) {
+            let dicommodule = document.querySelector(dicomid) || null;
             webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Restart Application',
-                                   function () {
-                                       bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                       function(e) {
-                                                           if (e)
-                                                               window.open(self.applicationURL,'_self');
-                                                       }
-                                                      );
-                                   });
-        });
+            webutil.createMenuItem(bmenu, 'Import DICOM', () => {
+                dicommodule.show();
+            });
+        }
+
+        
+        webutil.createMenuItem(bmenu,'');
+        webutil.createMenuItem(bmenu, 'Restart Application',
+                               function () {
+                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                                   function(e) {
+                                                       if (e)
+                                                           window.open(self.applicationURL,'_self');
+                                                   }
+                                                  );
+                               });
         return bmenu;
     }
 

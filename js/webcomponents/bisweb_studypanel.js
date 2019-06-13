@@ -9,6 +9,28 @@ const bis_bidsutils = require('bis_bidsutils.js');
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager=require('bisweb_studytaskmanager');
 
+/** TODO
+ *
+ *  1. Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
+ *  2. Save Study --> .biswebstudy this should include the task definition JSON as a field
+ *  3. Load Study, create tree and tasks (call studytaskmanager.setTaskData())
+ *  4. Import Task Defintion
+        1. a warning if we have data .. not to overwrite
+        2. a yes/no question as to whether to create tsv files for full BIDS compatibility
+ *  Hide this Convert task to tsv (advanced)  yes/no question before it does anything
+
+To Test
+   Load Study  (.biswebstudy)
+   Save Study  (.biswebstudy)
+   DICOM -> NII (with and without BIDS)
+
+   Convert task to tsv
+
+   Have Steph read the help file.
+
+   Try to avoid embedding to much Jquery code directly ... use webutil.
+*/
+
 require('jstree');
 require('bootstrap-slider');
 
@@ -163,9 +185,7 @@ class StudyPanel extends HTMLElement {
 
         parent.append($('<HR width="90%">'));
         this.taskManager=new BisWebTaskManager(this,this.viewerid);
-        this.taskManager.createGUI(); // add true here (true)
         this.rendered = true;
-
     }
 
     importFilesFromDirectory(filename) {

@@ -174,9 +174,21 @@ class StudyTaskManager {
             webutil.createAlert('Failed to parse task definitions',true);
             return Promise.reject();
         }
+
         this.plotTaskData();
     }
 
+    setTaskData(taskdata,plot=true) {
+        try {
+            this.taskdata=JSON.parse(JSON.stringify(taskdata));
+        } catch(e) {
+            webutil.createAlert('Failed to parse task definitions',true);
+        }
+        if (plot)
+            this.plotTaskData();
+    }
+        
+    
     plotTaskData() {
         
         if (this.taskdata===null) {
@@ -213,9 +225,12 @@ class StudyTaskManager {
                 if (parsedRuns[runkey].parsedRegions[taskKey]) {
 
                     let ukey=taskKey;
-                    regions[ukey] = parsedRuns[runkey].parsedRegions[taskKey];
-                    for (let j=0;j<regions[ukey].length;j++) {
-                        regions[ukey][j]=regions[ukey][j]*scale+base;
+                    let tmp=parsedRuns[runkey].parsedRegions[taskKey];
+                    regions[ukey] = new Array(tmp.length*3);
+                    for (let j=0;j<tmp.length;j++) {
+                        tmp[j]=tmp[j]*scale+base;
+                        for (let ia=0;ia<=2;ia++)
+                            regions[ukey][j*3+ia]=tmp[j];
                     }
                 }
             }
@@ -225,14 +240,14 @@ class StudyTaskManager {
                 regionsArray.push(regions[labelsArray[ia]]);
             taskCharts[runkey] = this.taskplotter.formatChartData(regionsArray,
                                                                   new Array(labelsArray.length).fill(1),
-                                                                  labelsArray);
+                                                                  labelsArray,1.0/3.0);
         }
         //let n='All Tasks';
         //taskCharts[n] = blockChart;
         let name=runKeys[0];
         
         this.taskplotter.createChart({
-            'xaxisLabel': 's',
+            'xaxisLabel': 'Time',
             'yaxisLabel': 'Activation',
             'isFrameChart': false,
             'charts': taskCharts,
