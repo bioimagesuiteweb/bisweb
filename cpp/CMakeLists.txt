@@ -265,7 +265,7 @@ IF (BIS_A_EMSCRIPTEN)
   
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
-  
+
   IF (BIS_BUILDNONGPL)
     MESSAGE("-- Also building Pure Apache C++ Library excluding GPL-Code from ${BIS_GPL_DIR}")
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
@@ -274,10 +274,18 @@ IF (BIS_A_EMSCRIPTEN)
   ELSE (BIS_BUILDNONGPL)
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
     SET (LIBLIST ${LIBNAME})
+    
   ENDIF (BIS_BUILDNONGPL)
 
   foreach(lib ${LIBLIST})
-  
+
+    IF (BIS_USEGPL)
+      SET(GPL 1)
+    ELSE (BIS_USEGPL)
+      SET(GPL 0)
+    ENDIF (BIS_USEGPL)
+      
+    
     SET_TARGET_PROPERTIES(${lib} PROPERTIES LINK_DEPENDS "${POST_JS};${PRE_JS}")
     SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${lib}.js")
     SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${lib}.wasm")
@@ -288,7 +296,7 @@ IF (BIS_A_EMSCRIPTEN)
     ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
       DEPENDS ${lib} ${TOOLS_DIR}/bis_create_wasm_module.js
       COMMENT "\nCreating Webpack Wasm Module"
-      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE})
+      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE} --gpl ${GPL})
     add_custom_target(wasm_${lib} ALL DEPENDS ${WEBPACK_WASM_MODULE})
   endforeach(lib ${LIBLIST})
 

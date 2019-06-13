@@ -765,8 +765,6 @@ class ElectrodeGridElement extends HTMLElement {
      * @param {BisImage} volume - new image
      */
     connectedCallback() {
-        console.log('Connected here');
-        
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         this.internal.orthoviewer=document.querySelector(viewerid);
