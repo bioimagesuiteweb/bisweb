@@ -75,9 +75,12 @@ const moduleImports = {
     tfrecon:require('tfRecon.js'),
     individualizedparcellation : require('individualizedParcellation.js'),
 
+    joinmatrices : require('joinMatrices.js'),
+    removematrixcols : require('removeMatrixCols.js'),
+
     // these are here so that can be accessed by electron
-    'dicomconversion' : require('./dicommodule.js'),
-    'bidsconversion' : require('./bis_bidsmodule.js'),
+    dicomconversion : require('./dicommodule.js'),
+    bidsconversion : require('./bis_bidsmodule.js'),
 
 };
 
