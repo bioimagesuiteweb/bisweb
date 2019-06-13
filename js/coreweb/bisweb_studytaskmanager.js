@@ -170,6 +170,7 @@ class StudyTaskManager {
         
         try {
             this.taskdata= await bisweb_taskutils.parseFile(name);
+            console.log('this.taskdata', this.taskdata);
         } catch(e) {
             webutil.createAlert('Failed to parse task definitions',true);
             return Promise.reject();

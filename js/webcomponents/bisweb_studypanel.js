@@ -7,7 +7,7 @@ const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const DicomModule = require('dicommodule.js');
-const BisWebTaskManager=require('bisweb_studytaskmanager');
+const BisWebTaskManager = require('bisweb_studytaskmanager');
 
 /** TODO
  *
@@ -197,6 +197,9 @@ class StudyPanel extends HTMLElement {
                 fileinfo.type='directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+
+                //look in the study file for tsv files, then parse them and add them as this study's current task data\
+                this.parseStudyTSVFiles(baseDir);
                 this.taskManager.createGUI();
                 return;
             } else {
@@ -219,6 +222,40 @@ class StudyPanel extends HTMLElement {
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 this.taskManager.createGUI();
+            });
+        });
+    }
+
+    /**
+     * Searches a BIDS directory for the directory containing tsv files, then parses these into a task file.
+     */
+    parseStudyTSVFiles(basedir) {
+        return new Promise( (resolve, reject) => {
+            let matchstring = basedir + '/**/*.tsv';
+            bis_genericio.getMatchingFiles(matchstring).then( (match) => {
+                
+                //TODO: This assumes that there is only one directory that contains TSV files while in a study with multiple subjects there may be more than one
+                //This would require changing the task definition file in the future!
+                console.log('match', match);
+                if (match.length > 0) {
+                    let splitTsvDirname = match[0].split('/');
+                    let tsvDirname = splitTsvDirname.slice(0, splitTsvDirname.length - 1).join('/');
+                    console.log('tsv dirname', tsvDirname);
+
+                    bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then( (obj) => {
+                        console.log('json', obj);
+                        resolve(obj);
+                    }).catch( (e) => {
+                        reject(e);
+                    });
+
+                } else {
+                    console.log('No tsv files found for this study, cannot parse tasks.');
+                    resolve();
+                }
+
+            }).catch( (e) => {
+                reject(e);
             });
         });
     }

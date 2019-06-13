@@ -873,17 +873,15 @@ let cleanRow=(line) => {
  * 
  * @param {String} tsvDirectory - Filepath of directory containing .tsv files. 
  * @param {String} outputDirectory - Filepath of the output directory.
- * @param {Number} tr - TR for the study. This is necessary because the JSON file is stored with frames as the unit and the .tsv files are stored with seconds. 
+ * @param {Boolean} save - Whether or not to save the parsed JSON file to disk.  
  */
-let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
+let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
     return new Promise ( (resolve, reject) => {
         let matchstring = tsvDirectory + '/*.tsv';
         bis_genericio.getMatchingFiles(matchstring).then( (files) => {
             
             //always parses with unit set to 'frame' and an offset of zero
             let parsedJSON = { 
-                'units' : 'frames', 
-                'TR' : tr, 
                 'offset' : 0, 
                 'runs' : {} 
             };
@@ -977,7 +975,8 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
     }
 
     function formatEntry(onset, duration) {
-        let lowRange = onset / tr, highRange = lowRange + (duration / tr);
+        let lowRange = parseInt(onset), highRange = parseInt(lowRange) + parseInt(duration);
+        console.log('low range', lowRange, 'highRange', highRange);
         return `${lowRange}-${highRange}`;
     }
 };

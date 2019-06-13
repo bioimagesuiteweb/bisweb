@@ -9,8 +9,6 @@ const bis_genericio = require('bis_genericio.js');
  * @param {Object} range - Object containing the range of values seen by whatever context is calling parseEntry. 
  * @returns The parsed tuple. 
  */
-
-// removed tr
 let parseEntry = (entry, range) => {
 
     if (Array.isArray(entry)) {
@@ -30,18 +28,25 @@ let parseEntry = (entry, range) => {
     return entryRange;
 };
 
-let parseFile = (filename) => {
-    return new Promise( (resolve, reject) => {
-        let chartRanges = { 'lowRange' : -1, 'highRange' : -1}, parsedData, parsedRuns = {};
-        bis_genericio.read(filename, false).then((obj) => {
+/**
+ * Parses a .biswebtask file, then formats and stores the contents in memory to use for future plotting tasks. Also displays the tasks on screen.
+ * 
+ * @param {String|Object} taskfile - The name of a task file to be loaded from disk, or an already parsed array of runs to be formatted further.
+ * @returns A promise resolving the fully-formatted 
+ */
+let parseFile = (taskfile) => {
 
+    return new Promise( (resolve, reject) => {
+
+        let formatJson = (parsedData) => {
+            let chartRanges = { 'lowRange' : -1, 'highRange' : -1}, parsedRuns = {};
+            
             //parse raw task data
             try {
-                parsedData = JSON.parse(obj.data);
                 let runs = Object.keys(parsedData.runs);
-
+    
                 for (let run of runs) {
-
+    
                     //parse data for each run
                     let tasks = Object.keys(parsedData.runs[run]);
                     for (let task of tasks) {
@@ -53,17 +58,36 @@ let parseFile = (filename) => {
             } catch(e) {
                 console.log('An error occured in parseFile', e);
                 reject(e);
+                return;
             }
-
+    
             //return results with relevant metadata
-            let offset = parseInt(obj.data.offset), frames = parseInt(obj.data.frames);
-            if (frames && frames < chartRanges.highRange) { chartRanges.highRange = frames; }
-
+            let offset = parsedData.offset || 0;
+            let frames = parsedData.frames || null;
+            if (parseInt(frames) && parseInt(frames) < chartRanges.highRange) { chartRanges.highRange = parseInt(frames); }
+            
+            console.log('frames', frames, 'offset', offset);
             let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
             let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'offset' : offset });
             resolve(resObj);
+        };
+
+
+        if (typeof taskfile !== 'string') { formatJson(taskfile); }
+
+        bis_genericio.read(taskfile, false).then( (obj) => {
+            let parsedJSON;
+            try {
+                parsedJSON = JSON.parse(obj.data);
+            } catch (e) {
+                console.log('An error occured while parsing JSON from disk', e);
+                reject(e);
+            }
+
+            formatJson(parsedJSON);
         }).catch( (e) => { reject(e); });
     });
+
 };
 
 let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
