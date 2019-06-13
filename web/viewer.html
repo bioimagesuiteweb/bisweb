@@ -116,36 +116,23 @@
       bis-viewerid="#viewer">
     </bisweb-grapherelement>
 
-    <bisweb-filetreepanel
-      id="bis_filetreepanel"
+    <bisweb-studypanel
+      id="dicom_import"
       bis-layoutwidgetid="#viewer_layout" 
       bis-viewerid="#viewer"
       bis-viewerapplicationid="#viewer_application"
-      bis-graphelementid="#bisweb_graphelement"
+      bis-painttoolid="#painttool"
       bis-algocontrollerid="#algoelement">
-    </bisweb-filetreepanel>
-
-    <bisweb-dicomimportelement
-      id="dicom_import"
-      bis-viewerid="#viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#bis_filetreepanel">
-    </bisweb-dicomimportelement>
-
-    <!-- bisweb-brukerimportelement
-      id="bruker_import"
-      bis-viewerid="viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#bis_filetreepanel">
-    </bisweb-brukerimportelement -->
+    </bisweb-studypanel>
     
     <bisweb-viewerapplication
       id="viewer_application"
       bis-menubarid="#viewer_menubar"
-      bis-modulemanagerid="#modulemanager"
+      bis-graphelementid="#bisweb_graphelement"
       bis-dicomimportid="#dicom_import"
+      bis-graphtoolid="#bisweb_grapherelement"
+      bis-modulemanagerid="#modulemanager"
       bis-viewerid="#viewer"
-      bis-graphtoolid="#bisweb_graphelement">
     </bisweb-viewerapplication>
 
   </div>

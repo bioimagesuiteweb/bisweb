@@ -26,12 +26,10 @@ require("bisweb_components.js");
 require("bisweb_awsmodule.js");
 require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
-require("bisweb_filetreepanel.js");
-require("bisweb_dicomimportelement.js");
-require("bisweb_brukerimportelement.js");
+require("bisweb_studypanel.js");
 require('bisweb_grapherelement.js');
 require('bisweb_oldgrapherelement.js');
-require('bisweb_filetreepipeline.js');
+
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
@@ -68,7 +66,6 @@ const Elements = {
     ConnectivityApplicationElement : require("bisweb_connectivityapplicationelement.js"),
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),
     WebWorkerControllerElement : require("bisweb_webworkercontroller.js"),
-    DiffSPECTElement : require("bisweb_diffspectelement.js"),
     DiffSPECTElement2 : require("bisweb_diffspectelement2.js"),
     ConnectivityControlElement:    ConnectivityControlElement,
     LandmarkControlElement :     LandmarkControlElement,

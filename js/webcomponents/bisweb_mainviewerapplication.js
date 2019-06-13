@@ -748,12 +748,6 @@ class ViewerApplicationElement extends HTMLElement {
                                                self.oldgraphtool.parseViewer(self.VIEWERS[paintviewerno]);
 
                                            });
-                    webutil.createMenuItem(objmenu[viewerno], 'Advanced VOI Analysis ',
-                                           () => {
-                                               let graphtoolid = self.getAttribute('bis-graphtoolid');
-                                               let graphtool = document.querySelector(graphtoolid);
-                                               graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
-                                           });
                 } else {
                     
                     webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
@@ -791,6 +785,16 @@ class ViewerApplicationElement extends HTMLElement {
                 }
                 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                let graphtoolid = self.getAttribute('bis-graphtoolid');
+                if (graphtoolid && viewerno===0) {
+                    webutil.createMenuItem(objmenu[viewerno], 'Advanced VOI Analysis ',
+                                           () => {
+                                               let graphtoolid = self.getAttribute('bis-graphtoolid');
+                                               let graphtool = document.querySelector(graphtoolid);
+                                               graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
+                                           });
+                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                }
                 bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
             }
         };
