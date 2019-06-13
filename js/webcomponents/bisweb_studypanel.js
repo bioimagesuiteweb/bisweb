@@ -6,8 +6,8 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
-const BisWebImage = require('bisweb_image.js');
 const DicomModule = require('dicommodule.js');
+const BisWebTaskManager=require('bisweb_studytaskmanager');
 
 require('jstree');
 require('bootstrap-slider');
@@ -34,30 +34,23 @@ class StudyPanel extends HTMLElement {
         this.rendered = false;
         this.listContainer=null;
         this.elementsContainer=null;
+        this.taskManager=null;
     }
 
     connectedCallback() {
 
-        this.id = this.getAttribute('id');
-        this.viewerid = this.getAttribute('bis-viewerid');
-        this.viewertwoid = this.getAttribute('bis-viewerid2');
-        this.layoutid = this.getAttribute('bis-layoutwidgetid');
-        this.viewerappid = this.getAttribute('bis-viewerapplicationid');
-        this.graphelementid = this.getAttribute('bis-graphelementid');
-        this.painttoolid = this.getAttribute('bis-painttoolid');
-
-
         webutil.runAfterAllLoaded( () => {
-
+            this.id = this.getAttribute('id');
+            this.viewerid = this.getAttribute('bis-viewerid');
+            this.viewertwoid = this.getAttribute('bis-viewerid2');
+            this.layoutid = this.getAttribute('bis-layoutwidgetid');
+            this.viewerappid = this.getAttribute('bis-viewerapplicationid');
             this.viewer = document.querySelector(this.viewerid);
             this.viewertwo = document.querySelector(this.viewertwoid) || null;
             this.layout = document.querySelector(this.layoutid);
             this.viewerapplication = document.querySelector(this.viewerappid);
-            this.graphelement = document.querySelector(this.graphelementid);
-            this.painttool = document.querySelector(this.painttoolid) || null;
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
-
 
             this.panel = new bisweb_panel(this.layout, {
                 name: 'Study Panel',
@@ -82,6 +75,8 @@ class StudyPanel extends HTMLElement {
 
             $('html').on('click', this.dismissPopoverFn);
             $('html').on('contextmenu', this.dismissPopoverFn);
+
+
         });
 
         this.contextMenuDefaultSettings = {
@@ -166,6 +161,9 @@ class StudyPanel extends HTMLElement {
                       'margin-top': '5px' }
             });
 
+        parent.append($('<HR width="90%">'));
+        this.taskManager=new BisWebTaskManager(this,this.viewerid);
+        this.taskManager.createGUI(); // add true here (true)
         this.rendered = true;
 
     }
@@ -179,6 +177,7 @@ class StudyPanel extends HTMLElement {
                 fileinfo.type='directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                this.taskManager.createGUI();
                 return;
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
@@ -199,6 +198,7 @@ class StudyPanel extends HTMLElement {
                 console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
+                this.taskManager.createGUI();
             });
         });
     }
@@ -659,60 +659,6 @@ class StudyPanel extends HTMLElement {
             console.log('an error occured while saving to disk', e);
             webutil.createAlert('An error occured while saving the study files to disk.', false);
         });
-    }
-
-    parseTaskImagesFromTree() {
-
-        //TODO: Figure out why this function hangs sometimes
-        if (this.fileTree === null) {
-            webutil.createAlert('Error: No study has been loaded. Please load a study before trying to parse task charts.', true);
-        }
-        let reconstructedTree = this.parseTreeToJSON();
-        let taglist = {}, duplicateTags = false;
-
-        checkForDuplicateTags(reconstructedTree);
-
-        if (duplicateTags) {
-            webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
-        }
-
-        if (this.viewer.getobjectmap() === null) {
-            webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
-        } else if (this.graphelement.taskdata === null) {
-            webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
-        }
-
-        let imgdata = {};
-        let promiseArray = [];
-        for (let key of Object.keys(taglist)) {
-            let img = new BisWebImage();
-            promiseArray.push(img.load(this.constructNodeName(taglist[key])));
-            imgdata[key] = img;
-        }
-
-        webutil.createAlert('Reading all runs marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner': true });
-        Promise.all(promiseArray).then(() => {
-            webutil.dismissAlerts();
-
-            //safety checks before beginning the long process of loading all the images
-            console.log('overlay', this.viewer.getobjectmap());
-            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
-        });
-
-        //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.
-        function checkForDuplicateTags(node) {
-
-            for (let item of node) {
-                if (item.tag) {
-                    if (!taglist[item.tag]) { taglist[item.tag] = item; }
-                    else if (item.tag.includes('Task') || item.tag.includes('rest')) { duplicateTags = true; return; }
-                }
-
-                if (item.children) {
-                    checkForDuplicateTags(item.children);
-                }
-            }
-        }
     }
 
     /**

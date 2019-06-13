@@ -151,7 +151,7 @@ class GrapherModule extends HTMLElement {
         let left = 10;
         let top = 40;
 
-        let graphWindow = document.createElement('bisweb-dialogelement').create('VOI Tool', width, height, left, top, 200, false);
+        let graphWindow = document.createElement('bisweb-dialogelement').create('Plotter', width, height, left, top, 200, false);
 
         let innerh = height - 120;
         let innerw = width - 10;

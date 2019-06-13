@@ -9,6 +9,8 @@ const bis_genericio = require('bis_genericio.js');
  * @param {Object} range - Object containing the range of values seen by whatever context is calling parseEntry. 
  * @returns The parsed tuple. 
  */
+
+// removed tr
 let parseEntry = (entry, range) => {
 
     if (Array.isArray(entry)) {
@@ -54,11 +56,11 @@ let parseFile = (filename) => {
             }
 
             //return results with relevant metadata
-            let tr = parseInt(obj.data.tr), offset = parseInt(obj.data.offset), frames = parseInt(obj.data.frames);
+            let offset = parseInt(obj.data.offset), frames = parseInt(obj.data.frames);
             if (frames && frames < chartRanges.highRange) { chartRanges.highRange = frames; }
 
             let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
-            let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'tr' : tr, 'offset' : offset });
+            let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'offset' : offset });
             resolve(resObj);
         }).catch( (e) => { reject(e); });
     });

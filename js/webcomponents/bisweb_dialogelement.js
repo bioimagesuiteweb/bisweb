@@ -255,6 +255,11 @@ class BisWebDialogElement extends HTMLElement {
         this.hide();
     }
 
+    setTitle(name) {
+        this.headertext.text(name);
+    }
+    
+
     /** Returns the dimensions of the dialog
      * @returns {Object} - { left, top, width, height }
      */
