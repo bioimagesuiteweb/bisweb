@@ -45,7 +45,7 @@ var get_module=function() {
 
 
 var get_date=function() {
-    return "03/19/2019";     
+    return "06/13/2019";     
 };
         
 
@@ -481,7 +481,7 @@ var get_date=function() {
   // C++:
   /** Smooth image using \link bisImageAlgorithms::gaussianSmoothImage \endlink
   * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 },
+  * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 , "vtkboundary": false},
   * @param debug if > 0 print debug messages
   * @returns a pointer to a serialized image
   */
@@ -698,6 +698,42 @@ var get_date=function() {
     const wasm_output=Module.ccall('blankImageWASM','number',
        ['number', 'string', 'number'],
        [ image1_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+
+    // Return
+    return output;
+  };
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Median Normalize an Image an image using \link bisImageAlgorithms::medianNormalizeImage \endlink
+  * @param input serialized input as unsigned char array
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to a serialized image
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'medianNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ]}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var medianNormalizeImageWASM = function(image1,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:medianNormalizeImageWASM\n++++');
+    const wasm_output=Module.ccall('medianNormalizeImageWASM','number',
+       ['number', 'number'],
+       [ image1_ptr, debug]);
 
     // Deserialize Output
     const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
@@ -992,26 +1028,28 @@ var get_date=function() {
   /** Computes ROI Mean for a timeseries
   * @param input input image time series as serialized array
   * @param roi   input roi image
+  * @param jsonstring  the parameter string for the algorithm { "storecentroids" : 0 }
   * @param debug if > 0 print debug messages
   * @returns a pointer to the roi matrix (rows=frames,cols=rois)
   */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage',  'debug' ]}
+  // JS: {'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ]}
   //      returns a Matrix
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var computeROIWASM = function(image1,image2,debug) { 
+  var computeROIWASM = function(image1,image2,paramobj,debug) { 
 
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
     let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
     let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
 
     // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeROIWASM\n++++');
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeROIWASM with '+jsonstring+'\n++++');
     const wasm_output=Module.ccall('computeROIWASM','number',
-       ['number', 'number', 'number'],
-       [ image1_ptr, image2_ptr, debug]);
+       ['number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, jsonstring, debug]);
 
     // Deserialize Output
     const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'Matrix');
@@ -1065,11 +1103,11 @@ var get_date=function() {
 
   //--------------------------------------------------------------
   // C++:
-  /** Compute butterworthFilter Output
-  * @param input the input image to filter (time = rows)
+  /** Compute butterworthFilter Output applied to images
+  * @param input the input image to filter
   * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5 };
   * @param debug if > 0 print debug messages
-  * @returns a pointer to the filtered image (rows=frames,cols=rois)
+  * @returns a pointer to the filtered image
   */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // JS: {'butterworthFilterImageWASM', 'bisImage', [ 'bisImage', 'ParamObj',  'debug' ]}
@@ -1191,6 +1229,52 @@ var get_date=function() {
 
   //--------------------------------------------------------------
   // C++:
+  /** Regress out a time series from another (with optional weights)
+  * @param input_ptr the input timeseries image
+  * @param regressor_ptr the regression timeseries matrix (roi output, rows=frames);
+  * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the filtered image
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'weightedRegressOutImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'debug' ]}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var weightedRegressOutImageWASM = function(image1,matrix2,vector3,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let matrix2_ptr=wrapperutil.serializeObject(Module,matrix2,'Matrix');
+    let vector3_ptr=0;
+    if (vector3!==0) 
+      vector3_ptr=wrapperutil.serializeObject(Module,vector3,'Vector');
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:weightedRegressOutImageWASM\n++++');
+    const wasm_output=Module.ccall('weightedRegressOutImageWASM','number',
+       ['number', 'number', 'number', 'number'],
+       [ image1_ptr, matrix2_ptr, vector3_ptr, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (matrix2_ptr !== matrix2)
+      wasmutil.release_memory(Module,matrix2_ptr);
+    if (vector3_ptr !==0  && vector3_ptr !== vector3)
+      wasmutil.release_memory(Module,vector3_ptr);
+
+    // Return
+    return output;
+  };
+
+  //--------------------------------------------------------------
+  // C++:
   /** Regress out global signal from a  time series (with optional weights)
   * @param input_ptr the input timeseries matrix (roi output, rows=frames);
   * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
@@ -1225,6 +1309,54 @@ var get_date=function() {
       wasmutil.release_memory(Module,matrix1_ptr);
     if (vector2_ptr !==0  && vector2_ptr !== vector2)
       wasmutil.release_memory(Module,vector2_ptr);
+
+    // Return
+    return output;
+  };
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Compute Seed map correlation image
+  * @param input_ptr the input image
+  * @param roi_ptr the input roi timeseries matrix (roi output, rows=frames) (the seed timecourses)
+  * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
+  * @param jsonstring the parameters { "zscore": "false" }
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the seed map image
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'computeSeedCorrelationImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'ParamObj', 'debug' ]}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var computeSeedCorrelationImageWASM = function(image1,matrix2,vector3,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let matrix2_ptr=wrapperutil.serializeObject(Module,matrix2,'Matrix');
+    let vector3_ptr=0;
+    if (vector3!==0) 
+      vector3_ptr=wrapperutil.serializeObject(Module,vector3,'Vector');
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeSeedCorrelationImageWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('computeSeedCorrelationImageWASM','number',
+       ['number', 'number', 'number', 'string', 'number'],
+       [ image1_ptr, matrix2_ptr, vector3_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (matrix2_ptr !== matrix2)
+      wasmutil.release_memory(Module,matrix2_ptr);
+    if (vector3_ptr !==0  && vector3_ptr !== vector3)
+      wasmutil.release_memory(Module,vector3_ptr);
 
     // Return
     return output;
@@ -1713,6 +1845,49 @@ var get_date=function() {
       wasmutil.release_memory(Module,image3_ptr);
     if (image4_ptr !==0  && image4_ptr !== image4)
       wasmutil.release_memory(Module,image4_ptr);
+
+    // Return
+    return output;
+  };
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Individualizes a group parcellation using a new 4D fmri Image
+  * @param input serialized 4D input file as unsigned char array
+  * @param groupparcellation serialized input (group) parcellation as unsigned char array
+  * @param jsonstring the parameter string for the algorithm
+  * { "numberorexemplars" : 268, "smooth" : 4}
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to a serialized image
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'individualizedParcellationWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ]}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var individualizedParcellationWASM = function(image1,image2,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:individualizedParcellationWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('individualizedParcellationWASM','number',
+       ['number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
 
     // Return
     return output;
@@ -2221,6 +2396,7 @@ var get_date=function() {
     cropImageWASM : cropImageWASM,
     flipImageWASM : flipImageWASM,
     blankImageWASM : blankImageWASM,
+    medianNormalizeImageWASM : medianNormalizeImageWASM,
     resampleImageWASM : resampleImageWASM,
     prepareImageForRegistrationWASM : prepareImageForRegistrationWASM,
     computeDisplacementFieldWASM : computeDisplacementFieldWASM,
@@ -2233,7 +2409,9 @@ var get_date=function() {
     butterworthFilterImageWASM : butterworthFilterImageWASM,
     computeCorrelationMatrixWASM : computeCorrelationMatrixWASM,
     weightedRegressOutWASM : weightedRegressOutWASM,
+    weightedRegressOutImageWASM : weightedRegressOutImageWASM,
     weightedRegressGlobalSignalWASM : weightedRegressGlobalSignalWASM,
+    computeSeedCorrelationImageWASM : computeSeedCorrelationImageWASM,
     addGridToImageWASM : addGridToImageWASM,
     projectImageWASM : projectImageWASM,
     backProjectImageWASM : backProjectImageWASM,
@@ -2248,6 +2426,7 @@ var get_date=function() {
     test_eigenUtilOperations : test_eigenUtilOperations,
     test_mirrorComboTransformTextFileWASM : test_mirrorComboTransformTextFileWASM,
     test_compute_histo_metric : test_compute_histo_metric,
+    individualizedParcellationWASM : individualizedParcellationWASM,
     uses_gpl : uses_gpl,
     runLinearRegistrationWASM : runLinearRegistrationWASM,
     runNonLinearRegistrationWASM : runNonLinearRegistrationWASM,
