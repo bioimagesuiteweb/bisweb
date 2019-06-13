@@ -76,6 +76,7 @@ const moduleImports = {
     individualizedparcellation : require('individualizedParcellation.js'),
 
     joinmatrices : require('joinMatrices.js'),
+    removematrixcols : require('removeMatrixCols.js'),
 
     // these are here so that can be accessed by electron
     dicomconversion : require('./dicommodule.js'),
