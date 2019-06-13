@@ -604,6 +604,13 @@ const util = {
         return  hour + ":" + min + ":" + sec ;
     },
 
+
+    /** Sleep for some time
+     * @param{number} ms - time to sleep in ms
+     * @returns{Promise} - resolved when done
+     */
+    sleep : function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));},
+    
     /** Colormap factory. 
      * This creates a function to perform constant hue colormap mapping.
      * @alias Util.constanthuefactory
@@ -688,13 +695,10 @@ const util = {
             
         };
 
-
-        
         return internalmapfunction;
     }
 
 };
-
 
 module.exports = util;
 
