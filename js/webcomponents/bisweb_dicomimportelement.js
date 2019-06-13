@@ -3,82 +3,72 @@ const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const DicomModule = require('dicommodule.js');
-const BisWebPanel = require('bisweb_panel.js');
 
 
 class DicomImportElement extends HTMLElement {
     constructor() {
         super();
-        this.panel=null;
+        this.rendered = false;
     }
 
     show() {
-        if (this.panel)
-            this.panel.show();
+        this.filetreepanel.showTreePanel();
+        if (!this.rendered) { 
+            this.createFileImportCollapseElement(); 
+            this.filetreepanel.createFileDisplayElements();
+            this.rendered = true;
+        }
     }
     
     connectedCallback() {
-        
         let viewerid = this.getAttribute('bis-viewerid');
         let viewerid2 = this.getAttribute('bis-viewerid2');
         let layoutid = this.getAttribute('bis-layoutwidgetid');
         let filetreepanelid = this.getAttribute('bis-filetreepanelid');
 
-        this.viewers = [
-            document.querySelector(viewerid),
-            document.querySelector(viewerid2)
-        ];
+        bis_webutil.runAfterAllLoaded( () => {
+            this.filetreepanel = document.querySelector(filetreepanelid);
+            this.layoutcontroller=document.querySelector(layoutid);
 
+            this.viewers = [
+                document.querySelector(viewerid),
+                document.querySelector(viewerid2)
+            ];
+        });    
+    }
+    
+    createFileImportCollapseElement() {
+        let treePanelBody = this.filetreepanel.panel.getWidget();
+        let importButtonsContainer = bis_webutil.createCollapseElement(treePanelBody, 'Import DICOM Files', true);
         
-        this.layoutcontroller=document.querySelector(layoutid);
-        this.panel=new BisWebPanel(this.layoutcontroller,
-                                   { name : "DICOM Import",
-                                     permanent : false,
-                                     dual : false
-                                   });
-        this.parentDomElement=this.panel.getWidget();
-        let basediv=$('<div></div>');
-        this.parentDomElement.append(basediv);
+        let inputGroup = $(`
+            <div class='btn-group' style='width: 90%; margin: 3px;'>
+                <button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 25%'>BIDS</button>
+            </div>
+        `);
 
-        
+        //let BIDSCheck = $(`<input class='form-check-input' type='checkbox'`)
 
-        let a=`<P> This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.`;
-        
-        if (bis_genericio.getmode()==='browser')
-            a+=`<EM> You need to use <a target="_blank" href="https://bioimagesuiteweb.github.io/bisweb-manual/tools/fileserver.html"> the BISWEB File Server</a> for this to work as we need direct filesystem access for this task.</EM>`;
+        importButtonsContainer.append(inputGroup);
 
-        basediv.append($(a+'</p><HR>'));
-        this.filetreepanel = document.querySelector(filetreepanelid);
-
-        bis_webutil.createbutton({
-            type: 'info',
-            name: 'Open File Tree Panel',
-            tooltip: 'Opens a panel which can display DICOM studies.',
-            parent: basediv,
-            css: { 'width': '90%', 'margin': '3px' },
-            callback: () => {
-                this.filetreepanel.showTreePanel();
-            },
-        });
-      
-        bis_webfileutil.createFileButton({ 
+        let convertDicomButton = bis_webfileutil.createFileButton({ 
             type : 'info',
-            name : 'Import DICOM Images',
-            parent : basediv,
-            css : { 'width' : '90%' , 'margin' : '3px' },
+            name : 'Convert DICOM Images',
+            css : { 'width' : '75%' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    this.importDICOMImages(f, o,false);
+                    //get whether to convert to BIDS or not from toggle
+                    let convertToBids = inputGroup.find('.bisweb-bids-toggle').hasClass('active');
+                    console.log('convert to bids', convertToBids);
+                    this.importDICOMImages(f, o, false);
                 };
                 
-                setTimeout( () => {
-                    bis_webfileutil.genericFileCallback( 
-                        {
-                            'title' : 'Choose output directory',
-                            'filters' : 'DIRECTORY',
-                            'save' : false
-                        }, saveFileCallback);
-                }, 1);
+                bis_webfileutil.genericFileCallback( 
+                    {
+                        'title' : 'Choose output directory',
+                        'filters' : 'DIRECTORY',
+                        'save' : false
+                    }, saveFileCallback);
             },
         },{
             title: 'Directory to import study from',
@@ -91,12 +81,12 @@ class DicomImportElement extends HTMLElement {
 
         bis_webfileutil.createFileButton({ 
             type : 'danger',
-            name : 'Import DICOM Images as BIDS',
-            parent : basediv,
+            name : 'Import DICOM Images',
+            parent : importButtonsContainer,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    this.importDICOMImages(f, o,true);
+                    this.importDICOMImages(f, o, true);
                 };
                 
                 setTimeout( () => {
@@ -115,9 +105,10 @@ class DicomImportElement extends HTMLElement {
             save : false,
             serveronly : true,
         });
-        
+
+        inputGroup.prepend(convertDicomButton);
+
     }
-    
 
 
     /**
@@ -129,6 +120,7 @@ class DicomImportElement extends HTMLElement {
      * @param {String} outputDirectory 
      */
     importDICOMImages(inputDirectory, outputDirectory,doBIDS=true) {
+        
         if (!bis_webfileutil.candoComplexIO(true)) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
@@ -139,7 +131,7 @@ class DicomImportElement extends HTMLElement {
             a='/BIDS';
         
         bis_webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
-
+        
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
         }
@@ -152,8 +144,8 @@ class DicomImportElement extends HTMLElement {
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
         
-            promise=bis_genericio.runFileConversion({
-                'fileType': 'dicom',
+            promise=bis_genericio.runDICOMConversiong({
+                'fixpaths' : true,
                 'inputDirectory': inputDirectory,
                 'outputDirectory' : outputDirectory,
                 'convertbids' : doBIDS

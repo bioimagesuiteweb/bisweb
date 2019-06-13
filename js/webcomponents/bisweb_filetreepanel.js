@@ -5,9 +5,7 @@ const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
-const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const bis_bidsutils = require('bis_bidsutils.js');
-const BiswebMatrix = require('bisweb_matrix.js');
 const BiswebImage = require('bisweb_image.js');
 
 require('jstree');
@@ -32,12 +30,14 @@ class FileTreePanel extends HTMLElement {
 
     connectedCallback() {
 
+        this.id = this.getAttribute('id');
         this.viewerid = this.getAttribute('bis-viewerid');
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
-        this.graphelementid = this.getAttribute('bis-graphelement');
-        this.painttoolid = this.getAttribute('bis-painttool');
+        this.graphelementid = this.getAttribute('bis-graphelementid');
+        this.painttoolid = this.getAttribute('bis-painttoolid');
+        this.algocontrollerid = this.getAttribute('bis-algocontrollerid'); //included to propagate to filetreepipeline, not used in this file
 
         bis_webutil.runAfterAllLoaded(() => {
 
@@ -49,18 +49,19 @@ class FileTreePanel extends HTMLElement {
             this.painttool = document.querySelector(this.painttoolid) || null;
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
+            this.fileTreePipeline = null;
 
             this.panel = new bisweb_panel(this.layout, {
-                name: 'File Tree Panel',
+                name: 'Imported Study Files',
                 permanent: false,
                 width: '400',
-                dual: true,
+                dual: false,
                 mode: 'sidebar',
                 helpButton: true
             });
 
 
-            let listElement = this.panel.getWidget();
+            /*let listElement = this.panel.getWidget();
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
             biswebElementMenu.css({ 'margin-top': '15px' });
 
@@ -72,6 +73,7 @@ class FileTreePanel extends HTMLElement {
 
             listElement.append(biswebElementMenu);
             this.makeStaticButtons(listElement);
+            */
 
             this.setHelpModalMessage();
 
@@ -141,12 +143,35 @@ class FileTreePanel extends HTMLElement {
         this.panel.show();
     }
 
+    /**
+     * Creates the jstree container elements and buttons that will load and save DICOM studies to disk. 
+     */
+    createFileDisplayElements() {
+        let listElement = this.panel.getWidget();
+        let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
+        biswebElementMenu.css({ 'margin-top': '15px' });
+
+        let listContainer = $(`<div class='file-container biswebpanel2'></div>`);
+        listContainer.css({ 'height': '100px', 'width': '100%' });
+        listElement.append(listContainer);
+        listElement.append($('<HR>'));
+
+
+        listElement.append(biswebElementMenu);
+        this.makeStaticButtons(listElement);
+
+        if (!this.fileTreePipeline) {
+            this.createFileTreePipelinePanel();
+        }
+    }
+
     importFilesFromDirectory(filename) {
 
         getFileList(filename).then((fileinfo) => {
             if (fileinfo.files.length > 0) {
                 console.log('contents', fileinfo);
-                let baseDir = formatBaseDirectory(filename, fileinfo.files);
+                let baseDir = formatBaseDirectory(filename, fileinfo.files) || filename;
+
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
@@ -427,13 +452,10 @@ class FileTreePanel extends HTMLElement {
                 <div class='btn-group middle-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
                 </div>
                 <br> 
-                <div class='btn-group bottom-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
-                </div>
             </div>
         `);
         let topButtonBar = buttonGroupDisplay.find('.top-bar');
         let middleButtonBar = buttonGroupDisplay.find('.middle-bar');
-        let bottomButtonBar = buttonGroupDisplay.find('.bottom-bar');
 
 
         //Route study load and save through bis_webfileutil file callbacks
@@ -482,62 +504,13 @@ class FileTreePanel extends HTMLElement {
                 initialCallback: () => { return this.getDefaultFilename(); },
             });
 
-        let importTaskButton = bis_webfileutil.createFileButton({
-            'type': 'info',
-            'name': 'Import task file',
-            'callback': (f) => {
-                this.graphelement.chartInvokedFrom = 'task';
-                this.loadStudyTaskData(f);
-            },
-        },
-            {
-                'title': 'Import task file',
-                'filters': [
-                    { 'name': 'Task Files', extensions: ['json'] }
-                ],
-                'suffix': 'json',
-                'save': false,
-            });
-
-        let clearTaskButton = bis_webutil.createbutton({ 'name': 'Clear tasks', 'type': 'primary' });
-        clearTaskButton.on('click', () => {
-            bootbox.confirm({
-                'message': 'Clear loaded task data?',
-                'buttons': {
-                    'confirm': {
-                        'label': 'Yes',
-                        'className': 'btn-success'
-                    },
-                    'cancel': {
-                        'label': 'No',
-                        'className': 'btn-danger'
-                    }
-                },
-                'callback': (result) => {
-                    if (result) { this.graphelement.taskdata = null; }
-                }
-            });
-            this.graphelement.taskdata = null;
-        });
-
-        let plotTasksButton = bis_webutil.createbutton({ 'name': 'Plot task charts', 'type': 'info' });
-        plotTasksButton.on('click', () => {
-            this.graphelement.chartInvokedFrom = 'task';
-            this.parseTaskImagesFromTree();
-        });
-
 
         saveStudyButton.addClass('bisweb-load-enable');
-        plotTasksButton.addClass('bisweb-load-enable');
         saveStudyButton.prop('disabled', 'true');
-        plotTasksButton.prop('disabled', 'true');
 
         topButtonBar.append(loadStudyDirectoryButton);
         topButtonBar.append(loadStudyJSONButton);
-        middleButtonBar.append(importTaskButton);
-        middleButtonBar.append(clearTaskButton);
         middleButtonBar.append(saveStudyButton);
-        bottomButtonBar.append(plotTasksButton);
 
         listElement.append(buttonGroupDisplay);
     }
@@ -673,244 +646,6 @@ class FileTreePanel extends HTMLElement {
         this.viewerapplication.loadImage(nodeName, viewer);
     }
 
-
-    /**
-     * Loads the data for each task from a file on disk. 
-     * Turns a JSON file into an array of 1's and zeroes denoting regions of task and rest.
-     * 
-     * @param {String} name - The name of the task file.
-     */
-    loadStudyTaskData(name) {
-
-        let lowRange = -1, highRange = -1, parsedData;
-        bis_genericio.read(name, false).then((obj) => {
-
-            //parse raw task data
-            try {
-                parsedData = JSON.parse(obj.data);
-                let runs = Object.keys(parsedData.runs);
-
-                //parsedRuns is the new 
-                let parsedRuns = {};
-                for (let key of runs) {
-
-                    //parse data for each run
-                    let tasks = Object.keys(parsedData.runs[key]);
-                    for (let task of tasks) {
-                        let range = parsedData.runs[key][task];
-                        if (!parsedRuns[key]) { parsedRuns[key] = {}; }
-                        parsedRuns[key][task] = parseEntry(range);
-                    }
-                }
-
-                let maxFrames = parseInt(parsedData['frames']);
-                if (maxFrames) { highRange = maxFrames; }
-
-                this.parsedData = parsedRuns;
-
-                //parse ranges into 0 and 1 array
-                let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
-                for (let run of Object.keys(parsedRuns)) {
-
-                    //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
-                    let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
-
-                    range = createArray(parsedRuns[run]);
-                    parsedRanges.push(range);
-                    labelsArray.push(reformattedRun);
-
-                    //parse regions into their own array 
-                    let regions = {};
-                    for (let region of Object.keys(parsedRuns[run])) {
-                        if (!taskNames[region]) { taskNames[region] = true; }
-                        regions[region] = createArray(parsedRuns[run][region]);
-                    }
-
-                    parsedRuns[run].parsedRegions = regions;
-                    tasks.push({ 'data': range, 'label': reformattedRun, 'regions': parsedData.runs[run] });
-                }
-
-                //array to designate that all the arrays are meant to be included while formatting data
-                let includeArray = new Array(parsedRanges.length).fill(1);
-                let blockChart = this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false, false);
-
-                //set the task range for the graph element to use in future images
-                let alphabetizedTaskNames = Object.keys(taskNames).sort();
-                let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
-
-                console.log('matrix', taskMatrixInfo.matrix);
-                let tr = parseInt(parsedData['TR']);
-                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
-
-                let taskObject = { 'formattedTasks': tasks, 'rawTasks': parsedData, 'matrix': taskMatrixInfo.matrix, 'stackedWaveform': stackedWaveform };
-                this.graphelement.taskdata = taskObject;
-
-                //matrixes are stacked on top of each other for each scanner run in alphabetical order, so slice them up to parse
-                let numericStackedWaveform = stackedWaveform.getNumericMatrix();
-
-                let slicedMatrices = [], runLength = numericStackedWaveform.length / taskMatrixInfo.runs.length;
-                for (let i = 0; i < taskMatrixInfo.runs.length; i++) {
-                    let matrixSlice = numericStackedWaveform.slice(i * runLength, (i + 1) * runLength);
-                    slicedMatrices.push(matrixSlice);
-                }
-
-                //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
-                //note that sliced matrices are already in alphabetical order by run
-                let taskChartLabelsArray = taskMatrixInfo.runs, HDRFCharts = {}, taskCharts = {};
-                for (let k = 0; k < alphabetizedTaskNames.length; k++) {
-                    let key = alphabetizedTaskNames[k];
-                    key = key + '_hdrf';
-                    HDRFCharts[key] = [];
-                    for (let i = 0; i < slicedMatrices.length; i++) {
-                        HDRFCharts[key].push([]);
-                        for (let j = 0; j < slicedMatrices[i].length; j++) {
-                            HDRFCharts[key][HDRFCharts[key].length - 1].push(slicedMatrices[i][j][k]);
-                        }
-                    }
-                }
-
-                for (let key of Object.keys(HDRFCharts)) {
-
-                    //exclude plots of all zeroes
-                    let includeArray = [];
-                    for (let i = 0; i < HDRFCharts[key].length; i++)
-                        if (HDRFCharts[key][i].every((element) => { return element === 0; })) {
-                            includeArray.push(0);
-                        } else {
-                            includeArray.push(1);
-                        }
-
-                    HDRFCharts[key] = this.graphelement.formatChartData(HDRFCharts[key], includeArray, taskChartLabelsArray, false, false);
-                }
-                
-                //now construct non-HDRF matrices
-                for (let regionKey of Object.keys(taskNames)) {
-                    let regions = {};
-                    for (let key of Object.keys(parsedRuns)) {
-                        if (parsedRuns[key].parsedRegions[regionKey]) {
-                            regions[key] = parsedRuns[key].parsedRegions[regionKey];
-                        }
-                    }
-                    let labelsArray = Object.keys(regions).sort(), regionsArray = [];
-                    console.log('regions', regions);
-                    for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
-                    taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
-                }
-
-                console.log('HDRF charts', HDRFCharts);
-                taskCharts = Object.assign(taskCharts, HDRFCharts);
-                taskCharts['block_chart'] = blockChart;
-
-                this.graphelement.createChart({ 
-                    'xaxisLabel': 'frame', 
-                    'yaxisLabel': 'On', 
-                    'isFrameChart': true, 
-                    'charts': taskCharts, 
-                    'makeTaskChart': false, 
-                    'displayChart': 'block_chart', 
-                    'chartType': 'line',
-                    'chartSettings' : {
-                        'optionalCharts' : Object.keys(HDRFCharts)
-                    }
-                });
-
-            } catch (e) {
-                console.log('An error occured while parsing the task file', e);
-            }
-        });
-
-        function parseEntry(entry) {
-
-            if (Array.isArray(entry)) {
-                let entryArray = [];
-                for (let item of entry)
-                    entryArray.push(parseEntry(item));
-
-                return entryArray;
-            }
-
-            let range = entry.split('-');
-            for (let i = 0; i < range.length; i++) { range[i] = parseInt(range[i]); }
-
-            if (lowRange < 0 || lowRange > range[0]) { lowRange = range[0]; }
-            if (highRange < range[1]) { highRange = range[1]; }
-
-            return range;
-        }
-
-        //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
-        function createArray(run) {
-            let taskArray = new Array(highRange).fill(0);
-
-            //the data for each individual run will be formatted as an array while the structure for each task will be an object
-            if (Array.isArray(run)) {
-                if (Array.isArray(run[0])) {
-                    for (let item of run) {
-                        addToArray(item);
-                    }
-                } else {
-                    addToArray(run);
-                }
-            } else if (typeof run === 'object') {
-                let keys = Object.keys(run);
-                for (let task of keys) {
-                    if (Array.isArray(run[task][0])) {
-                        for (let item of run[task])
-                            addToArray(item);
-                    } else {
-                        addToArray(run[task]);
-                    }
-                }
-            } else {
-                console.log('unrecognized run object', run);
-            }
-
-            //take the offset from the front before returning
-            taskArray = taskArray.slice(parsedData.offset);
-            return taskArray;
-
-            function addToArray(range) {
-                for (let i = range[0]; i <= range[1]; i++) {
-                    taskArray[i] = 1;
-                }
-            }
-        }
-
-    }
-
-    parseTaskMatrix(taskdata, taskNames) {
-        let taskMatrix = new BiswebMatrix();
-        let cols = taskNames.length;
-
-        let runNames = Object.keys(taskdata);
-        let randomRun = taskdata[runNames[0]].parsedRegions;
-        let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
-        let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
-
-        //sort run names so tasks are created in order
-        runNames.sort((a, b) => {
-            let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
-            if (aIndex && !bIndex) { return a; }
-            if (bIndex && !aIndex) { return b; }
-            if (!aIndex && !bIndex) { return a.localeCompare(b); }
-            else { return aIndex - bIndex; }
-        });
-
-        taskMatrix.allocate(rows, cols);
-        let currentRun;
-        for (let i = 0; i < rows; i++) {
-            currentRun = runNames[Math.floor(i / runLength)];
-            for (let j = 0; j < cols; j++) {
-                //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
-                let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
-                let datapoint = taskArray ? taskArray[i % runLength] : 0;
-                taskMatrix.setElement(i, j, datapoint);
-            }
-        }
-
-        return { 'matrix': taskMatrix, 'runs': runNames };
-    }
-
     /**
      * Saves a the current list of study files to whichever storage service the user has selected, e.g. the local file system, Amazon AWS, etc.
      * The list will be saved as a .study file with the study files nested the same way as the file tree.
@@ -953,6 +688,7 @@ class FileTreePanel extends HTMLElement {
 
     parseTaskImagesFromTree() {
 
+        //TODO: Figure out why this function hangs sometimes
         if (this.fileTree === null) {
             bis_webutil.createAlert('Error: No study has been loaded. Please load a study before trying to parse task charts.', true);
         }
@@ -1081,67 +817,64 @@ class FileTreePanel extends HTMLElement {
         let tree = this.fileTree.jstree(true);
         let confirmName;
         let renameFn = (name) => {
-            //get all selected nodes to rename as a group
-            let selectedNodes = tree.get_selected(true), movedFiles = [];
-            console.log('selected nodes', selectedNodes);
+            console.log('name', name);
+            if (name) {
+                //get all selected nodes to rename as a group
+                let selectedNodes = tree.get_selected(true), movedFiles = [];
 
-            for (let node of selectedNodes) {
-                let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
-                //task names should be the second or third bullet, so if it's not there then we know not to change them
-                if (splitName.length >= 2 && splitName[1].includes('task')) {
-                    taskName = splitName[1];
-                    index = 1;
-                } else if (splitName.length >= 3 && splitName[2].includes('task')) {
-                    taskName = splitName[2];
-                    index = 2;
-                }
+                for (let node of selectedNodes) {
+                    let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
+                    //task names should be the second or third bullet, so if it's not there then we know not to change them
+                    if (splitName.length >= 2 && splitName[1].includes('task')) {
+                        taskName = splitName[1];
+                        index = 1;
+                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
+                        taskName = splitName[2];
+                        index = 2;
+                    }
 
-                if (taskName) {
-                    //split off the second part of the task tag to change it
-                    let splitTag = taskName.split('-');
-                    splitTag[1] = name;
-                    splitName[index] = splitTag.join('-');
-                    let reconstructedName = splitName.join('_');
+                    if (taskName) {
+                        //split off the second part of the task tag to change it
+                        let splitTag = taskName.split('-');
+                        splitTag[1] = name;
+                        splitName[index] = splitTag.join('-');
+                        let reconstructedName = splitName.join('_');
 
-                    node.original.text = reconstructedName;
-                    node.text = reconstructedName;
+                        node.original.text = reconstructedName;
+                        node.text = reconstructedName;
 
-                    //move the file on disk 
-                    let basePath = tree.get_path(node.parent, '/');
-                    let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
-                    bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
-                    movedFiles.push({ 'old': srcFile, 'new': dstFile });
-                }
-            }
-
-            tree.redraw(true);
-
-            //update TaskName fields in supporting files, then sync the names
-            console.log('moved files', movedFiles);
-
-            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then( (supportingFiles) => {
-                for (let file of supportingFiles) {
-                    let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
-                    if (fileExtension.toLowerCase() === 'json') {
-                        //open file, update 'TaskName', then write it to disk
-                        let fullname = this.baseDirectory + '/' + file;
-                        bis_genericio.read(fullname).then( (obj) => {
-                            console.log('file', obj);
-                            try {
-                                let parsedJSON = JSON.parse(obj.data);
-                                parsedJSON.TaskName = name;
-                                console.log('parsed JSON', parsedJSON);
-                                let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
-                                console.log('stringified json', stringifiedJSON);
-                                bis_genericio.write(fullname, stringifiedJSON, false).then( () => { console.log('write for', file, 'done'); });
-                            } catch(e) {
-                                console.log('an error occured during conversion to/from JSON', e);
-                            }
-                        });
+                        //move the file on disk 
+                        let basePath = tree.get_path(node.parent, '/');
+                        let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
+                        bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
+                        movedFiles.push({ 'old': srcFile, 'new': dstFile });
                     }
                 }
-            });
-       };
+
+                tree.redraw(true);
+
+                bis_bidsutils.syncSupportingFiles(movedFiles, name, this.baseDirectory).then((supportingFiles) => {
+                    for (let file of supportingFiles) {
+                        let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
+                        if (fileExtension.toLowerCase() === 'json') {
+
+                            //open file, update 'TaskName', then write it to disk
+                            let fullname = this.baseDirectory + '/' + file;
+                            bis_genericio.read(fullname).then((obj) => {
+                                try {
+                                    let parsedJSON = JSON.parse(obj.data);
+                                    parsedJSON.TaskName = name;
+                                    let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
+                                    bis_genericio.write(fullname, stringifiedJSON, false).then(() => { console.log('write for', file, 'done'); });
+                                } catch (e) {
+                                    console.log('an error occured during conversion to/from JSON', e);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        };
 
         bootbox.prompt({
             'size': 'small',
@@ -1149,13 +882,15 @@ class FileTreePanel extends HTMLElement {
             'message': 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
             'show': true,
             'callback': (newName) => {
-                confirmName = newName;
-                bootbox.confirm({
-                    'size' : 'small',
-                    'title' : 'Confirm task rename',
-                    'message' : 'Rename task to ' + confirmName + '?',
-                    'callback' : renameFn.bind(this, newName)
-                });
+                if (newName) {
+                    confirmName = newName;
+                    bootbox.confirm({
+                        'size' : 'small',
+                        'title' : 'Confirm task rename',
+                        'message' : 'Rename task to ' + confirmName + '?',
+                        'callback' : renameFn.bind(this, newName)
+                    });
+                }
             }
         });
     }
@@ -1245,6 +980,26 @@ class FileTreePanel extends HTMLElement {
         }
 
         return splitName.join('/');
+    }
+
+    /**
+     * Creates a bisweb-filetreepipeline element and appends it to the body. Also calls its 'createPanel' function. 
+     * This is written to avoid circular dependencies from requiring bisweb_filetreepanel in bisweb_filetreepipeline and vice versa. 
+     * If filetreepipeline did not require filetreepanel, then the element could exist statically in the DOM.
+     */
+    createFileTreePipelinePanel() {
+        let fileTreePipeline = document.createElement('bisweb-filetreepipeline');
+        let id = '#' + this.id;
+        fileTreePipeline.setAttribute('id', 'bis_filetreepipeline');
+        fileTreePipeline.setAttribute('bis-layoutwidgetid', this.layoutid);
+        fileTreePipeline.setAttribute('bis-graphelementid', this.graphelementid);
+        fileTreePipeline.setAttribute('bis-algocontrollerid', this.algocontrollerid);
+        fileTreePipeline.setAttribute('bis-filetreepanelid', id);
+
+        document.body.appendChild(fileTreePipeline);
+
+        fileTreePipeline.createPanel(this.panel.getWidget());
+        this.fileTreePipeline = fileTreePipeline;
     }
 
     createTagSelectMenu(options = {}) {
@@ -1423,7 +1178,7 @@ class FileTreePanel extends HTMLElement {
 
     /** Loads dicom_job_info.json (or whatever the most recent settings file is) and displays it. */
     showStudySettingsModal() {
-        let settingsFilename = this.baseDirectory + '/dicom_job_info.json';
+        let settingsFilename = this.baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
         bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
             let settingsString;
             try {
@@ -1446,6 +1201,13 @@ class FileTreePanel extends HTMLElement {
                 $(settingsModal).scrollTop(0);
             });
         });
+    }
+
+    /** Returns the current file tree
+     * @returns The current file tree object.
+     */
+    getFileTree() {
+        return this.fileTree;
     }
 
 }
@@ -1566,8 +1328,8 @@ let getFileList = (filename) => {
  * Changes the format of the provided base directory to be rooted at 'sourcedata', modifies the file list appropriately.
  * 
  * @param {String} baseDirectory - Unformatted base directory.
- * @param {Array} contents - Flat list of files, or a jstree style list of files.
- * @returns Base directory rooted at 'sourcedata'. 
+ * @param {Array} contents - Flat list of files.
+ * @returns Base directory rooted at 'sourcedata', or null if sourcedata is not in any file's path (not a BIDS directory).
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
     let formattedBase = findBaseDirectory(baseDirectory);
@@ -1592,6 +1354,5 @@ let formatBaseDirectory = (baseDirectory, contents) => {
         return formattedBase;
     }
 };
-
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

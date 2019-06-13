@@ -1,3 +1,6 @@
+//TODO: Unused and should be deleted? Can't currently see anywhere it's used in the code.
+// -Zach
+
 "use strict";
 
 require('../../config/bisweb_pathconfig.js');
@@ -74,7 +77,7 @@ let runDCM2NII = (inFolder, outFolder) => {
             if (err) { console.log('Encountered an error making the BIDS directory'); }
 
             console.log('outfolder', outFolder);
-            bidsutils.dicom2BIDS( { 'indir' : outFolder, 'outdir' : outFolder + '/BIDS'} ).then( (data) => {
+            bidsutils.dicom2BIDS( { 'indir' : outFolder, 'outdir' : outFolder + '/BIDS', 'dcm2nii' : true} ).then( (data) => {
                 console.log('data', data);
             });
         });

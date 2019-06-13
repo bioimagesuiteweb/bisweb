@@ -1,0 +1,28 @@
+{
+  "source": "dcm2nii",
+  "platform": {
+    "os": "linux",
+    "arch": "x64",
+    "hostname": "z230pc",
+    "user": "xenios",
+    "date": "2019-06-06T19:57:00.231Z",
+    "nodeversion": "v8.9.4",
+    "biswebversion": "06/06/2019"
+  },
+  "location": [
+    "node"
+  ],
+  "bidsversion": "1.1.0",
+  "description": "Dataset generated on 01/20, 2010 at 11:07",
+  "files": [
+    {
+      "name": "sub-01_run-01_unknown.nii.gz",
+      "filename": "sub-01/anat/sub-01_run-01_unknown.nii.gz",
+      "hash": "fecfca0102e36ce0f5e0bc29ae7d3437a263ab4f47cd262d3388bf144d6204a7",
+      "supportingfiles": [
+        "sub-01/anat/sub-01_run-01_unknown.json"
+      ],
+      "details": ""
+    }
+  ]
+}

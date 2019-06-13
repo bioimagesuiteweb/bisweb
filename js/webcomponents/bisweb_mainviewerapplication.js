@@ -97,7 +97,7 @@ class ViewerApplicationElement extends HTMLElement {
             this.extraManualHTML='imageeditor.html';
         
         this.applicationInitializedPromiseList= [ ];
-
+        this.oldgraphtool=null;
         
         
     }
@@ -372,7 +372,10 @@ class ViewerApplicationElement extends HTMLElement {
                         webutil.createAlert('Image loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setimage(img);
                         resolve();
-                    }).catch( (e) => { reject(e); });
+                    }).catch( (e) => { 
+                        webutil.createAlert('An error occured while displaying image ' + fname, true);
+                        reject(e); 
+                    });
             },10);
         });
     }
@@ -735,14 +738,22 @@ class ViewerApplicationElement extends HTMLElement {
                     painttool = document.querySelector(painttoolid);
                     
                     painttool.createMenu(objmenu[viewerno]);
-                    
-                    let graphtoolid = self.getAttribute('bis-graphtoolid');
-                    let graphtool = document.querySelector(graphtoolid);
                     webutil.createMenuItem(objmenu[viewerno], 'VOI Analysis',
-                                           function () {
+                                           () => {
+                                               if (self.oldgraphtool===null)  {
+                                                   self.oldgraphtool=document.createElement('bisweb-oldgrapherelement');
+                                                   document.body.appendChild(self.oldgraphtool);
+                                               }
+                                               console.log('Old=',self.oldgraphtool,viewerno);
+                                               self.oldgraphtool.parseViewer(self.VIEWERS[paintviewerno]);
+
+                                           });
+                    webutil.createMenuItem(objmenu[viewerno], 'Advanced VOI Analysis ',
+                                           () => {
+                                               let graphtoolid = self.getAttribute('bis-graphtoolid');
+                                               let graphtool = document.querySelector(graphtoolid);
                                                graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
                                            });
-                    
                 } else {
                     
                     webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
@@ -1158,8 +1169,10 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         
+        //TODO: Remove The user preferences flag before release?
+        // -Zach 
         // ----------------------------------------------------------
-        // DICOM
+        // DICOM 
         // ----------------------------------------------------------
         userPreferences.safeGetItem("internal").then( (f) =>  {
             if (f) {

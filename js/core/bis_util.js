@@ -698,6 +698,7 @@ const util = {
         return internalmapfunction;
     }
 
+
 };
 
 module.exports = util;

@@ -30,6 +30,8 @@ require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
 require("bisweb_brukerimportelement.js");
 require('bisweb_grapherelement.js');
+require('bisweb_oldgrapherelement.js');
+require('bisweb_filetreepipeline.js');
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
