@@ -1,7 +1,7 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
-const bis_webutil = require('bis_webutil.js');
+const webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
@@ -23,11 +23,17 @@ require('bootstrap-slider');
  *      bis-viewerid2 : the second orthagonal viewer to draw in. Optional.
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
+
+const IMAGETYPES= [ 'Image','Task','Rest','DWI','3DAnat','2DAnat' ];
+const IMAGEVALUES= [ 'image','task','rest','dwi','3danat','2danat' ];
+
 class StudyPanel extends HTMLElement {
 
     constructor() {
         super();
         this.rendered = false;
+        this.listContainer=null;
+        this.elementsContainer=null;
     }
 
     connectedCallback() {
@@ -41,7 +47,7 @@ class StudyPanel extends HTMLElement {
         this.painttoolid = this.getAttribute('bis-painttoolid');
 
 
-        bis_webutil.runAfterAllLoaded( () => {
+        webutil.runAfterAllLoaded( () => {
 
             this.viewer = document.querySelector(this.viewerid);
             this.viewertwo = document.querySelector(this.viewertwoid) || null;
@@ -54,7 +60,7 @@ class StudyPanel extends HTMLElement {
 
 
             this.panel = new bisweb_panel(this.layout, {
-                name: 'Imported Study Files',
+                name: 'Study Panel',
                 permanent: false,
                 width: '400',
                 dual: false,
@@ -129,9 +135,7 @@ class StudyPanel extends HTMLElement {
     show() {
         this.panel.show();
         if (!this.rendered) { 
-            this.createFileImportCollapseElement(); 
-            this.createFileDisplayElements();
-            this.rendered = true;
+            this.createcreateGUI();
         }
 
     }
@@ -139,19 +143,31 @@ class StudyPanel extends HTMLElement {
     /**
      * Creates the jstree container elements and buttons that will load and save DICOM studies to disk. 
      */
-    createFileDisplayElements() {
-        let listElement = this.panel.getWidget();
-        let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
-        biswebElementMenu.css({ 'margin-top': '15px' });
+    createcreateGUI() {
+        let parent = this.panel.getWidget();
+        this.createLoadSaveStudyButtons(parent);
+        this.createImportButtons(parent);
+        parent.append($('<HR width="90%">'));
+        this.listContainer =  webutil.creatediv(
+            { parent: parent ,
+              css : { 'height': '350px',
+                      'max-height' : '1500px',
+                      'width': '95%',
+                      'overflow': 'auto',
+                      'margin-top': '5px' }
+            });
+        parent.append($('<HR width="90%">'));
+        this.elementsContainer =  webutil.creatediv(
+            { parent: parent ,
+              css : { 'height': '200px',
+                      'max-height' : '1500px',
+                      'overflow': 'auto',
+                      'width': '95%',
+                      'margin-top': '5px' }
+            });
 
-        let listContainer = $(`<div class='file-container biswebpanel2'></div>`);
-        listContainer.css({ 'height': '100px', 'width': '100%' });
-        listElement.append(listContainer);
-        listElement.append($('<HR>'));
+        this.rendered = true;
 
-
-        listElement.append(biswebElementMenu);
-        this.makeStaticButtons(listElement);
     }
 
     importFilesFromDirectory(filename) {
@@ -160,12 +176,12 @@ class StudyPanel extends HTMLElement {
             if (fileinfo.files.length > 0) {
                 console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(filename, fileinfo.files) || filename;
-
+                fileinfo.type='directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
-                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
             } else {
-                bis_webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
+                webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
             }
         });
     }
@@ -212,14 +228,17 @@ class StudyPanel extends HTMLElement {
 
         //alpabetize tree entries
         sortEntries(fileTree);
+        let len=fileTree.length;
+        for (let i=0;i<len;i++) {
+            let elem=fileTree[i];
+            if (!elem.state)
+                elem.state={};
+            elem['state']['opened']=true;
+        }
 
-        let listElement = this.panel.getWidget();
-        listElement.find('.file-container').remove();
-
-        let listContainer = $(`<div class='file-container'></div>`);
-        listElement.prepend(listContainer);
-
-        let tree = listContainer.jstree({
+        this.listContainer.empty();
+        
+        let tree = this.listContainer.jstree({
             'core': {
                 'data': fileTree,
                 'dblclick_toggle': true,
@@ -287,38 +306,31 @@ class StudyPanel extends HTMLElement {
 
         if (!this.renderedTagSelectMenu) {
 
+            let elementsDiv = this.elementsContainer;
+            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm bisweb-load-enable' disabled>Load image</button>`);
+            loadImageButton.on('click', () => { this.loadImageFromTree();  });
+            
+            let loaddiv =  webutil.creatediv({ parent : elementsDiv,css : { 'width' : '95%' }});
+            loaddiv.append(loadImageButton);
+            loaddiv.append(`<span class = "bisweb-file-import-label" style="font-size:80%; margin-left:20px; font-style:italic">Current — ${type}</span>`);
+            
             //create load button and static tag select menu
-            let tagSelectDiv = $(`<div></div>`);
+            let tagSelectDiv =  webutil.creatediv({ parent : elementsDiv,  css : { 'width' : '95%' }});
+            let lab=$(`<label>Tag of Selected Image:</label>`);
+            lab.css({'margin' : '5px'});
+            tagSelectDiv.append(lab);
             this.staticTagSelectMenu = this.createTagSelectMenu({ 'setDefaultValue': false, 'listenForTagEvents': true });
             tagSelectDiv.append(this.staticTagSelectMenu);
 
-            let elementsDiv = $('.bisweb-elements-menu');
-
-            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm bisweb-load-enable' disabled>Load image</button>`);
-            loadImageButton.on('click', () => {
-                this.loadImageFromTree();
-            });
-
-            let div = $('<div></div>');
-            elementsDiv.append(div);
-            div.append(tagSelectDiv);
-
-            elementsDiv.append(loadImageButton);
-            elementsDiv.append(`<br><p class = "bisweb-file-import-label" style="font-size:80%; font-style:italic">Currently loaded — ${type}</p>`);
-            elementsDiv.append($(`<label>Tag Selected Element:</label></br>`));
-            elementsDiv.append(tagSelectDiv);
-            loadImageButton.css({ 'margin': '10px' });
-            elementsDiv.append($('<HR>'));
-
             this.renderedTagSelectMenu = true;
         } else {
-            $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
+            this.elementsContainer.find('select').prop('disabled', 'disabled');
             $('.bisweb-file-import-label').text(`Currently loaded — ${type}`);
         }
 
 
         //attach listeners to new file tree
-        this.setOnClickListeners(tree, listContainer);
+        this.setOnClickListeners(tree, this.listContainer);
         this.fileTree = tree;
 
 
@@ -373,7 +385,7 @@ class StudyPanel extends HTMLElement {
 
             //if the file tree is empty, display an error message and return
             if (fileTree.length === 0) {
-                bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
+                webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
                 return;
             }
 
@@ -432,45 +444,22 @@ class StudyPanel extends HTMLElement {
      * 
      * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
      */
-    makeStaticButtons(listElement) {
-        let buttonGroupDisplay = $(`
-            <div class='btn-group'>
-                <div class='btn-group top-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
-                </div>
-                <br>
-                <div class='btn-group middle-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
-                </div>
-                <br> 
-            </div>
-        `);
-        let topButtonBar = buttonGroupDisplay.find('.top-bar');
-        let middleButtonBar = buttonGroupDisplay.find('.middle-bar');
-
+    createLoadSaveStudyButtons(listElement) {
+        
+        
+        let buttonBar = $(`<div></div>`);
 
         //Route study load and save through bis_webfileutil file callbacks
-        let loadStudyDirectoryButton = bis_webfileutil.createFileButton({
-            'type': 'info',
-            'name': 'Import study from directory',
-            'callback': (f) => {
-                this.importFilesFromDirectory(f);
-            },
-        }, {
-                'title': 'Import study from directory',
-                'filters': 'DIRECTORY',
-                'suffix': 'DIRECTORY',
-                'save': false,
-                'serveronly': true,
-            });
-
-        //Route study load and save through bis_webfileutil file callbacks
-        let loadStudyJSONButton = bis_webfileutil.createFileButton({
-            'type': 'primary',
-            'name': 'Import study',
+        bis_webfileutil.createFileButton({
+            'type': 'success',
+            'name': 'Load study file',
+            'css' : { 'margin' : '5px', 'width' : '45%' },
+            'parent' : buttonBar,
             'callback': (f) => {
                 this.importFilesFromJSON(f);
             },
         }, {
-                'title': 'Import study',
+                'title': 'Load study',
                 'filters': [
                     { 'name': 'Study Files', extensions: ['study'] }
                 ],
@@ -480,13 +469,15 @@ class StudyPanel extends HTMLElement {
 
         let saveStudyButton = bis_webfileutil.createFileButton({
             'type': 'info',
-            'name': 'Export study',
+            'css' : { 'margin' : '10px', 'width' : '40%' },
+            'name': 'Save study file',
+            'parent' : buttonBar,
             'callback': (f) => {
                 this.exportStudy(f);
             },
         },
             {
-                'title': 'Export study',
+                'title': 'Save study',
                 'filters': 'DIRECTORY',
                 'suffix': 'DIRECTORY',
                 'save': true,
@@ -496,12 +487,7 @@ class StudyPanel extends HTMLElement {
 
         saveStudyButton.addClass('bisweb-load-enable');
         saveStudyButton.prop('disabled', 'true');
-
-        topButtonBar.append(loadStudyDirectoryButton);
-        topButtonBar.append(loadStudyJSONButton);
-        middleButtonBar.append(saveStudyButton);
-
-        listElement.append(buttonGroupDisplay);
+        listElement.append(buttonBar);
     }
 
     /**
@@ -557,7 +543,7 @@ class StudyPanel extends HTMLElement {
 
         listContainer.on('select_node.jstree', (event, data) => {
 
-            $('.bisweb-elements-menu').find('select').prop('disabled', '');
+            this.elementsContainer.find('select').prop('disabled', '');
             $('.bisweb-load-enable').prop('disabled', '');
 
             this.currentlySelectedNode = data.node;
@@ -671,7 +657,7 @@ class StudyPanel extends HTMLElement {
             bis_genericio.write(filepath, stringifiedFiles, false);
         }).catch((e) => {
             console.log('an error occured while saving to disk', e);
-            bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
+            webutil.createAlert('An error occured while saving the study files to disk.', false);
         });
     }
 
@@ -679,7 +665,7 @@ class StudyPanel extends HTMLElement {
 
         //TODO: Figure out why this function hangs sometimes
         if (this.fileTree === null) {
-            bis_webutil.createAlert('Error: No study has been loaded. Please load a study before trying to parse task charts.', true);
+            webutil.createAlert('Error: No study has been loaded. Please load a study before trying to parse task charts.', true);
         }
         let reconstructedTree = this.parseTreeToJSON();
         let taglist = {}, duplicateTags = false;
@@ -687,13 +673,13 @@ class StudyPanel extends HTMLElement {
         checkForDuplicateTags(reconstructedTree);
 
         if (duplicateTags) {
-            bis_webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
+            webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
         }
 
         if (this.viewer.getobjectmap() === null) {
-            bis_webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
+            webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
         } else if (this.graphelement.taskdata === null) {
-            bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
+            webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
         }
 
         let imgdata = {};
@@ -704,9 +690,9 @@ class StudyPanel extends HTMLElement {
             imgdata[key] = img;
         }
 
-        bis_webutil.createAlert('Reading all runs marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner': true });
+        webutil.createAlert('Reading all runs marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner': true });
         Promise.all(promiseArray).then(() => {
-            bis_webutil.dismissAlerts();
+            webutil.dismissAlerts();
 
             //safety checks before beginning the long process of loading all the images
             console.log('overlay', this.viewer.getobjectmap());
@@ -719,7 +705,7 @@ class StudyPanel extends HTMLElement {
             for (let item of node) {
                 if (item.tag) {
                     if (!taglist[item.tag]) { taglist[item.tag] = item; }
-                    else if (item.tag.includes('task') || item.tag.includes('rest')) { duplicateTags = true; return; }
+                    else if (item.tag.includes('Task') || item.tag.includes('rest')) { duplicateTags = true; return; }
                 }
 
                 if (item.children) {
@@ -814,10 +800,10 @@ class StudyPanel extends HTMLElement {
                 for (let node of selectedNodes) {
                     let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
                     //task names should be the second or third bullet, so if it's not there then we know not to change them
-                    if (splitName.length >= 2 && splitName[1].includes('task')) {
+                    if (splitName.length >= 2 && splitName[1].includes('Task')) {
                         taskName = splitName[1];
                         index = 1;
-                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
+                    } else if (splitName.length >= 3 && splitName[2].includes('Task')) {
                         taskName = splitName[2];
                         index = 2;
                     }
@@ -930,7 +916,7 @@ class StudyPanel extends HTMLElement {
 
         //construct the full name out of the current node 
         let name = '', currentNode = this.currentlySelectedNode;
-        let tree = this.panel.widget.find('.file-container').jstree();
+        let tree = this.listContainer.jstree();
 
         if (node) {
             currentNode = tree.get_node(node.id);
@@ -974,15 +960,21 @@ class StudyPanel extends HTMLElement {
 
     createTagSelectMenu(options = {}) {
 
-        let tagSelectMenu = $(
+        let tagSelectMenu = webutil.createselect({
+            values : IMAGETYPES,
+            index : 0
+        });
+        tagSelectMenu.prop('disabled','1');
+        
+        /*let tagSelectMenu = $(
             `<select class='form-control' disabled> 
             <option value='image'>Image</option>
-            <option value='task'>Task</option>
-            <option value='rest'>Rest</option>
+            <option value='Task'>Task</option>
+            <option value='Rest'>Rest</option>
             <option value='dwi'>DWI</option>
             <option value='3danat'>3DAnat</option>
             <option value='2danat'>2DAnat</option>
-        </select>`);
+        </select>`);*/
 
         if (options.enabled) {
             tagSelectMenu.prop('disabled', '');
@@ -999,14 +991,16 @@ class StudyPanel extends HTMLElement {
         }
 
         tagSelectMenu.on('change', () => {
-            let selectedValue = tagSelectMenu.val();
+            let index=tagSelectMenu.val();
+            let selectedValue = IMAGEVALUES[index].toLowerCase();
+            console.log('Index=',index,selectedValue);
             this.currentlySelectedNode.original.tag = selectedValue;
 
             //create bootbox modal with task select slider
             if (selectedValue.includes('task')) {
-                createTaskSelectorWindow(this.currentlySelectedNode, this.panel);
+                createTaskSelectorWindow(this.currentlySelectedNode, this.listContainer);
             } else if (selectedValue.includes('rest')) {
-                clearTagFromTree(this.currentlySelectedNode, this.panel);
+                clearTagFromTree(this.currentlySelectedNode, this.listContainer);
             }
 
             //tag select menus can be created by popovers or statically in the file bar
@@ -1016,8 +1010,10 @@ class StudyPanel extends HTMLElement {
         });
 
         return tagSelectMenu;
-
-        function createTaskSelectorWindow(node, panel) {
+        
+        
+        
+        function createTaskSelectorWindow(node, listContainer) {
             let minSliderValue = 1;
             let maxSliderValue = 10;
 
@@ -1051,7 +1047,7 @@ class StudyPanel extends HTMLElement {
                     node.text = node.original.text;
 
                     //update name displayed on file tree panel
-                    let tree = panel.widget.find('.file-container').jstree();
+                    let tree = listContainer.jstree();
                     tree.redraw(true);
                 }
             });
@@ -1084,7 +1080,7 @@ class StudyPanel extends HTMLElement {
             box.modal('show');
         }
 
-        function clearTagFromTree(node, panel) {
+        function clearTagFromTree(node, listContainer) {
             //trim parenthetical tag from name
             let splitName = node.text.split(/^\(task_\d+\)/);
             console.log('split name', splitName);
@@ -1096,7 +1092,7 @@ class StudyPanel extends HTMLElement {
                 console.log('node', node);
 
                 //update name displayed on file tree panel
-                let tree = panel.widget.find('.file-container').jstree();
+                let tree = listContainer.jstree();
                 tree.redraw(true);
 
                 //dismiss popover manually 
@@ -1106,16 +1102,16 @@ class StudyPanel extends HTMLElement {
     }
 
     changeTagSelectMenu(menu, node) {
-        let selection = node.original.tag || "image";
-
-        //clear selected options
-        let options = menu.find('option');
-        for (let i = 0; i < options.length; i++) {
-            options[i].removeAttribute('selected');
+        let selection = node.original.tag || 'image';
+        selection=selection.toLowerCase();
+        if (selection.includes('task')) {
+            selection = 'Task';
         }
-
-        if (selection.includes('task')) { selection = 'task'; }
-        menu.find(`option[value=${selection}]`).prop('selected', true);
+        
+        let index= IMAGEVALUES.indexOf(selection);
+        if (index<0)
+            index=0;
+        menu.val(index);
     }
 
     getDefaultFilename() {
@@ -1180,30 +1176,21 @@ class StudyPanel extends HTMLElement {
         return this.fileTree;
     }
 
-    createFileImportCollapseElement() {
-        let treePanelBody = this.panel.getWidget();
-        let importButtonsContainer = bis_webutil.createCollapseElement(treePanelBody, 'Import DICOM Files', true);
-        
-        let inputGroup = $(`
-            <div class='btn-group' style='width: 90%; margin: 3px;'>
-                <button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 25%'>BIDS</button>
-            </div>
-        `);
+    createImportButtons(parent) {
 
-        //let BIDSCheck = $(`<input class='form-check-input' type='checkbox'`)
+        let inputGroup = $(`<div class='btn-group' style='width: 100%; margin: 0px;'></div>`);
+        parent.append(inputGroup);
 
-        importButtonsContainer.append(inputGroup);
-
-        let convertDicomButton = bis_webfileutil.createFileButton({ 
+        bis_webfileutil.createFileButton({ 
             type : 'info',
-            name : 'Convert DICOM Images',
-            css : { 'width' : '75%' },
+            name : 'DICOM->NII',
+            parent : inputGroup,
+            css : { 'width' : '30%','margin-left':'5px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
                     //get whether to convert to BIDS or not from toggle
                     let convertToBids = inputGroup.find('.bisweb-bids-toggle').hasClass('active');
-                    console.log('convert to bids', convertToBids);
-                    this.importDICOMImages(f, o, false);
+                    this.importDICOMImages(f, o, convertToBids);
                 };
                 
                 bis_webfileutil.genericFileCallback( 
@@ -1220,36 +1207,26 @@ class StudyPanel extends HTMLElement {
             save : false,
             serveronly : true,
         });
-        
+        inputGroup.append(`<button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 15%'>BIDS</button>`);
 
-        bis_webfileutil.createFileButton({ 
-            type : 'danger',
-            name : 'Import DICOM Images',
-            parent : importButtonsContainer,
-            css : { 'width' : '90%' , 'margin' : '3px' },
-            callback : (f) => {
-                let saveFileCallback = (o) => { 
-                    this.importDICOMImages(f, o, true);
-                };
-                
-                setTimeout( () => {
-                    bis_webfileutil.genericFileCallback( 
-                        {
-                            'title' : 'Choose output directory',
-                            'filters' : 'DIRECTORY',
-                            'save' : false
-                        }, saveFileCallback);
-                }, 1);
+        bis_webfileutil.createFileButton({
+            'type': 'success',
+            'parent' : inputGroup,
+            'css' : { 'margin-left' : '15px', 'width' : '40%' },
+            'name': 'Import BIDS Directory',
+            'callback': (f) => {
+                this.importFilesFromDirectory(f);
             },
-        },{
-            title: 'Directory to import study from',
-            filters:  'DIRECTORY',
-            suffix:  'DIRECTORY',
-            save : false,
-            serveronly : true,
+        }, {
+                'title': 'Import study from directory',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+            'serveronly': true,
         });
 
-        inputGroup.prepend(convertDicomButton);
+
+
 
     }
 
@@ -1273,7 +1250,7 @@ class StudyPanel extends HTMLElement {
         if (doBIDS)
             a='/BIDS';
         
-        bis_webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
+        webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
@@ -1303,7 +1280,7 @@ class StudyPanel extends HTMLElement {
             console.log('output', fileConversionOutput);
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
-            bis_webutil.dismissAlerts();
+            webutil.dismissAlerts();
             this.filetreepanel.importFilesFromDirectory(output);
             this.filetreepanel.showTreePanel();
         }).catch( (e) => {
@@ -1456,4 +1433,4 @@ let formatBaseDirectory = (baseDirectory, contents) => {
     }
 };
 
-bis_webutil.defineElement('bisweb-studypanel', StudyPanel);
+webutil.defineElement('bisweb-studypanel', StudyPanel);
