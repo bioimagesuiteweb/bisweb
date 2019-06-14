@@ -204,10 +204,9 @@ let getBIDSDirname =  (filename, flist, dirs) => {
 
     let lst=name.split(SEPARATOR);
     name=lst[lst.length-1];
+
     if (DEBUG)
         console.log('Name=',name,lst,'sep=',SEPARATOR);
-
-
     
     if (name.includes('bold') || name.includes('asl') || name.includes('rest') || name.includes('task')) {
         dirname = dirs.funcdir;
@@ -227,7 +226,7 @@ let getBIDSDirname =  (filename, flist, dirs) => {
 
     if (DEBUG)
         console.log('Name --->=',dirname);
-    return dirname;
+    return bis_genericio.getBaseName(dirname);
 };
 
 
@@ -348,9 +347,6 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
             console.log('Name=',dirname,dirs.subjectdirectory);
         dirname = bis_genericio.joinFilenames(dirs.subjectdirectory, dirname);
 
-
-
-        
         let basename = bis_genericio.getBaseName(name);
         let dirbasename = bis_genericio.getBaseName(dirname);
 
@@ -698,116 +694,137 @@ let getSettingsFile = (filename) => {
     });
 };
 
-let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
-    return new Promise( (resolve, reject) => {
-        bis_genericio.read(filename).then( (obj) => {
-            let parsedData;
-            try {
-                parsedData = JSON.parse(obj.data);
-            } catch(e) {
-                console.log('An error occured when parsing JSON', e);
-            }
+/**
+ * Parses a study's task file into a set of BIDS compliant tsv files and saves the tsv files to the 'func' directory of the study.
+ * 
+ * @param {String|Object} file - The name of a json file containing task information, or an already parsed task file. 
+ * @param {String} baseDirectory - The name of the base directory for the study.
+ * @param {Boolean} save - If true, write the files to disk, otherwise just return. 
+ */
+let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
     
+    return new Promise( (resolve, reject) => {
+
+        if (typeof file === 'string') {
+            bis_genericio.read(file).then( (obj) => {
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(obj.data);
+                } catch(e) {
+                    console.log('An error occured while parsing task file JSON', e);
+                    reject(e);
+                }
+                parseTaskFile(parsedData);
+            }).catch( (e) => { reject(e); });
+        } else {
+            console.log('file', file);
+            parseTaskFile(file);
+        }
+    
+        function parseTaskFile(parsedData) {
+
             // ------ Read the task file, parse it into an object, and organize task durations by start time 
             let orderedRuns = {}, range = { lowRange: -1, highRange: -1 };
-    
+
             for (let runName of Object.keys(parsedData.runs)) {
                 orderedRuns[runName] = [];
                 for (let task of Object.keys(parsedData.runs[runName])) {
-                    orderedRuns[runName].push({ 'task' : task, 'value' : parseEntry(parsedData.runs[runName][task], range) });
+                    //TODO : disallow the key parsedRegions in task files. this is an internal key
+                    if (task !== 'parsedRegions') {
+                        orderedRuns[runName].push({ 'task': task, 'value': parseEntry(parsedData.runs[runName][task], range) });
+                    }
                 }
-    
+
                 //sort ordered runs by their ranges (note that this assumes that ranges do not overlap)
                 //ensure that all arrays are fully expanded before sorting
                 let newVals = [];
                 for (let i = 0; i < orderedRuns[runName].length; i++) {
                     if (Array.isArray(orderedRuns[runName][i].value[0])) {
                         let expandedVals = orderedRuns[runName].splice(i, 1);
-                        
+
                         for (let val of expandedVals[0].value) {
-                            newVals.push({ 'task' : expandedVals[0].task, 'value' : val});
+                            newVals.push({ 'task': expandedVals[0].task, 'value': val });
                         }
-                        
+
                         i = i - 1;
                     }
                 }
-    
+
                 orderedRuns[runName] = orderedRuns[runName].concat(newVals);
-                orderedRuns[runName].sort( (a,b) => {
-                    if (a.value[0] < b.value[0]) { return -1;}
+                orderedRuns[runName].sort((a, b) => {
+                    if (a.value[0] < b.value[0]) { return -1; }
                     if (a.value[0] > b.value[0]) { return 1; }
                     return 0;
                 });
             }
-    
+
             // ------ Write tsv file with the parsed values and a few other parameters gleaned from the task file
-            let tr = parseInt(parsedData['TR']);
-            let offset = parseInt(parsedData['offset']);
-            let units = parsedData['units'];
-            if (units === 'seconds') { tr = 1; } //ignore TR if units are already in seconds
+            let offset;
+            if (typeof parsedData['offset'] === 'string') { offset = parseInt(parsedData['offset']); }
+            else { offset = parsedData['offset']; }
 
             let tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
                 let tsvFile = "onset\tduration\ttrial_type\n";
                 for (let task of orderedRuns[runName]) {
-                    let lowRange = (task.value[0] - offset) * tr, 
-                        highRange = (task.value[1] - offset) * tr,
-                        duration = (highRange - lowRange); 
-    
+                    let lowRange = (task.value[0] - offset),
+                        highRange = (task.value[1] - offset),
+                        duration = (highRange - lowRange);
+
                     tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n';
                 }
-    
+
                 tsvData[runName] = tsvFile;
             }
-    
+
             // ------ Correlate tsv files with their respective entries in the BIDS directory, e.g. the run marked 'run1' in the task file should go with the scan with 'run-01' in its name.
             //        Note that tsv files will always go with func data.
             //        This will be called only if save is specified at the top
             let correlateAndWriteTSVFiles = () => {
-                return new Promise( (resolve, reject) => {
+                return new Promise((resolve, reject) => {
                     let jobInfoFilename = baseDirectory + '/' + dicomParametersFilename, promiseArray = [];
-                    bis_genericio.read(jobInfoFilename).then( (obj) => {
-            
+                    bis_genericio.read(jobInfoFilename).then((obj) => {
+
                         //filter filenames by looking for 'func' 
                         let jobInfo;
                         try {
                             jobInfo = JSON.parse(obj.data);
-                        } catch(e) {
-                            console.log('An error occured while parsing JSON', e);   
+                        } catch (e) {
+                            console.log('An error occured while parsing JSON', e);
                             reject(e);
                         }
-            
-                        let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
-            
+
+                        let filteredFiles = jobInfo.files.filter((file) => { return file.filename.includes('func'); });
+
                         for (let file of filteredFiles) {
-            
+
                             //construct full path for tsv file using the name of the task file
                             //start by splitting the modality off the end of the image file and replacing it with 'events' 
                             let splitFilename = file.name.split('_');
                             splitFilename[splitFilename.length - 1] = 'events';
                             let tsvFilename = splitFilename.join('_') + '.tsv';
-            
-                            let bidsTsvFilename = file.filename.split('/'); 
+
+                            let bidsTsvFilename = file.filename.split('/');
                             bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
                             bidsTsvFilename = bidsTsvFilename.join('/');
-            
+
                             //get rid of the other tsv files associated with this file given that a new one is being uploaded
-                            file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
+                            file.supportingfiles = file.supportingfiles.filter((supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
                             file.supportingfiles.push(bidsTsvFilename);
-            
+
                             let runNumRegex = /run-0*(\d+)/g;
                             let runNumber = runNumRegex.exec(file.name);
                             let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
-            
+
                             let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
                             promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
                         }
-            
+
                         //since jobInfo has had supporting files updated for all func keys, write it too
                         let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
                         promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
-            
-    
+
+
                         //finally, generate events.json, which contains the keys of all custom fields generated in the .tsv file 
                         //as of 6-4-19 we have no custom fields but i left this field here as a gesture towards the future.
                         // -Zach
@@ -815,17 +832,15 @@ let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
             
                         };*/
 
-                        Promise.all(promiseArray).then( () => {
+                        Promise.all(promiseArray).then(() => {
                             console.log('write done');
                             resolve();
-                        }).catch( (e) => {
+                        }).catch((e) => {
                             reject(e);
                         });
-                    }).catch( (e) => { reject(e); });
+                    }).catch((e) => { reject(e); });
                 });
             };
-
-
 
             if (save) {
                 correlateAndWriteTSVFiles().then( () => {
@@ -836,30 +851,37 @@ let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
                 console.log('Finished conversion');
                 resolve(tsvData);
             }
-        }).catch( (e) => { reject(e); });
-    });
-   
-
-    // Splits an entry in the task file formatted as '[low range]-[high range]' into two integers 
-    // then checks the two numbers to see whether they are either lower than the lowest value seen so far or higher than the highest
-    function parseEntry(entry, range) {
-
-        if (Array.isArray(entry)) {
-            let entryArray = [];
-            for (let item of entry)
-                entryArray.push(parseEntry(item, range));
-
-            return entryArray;
         }
 
-        let entryRange = entry.split('-');
-        for (let i = 0; i < entryRange.length; i++) { entryRange[i] = parseInt(entryRange[i]); }
 
-        if (range.lowRange < 0 || range.lowRange > entryRange[0]) { range.lowRange = entryRange[0]; }
-        if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
+        // Splits an entry in the task file formatted as '[low range]-[high range]' into two integers 
+        // then checks the two numbers to see whether they are either lower than the lowest value seen so far or higher than the highest
+        function parseEntry(entry, range) {
 
-        return entryRange;
-    }
+            console.log('entry', entry);
+            if (Array.isArray(entry) && Array.isArray(entry[0])) {
+                let entryArray = [];
+                for (let item of entry)
+                    entryArray.push(parseEntry(item, range));
+
+                return entryArray;
+            }
+
+            //entry may be a string if the file was loaded from disk, so we want to parse it into an array in that case
+            let entryRange;
+            if (Array.isArray(entry)) { entryRange = entry;}
+            else if (typeof entry === 'string') { 
+                entryRange = entry.split('-'); 
+                for (let i = 0; i < entryRange.length; i++) { entryRange[i] = parseInt(entryRange[i]); }
+            }
+
+
+            if (range.lowRange < 0 || range.lowRange > entryRange[0]) { range.lowRange = entryRange[0]; }
+            if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
+
+            return entryRange;
+        }
+    });
 };
 
 
@@ -873,17 +895,15 @@ let cleanRow=(line) => {
  * 
  * @param {String} tsvDirectory - Filepath of directory containing .tsv files. 
  * @param {String} outputDirectory - Filepath of the output directory.
- * @param {Number} tr - TR for the study. This is necessary because the JSON file is stored with frames as the unit and the .tsv files are stored with seconds. 
+ * @param {Boolean} save - Whether or not to save the parsed JSON file to disk.  
  */
-let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
+let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
     return new Promise ( (resolve, reject) => {
         let matchstring = tsvDirectory + '/*.tsv';
         bis_genericio.getMatchingFiles(matchstring).then( (files) => {
             
             //always parses with unit set to 'frame' and an offset of zero
             let parsedJSON = { 
-                'units' : 'frames', 
-                'TR' : tr, 
                 'offset' : 0, 
                 'runs' : {} 
             };
@@ -977,7 +997,7 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
     }
 
     function formatEntry(onset, duration) {
-        let lowRange = onset / tr, highRange = lowRange + (duration / tr);
+        let lowRange = parseInt(onset), highRange = parseInt(lowRange) + parseInt(duration);
         return `${lowRange}-${highRange}`;
     }
 };

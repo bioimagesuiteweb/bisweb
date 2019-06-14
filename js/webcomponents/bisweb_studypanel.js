@@ -6,15 +6,16 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
+const bisweb_taskutils = require('bisweb_taskutils.js');
 const DicomModule = require('dicommodule.js');
-const BisWebTaskManager=require('bisweb_studytaskmanager');
+const BisWebTaskManager = require('bisweb_studytaskmanager');
 
 /** TODO
  *
- *  1. Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
- *  2. Save Study --> .biswebstudy this should include the task definition JSON as a field
- *  3. Load Study, create tree and tasks (call studytaskmanager.setTaskData())
- *  4. Import Task Defintion
+ *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
+ *  2.  (DONE) Save Study --> .biswebstudy this should include the task definition JSON as a field
+ *  3.  (DONE) Load Study, create tree and tasks (call studytaskmanager.setTaskData())
+ *  4.  (DONE) Import Task Defintion
         1. a warning if we have data .. not to overwrite
         2. a yes/no question as to whether to create tsv files for full BIDS compatibility
  *  Hide this Convert task to tsv (advanced)  yes/no question before it does anything
@@ -165,14 +166,12 @@ class StudyPanel extends HTMLElement {
         this.createLoadSaveStudyButtons(parent);
         this.createImportButtons(parent);
         parent.append($('<HR width="90%">'));
-        this.listContainer =  webutil.creatediv(
-            { parent: parent ,
-              css : { 'height': '350px',
-                      'max-height' : '1500px',
-                      'width': '95%',
-                      'overflow': 'auto',
-                      'margin-top': '5px' }
-            });
+
+        //file list container is generated each time because jstree cannot reuse the same div to make a new tree
+        this.listContainerDivID = webutil.getuniqueid();
+        let listContainerDiv = $(`<div id=${this.listContainerDivID}></div>`);
+        parent.append(listContainerDiv);
+
         parent.append($('<HR width="90%">'));
         this.elementsContainer =  webutil.creatediv(
             { parent: parent ,
@@ -197,8 +196,15 @@ class StudyPanel extends HTMLElement {
                 fileinfo.type='directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                this.taskManager.createGUI();
-                return;
+
+                //look in the study file for tsv files, then parse them and add them as this study's current task data
+                this.parseStudyTSVFiles(baseDir).then( () => {
+                    this.taskManager.createGUI();
+                }).catch( (e) => {
+                    console.log('An error occured while trying to parse tsv files', e);
+                    this.taskManager.createGUI();
+                })
+                
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
             }
@@ -215,10 +221,46 @@ class StudyPanel extends HTMLElement {
             }
 
             getFileList(parsedData.baseDirectory).then((fileinfo) => {
-                console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
+
+                if (parsedData.tasks) { this.taskManager.setTaskData(parsedData.tasks, false); }
                 this.taskManager.createGUI();
+            });
+        });
+    }
+
+    /**
+     * Searches a BIDS directory for the directory containing tsv files, then parses these into a task file.
+     */
+    parseStudyTSVFiles(basedir) {
+        return new Promise( (resolve, reject) => {
+            let matchstring = basedir + '/**/*.tsv';
+            bis_genericio.getMatchingFiles(matchstring).then( (match) => {
+                
+                //TODO: This assumes that there is only one directory that contains TSV files while in a study with multiple subjects there may be more than one
+                //This would require changing the task definition file in the future!
+                if (match.length > 0) {
+                    let splitTsvDirname = match[0].split('/');
+                    let tsvDirname = splitTsvDirname.slice(0, splitTsvDirname.length - 1).join('/');
+                    console.log('tsv dirname', tsvDirname);
+
+                    bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then( (obj) => {
+                        bisweb_taskutils.parseFile(obj).then( (formattedObj) => {
+                            this.taskManager.setTaskData(formattedObj, false);
+                            resolve(formattedObj);
+                        }).catch( (e) => { reject(e); });
+                    }).catch( (e) => {
+                        reject(e);
+                    });
+
+                } else {
+                    console.log('No tsv files found for this study, cannot parse tasks.');
+                    resolve();
+                }
+
+            }).catch( (e) => {
+                reject(e);
             });
         });
     }
@@ -239,13 +281,6 @@ class StudyPanel extends HTMLElement {
         this.studyType = type;
         let fileTree = parseFileList(files);
 
-        //check what type of list this is, a list of names or a fully parsed directory
-        /*if (typeof files[0] === 'string') {
-            fileTree = parseFileList(files);
-        } else {
-            fileTree = files;
-        }*/
-
         //alpabetize tree entries
         sortEntries(fileTree);
         let len=fileTree.length;
@@ -256,8 +291,19 @@ class StudyPanel extends HTMLElement {
             elem['state']['opened']=true;
         }
 
-        this.listContainer.empty();
-        
+        let listContainerDiv = this.panel.getWidget().find('#' + this.listContainerDivID);
+        listContainerDiv.empty();
+
+        this.listContainer = webutil.creatediv(
+            { parent: listContainerDiv,
+              css : { 'height': '350px',
+                      'max-height' : '1500px',
+                      'width': '95%',
+                      'overflow': 'auto',
+                      'margin-top': '5px' }
+            });
+        console.log('list container', this.listContainer, listContainerDiv);
+
         let tree = this.listContainer.jstree({
             'core': {
                 'data': fileTree,
@@ -318,6 +364,7 @@ class StudyPanel extends HTMLElement {
             });
         }
 
+        console.log('tree', tree);
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
 
@@ -481,7 +528,7 @@ class StudyPanel extends HTMLElement {
         }, {
                 'title': 'Load study',
                 'filters': [
-                    { 'name': 'Study Files', extensions: ['study'] }
+                    { 'name': 'Study Files', extensions: ['biswebstudy'] }
                 ],
                 'suffix': 'study',
                 'save': false,
@@ -666,11 +713,15 @@ class StudyPanel extends HTMLElement {
                 'contents': reconstructedTree
             };
 
+            let taskInfo = this.taskManager.getTaskData() || null;
+            if (taskInfo) { treeMetadataContainer.tasks = taskInfo; }
+
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
+            
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
-            if (splitPath.length < 2 || splitPath[1] !== 'STUDY' || splitPath[1] !== 'study') {
-                splitPath[1] = 'study';
+            if (splitPath.length < 2 || splitPath[1] !== 'biswebstudy' || splitPath[1] !== 'biswebstudy') {
+                splitPath[1] = 'biswebstudy';
             }
 
             filepath = splitPath.join('.');
@@ -1230,7 +1281,7 @@ class StudyPanel extends HTMLElement {
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
         
-            promise=bis_genericio.runDICOMConversiong({
+            promise=bis_genericio.runDICOMConversion({
                 'fixpaths' : true,
                 'inputDirectory': inputDirectory,
                 'outputDirectory' : outputDirectory,
@@ -1247,8 +1298,8 @@ class StudyPanel extends HTMLElement {
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             webutil.dismissAlerts();
-            this.filetreepanel.importFilesFromDirectory(output);
-            this.filetreepanel.showTreePanel();
+            this.importFilesFromDirectory(output);
+            this.showTreePanel();
         }).catch( (e) => {
             console.log('An error occured during file conversion', e);
         });

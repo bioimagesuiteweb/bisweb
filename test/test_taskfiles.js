@@ -75,7 +75,7 @@ describe('Convert .json to .tsv', () => {
 
     it('Parses .tsv to .json', (done) => {
         bis_genericio.read(jsonPath).then( (obj) => {
-            bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, 2, false).then( (jsonData) => {
+            bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, false).then( (jsonData) => {
 
                 console.log('jsonData=',jsonData);
                
@@ -103,7 +103,7 @@ describe('Convert .json to .tsv', () => {
         
         let obj=await bis_genericio.read(jsonPath2);
         console.log('Obj=',obj.data);
-        let jsonData=await bis_bidsutils.parseTaskFileFromTSV(tsvDir2, null, 1.0, false);
+        let jsonData=await bis_bidsutils.parseTaskFileFromTSV(tsvDir2, null, false);
                
         let stringifiedData = JSON.stringify(jsonData);
         console.log(colors.cyan(' ++++ json data parsed from tsv files in', tsvDir2, JSON.stringify(jsonData)));

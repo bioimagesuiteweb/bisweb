@@ -9,8 +9,6 @@ const bis_genericio = require('bis_genericio.js');
  * @param {Object} range - Object containing the range of values seen by whatever context is calling parseEntry. 
  * @returns The parsed tuple. 
  */
-
-// removed tr
 let parseEntry = (entry, range) => {
 
     if (Array.isArray(entry)) {
@@ -30,53 +28,66 @@ let parseEntry = (entry, range) => {
     return entryRange;
 };
 
-let parseFile = (filename) => {
+/**
+ * Parses a .biswebtask file, then formats and stores the contents in memory to use for future plotting tasks. Also displays the tasks on screen.
+ * 
+ * @param {String|Object} taskfile - The name of a task file to be loaded from disk, or an already parsed array of runs to be formatted further.
+ * @returns A promise resolving the fully-formatted 
+ */
+let parseFile = (taskfile) => {
+
     return new Promise( (resolve, reject) => {
-        bis_genericio.read(filename, false).then((obj) => {
+
+        let formatJson = (parsedData) => {
+            let chartRanges = { 'lowRange' : -1, 'highRange' : -1}, parsedRuns = {};
+            
+            //parse raw task data
             try {
-                let objout=parseData(obj.data);
-                if (objout)
-                    resolve(objout);
-                reject('Failed to parse'+obj.filename);
+                let runs = Object.keys(parsedData.runs);
+    
+                for (let run of runs) {
+    
+                    //parse data for each run
+                    let tasks = Object.keys(parsedData.runs[run]);
+                    for (let task of tasks) {
+                        let range = parsedData.runs[run][task];
+                        if (!parsedRuns[run]) { parsedRuns[run] = {}; }
+                        parsedRuns[run][task] = parseEntry(range, chartRanges);
+                    }
+                }
             } catch(e) {
-                reject(null);
+                console.log('An error occured in parseFile', e);
+                reject(e);
+                return;
             }
+    
+            //return results with relevant metadata
+            let offset = parsedData.offset || 0;
+            let frames = parsedData.frames || null;
+            if (parseInt(frames) && parseInt(frames) < chartRanges.highRange) { chartRanges.highRange = parseInt(frames); }
+            
+            let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
+            let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'offset' : offset });
+            resolve(resObj);
+        };
+
+        if (typeof taskfile !== 'string') { formatJson(taskfile); return; }
+
+        bis_genericio.read(taskfile, false).then( (obj) => {
+            let parsedJSON;
+            try {
+                parsedJSON = JSON.parse(obj.data);
+            } catch (e) {
+                console.log('An error occured while parsing JSON from disk', e);
+                reject(e);
+            }
+
+            formatJson(parsedJSON);
+
         }).catch( (e) => { reject(e); });
     });
+
 };
-
-var parseData=((data) => { 
-
-    let chartRanges = { 'lowRange' : -1, 'highRange' : -1}, parsedData, parsedRuns = {};
-
-    //parse raw task data
-    try {
-        parsedData = JSON.parse(data);
-        let runs = Object.keys(parsedData.runs);
-        
-        for (let run of runs) {
-            
-            //parse data for each run
-            let tasks = Object.keys(parsedData.runs[run]);
-            for (let task of tasks) {
-                let range = parsedData.runs[run][task];
-                if (!parsedRuns[run]) { parsedRuns[run] = {}; }
-                parsedRuns[run][task] = parseEntry(range, chartRanges);
-            }
-        }
-    } catch(e) {
-        console.log('An error occured in parseFile', e);
-        return null;
-    }
-
-    //return results with relevant metadata
-    let offset = parseInt(data.offset), frames = parseInt(data.frames);
-    if (frames && frames < chartRanges.highRange) { chartRanges.highRange = frames; }
-    
-    let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
-    let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'offset' : offset });
-    return(resObj);
-});
 
 let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
     let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
@@ -107,23 +118,16 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
         let taskArray = new Array(chartRange.highRange).fill(0);
 
         //the data for each individual run will be formatted as an array while the structure for each task will be an object
-        if (Array.isArray(run)) {
-            if (Array.isArray(run[0])) {
-                for (let item of run) {
-                    addToArray(item);
-                }
-            } else {
-                addToArray(run);
-            }
+        if (Array.isArray(run) && Array.isArray(run[0])) {
+            for (let item of run) 
+                addToArray(item);
+        } else if (Array.isArray(run) && typeof run[0] === 'number') {
+            addToArray(run);
         } else if (typeof run === 'object') {
             let keys = Object.keys(run);
             for (let task of keys) {
-                if (Array.isArray(run[task][0])) {
-                    for (let item of run[task])
-                        addToArray(item);
-                } else {
-                    addToArray(run[task]);
-                }
+                for (let item of run[task])
+                    addToArray(item);
             }
         } else {
             console.log('unrecognized run object', run);

@@ -41,6 +41,7 @@ class StudyTaskManager {
         this.viewerid=viewerid;
         this.viewer=document.querySelector(this.viewerid);
         this.taskdata=null;
+
         this.graphWindow=null;
         this.dialogElement=null;
         this.canvas=null;
@@ -88,8 +89,8 @@ class StudyTaskManager {
             'type': 'danger',
             'parent' : this.widget,
             'css' : {
-                'width' : '40%',
-                'margin-left' : '15px',
+                'width' : '45%',
+                'margin-left' : '5px',
                 'margin-bottom' : '10px',
             },
 
@@ -133,14 +134,24 @@ class StudyTaskManager {
             }
         });
 
-        bis_webfileutil.createFileButton({ 
-            'name': 'Convert task file to .tsv', 
+        let advancedOptionsModal = webutil.createmodal('Advanced Options');
+        webutil.createbutton({ 
+            'name' : 'Show advanced options',
             'type' : 'primary',
             'parent' : this.widget,
             'css' : {
-                'width' : '40%',
-                'margin-left' : '15px',
+                'width' : '45%',
+                'margin-left' : '5px',
             },
+            'callback' : () => {
+                advancedOptionsModal.dialog.modal('show');
+            }
+        });
+
+        let tasktotsvButton = bis_webfileutil.createFileButton({ 
+            'name': 'Convert task file to .tsv', 
+            'type' : 'primary',
+            'parent' : advancedOptionsModal.body,
             'callback': (f) => {
                 this.createTSVParseModal(f);
             },
@@ -154,20 +165,13 @@ class StudyTaskManager {
         });
 
 
-        /*let convertTasksButton = bis_webfileutil.createFileButton({
+        let taskfromtsvButton = bis_webfileutil.createFileButton({
             'name' : 'Convert .tsvs to task file',
             'type' : 'info',
+            'parent' : advancedOptionsModal.body,
             'callback' : (f) => {
                 let saveFileCallback = (o) => { 
-                    bootbox.prompt({
-                        'size' : 'small',
-                        'title' : 'Enter the TR for the study',
-                        'input' : 'number',
-                        'callback' : (result) => {
-                        bis_bidsutils.parseTaskFileFromTSV(f, o, result);
-                        }  
-                    });
-
+                    bis_bidsutils.parseTaskFileFromTSV(f, o, result);
                 };
                     
                 setTimeout( () => {
@@ -185,7 +189,10 @@ class StudyTaskManager {
                 'filters' : 'DIRECTORY',
                 'save' : false
             }
-            );*/
+        );
+
+        tasktotsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide'));
+        taskfromtsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide')); 
 
     }
 
@@ -197,16 +204,39 @@ class StudyTaskManager {
      */
     async loadStudyTaskData(name) {
 
-        //declared here so they can be accessed by the functions below
-        
-        try {
-            this.taskdata= await bisweb_taskutils.parseFile(name);
-        } catch(e) {
-            webutil.createAlert('Failed to parse task definitions',true);
-            return Promise.reject();
-        }
+        let loadTaskData = async () => {
+            try {
+                this.taskdata= await bisweb_taskutils.parseFile(name);
+                console.log('this.taskdata', this.taskdata);
+            } catch(e) {
+                webutil.createAlert('Failed to parse task definitions',true);
+                return Promise.reject();
+            }
+    
+            this.plotTaskData();
+        };
 
-        this.plotTaskData();
+        let openParseBIDSModal = () => {
+            bootbox.confirm('Parse BIDS .tsv files on import? These are required for full BIDS compatibility.', async (makeTsv) => {
+                if (makeTsv) {
+                    await loadTaskData();
+                    let baseDirectory = this.studypanel.baseDirectory;
+                    bis_bidsutils.parseTaskFileToTSV(this.taskdata, baseDirectory, true);
+                }
+            });
+        };
+
+        if (this.taskdata) {
+            bootbox.confirm('Overwrite existing data?', (overwrite) => {
+                if (overwrite) {
+                    openParseBIDSModal();
+                } else {
+                    webutil.createAlert('Import canceled.', false);
+                }
+            });
+        } else {
+            openParseBIDSModal();
+        }
     }
 
     setTaskData(taskdata,plot=true) {
