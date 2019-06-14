@@ -66,14 +66,12 @@ let parseFile = (taskfile) => {
             let frames = parsedData.frames || null;
             if (parseInt(frames) && parseInt(frames) < chartRanges.highRange) { chartRanges.highRange = parseInt(frames); }
             
-            console.log('frames', frames, 'offset', offset);
             let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
             let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'offset' : offset });
             resolve(resObj);
         };
 
-
-        if (typeof taskfile !== 'string') { formatJson(taskfile); }
+        if (typeof taskfile !== 'string') { formatJson(taskfile); return; }
 
         bis_genericio.read(taskfile, false).then( (obj) => {
             let parsedJSON;

@@ -6,12 +6,13 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
+const bisweb_taskutils = require('bisweb_taskutils.js');
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager = require('bisweb_studytaskmanager');
 
 /** TODO
  *
- *  1. Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
+ *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
  *  2. Save Study --> .biswebstudy this should include the task definition JSON as a field
  *  3. Load Study, create tree and tasks (call studytaskmanager.setTaskData())
  *  4. Import Task Defintion
@@ -198,10 +199,13 @@ class StudyPanel extends HTMLElement {
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
 
-                //look in the study file for tsv files, then parse them and add them as this study's current task data\
-                this.parseStudyTSVFiles(baseDir);
-                this.taskManager.createGUI();
-                return;
+                //look in the study file for tsv files, then parse them and add them as this study's current task data
+                this.parseStudyTSVFiles(baseDir).then( (taskdata) => {
+                    this.taskManager.setTaskData(taskdata, false);
+                    this.taskManager.createGUI();
+                    return;
+                });
+                
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
             }
@@ -218,7 +222,6 @@ class StudyPanel extends HTMLElement {
             }
 
             getFileList(parsedData.baseDirectory).then((fileinfo) => {
-                console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 this.taskManager.createGUI();
@@ -236,15 +239,15 @@ class StudyPanel extends HTMLElement {
                 
                 //TODO: This assumes that there is only one directory that contains TSV files while in a study with multiple subjects there may be more than one
                 //This would require changing the task definition file in the future!
-                console.log('match', match);
                 if (match.length > 0) {
                     let splitTsvDirname = match[0].split('/');
                     let tsvDirname = splitTsvDirname.slice(0, splitTsvDirname.length - 1).join('/');
                     console.log('tsv dirname', tsvDirname);
 
                     bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then( (obj) => {
-                        console.log('json', obj);
-                        resolve(obj);
+                        bisweb_taskutils.parseFile(obj).then( (formattedObj) => {
+                            resolve(formattedObj);
+                        });
                     }).catch( (e) => {
                         reject(e);
                     });
@@ -518,7 +521,7 @@ class StudyPanel extends HTMLElement {
         }, {
                 'title': 'Load study',
                 'filters': [
-                    { 'name': 'Study Files', extensions: ['study'] }
+                    { 'name': 'Study Files', extensions: ['biswebstudy'] }
                 ],
                 'suffix': 'study',
                 'save': false,
@@ -704,6 +707,7 @@ class StudyPanel extends HTMLElement {
             };
 
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
+            //let taskInfo = 
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
             if (splitPath.length < 2 || splitPath[1] !== 'STUDY' || splitPath[1] !== 'study') {
