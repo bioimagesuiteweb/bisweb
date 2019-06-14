@@ -10,7 +10,7 @@ const OFFSET=20;
 const AXIS=40;
 const OPACITY=0.5;
 
-const dummydata=`{
+/*const dummydata=`{
     "units": "frames",
     "TR": 1,
     "offset": 0,
@@ -26,7 +26,7 @@ const dummydata=`{
             "auditory": [ "25-37", "66-72", "85-98" ]
         }
     }
-}`;
+}`;*/
 
 
 
@@ -47,7 +47,7 @@ class StudyTaskManager {
         this.legendMargin=0;
         this.margins=[];
         this.htask=0;
-        console.log('Task Manager created');
+        this.textWidth=0;
     }
 
     getTaskData() {
@@ -111,7 +111,6 @@ class StudyTaskManager {
                         }
                     },
                     'callback': (result) => {
-                        console.log('Result=',result);
                         if (result===true) {
                             this.taskdata = null;
                             webutil.createAlert('Task definitions cleared from memory',false);
@@ -188,12 +187,6 @@ class StudyTaskManager {
             }
             );*/
 
-        //XP Change
-        if (dummydata) {
-            this.taskdata= bisweb_taskutils.parseData(dummydata);
-            this.plotTaskData();
-        }
-            
     }
 
     /**
@@ -259,23 +252,25 @@ class StudyTaskManager {
         }
         
         let dim= this.viewer.getViewerDimensions();
+        let left = 10;
         
         //search HTML for a dock open on the left
         //if it exists, we want to make sure the graph is displayed over it so we add extra width
         let docks = $('.biswebdock');
         for (let dock of docks) {
             if ($(dock).css('left') === '0px') {
-                dim[0] += parseInt($(dock).css('width'));
+                let dockw=parseInt($(dock).css('width'));
+                left=dockw+10;
             }
         }
         
-        let width = dim[0] - 20;
-        let height = dim[1] * 0.85;
-        let left = 10;
+        let width = dim[0]-20;
+        let height = dim[1] -50;
+
         let top = 40;
         
         this.dialogElement=document.createElement('bisweb-dialogelement');
-        console.log('Dlg=',this.dialogElement);
+
         let graphWindow =this.dialogElement.create('Task Plotter', width, height, left, top, 200, false);
         
         let innerh = height - 120;
@@ -317,7 +312,7 @@ class StudyTaskManager {
         this.canvas.width=cw;
         this.canvas.height=ch;
         graphWindow.widget.append($(this.canvas));
-        console.log('Canvas=',this.canvas);
+
 
         this.dialogElement.removeCloseButton();
         let footer=this.dialogElement.getFooter();
@@ -343,64 +338,91 @@ class StudyTaskManager {
             return;
         }
 
-        const taskNames = this.taskdata.taskNames;
         const footer=this.dialogElement.getFooter();
         const parsedRuns = this.taskdata.runs;
         const runKeys=Object.keys(parsedRuns);
-        
+
+
         for (let i=0;i<runKeys.length;i++) {
             let runName=runKeys[i];
             this.addItemToFooter(footer,runName);
         }
+        
+        webutil.createbutton({
+            'name' : 'Take Snapshot',
+            'type' : 'success',
+            'parent' : footer,
+            'css'  : {
+                'margin-left': '50px',
+                'margin-right': '10px',
+                'margin-top' : '0px',
+            },
+            callback : ( () => {
+                this.takeSnapshot();
+            })
+        });
 
+        const taskNames = this.taskdata.taskNames;
         
         let canvas=this.canvas;
         let context=canvas.getContext("2d");
-        context.clearRect(0,0,canvas.width,canvas.height);
-        context.fillStyle="#444444";
-        context.fillRect(0,0,canvas.width,canvas.height);
-        
         context.font='14px Arial';
-        context.fillStyle = "#ffffff";
-
-        const textw=120,texth=25,offset=20;
-        this.legendMargin=Math.ceil(textw+offset);
-
-        console.log('Canvas=',canvas.width,canvas.height,'margin=',this.legendMargin);
-
-        this.margins=[OFFSET,OFFSET,(canvas.width-this.legendMargin-OFFSET),canvas.height-2*OFFSET ];
-        this.htask=Math.floor((this.margins[3]-1.1*AXIS)/taskNames.length);
-        
-        for (let i=0;i<taskNames.length;i++) {
-            let y=50+i*this.htask;
-            let x=Math.round(canvas.width-this.legendMargin+offset/2);
-            let cl=util.objectmapcolormap[i+1];
-            context.fillStyle=`rgba(${cl[0]},${cl[1]},${cl[2]},${OPACITY})`;
-            context.fillRect(x,y,textw,1.25*texth);
-            context.fillStyle="#000000";
-            context.fillText(taskNames[i],Math.floor(x+offset/2),Math.floor(y+texth));
+        this.textWidth=context.measureText(taskNames[0]).width;
+        for (let i=1;i<taskNames.length;i++) {
+            let w=context.measureText(taskNames[i]).width;
+            if (w>this.textWidth)
+                this.textWidth=w;
         }
-
+        this.textWidth*=1.5;
         
+        this.legendMargin=Math.ceil(this.textWidth+OFFSET);
+        this.margins=[OFFSET,OFFSET+50,(canvas.width-this.legendMargin-OFFSET),canvas.height-2*OFFSET-50 ];
+        this.htask=Math.floor((this.margins[3]-AXIS-OFFSET)/taskNames.length);
+        this.htaskbase=this.margins[0]+0.1*this.htask;
         this.plotTaskDataRun(runKeys[0]);
     }
 
     /** Plot data for a single run */
     plotTaskDataRun(runName) {
 
-        this.dialogElement.setTitle('Showing Task Definitions for '+runName.toUpperCase());
-        
+        const taskNames = this.taskdata.taskNames;
+
         let canvas=this.canvas;
         let context=canvas.getContext("2d");
+        context.clearRect(0,0,canvas.width,canvas.height);
+        context.fillStyle="#444444";
+        context.fillRect(0,0,canvas.width,canvas.height);
         
+        context.font='20px Arial';
+        context.textAlign="center";
+        context.textBaseline="middle";
+        context.fillStyle="#ffffff";
+        context.fillText('Showing Task Definitions for '+runName.toUpperCase(),
+                         0.5*canvas.width,0.5*this.margins[1]);
+        
+        context.fillStyle = "#ffffff";
+        context.font='16px Arial';
+        const texth=25;
+        
+        for (let i=0;i<taskNames.length;i++) {
+            let y=this.htaskbase+(i+0.5)*this.htask;
+            let x=Math.round(canvas.width-this.legendMargin+OFFSET/2);
+            let cl=util.objectmapcolormap[i+1];
+            context.fillStyle=`rgba(${cl[0]},${cl[1]},${cl[2]},${OPACITY})`;
+            context.fillRect(x,y,this.textWidth,1.25*texth);
+            context.fillStyle="#000000";
+            console.log('X=',x+OFFSET/2);
+            context.fillText(taskNames[i],Math.floor(x+this.textWidth/2),Math.floor(y+0.625*texth));
+        }
+
         context.fillStyle="#383838";
         context.fillRect(this.margins[0],this.margins[1],this.margins[2],this.margins[3]);
 
-        const taskNames = this.taskdata.taskNames;
+
         const parsedRuns = this.taskdata.runs;
         const runInfo=parsedRuns[runName];
 
-        let taskbase=this.margins[0];
+
         
         let maxt=0;
         for (let i=0;i<taskNames.length;i++) {
@@ -424,7 +446,7 @@ class StudyTaskManager {
         context.beginPath();
         let liney=this.margins[1]+this.margins[3]-0.7*AXIS;
         context.strokeStyle="#ffffff";
-        console.log('axis=',axis_start,axis_stop,liney,this.margins);
+
         context.moveTo(axis_start,liney);
         context.lineTo(axis_stop,liney);
         context.stroke();
@@ -440,7 +462,7 @@ class StudyTaskManager {
             // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
             if (typeof runpairs[0] === "number")
                 runpairs=[runpairs];
-            let maxy=taskbase+this.htask*(i+1);
+            let maxy=this.htaskbase+this.htask*(i+1)+OFFSET;
             let miny=maxy-0.8*this.htask;
             
             context.save();
@@ -455,7 +477,7 @@ class StudyTaskManager {
             let cl=util.objectmapcolormap[i+1];
             for (let i=0;i<runpairs.length;i++) {
                 let limits=[ runpairs[i][0], runpairs[i][1] ];
-                console.log('Draing',task,limits,cl);
+
                 for (let i=0;i<=1;i++) {
                     limits[i]=axis_start+(limits[i]/maxt)*(axis_stop-axis_start);
                 }
@@ -545,6 +567,11 @@ class StudyTaskManager {
 
     }
 
+    /** take snapshot */
+    takeSnapshot() {
+        let snapshotElement=this.viewer.getSnapShotController();
+        snapshotElement.saveCanvasToPNG(this.canvas);
+    }
 
 
 
