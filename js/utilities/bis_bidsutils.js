@@ -998,7 +998,6 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
 
     function formatEntry(onset, duration) {
         let lowRange = parseInt(onset), highRange = parseInt(lowRange) + parseInt(duration);
-        console.log('low range', lowRange, 'highRange', highRange);
         return `${lowRange}-${highRange}`;
     }
 };

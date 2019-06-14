@@ -56,8 +56,8 @@ class StudyTaskManager {
             'type': 'danger',
             'parent' : this.widget,
             'css' : {
-                'width' : '40%',
-                'margin-left' : '15px',
+                'width' : '45%',
+                'margin-left' : '5px',
                 'margin-bottom' : '10px',
             },
 
@@ -102,14 +102,24 @@ class StudyTaskManager {
             }
         });
 
-        bis_webfileutil.createFileButton({ 
-            'name': 'Convert task file to .tsv', 
+        let advancedOptionsModal = webutil.createmodal('Advanced Options');
+        webutil.createbutton({ 
+            'name' : 'Show advanced options',
             'type' : 'primary',
             'parent' : this.widget,
             'css' : {
-                'width' : '40%',
-                'margin-left' : '15px',
+                'width' : '45%',
+                'margin-left' : '5px',
             },
+            'callback' : () => {
+                advancedOptionsModal.dialog.modal('show');
+            }
+        });
+
+        let tasktotsvButton = bis_webfileutil.createFileButton({ 
+            'name': 'Convert task file to .tsv', 
+            'type' : 'primary',
+            'parent' : advancedOptionsModal.body,
             'callback': (f) => {
                 this.createTSVParseModal(f);
             },
@@ -123,20 +133,13 @@ class StudyTaskManager {
         });
 
 
-        /*let convertTasksButton = bis_webfileutil.createFileButton({
+        let taskfromtsvButton = bis_webfileutil.createFileButton({
             'name' : 'Convert .tsvs to task file',
             'type' : 'info',
+            'parent' : advancedOptionsModal.body,
             'callback' : (f) => {
                 let saveFileCallback = (o) => { 
-                    bootbox.prompt({
-                        'size' : 'small',
-                        'title' : 'Enter the TR for the study',
-                        'input' : 'number',
-                        'callback' : (result) => {
-                        bis_bidsutils.parseTaskFileFromTSV(f, o, result);
-                        }  
-                    });
-
+                    bis_bidsutils.parseTaskFileFromTSV(f, o, result);
                 };
                     
                 setTimeout( () => {
@@ -154,7 +157,10 @@ class StudyTaskManager {
                 'filters' : 'DIRECTORY',
                 'save' : false
             }
-        );*/
+        );
+
+        tasktotsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide'));
+        taskfromtsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide')); 
     }
 
     /**
