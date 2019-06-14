@@ -16,7 +16,6 @@ class StudyTaskManager {
         this.taskplotter=null;
         this.viewerid=viewerid;
         this.taskdata=null;
-        console.log('Task Manager created');
     }
 
     getTaskData() {
@@ -166,17 +165,39 @@ class StudyTaskManager {
      */
     async loadStudyTaskData(name) {
 
-        //declared here so they can be accessed by the functions below
-        
-        try {
-            this.taskdata= await bisweb_taskutils.parseFile(name);
-            console.log('this.taskdata', this.taskdata);
-        } catch(e) {
-            webutil.createAlert('Failed to parse task definitions',true);
-            return Promise.reject();
-        }
+        let loadTaskData = async () => {
+            try {
+                this.taskdata= await bisweb_taskutils.parseFile(name);
+                console.log('this.taskdata', this.taskdata);
+            } catch(e) {
+                webutil.createAlert('Failed to parse task definitions',true);
+                return Promise.reject();
+            }
+    
+            this.plotTaskData();
+        };
 
-        this.plotTaskData();
+        let openParseBIDSModal = () => {
+            bootbox.confirm('Parse BIDS .tsv files on import? These are required for full BIDS compatibility.', async (makeTsv) => {
+                if (makeTsv) {
+                    await loadTaskData();
+                    let baseDirectory = this.studypanel.baseDirectory;
+                    bis_bidsutils.parseTaskFileToTSV(this.taskdata, baseDirectory, true);
+                }
+            });
+        };
+
+        if (this.taskdata) {
+            bootbox.confirm('Overwrite existing data?', (overwrite) => {
+                if (overwrite) {
+                    openParseBIDSModal();
+                } else {
+                    webutil.createAlert('Import canceled.', false);
+                }
+            });
+        } else {
+            openParseBIDSModal();
+        }
     }
 
     setTaskData(taskdata,plot=true) {
