@@ -13,7 +13,7 @@ const BisWebTaskManager = require('bisweb_studytaskmanager');
 /** TODO
  *
  *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
- *  2. Save Study --> .biswebstudy this should include the task definition JSON as a field
+ *  2.  (DONE) Save Study --> .biswebstudy this should include the task definition JSON as a field
  *  3. Load Study, create tree and tasks (call studytaskmanager.setTaskData())
  *  4. Import Task Defintion
         1. a warning if we have data .. not to overwrite
@@ -166,14 +166,12 @@ class StudyPanel extends HTMLElement {
         this.createLoadSaveStudyButtons(parent);
         this.createImportButtons(parent);
         parent.append($('<HR width="90%">'));
-        this.listContainer =  webutil.creatediv(
-            { parent: parent ,
-              css : { 'height': '350px',
-                      'max-height' : '1500px',
-                      'width': '95%',
-                      'overflow': 'auto',
-                      'margin-top': '5px' }
-            });
+
+        //file list container is generated each time because jstree cannot reuse the same div to make a new tree
+        this.listContainerDivID = webutil.getuniqueid();
+        let listContainerDiv = $(`<div id=${this.listContainerDivID}></div>`);
+        parent.append(listContainerDiv);
+
         parent.append($('<HR width="90%">'));
         this.elementsContainer =  webutil.creatediv(
             { parent: parent ,
@@ -201,7 +199,6 @@ class StudyPanel extends HTMLElement {
 
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
                 this.parseStudyTSVFiles(baseDir).then( (taskdata) => {
-                    this.taskManager.setTaskData(taskdata, false);
                     this.taskManager.createGUI();
                     return;
                 });
@@ -224,6 +221,8 @@ class StudyPanel extends HTMLElement {
             getFileList(parsedData.baseDirectory).then((fileinfo) => {
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
+
+                if (parsedData.tasks) { this.taskManager.setTaskData(parsedData.tasks, false); }
                 this.taskManager.createGUI();
             });
         });
@@ -246,6 +245,7 @@ class StudyPanel extends HTMLElement {
 
                     bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then( (obj) => {
                         bisweb_taskutils.parseFile(obj).then( (formattedObj) => {
+                            this.taskManager.setTaskData(formattedObj, false);
                             resolve(formattedObj);
                         });
                     }).catch( (e) => {
@@ -279,13 +279,6 @@ class StudyPanel extends HTMLElement {
         this.studyType = type;
         let fileTree = parseFileList(files);
 
-        //check what type of list this is, a list of names or a fully parsed directory
-        /*if (typeof files[0] === 'string') {
-            fileTree = parseFileList(files);
-        } else {
-            fileTree = files;
-        }*/
-
         //alpabetize tree entries
         sortEntries(fileTree);
         let len=fileTree.length;
@@ -296,8 +289,19 @@ class StudyPanel extends HTMLElement {
             elem['state']['opened']=true;
         }
 
-        this.listContainer.empty();
-        
+        let listContainerDiv = this.panel.getWidget().find('#' + this.listContainerDivID);
+        listContainerDiv.empty();
+
+        this.listContainer = webutil.creatediv(
+            { parent: listContainerDiv,
+              css : { 'height': '350px',
+                      'max-height' : '1500px',
+                      'width': '95%',
+                      'overflow': 'auto',
+                      'margin-top': '5px' }
+            });
+        console.log('list container', this.listContainer, listContainerDiv);
+
         let tree = this.listContainer.jstree({
             'core': {
                 'data': fileTree,
@@ -358,6 +362,7 @@ class StudyPanel extends HTMLElement {
             });
         }
 
+        console.log('tree', tree);
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
 
@@ -706,12 +711,15 @@ class StudyPanel extends HTMLElement {
                 'contents': reconstructedTree
             };
 
+            let taskInfo = this.taskManager.getTaskData() || null;
+            if (taskInfo) { treeMetadataContainer.tasks = taskInfo; }
+
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
-            //let taskInfo = 
+            
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
-            if (splitPath.length < 2 || splitPath[1] !== 'STUDY' || splitPath[1] !== 'study') {
-                splitPath[1] = 'study';
+            if (splitPath.length < 2 || splitPath[1] !== 'biswebstudy' || splitPath[1] !== 'biswebstudy') {
+                splitPath[1] = 'biswebstudy';
             }
 
             filepath = splitPath.join('.');
