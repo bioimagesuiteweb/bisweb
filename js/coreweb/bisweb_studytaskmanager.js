@@ -89,8 +89,8 @@ class StudyTaskManager {
             'type': 'danger',
             'parent' : this.widget,
             'css' : {
-                'width' : '45%',
-                'margin-left' : '5px',
+                'width' : '40%',
+                'margin-left' : '15px',
                 'margin-bottom' : '10px',
             },
 
@@ -140,8 +140,8 @@ class StudyTaskManager {
             'type' : 'primary',
             'parent' : this.widget,
             'css' : {
-                'width' : '45%',
-                'margin-left' : '5px',
+                'width' : '40%',
+                'margin-left' : '15px',
             },
             'callback' : () => {
                 advancedOptionsModal.dialog.modal('show');
@@ -458,6 +458,7 @@ class StudyTaskManager {
         for (let i=0;i<taskNames.length;i++) {
             let task=taskNames[i];
             let runpairs=runInfo[task];
+            console.log('RunPairs=',runpairs);
             // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
             if (typeof runpairs[0] === "number")
                 runpairs=[runpairs]; 
@@ -518,9 +519,15 @@ class StudyTaskManager {
         }
         
         // Vertical Grid Lines
-        for (let t=0;t<=maxt;t+=10.0) {
+
+        let stept=20.0;
+        while (stept*12<maxt)
+            stept=stept+10.0;
+        
+        
+        for (let t=0;t<=maxt;t+=stept) {
             let x=(t/maxt)*(axis_stop-axis_start)+axis_start;
-            let x2=((t+5)/maxt)*(axis_stop-axis_start)+axis_start;
+            let x2=((t+0.5*stept)/maxt)*(axis_stop-axis_start)+axis_start;
             context.beginPath();
             context.moveTo(x,liney-0.2*AXIS);
             context.lineTo(x,liney+0.2*AXIS);

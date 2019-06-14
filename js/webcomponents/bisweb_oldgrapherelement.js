@@ -668,5 +668,3 @@ class OldGrapherModule extends HTMLElement {
 
 webutil.defineElement('bisweb-oldgrapherelement', OldGrapherModule);
 
-
-console.log('Old grapher');

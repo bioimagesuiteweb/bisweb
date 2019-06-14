@@ -148,6 +148,5 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
 
 module.exports = {
     parseEntry : parseEntry,
-    parseFile : parseFile,
-    parseData : parseData
+    parseFile : parseFile
 };
