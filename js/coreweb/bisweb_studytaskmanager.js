@@ -217,12 +217,28 @@ class StudyTaskManager {
         };
 
         let openParseBIDSModal = () => {
-            bootbox.confirm('Parse BIDS .tsv files on import? These are required for full BIDS compatibility.', async (makeTsv) => {
-                if (makeTsv) {
-                    await loadTaskData();
-                    let baseDirectory = this.studypanel.baseDirectory;
-                    bis_bidsutils.parseTaskFileToTSV(this.taskdata, baseDirectory, true);
-                }
+            bootbox.confirm({
+                'title' : 'Parse BIDS?',
+                'message' : 'Parse BIDS .tsv files on import? These are required for full BIDS compatibility.',
+                'buttons' : {
+                    'confirm' : {
+                        'label' : 'Yes',
+                        'className' : 'btn-success'
+                    },
+                    'cancel' : {
+                        'label' : 'No', 
+                        'className' : 'btn-danger'
+                    }
+                },
+                'callback' :  async (makeTsv) => {
+                    if (makeTsv) {
+                        await loadTaskData();
+                        let baseDirectory = this.studypanel.baseDirectory;
+                        bis_bidsutils.parseTaskFileToTSV(this.taskdata, baseDirectory, true);
+                    } else {
+                        await loadTaskData();
+                    }
+                },
             });
         };
 
