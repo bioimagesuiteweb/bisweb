@@ -200,10 +200,11 @@ class StudyPanel extends HTMLElement {
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
                 this.parseStudyTSVFiles(baseDir).then( () => {
                     this.taskManager.createGUI();
+                    this.taskManager.plotTaskData();
                 }).catch( (e) => {
                     console.log('An error occured while trying to parse tsv files', e);
                     this.taskManager.createGUI();
-                })
+                });
                 
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
@@ -224,7 +225,10 @@ class StudyPanel extends HTMLElement {
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
 
-                if (parsedData.tasks) { this.taskManager.setTaskData(parsedData.tasks, false); }
+                if (parsedData.tasks) {
+                    this.taskManager.setTaskData(parsedData.tasks, false);
+                    this.taskManager.plotTaskData();
+                }
                 this.taskManager.createGUI();
             });
         });
