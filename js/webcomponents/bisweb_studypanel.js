@@ -203,7 +203,7 @@ class StudyPanel extends HTMLElement {
                 }).catch( (e) => {
                     console.log('An error occured while trying to parse tsv files', e);
                     this.taskManager.createGUI();
-                })
+                });
                 
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
