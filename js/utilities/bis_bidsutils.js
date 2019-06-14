@@ -204,10 +204,9 @@ let getBIDSDirname =  (filename, flist, dirs) => {
 
     let lst=name.split(SEPARATOR);
     name=lst[lst.length-1];
+
     if (DEBUG)
         console.log('Name=',name,lst,'sep=',SEPARATOR);
-
-
     
     if (name.includes('bold') || name.includes('asl') || name.includes('rest') || name.includes('task')) {
         dirname = dirs.funcdir;
@@ -227,7 +226,7 @@ let getBIDSDirname =  (filename, flist, dirs) => {
 
     if (DEBUG)
         console.log('Name --->=',dirname);
-    return dirname;
+    return bis_genericio.getBaseName(dirname);
 };
 
 
@@ -348,9 +347,6 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
             console.log('Name=',dirname,dirs.subjectdirectory);
         dirname = bis_genericio.joinFilenames(dirs.subjectdirectory, dirname);
 
-
-
-        
         let basename = bis_genericio.getBaseName(name);
         let dirbasename = bis_genericio.getBaseName(dirname);
 

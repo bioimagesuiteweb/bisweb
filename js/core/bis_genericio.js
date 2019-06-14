@@ -610,10 +610,9 @@ let isSaveDownload =function() {
  * Runs file conversion for a given filetype using server utilities. 
  * 
  * @param {Object} params - Parameter object for the file conversion. 
- * @param {String} params.fileType - The type of the file to convert from. Currently supports 'dicom'.
  * @param {String} params.inputDirectory - The input directory to run file conversions in. 
  */
-let runFileConversion = (params) => {
+let runDICOMConversion = (params) => {
 
     /*let updateFn = (obj) => {
         console.log('update fn', obj);
@@ -621,15 +620,11 @@ let runFileConversion = (params) => {
 
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
-            if (params.fileType === 'dicom') {
-                fileServerClient.runModule('dicomconversion', params, console.log, true)
-                    .then((obj) => {
-                        console.log('Conversion done', obj);
-                        resolve(obj);
-                    }).catch((e) => { reject(e); });
-            } else {
-                reject('Error: unsupported file type', params.fileType);
-            }
+            fileServerClient.runModule('dicomconversion', params, console.log, true)
+                .then((obj) => {
+                    console.log('Conversion done', obj);
+                    resolve(obj);
+                }).catch((e) => { reject(e); });
         } else {
             reject('No fileserver client defined');
         }
@@ -800,7 +795,7 @@ const bisgenericio = {
     getPathSeparator : getPathSeparator,
     //
     isSaveDownload : isSaveDownload,
-    runFileConversion : runFileConversion,
+    runDICOMConversion : runDICOMConversion,
     makeFileChecksum : makeFileChecksum,
     //
     readPartialDataFromStartOfFile : readPartialDataFromStartOfFile

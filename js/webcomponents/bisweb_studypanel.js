@@ -1267,7 +1267,7 @@ class StudyPanel extends HTMLElement {
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
         
-            promise=bis_genericio.runDICOMConversiong({
+            promise=bis_genericio.runDICOMConversion({
                 'fixpaths' : true,
                 'inputDirectory': inputDirectory,
                 'outputDirectory' : outputDirectory,
@@ -1284,8 +1284,8 @@ class StudyPanel extends HTMLElement {
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             webutil.dismissAlerts();
-            this.filetreepanel.importFilesFromDirectory(output);
-            this.filetreepanel.showTreePanel();
+            this.importFilesFromDirectory(output);
+            this.showTreePanel();
         }).catch( (e) => {
             console.log('An error occured during file conversion', e);
         });
