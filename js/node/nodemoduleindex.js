@@ -21,11 +21,7 @@ const universalmodules=require('moduleindex');
 const base=require('nodemoduleindex_base');
 
 const moduleImports = {
-    'bisserver' : require('./fileservermodule.js'),
-    'pipeline' : require('./pipelinemodule.js'),
-    'concatenateimages' : require('./concatenateImages.js'),
-    'headerinfo' : require('./bis_headerinfo.js'),
-    'computeroilarge' : require('./computeROILarge.js')
+    'bisserver' : require('./fileservermodule.js')
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

@@ -88,8 +88,13 @@ class BaseModule {
             }
         });
 
+
         if (error.length > 0)
             return Promise.reject(error.join("\n"));
+
+        if (params.extraArgs)
+            fullparams.extraArgs=params.extraArgs;
+        
 
         const self=this;
         let name=this.name;
@@ -99,6 +104,7 @@ class BaseModule {
                 self.storeCommentsInOutputs(baseutils.getExecutableArguments(name), params, baseutils.getSystemInfo(biswrap));
                 resolve(m);
             }).catch( (e) => {
+                console.log('Error=',e.stack,e);
                 reject(e);
             });
         });
@@ -571,6 +577,8 @@ class BaseModule {
             }).catch((e) => { reject(e); });
         });
     }
+
+    
 }
 
 
