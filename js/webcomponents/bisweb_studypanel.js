@@ -14,8 +14,8 @@ const BisWebTaskManager = require('bisweb_studytaskmanager');
  *
  *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
  *  2.  (DONE) Save Study --> .biswebstudy this should include the task definition JSON as a field
- *  3. Load Study, create tree and tasks (call studytaskmanager.setTaskData())
- *  4. Import Task Defintion
+ *  3.  (DONE) Load Study, create tree and tasks (call studytaskmanager.setTaskData())
+ *  4.  (DONE) Import Task Defintion
         1. a warning if we have data .. not to overwrite
         2. a yes/no question as to whether to create tsv files for full BIDS compatibility
  *  Hide this Convert task to tsv (advanced)  yes/no question before it does anything
@@ -198,10 +198,12 @@ class StudyPanel extends HTMLElement {
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
 
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
-                this.parseStudyTSVFiles(baseDir).then( (taskdata) => {
+                this.parseStudyTSVFiles(baseDir).then( () => {
                     this.taskManager.createGUI();
-                    return;
-                });
+                }).catch( (e) => {
+                    console.log('An error occured while trying to parse tsv files', e);
+                    this.taskManager.createGUI();
+                })
                 
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
@@ -247,7 +249,7 @@ class StudyPanel extends HTMLElement {
                         bisweb_taskutils.parseFile(obj).then( (formattedObj) => {
                             this.taskManager.setTaskData(formattedObj, false);
                             resolve(formattedObj);
-                        });
+                        }).catch( (e) => { reject(e); });
                     }).catch( (e) => {
                         reject(e);
                     });
