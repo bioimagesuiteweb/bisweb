@@ -445,6 +445,10 @@ tspan {
     background-color :  rgba(27, 35, 83, 0.8);
 }
 
+.tau-chart__legend__reset:hover {
+    background-color : rgba(202, 0, 0, 0.4);
+}
+
 .tau-chart__legend__guide--color {
     height : 5px;
 }
@@ -480,4 +484,25 @@ tspan {
     background-color : rgba(29, 224, 150, 0.4);
 }
 
+.bisweb-centered {
+    margin: 0 auto;
+    width: 50%;
+}
 
+.bisweb-pipeline-list-item:hover {
+    background-color : rgba(10, 63, 143, 0.5);
+}
+
+.bisweb-outline {
+    background-color : rgb(0,0,0,0);
+    transition : background-color 0.5s;
+}
+
+.bisweb-outline-primary {
+    border-color : dodgerblue;
+    color : dodgerblue;
+}
+
+.bisweb-outline-primary.active {
+    background-color : rgba(30, 144, 255, 0.5);
+}

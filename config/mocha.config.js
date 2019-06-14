@@ -48,7 +48,7 @@ module.exports = {
 	modules : [ path.resolve(mypath,'node_modules'),
                 path.resolve(mypath,'lib/js'),
                 path.resolve(mypath,'js'),
-                path.resolve(mypath,'js/legacy'),
+                path.resolve(mypath,'js/utilities'),
                 path.resolve(mypath,'js/core'),
                 path.resolve(mypath,'js/dataobjects'),
                 path.resolve(mypath,'js/node'),

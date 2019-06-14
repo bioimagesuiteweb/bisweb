@@ -6,8 +6,8 @@
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
     "scripts": {
         "test": "mocha test",
-        "bisweb" : "node js/bin/bisweb.js",
-        "localtest" : "mocha test/test_module.js --input local"
+        "bisweb": "node js/bin/bisweb.js",
+        "localtest": "mocha test/test_module.js --input local"
     },
     "keywords": [
         "Neuroimaging",
@@ -47,6 +47,7 @@
         "jquery": "3.3.1",
         "jsonlint": "1.6.3",
         "jstree": "3.3.7",
+        "jszip": "^3.2.1",
         "localforage": "1.7.3",
         "moment": "2.22.1",
         "numeric": "1.2.6",

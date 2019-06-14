@@ -23,7 +23,6 @@ const webutil = require('bis_webutil');
 
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
-const biswrap = require('libbiswasm_wrapper');
 const userPreferences = require('bisweb_userpreferences.js');
 
 /**
@@ -146,49 +145,38 @@ class ModuleManagerElement extends HTMLElement {
 
     initializeElements(menubar, viewers = []) {
 
-        return new Promise( (resolve,reject) => {
-            
-            if (!this.algorithmController) {
-                reject('No algorithm controller');
-            }
+        if (!this.algorithmController) {
+            return null;
+        }
         
-            this.viewers = viewers;
-            let numviewers = this.viewers.length;
-            for (let i = 0; i < numviewers; i++)
-                this.viewers[i].addImageChangedObserver(this);
-
-            let moduleoptions = { 'numViewers': numviewers, 'dual' : false };
-            if (numviewers>1)
-                moduleoptions.dual=true;
-            
-            this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
-            
-            if (this.mode !== 'paravision')
-                this.moduleMenu[2] = webutil.createTopMenuBarMenu('Segmentation', menubar);
-            else
-                this.moduleMenu[2] = this.moduleMenu[1];
-            
-            if (this.mode!=='single') {
-                this.moduleMenu[3] = webutil.createTopMenuBarMenu('Registration', menubar);
-            }
-            
-            biswrap.initialize().then( () => {
-                this.initializeElementsInternal(menubar,moduleoptions);
-                resolve(this.moduleMenu);
-            }).catch( (e) => {
-                reject(e+' '+e.stack);
-            });
-        });
+        this.viewers = viewers;
+        let numviewers = this.viewers.length;
+        for (let i = 0; i < numviewers; i++)
+            this.viewers[i].addImageChangedObserver(this);
+        
+        let moduleoptions = { 'numViewers': numviewers, 'dual' : false };
+        if (numviewers>1)
+            moduleoptions.dual=true;
+        
+        this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
+        
+        if (this.mode !== 'paravision')
+            this.moduleMenu[2] = webutil.createTopMenuBarMenu('Segmentation', menubar);
+        else
+            this.moduleMenu[2] = this.moduleMenu[1];
+        
+        if (this.mode!=='single') {
+            this.moduleMenu[3] = webutil.createTopMenuBarMenu('Registration', menubar);
+        }
+        
+        this.initializeElementsInternal(menubar,moduleoptions);
+        return this.moduleMenu;
     }
 
     
     initializeElementsInternal(menubar,moduleoptions) {
 
-        let usesgpl=biswrap.uses_gpl();
-        if (usesgpl)
-            usesgpl=true;
-        else
-            usesgpl=false;
+        let usesgpl=window.bioimagesuitewasmpack.usesgpl;
 
         this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
         userPreferences.safeGetItem("internal").then( (f) => {

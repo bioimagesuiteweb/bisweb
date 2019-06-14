@@ -44,6 +44,7 @@ let ModuleList={};
  * @param {Number} opts.numViewers - Number of Image Viewers attached
  * @param {String} opts.name - Name of the panel / panel (if set)
  * @param {Boolean} opts.dual - If true allow dock and side bar (default false)
+ * @param {Number} opts.width - Size for the width of the custom element controller.
  */
 
 class CustomModule {
@@ -85,28 +86,36 @@ class CustomModule {
         this.name = opts.name || description.dialogname || description.name;
         this.dual = opts.dual || false;
 
-        
-        // Three states
+        let width = opts.width || 250;
 
+        // Three states
         this.panel=new BisWebPanel(layoutcontroller,{
             name : this.name,
-            width : 250,
+            width : width,
             hasfooter : false,
             dual : this.dual,
         });
 
+        let paramsMargin = opts.paramsMargin || '10px';
+        let buttonsMargin = opts.buttonsMargin || '20px';
+
         this.basewidget=webutil.creatediv({  parent: this.panel.getWidget(),
                                              css : {
-                                                 'padding-top' : '10px',
+                                                 'padding-top' : paramsMargin,
                                                  'padding-left' : '2px'
                                              }
                                           });
+
         this.footer=webutil.creatediv({  parent: this.panel.getWidget(),
                                          css : {
-                                             'padding-top' : '20px',
+                                             'padding-top' : buttonsMargin,
                                              'padding-left' : '2px'
                                          }
                                       });
+
+        $(this.basewidget).addClass('bisweb-customelement-body');
+        $(this.footer).addClass('bisweb-customelement-footer');
+
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
@@ -281,20 +290,30 @@ class CustomModule {
      * @param{FileObject} fobj - the file object to load from
      */
     loadParameters(fobj) {
-        let description = this.module.getDescription();
         this.module.loadParameters(fobj).then( (obj) => {
-            description.params.forEach((param) => {
-                let varname=param.varname;
-                if (obj[varname]) {
-                    this.guiVars[varname] = obj[varname];
-                    this.parameterControllers[varname].updateDisplay();
-                }
-            });
+            this.updateParams(obj);
             this.updateModuleGUIFromInputObjects();
         }).catch( (e) => {
             let fname=bisgenericio.getFixedLoadFileName(fobj);
             webutil.createAlert(`Failed to load parameters from ${fname} (${e})`,true);
         });
+    }
+
+    /**
+     * Updates internal parameters with params dictionary.
+     * 
+     * @param {Object} obj - Parameters object.
+     */
+    updateParams(obj) {
+        let description = this.module.getDescription();
+        description.params.forEach((param) => {
+            let varname=param.varname;
+            if (obj[varname]) {
+                this.guiVars[varname] = obj[varname];
+                this.parameterControllers[varname].updateDisplay();
+            }
+        });
+        this.updateModuleGUIFromInputObjects();
     }
 
 
@@ -324,8 +343,11 @@ class CustomModule {
     
     /**
      * If needed creates the GUI. It then updates this with any new inputs
+     * 
+     * @param {Object} opts - Options for GUI creation.
+     * @param {Number} opts.width - Desired width for the container.
      */
-    createOrUpdateGUI() {
+    createOrUpdateGUI(opts = {}) {
         //if the module has modifications to its parameters add them, otherwise ignore them
 
         const self = this;
@@ -337,7 +359,8 @@ class CustomModule {
             let generatedContent = parser.parseDescriptionAndCreateGUI(this.basewidget,
                                                                        this.footer,
                                                                        description,
-                                                                       this.moduleOptions['numViewers']);
+                                                                       this.moduleOptions['numViewers'],
+                                                                       opts);
             
             // Gui Event Handling for Input stuff
             this.generatedContent=generatedContent;

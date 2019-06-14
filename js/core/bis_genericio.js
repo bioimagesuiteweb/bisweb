@@ -449,6 +449,13 @@ let getMatchingFiles=function(matchstring) {
     }
 
     let m=glob.sync(matchstring);
+    if (path.sep==='\\') {
+        let m2=[];
+        for (let i=0;i<m.length;i++) {
+            m2.push(m[i].replace(/\//g,path.sep));
+        }
+        m=m2;
+    }
     return Promise.resolve(m);
 };
 

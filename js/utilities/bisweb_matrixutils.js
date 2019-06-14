@@ -11,6 +11,39 @@ const WAVRestoreTime = 2.0;
 const peak = 1.0;
 let tr = 1.0;
 
+let parseTaskMatrix = (taskdata, taskNames) => {
+    let taskMatrix = new BiswebMatrix();
+    let cols = taskNames.length;
+
+    let runNames = Object.keys(taskdata);
+    let randomRun = taskdata[runNames[0]].parsedRegions;
+    let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
+    let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
+
+    //sort run names so tasks are created in order
+    runNames.sort((a, b) => {
+        let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
+        if (aIndex && !bIndex) { return a; }
+        if (bIndex && !aIndex) { return b; }
+        if (!aIndex && !bIndex) { return a.localeCompare(b); }
+        else { return aIndex - bIndex; }
+    });
+
+    taskMatrix.allocate(rows, cols);
+    let currentRun;
+    for (let i = 0; i < rows; i++) {
+        currentRun = runNames[Math.floor(i / runLength)];
+        for (let j = 0; j < cols; j++) {
+            //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
+            let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
+            let datapoint = taskArray ? taskArray[i % runLength] : 0;
+            taskMatrix.setElement(i, j, datapoint);
+        }
+    }
+
+    return { 'matrix': taskMatrix, 'runs': runNames };
+};
+
 /**
  * Creates the matrix of task regions convolved with the hemodynamic response function. 
  * 
@@ -186,6 +219,7 @@ let addDriftTerms = (matrix, runs, order = 1) => {
 };
 
 module.exports = {
+    parseTaskMatrix : parseTaskMatrix,
     createStackedWaveform : createStackedWaveform,
     createWaveform : createWaveform,
     generateHDRF : generateHDRF,

@@ -19,7 +19,7 @@
 
 const $ = require('jquery');
 const Chart = require('chart.js');
-const webutil = require('bis_webutil');
+const bis_webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const util = require('bis_util');
 const fmriutil = require('bis_fmrimatrixconnectivity');
@@ -35,6 +35,7 @@ require('bootstrap-slider');
 require('../../node_modules/taucharts/dist/plugins/tooltip.js');
 require('../../node_modules/taucharts/dist/plugins/legend.js');
 require('../../node_modules/taucharts/dist/plugins/annotations.js');
+require('../../node_modules/taucharts/dist/plugins/export-to.js');
 
 Chart.defaults.global.defaultFontColor = 'white';
 Chart.defaults.global.defaultFontSize = '16';
@@ -67,7 +68,7 @@ class GrapherModule extends HTMLElement {
         this.viewerid = this.getAttribute('bis-viewerid');
         this.viewerid2 = this.getAttribute('bis-viewerid2');
 
-        webutil.runAfterAllLoaded( () => {
+        bis_webutil.runAfterAllLoaded( () => {
             this.viewer = document.querySelector(this.viewerid);
             this.viewer.addResizeObserver(this);
             if (this.viewerid2) { 
@@ -87,7 +88,7 @@ class GrapherModule extends HTMLElement {
      */
     renderGraphFrame(settings) {
 
-        this.graphcanvasid = webutil.getuniqueid();
+        this.graphcanvasid = bis_webutil.getuniqueid();
         let windowobj = this.createGraphWindow();
         let graphWindow = windowobj.window, dm = windowobj.dimensions;
 
@@ -146,7 +147,7 @@ class GrapherModule extends HTMLElement {
         }
 
         let width = dim[0] - 20;
-        let height = dim[1] - 20;
+        let height = dim[1] * 0.85;
         let left = 10;
         let top = 40;
 
@@ -154,6 +155,7 @@ class GrapherModule extends HTMLElement {
 
         let innerh = height - 120;
         let innerw = width - 10;
+
         graphWindow.widget.css({
             'margin': '0 0 0 0',
             'padding': '0 0 0 0',
@@ -190,17 +192,22 @@ class GrapherModule extends HTMLElement {
 
     /**
      * Creates UI elements inside the graph frame created by renderGraphFrame.
-     * @param {Object} settings — Parameter object for the GUI
+     * 
      * @param {bisweb_dialogelement} graphWindow — Dialog window containing the graph.
+     * @param {Object} settings — Parameter object for the GUI
      * @param {String} settings.chartType — Type of chart to render, one of 'bar', 'line', or 'task'. Renders different buttons for different tasks.
      */
     createGUI(graphWindow, settings) {
 
-        let bbar = graphWindow.getFooter();
-        bbar.empty();
+        let footer = graphWindow.getContent().find('.modal-footer');
+        $(footer).empty();
+
+        let bbar = bis_webutil.createbuttonbar({ 'css' : 'width: 80%;'});
 
         //settings button should be attached next to close button
-        let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
+        //TODO: Revisit settings menu? 
+        // -Zach
+        let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none; visibility: hidden'></button>'`);
         let dropdownButton = $(`
         <div class='btn-group dropleft' style='float: right;'>
             <button type='button dropdown-toggle' data-toggle='dropdown' class='bistoggle task-selector' style='float: right; visibility: hidden; -webkit-user-drag: none;'>
@@ -219,11 +226,9 @@ class GrapherModule extends HTMLElement {
         settingsButton.insertAfter(closeButton);
         dropdownButton.insertAfter(settingsButton);
 
-        console.log('create gui settings', settings);
         settingsButton.on('click', () => { this.createSettingsModal(settings); });
 
-        let buttons = [];
-        buttons.push(webutil.createbutton({
+        let timecourseButton = bis_webutil.createbutton({
             name: 'Plot Timecourse',
             type: "primary",
             tooltip: '',
@@ -231,31 +236,37 @@ class GrapherModule extends HTMLElement {
                 'margin-left': '10px',
             },
             position: "right",
-            parent: bbar
-        }).click(() => { this.replotGraph(false).catch(() => { }); }));
+        }).click(() => { this.replotGraph(false).catch(() => { }); });
 
-        buttons.push(webutil.createbutton({
-            name: 'Plot Single Frame',
-            type: "default",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "left",
-            parent: bbar
-        }).click(() => {
-            let cb = (frame) => {
-                this.replotGraph(frame).catch(() => { });
-            };
 
-            this.createFrameSelectorModal(cb);
+        console.log('settings', settings);
+        //Add button to look at a single frame of data if data is a timecourse
+        if (settings.chartType === 'line') {
+            let singleFrameButton = bis_webutil.createbutton({
+                name: 'Plot Single Frame',
+                type: "default",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+            }).click(() => {
+                let cb = (frame) => {
+                    this.replotGraph(frame).catch(() => { });
+                };
 
-        }));
+                this.createFrameSelectorModal(cb);
+            });
 
+
+            bbar.append(singleFrameButton);
+        }
+
+        bbar.append(timecourseButton);
 
         //check to see if current data exists and isn't an empty object
         if (this.currentdata && Object.entries(this.currentdata).length !== 0) {
-            webutil.createbutton({
+            let exportButton = bis_webutil.createbutton({
                 name: 'Export as CSV',
                 type: "info",
                 tooltip: 'Export Data',
@@ -263,19 +274,22 @@ class GrapherModule extends HTMLElement {
                     'margin-left': '10px',
                 },
                 position: "left",
-                parent: bbar
             }).click( (e) => {
                 e.preventDefault();
                 this.exportLastData();
             });
+
+            bbar.append(exportButton);
         }
 
         if (this.taskdata && Object.entries(this.taskdata).length !== 0) {
             
-            webfileutil.createFileButton({
+            let exportButton = webfileutil.createFileButton({
                 'type': 'info',
                 'name': 'Export task info',
-                'parent' : bbar,
+                'css' : { 
+                    'margin-left' : '10px'
+                },
                 'callback': (f) => {
                     this.taskdata.matrix.save(f);
                 },
@@ -287,12 +301,12 @@ class GrapherModule extends HTMLElement {
                 'serveronly' : true,
                 initialCallback: () => { return 'tasks.matr'; },
             });
+
+            bbar.append(exportButton);
         }
        
-        //TODO: this only loads the first time I open the frame? not sure why. 
-        //console.log('get image', this.viewer.getimage());
         if (this.viewer.getimage() || (this.viewer2 && this.viewer2.getimage())) {
-            webutil.createbutton({
+            let screenshotButton = bis_webutil.createbutton({
                 name: 'Save Snapshot',
                 type: "warning",
                 tooltip: '',
@@ -300,11 +314,15 @@ class GrapherModule extends HTMLElement {
                     'margin-left': '10px',
                 },
                 position: "left",
-                parent: bbar
-            }).click(() => { this.saveSnapshot(); });
+            }).click(() => { this.saveTauchartsSnapshot(); });
+
+            //TODO: Removed until I work out saving a snapshot with Taucharts
+            // -Zach
+            //bbar.append(screenshotButton);
         }
         
         bbar.tooltip();
+        footer.append(bbar);
     }
 
     /** Main Function 1 as called by the editor tool
@@ -318,6 +336,8 @@ class GrapherModule extends HTMLElement {
      */
     parsePaintedAreaAverageTimeSeries(orthoElement = null, imgdata = null) {
 
+        //TODO: Work out the issue with chartType not being specified in these settings but the correct chart being created anyway.
+        // -Zach
         let self = this;
         if (!orthoElement && !imgdata)
             return;
@@ -348,7 +368,7 @@ class GrapherModule extends HTMLElement {
 
         function formatChart(image, objectmap) {
             if (image === null || objectmap === null) {
-                webutil.createAlert('No image or objecmap in memory', true);
+                bis_webutil.createAlert('No image or objecmap in memory', true);
                 return;
             }
     
@@ -356,7 +376,7 @@ class GrapherModule extends HTMLElement {
             try {
                 matrix = fmriutil.roimean(image, objectmap);
             } catch (e) {
-                webutil.createAlert('Cannot create roi:' + e, true);
+                bis_webutil.createAlert('Cannot create roi:' + e, true);
                 return;
             }
     
@@ -397,7 +417,7 @@ class GrapherModule extends HTMLElement {
         }
 
         if (this.currentdata.y < 1) {
-            webutil.createAlert('No  objecmap in memory', true);
+            bis_webutil.createAlert('No  objecmap in memory', true);
             return Promise.reject();
         }
 
@@ -407,8 +427,6 @@ class GrapherModule extends HTMLElement {
             this.currentdata.numvoxels,
             null,
             singleFrame);
-
-        this.renderGraphFrame();
 
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -436,7 +454,7 @@ class GrapherModule extends HTMLElement {
         let makeLabels = labelsArray ? false : true;
         if (makeLabels) labelsArray = [];
 
-        if ( !y || y.length === 0) { webutil.createAlert('Error: no objectmap loaded', true); return; }
+        if ( !y || y.length === 0) { bis_webutil.createAlert('Error: no objectmap loaded', true); return; }
 
         if (this.numframes > 1 && singleFrame === false) {
 
@@ -556,7 +574,7 @@ class GrapherModule extends HTMLElement {
         if (settings === null) { settings = this.settings; }
         else { this.settings = settings; }
 
-        this.renderGraphFrame(settings.chartSettings);
+        this.renderGraphFrame(settings);
         let frame = document.getElementById(this.graphcanvasid);
 
         //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
@@ -566,18 +584,11 @@ class GrapherModule extends HTMLElement {
             dropdownMenu.empty();
 
             //check for optional charts in settings and alphabetize keys so that they display in order in the dropdown
-            let keys, optionalChartKeys = {};
-            if (settings.chartSettings && settings.chartSettings.optionalCharts) {
+            let keys = Object.keys(settings.charts);
 
-                optionalChartKeys = settings.chartSettings.optionalCharts;
-                keys = Object.keys(settings.charts).concat(optionalChartKeys); 
-            } else {
-                keys = Object.keys(settings.charts);
-            }
-            
             keys.sort();
             for (let i = 0 ; i < keys.length; i++) {
-                addItemToDropdown(keys[i], dropdownMenu, optionalChartKeys);
+                addItemToDropdown(keys[i], dropdownMenu);
             }
 
         } else {
@@ -596,15 +607,9 @@ class GrapherModule extends HTMLElement {
         }
 
         let self = this;
-        function addItemToDropdown(key, dropdownMenu, optionalCharts) {
-            console.log('optional charts', optionalCharts, 'key', key);
-            let button; 
-            if (optionalCharts.includes(key)) {
-                button = $(`<a class='dropdown-item bisweb-optional' style='visibility: hidden' href='#'>${key}<br></a>`);
-            } else {
-                button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
-            }
-
+        function addItemToDropdown(key, dropdownMenu) {
+            let button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
+            
             let buttonItem = $(`<li></li>`);
             buttonItem.append(button);
             dropdownMenu.append(buttonItem);
@@ -650,6 +655,10 @@ class GrapherModule extends HTMLElement {
                 Taucharts.api.plugins.get('tooltip')({
                     'fields': ['intensity', 'label'],
                     'align': 'right'
+                }),
+                Taucharts.api.plugins.get('export-to')({
+                    'visible' : false,
+                    'paddingTop' : '20px'
                 })],
             data: data,
         });
@@ -946,7 +955,7 @@ class GrapherModule extends HTMLElement {
         dispimg.attr('src', outimg);
         dispimg.width(300);
 
-        let a = webutil.creatediv();
+        let a = bis_webutil.creatediv();
         a.append(dispimg);
 
         bootbox.dialog({
@@ -958,7 +967,7 @@ class GrapherModule extends HTMLElement {
                     className: "btn-success",
                     callback: function () {
                         let blob = bisgenericio.dataURLToBlob(outimg);
-                        if (webutil.inElectronApp()) {
+                        if (bis_webutil.inElectronApp()) {
                             let reader = new FileReader();
                             reader.onload = function () {
                                 let buf = this.result;
@@ -982,6 +991,14 @@ class GrapherModule extends HTMLElement {
             }
         });
         return false;
+    }
+
+    saveTauchartsSnapshot() {
+        //click hidden 'Export' button
+        let frame = document.getElementById(this.graphcanvasid);
+        let exportButton = $(frame).find('.tau-chart__export');
+        console.log('export button', exportButton);
+        exportButton.trigger('click');
     }
 
     /** save the last data to csv */
@@ -1099,7 +1116,7 @@ class GrapherModule extends HTMLElement {
     }
 
     createSettingsModal(settings = {}) {
-        let settingsModal = webutil.createmodal('Change settings');
+        let settingsModal = bis_webutil.createmodal('Change settings');
 
         let submitButton = $(`<button type='button' class='btn btn-sm btn-success'>Ok</button>`);
         let cancelButton = $(`<button type='button' class='btn btn-sm btn-primary'>Cancel</button>`);
@@ -1146,7 +1163,7 @@ class GrapherModule extends HTMLElement {
         settingsModal.dialog.modal('show');
 
         function createCheck(name) {
-            let id = webutil.getuniqueid();
+            let id = bis_webutil.getuniqueid();
             let button = $(`<div class='custom-control custom-radio'> 
                                 <input id=${id} class='form-check-input' type='checkbox'></input>
                                 <label for='polarity-check'>${name}</label>
@@ -1244,6 +1261,6 @@ class GrapherModule extends HTMLElement {
 }
 
 module.exports = GrapherModule;
-webutil.defineElement('bisweb-graphelement', GrapherModule);
+bis_webutil.defineElement('bisweb-graphelement', GrapherModule);
 
 

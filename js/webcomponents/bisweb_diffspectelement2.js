@@ -223,6 +223,9 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         if (null !== this.spectModule.app_state['tmap']) {
             console.log('Showing tmap');
             this.showTmapImage();            
+        } else {
+            this.VIEWERS[0].setimage(this.spectModule.app_state['ictal']);
+            this.dataPanel.show();
         }
         
         if (null !== this.spectModule.app_state['hyper']) {
@@ -241,7 +244,7 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
 
     // --------------------------------------------------------------------------------
     // Load Image Callback
-    loadSPECTImage(name='ictal') {
+    loadPatientImage(name='ictal') {
 
         let handleGenericFileSelect = (imgfile)=> {
             let newimage = new BisWebImage();
@@ -267,6 +270,12 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
             }),
         );
         
+    }
+
+
+    savePatientImage(name='ictal') {
+        let img=this.spectModule.app_state[name];
+        img.save();
     }
 
     // --------------------------------------------------------------------------------
@@ -297,15 +306,9 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                             'selected': false
                         },
                         'children': [
-                            {
-                                'text': 'Interictal'
-                            },
-                            {
-                                'text': 'Ictal'
-                            },
-                            {
-                                'text': 'MRI'
-                            }
+                            {'text': 'Interictal' },
+                            {'text': 'Ictal' },
+                            {'text': 'MRI' }
                         ]
                     },
                     {
@@ -315,16 +318,14 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                             'selected': false
                         },
                         'children': [
-                            {
-                                'text': 'ATLAS to Interictal'
-                            },
-                            {
-                                'text': 'ATLAS to Ictal'
-                            },
-                            {
-                                'text': 'Interictal to Ictal'
-                            }
-                        ]
+                            { 'text': 'Interictal to Ictal' },
+                            { 'text': 'ATLAS to Interictal' },
+                            { 'text': 'ATLAS to Ictal' },
+                            { 'text': 'MRI to Interictal' },
+                            { 'text': 'MRI to Ictal' },
+                            { 'text': 'ATLAS to MRI' },
+
+                        ]                        
                     },
                     {
                         'text': 'Diff SPECT',
@@ -360,28 +361,6 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         const self=this;
 
         let items = {
-            loadinter: {
-                'label': 'Load Interictal',
-                'action': () => {
-                    self.loadSPECTImage('interictal');
-                },
-                
-            },
-            
-            loadictal: {
-                'label': 'Load Ictal',
-                'action': () => {
-                    self.loadSPECTImage('ictal');
-                }
-            },
-            
-            loadmri: {
-                'label': 'Load MRI',
-                'action': () =>  {
-                    self.loadSPECTImage('mri');
-                }
-            },
-            
             showimage: {
                 'label': 'Show Image',
                 'action': () => {
@@ -432,16 +411,88 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                 },
             },
 
+            loadinter: {
+                'label': 'Load Interictal',
+                'action': () => {
+                    self.loadPatientImage('interictal');
+                },
+                
+            },
             
+            loadictal: {
+                'label': 'Load Ictal',
+                'action': () => {
+                    self.loadPatientImage('ictal');
+                }
+            },
+            
+            loadmri: {
+                'label': 'Load MRI',
+                'action': () =>  {
+                    self.loadPatientImage('mri');
+                }
+            },
+            
+            saveinter: {
+                'label': 'Save Interictal',
+                'action': () => {
+                    self.savePatientImage('interictal');
+                },
+                
+            },
+            
+            saveictal: {
+                'label': 'Save Ictal',
+                'action': () => {
+                    self.savePatientImage('ictal');
+                }
+            },
+            
+            savemri: {
+                'label': 'Save MRI',
+                'action': () =>  {
+                    self.savePatientImage('mri');
+                }
+            },
+
             showregistration: {
                 'label': 'Show Registration',
                 'action': () =>  {
+                    console.log('Action=',node.text);
+                    this.spectModule.setAutoUseMRI();
                     if (node.text === "ATLAS to Interictal") {
                         self.showAtlasToInterictalRegistration();
                     } else if (node.text === "ATLAS to Ictal") {
                         self.showAtlasToIctalRegistration();
-                    }  else if (node.text === "Interictal to Ictal") {
+                    } else if (node.text === "Interictal to Ictal") {
                         self.showInterictalToIctalRegistration();
+                    } else if (node.text ==="ATLAS to MRI") {
+                        self.showAtlasToMRIRegistration();
+                    } else if (node.text ==="MRI to Interictal") {
+                        self.showMRIToInterictalRegistration();
+                    } else if (node.text ==="MRI to Ictal") {
+                        self.showMRIToIctalRegistration();
+                    }
+                }
+            },
+
+            saveregistration: {
+                'label': 'Save Registration',
+                'action': () =>  {
+                    console.log('Action=',node.text);
+                    this.spectModule.setAutoUseMRI();
+                    if (node.text === "ATLAS to Interictal") {
+                        self.showAtlasToInterictalRegistration(true);
+                    } else if (node.text === "ATLAS to Ictal") {
+                        self.showAtlasToIctalRegistration(true);
+                    } else if (node.text === "Interictal to Ictal") {
+                        self.showInterictalToIctalRegistration(true);
+                    } else if (node.text ==="ATLAS to MRI") {
+                        self.showAtlasToMRIRegistration(true);
+                    } else if (node.text ==="MRI to Interictal") {
+                        self.showMRIToInterictalRegistration(true);
+                    } else if (node.text ==="MRI to Ictal") {
+                        self.showMRIToIctalRegistration(true);
                     }
                 }
             },
@@ -452,20 +503,38 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
             items = null;
         }
 
-        if (node.text !== 'Interictal') delete items.loadinter;
-        if (node.text !== 'Ictal')      delete items.loadictal;
-        if (node.text !== 'MRI')        delete items.loadmri;
+        if (node.text !== 'Interictal') {
+            delete items.loadinter;
+            delete items.saveinter;
+        }
+        if (node.text !== 'Ictal') {
+            delete items.loadictal;
+            delete items.saveictal;
+        }
+        
+        if (node.text !== 'MRI')      {
+            delete items.loadmri;
+            delete items.savemri;
+        }
+            
 
         if (node.text !== 'Interictal'  &&
             node.text !== 'Ictal'       &&
             node.text !== 'Tmap Image'  &&
             node.text !== 'Tmap Image (Native Space)' &&
-            node.text !== 'MRI')        delete items.showimage;
+            node.text !== 'MRI')  {
+            delete items.showimage;
+        }
         
         if (node.text !== 'ATLAS to Interictal' &&
             node.text !== 'ATLAS to Ictal'      &&
-            node.text !== 'Interictal to Ictal') delete items.showregistration;
-
+            node.text !== 'Interictal to Ictal' &&
+            node.text !== 'MRI to Interictal' &&
+            node.text !== 'MRI to Ictal' &&
+            node.text !== 'ATLAS to MRI') {
+            delete items.showregistration;
+            delete items.saveregistration;
+        }
         
 
         return items;
@@ -613,36 +682,77 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         cmapcontrol.setElementState(elem);
         cmapcontrol.updateTransferFunctions(true);
     }
+
+    saveTransformation(operation) {
+        let xform=this.spectModule.getComboTransformation(operation);
+        xform.save(`${operation}.bisxform`);
+    }
     
-    showAtlasToInterictalRegistration() {
+    showAtlasToInterictalRegistration(save=false) {
         this.spectModule.resliceImages('inter2Atlas',false).then( () => {
             webutil.createAlert('Displaying resliced interictal image over atlas SPECT image');
             this.VIEWERS[0].setimage(this.spectModule.app_state.ATLAS_spect);
-            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.inter_in_atlas_reslice,false,'overlay');
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.inter_in_atlas_reslice,false,'Overlay2');
             this.setViewerOpacity(0.5);
+            if (save) this.saveTransformation('inter2Atlas');
+                
         }).catch( (e) => { errormessage(e); });
                            
     }
 
+    showMRIToInterictalRegistration(save=false) {
+        
+        this.spectModule.resliceImages('inter2mri',false).then( () => {
+            webutil.createAlert('Displaying resliced interictal image over MRI image');
+            this.VIEWERS[0].setimage(this.spectModule.app_state.mri);
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.inter_in_mri_reslice,false,'Overlay2');
+            this.setViewerOpacity(0.5);
+            if (save) this.saveTransformation('inter2mri');
+        }).catch( (e) => { errormessage(e); });
+    }
 
-    showAtlasToIctalRegistration() {
+    showAtlasToIctalRegistration(save=false) {
         this.spectModule.resliceImages('ictal2Atlas',false).then( () => {
             webutil.createAlert('Displaying resliced ictal image over atlas SPECT image');
             this.VIEWERS[0].setimage(this.spectModule.app_state.ATLAS_spect);
-            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_atlas_reslice,false,'overlay');
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_atlas_reslice,false,'Overlay2');
             this.setViewerOpacity(0.5);
+            if (save) this.saveTransformation('ictal2Atlas');
         }).catch( (e) => { errormessage(e); });
     }
 
-    showInterictalToIctalRegistration() {
+    showMRIToIctalRegistration(save=false) {
+        this.spectModule.resliceImages('ictal2mri',false).then( () => {
+            webutil.createAlert('Displaying resliced ictal image over MRI image');
+            this.VIEWERS[0].setimage(this.spectModule.app_state.mri);
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_mri_reslice,false,'Overlay2');
+            this.setViewerOpacity(0.5);
+            if (save) this.saveTransformation('ictal2mri');
+        }).catch( (e) => { errormessage(e); });
+    }
+    
+    showInterictalToIctalRegistration(save=false) {
         this.spectModule.resliceImages('inter2ictal',false).then( () => {
             webutil.createAlert('Displaying resliced ictal image over interictal image');
             this.VIEWERS[0].setimage(this.spectModule.app_state.interictal);
-            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_inter_reslice,false,'overlay');
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_inter_reslice,false,'Overlay2');
             this.setViewerOpacity(0.5);
+            if (save) this.saveTransformation('inter2ictal');
         }).catch( (e) => { errormessage(e); });
     }
 
+    // New
+    showAtlasToMRIRegistration(save=false) {
+        
+        this.spectModule.resliceImages('mri2Atlas',false).then( () => {
+            webutil.createAlert('Displaying resliced mri image over atlas MRI image');
+            this.VIEWERS[0].setimage(this.spectModule.app_state.ATLAS_mri);
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.mri_in_atlas_reslice,false,'Orange');
+            this.setViewerOpacity(0.5);
+            if (save) this.saveTransformation('mri2Atlas');
+        }).catch( (e) => { errormessage(e); });
+    }
+    
     showTmapImage() {
         if (this.spectModule.app_state.tmap) {
             webutil.createAlert('Displaying diff-spect TMAP over atlas MRI image');
@@ -682,6 +792,8 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
     computeAllRegistrations(nonlinear=false) {
 
         this.spectModule.app_state.nonlinear = nonlinear;
+        this.spectModule.setAutoUseMRI();
+        
         this.spectModule.computeAllRegistrations().then( (m) => {
             this.spectModule.resliceImages('ictal2Atlas').then( () => {
                 this.showAtlasToIctalRegistration();
@@ -745,13 +857,18 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                       });
 
         webutil.createMenuItem(sMenu, 'Load Patient Ictal Image', () =>  {
-            self.loadSPECTImage('ictal'); 
+            self.loadPatientImage('ictal'); 
         }); 
         webutil.createMenuItem(sMenu, 'Load Patient Inter-Ictal Image', () =>  {
-            self.loadSPECTImage('interictal'); 
+            self.loadPatientImage('interictal'); 
         });
         webutil.createMenuItem(sMenu, 'Load Patient MRI Image', () =>  {
-            self.loadSPECTImage('mri'); 
+            self.loadPatientImage('mri'); 
+        });
+        webutil.createMenuItem(sMenu, 'Debug', () =>  {
+            let s=self.spectModule.getDataDescription();
+            s=s.trim().replace(/\n/g,'<BR>');
+            bootbox.alert(s);
         });
        
         webutil.createMenuItem(sMenu,'');

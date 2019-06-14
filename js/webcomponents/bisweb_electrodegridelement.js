@@ -30,6 +30,8 @@ const $=require('jquery');
 const webfileutil = require('bis_webfileutil');
 const BisWebPanel = require('bisweb_panel.js');
 const dat = require('bisweb_datgui');
+const JSZip = require('jszip');
+const filesaver = require('FileSaver');
 
 const loaderror = function(msg) {
     console.log(msg);
@@ -38,6 +40,9 @@ const loaderror = function(msg) {
 
 const MAXGRIDS=30;
 const PROPERTIES=[ "Motor", "Sensory", "Visual", "Language", "Auditory", "User1", "SeizureOnset", "SpikesPresent" ];
+
+//const sleep=function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));};
+
 // -------------------------------------------------------------------------
 
 /** 
@@ -227,7 +232,7 @@ class ElectrodeGridElement extends HTMLElement {
         let geometry2=this.createGridGeometry(points,0.2*parseFloat(grid.radius),false);
 
         let color=this.mapColor(grid.color);
-        let mat=new THREE.MeshBasicMaterial( {color: color, wireframe:true});
+        let mat=new THREE.MeshBasicMaterial( {color: color, wireframe:false});
         let mat2=new THREE.MeshBasicMaterial( {color: color , wireframe:false});
         
         for (let i=0;i<this.internal.subviewers.length;i++) {
@@ -500,6 +505,7 @@ class ElectrodeGridElement extends HTMLElement {
         
         //          this.internal.data.enabled=false;
         this.internal.currentgridindex=ind;
+        this.internal.currentelectrode=0;
         
         // No carryover pick
         this.centerOnElectrode();
@@ -720,6 +726,28 @@ class ElectrodeGridElement extends HTMLElement {
                                          suffix : ".bisgrid,.mgrid",
                                          initialCallback : () => { return this.getInitialSaveFilename(); },
                                      });
+
+        
+        webutil.createbutton({ type : "info",
+                               name : "Multisnapshot (Current Grid)",
+                               parent : bbar0,
+                               css : {
+                                   'margin-top': '20px',
+                                   'margin-left': '10px'
+                               },
+                               callback : () => { this.multisnapshot(false).catch( (e) => { console.log(e);});}
+                             });
+
+        webutil.createbutton({ type : "danger",
+                               name : "Multisnapshot (All Grids)",
+                               parent : bbar0,
+                               css : {
+                                   'margin-top': '20px',
+                                   'margin-left': '10px'
+                               },
+                               callback : () => { this.multisnapshot(true).catch( (e) => { console.log(e);});}
+                             });
+
         
         webutil.tooltip(this.internal.parentDomElement);
         
@@ -737,8 +765,6 @@ class ElectrodeGridElement extends HTMLElement {
      * @param {BisImage} volume - new image
      */
     connectedCallback() {
-        console.log('Connected here');
-        
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         this.internal.orthoviewer=document.querySelector(viewerid);
@@ -858,6 +884,96 @@ class ElectrodeGridElement extends HTMLElement {
             this.panel.hide();
         }
         this.enablemouse(false);
+    }
+
+    
+    async multisnapshot(allgrids=false) {
+        
+        if (this.internal.multigrid.getNumGrids()===0) {
+            console.log('No Grids');
+            return Promise.reject('None');
+        }
+
+        let begin=0;
+        let end=this.internal.multigrid.getNumGrids()-1;
+        if (!allgrids) {
+            begin=this.internal.currentgridindex;
+            end=this.internal.currentgridindex;
+        }
+
+        let snapshotElement=this.internal.orthoviewer.getSnapShotController();
+        snapshotElement.data.dowhite=false;
+        const canvaslist=[];
+        const names=[];
+        let text='Grid,Electrode,I,J,J,X,Y,Z\n';
+        const spa=this.internal.volume.getSpacing();
+        
+        let addzeros=( (num) => {
+            let s=`${num}`;
+            while (s.length<3) {
+                s=`0${s}`;
+            }
+            return s;
+        });
+
+        console.log('Beginning',begin,end,text);
+        
+        for (let gridindex=begin;gridindex<=end;gridindex++) {
+            this.setCurrentGrid(gridindex);
+            let grid=this.internal.multigrid.getGrid(gridindex);
+            console.log(JSON.stringify(grid));
+            let numelectrodes=grid.electrodes.length;
+            if (numelectrodes>0) {
+                console.log('Num Electrodes for grid',gridindex,'=',numelectrodes);
+
+                for (let i=0;i<numelectrodes;i++) {
+                    let electrode=this.internal.multigrid.getElectrode(gridindex,i);
+                    let mm = electrode.position;
+                    let ijk=[0,0,0];
+                    for (let ia=0;ia<=2;ia++) {
+                        ijk[ia]=Math.round(mm[ia]/spa[ia]);
+                    }
+                    this.internal.orthoviewer.updatemousecoordinates(mm,-1,0);
+                    let canvas=await snapshotElement.getTestImage();
+                    let number=addzeros(`${i+1}`);
+                    let name=`${grid.description}:${number}`;
+                    text+=`${grid.description},${i+1},${ijk[0]},${ijk[1]},${ijk[2]},${mm[0]},${mm[1]},${mm[2]}\n`;
+                    names.push(name);
+                    let context=canvas.getContext("2d");
+
+                    
+                    context.font='48px Arial';
+                    context.fillStyle = "#ffffff";
+                    context.textAlign="left";
+                    context.textBaseline="bottom";
+
+                    let h=context.measureText(name).width;
+                    let w=context.measureText(name).height;
+
+                    context.clearRect(0,canvas.height-(5+h),w+10,h+10);
+                    context.fillText(name,5,canvas.height-5);
+                    canvaslist.push(canvas);
+                }
+            }
+        }
+
+        const zip = new JSZip();
+        zip.file("00LOGFILE.csv", text);
+        
+        for (let i=0;i<canvaslist.length;i++) {
+            let outimg=canvaslist[i].toDataURL("image/png");
+            let blob = bisgenericio.dataURLToBlob(outimg);
+            zip.file(names[i]+".png", blob, {base64: true});
+        }
+        try {
+            let content=await zip.generateAsync({type:"blob"});
+            console.log(content);
+            filesaver(content, "snapshots.zip");
+            return Promise.resolve('Done');
+        } catch (e)  {
+            console.log('Error'+e);
+        }
+        return Promise.reject('Failed to make zip');
     }
 
 }
