@@ -117,23 +117,16 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
         let taskArray = new Array(chartRange.highRange).fill(0);
 
         //the data for each individual run will be formatted as an array while the structure for each task will be an object
-        if (Array.isArray(run)) {
-            if (Array.isArray(run[0])) {
-                for (let item of run) {
-                    addToArray(item);
-                }
-            } else {
-                addToArray(run);
-            }
+        if (Array.isArray(run) && Array.isArray(run[0])) {
+            for (let item of run) 
+                addToArray(item);
+        } else if (Array.isArray(run) && typeof run[0] === 'number') {
+            addToArray(run);
         } else if (typeof run === 'object') {
             let keys = Object.keys(run);
             for (let task of keys) {
-                if (Array.isArray(run[task][0])) {
-                    for (let item of run[task])
-                        addToArray(item);
-                } else {
-                    addToArray(run[task]);
-                }
+                for (let item of run[task])
+                    addToArray(item);
             }
         } else {
             console.log('unrecognized run object', run);
