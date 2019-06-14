@@ -10,6 +10,7 @@ const glob = bisgenericio.getglobmodule();
 const bidsutils = require('bis_bidsutils.js');
 const moduleindex = require('nodemoduleindex_base');
 const sysutils = require('bis_filesystemutils.js');
+const bis_commandlineutils = require('bis_commandlineutils.js');
 
 // TODO: IP Filtering
 // TODO: Check Base Directories not / /usr (probably two levels)
@@ -875,13 +876,17 @@ class BaseFileServer {
      */
 
     runModule(socket, opts) {
+
+        
         let id = opts.id;
         let modulename = opts.modulename;
         let moduleparams = opts.params;
-
-        console.log('run module', opts);
+        let external = opts.external || false;
+        
+        console.log('___ running module', modulename,JSON.stringify(moduleparams),' external=',external);
 
         let done = (success, text) => {
+            console.log('___ finished running module',modulename,' external=',external,' success=',success);
             if (!success)
                 this.sendCommand(socket, 'bisModuleFailed', {
                     'output': text,
@@ -895,19 +900,64 @@ class BaseFileServer {
             return;
         };
 
-        // Set Listen Function
-        //let listen= (message) => {
-        //            this.sendCommand(socket,'bisModuleProgress', message);
-        //        };
-        //
-        //
-        //module.setListenFunction(listen);
+        if (external) {
+            
+            let scriptname=process.mainModule.filename;
+            scriptname=path.resolve(path.normalize(path.join(path.dirname(scriptname),'bisweb.js')));
+            let nodejs=process.execPath;
 
-        // Run Module and call done when it is done
+            let keys=Object.keys(moduleparams);
+            
+            let cmd = nodejs+' '+scriptname+' '+modulename.toLowerCase()+' ';
+            let extra='';
+            for (let i=0;i<keys.length;i++) {
+                let key=keys[i];
+                if (key !=='extraArgs') {
+                    cmd+=`--${key} ${moduleparams[key]} `;
+                } else {
+                    extra=moduleparams[key];
+                }
+            }
+            cmd+=extra;
+
+            /*let totallog='';
+            let count=0;
+            
+                            let logfunction= (m,force=false) => {
+                totallog=totallog+m+'\n';
+                ++count;
+                if (count===10 || force) {
+                    this.sendCommand(socket, 'bisModuleProgress', {
+                        'output': totallog,
+                        'id': id
+                    });
+                    totallog='';
+                    count=0;
+                }
+            };*/
+            
+            console.log('.... executing :'+cmd+'\n....');
+
+            bis_commandlineutils.executeCommandAndLog(cmd, process.cwd()).then( (m) => {
+                done(true,m);
+            }).catch( (e) => {
+                done(false,e);
+            });
+
+            return;
+        }
+
+        
+        // -----------------------------------------------------------------
+        // Run Module inside this process and call done when it is done
+        // -----------------------------------------------------------------
         let module = moduleindex.getModule(modulename, true);
-
+        if (!module) {
+            done(false,'Failed to find module='+modulename);
+                return;
+        }
+        
         module.execute({}, moduleparams).then((m) => {
-            console.log('M=', m);
             done(true, m);
         }).catch((e) => {
             done(false, e);

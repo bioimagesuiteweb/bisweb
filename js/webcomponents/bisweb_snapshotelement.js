@@ -339,7 +339,7 @@ class SnapshotElement extends HTMLElement {
         this.createsnapshot_internal(outcanvas);
     }
 
-    createsnapshot_internal(outcanvas) {
+    createsnapshot_internal(outcanvas,fname='snapshot.png') {
         
     
         let outimg=outcanvas.toDataURL("image/png");
@@ -368,7 +368,7 @@ class SnapshotElement extends HTMLElement {
                                     let arr = new Int8Array(buf);
 
                                     bisgenericio.write({
-                                        filename: "snapshot.png",
+                                        filename: fname,
                                         title: 'Select file to save snapshot in',
                                         filters: [{ name: 'PNG Files', extensions: ['png'] }],
                                     }, arr, true);
@@ -771,6 +771,10 @@ class SnapshotElement extends HTMLElement {
         
         return false;
 
+    }
+
+    saveCanvasToPNG(canvas) {
+        this.createsnapshot_internal(canvas);
     }
 
     

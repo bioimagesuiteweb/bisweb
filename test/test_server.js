@@ -25,10 +25,13 @@ require('../config/bisweb_pathconfig.js');
 
 const assert = require("assert");
 const path=require('path');
+const fs=require('fs');
 const util=require('bis_util');
 const genericio=require('bis_genericio');
-const os=require('os');
 const bisserverutil=require('bis_fileservertestutils');
+const tempfs = require('temp').track();
+const os = require('os');
+const tmpDirPath=tempfs.mkdirSync('test_image');
 
 let inpfilename = "testdata/MNI_2mm_resliced.nii.gz";
 let testfilename = "testdata/newtests/goldsmooth2sigma.nii.gz";
@@ -206,7 +209,6 @@ describe('Testing the WS server\n', function() {
         });
     });
         
-    
     it('WS ...test home dir',function(done) {
 
         let baseDirectory = os.homedir();
@@ -273,11 +275,107 @@ describe('Testing the WS server\n', function() {
             });
         }).catch( (e) => {
             console.log('We have failed',e);
-            assert(true,false);
+            assert.equal(true,false);
             done();
         });
     });
+        
+
+    it ('ws ... test run module headerinfo',  (done) => {
+
+        console.log('\n\n\n');
+        console.log('Running module');
+
+        
+        let logpath=path.join(tmpDirPath,'log.json');
+        
+        client.runModule('headerinfo', {
+            'debug' : true,
+            'logoutput' : logpath,
+            'extraArgs' : [ path.resolve(path.join(__dirname,'testdata/glm/clusterno.nii.gz')) ],
+        },true).then( () => {
+
+            let f=fs.readFileSync(logpath,'utf-8');
+            let o_obj=JSON.parse(f);
+            let obj=JSON.parse(o_obj.text);
+            console.log('Final obj=',JSON.stringify(obj));
             
+            let dimensions=obj[0].dimensions;
+            let gold=[20,20,14,1,1 ];
+            let diff=0;
+
+            for (let i=0;i<gold.length;i++)
+                diff+=Math.abs(gold[i]-dimensions[i]);
+            console.log('____ Module headerinfo output',gold,'vs',dimensions,' diff=',diff);
+            assert.equal(true,(diff<1));
+            done();
+        }).catch( (e) => {
+            console.log('Failed',e);
+            assert.equal(true,false);
+            done();
+        });
+            
+    });
+
+    it ('ws ... test run checksum module external',  (done) => {
+
+        console.log('\n\n\n');
+        console.log('Running module');
+
+        
+        let logpath=path.join(tmpDirPath,'log2.json');
+        
+        client.runModule('makechecksum', {
+            'debug' : true,
+            'logoutput' : logpath,
+            'input' : path.resolve(path.join(__dirname,'testdata/glm/clusterno.nii.gz')),
+        },true).then( (m) => {
+            console.log('m=',m);
+
+            let f=fs.readFileSync(logpath,'utf-8');
+            let o_obj=JSON.parse(f);
+            let obj=JSON.parse(o_obj.text);
+            console.log('Final obj=',JSON.stringify(obj));
+            let hash=obj.hash;
+            let gold="0cfb6bd4c589813f7abf46a17b1b44b3a0c15fd5739769cd860c206171b510d3";
+            
+            console.log('____ Module headerinfo output',gold,'vs',hash);
+            assert.equal(hash,gold);
+            done();
+        }).catch( (e) => {
+            console.log('Failed',e);
+            assert.equal(true,false);
+            done();
+        });
+            
+    });
+
+    it ('ws ... test run checksum module internal',  (done) => {
+
+        console.log('\n\n\n');
+        console.log('Running module');
+        
+        client.runModule('makechecksum', {
+            'debug' : true,
+            'input' : path.resolve(path.join(__dirname,'testdata/glm/clusterno.nii.gz')),
+        },false).then( (obj) => {
+
+            
+            console.log('Final obj=',JSON.stringify(obj,null,2));
+            console.log('\n\n\n');
+            let hash=obj.output.hash;
+            let gold="0cfb6bd4c589813f7abf46a17b1b44b3a0c15fd5739769cd860c206171b510d3";
+            
+            console.log('____ Module headerinfo output',gold,'vs',hash);
+            assert.equal(hash,gold);
+            done();
+        }).catch( (e) => {
+            console.log('Failed',e);
+            assert.equal(true,false);
+            done();
+        });
+            
+    });
 
     after(function(done) {
         bisserverutil.terminateTestingServer(client).then( ()=> {

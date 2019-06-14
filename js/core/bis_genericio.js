@@ -611,8 +611,9 @@ let isSaveDownload =function() {
  * 
  * @param {Object} params - Parameter object for the file conversion. 
  * @param {String} params.inputDirectory - The input directory to run file conversions in. 
+ * @param {Boolean} external - if true run as an external process
  */
-let runDICOMConversion = (params) => {
+let runDICOMConversion = (params,external=false) => {
 
     /*let updateFn = (obj) => {
         console.log('update fn', obj);
@@ -620,7 +621,7 @@ let runDICOMConversion = (params) => {
 
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
-            fileServerClient.runModule('dicomconversion', params, console.log, true)
+            fileServerClient.runModule('dicomconversion', params, external,console.log, true)
                 .then((obj) => {
                     console.log('Conversion done', obj);
                     resolve(obj);
@@ -635,12 +636,13 @@ let runDICOMConversion = (params) => {
  * Note that this function only works when calling from the web environment. Bisweb modules calculate their own checksums due to genericio not being directly compatible with modules.
  * 
  * @param {String} url - Filename of image to make checksum for.
+ * @param {Boolean} external - if true run as an external process
  * @returns Promise that will resolve the checksum, or false if no file server client is specified.
  */
-let makeFileChecksum = (url) => {
+let makeFileChecksum = (url,external=false ) => {
 
     if (fileServerClient) {
-        return fileServerClient.runModule('makechecksum', { 'url' : url });
+        return fileServerClient.runModule('makechecksum', { 'input' : url }, external );
     } else if (inBrowser) {
         console.log('Cannot perform makeFileChecksum without a file server client.');
         return false;

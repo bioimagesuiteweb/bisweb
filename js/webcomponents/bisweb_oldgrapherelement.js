@@ -51,7 +51,6 @@ class OldGrapherModule extends HTMLElement {
         this.graphWindow=null;
         this.resizingTimer=null;
         this.buttons=[];
-        console.log('Created old graph tool');
     }
 
 

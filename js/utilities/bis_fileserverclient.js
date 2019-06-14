@@ -782,12 +782,13 @@ class BisFileServerClient extends BisBaseServerClient {
     /** runs Module (e.g. DCM2NII)
      * @param{String} modulename -- the name of the module
      * @param{Object} params -- the module params
+     * @param{Boolean} external - if true run as an external process
      * @param{Function} upd - function to call for progress messages
      * @param{Boolean} debug - if true print more stuff
      * @returns {Promise} payload is the result
      */
-    runModule(modulename,params,upd=console.log,debug=false) {
-        
+    runModule(modulename,params,external=false,upd=console.log,debug=false) {
+
         let outstring="";
         this.updateCallback= ((msg) => {
             outstring+=msg;
@@ -816,6 +817,7 @@ class BisFileServerClient extends BisBaseServerClient {
                                'modulename' : modulename,
                                'params' : params,
                                'debug' : debug,
+                               'external' : external,
                                'id' : serverEvent.id,
                                'timeout' : 300000}); 
         });
