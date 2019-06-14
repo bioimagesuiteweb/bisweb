@@ -17,7 +17,11 @@
 
 'use strict';
 
-//TODO: store DCM2NIIX for each platform (package dcm2niix appropriately). stringify dcm2niix and store it somewhere on disk, then read it and parse it before using it.
+
+/*
+  This  file is in this directory even though it does not work in the browser for access through electron
+*/
+
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const sysutils = require('bis_filesystemutils.js');
@@ -147,6 +151,10 @@ class DicomModule extends BaseModule {
     
     async directInvokeAlgorithm(vals) {
 
+        if (bis_genericio.getmode()==='browser') {
+            return Promise.reject('Do not call this module from the Browser. Electron/Node only');
+        }
+        
         console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
         // -------------------- Check Directories and create as needed --------------------

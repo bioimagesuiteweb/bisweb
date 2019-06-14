@@ -91,11 +91,10 @@ class HeaderModule extends BaseModule {
             return Promise.reject('Need at least one input image');
         }
         
-        let msg='';
+        let output =[];
+        
         for (let i=0;i<inputlist.length;i++) {
-            let a=`--------------- Image ${i+1}/${inputlist.length} -----------------------------`;
-            console.log(colors.red(a));
-            msg+=a+'\n';
+            console.log(colors.red(`--------------- Image ${i+1}/${inputlist.length} -----------------------------`));
 
             let img=new BisWebImage();
             try {
@@ -104,18 +103,26 @@ class HeaderModule extends BaseModule {
                 return Promise.reject('Failed to read '+inputlist[i]);
             }
             
-            a='\n____ filename='+inputlist[i]+'\n\t'+img.getDescription()+'\n';
-            console.log(colors.yellow(a));
-            msg+=a+'\n';
+            console.log(colors.yellow('\n____ filename='+inputlist[i]+'\n\t'+img.getDescription()+'\n'));
+            
+            let d=img.getHeader().getDescription((detail>1));
+
+            let obj={ };
+            obj.filename=inputlist[i];
+            obj.dimensions=img.getDimensions();
+            obj.spacing=img.getSpacing();
+            obj.description=img.getDescription();
+            obj.details=d;
+            output.push(obj);
+                
             if (detail>0) {
-                let a=img.getHeader().getDescription((detail>1));
-                msg+=a+'\n';
-                console.log(colors.cyan(a));
+                console.log(colors.cyan(d));
             }
             img=null;
         }
-        this.outputs['logoutput']=new BisWebTextObject(msg);
-        return Promise.resolve(msg);
+        let outtext=new BisWebTextObject(JSON.stringify(output));
+        this.outputs['logoutput']=outtext;
+        return Promise.resolve(output);
     }
                                          
 }

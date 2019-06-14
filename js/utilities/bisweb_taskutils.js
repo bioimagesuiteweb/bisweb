@@ -83,6 +83,7 @@ let parseFile = (taskfile) => {
             }
 
             formatJson(parsedJSON);
+
         }).catch( (e) => { reject(e); });
     });
 
@@ -147,5 +148,6 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
 
 module.exports = {
     parseEntry : parseEntry,
-    parseFile : parseFile
+    parseFile : parseFile,
+    parseData : parseData
 };

@@ -4,6 +4,7 @@ const baseutils = require('baseutils.js');
 const bis_util = require('bis_util.js');
 const fs = require('fs');
 const zlib = require('zlib');
+const BisWebTextObject = require('bisweb_textobject.js');
 //const streamifier = require('streamifier');
 
 class HashModule extends BaseModule {
@@ -27,6 +28,7 @@ class HashModule extends BaseModule {
                     'description': 'log file',
                     'varname': 'logoutput',
                     'required': false,
+                    'shortname' : 'o',
                     'extension': '.bistext'
                 },
             ],
@@ -34,12 +36,13 @@ class HashModule extends BaseModule {
             "shortname": "info",
             "params": [
                 {
-                    "name": "Image",
-                    "description": "Name of the image to read from disk",
+                    "name": "input",
+                    "description": "Name of the file to read from disk",
                     "advanced": false,
                     "type": "string",
-                    "varname": "url",
+                    "varname": "input",
                     "required" : true,
+                    "shortname" :  "i",
                     "default": ""
                 },
                 baseutils.getDebugParam()
@@ -49,13 +52,13 @@ class HashModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
 
-        if (vals.url==="") {
+        if (vals.input==="") {
             return Promise.reject(': No input filename specified');
         }
         
         return new Promise((resolve, reject) => {
             const bufs = [];
-            const readStream = fs.createReadStream(vals.url);
+            const readStream = fs.createReadStream(vals.input);
             const gunzip = zlib.createGunzip();
 
             readStream
@@ -76,26 +79,17 @@ class HashModule extends BaseModule {
                 let image = Buffer.concat(bufs);
                 let hash = bis_util.SHA256(image);
                 console.log('Calculated hash', hash);
-                resolve({'hash' : hash, 'filename' : vals.url});
+                let obj={'hash' : hash, 'filename' : vals.input};
+                let txt=JSON.stringify(obj);
+                this.outputs['logoutput']=new BisWebTextObject(txt);
+                resolve(obj);
+
             });
         });
 
     }
 
-//TODO: Make a 'paranoid' mode that will write a copy of the image to disk.
-/*
-const write = fs.createWriteStream('/home/zach/Desktop/file.nii');
-const bufferReadStream = streamifier.createReadStream(image);
- 
-bufferReadStream
-    .pipe(write)
-    .on('finish', () => {
-        console.log('Done writing to disk.');
-        resolve({'hash' : hash});
-    }).on('error', () => {
-        console.log('Error writing to disk', e);
-    });
-    */
+
 }
 
 module.exports = HashModule;
