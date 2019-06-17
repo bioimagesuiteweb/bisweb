@@ -171,7 +171,7 @@ class StudyTaskManager {
             'parent' : advancedOptionsModal.body,
             'callback' : (f) => {
                 let saveFileCallback = (o) => { 
-                    bis_bidsutils.parseTaskFileFromTSV(f, o, result);
+                    bis_bidsutils.parseTaskFileFromTSV(f, o, true);
                 };
                     
                 setTimeout( () => {

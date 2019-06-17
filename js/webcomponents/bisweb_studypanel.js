@@ -225,7 +225,13 @@ class StudyPanel extends HTMLElement {
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
 
-                if (parsedData.tasks) { this.taskManager.setTaskData(parsedData.tasks, false); }
+                if (parsedData.tasks) { 
+                    //parse stored task data to be the full object used to create charts
+                    bisweb_taskutils.parseFile(parsedData.tasks).then( (parsedFile) => {
+                        console.log('parsed file', parsedFile);
+                        this.taskManager.setTaskData(parsedFile, false); 
+                    });
+                }
                 this.taskManager.createGUI();
             });
         });
@@ -716,11 +722,16 @@ class StudyPanel extends HTMLElement {
 
             let taskInfo = this.taskManager.getTaskData() || null;
             if (taskInfo) { 
-                //trim unnecessary fields from task info
+                //trim unnecessary fields from task info and join all the array in runs to match the format expected for task files on disk
                 let runs = taskInfo.runs, keys = Object.keys(runs);
-                for (let i = 0; i < keys.length; i++) { delete runs[keys[i]].parsedRegions; }
+                for (let i = 0; i < keys.length; i++) { 
+                    delete runs[keys[i]].parsedRegions; 
+                    for (let taskKey of Object.keys(runs[keys[i]])) {
+                        runs[keys[i]][taskKey] = joinArray(runs[keys[i]][taskKey]);
+                    }
+                }
                 console.log('runs', runs);
-                treeMetadataContainer.tasks = runs; 
+                treeMetadataContainer.tasks = { 'runs' : runs }; 
             }
 
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
@@ -732,11 +743,25 @@ class StudyPanel extends HTMLElement {
             }
 
             filepath = splitPath.join('.');
-            bis_genericio.write(filepath, stringifiedFiles, false);
+            bis_genericio.write(filepath, stringifiedFiles, false).then( () => {
+                webutil.createAlert('Saved study file ' + filepath + ' successfully');
+            });
         }).catch((e) => {
             console.log('an error occured while saving to disk', e);
             webutil.createAlert('An error occured while saving the study files to disk.', false);
         });
+
+        function joinArray(array) {
+            console.log('array', array);
+            if (Array.isArray(array[0])) {
+                for (let i = 0; i < array.length; i++) {
+                    array[i] = joinArray(array[i]);
+                }
+                return array;
+            }
+
+            return array.join('-');
+        }
     }
 
     /**
@@ -1212,9 +1237,9 @@ class StudyPanel extends HTMLElement {
             callback : (f) => {
                 let saveFileCallback = (o) => { 
                     //get whether to convert to BIDS or not from toggle
-                    let toggleState = $(parent).find('#' + toggleid).parent().hasClass('off');
-                    console.log('toggle state', toggleState)
                     //toggle state will be true if the switch has the class off, so we want the mirror
+                    
+                    let toggleState = $(parent).find('#' + toggleid).parent().hasClass('off');
                     this.importDICOMImages(f, o, !toggleState);
                 };
                 
