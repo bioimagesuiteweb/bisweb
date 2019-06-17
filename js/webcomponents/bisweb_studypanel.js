@@ -537,7 +537,7 @@ class StudyPanel extends HTMLElement {
 
         let saveStudyButton = bis_webfileutil.createFileButton({
             'type': 'info',
-            'css' : { 'margin' : '10px', 'width' : '40%' },
+            'css' : { 'margin' : '10px', 'width' : '45%' },
             'name': 'Save study file',
             'parent' : buttonBar,
             'callback': (f) => {
@@ -715,7 +715,13 @@ class StudyPanel extends HTMLElement {
             };
 
             let taskInfo = this.taskManager.getTaskData() || null;
-            if (taskInfo) { treeMetadataContainer.tasks = taskInfo; }
+            if (taskInfo) { 
+                //trim unnecessary fields from task info
+                let runs = taskInfo.runs, keys = Object.keys(runs);
+                for (let i = 0; i < keys.length; i++) { delete runs[keys[i]].parsedRegions; }
+                console.log('runs', runs);
+                treeMetadataContainer.tasks = runs; 
+            }
 
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
             
@@ -1196,19 +1202,20 @@ class StudyPanel extends HTMLElement {
 
     createImportButtons(parent) {
 
-        let inputGroup = $(`<div class='btn-group' style='width: 100%; margin: 0px;'></div>`);
-        parent.append(inputGroup);
+        let toggleid = webutil.getuniqueid();
 
         bis_webfileutil.createFileButton({ 
             type : 'info',
             name : 'DICOM->NII',
-            parent : inputGroup,
-            css : { 'width' : '30%','margin-left':'5px' },
+            parent : parent,
+            css : { 'width' : '45%','margin-left':'5px', 'margin-bottom' : '5px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
                     //get whether to convert to BIDS or not from toggle
-                    let convertToBids = inputGroup.find('.bisweb-bids-toggle').hasClass('active');
-                    this.importDICOMImages(f, o, convertToBids);
+                    let toggleState = $(parent).find('#' + toggleid).parent().hasClass('off');
+                    console.log('toggle state', toggleState)
+                    //toggle state will be true if the switch has the class off, so we want the mirror
+                    this.importDICOMImages(f, o, !toggleState);
                 };
                 
                 bis_webfileutil.genericFileCallback( 
@@ -1226,20 +1233,10 @@ class StudyPanel extends HTMLElement {
             serveronly : true,
         });
 
-        let bidsToggleId = webutil.getuniqueid();
-        let bidsToggleButton = $(`<input id=${bidsToggleId} type='checkbox' data-toggle='toggle' style='width: 15%;'>`);
-
-        console.log('bids toggle button', bidsToggleButton);
-        parent.append(bidsToggleButton);
-
-        bidsToggleButton.bootstrapToggle();
-        
-        //inputGroup.append(`<button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 15%'>BIDS</button>`);
-
         bis_webfileutil.createFileButton({
             'type': 'success',
-            'parent' : inputGroup,
-            'css' : { 'margin-left' : '15px', 'width' : '40%' },
+            'parent' : parent,
+            'css' : { 'margin-left' : '15px', 'width' : '45%', 'margin-bottom' : '5px' },
             'name': 'Import BIDS Directory',
             'callback': (f) => {
                 this.importFilesFromDirectory(f);
@@ -1252,6 +1249,17 @@ class StudyPanel extends HTMLElement {
             'serveronly': true,
         });
 
+        let bidsToggleButton = $(`<input id=${toggleid} type='checkbox' data-toggle='toggle' data-size='small' data-style='bisweb'>`);
+        parent.append(bidsToggleButton);    
+
+        bidsToggleButton.bootstrapToggle({
+            'width' : '25%',
+            'on' : 'BIDS', 
+            'off' : 'No BIDS',
+        });
+
+        bidsToggleButton.bootstrapToggle('on');
+
     }
 
 
@@ -1263,7 +1271,7 @@ class StudyPanel extends HTMLElement {
      * @param {String} inputDirectory 
      * @param {String} outputDirectory 
      */
-    importDICOMImages(inputDirectory, outputDirectory,doBIDS=true) {
+    importDICOMImages(inputDirectory, outputDirectory, doBIDS=true) {
         
         if (!bis_webfileutil.candoComplexIO(true)) {
             console.log('Error: cannot import DICOM study without access to file server.');
