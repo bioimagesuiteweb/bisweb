@@ -506,3 +506,8 @@ tspan {
 .bisweb-outline-primary.active {
     background-color : rgba(30, 144, 255, 0.5);
 }
+
+.toggle.bisweb, .toggle-on.bisweb, .toggle-off.bisweb { 
+    margin-left : 5px;
+    margin-top : 5px;
+}

@@ -34,6 +34,7 @@ To Test
 
 require('jstree');
 require('bootstrap-slider');
+require('bootstrap-toggle');
 
 /**
  * <bisweb-treepanel
@@ -1224,7 +1225,16 @@ class StudyPanel extends HTMLElement {
             save : false,
             serveronly : true,
         });
-        inputGroup.append(`<button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 15%'>BIDS</button>`);
+
+        let bidsToggleId = webutil.getuniqueid();
+        let bidsToggleButton = $(`<input id=${bidsToggleId} type='checkbox' data-toggle='toggle' style='width: 15%;'>`);
+
+        console.log('bids toggle button', bidsToggleButton);
+        parent.append(bidsToggleButton);
+
+        bidsToggleButton.bootstrapToggle();
+        
+        //inputGroup.append(`<button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 15%'>BIDS</button>`);
 
         bis_webfileutil.createFileButton({
             'type': 'success',
@@ -1241,9 +1251,6 @@ class StudyPanel extends HTMLElement {
                 'save': false,
             'serveronly': true,
         });
-
-
-
 
     }
 
