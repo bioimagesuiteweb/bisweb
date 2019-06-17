@@ -782,7 +782,7 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
             //        This will be called only if save is specified at the top
             let correlateAndWriteTSVFiles = () => {
                 return new Promise((resolve, reject) => {
-                    let jobInfoFilename = baseDirectory + '/' + dicomParametersFilename, promiseArray = [];
+                    let jobInfoFilename = baseDirectory + SEPARATOR + dicomParametersFilename, promiseArray = [];
                     bis_genericio.read(jobInfoFilename).then((obj) => {
 
                         //filter filenames by looking for 'func' 
@@ -806,7 +806,7 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
 
                             let bidsTsvFilename = file.filename.split('/');
                             bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
-                            bidsTsvFilename = bidsTsvFilename.join('/');
+                            bidsTsvFilename = bidsTsvFilename.join(SEPARATOR);
 
                             //get rid of the other tsv files associated with this file given that a new one is being uploaded
                             file.supportingfiles = file.supportingfiles.filter((supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
@@ -816,7 +816,7 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
                             let runNumber = runNumRegex.exec(file.name);
                             let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
 
-                            let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
+                            let fullTsvFilename = baseDirectory + SEPARATOR + bidsTsvFilename;
                             promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
                         }
 
@@ -858,7 +858,6 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
         // then checks the two numbers to see whether they are either lower than the lowest value seen so far or higher than the highest
         function parseEntry(entry, range) {
 
-            console.log('entry', entry);
             if (Array.isArray(entry) && Array.isArray(entry[0])) {
                 let entryArray = [];
                 for (let item of entry)
@@ -899,7 +898,7 @@ let cleanRow=(line) => {
  */
 let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
     return new Promise ( (resolve, reject) => {
-        let matchstring = tsvDirectory + '/*.tsv';
+        let matchstring = tsvDirectory + SEPARATOR + '*.tsv';
         bis_genericio.getMatchingFiles(matchstring).then( (files) => {
             
             //always parses with unit set to 'frame' and an offset of zero
@@ -960,7 +959,7 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
 
                     let date = new Date();
                     let formattedLocaleDateString=  date.toLocaleDateString().replace(/\//g, '-');
-                    let outputName = outputDirectory + '/task_file_' + formattedLocaleDateString + '.json';
+                    let outputName = outputDirectory + SEPARATOR + 'task_file_' + formattedLocaleDateString + '.json';
                     bis_genericio.write(outputName, stringifiedJSON, false).then( () => {
                         resolve();
                     });

@@ -10,6 +10,8 @@ const bisweb_taskutils = require('bisweb_taskutils.js');
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager = require('bisweb_studytaskmanager');
 
+const SEPARATOR = bis_genericio.getPathSeparator();
+
 /** TODO
  *
  *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
@@ -849,10 +851,10 @@ class StudyPanel extends HTMLElement {
                 for (let node of selectedNodes) {
                     let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
                     //task names should be the second or third bullet, so if it's not there then we know not to change them
-                    if (splitName.length >= 2 && splitName[1].includes('Task')) {
+                    if (splitName.length >= 2 && splitName[1].includes('task')) {
                         taskName = splitName[1];
                         index = 1;
-                    } else if (splitName.length >= 3 && splitName[2].includes('Task')) {
+                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
                         taskName = splitName[2];
                         index = 2;
                     }
@@ -870,6 +872,11 @@ class StudyPanel extends HTMLElement {
                         //move the file on disk 
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
+                        
+                        //replace forward slashes with separator character for the given platform
+                        srcFile = srcFile.replace(/[/]/g, SEPARATOR), dstFile = dstFile.replace(/[/]/g, SEPARATOR);
+
+                        console.log('source', srcFile, 'dest', dstFile);
                         bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
                         movedFiles.push({ 'old': srcFile, 'new': dstFile });
                     }
@@ -883,7 +890,7 @@ class StudyPanel extends HTMLElement {
                         if (fileExtension.toLowerCase() === 'json') {
 
                             //open file, update 'TaskName', then write it to disk
-                            let fullname = this.baseDirectory + '/' + file;
+                            let fullname = this.baseDirectory + SEPARATOR + file;
                             bis_genericio.read(fullname).then((obj) => {
                                 try {
                                     let parsedJSON = JSON.parse(obj.data);
