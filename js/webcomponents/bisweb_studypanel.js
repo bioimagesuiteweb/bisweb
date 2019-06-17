@@ -3,7 +3,6 @@ const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
 const webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
-const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
@@ -198,6 +197,7 @@ class StudyPanel extends HTMLElement {
                 let baseDir = formatBaseDirectory(filename, fileinfo.files) || filename;
                 fileinfo.type='directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
+                console.log('BaseDir=',baseDir);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
 
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
@@ -297,9 +297,9 @@ class StudyPanel extends HTMLElement {
      */
     updateFileTree(files, baseDirectory, type) {
 
-        if (bis_genericio.getPathSeparator() === '\\')
-            baseDirectory = util.filenameWindowsToUnix(baseDirectory);
-
+        if (bis_genericio.getPathSeparator() === '\\') {
+            baseDirectory=baseDirectory.trim().replace(/\\/g,'/');
+        }
         this.baseDirectory = baseDirectory;
 
         this.studyType = type;
@@ -431,7 +431,7 @@ class StudyPanel extends HTMLElement {
             for (let file of files) {
                 //trim the common directory name from the filtered out name
                 if (bis_genericio.getPathSeparator() === '\\')
-                    file = util.filenameWindowsToUnix(file);
+                    file=file.trim().replace(/\\/g,'/');
 
                 let trimmedName = file.replace(baseDirectory, '');
                 let splitName = trimmedName.split('/');
@@ -536,7 +536,6 @@ class StudyPanel extends HTMLElement {
      * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
      */
     createLoadSaveStudyButtons(listElement) {
-        
         
         let buttonBar = $(`<div></div>`);
 
@@ -725,8 +724,8 @@ class StudyPanel extends HTMLElement {
         console.log('Base Directory', this.baseDirectory, filepath);
 
         let base = this.baseDirectory;
-        if (bis_genericio.getPathSeparator() === '\\')
-            base = util.filenameUnixToWindows(base);
+        //if (bis_genericio.getPathSeparator() === '\\')
+        //base = util.filenameUnixToWindows(base,false);
 
         bis_genericio.getFileStats(base).then((stats) => {
 
@@ -1002,8 +1001,8 @@ class StudyPanel extends HTMLElement {
 
         name = this.stripTaskName(name);
         let finalname = this.baseDirectory + name;
-        if (bis_genericio.getPathSeparator() === '\\')
-            finalname = util.filenameUnixToWindows(finalname);
+        //if (bis_genericio.getPathSeparator() === '\\')
+        //finalname = util.filenameUnixToWindows(finalname,false);
 
         return finalname;
 
@@ -1450,6 +1449,9 @@ let readParamsFile = (sourceDirectory) => {
  * @returns A promise resolving the study files
  */
 let getFileList = (filename) => {
+
+    console.log('Filename=',filename);
+    
     return new Promise((resolve, reject) => {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
@@ -1464,6 +1466,7 @@ let getFileList = (filename) => {
         }
 
         readParamsFile(filename).then((data) => {
+            console.log('Filename');
 
             let type = data.type || data.acquisition || data.bisformat || 'Unknown type';
             bis_genericio.getMatchingFiles(queryString).then((files) => {
@@ -1489,6 +1492,9 @@ let getFileList = (filename) => {
  * @returns Base directory rooted at 'sourcedata', or null if sourcedata is not in any file's path (not a BIDS directory).
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
+
+    //console.log("BASE=",baseDirectory);
+    
     let formattedBase = findBaseDirectory(baseDirectory);
 
     if (!formattedBase) {
@@ -1497,14 +1503,14 @@ let formatBaseDirectory = (baseDirectory, contents) => {
         formattedBase = findBaseDirectory(file);
     }
 
-    //console.log('formatted base', formattedBase);
+    console.log('formatted base', formattedBase);
     return formattedBase;
 
     function findBaseDirectory(directory) {
-        let splitBase = directory.split('/'), formattedBase = null;
+        let splitBase = directory.split(SEPARATOR), formattedBase = null;
         for (let i = 0; i < splitBase.length; i++) {
             if (splitBase[i] === 'sourcedata') {
-                formattedBase = splitBase.slice(0, i + 1).join('/');
+                formattedBase = splitBase.slice(0, i + 1).join(SEPARATOR);
             }
         }
 
