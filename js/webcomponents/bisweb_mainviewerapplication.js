@@ -1163,16 +1163,14 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         
-        //TODO: Remove The user preferences flag before release?
-        // -Zach 
         // ----------------------------------------------------------
-        // DICOM 
+        // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
         const dicomid = this.getAttribute('bis-dicomimportid') || null;
         if (dicomid) {
             let dicommodule = document.querySelector(dicomid) || null;
             webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Import DICOM', () => {
+            webutil.createMenuItem(bmenu, 'Study (DICOM/BIDS) Panel', () => {
                 dicommodule.show();
             });
         }

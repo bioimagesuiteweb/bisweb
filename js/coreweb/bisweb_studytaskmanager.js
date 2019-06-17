@@ -202,6 +202,12 @@ class StudyTaskManager {
      * 
      * @param {String} name - The name of the task file.
      */
+
+    // TODO:
+    //    Should I overwrite?
+    //    Only ask if .tsv files exist.
+    //    Make it clear if this involves overwriting
+    
     async loadStudyTaskData(name) {
 
         let loadTaskData = async () => {
@@ -218,8 +224,8 @@ class StudyTaskManager {
 
         let openParseBIDSModal = () => {
             bootbox.confirm({
-                'title' : 'Parse BIDS?',
-                'message' : 'Parse BIDS .tsv files on import? These are required for full BIDS compatibility.',
+                'title' : 'Create TSV Files?',
+                'message' : 'Create BIDS .tsv files on import? These are required for full BIDS compatibility.',
                 'buttons' : {
                     'confirm' : {
                         'label' : 'Yes',
@@ -234,7 +240,8 @@ class StudyTaskManager {
                     if (makeTsv) {
                         await loadTaskData();
                         let baseDirectory = this.studypanel.baseDirectory;
-                        bis_bidsutils.parseTaskFileToTSV(this.taskdata, baseDirectory, true);
+                        console.log("BASE =",baseDirectory);
+                        bis_bidsutils.convertTASKFileToTSV(this.taskdata, baseDirectory, true);
                     } else {
                         await loadTaskData();
                     }
@@ -282,7 +289,7 @@ class StudyTaskManager {
             'callback' : (result) => {
                 if (result) {
                     let baseDirectory = this.studypanel.baseDirectory;
-                    bis_bidsutils.parseTaskFileToTSV(f, baseDirectory).then( () => {
+                    bis_bidsutils.convertTASKFileToTSV(f, baseDirectory).then( () => {
                         webutil.createAlert('Task parse successful. Please ensure that these files match what you expect!');
                     });
                 }
@@ -377,13 +384,12 @@ class StudyTaskManager {
     /** Initialize the plot and then plot the first run */
     plotTaskData() {
         
-        this.createTaskPlotWindow();
-
         if (this.taskdata===null) {
             webutil.createAlert('No task definitions in memory',true);
             return;
         }
 
+        this.createTaskPlotWindow();
         const footer=this.dialogElement.getFooter();
         const parsedRuns = this.taskdata.runs;
         const runKeys=Object.keys(parsedRuns);
@@ -474,7 +480,7 @@ class StudyTaskManager {
         for (let i=0;i<taskNames.length;i++) {
             let task=taskNames[i];
             let runpairs=runInfo[task];
-            console.log('RunPairs=',runpairs);
+
             // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
             if (typeof runpairs[0] === "number")
                 runpairs=[runpairs]; 

@@ -701,7 +701,7 @@ let getSettingsFile = (filename) => {
  * @param {String} baseDirectory - The name of the base directory for the study.
  * @param {Boolean} save - If true, write the files to disk, otherwise just return. 
  */
-let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
+let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
     
     return new Promise( (resolve, reject) => {
 
@@ -889,7 +889,7 @@ let cleanRow=(line) => {
 };
 
 /**
- * Parses all .tsv files in a given directory into a .json task file (see parseTaskFileToTSV).
+ * Parses all .tsv files in a given directory into a .json task file (see convertTASKFileToTSV).
  * Produces an output file in outputDirectory named 'task_file' with the current date appended.
  * 
  * @param {String} tsvDirectory - Filepath of directory containing .tsv files. 
@@ -1005,7 +1005,7 @@ module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
     getSettingsFile : getSettingsFile,
-    parseTaskFileToTSV : parseTaskFileToTSV,
+    convertTASKFileToTSV : convertTASKFileToTSV,
     parseTaskFileFromTSV : parseTaskFileFromTSV,
     dicomParametersFilename : dicomParametersFilename
 };

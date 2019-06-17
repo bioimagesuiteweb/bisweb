@@ -190,7 +190,7 @@ class StudyPanel extends HTMLElement {
         this.rendered = true;
     }
 
-    importFilesFromDirectory(filename) {
+    importBIDSDirectory(filename) {
 
         getFileList(filename).then((fileinfo) => {
             if (fileinfo.files.length > 0) {
@@ -201,12 +201,27 @@ class StudyPanel extends HTMLElement {
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
 
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
-                this.parseStudyTSVFiles(baseDir).then( () => {
+                let tasksfound=false;
+                this.parseStudyTSVFiles(baseDir).then( (obj) => {
+                    if (obj)
+                        tasksfound=true;
+                }).catch( (e) => {
+                    console.log('An error occured while trying to parse tsv files', e);
+
+                }).finally( () => {
+                    this.taskManager.createGUI();
+                    let a='(No Tasks defined)';
+                    if (tasksfound)
+                        a='(Study includes task definitions)';
+                    webutil.createAlert('Loaded study from ' + filename+' '+a, false, 0, 3000);
+                    
+                });
+                /*this.parseStudyTSVFiles(baseDir).then( () => {
                     this.taskManager.createGUI();
                 }).catch( (e) => {
                     console.log('An error occured while trying to parse tsv files', e);
                     this.taskManager.createGUI();
-                });
+                });*/
                 
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
@@ -214,7 +229,7 @@ class StudyPanel extends HTMLElement {
         });
     }
 
-    importFilesFromJSON(filename) {
+    loadStudy(filename) {
         bis_genericio.read(filename).then((obj) => {
             let jsonData = obj.data, parsedData;
             try {
@@ -264,7 +279,7 @@ class StudyPanel extends HTMLElement {
                     });
 
                 } else {
-                    console.log('No tsv files found for this study, cannot parse tasks.');
+                    //console.log('No tsv files found for this study, cannot parse tasks.');
                     resolve();
                 }
 
@@ -311,7 +326,7 @@ class StudyPanel extends HTMLElement {
                       'overflow': 'auto',
                       'margin-top': '5px' }
             });
-        console.log('list container', this.listContainer, listContainerDiv);
+        //        console.log('list container', this.listContainer, listContainerDiv);
 
         let tree = this.listContainer.jstree({
             'core': {
@@ -532,7 +547,7 @@ class StudyPanel extends HTMLElement {
             'css' : { 'margin' : '5px', 'width' : '45%' },
             'parent' : buttonBar,
             'callback': (f) => {
-                this.importFilesFromJSON(f);
+                this.loadStudy(f);
             },
         }, {
                 'title': 'Load study',
@@ -1271,7 +1286,7 @@ class StudyPanel extends HTMLElement {
             'css' : { 'margin-left' : '15px', 'width' : '45%', 'margin-bottom' : '5px' },
             'name': 'Import BIDS Directory',
             'callback': (f) => {
-                this.importFilesFromDirectory(f);
+                this.importBIDSDirectory(f);
             },
         }, {
                 'title': 'Import study from directory',
@@ -1345,7 +1360,7 @@ class StudyPanel extends HTMLElement {
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             webutil.dismissAlerts();
-            this.importFilesFromDirectory(output);
+            this.importBIDSDirectory(output);
             this.showTreePanel();
         }).catch( (e) => {
             console.log('An error occured during file conversion', e);
