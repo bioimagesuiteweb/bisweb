@@ -596,17 +596,19 @@ class StudyPanel extends HTMLElement {
             <br>
             </p>`);
 
-            dicomModal.body.append(text, $(`<HR width="90%"></HR><br>`));
+            dicomModal.body.append(text, $(`<HR width="90%"></HR>`));
             let inputGroups = $(`
                 <div style='width: 90%; margin: 0 auto;'>
+                    <label>Input directory</label>
                     <div class='input-group bisweb-filepath'>
-                        <input type='search' class='form-control' placeholder='Input directory'>
+                        <input type='search' class='form-control' placeholder='Enter an input directory...'>
                         <span class='input-group-btn'>
                             <button class='btn btn-primary' type='button'>. . .</button>
                         </span>
                     </div>
+                    <label>Output directory</label>
                     <div class='input-group bisweb-filepath'>
-                        <input type='search' class='form-control' placeholder='Output directory'>
+                        <input type='search' class='form-control' placeholder='Enter an output directory...'>
                         <span class='input-group-btn'>
                             <button class='btn btn-primary' type='button'>. . .</button>
                         </span>
@@ -614,22 +616,22 @@ class StudyPanel extends HTMLElement {
                 </div>
             `);
 
-            //Create convert button with BIDS toggle next to it
-            dicomModal.footer.empty();
-            let convertButton = webutil.createbutton({
-                'name' : 'Convert',
-                'type' : 'success'
-            });
-
+            //Create convert button with BIDS toggle next to it and append it to the footer
             //TODO: Create class for toggle buttons?
             let bidsToggleButton = $(`<button class='btn btn-sm bisweb-outline bisweb-outline-success active' data-toggle='button'>BIDS</button>`);
+            let convertButton = webutil.createbutton({
+                'name' : 'Convert',
+                'type' : 'success',
+            });
 
             let convertButtonBar = webutil.createbuttonbar();
             convertButtonBar.append(convertButton);
             convertButtonBar.append(bidsToggleButton);
 
             dicomModal.body.append(inputGroups);
+            dicomModal.footer.empty();
             dicomModal.footer.append(convertButtonBar);
+
             dicomModal.dialog.modal('show');
             this.dicomModal = dicomModal;
         }
