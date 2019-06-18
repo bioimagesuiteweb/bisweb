@@ -1173,8 +1173,11 @@ class ViewerApplicationElement extends HTMLElement {
             webutil.createMenuItem(bmenu, 'Study (DICOM/BIDS) Panel', () => {
                 dicommodule.show();
             });
-        }
 
+            webutil.createMenuItem(bmenu, 'DICOM Import Modal', () => {
+                dicommodule.showDICOMImportModal();
+            });
+        }
         
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',

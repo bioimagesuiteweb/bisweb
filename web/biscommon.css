@@ -507,7 +507,22 @@ tspan {
     background-color : rgba(30, 144, 255, 0.5);
 }
 
+.bisweb-outline-success {
+    border-color: rgb(0, 188, 140);
+    color : rgb(0, 188, 140);
+}
+
+.bisweb-outline-success.active {
+    background-color : rgb(0, 188, 140, 0.5);
+}
+
+
 .toggle.bisweb, .toggle-on.bisweb, .toggle-off.bisweb { 
     margin-left : 5px;
     margin-top : 5px;
+}
+
+.bisweb-filepath {
+    width : 80%;
+    margin-bottom : 12px;
 }

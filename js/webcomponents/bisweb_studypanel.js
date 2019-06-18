@@ -43,6 +43,7 @@ class StudyPanel extends HTMLElement {
         this.listContainer = null;
         this.elementsContainer = null;
         this.taskManager = null;
+        this.dicomModal = null;
     }
 
     connectedCallback() {
@@ -149,7 +150,6 @@ class StudyPanel extends HTMLElement {
     createcreateGUI() {
         let parent = this.panel.getWidget();
         this.createStudyButtons(parent);
-        this.createImportButtons(parent);
         parent.append($('<HR width="90%">'));
 
         //file list container is generated each time because jstree cannot reuse the same div to make a new tree
@@ -202,12 +202,6 @@ class StudyPanel extends HTMLElement {
                     webutil.createAlert('Loaded study from ' + filename + ' ' + a, false, 0, 3000);
 
                 });
-                /*this.parseStudyTSVFiles(baseDir).then( () => {
-                    this.taskManager.createGUI();
-                }).catch( (e) => {
-                    console.log('An error occured while trying to parse tsv files', e);
-                    this.taskManager.createGUI();
-                });*/
 
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
@@ -231,7 +225,6 @@ class StudyPanel extends HTMLElement {
                 if (parsedData.tasks) {
                     //parse stored task data to be the full object used to create charts
                     bisweb_taskutils.parseFile(parsedData.tasks).then((parsedFile) => {
-                        console.log('parsed file', parsedFile);
                         this.taskManager.setTaskData(parsedFile, false);
                     });
                 }
@@ -253,7 +246,6 @@ class StudyPanel extends HTMLElement {
                 if (match.length > 0) {
                     let splitTsvDirname = match[0].split('/');
                     let tsvDirname = splitTsvDirname.slice(0, splitTsvDirname.length - 1).join('/');
-                    console.log('tsv dirname', tsvDirname);
 
                     bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then((obj) => {
                         bisweb_taskutils.parseFile(obj).then((formattedObj) => {
@@ -315,7 +307,6 @@ class StudyPanel extends HTMLElement {
                     'margin-top': '5px'
                 }
             });
-        //        console.log('list container', this.listContainer, listContainerDiv);
 
         let tree = this.listContainer.jstree({
             'core': {
@@ -356,7 +347,6 @@ class StudyPanel extends HTMLElement {
         if (this.viewertwo) {
             delete newSettings.Load;
 
-            //console.log('new settings', newSettings);
             newSettings = Object.assign(newSettings, {
                 'Viewer1': {
                     'separator_before': false,
@@ -589,16 +579,62 @@ class StudyPanel extends HTMLElement {
             });
 
 
-        /*let dicomModalButton = webutil.createbutton({
-            'name': 'DICOM conversion',
-            'type': 'primary',
-            'css': { 'margin': '5px', 'width': '90%' },
-
-        });*/
-
         studyButtonsDiv.append(topButtonBar);
-        //studyButtonsDiv.append(dicomModalButton);
         listElement.append(studyButtonsDiv);
+    }
+
+    showDICOMImportModal() {
+        if (!this.dicomModal) {
+            let dicomModal = webutil.createmodal('DICOM Import', 'modal-md');
+
+            let text = $(`<p><i>
+            Choose a directory that contains raw DICOM images and a directory where you'd like to put the converted images, then press 'Convert' to start the process. 
+            This process requires you to be connected to the BioImage Suite Web File Server Helper, or to to running the application on Electron (the Electron app <a href="http://bisweb.yale.edu/binaries/binaries.html">may be found here</a>).
+            <br><br>
+            This file conversion process will attempt to format the DICOM files according to <a href="https://bids.neuroimaging.io/">the BIDS specification</a> after converting the raw files. Deselect the 'BIDS' button next to 'Convert' if you would prefer to leave your files unformatted.
+            </i>
+            <br>
+            </p>`);
+
+            dicomModal.body.append(text, $(`<HR width="90%"></HR><br>`));
+            let inputGroups = $(`
+                <div style='width: 90%; margin: 0 auto;'>
+                    <div class='input-group bisweb-filepath'>
+                        <input type='search' class='form-control' placeholder='Input directory'>
+                        <span class='input-group-btn'>
+                            <button class='btn btn-primary' type='button'>. . .</button>
+                        </span>
+                    </div>
+                    <div class='input-group bisweb-filepath'>
+                        <input type='search' class='form-control' placeholder='Output directory'>
+                        <span class='input-group-btn'>
+                            <button class='btn btn-primary' type='button'>. . .</button>
+                        </span>
+                    </div>
+                </div>
+            `);
+
+            //Create convert button with BIDS toggle next to it
+            dicomModal.footer.empty();
+            let convertButton = webutil.createbutton({
+                'name' : 'Convert',
+                'type' : 'success'
+            });
+
+            //TODO: Create class for toggle buttons?
+            let bidsToggleButton = $(`<button class='btn btn-sm bisweb-outline bisweb-outline-success active' data-toggle='button'>BIDS</button>`);
+
+            let convertButtonBar = webutil.createbuttonbar();
+            convertButtonBar.append(convertButton);
+            convertButtonBar.append(bidsToggleButton);
+
+            dicomModal.body.append(inputGroups);
+            dicomModal.footer.append(convertButtonBar);
+            dicomModal.dialog.modal('show');
+            this.dicomModal = dicomModal;
+        }
+
+        this.dicomModal.dialog.modal('show');
     }
 
     /**
@@ -622,7 +658,6 @@ class StudyPanel extends HTMLElement {
             let existingTreeSettings = tree.settings.contextmenu.items;
             let enabledButtons = { 'RenameTask': true };
 
-            //console.log('node', tree.get_node(data.node.parent), data.node, existingTreeSettings);
             //dual viewer applications have a 'load to viewer 1' and 'load to viewer 2' button instead of just one load
             if (existingTreeSettings.Load) {
                 enabledButtons.Load = true;
@@ -745,8 +780,6 @@ class StudyPanel extends HTMLElement {
         console.log('Base Directory', this.baseDirectory, filepath);
 
         let base = this.baseDirectory;
-        //if (bis_genericio.getPathSeparator() === '\\')
-        //base = util.filenameUnixToWindows(base,false);
 
         bis_genericio.getFileStats(base).then((stats) => {
 
@@ -1022,8 +1055,6 @@ class StudyPanel extends HTMLElement {
 
         name = this.stripTaskName(name);
         let finalname = this.baseDirectory + name;
-        //if (bis_genericio.getPathSeparator() === '\\')
-        //finalname = util.filenameUnixToWindows(finalname,false);
 
         return finalname;
 
@@ -1056,16 +1087,6 @@ class StudyPanel extends HTMLElement {
             index: 0
         });
         tagSelectMenu.prop('disabled', '1');
-
-        /*let tagSelectMenu = $(
-            `<select class='form-control' disabled> 
-            <option value='image'>Image</option>
-            <option value='Task'>Task</option>
-            <option value='Rest'>Rest</option>
-            <option value='dwi'>DWI</option>
-            <option value='3danat'>3DAnat</option>
-            <option value='2danat'>2DAnat</option>
-        </select>`);*/
 
         if (options.enabled) {
             tagSelectMenu.prop('disabled', '');
@@ -1267,9 +1288,9 @@ class StudyPanel extends HTMLElement {
         return this.fileTree;
     }
 
-    createImportButtons(parent) {
+    /*createImportButtons(parent) {
 
-        /*let toggleid = webutil.getuniqueid();
+        let toggleid = webutil.getuniqueid();
 
         bis_webfileutil.createFileButton({ 
             type : 'info',
@@ -1300,17 +1321,10 @@ class StudyPanel extends HTMLElement {
             serveronly : true,
         });
         
-        let bidsToggleButton = $(`<input id=${toggleid} type='checkbox' data-toggle='toggle' data-size='small' data-style='bisweb'>`);
-        parent.append(bidsToggleButton);    
-
-        bidsToggleButton.bootstrapToggle({
-            'width' : '25%',
-            'on' : 'BIDS', 
-            'off' : 'No BIDS',
-        });
+        
         bidsToggleButton.bootstrapToggle('on');
-        */
-    }
+        
+    }*/
 
 
     /**
@@ -1496,8 +1510,6 @@ let getFileList = (filename) => {
  * @returns Base directory rooted at 'sourcedata', or null if sourcedata is not in any file's path (not a BIDS directory).
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
-
-    //console.log("BASE=",baseDirectory);
 
     let formattedBase = findBaseDirectory(baseDirectory);
 
