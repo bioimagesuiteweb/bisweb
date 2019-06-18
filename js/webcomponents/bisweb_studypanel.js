@@ -597,24 +597,31 @@ class StudyPanel extends HTMLElement {
             </p>`);
 
             dicomModal.body.append(text, $(`<HR width="90%"></HR>`));
+            let inputDirectoryTextboxId = webutil.getuniqueid(), outputDirectoryTextboxId = webutil.getuniqueid();
+            let inputSearchButtonId = webutil.getuniqueid(), outputSearchButtonId = webutil.getuniqueid();
+
             let inputGroups = $(`
                 <div style='width: 90%; margin: 0 auto;'>
                     <label>Input directory</label>
                     <div class='input-group bisweb-filepath'>
-                        <input type='search' class='form-control' placeholder='Enter an input directory...'>
+                        <input id=${inputDirectoryTextboxId} type='search' class='form-control' placeholder='Enter an input directory...'>
                         <span class='input-group-btn'>
-                            <button class='btn btn-primary' type='button'>. . .</button>
+                            <button id=${inputSearchButtonId} class='btn btn-primary' type='button'>. . .</button>
                         </span>
                     </div>
                     <label>Output directory</label>
                     <div class='input-group bisweb-filepath'>
-                        <input type='search' class='form-control' placeholder='Enter an output directory...'>
+                        <input id=${outputDirectoryTextboxId} type='search' class='form-control' placeholder='Enter an output directory...'>
                         <span class='input-group-btn'>
-                            <button class='btn btn-primary' type='button'>. . .</button>
+                            <button id=${outputSearchButtonId} class='btn btn-primary' type='button'>. . .</button>
                         </span>
                     </div>
                 </div>
             `);
+
+            $(inputGroups).find(`#${inputSearchButtonId}`).on('click', () => { searchButtonCallback(inputDirectoryTextboxId, 'Select a directory containing raw DICOM images'); });
+            $(inputGroups).find(`#${outputSearchButtonId}`).on('click', () => { searchButtonCallback(outputDirectoryTextboxId, 'Select the destination directory for the converted DICOM files'); });
+
 
             //Create convert button with BIDS toggle next to it and append it to the footer
             //TODO: Create class for toggle buttons?
@@ -622,6 +629,13 @@ class StudyPanel extends HTMLElement {
             let convertButton = webutil.createbutton({
                 'name' : 'Convert',
                 'type' : 'success',
+                'callback' : () => {
+                    let inputDirectoryName = $('#' + inputDirectoryTextboxId).val();
+                    let outputDirectoryName = $('#' + outputDirectoryTextboxId).val();
+                    let toggleState = bidsToggleButton.hasClass('active');
+
+                    this.importDICOMImages(inputDirectoryName, outputDirectoryName, toggleState);
+                }
             });
 
             let convertButtonBar = webutil.createbuttonbar();
@@ -637,6 +651,19 @@ class StudyPanel extends HTMLElement {
         }
 
         this.dicomModal.dialog.modal('show');
+
+        function searchButtonCallback(textInputId, titleText) {
+            bis_webfileutil.genericFileCallback({
+                'title': titleText,
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+                'serveronly': true,
+            }, (directory) => {
+                console.log('directory', directory);
+                $(`#${textInputId}`).val(directory);
+            });
+        }
     }
 
     /**
@@ -1379,8 +1406,8 @@ class StudyPanel extends HTMLElement {
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             webutil.dismissAlerts();
+            this.show();
             this.importBIDSDirectory(output);
-            this.showTreePanel();
         }).catch((e) => {
             console.log('An error occured during file conversion', e);
         });
