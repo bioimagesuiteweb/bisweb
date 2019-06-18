@@ -11,27 +11,10 @@ const BisWebTaskManager = require('bisweb_studytaskmanager');
 
 const SEPARATOR = bis_genericio.getPathSeparator();
 
-/** TODO
- *
- *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
- *  2.  (DONE) Save Study --> .biswebstudy this should include the task definition JSON as a field
- *  3.  (DONE) Load Study, create tree and tasks (call studytaskmanager.setTaskData())
- *  4.  (DONE) Import Task Defintion
-        1. a warning if we have data .. not to overwrite
-        2. a yes/no question as to whether to create tsv files for full BIDS compatibility
- *  Hide this Convert task to tsv (advanced)  yes/no question before it does anything
-
-To Test
-   Load Study  (.biswebstudy)
-   Save Study  (.biswebstudy)
-   DICOM -> NII (with and without BIDS)
-
-   Convert task to tsv
-
-   Have Steph read the help file.
-
-   Try to avoid embedding to much Jquery code directly ... use webutil.
-*/
+/** 
+ * TODO: 
+ *  Have Steph read the help file.
+ */
 
 require('jstree');
 require('bootstrap-slider');
@@ -49,22 +32,22 @@ require('bootstrap-toggle');
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
 
-const IMAGETYPES= [ 'Image','Task','Rest','DWI','3DAnat','2DAnat' ];
-const IMAGEVALUES= [ 'image','task','rest','dwi','3danat','2danat' ];
+const IMAGETYPES = ['Image', 'Task', 'Rest', 'DWI', '3DAnat', '2DAnat'];
+const IMAGEVALUES = ['image', 'task', 'rest', 'dwi', '3danat', '2danat'];
 
 class StudyPanel extends HTMLElement {
 
     constructor() {
         super();
         this.rendered = false;
-        this.listContainer=null;
-        this.elementsContainer=null;
-        this.taskManager=null;
+        this.listContainer = null;
+        this.elementsContainer = null;
+        this.taskManager = null;
     }
 
     connectedCallback() {
 
-        webutil.runAfterAllLoaded( () => {
+        webutil.runAfterAllLoaded(() => {
             this.id = this.getAttribute('id');
             this.viewerid = this.getAttribute('bis-viewerid');
             this.viewertwoid = this.getAttribute('bis-viewerid2');
@@ -137,7 +120,7 @@ class StudyPanel extends HTMLElement {
                     this.openTaskRenamingModal(node);
                 }
             },
-            'StudySettings' : {
+            'StudySettings': {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'Show Study Settings',
@@ -154,7 +137,7 @@ class StudyPanel extends HTMLElement {
      */
     show() {
         this.panel.show();
-        if (!this.rendered) { 
+        if (!this.rendered) {
             this.createcreateGUI();
         }
 
@@ -165,7 +148,7 @@ class StudyPanel extends HTMLElement {
      */
     createcreateGUI() {
         let parent = this.panel.getWidget();
-        this.createLoadSaveStudyButtons(parent);
+        this.createStudyButtons(parent);
         this.createImportButtons(parent);
         parent.append($('<HR width="90%">'));
 
@@ -175,17 +158,20 @@ class StudyPanel extends HTMLElement {
         parent.append(listContainerDiv);
 
         parent.append($('<HR width="90%">'));
-        this.elementsContainer =  webutil.creatediv(
-            { parent: parent ,
-              css : { 'height': '200px',
-                      'max-height' : '1500px',
-                      'overflow': 'auto',
-                      'width': '95%',
-                      'margin-top': '5px' }
+        this.elementsContainer = webutil.creatediv(
+            {
+                parent: parent,
+                css: {
+                    'height': '200px',
+                    'max-height': '1500px',
+                    'overflow': 'auto',
+                    'width': '95%',
+                    'margin-top': '5px'
+                }
             });
 
         parent.append($('<HR width="90%">'));
-        this.taskManager=new BisWebTaskManager(this,this.viewerid);
+        this.taskManager = new BisWebTaskManager(this, this.viewerid);
         this.rendered = true;
     }
 
@@ -195,26 +181,26 @@ class StudyPanel extends HTMLElement {
             if (fileinfo.files.length > 0) {
                 console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(filename, fileinfo.files) || filename;
-                fileinfo.type='directory import';
+                fileinfo.type = 'directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
-                console.log('BaseDir=',baseDir);
+                console.log('BaseDir=', baseDir);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
 
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
-                let tasksfound=false;
-                this.parseStudyTSVFiles(baseDir).then( (obj) => {
+                let tasksfound = false;
+                this.parseStudyTSVFiles(baseDir).then((obj) => {
                     if (obj)
-                        tasksfound=true;
-                }).catch( (e) => {
+                        tasksfound = true;
+                }).catch((e) => {
                     console.log('An error occured while trying to parse tsv files', e);
 
-                }).finally( () => {
+                }).finally(() => {
                     this.taskManager.createGUI();
-                    let a='(No Tasks defined)';
+                    let a = '(No Tasks defined)';
                     if (tasksfound)
-                        a='(Study includes task definitions)';
-                    webutil.createAlert('Loaded study from ' + filename+' '+a, false, 0, 3000);
-                    
+                        a = '(Study includes task definitions)';
+                    webutil.createAlert('Loaded study from ' + filename + ' ' + a, false, 0, 3000);
+
                 });
                 /*this.parseStudyTSVFiles(baseDir).then( () => {
                     this.taskManager.createGUI();
@@ -222,7 +208,7 @@ class StudyPanel extends HTMLElement {
                     console.log('An error occured while trying to parse tsv files', e);
                     this.taskManager.createGUI();
                 });*/
-                
+
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
             }
@@ -242,11 +228,11 @@ class StudyPanel extends HTMLElement {
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
 
-                if (parsedData.tasks) { 
+                if (parsedData.tasks) {
                     //parse stored task data to be the full object used to create charts
-                    bisweb_taskutils.parseFile(parsedData.tasks).then( (parsedFile) => {
+                    bisweb_taskutils.parseFile(parsedData.tasks).then((parsedFile) => {
                         console.log('parsed file', parsedFile);
-                        this.taskManager.setTaskData(parsedFile, false); 
+                        this.taskManager.setTaskData(parsedFile, false);
                     });
                 }
                 this.taskManager.createGUI();
@@ -258,10 +244,10 @@ class StudyPanel extends HTMLElement {
      * Searches a BIDS directory for the directory containing tsv files, then parses these into a task file.
      */
     parseStudyTSVFiles(basedir) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let matchstring = basedir + '/**/*.tsv';
-            bis_genericio.getMatchingFiles(matchstring).then( (match) => {
-                
+            bis_genericio.getMatchingFiles(matchstring).then((match) => {
+
                 //TODO: This assumes that there is only one directory that contains TSV files while in a study with multiple subjects there may be more than one
                 //This would require changing the task definition file in the future!
                 if (match.length > 0) {
@@ -269,12 +255,12 @@ class StudyPanel extends HTMLElement {
                     let tsvDirname = splitTsvDirname.slice(0, splitTsvDirname.length - 1).join('/');
                     console.log('tsv dirname', tsvDirname);
 
-                    bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then( (obj) => {
-                        bisweb_taskutils.parseFile(obj).then( (formattedObj) => {
+                    bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then((obj) => {
+                        bisweb_taskutils.parseFile(obj).then((formattedObj) => {
                             this.taskManager.setTaskData(formattedObj, false);
                             resolve(formattedObj);
-                        }).catch( (e) => { reject(e); });
-                    }).catch( (e) => {
+                        }).catch((e) => { reject(e); });
+                    }).catch((e) => {
                         reject(e);
                     });
 
@@ -283,7 +269,7 @@ class StudyPanel extends HTMLElement {
                     resolve();
                 }
 
-            }).catch( (e) => {
+            }).catch((e) => {
                 reject(e);
             });
         });
@@ -298,7 +284,7 @@ class StudyPanel extends HTMLElement {
     updateFileTree(files, baseDirectory, type) {
 
         if (bis_genericio.getPathSeparator() === '\\') {
-            baseDirectory=baseDirectory.trim().replace(/\\/g,'/');
+            baseDirectory = baseDirectory.trim().replace(/\\/g, '/');
         }
         this.baseDirectory = baseDirectory;
 
@@ -307,24 +293,27 @@ class StudyPanel extends HTMLElement {
 
         //alpabetize tree entries
         sortEntries(fileTree);
-        let len=fileTree.length;
-        for (let i=0;i<len;i++) {
-            let elem=fileTree[i];
+        let len = fileTree.length;
+        for (let i = 0; i < len; i++) {
+            let elem = fileTree[i];
             if (!elem.state)
-                elem.state={};
-            elem['state']['opened']=true;
+                elem.state = {};
+            elem['state']['opened'] = true;
         }
 
         let listContainerDiv = this.panel.getWidget().find('#' + this.listContainerDivID);
         listContainerDiv.empty();
 
         this.listContainer = webutil.creatediv(
-            { parent: listContainerDiv,
-              css : { 'height': '350px',
-                      'max-height' : '1500px',
-                      'width': '95%',
-                      'overflow': 'auto',
-                      'margin-top': '5px' }
+            {
+                parent: listContainerDiv,
+                css: {
+                    'height': '350px',
+                    'max-height': '1500px',
+                    'width': '95%',
+                    'overflow': 'auto',
+                    'margin-top': '5px'
+                }
             });
         //        console.log('list container', this.listContainer, listContainerDiv);
 
@@ -399,16 +388,16 @@ class StudyPanel extends HTMLElement {
 
             let elementsDiv = this.elementsContainer;
             let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm bisweb-load-enable' disabled>Load image</button>`);
-            loadImageButton.on('click', () => { this.loadImageFromTree();  });
-            
-            let loaddiv =  webutil.creatediv({ parent : elementsDiv,css : { 'width' : '95%' }});
+            loadImageButton.on('click', () => { this.loadImageFromTree(); });
+
+            let loaddiv = webutil.creatediv({ parent: elementsDiv, css: { 'width': '95%' } });
             loaddiv.append(loadImageButton);
             loaddiv.append(`<span class = "bisweb-file-import-label" style="font-size:80%; margin-left:20px; font-style:italic">Current — ${type}</span>`);
-            
+
             //create load button and static tag select menu
-            let tagSelectDiv =  webutil.creatediv({ parent : elementsDiv,  css : { 'width' : '95%' }});
-            let lab=$(`<label>Tag of Selected Image:</label>`);
-            lab.css({'margin' : '5px'});
+            let tagSelectDiv = webutil.creatediv({ parent: elementsDiv, css: { 'width': '95%' } });
+            let lab = $(`<label>Tag of Selected Image:</label>`);
+            lab.css({ 'margin': '5px' });
             tagSelectDiv.append(lab);
             this.staticTagSelectMenu = this.createTagSelectMenu({ 'setDefaultValue': false, 'listenForTagEvents': true });
             tagSelectDiv.append(this.staticTagSelectMenu);
@@ -431,7 +420,7 @@ class StudyPanel extends HTMLElement {
             for (let file of files) {
                 //trim the common directory name from the filtered out name
                 if (bis_genericio.getPathSeparator() === '\\')
-                    file=file.trim().replace(/\\/g,'/');
+                    file = file.trim().replace(/\\/g, '/');
 
                 let trimmedName = file.replace(baseDirectory, '');
                 let splitName = trimmedName.split('/');
@@ -535,16 +524,23 @@ class StudyPanel extends HTMLElement {
      * 
      * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
      */
-    createLoadSaveStudyButtons(listElement) {
-        
-        let buttonBar = $(`<div></div>`);
+    createStudyButtons(listElement) {
+
+        let studyButtonsDiv = $(`<div class='text-center' style='margin: 0 auto; width: 90%'><br></div>`);
+
+        let topButtonBar = $(`<div class='btn-group btn-group-justified' style="margin: 0px;"></div>`);
+
+        let studyFileButtonWrapper = $(`<div class='btn-group'></div>`);
+        let saveStudyButtonWrapper = $(`<div class='btn-group'></div>`);
+        let importDirectoryButtonWrapper = $(`<div class='btn-group'></div>`);
+
+        topButtonBar.append(studyFileButtonWrapper, saveStudyButtonWrapper, importDirectoryButtonWrapper);
 
         //Route study load and save through bis_webfileutil file callbacks
         bis_webfileutil.createFileButton({
             'type': 'success',
             'name': 'Load study file',
-            'css' : { 'margin' : '5px', 'width' : '45%' },
-            'parent' : buttonBar,
+            'parent': studyFileButtonWrapper,
             'callback': (f) => {
                 this.loadStudy(f);
             },
@@ -559,9 +555,8 @@ class StudyPanel extends HTMLElement {
 
         let saveStudyButton = bis_webfileutil.createFileButton({
             'type': 'info',
-            'css' : { 'margin' : '10px', 'width' : '45%' },
             'name': 'Save study file',
-            'parent' : buttonBar,
+            'parent': saveStudyButtonWrapper,
             'callback': (f) => {
                 this.exportStudy(f);
             },
@@ -574,10 +569,36 @@ class StudyPanel extends HTMLElement {
                 initialCallback: () => { return this.getDefaultFilename(); },
             });
 
-
+        //.bisweb-load-enable becomes enabled once a study has been loaded
         saveStudyButton.addClass('bisweb-load-enable');
         saveStudyButton.prop('disabled', 'true');
-        listElement.append(buttonBar);
+
+        bis_webfileutil.createFileButton({
+            'type': 'success',
+            'name': 'Import directory',
+            'parent': importDirectoryButtonWrapper,
+            'callback': (f) => {
+                this.importBIDSDirectory(f);
+            },
+        }, {
+                'title': 'Import study from directory',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+                'serveronly': true,
+            });
+
+
+        /*let dicomModalButton = webutil.createbutton({
+            'name': 'DICOM conversion',
+            'type': 'primary',
+            'css': { 'margin': '5px', 'width': '90%' },
+
+        });*/
+
+        studyButtonsDiv.append(topButtonBar);
+        //studyButtonsDiv.append(dicomModalButton);
+        listElement.append(studyButtonsDiv);
     }
 
     /**
@@ -611,10 +632,10 @@ class StudyPanel extends HTMLElement {
             }
 
             if (data.node.original.type === 'directory') {
-                if (enabledButtons.Load) { 
-                    enabledButtons.Load = false; 
-                } else { 
-                    enabledButtons.Viewer1 = false; 
+                if (enabledButtons.Load) {
+                    enabledButtons.Load = false;
+                } else {
+                    enabledButtons.Viewer1 = false;
                     enabledButtons.Viewer2 = false;
                 }
             } if (data.node.parent === '#' || tree.get_node(data.node.parent).original.text !== 'func') {
@@ -737,21 +758,21 @@ class StudyPanel extends HTMLElement {
             };
 
             let taskInfo = this.taskManager.getTaskData() || null;
-            if (taskInfo) { 
+            if (taskInfo) {
                 //trim unnecessary fields from task info and join all the array in runs to match the format expected for task files on disk
                 let runs = taskInfo.runs, keys = Object.keys(runs);
-                for (let i = 0; i < keys.length; i++) { 
-                    delete runs[keys[i]].parsedRegions; 
+                for (let i = 0; i < keys.length; i++) {
+                    delete runs[keys[i]].parsedRegions;
                     for (let taskKey of Object.keys(runs[keys[i]])) {
                         runs[keys[i]][taskKey] = joinArray(runs[keys[i]][taskKey]);
                     }
                 }
                 console.log('runs', runs);
-                treeMetadataContainer.tasks = { 'runs' : runs }; 
+                treeMetadataContainer.tasks = { 'runs': runs };
             }
 
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
-            
+
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
             if (splitPath.length < 2 || splitPath[1] !== 'biswebstudy' || splitPath[1] !== 'biswebstudy') {
@@ -759,7 +780,7 @@ class StudyPanel extends HTMLElement {
             }
 
             filepath = splitPath.join('.');
-            bis_genericio.write(filepath, stringifiedFiles, false).then( () => {
+            bis_genericio.write(filepath, stringifiedFiles, false).then(() => {
                 webutil.createAlert('Saved study file ' + filepath + ' successfully');
             });
         }).catch((e) => {
@@ -886,7 +907,7 @@ class StudyPanel extends HTMLElement {
                         //move the file on disk 
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
-                        
+
                         //replace forward slashes with separator character for the given platform
                         srcFile = srcFile.replace(/[/]/g, SEPARATOR), dstFile = dstFile.replace(/[/]/g, SEPARATOR);
 
@@ -930,10 +951,10 @@ class StudyPanel extends HTMLElement {
                 if (newName) {
                     confirmName = newName;
                     bootbox.confirm({
-                        'size' : 'small',
-                        'title' : 'Confirm task rename',
-                        'message' : 'Rename task to ' + confirmName + '?',
-                        'callback' : renameFn.bind(this, newName)
+                        'size': 'small',
+                        'title': 'Confirm task rename',
+                        'message': 'Rename task to ' + confirmName + '?',
+                        'callback': renameFn.bind(this, newName)
                     });
                 }
             }
@@ -1031,11 +1052,11 @@ class StudyPanel extends HTMLElement {
     createTagSelectMenu(options = {}) {
 
         let tagSelectMenu = webutil.createselect({
-            values : IMAGETYPES,
-            index : 0
+            values: IMAGETYPES,
+            index: 0
         });
-        tagSelectMenu.prop('disabled','1');
-        
+        tagSelectMenu.prop('disabled', '1');
+
         /*let tagSelectMenu = $(
             `<select class='form-control' disabled> 
             <option value='image'>Image</option>
@@ -1061,9 +1082,9 @@ class StudyPanel extends HTMLElement {
         }
 
         tagSelectMenu.on('change', () => {
-            let index=tagSelectMenu.val();
+            let index = tagSelectMenu.val();
             let selectedValue = IMAGEVALUES[index].toLowerCase();
-            console.log('Index=',index,selectedValue);
+            console.log('Index=', index, selectedValue);
             this.currentlySelectedNode.original.tag = selectedValue;
 
             //create bootbox modal with task select slider
@@ -1080,9 +1101,9 @@ class StudyPanel extends HTMLElement {
         });
 
         return tagSelectMenu;
-        
-        
-        
+
+
+
         function createTaskSelectorWindow(node, listContainer) {
             let minSliderValue = 1;
             let maxSliderValue = 10;
@@ -1173,14 +1194,14 @@ class StudyPanel extends HTMLElement {
 
     changeTagSelectMenu(menu, node) {
         let selection = node.original.tag || 'image';
-        selection=selection.toLowerCase();
+        selection = selection.toLowerCase();
         if (selection.includes('task')) {
             selection = 'Task';
         }
-        
-        let index= IMAGEVALUES.indexOf(selection);
-        if (index<0)
-            index=0;
+
+        let index = IMAGEVALUES.indexOf(selection);
+        if (index < 0)
+            index = 0;
         menu.val(index);
     }
 
@@ -1215,20 +1236,20 @@ class StudyPanel extends HTMLElement {
     /** Loads dicom_job_info.json (or whatever the most recent settings file is) and displays it. */
     showStudySettingsModal() {
         let settingsFilename = this.baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
-        bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
+        bis_bidsutils.getSettingsFile(settingsFilename).then((settings) => {
             let settingsString;
             try {
                 settingsString = JSON.stringify(settings, null, 2);
-            } catch(e) {
+            } catch (e) {
                 console.log('An error occured while trying to display settings', e);
             }
 
             let settingsModal = bootbox.alert({
-               'size' : 'large',
-               'title' : 'DICOM Job Settings',
-               'message' : `<pre>${settingsString}</pre>`,
-               'backdrop' : true,
-               'scrollable' : true,
+                'size': 'large',
+                'title': 'DICOM Job Settings',
+                'message': `<pre>${settingsString}</pre>`,
+                'backdrop': true,
+                'scrollable': true,
             });
 
 
@@ -1248,7 +1269,7 @@ class StudyPanel extends HTMLElement {
 
     createImportButtons(parent) {
 
-        let toggleid = webutil.getuniqueid();
+        /*let toggleid = webutil.getuniqueid();
 
         bis_webfileutil.createFileButton({ 
             type : 'info',
@@ -1278,23 +1299,7 @@ class StudyPanel extends HTMLElement {
             save : false,
             serveronly : true,
         });
-
-        bis_webfileutil.createFileButton({
-            'type': 'success',
-            'parent' : parent,
-            'css' : { 'margin-left' : '15px', 'width' : '45%', 'margin-bottom' : '5px' },
-            'name': 'Import BIDS Directory',
-            'callback': (f) => {
-                this.importBIDSDirectory(f);
-            },
-        }, {
-                'title': 'Import study from directory',
-                'filters': 'DIRECTORY',
-                'suffix': 'DIRECTORY',
-                'save': false,
-            'serveronly': true,
-        });
-
+        
         let bidsToggleButton = $(`<input id=${toggleid} type='checkbox' data-toggle='toggle' data-size='small' data-style='bisweb'>`);
         parent.append(bidsToggleButton);    
 
@@ -1303,9 +1308,8 @@ class StudyPanel extends HTMLElement {
             'on' : 'BIDS', 
             'off' : 'No BIDS',
         });
-
         bidsToggleButton.bootstrapToggle('on');
-
+        */
     }
 
 
@@ -1317,19 +1321,19 @@ class StudyPanel extends HTMLElement {
      * @param {String} inputDirectory 
      * @param {String} outputDirectory 
      */
-    importDICOMImages(inputDirectory, outputDirectory, doBIDS=true) {
-        
+    importDICOMImages(inputDirectory, outputDirectory, doBIDS = true) {
+
         if (!bis_webfileutil.candoComplexIO(true)) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
         }
 
-        let a='';
+        let a = '';
         if (doBIDS)
-            a='/BIDS';
-        
-        webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
-        
+            a = '/BIDS';
+
+        webutil.createAlert('Converting raw DICOM files to NII' + a + ' format...', false, 0, 1000000000, { 'makeLoadSpinner': true });
+
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
         }
@@ -1338,20 +1342,20 @@ class StudyPanel extends HTMLElement {
         }
 
 
-        let promise=null;
+        let promise = null;
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
-        
-            promise=bis_genericio.runDICOMConversion({
-                'fixpaths' : true,
+
+            promise = bis_genericio.runDICOMConversion({
+                'fixpaths': true,
                 'inputDirectory': inputDirectory,
-                'outputDirectory' : outputDirectory,
-                'convertbids' : doBIDS
+                'outputDirectory': outputDirectory,
+                'convertbids': doBIDS
             });
         } else {
             //if on electron just run the module directly
             let dicomModule = new DicomModule();
-            promise = dicomModule.execute( {}, { 'inputDirectory' : inputDirectory, 'outputDirectory' : outputDirectory, 'convertbids' : doBIDS });
+            promise = dicomModule.execute({}, { 'inputDirectory': inputDirectory, 'outputDirectory': outputDirectory, 'convertbids': doBIDS });
         }
 
         promise.then((fileConversionOutput) => {
@@ -1361,7 +1365,7 @@ class StudyPanel extends HTMLElement {
             webutil.dismissAlerts();
             this.importBIDSDirectory(output);
             this.showTreePanel();
-        }).catch( (e) => {
+        }).catch((e) => {
             console.log('An error occured during file conversion', e);
         });
     }
@@ -1450,8 +1454,8 @@ let readParamsFile = (sourceDirectory) => {
  */
 let getFileList = (filename) => {
 
-    console.log('Filename=',filename);
-    
+    console.log('Filename=', filename);
+
     return new Promise((resolve, reject) => {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
@@ -1494,7 +1498,7 @@ let getFileList = (filename) => {
 let formatBaseDirectory = (baseDirectory, contents) => {
 
     //console.log("BASE=",baseDirectory);
-    
+
     let formattedBase = findBaseDirectory(baseDirectory);
 
     if (!formattedBase) {
