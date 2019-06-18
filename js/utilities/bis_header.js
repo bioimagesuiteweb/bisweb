@@ -258,7 +258,7 @@ class BisHeader {
 
         // Fix spacing and dimensions to correct standard issues
         let pixdim=this.struct['pixdim'];
-        for (let i=0;i<pixdim.length;i++) {
+        for (let i=1;i<pixdim.length;i++) { // START at 1,[0] can be -ve, it is qfac!!!
             if (pixdim[i]<0.00001)
                 pixdim[i]=1.0;
         }
