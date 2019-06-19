@@ -62,27 +62,19 @@ class StudyTaskManager {
             
         this.widget =  webutil.creatediv({ parent : this.studypanel.panel.getWidget(),
                                            css : { 'width' : '95%' }});
-        bis_webfileutil.createFileButton({
-            'type': 'info',
+
+        webutil.createbutton({
+            'name': 'Plot Tasks',
+            'type': 'info' ,
             'parent' : this.widget,
             'css' : {
-                'width' : '45%',
+                'width' : '30%',
                 'margin-left' : '5px',
-                'margin-bottom' : '10px',
             },
-            'name': 'Import task definition file',
-            'callback': (f) => {
-                this.loadStudyTaskData(f);
-            },
-        },
-            {
-                'title': 'Import task defintion file',
-                'filters': [
-                    { 'name': 'Task Files', extensions: ['biswebtask'] }
-                ],
-                'suffix': 'biswebtask',
-                'save': false,
-            });
+            callback : () => {
+                this.plotTaskData();
+            }
+        });
 
         webutil.createbutton({
             'name': 'Clear task definitions',
@@ -91,7 +83,6 @@ class StudyTaskManager {
             'css' : {
                 'width' : '40%',
                 'margin-left' : '15px',
-                'margin-bottom' : '10px',
             },
 
             'callback' : () => {
@@ -121,27 +112,16 @@ class StudyTaskManager {
             }
         });
 
-        webutil.createbutton({
-            'name': 'Plot Task Timecourses',
-            'type': 'info' ,
-            'parent' : this.widget,
-            'css' : {
-                'width' : '45%',
-                'margin-left' : '5px',
-            },
-            callback : () => {
-                this.plotTaskData();
-            }
-        });
+
 
         let advancedOptionsModal = webutil.createmodal('Advanced Options');
         webutil.createbutton({ 
-            'name' : 'Show advanced options',
+            'name' : '..',
             'type' : 'primary',
             'parent' : this.widget,
             'css' : {
-                'width' : '40%',
-                'margin-left' : '15px',
+                'margin-left' : '5px',
+                'margin-right' : '5px',
             },
             'callback' : () => {
                 advancedOptionsModal.dialog.modal('show');
@@ -151,6 +131,8 @@ class StudyTaskManager {
         let tasktotsvButton = bis_webfileutil.createFileButton({ 
             'name': 'Convert task file to .tsv', 
             'type' : 'primary',
+            'css' : {  'width' : '45%',
+                       'margin' : '5px' },
             'parent' : advancedOptionsModal.body,
             'callback': (f) => {
                 this.createTSVParseModal(f);
@@ -168,6 +150,8 @@ class StudyTaskManager {
         let taskfromtsvButton = bis_webfileutil.createFileButton({
             'name' : 'Convert .tsvs to task file',
             'type' : 'info',
+            'css' : {  'width' : '45%',
+                       'margin' : '5px' },
             'parent' : advancedOptionsModal.body,
             'callback' : (f) => {
                 let saveFileCallback = (o) => { 
@@ -191,8 +175,31 @@ class StudyTaskManager {
             }
         );
 
+        let but2=bis_webfileutil.createFileButton({
+            'type': 'success',
+            'parent' : advancedOptionsModal.body,
+            'css' : {
+                'width' : '45%',
+                'margin-left' : '5px',
+            },
+            'name': 'Import task definition file',
+            'callback': (f) => {
+                this.loadStudyTaskData(f);
+            },
+        },
+            {
+                'title': 'Import task defintion file',
+                'filters': [
+                    { 'name': 'Task Files', extensions: ['biswebtask'] }
+                ],
+                'suffix': 'biswebtask',
+                'save': false,
+            });
+
+        
         tasktotsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide'));
-        taskfromtsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide')); 
+        taskfromtsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide'));
+        but2.on('click', () => advancedOptionsModal.dialog.modal('hide')); 
 
     }
 

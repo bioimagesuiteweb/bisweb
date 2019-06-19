@@ -67,10 +67,10 @@ class StudyPanel extends HTMLElement {
                 width: '400',
                 dual: false,
                 mode: 'sidebar',
-                helpButton: true
+                //helpButton: true
             });
 
-            this.setHelpModalMessage();
+            //this.setHelpModalMessage();
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             this.dismissPopoverFn = (e) => {
@@ -516,21 +516,14 @@ class StudyPanel extends HTMLElement {
      */
     createStudyButtons(listElement) {
 
-        let studyButtonsDiv = $(`<div class='text-center' style='margin: 0 auto; width: 90%'><br></div>`);
-
-        let topButtonBar = $(`<div class='btn-group btn-group-justified' style="margin: 0px;"></div>`);
-
-        let studyFileButtonWrapper = $(`<div class='btn-group'></div>`);
-        let saveStudyButtonWrapper = $(`<div class='btn-group'></div>`);
-        let importDirectoryButtonWrapper = $(`<div class='btn-group'></div>`);
-
-        topButtonBar.append(studyFileButtonWrapper, saveStudyButtonWrapper, importDirectoryButtonWrapper);
+        let topbar = webutil.creatediv({ parent: listElement });
 
         //Route study load and save through bis_webfileutil file callbacks
         bis_webfileutil.createFileButton({
-            'type': 'success',
+            'type': 'info',
+            'css' : { 'margin' : '5px' },
             'name': 'Load study file',
-            'parent': studyFileButtonWrapper,
+            'parent': topbar,
             'callback': (f) => {
                 this.loadStudy(f);
             },
@@ -544,9 +537,10 @@ class StudyPanel extends HTMLElement {
             });
 
         let saveStudyButton = bis_webfileutil.createFileButton({
-            'type': 'info',
+            'type': 'danger',
             'name': 'Save study file',
-            'parent': saveStudyButtonWrapper,
+            'css' : { 'margin' : '5px' },
+            'parent': topbar,
             'callback': (f) => {
                 this.exportStudy(f);
             },
@@ -565,8 +559,8 @@ class StudyPanel extends HTMLElement {
 
         bis_webfileutil.createFileButton({
             'type': 'success',
+            'parent': topbar,
             'name': 'Import directory',
-            'parent': importDirectoryButtonWrapper,
             'callback': (f) => {
                 this.importBIDSDirectory(f);
             },
@@ -579,27 +573,25 @@ class StudyPanel extends HTMLElement {
             });
 
 
-        studyButtonsDiv.append(topButtonBar);
-        listElement.append(studyButtonsDiv);
+
     }
 
     showDICOMImportModal() {
         if (!this.dicomModal) {
             let dicomModal = webutil.createmodal('DICOM Import', 'modal-md');
 
-            let text = $(`<p><i>
-            Choose a directory that contains raw DICOM images and a directory where you'd like to put the converted images, then press 'Convert' to start the process. 
-            This process requires you to be connected to the BioImage Suite Web File Server Helper, or to to running the application on Electron (the Electron app <a href="http://bisweb.yale.edu/binaries/binaries.html">may be found here</a>).
-            <br><br>
-            This file conversion process will attempt to format the DICOM files according to <a href="https://bids.neuroimaging.io/">the BIDS specification</a> after converting the raw files. Deselect the 'BIDS' button next to 'Convert' if you would prefer to leave your files unformatted.
-            </i>
-            <br>
-            </p>`);
+            let text = $(`<P align="center"><B>This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.<B></p>
 
+            <p>Choose a directory that contains raw DICOM images and a directory where you would like to save the converted NIFTI .nii.gz images, then press 'Convert' to start the process. 
+            This process requires you to (i) either be connected to the BioImage Suite Web File Server Helper, or (ii) to be running the application via Electron (the Electron app <a href="binaries.html" target="_blank">may be found here</a>).</p>
+ 
+            <p><B>Note:</B> If the "BIDS" checkbox is selected, the NIFTI .nii.gz files will be sorted to create a directory structure that is based on <a href="https://bids.neuroimaging.io/">the BIDS specification</a> after converting the raw files. </p>`);
+            
             dicomModal.body.append(text, $(`<HR width="90%"></HR>`));
             let inputDirectoryTextboxId = webutil.getuniqueid(), outputDirectoryTextboxId = webutil.getuniqueid();
             let inputSearchButtonId = webutil.getuniqueid(), outputSearchButtonId = webutil.getuniqueid();
-
+            let doBidsId=webutil.getuniqueid();
+                        
             let inputGroups = $(`
                 <div style='width: 90%; margin: 0 auto;'>
                     <label>Input directory</label>
@@ -616,36 +608,34 @@ class StudyPanel extends HTMLElement {
                             <button id=${outputSearchButtonId} class='btn btn-primary' type='button'>. . .</button>
                         </span>
                     </div>
+                    <div>
+                    <input id="${doBidsId}" style="margin-left:30%" type="checkbox">
+                    <label style="margin-left:5px;">Reorganize Files to BIDS</label>
+                    </div>
                 </div>
             `);
 
             $(inputGroups).find(`#${inputSearchButtonId}`).on('click', () => { searchButtonCallback(inputDirectoryTextboxId, 'Select a directory containing raw DICOM images'); });
             $(inputGroups).find(`#${outputSearchButtonId}`).on('click', () => { searchButtonCallback(outputDirectoryTextboxId, 'Select the destination directory for the converted DICOM files'); });
+            let bidsCheck=$('#'+doBidsId);
+            dicomModal.body.append(inputGroups);
+            dicomModal.footer.empty();
 
 
-            //Create convert button with BIDS toggle next to it and append it to the footer
-            //TODO: Create class for toggle buttons?
-            let bidsToggleButton = $(`<button class='btn btn-sm bisweb-outline bisweb-outline-success active' data-toggle='button'>BIDS</button>`);
-            let convertButton = webutil.createbutton({
+            webutil.createbutton({
                 'name' : 'Convert',
                 'type' : 'success',
-                'callback' : () => {
+                parent : dicomModal.footer,
+                'callback' : (e) => {
+                    e.preventDefault();
                     let inputDirectoryName = $('#' + inputDirectoryTextboxId).val();
                     let outputDirectoryName = $('#' + outputDirectoryTextboxId).val();
-                    let toggleState = bidsToggleButton.hasClass('active');
-
+                    let toggleState = bidsCheck.is(":checked") || false;
                     this.importDICOMImages(inputDirectoryName, outputDirectoryName, toggleState);
                 }
             });
-
-            let convertButtonBar = webutil.createbuttonbar();
-            convertButtonBar.append(convertButton);
-            convertButtonBar.append(bidsToggleButton);
-
-            dicomModal.body.append(inputGroups);
-            dicomModal.footer.empty();
-            dicomModal.footer.append(convertButtonBar);
-
+            
+            
             dicomModal.dialog.modal('show');
             this.dicomModal = dicomModal;
         }

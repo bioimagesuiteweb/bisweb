@@ -1170,11 +1170,11 @@ class ViewerApplicationElement extends HTMLElement {
         if (dicomid) {
             let dicommodule = document.querySelector(dicomid) || null;
             webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Study (DICOM/BIDS) Panel', () => {
+            webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
                 dicommodule.show();
             });
 
-            webutil.createMenuItem(bmenu, 'DICOM Import Modal', () => {
+            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
                 dicommodule.showDICOMImportModal();
             });
         }
