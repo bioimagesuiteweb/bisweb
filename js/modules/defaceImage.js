@@ -46,7 +46,9 @@ class DefaceImageModule extends BaseModule {
         let m=this.outputmask;
         return {
             "name": "Deface",
-            "description": "This module uses data from the openfmri project to deface an image by first affinely registering it to a template",
+            "description": `This module uses data from the openfmri project to deface an image by first affinely registering it to a template.`,
+            "webdescription" : `The original template was obtained from the <a href="https://github.com/poldrack/openfmri/blob/master/pipeline/facemask/deface.py" target="_blank">openfmri</a> project and slightly edited.`,
+            
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
