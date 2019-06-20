@@ -578,7 +578,7 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
         let settingsFilename = baseDirectory + SEPARATOR + dicomParametersFilename;
 
         //open dicom settings file 
-        getSettingsFile(settingsFilename).then((settings) => {
+        getSettingsFile(baseDirectory).then((settings) => {
             let compiledSupportingFileList = [], movePromiseArray = [];
 
             for (let file of changedFiles) {
@@ -679,12 +679,14 @@ let writeSettingsFile = (filename, settings) => {
 
 /**
  * Reads settings file from disk and returns the contents.
+ * 
+ * @param {String} baseDirectory - Name of the base directory for the study in question.
  */
-let getSettingsFile = (filename) => {
+let getSettingsFile = (baseDirectory) => {
+    let settingsFilename = baseDirectory + SEPARATOR + dicomParametersFilename;
     return new Promise( (resolve, reject) => {
-        bis_genericio.read(filename).then( (obj) => {
+        bis_genericio.read(settingsFilename).then( (obj) => {
             try {
-                console.log('obj', obj);
                 let fileInfo = JSON.parse(obj.data);
                 resolve(fileInfo);
             } catch (e) {
@@ -692,6 +694,31 @@ let getSettingsFile = (filename) => {
             }
         });
     });
+};
+/**
+ * Gets the entry for a single .nii.gz file in the DICOM jobs file. 
+ * 
+ * @param {String} filename - Name of the file to return an entry for. 
+ */
+let getSettingsEntry = (baseDirectory, filename) => {
+    return new Promise( (resolve, reject) => {
+        getSettingsFile(baseDirectory).then( (settingsFile) => {
+            let basename = bis_genericio.getBaseName(filename).split('.')[0]; //sometimes name in the settings file may not include the extension
+            let settingsEntry = null;
+    
+            //find the entry with the same filename as the one invoked from the contextmenu
+            for (let file of settingsFile.files) {
+                if (file.name.includes(basename)) {
+                    settingsEntry = file;
+                    break;
+                }
+            }
+    
+            if (!settingsEntry) { reject('No entry found for ' + filename); return; }
+            resolve(settingsEntry); 
+        }).catch( (e) => { reject(e); });
+    });
+    
 };
 
 /**
@@ -1005,6 +1032,7 @@ module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
     getSettingsFile : getSettingsFile,
+    getSettingsEntry : getSettingsEntry,
     convertTASKFileToTSV : convertTASKFileToTSV,
     parseTaskFileFromTSV : parseTaskFileFromTSV,
     dicomParametersFilename : dicomParametersFilename

@@ -526,3 +526,7 @@ tspan {
     width : 100%;
     margin-bottom : 12px;
 }
+
+.bisweb-li:hover {
+    background-color : rgba(0, 188, 140, 0.5);
+}

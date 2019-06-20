@@ -121,14 +121,14 @@ class StudyPanel extends HTMLElement {
                     this.openTaskRenamingModal(node);
                 }
             },
-            'StudySettings': {
+            /*'StudySettings': {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'Show Study Settings',
                 'action': (node) => {
                     this.showStudySettingsModal(node);
                 }
-            }
+            }*/
         };
 
     }
@@ -796,9 +796,6 @@ class StudyPanel extends HTMLElement {
     exportStudy(filepath) {
 
         let reconstructedTree = this.parseTreeToJSON();
-
-        console.log('Base Directory', this.baseDirectory, filepath);
-
         let base = this.baseDirectory;
 
         bis_genericio.getFileStats(base).then((stats) => {
@@ -893,19 +890,16 @@ class StudyPanel extends HTMLElement {
     createFileInfoModal(node) {
         console.log('node', node);
         let fileModal = webutil.createmodal('File info', 'modal-lg');
-        let nodeName = this.constructNodeName(node), baseDirectory = this.baseDirectory; 
+        let nodeName = this.constructNodeName(node); 
 
         let fileInfoLayout = $(`
             <div class='container-fluid'> 
                 <div class='row justify-content-start'>
                     <div class='col-lg-4'>
                         <ul class='list-group bisweb-file-list'>
-                            <li class='list-group-item'>Placeholder</li>
-                            <li class='list-group-item'>Placeholder</li>
-                            <li class='list-group-item'>Placeholder</li>
                         </ul>
                     </div>
-                    <div class='col-lg-8'>
+                    <div class='col-lg-8 bisweb-file-info'>
                         <pre>Content here...</pre>
                     </div>
                 </div>
@@ -914,50 +908,64 @@ class StudyPanel extends HTMLElement {
 
         fileModal.body.append(fileInfoLayout);
 
-        getSettingsEntry(nodeName).then( (settingsEntry) => {
-            console.log('settings entry', settingsEntry);
-            //if ()
-            /*bootbox.alert({
-                'title': 'DICOM Job Settings',
-                'message': `<pre>${settingsString}</pre>`,
-                'backdrop': true,
-                'scrollable': true,
-            });*/
+        bis_bidsutils.getSettingsEntry(this.baseDirectory, nodeName).then( (settingsEntry) => {
+            let filelist = fileModal.body.find('.bisweb-file-list');
+            filelist.empty();
+
+
+            //add image file to file list, then the supporting files
+            let imageli = $(`<li class='list-group-item bisweb-li'>${bis_genericio.getBaseName(nodeName)}</li>`);
+            filelist.append(imageli);
+            for (let file of settingsEntry.supportingfiles) {
+                let basename = bis_genericio.getBaseName(file);
+                let li = $(`<li class='list-group-item bisweb-li'>${basename}</li>`);
+                filelist.append(li);
+            }
+            
+
+            //add 'active' class to element on click and remove 'active' from all others
+            //then change bisweb-file-info to be the info of the selected item
+            fileModal.body.find('.bisweb-file-list>.list-group-item').on('click', function() {
+                console.log('this text', $(this));
+                fileInfoLayout.find('.bisweb-file-list>.list-group-item').removeClass('active');
+                $(this).addClass('active');
+                let basename = $(this).html();
+                changeDisplayedInfo(basename);
+            });
 
             fileModal.dialog.modal('show');
         }).catch( (e) => { console.log('An error occured while creating the file info modal', e); });
 
+        const self = this;
+        function changeDisplayedInfo(basename) {
+            console.log('base name', basename, 'node name', nodeName);
+            //create full name of file in list by replacing base of node name with basename
+            let splitName = nodeName.split(SEPARATOR); 
+            splitName[splitName.length - 1] = basename;
+            let filename = splitName.join(SEPARATOR); 
 
-        function getSettingsEntry(filename) {
-            return new Promise( (resolve, reject) => {
-                let settingsFilename = baseDirectory + SEPARATOR + bis_bidsutils.dicomParametersFilename;
-                bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
-                    let basename = bis_genericio.getBaseName(filename).split('.')[0]; //sometimes name in the settings file may not include the extension
-                    let settingsEntry = null;
+            if (filename.includes('.nii.gz')) {
+                let fileInfoPane = fileModal.body.find('.bisweb-file-info');
+                fileInfoPane.empty();
 
-                    //find the entry with the same filename as the one invoked from the contextmenu
-                    for (let file of settings.files) {
-                        if (file.name.includes(basename)) {
-                            settingsEntry = file;
-                            break;
-                        }
+                self.getFileInfo(filename).then( (fileInfo) => {
+                    let fileInfoContent = $(`<p>${fileInfo}</p>`);
+                    fileInfoPane.append(fileInfoContent);
+                });
+            } else {
+                /*bis_genericio.read(filename).then( (obj) => {
+                    try {
+                        let 
                     }
-
-                    if (!settingsEntry) { reject('No entry found for ' + filename); return; }
-                    resolve(settingsEntry); 
-                }).catch( (e) => {
-                    reject(e);
-                })
-            });
+                });*/
+            }
         }
     }
 
-    getFileInfo() {
+    getFileInfo(filename) {
+        return new Promise((resolve, reject) => {
+            bis_genericio.getFileStats(filename).then((stats) => {
 
-        bis_genericio.isDirectory(this.constructNodeName()).then((isDirectory) => {
-            bis_genericio.getFileStats(this.constructNodeName()).then((stats) => {
-
-                console.log('stats', stats, 'node', this.currentlySelectedNode);
                 //make file size something more readable than bytes
                 let displayedSize, filetype;
                 let kb = stats.size / 1000;
@@ -972,20 +980,12 @@ class StudyPanel extends HTMLElement {
                 let accessedTime = new Date(stats.atimeMs);
                 let createdTime = new Date(stats.birthtimeMs);
                 let modifiedTime = new Date(stats.mtimeMs);
-                let parsedIsDirectory = isDirectory ? 'Yes' : 'No';
-
-                console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
 
                 //make info dialog
-                let infoDisplay = `Name: ${this.currentlySelectedNode.text}<br> File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag || 'None'}`;
-
-                bootbox.dialog({
-                    'title': 'File Info',
-                    'message': infoDisplay
-                });
-            });
+                let infoDisplay = `Name: ${filename}<br> File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime}`;
+                resolve(infoDisplay);
+            }).catch((e) => { reject('There was an error getting file stats', e); });
         });
-
     }
 
     openTaskRenamingModal() {
@@ -1342,8 +1342,7 @@ class StudyPanel extends HTMLElement {
     showStudySettingsModal(node) {
         let nodeName = this.constructNodeName(node); 
 
-        let settingsFilename = this.baseDirectory + SEPARATOR + bis_bidsutils.dicomParametersFilename;
-        bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
+        bis_bidsutils.getSettingsFile().then( (settings) => {
             let filename = bis_genericio.getBaseName(nodeName).split('.')[0]; //sometimes name may not include the extension
             
             //find the entry with the same filename as the one invoked from the contextmenu
