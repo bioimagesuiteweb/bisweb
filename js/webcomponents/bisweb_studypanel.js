@@ -93,8 +93,8 @@ class StudyPanel extends HTMLElement {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'File Info',
-                'action': () => {
-                    this.showInfoModal();
+                'action': (node) => {
+                    this.createFileInfoModal(node);
                 }
             },
             'Load': {
@@ -890,7 +890,69 @@ class StudyPanel extends HTMLElement {
 
     }
 
-    showInfoModal() {
+    createFileInfoModal(node) {
+        console.log('node', node);
+        let fileModal = webutil.createmodal('File info', 'modal-lg');
+        let nodeName = this.constructNodeName(node), baseDirectory = this.baseDirectory; 
+
+        let fileInfoLayout = $(`
+            <div class='container-fluid'> 
+                <div class='row justify-content-start'>
+                    <div class='col-lg-4'>
+                        <ul class='list-group bisweb-file-list'>
+                            <li class='list-group-item'>Placeholder</li>
+                            <li class='list-group-item'>Placeholder</li>
+                            <li class='list-group-item'>Placeholder</li>
+                        </ul>
+                    </div>
+                    <div class='col-lg-8'>
+                        <pre>Content here...</pre>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        fileModal.body.append(fileInfoLayout);
+
+        getSettingsEntry(nodeName).then( (settingsEntry) => {
+            console.log('settings entry', settingsEntry);
+            //if ()
+            /*bootbox.alert({
+                'title': 'DICOM Job Settings',
+                'message': `<pre>${settingsString}</pre>`,
+                'backdrop': true,
+                'scrollable': true,
+            });*/
+
+            fileModal.dialog.modal('show');
+        }).catch( (e) => { console.log('An error occured while creating the file info modal', e); });
+
+
+        function getSettingsEntry(filename) {
+            return new Promise( (resolve, reject) => {
+                let settingsFilename = baseDirectory + SEPARATOR + bis_bidsutils.dicomParametersFilename;
+                bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
+                    let basename = bis_genericio.getBaseName(filename).split('.')[0]; //sometimes name in the settings file may not include the extension
+                    let settingsEntry = null;
+
+                    //find the entry with the same filename as the one invoked from the contextmenu
+                    for (let file of settings.files) {
+                        if (file.name.includes(basename)) {
+                            settingsEntry = file;
+                            break;
+                        }
+                    }
+
+                    if (!settingsEntry) { reject('No entry found for ' + filename); return; }
+                    resolve(settingsEntry); 
+                }).catch( (e) => {
+                    reject(e);
+                })
+            });
+        }
+    }
+
+    getFileInfo() {
 
         bis_genericio.isDirectory(this.constructNodeName()).then((isDirectory) => {
             bis_genericio.getFileStats(this.constructNodeName()).then((stats) => {
