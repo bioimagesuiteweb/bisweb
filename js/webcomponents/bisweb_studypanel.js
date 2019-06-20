@@ -125,8 +125,8 @@ class StudyPanel extends HTMLElement {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'Show Study Settings',
-                'action': () => {
-                    this.showStudySettingsModal();
+                'action': (node) => {
+                    this.showStudySettingsModal(node);
                 }
             }
         };
@@ -1052,8 +1052,8 @@ class StudyPanel extends HTMLElement {
     }
 
     /**
-     * Constructs the full filename of the node based on
-     * @param {Object} node - Object describing the jstree node. If not specified this will infer that the currently selected node is to be used. 
+     * Constructs the full filename of the node based on an identifier from a node in the tree. 
+     * @param {Object} node - Object describing the jstree node, from tree.get_node, a reference passed by the contextmenu, etc. If not specified this will infer that the currently selected node is to be used. 
      */
     constructNodeName(node = null) {
 
@@ -1061,8 +1061,10 @@ class StudyPanel extends HTMLElement {
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.listContainer.jstree();
 
-        if (node) {
+        if (node && node.id) {
             currentNode = tree.get_node(node.id);
+        } else if (node && node.reference) {
+            currentNode = tree.get_node(node.reference);
         }
 
         while (currentNode.parent) {
@@ -1274,9 +1276,21 @@ class StudyPanel extends HTMLElement {
     }
 
     /** Loads dicom_job_info.json (or whatever the most recent settings file is) and displays it. */
-    showStudySettingsModal() {
-        let settingsFilename = this.baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
-        bis_bidsutils.getSettingsFile(settingsFilename).then((settings) => {
+    showStudySettingsModal(node) {
+        let nodeName = this.constructNodeName(node); 
+
+        let settingsFilename = this.baseDirectory + SEPARATOR + bis_bidsutils.dicomParametersFilename;
+        bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
+            let filename = bis_genericio.getBaseName(nodeName).split('.')[0]; //sometimes name may not include the extension
+            
+            //find the entry with the same filename as the one invoked from the contextmenu
+            for (let file of settings.files) {
+                if (file.name.includes(filename)) {
+                    settings = file;
+                    break;
+                }
+            }
+
             let settingsString;
             try {
                 settingsString = JSON.stringify(settings, null, 2);
@@ -1284,18 +1298,11 @@ class StudyPanel extends HTMLElement {
                 console.log('An error occured while trying to display settings', e);
             }
 
-            let settingsModal = bootbox.alert({
-                'size': 'large',
+            bootbox.alert({
                 'title': 'DICOM Job Settings',
                 'message': `<pre>${settingsString}</pre>`,
                 'backdrop': true,
                 'scrollable': true,
-            });
-
-
-            settingsModal.on('shown.bs.modal', () => {
-                console.log('modal shown', settingsModal);
-                $(settingsModal).scrollTop(0);
             });
         });
     }
