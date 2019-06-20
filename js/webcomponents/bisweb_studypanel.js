@@ -516,12 +516,12 @@ class StudyPanel extends HTMLElement {
      */
     createStudyButtons(listElement) {
 
-        let topbar = webutil.creatediv({ parent: listElement });
+        let topbar = webutil.creatediv({ 'parent': listElement, 'css' :  { 'text-align' : 'center' } });
 
         //Route study load and save through bis_webfileutil file callbacks
         bis_webfileutil.createFileButton({
             'type': 'info',
-            'css' : { 'margin' : '5px' },
+            'css' : { 'margin-top' : '10px' },
             'name': 'Load study file',
             'parent': topbar,
             'callback': (f) => {
@@ -539,7 +539,7 @@ class StudyPanel extends HTMLElement {
         let saveStudyButton = bis_webfileutil.createFileButton({
             'type': 'danger',
             'name': 'Save study file',
-            'css' : { 'margin' : '5px' },
+            'css' : { 'margin-left' : '5px', 'margin-top' : '10px' },
             'parent': topbar,
             'callback': (f) => {
                 this.exportStudy(f);
@@ -561,6 +561,7 @@ class StudyPanel extends HTMLElement {
             'type': 'success',
             'parent': topbar,
             'name': 'Import directory',
+            'css' : { 'margin-left' : '5px', 'margin-top' : '10px' },
             'callback': (f) => {
                 this.importBIDSDirectory(f);
             },
