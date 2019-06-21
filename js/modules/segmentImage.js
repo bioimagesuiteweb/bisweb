@@ -139,7 +139,7 @@ class SegmentImageModule extends BaseModule {
                 },
                 {
                     "name": "Internal Iterations",
-                    "description": "Number of Internal iterations",
+                    "description": "Number of internal iterations",
                     "priority": 100,
                     "advanced": true,
                     "gui": "slider",
