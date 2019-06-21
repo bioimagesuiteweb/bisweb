@@ -119,11 +119,11 @@ class CustomModule {
 
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
-        this.createHelpMessage(this.module,this.panel);
+        this.createHelpMessage(this.panel);
     }
 
     /** Create help message */
-    createHelpMessage(module,panel) {
+    createHelpMessage(panel) {
 
         
         let description = this.module.getDescription();
@@ -133,7 +133,7 @@ class CustomModule {
             help+='<P>'+description.webdescription+'</p>';
         
         let params=description.params;
-        help+="<details><summary><B>Parameters</B>";
+        help+="<B>Parameters</B>";
         
         params = params.sort((a, b) => {
             let sa=0,sb=0;
@@ -153,16 +153,17 @@ class CustomModule {
             if (p.advanced && addedadv===false) {
                 addedadv=true;
                 if (i>0)
-                    help+='</UL></summary><P>Advanced Parameters</P><UL>';
+                    help+='</UL><details><summary><b>Advanced Parameters</b></summary><UL>';
             }
             help+=`<LI><B>${p.name}</B>: ${p.description}</LI>`;
         }
 
-        if (!addedadv)
-            help+="</summary></details>";
-        else
+        if (addedadv)
             help+="</details>";
-        
+        /*else {}
+            help+="</details>";
+        */
+       
         help+=`</UL>`;
         panel.setHelpModalMessage(help);
     }
