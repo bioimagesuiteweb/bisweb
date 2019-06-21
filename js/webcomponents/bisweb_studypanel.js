@@ -74,6 +74,7 @@ class StudyPanel extends HTMLElement {
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             this.dismissPopoverFn = (e) => {
+                e.preventDefault();
                 if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
                     if (this.popoverDisplayed) {
                         $('[data-original-title]').popover('hide');
@@ -378,7 +379,7 @@ class StudyPanel extends HTMLElement {
 
             let elementsDiv = this.elementsContainer;
             let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm bisweb-load-enable' disabled>Load image</button>`);
-            loadImageButton.on('click', () => { this.loadImageFromTree(); });
+            loadImageButton.on('click', (e) => { e.preventDefault(); this.loadImageFromTree(); });
 
             let loaddiv = webutil.creatediv({ parent: elementsDiv, css: { 'width': '95%' } });
             loaddiv.append(loadImageButton);
@@ -627,8 +628,7 @@ class StudyPanel extends HTMLElement {
                 'name' : 'Convert',
                 'type' : 'success',
                 parent : dicomModal.footer,
-                'callback' : (e) => {
-                    e.preventDefault();
+                'callback' : () => {
                     let inputDirectoryName = $('#' + inputDirectoryTextboxId).val();
                     let outputDirectoryName = $('#' + outputDirectoryTextboxId).val();
                     let toggleState = bidsCheck.is(":checked") || false;
@@ -1093,7 +1093,8 @@ class StudyPanel extends HTMLElement {
             this.popoverDisplayed = true;
         });
 
-        dropdownMenu[0].addEventListener('change', () => {
+        dropdownMenu[0].addEventListener('change', (e) => {
+            e.preventDefault();
             popover.popover('hide');
         });
 
@@ -1186,7 +1187,9 @@ class StudyPanel extends HTMLElement {
             });
         }
 
-        tagSelectMenu.on('change', () => {
+        tagSelectMenu.on('change', (e) => {
+            e.preventDefault();
+
             let index = tagSelectMenu.val();
             let selectedValue = IMAGEVALUES[index].toLowerCase();
             console.log('Index=', index, selectedValue);
@@ -1260,16 +1263,16 @@ class StudyPanel extends HTMLElement {
                 let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
                 box.find('.modal-body').append(numberInput);
 
-                numberInput.on('keyup change', () => {
-                    console.log('val', numberInput.val());
+                numberInput.on('keyup change', (e) => {
+                    e.preventDefault();
                     let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
                     val = val > maxSliderValue ? maxSliderValue : val;
                     box.find('.bootstrap-task-slider').slider('setValue', val);
                 });
 
-                box.find('.bootstrap-task-slider').on('slide', (event) => {
-                    console.log('value', event.value);
-                    numberInput.val(event.value);
+                box.find('.bootstrap-task-slider').on('slide', (e) => {
+                    e.preventDefault();
+                    numberInput.val(e.value);
                 });
             });
 
@@ -1375,44 +1378,6 @@ class StudyPanel extends HTMLElement {
     getFileTree() {
         return this.fileTree;
     }
-
-    /*createImportButtons(parent) {
-
-        let toggleid = webutil.getuniqueid();
-
-        bis_webfileutil.createFileButton({ 
-            type : 'info',
-            name : 'DICOM->NII',
-            parent : parent,
-            css : { 'width' : '45%','margin-left':'5px', 'margin-bottom' : '5px' },
-            callback : (f) => {
-                let saveFileCallback = (o) => { 
-                    //get whether to convert to BIDS or not from toggle
-                    //toggle state will be true if the switch has the class off, so we want the mirror
-                    
-                    let toggleState = $(parent).find('#' + toggleid).parent().hasClass('off');
-                    this.importDICOMImages(f, o, !toggleState);
-                };
-                
-                bis_webfileutil.genericFileCallback( 
-                    {
-                        'title' : 'Choose output directory',
-                        'filters' : 'DIRECTORY',
-                        'save' : false
-                    }, saveFileCallback);
-            },
-        },{
-            title: 'Directory to import study from',
-            filters:  'DIRECTORY',
-            suffix:  'DIRECTORY',
-            save : false,
-            serveronly : true,
-        });
-        
-        
-        bidsToggleButton.bootstrapToggle('on');
-        
-    }*/
 
 
     /**
