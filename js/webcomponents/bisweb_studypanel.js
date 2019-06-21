@@ -74,7 +74,6 @@ class StudyPanel extends HTMLElement {
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             this.dismissPopoverFn = (e) => {
-                e.preventDefault();
                 if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
                     if (this.popoverDisplayed) {
                         $('[data-original-title]').popover('hide');
