@@ -578,7 +578,7 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
         let settingsFilename = baseDirectory + SEPARATOR + dicomParametersFilename;
 
         //open dicom settings file 
-        getSettingsFile(settingsFilename).then((settings) => {
+        getSettingsFile(baseDirectory).then((settings) => {
             let compiledSupportingFileList = [], movePromiseArray = [];
 
             for (let file of changedFiles) {
@@ -679,12 +679,14 @@ let writeSettingsFile = (filename, settings) => {
 
 /**
  * Reads settings file from disk and returns the contents.
+ * 
+ * @param {String} baseDirectory - Name of the base directory for the study in question.
  */
-let getSettingsFile = (filename) => {
+let getSettingsFile = (baseDirectory) => {
+    let settingsFilename = baseDirectory + SEPARATOR + dicomParametersFilename;
     return new Promise( (resolve, reject) => {
-        bis_genericio.read(filename).then( (obj) => {
+        bis_genericio.read(settingsFilename).then( (obj) => {
             try {
-                console.log('obj', obj);
                 let fileInfo = JSON.parse(obj.data);
                 resolve(fileInfo);
             } catch (e) {
@@ -692,6 +694,31 @@ let getSettingsFile = (filename) => {
             }
         });
     });
+};
+/**
+ * Gets the entry for a single .nii.gz file in the DICOM jobs file. 
+ * 
+ * @param {String} filename - Name of the file to return an entry for. 
+ */
+let getSettingsEntry = (baseDirectory, filename) => {
+    return new Promise( (resolve, reject) => {
+        getSettingsFile(baseDirectory).then( (settingsFile) => {
+            let basename = bis_genericio.getBaseName(filename).split('.')[0]; //sometimes name in the settings file may not include the extension
+            let settingsEntry = null;
+    
+            //find the entry with the same filename as the one invoked from the contextmenu
+            for (let file of settingsFile.files) {
+                if (file.name.includes(basename)) {
+                    settingsEntry = file;
+                    break;
+                }
+            }
+    
+            if (!settingsEntry) { reject('No entry found for ' + filename); return; }
+            resolve(settingsEntry); 
+        }).catch( (e) => { reject(e); });
+    });
+    
 };
 
 /**
@@ -701,7 +728,7 @@ let getSettingsFile = (filename) => {
  * @param {String} baseDirectory - The name of the base directory for the study.
  * @param {Boolean} save - If true, write the files to disk, otherwise just return. 
  */
-let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
+let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
     
     return new Promise( (resolve, reject) => {
 
@@ -782,7 +809,7 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
             //        This will be called only if save is specified at the top
             let correlateAndWriteTSVFiles = () => {
                 return new Promise((resolve, reject) => {
-                    let jobInfoFilename = baseDirectory + '/' + dicomParametersFilename, promiseArray = [];
+                    let jobInfoFilename = baseDirectory + SEPARATOR + dicomParametersFilename, promiseArray = [];
                     bis_genericio.read(jobInfoFilename).then((obj) => {
 
                         //filter filenames by looking for 'func' 
@@ -806,7 +833,7 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
 
                             let bidsTsvFilename = file.filename.split('/');
                             bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
-                            bidsTsvFilename = bidsTsvFilename.join('/');
+                            bidsTsvFilename = bidsTsvFilename.join(SEPARATOR);
 
                             //get rid of the other tsv files associated with this file given that a new one is being uploaded
                             file.supportingfiles = file.supportingfiles.filter((supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
@@ -816,7 +843,7 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
                             let runNumber = runNumRegex.exec(file.name);
                             let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
 
-                            let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
+                            let fullTsvFilename = baseDirectory + SEPARATOR + bidsTsvFilename;
                             promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
                         }
 
@@ -858,7 +885,6 @@ let parseTaskFileToTSV = (file, baseDirectory, save = true) => {
         // then checks the two numbers to see whether they are either lower than the lowest value seen so far or higher than the highest
         function parseEntry(entry, range) {
 
-            console.log('entry', entry);
             if (Array.isArray(entry) && Array.isArray(entry[0])) {
                 let entryArray = [];
                 for (let item of entry)
@@ -890,7 +916,7 @@ let cleanRow=(line) => {
 };
 
 /**
- * Parses all .tsv files in a given directory into a .json task file (see parseTaskFileToTSV).
+ * Parses all .tsv files in a given directory into a .json task file (see convertTASKFileToTSV).
  * Produces an output file in outputDirectory named 'task_file' with the current date appended.
  * 
  * @param {String} tsvDirectory - Filepath of directory containing .tsv files. 
@@ -899,7 +925,7 @@ let cleanRow=(line) => {
  */
 let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
     return new Promise ( (resolve, reject) => {
-        let matchstring = tsvDirectory + '/*.tsv';
+        let matchstring = tsvDirectory + SEPARATOR + '*.tsv';
         bis_genericio.getMatchingFiles(matchstring).then( (files) => {
             
             //always parses with unit set to 'frame' and an offset of zero
@@ -960,7 +986,7 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
 
                     let date = new Date();
                     let formattedLocaleDateString=  date.toLocaleDateString().replace(/\//g, '-');
-                    let outputName = outputDirectory + '/task_file_' + formattedLocaleDateString + '.json';
+                    let outputName = outputDirectory + SEPARATOR + 'task_file_' + formattedLocaleDateString + '.json';
                     bis_genericio.write(outputName, stringifiedJSON, false).then( () => {
                         resolve();
                     });
@@ -1006,7 +1032,8 @@ module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
     getSettingsFile : getSettingsFile,
-    parseTaskFileToTSV : parseTaskFileToTSV,
+    getSettingsEntry : getSettingsEntry,
+    convertTASKFileToTSV : convertTASKFileToTSV,
     parseTaskFileFromTSV : parseTaskFileFromTSV,
     dicomParametersFilename : dicomParametersFilename
 };

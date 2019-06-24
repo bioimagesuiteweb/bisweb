@@ -62,27 +62,19 @@ class StudyTaskManager {
             
         this.widget =  webutil.creatediv({ parent : this.studypanel.panel.getWidget(),
                                            css : { 'width' : '95%' }});
-        bis_webfileutil.createFileButton({
-            'type': 'info',
+
+        webutil.createbutton({
+            'name': 'Plot Tasks',
+            'type': 'info' ,
             'parent' : this.widget,
             'css' : {
-                'width' : '45%',
+                'width' : '30%',
                 'margin-left' : '5px',
-                'margin-bottom' : '10px',
             },
-            'name': 'Import task definition file',
-            'callback': (f) => {
-                this.loadStudyTaskData(f);
-            },
-        },
-            {
-                'title': 'Import task defintion file',
-                'filters': [
-                    { 'name': 'Task Files', extensions: ['biswebtask'] }
-                ],
-                'suffix': 'biswebtask',
-                'save': false,
-            });
+            callback : () => {
+                this.plotTaskData();
+            }
+        });
 
         webutil.createbutton({
             'name': 'Clear task definitions',
@@ -91,7 +83,6 @@ class StudyTaskManager {
             'css' : {
                 'width' : '40%',
                 'margin-left' : '15px',
-                'margin-bottom' : '10px',
             },
 
             'callback' : () => {
@@ -121,27 +112,16 @@ class StudyTaskManager {
             }
         });
 
-        webutil.createbutton({
-            'name': 'Plot Task Timecourses',
-            'type': 'info' ,
-            'parent' : this.widget,
-            'css' : {
-                'width' : '45%',
-                'margin-left' : '5px',
-            },
-            callback : () => {
-                this.plotTaskData();
-            }
-        });
+
 
         let advancedOptionsModal = webutil.createmodal('Advanced Options');
         webutil.createbutton({ 
-            'name' : 'Show advanced options',
+            'name' : '..',
             'type' : 'primary',
             'parent' : this.widget,
             'css' : {
-                'width' : '40%',
-                'margin-left' : '15px',
+                'margin-left' : '5px',
+                'margin-right' : '5px',
             },
             'callback' : () => {
                 advancedOptionsModal.dialog.modal('show');
@@ -151,6 +131,8 @@ class StudyTaskManager {
         let tasktotsvButton = bis_webfileutil.createFileButton({ 
             'name': 'Convert task file to .tsv', 
             'type' : 'primary',
+            'css' : {  'width' : '45%',
+                       'margin' : '5px' },
             'parent' : advancedOptionsModal.body,
             'callback': (f) => {
                 this.createTSVParseModal(f);
@@ -168,10 +150,12 @@ class StudyTaskManager {
         let taskfromtsvButton = bis_webfileutil.createFileButton({
             'name' : 'Convert .tsvs to task file',
             'type' : 'info',
+            'css' : {  'width' : '45%',
+                       'margin' : '5px' },
             'parent' : advancedOptionsModal.body,
             'callback' : (f) => {
                 let saveFileCallback = (o) => { 
-                    bis_bidsutils.parseTaskFileFromTSV(f, o, result);
+                    bis_bidsutils.parseTaskFileFromTSV(f, o, true);
                 };
                     
                 setTimeout( () => {
@@ -191,8 +175,31 @@ class StudyTaskManager {
             }
         );
 
+        let but2=bis_webfileutil.createFileButton({
+            'type': 'success',
+            'parent' : advancedOptionsModal.body,
+            'css' : {
+                'width' : '45%',
+                'margin-left' : '5px',
+            },
+            'name': 'Import task definition file',
+            'callback': (f) => {
+                this.loadStudyTaskData(f);
+            },
+        },
+            {
+                'title': 'Import task defintion file',
+                'filters': [
+                    { 'name': 'Task Files', extensions: ['biswebtask'] }
+                ],
+                'suffix': 'biswebtask',
+                'save': false,
+            });
+
+        
         tasktotsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide'));
-        taskfromtsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide')); 
+        taskfromtsvButton.on('click', () => advancedOptionsModal.dialog.modal('hide'));
+        but2.on('click', () => advancedOptionsModal.dialog.modal('hide')); 
 
     }
 
@@ -202,6 +209,12 @@ class StudyTaskManager {
      * 
      * @param {String} name - The name of the task file.
      */
+
+    // TODO:
+    //    Should I overwrite?
+    //    Only ask if .tsv files exist.
+    //    Make it clear if this involves overwriting
+    
     async loadStudyTaskData(name) {
 
         let loadTaskData = async () => {
@@ -217,12 +230,29 @@ class StudyTaskManager {
         };
 
         let openParseBIDSModal = () => {
-            bootbox.confirm('Parse BIDS .tsv files on import? These are required for full BIDS compatibility.', async (makeTsv) => {
-                if (makeTsv) {
-                    await loadTaskData();
-                    let baseDirectory = this.studypanel.baseDirectory;
-                    bis_bidsutils.parseTaskFileToTSV(this.taskdata, baseDirectory, true);
-                }
+            bootbox.confirm({
+                'title' : 'Create TSV Files?',
+                'message' : 'Create BIDS .tsv files on import? These are required for full BIDS compatibility.',
+                'buttons' : {
+                    'confirm' : {
+                        'label' : 'Yes',
+                        'className' : 'btn-success'
+                    },
+                    'cancel' : {
+                        'label' : 'No', 
+                        'className' : 'btn-danger'
+                    }
+                },
+                'callback' :  async (makeTsv) => {
+                    if (makeTsv) {
+                        await loadTaskData();
+                        let baseDirectory = this.studypanel.baseDirectory;
+                        console.log("BASE =",baseDirectory);
+                        bis_bidsutils.convertTASKFileToTSV(this.taskdata, baseDirectory, true);
+                    } else {
+                        await loadTaskData();
+                    }
+                },
             });
         };
 
@@ -266,7 +296,7 @@ class StudyTaskManager {
             'callback' : (result) => {
                 if (result) {
                     let baseDirectory = this.studypanel.baseDirectory;
-                    bis_bidsutils.parseTaskFileToTSV(f, baseDirectory).then( () => {
+                    bis_bidsutils.convertTASKFileToTSV(f, baseDirectory).then( () => {
                         webutil.createAlert('Task parse successful. Please ensure that these files match what you expect!');
                     });
                 }
@@ -361,13 +391,12 @@ class StudyTaskManager {
     /** Initialize the plot and then plot the first run */
     plotTaskData() {
         
-        this.createTaskPlotWindow();
-
         if (this.taskdata===null) {
             webutil.createAlert('No task definitions in memory',true);
             return;
         }
 
+        this.createTaskPlotWindow();
         const footer=this.dialogElement.getFooter();
         const parsedRuns = this.taskdata.runs;
         const runKeys=Object.keys(parsedRuns);
@@ -458,7 +487,7 @@ class StudyTaskManager {
         for (let i=0;i<taskNames.length;i++) {
             let task=taskNames[i];
             let runpairs=runInfo[task];
-            console.log('RunPairs=',runpairs);
+
             // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
             if (typeof runpairs[0] === "number")
                 runpairs=[runpairs]; 

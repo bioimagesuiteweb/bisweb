@@ -53,6 +53,7 @@ const mkey=keystore.OneDriveKey || "";
 // ------------------------
 
 const enableserver=true;
+const BisWebFileServerClient=require('bisweb_fileserverclient');
 
 // This is an option
 let enableaws=false;
@@ -62,7 +63,6 @@ let enableaws=false;
 // Link File Server if not in Electron
 let bisweb_fileserverclient=null;
 if (!webutil.inElectronApp() && enableserver===true) {
-    const BisWebFileServerClient=require('bisweb_fileserverclient');
     bisweb_fileserverclient=new BisWebFileServerClient();
 }
 

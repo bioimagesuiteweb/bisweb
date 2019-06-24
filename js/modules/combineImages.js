@@ -33,8 +33,8 @@ class CombineImageModule extends BaseModule {
 
     createDescription() {
         return {
-            "name": "Math Operations",
-            "description": "Performs Math Operations on a pair of Images",
+            "name": "Combine Images",
+            "description": "Combines two images using a variety of arithmetic or image processing methods.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs":  [ {
@@ -64,7 +64,7 @@ class CombineImageModule extends BaseModule {
             "params": [
                 {
                     "name": "Operation",
-                    "description": "Operation to perform (one of add,subtract,multiply,divide)",
+                    "description": "Operation to perform.",
                     "priority": 1,
                     "advanced": false,
                     "gui": "dropdown",
@@ -76,7 +76,7 @@ class CombineImageModule extends BaseModule {
                 },
                 {
                     "name": "Weight 1",
-                    "description": "Scalar to multiply Image 1 before operation",
+                    "description": "Scalar to multiply image 1 by before operation",
                     "priority": 10,
                     "advanced": true,
                     "gui": "slider",
@@ -89,7 +89,7 @@ class CombineImageModule extends BaseModule {
                 },
                 {
                     "name": "Weight 2",
-                    "description": "Scalar to multiply Image 2 before operation",
+                    "description": "Scalar to multiply image 2 by before operation",
                     "priority": 10,
                     "advanced": true,
                     "gui": "slider",

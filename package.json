@@ -30,6 +30,7 @@
         "bootbox": "4.4.0",
         "bootstrap": "3.4.0",
         "bootstrap-slider": "10.6.0",
+        "bootstrap-toggle": "^2.2.2",
         "btoa": "1.2.1",
         "chart.js": "2.7.2",
         "colors": "1.1.2",
