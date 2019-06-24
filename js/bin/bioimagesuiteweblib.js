@@ -18,6 +18,7 @@ expobj.userPreferences = require('bisweb_userpreferences.js');
 expobj.bisnodecmd=require("bis_commandlineutils"),
 expobj.wsutil=require('bis_wsutil');
 expobj.loadParse=expobj.commandline.loadParse;
+expobj.createXML=expobj.commandline.createXML;
 expobj.loadUserPreferences=expobj.userPreferences.initialize;
 expobj.BisWSWebSocketFileServer=require('bis_wswebsocketfileserver');
 expobj.nodemodules=require('nodemoduleindex'),

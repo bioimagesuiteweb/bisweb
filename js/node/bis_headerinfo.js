@@ -35,8 +35,8 @@ class HeaderModule extends BaseModule {
 
     createDescription() {
         return {
-            "name": "Header Images",
-            "description": "Headers Multiple Images to a single 4D Image",
+            "name": "Image Header",
+            "description": "Reads the Image Headers of Multiple .nii/.nii.gz images and optionally stores result in a json file",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs" : [],

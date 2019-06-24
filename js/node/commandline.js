@@ -21,6 +21,7 @@ const program = require('commander');
 const modules = require('nodemoduleindex.js');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const baseutils = require('baseutils');
+const slicerxml = require('bis_slicerxml');
 const genericio=require('bis_genericio');
 const biswrap = require('libbiswasm_wrapper');
 const boldon = "";
@@ -145,7 +146,10 @@ let loadParse = function (args, toolname,basedirectory='') {
             else
                 outargs.push(args[i]);
         }
+
         program.parse(outargs);
+
+        
         let objinputs=mod.getDescription().inputs;
         let max=3;
         if (objinputs.length<1)
@@ -297,9 +301,18 @@ let processTestResult = function (toolname, resultFile, test_target, test_type, 
                });
 };
 
+// --------------------------------------------------------------------------
+/** creates XML string for Slicer CLP */
+let createXML = function(toolname) {
+    const mod = modules.getModule(toolname);
+    return slicerxml.createXMLDescription(mod);
+};
+
+
 
 module.exports = {
     loadParse: loadParse,
+    createXML : createXML,
     processTestResult: processTestResult
 };
 
