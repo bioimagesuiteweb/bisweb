@@ -34,7 +34,7 @@ GET_FILENAME_COMPONENT(TEST_DIR ${PROJECT_SOURCE_DIR}/../test ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
 SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
-SET (MODULE_LIST_SCRIPT ${TOOLS_DIR}/bis_createmodulelist.js)
+SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
@@ -313,9 +313,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT})
   
   # ---- create library for command line  -----------
-  FILE(GLOB H1 ${PROJECT_SOURCE_DIR}/../legacy/*.js)
-  FILE(GLOB H2 ${PROJECT_SOURCE_DIR}/../js/*/*.js)
-  SET(JSFILES ${H1} ${H2})
+  FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/*.js)
 
   # bioimagesuiteweblib.js
   SET (BISWEBLIBFILE bioimagesuiteweblib.js)
@@ -373,30 +371,35 @@ IF (BIS_A_EMSCRIPTEN)
 
   # ---- create scripts for command line  -----------
   # Read the modules
-  SET (MODULE_LIST_FILENAME ${LIBRARY_OUTPUT_PATH}/ModuleList.txt)
-  execute_process(COMMAND node ${MODULE_LIST_SCRIPT} -o ${MODULE_LIST_FILENAME})
-  install (FILES ${MODULE_LIST_FILENAME} DESTINATION bisweb/)
-  FILE (STRINGS ${MODULE_LIST_FILENAME} JSMODULES)
-
   IF(BIS_BUILDSCRIPTS)
 
-    # ---- Tests -------------------------------
+    GET_FILENAME_COMPONENT(MODULE_DIR ${LIBRARY_OUTPUT_PATH}/bin ABSOLUTE)
+    SET(MODULE_LIST_FILENAME "${MODULE_DIR}/ModuleList.txt")
+    MESSAGE("Creating Scripts ${MODULE_LIST_FILENAME}, ${MODULE_DIR}")
+    add_custom_command(OUTPUT ${MODULE_LIST_FILENAME}
+      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt
+      PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Unix)"
+      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
 
-    MESSAGE("++++ Creating individual node.js script files")
-    SET(OUTFILES "")
-    SET(OUTFILESWIN "")
-    foreach(item ${JSMODULES})
-      SET (OFILE ${LIBRARY_OUTPUT_PATH}/bw_${item})
-      SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/bw_${item}.bat)
-      configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.in ${OFILE} @ONLY )
-      configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.bat.in ${OFILE2} @ONLY )
-      SET(OUTFILES ${OUTFILES} ${OFILE})
-      SET(OUTFILESWIN ${OUTFILESWIN} ${OFILE2})
-    endforeach(item ${JSMODULES})
-    install (FILES ${OUTFILES} DESTINATION bisweb/bin 
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    GET_FILENAME_COMPONENT(MODULE2_DIR ${LIBRARY_OUTPUT_PATH}/winbin ABSOLUTE)
+    SET(MODULE_LIST_FILENAME2 "${MODULE2_DIR}/ModuleList.txt")
+    MESSAGE("Creating Scripts ${MODULE_LIST_FILENAME2}, ${MODULE2_DIR}")
+    add_custom_command(OUTPUT ${MODULE_LIST_FILENAME2}
+      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt
+      PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
+      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
+    
+    add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2})
+
+    install (DIRECTORY ${MODULE_DIR}  DESTINATION bisweb
+      PATTERN "*.txt" EXCLUDE
+      PATTERN "*.sh"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+    install (DIRECTORY ${MODULE2_DIR}  DESTINATION bisweb
+      PATTERN "*.txt" EXCLUDE
+      PATTERN "*.bat"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
   ENDIF()
   
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
