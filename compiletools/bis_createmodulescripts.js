@@ -99,7 +99,7 @@ for (let i=0;i<l;i++) {
 
     fs.writeFileSync(outfile,outtext);
     lst.push(outfile);
-    console.log('++++ \t Created '+outfile);
+    //console.log('++++ \t Created '+outfile);
 
 
     let mod = modules.getModule(item);
@@ -109,7 +109,7 @@ for (let i=0;i<l;i++) {
 
     let desc=mod.getDescription();
     fs.writeFileSync(xmlname,xmlstring);
-    console.log('++++ \t\t and '+xmlname+'\n\t\t '+desc.name+'\n\t\t '+desc.description);
+    //    console.log('++++ \t\t and '+xmlname+'\n\t\t '+desc.name+'\n\t\t '+desc.description);
 }
 
 let oname=path.join(scriptdir,'ModuleList.txt');

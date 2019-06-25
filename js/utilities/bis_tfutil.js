@@ -3,7 +3,7 @@ const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
 
 /**
-`> * tf recon module
+ * tf recon module
  */
 
 
@@ -43,6 +43,7 @@ class TFWrapper {
     disposeTensor(tensor) {
         tensor.dispose();
     }
+
 
     predict(model,patch,shape,debug=false) {
 
@@ -471,10 +472,6 @@ class BisWebTensorFlowRecon {
                     last=pindex;
                 }
 
-
-                for (let i=0;i<this.patch.length;i++)
-                    this.patch[i]=0;
-                
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
@@ -594,17 +591,10 @@ let initializeTFModule=function(forcebrowser=false) {
         }
 
         if (environment === 'node') {
-            try {
-                let tf=require("@tensorflow/tfjs");
-                require('@tensorflow/tfjs-node');
-                tfjsModule=new TFWrapper(tf,'tfjs-node');
-                resolve('Module loaded from tfjs-node');
-                return;
-            } catch(e) {
-                tfjsModule=null;
-                reject('Failed to load tfjs-node');
-                return;
-            }
+            const ttf=require('./bis_tfjs');
+            console.log('TFJS Module=',ttf);
+            tfjsModule=new TFWrapper(ttf,'tfjs-node');
+            resolve('Module loaded from tfjs-node');
         }
     });
 };
@@ -734,3 +724,4 @@ module.exports = {
     getTFJSModule :     getTFJSModule,
     loadAndWarmUpModel : loadAndWarmUpModel,
 };
+

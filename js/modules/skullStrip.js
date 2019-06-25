@@ -183,8 +183,9 @@ class SkullStripImageModule extends BaseModule {
                     "priority": 20,
                     "advanced": true,
                     "varname": 'modelname',
-                    "type": 'string',
+                    "type": 'filename',
                     "default" : '',
+                    "filename" : true,
                 },
                 baseutils.getDebugParam()
             ]
