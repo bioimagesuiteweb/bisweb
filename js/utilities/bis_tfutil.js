@@ -3,7 +3,7 @@ const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
 
 /**
- * tf recon module
+`> * tf recon module
  */
 
 
@@ -55,17 +55,26 @@ class TFWrapper {
         }
         
         return new Promise( (resolve) => {
-            //            if (debug)
-            //console.log('++++ creating tensor',shape,'patch=',patch.length);
             const tensor= this.tf.tensor(patch, shape);
-            const output=this.models[model.index].predict(tensor);
-            /*const tmp=this.tf.split(tensor,5,3);
-              console.log('Num elements=',tmp.length,tmp[0].shape);
-              const output=tmp[0];//this.tf.slice(tensor,5,3);*/
+
+
+            let tshape=[0,2,1];
+            if (tensor.shape.length>3) {
+                tshape.push(3);
+            }
+            if (debug)
+                console.log('++++ creating tensor',shape,'patch=',patch.length,tshape);
+            
+            const tensor2= this.tf.transpose(tensor,tshape);
+            const output=this.models[model.index].predict(tensor2);
+            let tshapeout=[0,2,1];
+            const output2= this.tf.transpose(output,tshapeout);
             if (debug)
                 console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
             tensor.dispose();
-            resolve(output);
+            tensor2.dispose();
+            output.dispose();
+            resolve(output2);
         });
     }
 
@@ -160,6 +169,7 @@ class BisWebTensorFlowRecon {
         };
         console.log('PatchInfo=',this.patchinfo);
         this.patch=null;
+        //        this.tpatch=null;
     }
 
     /** create temporary patch typedarray
@@ -170,8 +180,9 @@ class BisWebTensorFlowRecon {
         this.patchinfo.patchslicesize=this.patchinfo.width*this.patchinfo.height;
         this.patchinfo.patchslabsize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
         this.patch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
-        if (this.debug)
-            console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchslabsize,'*',this.patchinfo.batchsize,')');
+        //        this.tpatch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
+        //if (this.debug)
+        console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchslabsize,'*',this.patchinfo.batchsize,')');
     }
 
     /** clean up internal objects */
@@ -222,6 +233,10 @@ class BisWebTensorFlowRecon {
             offset : offset
 
         };
+
+        //console.log(' ===== ',JSON.stringify(obj,null,2));
+
+
         
         if (store) {
 
@@ -308,14 +323,15 @@ class BisWebTensorFlowRecon {
             
             let limits=this.getPatchLimits(sl,frame,row,col,false);
             let index=(slice-minslice)+batchindex*this.patchinfo.patchslabsize;
-            if (this.debug)
-                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}, index=${index}`);
 
             let iextra=0;
             if (limits.endi>=dims[0]) {
                 iextra=(limits.endi-(dims[0]-1))*this.patchinfo.numslices;
                 limits.endi=dims[0]-1;
             }
+            
+            if (this.debug)
+                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}, index=${index}`);
 
             for (let j=limits.beginj;j<=limits.endj;j++) {
                 let input_index=limits.offset+j*dims[0]+limits.begini;
@@ -443,7 +459,7 @@ class BisWebTensorFlowRecon {
             for (let pindex=0;pindex<patchindexlist.length;pindex+=batchsize) {
                 
                 let numpatches=patchindexlist.length-pindex;
-                
+
                 if (numpatches<batchsize)
                     this.createPatch(numpatches);
                 else
@@ -454,17 +470,44 @@ class BisWebTensorFlowRecon {
                     console.log(`+++ ${bisutil.getTime()}\t ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
                     last=pindex;
                 }
+
+
+                for (let i=0;i<this.patch.length;i++)
+                    this.patch[i]=0;
+                
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
                     this.extractPatch(elem,inner);
                 }
+
+                //for (let i=0;i<256;i++) {
+                //                    for (let j=0;j<256;j++) {
+                //                        this.tpatch[i*256+j]=this.patch[i+256*j];
+                //                    }
+                //}
                 
-                let patch=this.getPatch();
+
+                
+                /*let img=new BisWebImage();
+                img.createImage({ dimensions : [ 256,256,1 ],
+                                  type : 'float',
+                                  orientation : 'LPS',
+                                });
+                let imgdata=img.getImageData();
+                for (let i=0;i<imgdata.length;i++)
+                    imgdata[i]=this.patch[i];
+                
+                await img.save("patch.nii.gz");
+                console.log('Patch saved');
+                process.exit(0);*/
+             
+
                 shape[0]=numpatches;
 
-                const output=await tfwrapper.predict(this.model,patch,shape,this.debug);
+                const output=await tfwrapper.predict(this.model,this.patch,shape,this.debug);
                 let predict=output.dataSync();
+
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];

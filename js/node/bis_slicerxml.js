@@ -1,4 +1,3 @@
-
 const bisdate=require('bisdate.js');
 
 module.exports={
@@ -12,10 +11,10 @@ module.exports={
 
         let base=`
 \t\t\t<name>${param.name}</name>
-\t\t\t<label>${param.description}</label>
+\t\t\t<label>${param.name}</label>
 \t\t\t<description>${param.description}</description>
 \t\t\t<longflag>--${param.varname}</longflag>`;
-        if (param.default) 
+        if (param.default !== undefined) 
             base+=`\n\t\t\t<default>${param.default}</default>\n`;
         else
             base+='\n';
@@ -23,10 +22,17 @@ module.exports={
         if (param.type === 'filename') {
             let tmp='';
             if (param.writefile)
-                tmp="\t\t\t<channel>output</channel>\n"
-	    else
-		tmp="\t\t\t<channel>input</channel>\n"
-	    return `\t\t<file>${base}    ${tmp}\t\t</file>\n`
+                tmp="\t\t\t<channel>output</channel>\n";
+            else
+                tmp="\t\t\t<channel>input</channel>\n";
+            return `\t\t<file>${base}    ${tmp}\t\t</file>\n`;
+        } else if (param.type === 'image') {
+            let tmp='';
+            if (param.writefile)
+                tmp="\t\t\t<channel>output</channel>\n";
+            else
+                tmp="\t\t\t<channel>input</channel>\n";
+            return `\t\t<image fileExtensions=".nii.gz,.nii">${base}    ${tmp}\t\t</image>\n`;
         }
         
         let range='';
@@ -37,14 +43,14 @@ module.exports={
         
         
         let fields=param.fields || [];
-        let elrange=""
+        let elrange="";
         if (param.type==='boolean') {
             fields=[ 'true', 'false' ];
         }
 
         if (fields.length>0) {
             for (let i=0;i<fields.length;i++) {
-	        elrange=elrange+`\t\t\t<element>${fields[i]}</element>\n`;
+                elrange=elrange+`\t\t\t<element>${fields[i]}</element>\n`;
             }
         }
         if (elrange.length>0) {
@@ -54,14 +60,14 @@ module.exports={
 
         let line='';
         if (param.type === 'int') {
-	    line=`\t\t<integer>${base}${range}\t\t</integer>\n`;
-	} else if (param.type === 'float') {
+            line=`\t\t<integer>${base}${range}\t\t</integer>\n`;
+        } else if (param.type === 'float') {
             line=`\t\t<double>${base}${range}\t\t</double>\n`;
-	} else if (param.type === 'boolean' || param.type==='list') {
+        } else if (param.type === 'boolean' || param.type==='list') {
             line=`\t\t<string-enumeration>${base}${elrange}\t\t</string-enumeration>\n`;
-	} else {
-	    line =`\t\t<string>${base}${elrange}\t\t</string>\n`;
-	}
+        } else {
+            line =`\t\t<string>${base}${elrange}\t\t</string>\n`;
+        }
 
 
         return line;
@@ -70,12 +76,10 @@ module.exports={
     createXMLDescription : function(mod) {
 
 
-        let cmd=mod.name;
-
-        
+        //let cmd=mod.name;
         let normal="\t<parameters>\n\t\t<label>Standard</label>\n\t\t<description>Standard Parameters</description>\n";
         let advanced="\t<parameters advanced=\"true\">\n\t\t<label>Advanced</label>\n\t\t<description>Advanced Parameters</description>\n";
-        let inp="\t<parameters>\n\t\t<label>Inputs</label>\n\t\t<description>Input Objects</description>\n"
+        let inp="\t<parameters>\n\t\t<label>Inputs</label>\n\t\t<description>Input Objects</description>\n";
         let outp="\t<parameters>\n\t\t<label>Outputs</label>\n\t\t<description>Output Objects</description>\n";
         let numnormal=0;
         let numadvanced=0;
@@ -101,9 +105,11 @@ module.exports={
             
             for (let i=0;i<obj[pass].length;i++) {
                 let ob=obj[pass][i];
-                ob.type='filename';
+                if (ob.type!=='image') {
+                    ob.type='filename';
+                }
                 ob.writefile=(pass===1);
-	        let m=this.createOptionXML(ob);
+                let m=this.createOptionXML(ob);
                 if (pass===0) {
                     inp+=m;
                     numinp+=1;
@@ -123,6 +129,7 @@ module.exports={
         cmdline+="\n\t<documentation-url>https://bioimagesuiteweb.github.io/bisweb-manual</documentation-url>";
         cmdline+="\n\t<license>GPL v2</license>";
         cmdline+=`\n\t<contributor>${desc.author}</contributor>\n`;
+        cmdline+='\n<acknowledgements>Funding for this work was provided by the NIH Brain Initiative under grant R24 MH114805.</acknowledgements>\n';
         
         
         if (numnormal > 0)
@@ -136,6 +143,6 @@ module.exports={
 
         cmdline+='\n</executable>\n';
 
-        return cmdline
+        return cmdline;
     },
 };

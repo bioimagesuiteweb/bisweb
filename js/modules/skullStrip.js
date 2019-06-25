@@ -113,14 +113,26 @@ class SkullStripImageModule extends BaseModule {
                     "default": false,
                 },
                 {
-                    "name": "Median Normalize",
+                    "name": "Quantile Normalize",
                     "description": "If true perform median normalization",
                     "priority": 10,
                     "advanced": true,
                     "gui": "check",
-                    "varname": "mednorm",
+                    "varname": "norm",
                     "type": 'boolean',
                     "default": true,
+                },
+                {
+                    "name": "Padding",
+                    "description": "Padding to apply when doing patch-based reconstruction",
+                    "priority": 1,
+                    "advanced": false,
+                    "gui": "dropdown",
+                    "type": "int",
+                    "default" : "16",
+                    "varname": "padding",
+                    "fields" : [ 0,2,4,8,12,16,32 ],
+                    "restrictAnswer" : [ 0,2,4,8,12,16,32 ],
                 },
                 {
                     "name": "Output Mask",
@@ -251,6 +263,7 @@ class SkullStripImageModule extends BaseModule {
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: skullStrip with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
+        let padding=parseInt(vals.padding);
         
         let matr=null;
         let reslicedInput=input;
@@ -271,7 +284,7 @@ class SkullStripImageModule extends BaseModule {
         // Step 1 Register
         if (this.parseBoolean(vals['register'])) {
             try {
-                let obj=await RunRegistration(input,vals);
+                let obj=await this.runRegistration(input,vals);
                 matr=obj.matr;
                 reslicedInput=obj.reslicedInput;
             } catch(e) {
@@ -282,7 +295,7 @@ class SkullStripImageModule extends BaseModule {
         // Step 2
         console.log('oooo\noooo Normalize Image\noooo');
         let normalized=null;
-        if (this.parseBoolean(vals.mednorm)) {
+        if (this.parseBoolean(vals.norm)) {
             console.log('oooo median Normalize Image');
             normalized=biswrap.medianNormalizeImageWASM(reslicedInput,1);
         } else {
@@ -300,7 +313,8 @@ class SkullStripImageModule extends BaseModule {
         mod0.makeInternal();
         await mod0.execute( {'input' : normalized },
                             {'modelname' : modelname,
-                             'debug' : debug
+                             'debug' : debug,
+                             'padding' : padding,
                             });
         let tfOutput=mod0.getOutputObject('output');
         normalized=null;
