@@ -34,7 +34,7 @@ class RemoveMatrixCols extends BaseModule {
 
     createDescription() {
         let des={
-            "name": "Join Matrices",
+            "name": "Remove Matrix Columns",
             "description": "Takes a matrix and removes a number of rows.",
             "author": "Zach Saltzman",
             "version": "1.0",

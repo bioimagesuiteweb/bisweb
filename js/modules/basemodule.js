@@ -59,7 +59,7 @@ class BaseModule {
      * @return JSON description of module
      */
     getDescription() {
-        if (this.description === null) {
+        if (!this.description) {
             this.description = this.createDescription();
         }
         return this.description;
@@ -129,6 +129,8 @@ class BaseModule {
         let des = this.getDescription();
         let out = {};
         let parsedCmd = {};
+
+
 
         //make case insensitive directory of input parameters
         let cmdKeys = Object.keys(cmd);

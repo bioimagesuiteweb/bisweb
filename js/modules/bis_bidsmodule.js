@@ -12,7 +12,7 @@ class BidsModule extends BaseModule {
     createDescription() {
 
         return {
-            "name": "Dicom Conversion",
+            "name": "BIDS Conversion",
             "description": "This module converts raw DICOM data into NIFTI form using dcm2niix, then formats it to BIDS specifications",
             "author": "Zach Saltzman",
             "version": "1.0",

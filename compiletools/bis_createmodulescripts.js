@@ -32,6 +32,7 @@ const fs=require('fs');
 const path=require('path');
 const modulelist = modules.getModuleNames();
 const rimraf=require('rimraf');
+const slicerxml = require('bis_slicerxml');
 
 // -----------------------------------------------------------------
 
@@ -85,20 +86,30 @@ for (let i=0;i<l;i++) {
     
     let item=modulelist[i];
 
+    let outfile='';
+    let outtext='';
+    
     if (mode === 0) {
-        let outsh=path.normalize(path.join(scriptdir,'bw_'+item+'.sh'));
-        const shtext='#!/bin/bash\nDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\nnode ${DIR}/../lib/bisweb.js '+item+' $@\n';
-
-        fs.writeFileSync(outsh,shtext);
-        lst.push(outsh);
-        console.log('++++ \t Created '+outsh);
+        outfile=path.normalize(path.join(scriptdir,'bw_'+item+'.sh'));
+        outtext='#!/bin/bash\nDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\nnode ${DIR}/../lib/bisweb.js '+item+' $@\n';
     } else {
-        let outbat=path.normalize(path.join(scriptdir,'bw_'+item+'.bat'));
-        const battext='@echo off\nSET DIRNAME=%~dp0\nnode.exe %DIRNAME%..\\lib\\bisweb.js '+item+' %*\n';    
-        fs.writeFileSync(outbat,battext);
-        lst.push(outbat);
-        console.log('++++ \t Created '+outbat);
+        outfile=path.normalize(path.join(scriptdir,'bw_'+item+'.bat'));
+        outtext='@echo off\nSET DIRNAME=%~dp0\nnode.exe %DIRNAME%..\\lib\\bisweb.js '+item+' %*\n';
     }
+
+    fs.writeFileSync(outfile,outtext);
+    lst.push(outfile);
+    console.log('++++ \t Created '+outfile);
+
+
+    let mod = modules.getModule(item);
+    let xmlstring=slicerxml.createXMLDescription(mod);
+    let xmlname=path.normalize(path.join(scriptdir,'bw_'+item+'.xml'));
+
+
+    let desc=mod.getDescription();
+    fs.writeFileSync(xmlname,xmlstring);
+    console.log('++++ \t\t and '+xmlname+'\n\t\t '+desc.name+'\n\t\t '+desc.description);
 }
 
 let oname=path.join(scriptdir,'ModuleList.txt');

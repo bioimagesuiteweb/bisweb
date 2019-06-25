@@ -117,7 +117,7 @@ module.exports={
         let cmdline="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
         cmdline+="\n<executable>";
         cmdline+="\n\t<category>BisWEB</category>";
-        cmdline+=`\n\t<title>BioImage Suite-${desc.name}</title>`;
+        cmdline+=`\n\t<title>${desc.name}</title>`;
         cmdline+= `\n\t<description>${desc.description}</description>`;
         cmdline+=`\n\t<version>${bisdate.version}</version>`;
         cmdline+="\n\t<documentation-url>https://bioimagesuiteweb.github.io/bisweb-manual</documentation-url>";

@@ -49,7 +49,7 @@ class SkullStripImageModule extends BaseModule {
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(null,'viewer1','overlay'),
             "buttonName": "SkullStrip",
-            "shortname" : "defaced",
+            "shortname" : "strip",
             "params": [
                 {
                     "name": "Resolution",
@@ -65,7 +65,7 @@ class SkullStripImageModule extends BaseModule {
                 },
                 {
                     "name": "Iterations",
-                    "description": "Number of iterations (per level)",
+                    "description": "Number of iterations (per level) for registration",
                     "priority": 2,
                     "advanced": true,
                     "gui": "slider",
@@ -78,7 +78,7 @@ class SkullStripImageModule extends BaseModule {
                 },
                 {
                     "name": "Levels",
-                    "description": "Number of levels in multiresolution optimization",
+                    "description": "Number of levels in multiresolution optimization for registration",
                     "priority": 3,
                     "advanced": true,
                     "default": 2,
@@ -91,7 +91,7 @@ class SkullStripImageModule extends BaseModule {
                 },
                 {
                     "name": "Smoothing",
-                    "description": "Amount of image smoothing to perform",
+                    "description": "Amount of image smoothing to perform for registration",
                     "priority": 4,
                     "advanced": true,
                     "type": "float",
@@ -110,7 +110,7 @@ class SkullStripImageModule extends BaseModule {
                     "gui": "check",
                     "varname": "register",
                     "type": 'boolean',
-                    "default": true,
+                    "default": false,
                 },
                 {
                     "name": "Median Normalize",
@@ -130,7 +130,7 @@ class SkullStripImageModule extends BaseModule {
                     "gui": "check",
                     "varname": "outputmask",
                     "type": 'boolean',
-                    "default": false,
+                    "default": true,
                 },
                 {
                     "name": "MNI Mask",
@@ -163,7 +163,7 @@ class SkullStripImageModule extends BaseModule {
                     "low": 0,
                     "high": 4,
                     "step" : 1,
-                    "default": 2,
+                    "default": 0,
                 },
                 {
                     "name": "Model name",
@@ -180,7 +180,75 @@ class SkullStripImageModule extends BaseModule {
     }
 
 
-    directInvokeAlgorithm(vals) {
+    async runRegistration(input,vals) {
+
+        console.log('oooo Registering to MNI and optionally masking');
+        
+        let images = [ new BisWebImage(), new BisWebImage() ];
+        let imagepath=genericio.getimagepath();
+        let p=[
+            images[0].load(`${imagepath}/MNI_T1_1mm_ras.nii.gz`),
+            images[1].load(`${imagepath}/MNI_T1_1mm_mask.nii.gz`),
+        ];
+        
+        try {
+            await Promise.all(p);
+        } catch(e) {
+            return Promise.reject(e);
+        }
+        
+        
+        let initial=0;
+        let o1=input.getOrientationName();
+        let o2=images[0].getOrientationName();
+        let centeronrefonly=false;
+        
+        if (o1!==o2) {
+            centeronrefonly=true;
+            initial=xformutil.computeHeaderTransformation(input,images[0],false);
+        }
+        
+        
+        let matr = biswrap.runLinearRegistrationWASM(images[0],input, initial, {
+            'intscale' : 1,
+            'numbins' : 64,
+            'levels' : parseInt(vals.levels),
+            'centeronrefonly' : this.parseBoolean(centeronrefonly),
+            'smoothing' : parseFloat(vals.imagesmoothing),
+            'optimization' : 2,
+            'stepsize' : 1.0,
+            'metric' : 3,
+            'steps' : 1,
+            'iterations' : parseInt(vals.iterations),
+            'mode' : 3,
+            'resolution' : parseFloat(vals.resolution),
+            'normalize' : true,
+            'debug' : true,
+            'return_vector' : false}, this.parseBoolean(vals.debug));
+        
+        let reslicedInput=baseutils.resliceRegistrationOutput(biswrap,images[0],input,matr,1,0);
+        
+        if (this.parseBoolean(vals.mnimask)) {
+            console.log("Resliced = ",reslicedInput.getDescription());
+            console.log("Mask = ",images[1].getDescription());
+            console.log('oooo Masking close to  MNI');
+            let rdat=reslicedInput.getImageData();
+            let mdat=images[1].getImageData();
+            let l=rdat.length;
+            for (let i=0;i<l;i++) {
+                if (mdat[i]<1)
+                    rdat[i]=0;
+            }
+        } else {
+            console.log('---- Not Masking');
+        }
+
+        return Promise.resolve({ matr : matr,
+                                 reslicedInput : reslicedInput});
+    }
+    
+
+    async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: skullStrip with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
         
@@ -192,172 +260,117 @@ class SkullStripImageModule extends BaseModule {
         }
 
         console.log("This far",debug,input.getDescription());
-        return new Promise( (resolve,reject) => {
-            biswrap.initialize().then( async () => {
 
-                console.log('Here');
-                
-                if (this.parseBoolean(vals['register'])) {
-
-                    console.log('oooo Registering to MNI and optionally masking');
-                    
-                    let images = [ new BisWebImage(), new BisWebImage() ];
-                    let imagepath=genericio.getimagepath();
-                    let p=[
-                        images[0].load(`${imagepath}/MNI_T1_1mm_ras.nii.gz`),
-                        images[1].load(`${imagepath}/MNI_T1_1mm_mask.nii.gz`),
-                    ];
-
-                    try {
-                        await Promise.all(p);
-                    } catch(e) {
-                        reject(e);
-                        return;
-                    }
-                    
-                    
-                    let initial=0;
-                    let o1=input.getOrientationName();
-                    let o2=images[0].getOrientationName();
-                    let centeronrefonly=false;
-                    
-                    if (o1!==o2) {
-                        centeronrefonly=true;
-                        initial=xformutil.computeHeaderTransformation(input,images[0],false);
-                    }
-                    
-                    
-                    matr = biswrap.runLinearRegistrationWASM(images[0],input, initial, {
-                        'intscale' : 1,
-                        'numbins' : 64,
-                        'levels' : parseInt(vals.levels),
-                        'centeronrefonly' : this.parseBoolean(centeronrefonly),
-                        'smoothing' : parseFloat(vals.imagesmoothing),
-                        'optimization' : 2,
-                        'stepsize' : 1.0,
-                        'metric' : 3,
-                        'steps' : 1,
-                        'iterations' : parseInt(vals.iterations),
-                        'mode' : 3,
-                        'resolution' : parseFloat(vals.resolution),
-                        'normalize' : true,
-                        'debug' : true,
-                        'return_vector' : false}, this.parseBoolean(vals.debug));
-                    
-                    reslicedInput=baseutils.resliceRegistrationOutput(biswrap,images[0],input,matr,1,0);
-                    
-                    if (this.parseBoolean(vals.mnimask)) {
-                        console.log("Resliced = ",reslicedInput.getDescription());
-                        console.log("Mask = ",images[1].getDescription());
-                        console.log('oooo Masking close to  MNI');
-                        let rdat=reslicedInput.getImageData();
-                        let mdat=images[1].getImageData();
-                        let l=rdat.length;
-                        for (let i=0;i<l;i++) {
-                            if (mdat[i]<1)
-                                rdat[i]=0;
-                        }
-                    } else {
-                        console.log('---- Not Masking');
-                    }
-                } else {
-                    console.log('---- Not Registering');
-                }
-
-                let tfOutput=reslicedInput;
-                if (this.parseBoolean(vals.usetf)) {
-                    // Step 2
-                    let normalized=null;
-                    if (this.parseBoolean(vals.mednorm)) {
-                        console.log('oooo median Normalize Image');
-                        normalized=biswrap.medianNormalizeImageWASM(reslicedInput,1);
-                    } else {
-                        console.log('---- Not median Normalize Image');
-                        normalized=reslicedInput;
-                    }
-                    
-                    // Step 3 TF
-                    console.log('oooo deep Learning Now');
-                    let modelname = vals.modelname;
-                    if (modelname.length<2)
-                        modelname='http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/';
-
-                    let mod0=new tfRecon();
-                    mod0.makeInternal();
-                    await mod0.execute( {'input' : normalized },
-                                        {'modelname' : modelname,
-                                         'debug' : debug
-                                        });
-                    tfOutput=mod0.getOutputObject('output');
-                    normalized=null;
-                }
-
-                let nume=parseInt(vals.erosions);
-                let morphOutput=tfOutput; 
-                if (nume>0) {
-                    console.log('oooo Erosions and Dilations');
-                    let temp=tfOutput; tfOutput=null;
-
-                    // Step 4 Erode/Dilate
-
-                    for (let i=0;i<nume;i++) {
-                        console.log('oooo Erode ',i+1,'/',nume);
-                        temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "erode",
-                                                                          "radius" : 1,
-                                                                          "do3d" : true }, debug);
-                    }
-                    for (let i=0;i<2*nume;i++) {
-                        console.log('oooo Dilate ',i+1,'/',nume*2);
-                        temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "dilate",
-                                                                          "radius" : 1,
-                                                                          "do3d" : true }, debug);
-                    }
-                    for (let i=0;i<nume;i++) {
-                        console.log('oooo Erode ',i+1,'/',nume);
-                        temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "erode",
-                                                                          "radius" : 1,
-                                                                          "do3d" : true }, debug);
-                    }
-                    morphOutput=temp; temp=null;
-                }
+        try {
+            await biswrap.initialize();
+        } catch(e) {
+            return Promise.reject(e);
+        }
 
 
-                if (matr!==null) {
-                    console.log('oooo inverse Reslice Back to Native Space');
-                    let mat=matr.getMatrix();
-                    console.log('oooo Forward mat',mat);
-                    let imat=numeric.inv(mat);
-                    console.log('oooo Inverse mat',imat);
-                    matr.setMatrix(imat);
-                    morphOutput=baseutils.resliceRegistrationOutput(biswrap,input,morphOutput,matr,0,0);
-                }
-                
-                if (!this.parseBoolean(vals.outputmask)) {
-                    // Make this short !!!!
-                    console.log('oooo Masking Input ');
-                    let output = new BisWebImage();
-                    output.cloneImage(input);
-                    let odat=output.getImageData();
-                    let tdat=morphOutput.getImageData();
-                    let idat=input.getImageData();
-                    let l=tdat.length;
-                    for (let i=0;i<l;i++) {
-                        if (tdat[i]<1)
-                            odat[i]=0;
-                        else
-                            odat[i]=idat[i];
-                    }
-                    this.outputs['output']=output;
-                } else {
-                    console.log('oooo Outputing Binary Mask');
-                    this.outputs['output']=morphOutput;
-                }
-                resolve();
-            }).catch( (e) => {
-                console.log(e,e.stack);
-                reject(e);
-            });
-        });
+        // Step 1 Register
+        if (this.parseBoolean(vals['register'])) {
+            try {
+                let obj=await RunRegistration(input,vals);
+                matr=obj.matr;
+                reslicedInput=obj.reslicedInput;
+            } catch(e) {
+                return Promise.reject(e);
+            }
+        }
+        
+        // Step 2
+        console.log('oooo\noooo Normalize Image\noooo');
+        let normalized=null;
+        if (this.parseBoolean(vals.mednorm)) {
+            console.log('oooo median Normalize Image');
+            normalized=biswrap.medianNormalizeImageWASM(reslicedInput,1);
+        } else {
+            console.log('---- Not median Normalize Image');
+            normalized=reslicedInput;
+        }
+        
+        // Step 3 TF
+        console.log('oooo deep Learning Now');
+        let modelname = vals.modelname;
+        if (modelname.length<2)
+            modelname='http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/';
+        
+        let mod0=new tfRecon();
+        mod0.makeInternal();
+        await mod0.execute( {'input' : normalized },
+                            {'modelname' : modelname,
+                             'debug' : debug
+                            });
+        let tfOutput=mod0.getOutputObject('output');
+        normalized=null;
+
+        console.log('oooo\noooo Done with TFJS\noooo');
+        
+        let nume=parseInt(vals.erosions);
+        let morphOutput=tfOutput; 
+        if (nume>0) {
+            console.log('oooo');
+            console.log('oooo Erosions and Dilations');
+            console.log('oooo');
+            let temp=tfOutput; tfOutput=null;
+            
+            // Step 4 Erode/Dilate
+            
+            for (let i=0;i<nume;i++) {
+                console.log('oooo Erode ',i+1,'/',nume);
+                temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "erode",
+                                                                  "radius" : 1,
+                                                                  "do3d" : true }, debug);
+            }
+            for (let i=0;i<2*nume;i++) {
+                console.log('oooo Dilate ',i+1,'/',nume*2);
+                temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "dilate",
+                                                                  "radius" : 1,
+                                                                  "do3d" : true }, debug);
+            }
+            for (let i=0;i<nume;i++) {
+                console.log('oooo Erode ',i+1,'/',nume);
+                temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "erode",
+                                                                  "radius" : 1,
+                                                                  "do3d" : true }, debug);
+            }
+            morphOutput=temp; temp=null;
+        }
+        
+
+        if (matr!==null) {
+            console.log('oooo inverse Reslice Back to Native Space');
+            let mat=matr.getMatrix();
+            console.log('oooo Forward mat',mat);
+            let imat=numeric.inv(mat);
+            console.log('oooo Inverse mat',imat);
+            matr.setMatrix(imat);
+            morphOutput=baseutils.resliceRegistrationOutput(biswrap,input,morphOutput,matr,0,0);
+        }
+        
+        if (!this.parseBoolean(vals.outputmask)) {
+            // Make this short !!!!
+            console.log('oooo Masking Input ');
+            let output = new BisWebImage();
+            output.cloneImage(input);
+            let odat=output.getImageData();
+            let tdat=morphOutput.getImageData();
+            let idat=input.getImageData();
+            let l=tdat.length;
+            for (let i=0;i<l;i++) {
+                if (tdat[i]<1)
+                    odat[i]=0;
+                else
+                    odat[i]=idat[i];
+            }
+            this.outputs['output']=output;
+        } else {
+            console.log('oooo Outputing Binary Mask');
+            this.outputs['output']=morphOutput;
+        }
+
+        return Promise.resolve('done');
     }
 
 

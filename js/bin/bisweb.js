@@ -24,26 +24,10 @@
  * This is the main command line tool for all modules. Uses functionality in commandline.
  */
 
-let doxml=false;
 
-if (process.argv.indexOf('--xml')>=0) {
-    global.bioimagesuiteweblib=true;
-    doxml=true;
-} else {
-    console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
-    global.bioimagesuiteweblib=false;
-}
-
+console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+global.bioimagesuiteweblib=false;
 let bisweb=require('./bioimagesuiteweblib');
-
-if (doxml) {
-    let toolname=process.argv[2] || '';
-    if (toolname.length>0) {
-        console.log(bisweb.createXML(toolname));
-        process.exit(0);
-    }
-}
-
 let args=[];
 for (let i=0;i<process.argv.length;i++) {
     if (i!==2 && i!==1)
