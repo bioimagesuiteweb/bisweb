@@ -129,7 +129,7 @@ class SkullStripImageModule extends BaseModule {
                     "advanced": false,
                     "gui": "dropdown",
                     "type": "int",
-                    "default" : "16",
+                    "default" : "0",
                     "varname": "padding",
                     "fields" : [ 0,2,4,8,12,16,32 ],
                     "restrictAnswer" : [ 0,2,4,8,12,16,32 ],
@@ -240,6 +240,8 @@ class SkullStripImageModule extends BaseModule {
             'return_vector' : false}, this.parseBoolean(vals.debug));
         
         let reslicedInput=baseutils.resliceRegistrationOutput(biswrap,images[0],input,matr,1,0);
+
+        reslicedInput.save('resl.nii.gz');
         
         if (this.parseBoolean(vals.mnimask)) {
             console.log("Resliced = ",reslicedInput.getDescription());
@@ -255,6 +257,8 @@ class SkullStripImageModule extends BaseModule {
         } else {
             console.log('---- Not Masking');
         }
+
+        reslicedInput.save('resl_mask.nii.gz');
 
         return Promise.resolve({ matr : matr,
                                  reslicedInput : reslicedInput});
@@ -303,22 +307,24 @@ class SkullStripImageModule extends BaseModule {
         }
         
         // Step 3 TF
-        console.log('oooo deep Learning Now');
-        let modelname = vals.modelname;
-        if (modelname.length<2)
-            modelname='http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/';
-        
-        let mod0=new tfRecon();
-        mod0.makeInternal();
-        await mod0.execute( {'input' : normalized },
-                            {'modelname' : modelname,
-                             'debug' : debug,
-                             'padding' : padding,
-                            });
-        let tfOutput=mod0.getOutputObject('output');
-        normalized=null;
-
-        console.log('oooo\noooo Done with TFJS\noooo');
+        let tfOutput=normalized;
+        if (this.parseBoolean(vals.usetf)) {
+            console.log('oooo deep Learning Now');
+            let modelname = vals.modelname;
+            if (modelname.length<2)
+                modelname='http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/';
+            
+            let mod0=new tfRecon();
+            mod0.makeInternal();
+            await mod0.execute( {'input' : normalized },
+                                {'modelname' : modelname,
+                                 'debug' : debug,
+                                 'padding' : padding,
+                                });
+            tfOutput=mod0.getOutputObject('output');
+            normalized=null;
+            console.log('oooo\noooo Done with TFJS\noooo');
+        }
         
         let nume=parseInt(vals.erosions);
         let morphOutput=tfOutput; 
@@ -355,9 +361,7 @@ class SkullStripImageModule extends BaseModule {
         if (matr!==null) {
             console.log('oooo inverse Reslice Back to Native Space');
             let mat=matr.getMatrix();
-            console.log('oooo Forward mat',mat);
             let imat=numeric.inv(mat);
-            console.log('oooo Inverse mat',imat);
             matr.setMatrix(imat);
             morphOutput=baseutils.resliceRegistrationOutput(biswrap,input,morphOutput,matr,0,0);
         }
