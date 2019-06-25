@@ -43,8 +43,8 @@ class SkullStripImageModule extends BaseModule {
 
         return {
             "name": "SkullStrip",
-            "description": "This module uses data from the openfmri project to deface an image by first affinely registering it to a template",
-            "author": "Xenios Papademetris",
+            "description": "This module models trained in the Python TF and appropriately exported",
+            "author": "Xenios Papademetris and John Onofrey",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(null,'viewer1','overlay'),
@@ -181,7 +181,7 @@ class SkullStripImageModule extends BaseModule {
                     "name": "Model name",
                     "description": "Location of Model to use",
                     "priority": 20,
-                    "advanced": true,
+                    "advanced": false,
                     "varname": 'modelname',
                     "type": 'filename',
                     "default" : '',
@@ -272,8 +272,6 @@ class SkullStripImageModule extends BaseModule {
         if (!this.parseBoolean(vals.usetf)) {
             vals['register']=true;
         }
-
-        console.log("This far",debug,input.getDescription());
 
         try {
             await biswrap.initialize();

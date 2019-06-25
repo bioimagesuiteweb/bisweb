@@ -1,7 +1,7 @@
 const BisWebImage=require('bisweb_image');
 const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
-
+const bisweb_tf=require('./bis_tfjs');
 /**
  * tf recon module
  */
@@ -122,7 +122,6 @@ class BisWebTensorFlowRecon {
     constructor(tfwrapper,input,model,padding=16,debug=false) {
 
         this.debug=debug;
-        console.log('Debug=',this.debug, ' debug');
         this.input=input;
         this.output=new BisWebImage();
         this.output.cloneImage(this.input);
@@ -168,7 +167,7 @@ class BisWebTensorFlowRecon {
             'numframes' : dims[3]*dims[4],
             'dims' : dims,
         };
-        console.log('PatchInfo=',this.patchinfo);
+        console.log('PatchInfo=',JSON.stringify(this.patchinfo));
         this.patch=null;
         //        this.tpatch=null;
     }
@@ -591,10 +590,9 @@ let initializeTFModule=function(forcebrowser=false) {
         }
 
         if (environment === 'node') {
-            const ttf=require('./bis_tfjs');
-            console.log('TFJS Module=',ttf);
-            tfjsModule=new TFWrapper(ttf,'tfjs-node');
-            resolve('Module loaded from tfjs-node');
+            let fn=bisweb_tf;
+            tfjsModule=new TFWrapper(fn(),'tfjs node');
+            resolve('Module loaded from tfjs node');
         }
     });
 };

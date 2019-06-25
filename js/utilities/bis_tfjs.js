@@ -1,11 +1,18 @@
-// This gets tfjs
+let tf=null;
 
-try {
-    const tf=require("@tensorflow/tfjs");
-    require('@tensorflow/tfjs-node');
-    module.exports=tf;
-    console.log('++++ Loaded TFJS, tfjs-node',tf.loadFrozenModel);
-} catch(e) {
-    console.log('Failed to load tensorflow',e);
-    module.exports={};
-}
+module.exports = function() {
+
+    if (tf) {
+        console.log('++++ TF already loaded');
+        return tf;
+    }
+
+    console.log('++++ Loading TF');
+    try {
+        tf=require("@tensorflow/tfjs");
+        require('@tensorflow/tfjs-node');
+    } catch(e) {
+        console.log('Failed to load tensorflow',e);
+    }
+    return tf;
+};

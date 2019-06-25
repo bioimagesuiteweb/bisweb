@@ -257,9 +257,13 @@ class BaseModule {
 
         param.type = param.type || "string";
 
-        if (param.default === undefined && param.type !== 'string') {
-            console.log('Parameter', param.name, 'does not have a default value');
-            return false;
+        if (param.default === undefined) {
+            if (param.type !== 'string' && param.type !=='filename') {
+                console.log('Parameter', param.name, 'does not have a default value');
+                return false;
+            } else {
+                param.default = '';
+            }
         }
 
         switch (param.type.toLowerCase())
@@ -270,6 +274,7 @@ class BaseModule {
             case 'int':
             case 'integer': return (isNaN(parseFloat(val, 10)) === false);
             case 'string':
+            case 'filename' :
             case 'extra':
             case '': break;
             default: console.log('warning: could not interpret param', val);

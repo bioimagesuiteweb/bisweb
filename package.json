@@ -119,7 +119,8 @@
             "libbiswasm": "./bis_dummy",
             "@tensorflow/tfjs": "./bis_dummy",
             "@tensorflow/tfjs-node": "./bis_dummy",
-            "@tensorflow/tfjs-node-gpu": "./bis_dummy"
+            "@tensorflow/tfjs-node-gpu": "./bis_dummy",
+            "bis_tfjs" : "./bis_dummy"
         },
         "workerexternals": {
             "@tensorflow/tfjs": "console.log",

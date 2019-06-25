@@ -105,11 +105,8 @@ for (let i=0;i<l;i++) {
     let mod = modules.getModule(item);
     let xmlstring=slicerxml.createXMLDescription(mod);
     let xmlname=path.normalize(path.join(scriptdir,'bw_'+item+'.xml'));
-
-
-    let desc=mod.getDescription();
     fs.writeFileSync(xmlname,xmlstring);
-    //    console.log('++++ \t\t and '+xmlname+'\n\t\t '+desc.name+'\n\t\t '+desc.description);
+
 }
 
 let oname=path.join(scriptdir,'ModuleList.txt');
