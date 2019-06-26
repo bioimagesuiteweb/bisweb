@@ -198,7 +198,7 @@ _Note 2:_ If npm install fails to install tensorfow.js (probably because you
 do not have a proper node-gyp) setup, simply delete the line containing
 `tensorflow` from `package.json` and try again. This is optional at this point.
 
- To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.sh` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, Bisweb comes with a prebaked version of the wasm binaries:
+ To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.js` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, Bisweb comes with a prebaked version of the wasm binaries:
 
     node ./config/createjsbuild.js
 
@@ -217,7 +217,7 @@ This will copy core files to `build/web`, the destination for the both the web a
 
  To do this type:
 
-    gulp serve
+    gulp 
 
 This does three things:
 
@@ -298,19 +298,15 @@ These are used by the Python regression tests.
 
 ### Installing Emscripten and Eigen and Configuring your Build Directories
 
-The C++ BisWeb code has a single external library dependency — Eigen. We also need to install Emscripten to compile the C++ code to Web Assembly. Both the installation of these tools and the creation of the correct development directories is automated using the [createbuild.sh](../config/createbuild.sh) script from the config directory as follows:
+The C++ BisWeb code has a single external library dependency — Eigen. We also need to install Emscripten to compile the C++ code to Web Assembly. Both the installation of these tools and the creation of the correct development directories is automated using the [createbuild.js](../config/createbuild.js) script from the config directory as follows:
 
 First go to your source directory
 
     cd SOURCE_DIR
 
-Ensure createbuild.sh is executable
-
-    chmod +x config/createbuild.sh  
-
 Run the script:
 
-    ./config/createbuild.sh
+    node ./config/createbuild.js
 
 
 This will install Eigen v3, the latest cut of Emscripten and then create the build directories and a bunch of scripts all inside a directory called `build` in your source tree. For the curious, a detailed description of createbuild [can be found at the end of this document](#Detailed-description-of-createbuild.sh).
@@ -563,13 +559,6 @@ The one weakness of compiing BisWeb under the [Windows Subsystem for Linux (WSL)
 2. Configure the Windows version to just build the JS distribution (i.e. no WebAssembly)
 
 3. Configure the WSL (Ubuntu effectively) version to build the full version (including Web Assembly)
-
-Under WSL (Ubuntu) in CMake set the two variables (under advanced)
-
-* BIS_WASMLIB_COPY : ON
-* BIS_EXTRAPATH : /c/users/user/bisweb/build/wasm
-
-This will instruct CMake to copy the output of the WebAssembly compilation (the three files `libbiswasm.js`, `libbiswasm_wasm.js` and `libbiswasm_wrapper.js` to 'c:\users\user\bisweb\build\wasm' each time they are regenerated. This is done automatically as a post-build rule within CMake. __This takes advantage of the fact that WASM results in completely platform-independent bytecode__, hence we can compile it one one platform and use it everywhere. The advent of WSL means that one does not need to fight with Windows tools and paths anymore. (Though it has been done, but the WSL solution is so much nicer!) Much of the initial testing of the Electron version of BioImage Suite Web was performed in exactly this dual platform setup.
 
 If you are not planning to modify the C++ code then you can simply build this once under WSL and just copy the three files above manually.
 
