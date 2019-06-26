@@ -26,7 +26,7 @@ const bisdate=require('bisdate.js').date;
 const BisWebImage=require('bisweb_image');
 const userPreferences = require('bisweb_userpreferences.js');
 const gettestdata=require('./bis_gettestdata');
-const genericio = require('bis_genericio');
+
 
 import testmodule from '../../test/webtestdata/displaytests.json';
 let displaytestlist=null;
