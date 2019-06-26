@@ -52,8 +52,8 @@ class TopMenuBarElement extends HTMLElement {
         let logolink=this.getAttribute('logolink') || "./index.html";
         
         const topmenubartext=`
+            <div class="container-fluid" id="bismenucontainer" css="height:60px">
             <nav class="navbar navbar-default navbar-fixed-top">
-            <div class="container-fluid" id="bismenucontainer">
       <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header" id="bismenuheader" >
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
