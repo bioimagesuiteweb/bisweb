@@ -26,6 +26,9 @@ const bisdate=require('bisdate.js').date;
 const BisWebImage=require('bisweb_image');
 const userPreferences = require('bisweb_userpreferences.js');
 const gettestdata=require('./bis_gettestdata');
+const genericio = require('bis_genericio');
+const environment=genericio.getenvironment();
+
 import testmodule from '../../test/webtestdata/displaytests.json';
 let displaytestlist=null;
 
@@ -102,8 +105,9 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
             $('#goldtd').empty();
             $('#goldtd').append('Gold '+(testindex));
             globalParams.goldImageElement.removeEventListener('load',loadfn);
-            
+
             snapshotElement.createBisWebImageFromURL(comparisonpng).then( (goldstandard) => {
+
                 setTimeout( () => {
                     globalParams.resdiv.append('<p>Read result from: '+comparisonpng+'</p>');
                     console.log(goldstandard.getDescription());
@@ -145,7 +149,10 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
         };
         globalParams.goldImageElement.addEventListener('load', loadfn);
         setTimeout( () => {
-            comparisonpng=comparisonpng+"?time=" + new Date().getTime();
+            if (comparisonpng.indexOf('http')===0 ||
+                comparisonpng.indexOf('file')===0 ) {
+                comparisonpng=comparisonpng+"?time=" + new Date().getTime();
+            }
             console.log('Loading comparison from ',comparisonpng);
             globalParams.goldImageElement.src=comparisonpng;
         },100);
@@ -200,13 +207,14 @@ var runTests= async function(multiple=false,isconnviewer=false) {
         }
         
         let desired=displaytestlist[test]['result'];
-        
+
+        let png=globalParams.testDataRootDirectory+'/'+displaytestlist[test]['comparison'];
         let result=await runTest(
             test,
             displaytestlist[test]['viewer'] || 1,
             globalParams.testDataRootDirectory+'/'+displaytestlist[test]['base'],
             statefile,
-            globalParams.testDataRootDirectory+'/'+displaytestlist[test]['comparison'],
+            png,
             isconnviewer
         );
 
