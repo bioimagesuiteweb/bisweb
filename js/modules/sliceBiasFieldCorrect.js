@@ -34,7 +34,7 @@ class SliceBiasCorrectModule extends BaseModule {
     createDescription() {
         return {
             "name": "Bias Field Correct",
-            "description": "Performs slice-based intensity inhomogeneity (bias field) correction on an image",
+            "description": "Performs slice-based intensity inhomogeneity (bias field) correction on an image to correct for acquisition artifacts. This includes B1 inhomogeneity correction for MRI, or attenuation issues in microscopy.",
             "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),

@@ -34,7 +34,7 @@ class CombineImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Combine Images",
-            "description": "Combines two images using a variety of arithmetic or image processing methods.",
+            "description": "Combines two images in different ways. This can be either arithmetic combination (add, subtract, multiply, divide) or combine them by appending one after the other.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs":  [ {
@@ -64,7 +64,7 @@ class CombineImageModule extends BaseModule {
             "params": [
                 {
                     "name": "Operation",
-                    "description": "Operation to perform.",
+                    "description": "Operation to perform, i.e. how to combine the images.",
                     "priority": 1,
                     "advanced": false,
                     "gui": "dropdown",

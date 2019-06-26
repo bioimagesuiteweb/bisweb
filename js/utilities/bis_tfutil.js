@@ -2,6 +2,7 @@ const BisWebImage=require('bisweb_image');
 const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
 const bisweb_tf=require('./bis_tfjs');
+const slicerupd = require('bis_slicerprogress');
 /**
  * tf recon module
  */
@@ -117,6 +118,7 @@ class TFWrapper {
             console.log('___\t Warm up model with zero input',shape.join(','));
             this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
             console.log('___\t Warm up done');
+            slicerupd.update(0.2);
         });
     }
 }
@@ -482,6 +484,7 @@ class BisWebTensorFlowRecon {
                 if (this.debug || (pindex-last>step) || pindex===0) {
                     let per=Math.round( (100.0*pindex)/patchindexlist.length);
                     console.log(`+++ ${bisutil.getTime()}\t ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
+                    slicerupd.updatePercentage(per);
                     last=pindex;
                 }
 

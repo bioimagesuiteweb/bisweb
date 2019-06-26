@@ -35,7 +35,7 @@ class ManualRegistrationModule extends BaseModule {
     createDescription() {
         return {
             "name": "Manual Registration",
-            "description": "This algorithm performes manual image registration",
+            "description": "This algorithm performs manual image registration, where the user specifies the parameters directly",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs" : baseutils.getRegistrationInputs(false),

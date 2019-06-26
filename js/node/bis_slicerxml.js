@@ -91,6 +91,18 @@ module.exports={
 
         
         let desc=mod.getDescription();
+
+        desc.params.push( {
+            "name": "SlicerProgress",
+            "description": "Enables progress xml outputs for Slicer",
+            "priority": 10000,
+            "advanced": true,
+            "gui": "check",
+            "varname": "slicerprogress",
+            "type": 'boolean',
+            "default": true,
+        });
+
         
         for (let i=0;i<desc.params.length;i++) {
             let m=this.createOptionXML(desc.params[i]);

@@ -37,7 +37,7 @@ class ShiftScaleImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "ShiftScale",
-            "description": "This element will shift and scale an image and cast to desired output",
+            "description": "This element will shift and scale an image and cast to desired output. E.g. out=(input+shift)*scale",
             "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
@@ -58,7 +58,7 @@ class ShiftScaleImageModule extends BaseModule {
                 },
                 {
                     "name": "Scale",
-                    "description": "The Scale to multiple all voxels post shift",
+                    "description": "The Scale to multiple all voxels after the shift value is applied",
                     "priority": 2,
                     "advanced": false,
                     "gui": "slider",

@@ -32,10 +32,10 @@ class FlipImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Flip",
-            "description": "This algorithm performes image fliping",
+            "description": "This algorithm performs image fliping",
             "author": "Xenios Papdemetris",
             "version": "1.0",
-            "inputs": baseutils.getImageToImageInputs('Load the image to be fliped'),
+            "inputs": baseutils.getImageToImageInputs('input'),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Flip",
             "shortname" : "flp",

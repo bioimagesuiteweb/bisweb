@@ -36,7 +36,7 @@ class MorphologyFilterModule extends BaseModule {
     createDescription() {
         return {
             "name": "Morphology Filtering",
-            "description": "Performs Binary Morphology Filtering on an Image",
+            "description": "Performs Binary Morphology Filtering on an Image. The seed parameter is used by the connect operation to create a connected mask originating at this location.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs("The binary mask to be filtered","viewer1","overlay"),
@@ -46,7 +46,7 @@ class MorphologyFilterModule extends BaseModule {
             "params": [
                 {
                     "name": "Operation",
-                    "description": "Operation to perform (one of erode,dilate,median,erodedilate,dilateerode)",
+                    "description": "Operation to perform",
                     "priority": 1,
                     "advanced": false,
                     "gui": "dropdown",
@@ -58,7 +58,7 @@ class MorphologyFilterModule extends BaseModule {
                 },
                 {
                     "name": "Radius",
-                    "description": "This filter radius in voxels",
+                    "description": "This filter radius in voxels. For erode and dilate operations the size of the window is 2*radius+1",
                     "priority": 2,
                     "advanced": false,
                     "gui": "slider",
@@ -81,7 +81,7 @@ class MorphologyFilterModule extends BaseModule {
                 },
                 {
                     "name": "Seed I (vx)",
-                    "description": "I - seed",
+                    "description": "I - seed (for connect)",
                     "priority": 10,
                     "advanced": true,
                     "gui": "slider",
@@ -94,7 +94,7 @@ class MorphologyFilterModule extends BaseModule {
                 },
                 {
                     "name": "Seed J (vx)",
-                    "description": "J - seed",
+                    "description": "J - seed (for connect)",
                     "priority": 11,
                     "advanced": true,
                     "gui": "slider",
@@ -107,7 +107,7 @@ class MorphologyFilterModule extends BaseModule {
                 },
                 {
                     "name": "Seed K (vx)",
-                    "description": "K - seed",
+                    "description": "K - seed (for connect)",
                     "priority": 12,
                     "advanced": true,
                     "gui": "slider",

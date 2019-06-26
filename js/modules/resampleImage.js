@@ -95,7 +95,7 @@ class ResampleImageModule extends BaseModule {
                 },
                 {
                     "name": "Background Value", 
-                    "description": "value to use for outside the image",
+                    "description": "value to use for outside the region covered by the original image (at the boundaries)",
                     "priority": 100,
                     "advanced": true,
                     "gui": "entrywidget",

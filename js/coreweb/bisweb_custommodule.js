@@ -127,10 +127,14 @@ class CustomModule {
 
         
         let description = this.module.getDescription();
-        let help=`<H3>Module: ${description.name}</H3><P>${description.description}</p>`;
+        let dtext=description.description.trim();
+        if (dtext.lastIndexOf('.')!==dtext.length-1)
+            dtext+='.';
+        let help=`<H3>Module: ${description.name}</H3><P>${dtext}</p>`;
 
         if (description.webdescription)
             help+='<P>'+description.webdescription+'</p>';
+        help+=`<HR width='50%'>`;
         
         let params=description.params;
         help+="<B>Parameters</B>";

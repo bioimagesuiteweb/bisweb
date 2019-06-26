@@ -37,7 +37,7 @@ class RegularizeObjectmapModule extends BaseModule {
     createDescription() {
         let des={
             "name": "Regularize Objectmap ",
-            "description": "Performs Objectmap regularization",
+            "description": "Performs Objectmap regularization. An objectmap is an image where the values refer to different regions. This modules uses an MRF-based algorithm to smooth the segmentation map. It is similar to a median filter for a binary mask.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs("The binary mask to be regularized","viewer1","overlay"),

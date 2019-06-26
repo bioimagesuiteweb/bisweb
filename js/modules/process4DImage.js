@@ -35,7 +35,7 @@ class process4DImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Processs a 4D Image",
-            "description": "This algorithm computes the single frame from a 4D image",
+            "description": "This algorithm computes voxel wise time statistics from a 4D image.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Execute",
