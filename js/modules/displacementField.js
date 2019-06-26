@@ -35,7 +35,7 @@ class DisplacementFieldModule extends BaseModule {
         let des= {
             "name": "Displacement Field",
             "description": "Calculates the displacement field for a given transformation for the volume specified by the given image.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "outputs":  baseutils.getImageToImageOutputs("Output displacement field image"),
             "inputs":  baseutils.getImageToImageInputs("Image that defines the output size"),

@@ -43,6 +43,7 @@ class ReorientImageModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
             "shortname" : "reornt",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Orientation",

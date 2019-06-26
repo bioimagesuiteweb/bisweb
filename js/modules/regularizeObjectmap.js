@@ -44,6 +44,7 @@ class RegularizeObjectmapModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs("The output mask","viewer1","overlay"),
             "buttonName": "Smooth",
             "shortname" : "reg",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Smoothness",

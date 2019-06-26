@@ -40,6 +40,7 @@ class QuantileNormalizeImageModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
             "shortname" : "qnrm",
+            "slicer" : true,
             "params": [
                 baseutils.getDebugParam()
             ]

@@ -55,6 +55,7 @@ class DefaceImageModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs(null,'viewer1','overlay'),
             "buttonName": "Deface",
             "shortname" : "defaced",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Resolution",

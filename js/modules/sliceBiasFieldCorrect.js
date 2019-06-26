@@ -35,12 +35,13 @@ class SliceBiasCorrectModule extends BaseModule {
         return {
             "name": "Bias Field Correct",
             "description": "Performs slice-based intensity inhomogeneity (bias field) correction on an image",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
             "shortname" : "slb",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Axis",

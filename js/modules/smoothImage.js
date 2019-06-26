@@ -34,12 +34,13 @@ class SmoothImageModule extends BaseModule {
         return {
             "name": "Smooth",
             "description": "This algorithm performes image smoothing using a 2D/3D Gaussian kernel",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs('Load the image to be smoothed'),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Smooth",
             "shortname" : "sm",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Sigma",

@@ -40,6 +40,7 @@ class maskModule extends BaseModule {
             "version": "1.0",
             "buttonName": "Mask",
             "shortname" : "msk",
+            "slicer" : true,
             "inputs" : [
                 {
                     'type': 'image',

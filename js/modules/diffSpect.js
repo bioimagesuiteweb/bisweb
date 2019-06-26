@@ -114,7 +114,8 @@ class diffSpectModule extends BaseModule {
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Execute",
-            "shortname" : "tmap",
+            "shortname" : "DiffSpect",
+            "slicer" : true,
             "inputs":  [ {
                 'type': 'image',
                 'name': 'Ictal Image',

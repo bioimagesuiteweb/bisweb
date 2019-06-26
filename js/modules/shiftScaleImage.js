@@ -38,12 +38,13 @@ class ShiftScaleImageModule extends BaseModule {
         return {
             "name": "ShiftScale",
             "description": "This element will shift and scale an image and cast to desired output",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Shift+Scale",
             "shortname" : "shsc",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Shift",

@@ -43,12 +43,13 @@ class ResampleImageModule extends BaseModule {
         return {
             "name": "Resample Image",
             "description": "Resamples an existing image",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Resample",
             "shortname" : "rsp",
+            "slicer" : true,
             "params": [
                 {
                     "name": "XSpacing",

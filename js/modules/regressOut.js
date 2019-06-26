@@ -39,7 +39,7 @@ class WeightedRegressOutModule extends BaseModule {
         let des={
             "name": "Weighted Regress Out",
             "description": "Regresses one time signal from another with the option to specify a weight matrix",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getMatrixToMatrixInputs(true),
             "outputs":  baseutils.getMatrixToMatrixOutputs(),

@@ -39,6 +39,7 @@ class FlipImageModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Flip",
             "shortname" : "flp",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Flip the i-axis",

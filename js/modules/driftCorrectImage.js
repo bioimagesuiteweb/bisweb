@@ -42,6 +42,7 @@ class DriftCorrectImageModule extends BaseModule {
             "outputs":  baseutils.getImageToImageOutputs(),
             "buttonName": "Drift Correct",
             "shortname" : "drift",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Order",

@@ -43,6 +43,7 @@ class ButterworthFilterImageModule extends BaseModule {
             "outputs":  baseutils.getImageToImageOutputs(),
             "buttonName": "Filter",
             "shortname" : "bwf",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Type",

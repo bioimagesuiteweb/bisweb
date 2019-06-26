@@ -43,6 +43,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
             "outputs": baseutils.getImageToImageOutputs("The output mask","viewer1","overlay"),
             "buttonName": "Create",
             "shortname" : "bthr",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Low Threshold",

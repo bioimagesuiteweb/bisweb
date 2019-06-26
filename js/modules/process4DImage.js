@@ -42,6 +42,7 @@ class process4DImageModule extends BaseModule {
             "shortname" : "comb4d",
             "inputs": baseutils.getImageToImageInputs('The image to be processed'),
             "outputs": baseutils.getImageToImageOutputs(),
+            "slicer" : true,
             "params": [
                 {
                     "name": "Operation",

@@ -57,6 +57,7 @@ class CropImageModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Crop",
             "shortname" : "crp",
+            "slicer" : true,
             "params": [
                 createParam('i','Start','i0',0,1),
                 createParam('i','End','i1',10,2),

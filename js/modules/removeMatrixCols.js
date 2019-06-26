@@ -36,7 +36,7 @@ class RemoveMatrixCols extends BaseModule {
         let des={
             "name": "Remove Matrix Columns",
             "description": "Takes a matrix and removes a number of rows.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs" : baseutils.getMatrixToMatrixInputs(false, 'The matrix to remove columns from'),
             "outputs" : baseutils.getMatrixToMatrixOutputs('The matrix without the chosen columns'),

@@ -43,6 +43,7 @@ class SeedCorrelationImageModule extends BaseModule {
             "outputs":  baseutils.getImageToImageOutputs(),
             "buttonName": "Seed Map",
             "shortname" : "seed",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Z-Score",

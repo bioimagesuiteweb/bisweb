@@ -34,12 +34,13 @@ class NormalizeImageModule extends BaseModule {
         return {
             "name": "Normalize",
             "description": "This element will normalize an image by thresholding below low threshold and saturating above high",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
             "shortname" : "nrm",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Low",

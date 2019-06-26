@@ -43,9 +43,10 @@ class ResliceImageModule extends BaseModule {
         return {
             "name": "Reslice Image",
             "description": "Reslices an existing image to match a reference and a transformation",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "shortname" : "rsl",
+            "slicer" : true,
             "buttonName": "Reslice",
             "inputs":   [
                 {

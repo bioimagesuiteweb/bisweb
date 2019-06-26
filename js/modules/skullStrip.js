@@ -50,6 +50,7 @@ class SkullStripImageModule extends BaseModule {
             "outputs": baseutils.getImageToImageOutputs(null,'viewer1','overlay'),
             "buttonName": "SkullStrip",
             "shortname" : "strip",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Resolution",
@@ -184,6 +185,7 @@ class SkullStripImageModule extends BaseModule {
                     "advanced": false,
                     "varname": 'modelname',
                     "type": 'filename',
+                    "gui" : 'directory',
                     "default" : '',
                     "filename" : true,
                 },
