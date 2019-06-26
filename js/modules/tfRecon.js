@@ -20,7 +20,7 @@
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const bistfutil = require('bis_tfutil.js');
-
+const biswrap = require('libbiswasm_wrapper');
 
 class BisWebTFJSReconModule extends BaseModule {
     constructor() {
@@ -150,7 +150,8 @@ class BisWebTFJSReconModule extends BaseModule {
             } catch(e) {
                 return Promise.reject(e);
             }
-            input=biswrap.medianNormalizeImageWASM(input,1);
+            let out=biswrap.medianNormalizeImageWASM(input,1);
+            input=out;
         }
         
         if (this.tfjsModule===null) {

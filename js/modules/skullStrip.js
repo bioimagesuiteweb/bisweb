@@ -53,7 +53,7 @@ class SkullStripImageModule extends BaseModule {
             "slicer" : true,
             "params": [
                 {
-                    "name": "Resolution",
+                    "name": "Reg Resolution",
                     "description": "Factor to reduce the resolution prior to registration",
                     "priority": 1,
                     "advanced": true,
@@ -65,7 +65,7 @@ class SkullStripImageModule extends BaseModule {
                     "high": 5.0,
                 },
                 {
-                    "name": "Iterations",
+                    "name": "Reg Iterations",
                     "description": "Number of iterations (per level) for registration",
                     "priority": 2,
                     "advanced": true,
@@ -78,7 +78,7 @@ class SkullStripImageModule extends BaseModule {
                     "default": 5,
                 },
                 {
-                    "name": "Levels",
+                    "name": "Reg Levels",
                     "description": "Number of levels in multiresolution optimization for registration",
                     "priority": 3,
                     "advanced": true,
@@ -91,7 +91,7 @@ class SkullStripImageModule extends BaseModule {
                     "step" : 1,
                 },
                 {
-                    "name": "Smoothing",
+                    "name": "Reg Smoothing",
                     "description": "Amount of image smoothing to perform for registration",
                     "priority": 4,
                     "advanced": true,
@@ -117,7 +117,7 @@ class SkullStripImageModule extends BaseModule {
                     "name": "Quantile Normalize",
                     "description": "If true perform median normalization",
                     "priority": 10,
-                    "advanced": true,
+                    "advanced": false,
                     "gui": "check",
                     "varname": "norm",
                     "type": 'boolean',
@@ -127,7 +127,7 @@ class SkullStripImageModule extends BaseModule {
                     "name": "Padding",
                     "description": "Padding to apply when doing patch-based reconstruction",
                     "priority": 1,
-                    "advanced": false,
+                    "advanced": true,
                     "gui": "dropdown",
                     "type": "int",
                     "default" : "0",
@@ -166,10 +166,10 @@ class SkullStripImageModule extends BaseModule {
                     "default": true,
                 },
                 {
-                    "name": "Num Erosions",
+                    "name": "Num Dilations/Erosions",
                     "description": "Number of erosions/dilations (2)",
                     "priority": 22,
-                    "advanced": true,
+                    "advanced": false,
                     "gui": "slider",
                     "type": "int",
                     "varname": "erosions",
@@ -297,19 +297,8 @@ class SkullStripImageModule extends BaseModule {
             }
         }
         
-        // Step 2
-        console.log('oooo\noooo Normalize Image\noooo');
-        let normalized=null;
-        if (this.parseBoolean(vals.norm)) {
-            console.log('oooo median Normalize Image');
-            normalized=biswrap.medianNormalizeImageWASM(reslicedInput,1);
-        } else {
-            console.log('---- Not median Normalize Image');
-            normalized=reslicedInput;
-        }
-        
-        // Step 3 TF
-        let tfOutput=normalized;
+        // Step 2 TF
+        let tfOutput=reslicedInput;
         if (this.parseBoolean(vals.usetf)) {
             console.log('oooo deep Learning Now');
             let modelname = vals.modelname;
@@ -318,16 +307,18 @@ class SkullStripImageModule extends BaseModule {
             
             let mod0=new tfRecon();
             mod0.makeInternal();
-            await mod0.execute( {'input' : normalized },
+            await mod0.execute( {'input' : reslicedInput },
                                 {'modelname' : modelname,
                                  'debug' : debug,
                                  'padding' : padding,
+                                 'norm' : this.parseBoolean(vals.norm),
                                 });
             tfOutput=mod0.getOutputObject('output');
-            normalized=null;
+            reslicedInput=null;
             console.log('oooo\noooo Done with TFJS\noooo');
         }
-        
+
+        // Step 3 Posthoc smoothing
         let nume=parseInt(vals.erosions);
         let morphOutput=tfOutput; 
         if (nume>0) {
@@ -335,8 +326,6 @@ class SkullStripImageModule extends BaseModule {
             console.log('oooo Erosions and Dilations');
             console.log('oooo');
             let temp=tfOutput; tfOutput=null;
-            
-            // Step 4 Erode/Dilate
             
             for (let i=0;i<nume;i++) {
                 console.log('oooo Erode ',i+1,'/',nume);
