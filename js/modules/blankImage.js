@@ -55,7 +55,7 @@ class BlankImageModule extends BaseModule {
 
         return {
             "name": "Blank Image",
-            "description": "This algorithm performes image blanking, i.e. zeros values outside the specified region. It is similar to crop but maintains the original image dimensions.",
+            "description": "This algorithm performs image blanking, i.e. zeros values outside the specified region. It is similar to crop but maintains the original image dimensions.",
             "author": "Xenios Papdemetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
