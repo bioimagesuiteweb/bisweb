@@ -200,8 +200,7 @@ do not have a proper node-gyp) setup, simply delete the line containing
 
  To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.sh` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, Bisweb comes with a prebaked version of the wasm binaries:
 
-    chmod +x config/createjsbuild.sh
-    ./config/createjsbuild.sh
+    node ./config/createjsbuild.js
 
 This will create three directories, ``build/web``, ``build/wasm``, and ``build/dist`` and copy the wasm binary in ``various/wasm`` to the build folders. This will perform the same function as making the WebAssembly binaries from the C++ code, though the prebaked binaries may not be fully up-to-date in every version of the software.
 
