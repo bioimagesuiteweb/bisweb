@@ -16,7 +16,7 @@ let tfjsModule=null;
 class TFWrapper {
 
     
-    constructor(tf,mode='') {
+    constructor(tf,mode='',transpose=true) {
 
         if (mode.length>1)
             this.mode=mode+' '+tf.getBackend();
@@ -26,6 +26,7 @@ class TFWrapper {
         this.tf=tf;
         this.models={};
         this.modelcount=0;
+        this.transpose=transpose;
 
     }
 
@@ -45,7 +46,7 @@ class TFWrapper {
     }
 
 
-    predict(model,patch,shape,debug=false) {
+    async predict(model,patch,shape,debug=false) {
 
         // shape[0] can be a string so map this to an integer
         // Needed in electron when crossing boundaries
@@ -55,28 +56,40 @@ class TFWrapper {
             shape[0]=1;
         }
         
-        return new Promise( (resolve) => {
-            const tensor= this.tf.tensor(patch, shape);
+        const tensor= this.tf.tensor(patch, shape);
 
-
+        let output=null;
+            
+        if (this.tranpose) {
             let tshape=[0,2,1];
             if (tensor.shape.length>3) {
                 tshape.push(3);
             }
+
             if (debug)
-                console.log('++++ creating tensor',shape,'patch=',patch.length,tshape);
-            
-            const tensor2= this.tf.transpose(tensor,tshape);
-            const output=this.models[model.index].predict(tensor2);
+                console.log('++++ creating transposed tensor',shape,'patch=',patch.length,tshape);
+
+            const t_tensor= this.tf.transpose(tensor,tshape);
+            const t_output=this.models[model.index].predict(t_tensor);
             let tshapeout=[0,2,1];
-            const output2= this.tf.transpose(output,tshapeout);
+            if (t_output.shape.length>3)
+                tshapeout.push(3);
+            output= this.tf.transpose(t_output,tshapeout);
+            
+            t_tensor.dispose();
+            t_output.dispose();
+        } else {
             if (debug)
-                console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
-            tensor.dispose();
-            tensor2.dispose();
-            output.dispose();
-            resolve(output2);
-        });
+                console.log('++++ creating tensor',shape,'patch=',patch.length,tensor.shape);
+
+            output=this.models[model.index].predict(tensor);
+        }
+        
+        tensor.dispose();
+        
+        if (debug)
+            console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
+        return Promise.resolve(output);
     }
 
     loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
@@ -167,7 +180,8 @@ class BisWebTensorFlowRecon {
             'numframes' : dims[3]*dims[4],
             'dims' : dims,
         };
-        console.log('PatchInfo=',JSON.stringify(this.patchinfo));
+        if (this.debug)
+            console.log('PatchInfo=',JSON.stringify(this.patchinfo));
         this.patch=null;
         //        this.tpatch=null;
     }
@@ -181,8 +195,8 @@ class BisWebTensorFlowRecon {
         this.patchinfo.patchslabsize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
         this.patch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
         //        this.tpatch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
-        //if (this.debug)
-        console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchslabsize,'*',this.patchinfo.batchsize,')');
+        if (this.debug)
+            console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchslabsize,'*',this.patchinfo.batchsize,')');
     }
 
     /** clean up internal objects */
@@ -450,7 +464,7 @@ class BisWebTensorFlowRecon {
             this.createPatch(batchsize);
             let shape=this.model.shape;
 
-            console.log(`+++\n+++ Beginning Prediction: numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}, padding=${this.patchinfo.padding}\n+++`);
+            console.log(`+++\n+++ Beginning Prediction: numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}, padding=${this.patchinfo.padding} transpose=${tfwrapper.transpose}\n+++`);
             let startTime=new Date();
             
             let step=Math.round(patchindexlist.length/20);
@@ -534,7 +548,7 @@ class BisWebTensorFlowRecon {
 /** if tf module is not set try to set it 
  * @returns{Boolean} -- success or failure to initialize 
  */
-let initializeTFModule=function(forcebrowser=false) {
+let initializeTFModule=function(forcebrowser=false,transpose=true) {
 
     let environment=bisgenericio.getmode();
 
@@ -557,7 +571,7 @@ let initializeTFModule=function(forcebrowser=false) {
             let obj=window.BISELECTRON.loadtf(mode);
             if (obj.tf !== null) {
                 let md=obj.name || 'electron';
-                tfjsModule=new TFWrapper(obj.tf,md);
+                tfjsModule=new TFWrapper(obj.tf,md,transpose);
                 resolve(md);
                 return;
             } else {
@@ -568,7 +582,7 @@ let initializeTFModule=function(forcebrowser=false) {
         if (environment === 'browser' ) {
             
             if (window.tf) {
-                tfjsModule=new TFWrapper(window.tf,'loaded from script');
+                tfjsModule=new TFWrapper(window.tf,'loaded from script',transpose);
                 resolve('Using preloaded tfjs module');
                 return;
             }
@@ -577,7 +591,7 @@ let initializeTFModule=function(forcebrowser=false) {
             let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
             apiTag.src = url;
             apiTag.onload = ( () => {
-                tfjsModule=new TFWrapper(window.tf,url);
+                tfjsModule=new TFWrapper(window.tf,url,transpose);
                 resolve('Module loaded from '+url);
             });
             
@@ -591,7 +605,7 @@ let initializeTFModule=function(forcebrowser=false) {
 
         if (environment === 'node') {
             let fn=bisweb_tf;
-            tfjsModule=new TFWrapper(fn(),'tfjs node');
+            tfjsModule=new TFWrapper(fn(),'tfjs node',transpose);
             resolve('Module loaded from tfjs node');
         }
     });

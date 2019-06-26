@@ -103,10 +103,14 @@ for (let i=0;i<l;i++) {
 
 
     let mod = modules.getModule(item);
-    let xmlstring=slicerxml.createXMLDescription(mod);
-    let xmlname=path.normalize(path.join(scriptdir,'bw_'+item+'.xml'));
-    fs.writeFileSync(xmlname,xmlstring);
+    let desc=mod.getDescription();
 
+    let xmlname=path.normalize(path.join(scriptdir,'bw_'+item+'.xml'));
+    let xmlstring='';
+    if (desc.slicer) {
+        xmlstring=slicerxml.createXMLDescription(mod);
+    }
+    fs.writeFileSync(xmlname,xmlstring);
 }
 
 let oname=path.join(scriptdir,'ModuleList.txt');

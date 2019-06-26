@@ -25,6 +25,9 @@ module.exports={
                 tmp="\t\t\t<channel>output</channel>\n";
             else
                 tmp="\t\t\t<channel>input</channel>\n";
+            if (param.gui === 'directory') {
+                return `\t\t<directory>${base}    ${tmp}\t\t</directory>\n`;
+            }
             return `\t\t<file>${base}    ${tmp}\t\t</file>\n`;
         } else if (param.type === 'image') {
             let tmp='';

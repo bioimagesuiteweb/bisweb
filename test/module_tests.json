@@ -566,7 +566,7 @@
             "dopython": false
         },
         {
-            "command"  : "tfrecon -i testdata/tfjs64/sample1.nii.gz --modelname testdata/tfjs64 --padding 8 --batchsize 1",
+            "command"  : "tfrecon -i testdata/tfjs64/sample1.nii.gz --modelname testdata/tfjs64 --padding 8 --batchsize 1 --transpose false",
             "test"     : "--test_target testdata/tfjs64/sampleout.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.5",
             "result"   : true,
             "dopython" : false,
