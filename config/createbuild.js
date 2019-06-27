@@ -14,7 +14,6 @@ let extra=process.argv[2] || 'build';
 const main=async function() {
 
     console.log("------------------------------------------------------------------------------------");
-    
     const DIR= path.normalize(path.join(__dirname,path.join('..',extra)));
     console.log('++++ BioImageSuite Web\n++++ creating full build directory\n++++ \tDIR=     '+DIR+'\n++++');
     util.initialize(DIR);
