@@ -9,10 +9,7 @@ if (path.sep==='\\') {
     process.exit(1);
 }
 
-
-
 let extra=process.argv[2] || 'build';
-
 
 const main=async function() {
 
@@ -25,7 +22,6 @@ const main=async function() {
     console.log("++++");
     console.log("++++ Creating scripts");
     console.log("++++");
-
     util.copyFileSync(DIR,'../config/setpaths_build.sh',DIR,'setpaths.sh');
     util.copyFileSync(DIR,'../compiletools/cmake.sh',DIR,'cmake.sh');
     util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
@@ -34,14 +30,12 @@ const main=async function() {
     console.log("++++");
     await util.executeCommand('chmod +x *make*.sh',DIR);
 
-
     console.log("++++");
     console.log("++++ Installing Eigen3");
     console.log("++++");
     util.makeDir(path.join(DIR,'eigen3'));
     let eig=path.normalize(`${DIR}/../various/download/Eigen.zip`);
     await util.executeCommand(`unzip ${eig}`, `${DIR}/eigen3`);
-
 
     console.log("++++");
     console.log("++++ Installing IGL");
@@ -54,15 +48,11 @@ const main=async function() {
     console.log("++++ Installing Emscripten");
     console.log("++++");
     let f=path.normalize(`${DIR}/../various/download/emsdk-portable.tar.gz`);
-
     await util.executeCommand(`tar xvfz ${f}`, DIR);
     await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk update`,`${DIR}/emsdk_portable`,true);
     await util.executeCommand(`python3 ${DIR}/emsdk_portable/emsdk install latest`,`${DIR}/emsdk_portable`,true);
     await util.executeCommand(`python3 ${DIR}/emsdk_portable/emsdk activate latest`,`${DIR}/emsdk_portable`);
-
     console.log('++++');
-
-
 };
 
 main().then( () => {
