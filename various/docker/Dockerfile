@@ -27,7 +27,7 @@ RUN git clone https://github.com/bioimagesuiteweb/bisweb src
 RUN ls
 RUN ls src
 WORKDIR /opt/bisweb/src
-RUN git branch -l
+RUN git status
 RUN git checkout devel
 RUN git pull
 
