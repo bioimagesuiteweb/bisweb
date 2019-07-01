@@ -80,7 +80,7 @@ SET(KITSRCS
 SET(LIBNAME libbiswasm)
 SET (PRE_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_pre.js")
 SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
-SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
+
 
 # ---------------------------------------------------------------------------------------------
 # Native/Python/Matlab Stuff
@@ -307,7 +307,7 @@ IF (BIS_A_EMSCRIPTEN)
   configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY ) 
   
   # ------------------ create wrapper ---------------------------
-
+  SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT}
     DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
     PRE_BUILD COMMENT "Creating JS Wrappers"

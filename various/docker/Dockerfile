@@ -47,8 +47,13 @@ RUN gulp build
 WORKDIR /opt/bisweb/src/build/wasm
 RUN cp /opt/bisweb/src/various/scripts/*.sh /opt/bisweb/src/build
 RUN chmod +x /opt/bisweb/src/build/*.sh
+
+WORKDIR /opt/bisweb/src
+RUN git pull
+
+WORKDIR /opt/bisweb/src/build/wasm
 RUN ../cmake_full.sh
-RUN make -j2
+RUN make 
 RUN make install
 
 # Create npm package biswebnode
