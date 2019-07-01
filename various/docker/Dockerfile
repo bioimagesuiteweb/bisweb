@@ -46,9 +46,8 @@ RUN touch /opt/bisweb/src/build/web/LICENSE
 RUN gulp build
 
 # Now C++ Build for WASM
-ADD scripts /opt/scripts
 WORKDIR /opt/bisweb/src/build/wasm
-RUN cp /opt/scripts/*.sh /opt/bisweb/src/build
+RUN cp /opt/bisweb/various/scripts/*.sh /opt/bisweb/src/build
 RUN chmod +x /opt/bisweb/src/build/*.sh
 RUN ../cmake_full.sh
 RUN make -j2
