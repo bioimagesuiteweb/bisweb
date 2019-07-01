@@ -266,6 +266,8 @@ IF (BIS_A_EMSCRIPTEN)
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
 
+  MESSAGE("DIRS=${EXECUTABLE_OUTPUT_PATH}, ${LIBRARY_OUTPUT_PATH}")
+
   IF (BIS_BUILDNONGPL)
     MESSAGE("-- Also building Pure Apache C++ Library excluding GPL-Code from ${BIS_GPL_DIR}")
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})

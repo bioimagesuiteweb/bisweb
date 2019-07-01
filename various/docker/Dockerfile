@@ -45,7 +45,7 @@ RUN gulp build
 
 # Now C++ Build for WASM
 WORKDIR /opt/bisweb/src/build/wasm
-RUN cp /opt/bisweb/various/scripts/*.sh /opt/bisweb/src/build
+RUN cp /opt/bisweb/src/various/scripts/*.sh /opt/bisweb/src/build
 RUN chmod +x /opt/bisweb/src/build/*.sh
 RUN ../cmake_full.sh
 RUN make -j2
