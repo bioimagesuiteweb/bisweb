@@ -21,8 +21,8 @@ RUN npm install -g electron --unsafe-perm=true --allow-root
 RUN npm install -g electron-packager
 
 # Checkout bisweb source
-ADD bisweb /opt/bisweb
-WORKDIR /opt/bisweb
+WORKDIR /opt
+RUN mkdir bisweb
 RUN git clone https://github.com/bioimagesuiteweb/bisweb src
 RUN ls
 RUN ls src
