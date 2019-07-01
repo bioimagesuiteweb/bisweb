@@ -73,8 +73,19 @@ WORKDIR /opt/bisweb/src/build/native
 RUN ../cmake_full_native.sh
 RUN make -j2
 RUN make package
+RUN cp *.gz /opt/bisweb
 
-# Expose 8080
+# END
+WORKDIR /opt/bisweb
+RUN ls -l *gz
+RUN node src/js/bin/bisweb -h
+
+
+# Run quick tests
+WORKDIR /opt/bisweb/src/test
+RUN mocha   test_module.js --input local --last 2
+RUN python3 test_module.py --last 5
+
+# Done
+WORKDIR /opt/bisweb
 EXPOSE 8080
-
-
