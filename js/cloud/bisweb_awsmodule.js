@@ -51,10 +51,14 @@ class AWSModule extends BaseServerClient {
             try {
 
                 let parsedAWS = JSON.parse(value);
-                if (parsedAWS.bucketName && parsedAWS.identityPoolId)
+                console.log('parsed aws', parsedAWS);
+                if (parsedAWS.bucketName && parsedAWS.identityPoolId) {
                     this.currentAWS = JSON.parse(value);
-                else
+                    this.changeBuckets(parsedAWS);
+                } else {
                     this.currentAWS = null;
+                }
+                    
 
             } catch (e) {
                //console.log('current aws', this.currentAWS);
@@ -592,11 +596,12 @@ class AWSModule extends BaseServerClient {
 
         //When biswebaws.html alerts that it's ready for credentials, send them. 
         window.addEventListener('awsready', () => {
-            console.log('received awsready');
             authWindow.authParams = authParams;
             //authWindow.accountId = 
             authWindow.dispatchEvent(new CustomEvent('handleIncoming'));
         });
+
+        createExchangeFlow();
         
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
         
@@ -604,62 +609,66 @@ class AWSModule extends BaseServerClient {
         authWindow.outerScope = AWSCognitoAuth; 
         //authWindow.AWS = AWS;
 
+        const self = this;
+        function createExchangeFlow() {
 
-        //set timeout in case window doesn't return a storage event
-        let timeoutEvent = setTimeout(() => {
-            bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
-            window.removeEventListener('storage', idTokenEvent);
-            //authWindow.close();
-        }, 20000);
+            let idTokenEvent = (data) => {
+                if (data.key === 'aws_id_token') {
+                    window.removeEventListener('storage', idTokenEvent);
+                    clearTimeout(timeoutEvent);
 
-        let idTokenEvent = (data) => {
-            if (data.key === 'aws_id_token') {
+                    //---------------------------------------------------------------
+                    // 2.) log into identity pool
+                    //---------------------------------------------------------------
+
+                    let login = {}, cognitoUserPoolKey = `cognito-idp.${AWSParameters.RegionName}.amazonaws.com/${AWSParameters.authParams.UserPoolId}`;
+
+                    //construct credentials request from id token fetched from user pool, and the id of the identity pool
+                    //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
+                    login[cognitoUserPoolKey] = data.newValue;
+                    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                        'IdentityPoolId': AWSParameters.IdentityPoolId(),
+                        'Logins': login,
+                        'RoleSessionName': 'web'
+                    });
+
+                    AWS.config.credentials.get((err) => {
+                        if (err) {
+                            console.log(err);
+                            authWindow.postMessage({ 'failure': 'auth failed', 'error': err.toString() }, '*');
+                        } else {
+                            console.log('Exchanged access token for access key');
+                            authWindow.postMessage({ 'success': 'auth complete' }, '*');
+
+                            //TODO: determine whether refresh is necessary
+                            AWS.config.credentials.refresh((err) => {
+                                if (err) { console.log('an error occured refreshing', err); }
+                                else {
+                                    console.log('refresh successful.');
+                                    self.s3 = self.createS3(AWSParameters.BucketName(), AWS.config.credentials);
+                                    authWindow.close();
+                                    cb();
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+
+             //set timeout in case window doesn't return a storage event
+            let timeoutEvent = setTimeout(() => {
+                bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
                 window.removeEventListener('storage', idTokenEvent);
-                clearTimeout(timeoutEvent);
+                //authWindow.close();
+            }, 20000);
 
-                //---------------------------------------------------------------
-                // 2.) log into identity pool
-                //---------------------------------------------------------------
-
-                let login = {}, cognitoUserPoolKey = `cognito-idp.${AWSParameters.RegionName}.amazonaws.com/${AWSParameters.authParams.UserPoolId}`;
-
-                //construct credentials request from id token fetched from user pool, and the id of the identity pool
-                //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
-                login[cognitoUserPoolKey] = data.newValue;
-                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                    'IdentityPoolId': AWSParameters.IdentityPoolId(),
-                    'Logins': login,
-                    'RoleSessionName': 'web'
-                });
-
-                AWS.config.credentials.get((err) => {
-                    if (err) {
-                        console.log(err);
-                        authWindow.postMessage({ 'failure': 'auth failed', 'error': err.toString() }, '*');
-                    } else {
-                        console.log('Exchanged access token for access key');
-                        authWindow.postMessage({ 'success': 'auth complete' }, '*');
-
-                        //TODO: determine whether refresh is necessary
-                        AWS.config.credentials.refresh((err) => {
-                            if (err) { console.log('an error occured refreshing', err); }
-                            else {
-                                console.log('refresh successful.');
-                                this.s3 = this.createS3(AWSParameters.BucketName(), AWS.config.credentials);
-                                authWindow.close();
-                                cb();
-                            }
-                        });
-                    }
-                });
-            }
-        };
-
-        window.addEventListener('storage', idTokenEvent);
+            window.addEventListener('storage', idTokenEvent);
+        }
     }
 
     changeBuckets(newBucketInfo) {
-        this.s3 = this.createS3(newBucketInfo.bucketName);
+        console.log('change buckets');
+        //this.s3 = this.createS3(newBucketInfo.bucketName);
         this.currentAWS = {
             'bucketName': newBucketInfo.bucketName,
             'identityPoolId': newBucketInfo.identityPoolId,
