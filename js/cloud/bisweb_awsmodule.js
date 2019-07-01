@@ -1,6 +1,5 @@
 'use strict';
 
-//const AWS = require('aws-sdk');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
@@ -8,9 +7,12 @@ const BaseServerClient = require('bis_baseserverclient.js');
 const bis_genericio = require('bis_genericio.js');
 const pako = require('pako');
 const localforage = require('localforage');
-let AWS=null;
+
+const AWSCognitoAuth = require('amazon-cognito-auth-js');
+let AWS = null;
 const $ = require('jquery');
 
+//TODO: Investigate AWS being null when trying to create new bucket
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
  * Does not require the use of an app key like Dropbox and Google Drive. 
@@ -66,8 +68,8 @@ class AWSModule extends BaseServerClient {
             this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
             this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
             bis_webutil.loadJavaScriptModule('https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js').then( (m) => {
-                console.log('--- '+m);
-                AWS=window.AWS;
+                console.log('--- Loaded AWS '+m);
+                AWS = window.AWS;
             });
         });
     }
@@ -554,19 +556,19 @@ class AWSModule extends BaseServerClient {
         } else {
             parseCommand();
         }
-
-
     }
 
     /**
      * Begins the AWS authentication process by opening a new winbow with the URL specified as 'biswebaws.html'. This performs the following steps:
-     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for teeeheir Amazon Cognito credentials. The user may create an account at this time.
+     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for their Amazon Cognito credentials. The user may create an account at this time.
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
      */
     awsAuthUser(cb) {
 
+        console.log('AWSParameters', AWSParameters);
+        
         //create AWS configuration object before beginning login process
         AWS.config.update({
             'region': AWSParameters.RegionName,
@@ -588,13 +590,20 @@ class AWSModule extends BaseServerClient {
             'cognitoParams': AWSParameters.getCurrentCognitoParams()
         };
 
+        //When biswebaws.html alerts that it's ready for credentials, send them. 
         window.addEventListener('awsready', () => {
             console.log('received awsready');
             authWindow.authParams = authParams;
+            //authWindow.accountId = 
             authWindow.dispatchEvent(new CustomEvent('handleIncoming'));
         });
-
+        
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
+        
+        //inject AWS SDK and Cognito Auth API into new window to avoid having to load them there
+        authWindow.outerScope = AWSCognitoAuth; 
+        //authWindow.AWS = AWS;
+
 
         //set timeout in case window doesn't return a storage event
         let timeoutEvent = setTimeout(() => {
