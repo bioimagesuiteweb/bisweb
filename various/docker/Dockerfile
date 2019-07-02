@@ -1,4 +1,4 @@
-# Base
+gi# Base
 FROM ubuntu:18.04
 
 MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
@@ -41,22 +41,16 @@ RUN node config/createbuild.js
 # Build the JS code first
 WORKDIR /opt/bisweb/src
 RUN touch /opt/bisweb/src/build/web/LICENSE
-RUN gulp build
+
 
 # Now C++ Build for WASM
-WORKDIR /opt/bisweb/src/build/wasm
-RUN cp /opt/bisweb/src/various/scripts/*.sh /opt/bisweb/src/build
+WORKDIR /opt/bisweb/src/build
 RUN chmod +x /opt/bisweb/src/build/*.sh
-
-WORKDIR /opt/bisweb/src
-RUN git pull
-
-WORKDIR /opt/bisweb/src/build/wasm
-RUN ../cmake_full.sh
-
-# Build NATIVE
-WORKDIR /opt/bisweb/src/build/native
-RUN ../cmake_full_native.sh
+RUN ./fullbuild.sh
 
 # Expose server
 EXPOSE 8080
+
+# Build NATIVE
+WORKDIR /opt/bisweb/src/
+RUN gulp serve
