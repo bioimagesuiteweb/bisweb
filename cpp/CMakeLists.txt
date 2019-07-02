@@ -294,7 +294,7 @@ IF (BIS_A_EMSCRIPTEN)
     install (FILES ${FVAR2} DESTINATION bisweb/lib)
     
     SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${lib}_wasm.js")
-    # ------------------ create webpack wasm module ---------------
+    # ------------------ create webpack wasm module for web-based tools ---------------
     ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
       DEPENDS ${lib} ${TOOLS_DIR}/bis_create_wasm_module.js
       COMMENT "\nCreating Webpack Wasm Module"
