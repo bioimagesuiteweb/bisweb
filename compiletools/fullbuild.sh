@@ -7,6 +7,8 @@ BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 source ${BDIR}/emsdk_portable/emsdk_env.sh
 
+mkdir -p ${BDIR}/install
+
 echo "-----------------------------------------------------------------------"
 echo "SRCDIR=${SRCDIR}, BDIR=${BDIR}"
 echo "-----------------------------------------------------------------------"
@@ -20,14 +22,19 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_CXX_FLAGS="-o0 -s WASM=1 -s TOTAL_MEMORY=512MB" \
       -DCMAKE_EXE_LINKER_FLAGS="--pre-js ${SRCDIR}/cpp/libbiswasm_pre.js --post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
+      -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
+      -DBIS_BUILDSCRIPTS=ON \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
       -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
       ${SRCDIR}/cpp
 
 
-make ${BISMAKEJ}
+make ${BISMAKEJ} install
 echo "-----------------------------------------------------------------------"
+exit
+
+
 # Create npm package biswebbrowser
 cd ${SRCDIR}
 gulp build
@@ -37,7 +44,7 @@ pwd
 ls -l 
 npm pack
 cp *tgz ${BDIR}
-exit
+
 
 
 echo "-----------------------------------------------------------------------"
@@ -45,7 +52,7 @@ echo "-----------------------------------------------------------------------"
 cd ${BDIR}/native
 rm CMakeCache.txt
 
-cpcmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
+cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
       -DBIS_A_MATLAB=ON \
@@ -55,12 +62,13 @@ cpcmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
 ../cmake_full_native.sh
 make ${BISMAKEJ}
 make package
-cp *.gz ${BDIR}
+cp *tar.gz ${BDIR}
+
+
 
 echo "-----------------------------------------------------------------------"
 # END
 cd ${BDIR}
-ls -l *gz
 node ${SRCDIR}/js/bin/bisweb -h
 
 

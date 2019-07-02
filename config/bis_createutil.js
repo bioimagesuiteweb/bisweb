@@ -3,14 +3,17 @@ const path=require('path');
 const child_process=require('child_process');
 
 
-const makeDir=function(f1) {
+const makeDir=function(f1,exit=true) {
     console.log('++++ creating directory',f1);
     try {
         fs.mkdirSync(f1);
     } catch(e) {
         if (e.code === 'EEXIST') {
-            console.log('---- directory '+f1+' exists. Remove and try again.');
-            process.exit(0);
+            console.log('---- directory '+f1+' exists. Remove and try again.'+exit);
+            if (exit)
+                process.exit(0);
+            else
+                return;
         }
         console.log('---- error=',JSON.stringify(e));
         process.exit(0);
@@ -105,14 +108,15 @@ const copyFileSync2=function(d1,fname,t1,t2) {
     }
 };
 
-let initialize=function(DIR) {
+let initialize=function(DIR,exit=true) {
 
     const WASMDIR= path.normalize(path.join(DIR,path.join('..',path.join('various','wasm'))));
     
-    makeDir(DIR);
-    makeDir(path.join(DIR,'web'));
-    makeDir(path.join(DIR,'wasm'));
-    makeDir(path.join(DIR,'dist'));
+    makeDir(DIR,exit);
+    makeDir(path.join(DIR,'web'),exit);
+    makeDir(path.join(DIR,'wasm'),exit);
+    makeDir(path.join(DIR,'dist'),exit);
+    makeDir(path.join(DIR,'native'),exit);
     console.log('++++');
     
     copyFileSync2(WASMDIR,`libbiswasm_wasm.js`,DIR,`web`);

@@ -311,7 +311,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT}
     DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
     PRE_BUILD COMMENT "Creating JS Wrappers"
-    COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH})
+    COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT})
   
   # ---- create library for command line  -----------
@@ -327,8 +327,8 @@ IF (BIS_A_EMSCRIPTEN)
 
 
   
-  add_custom_command(OUTPUT ${OUTSCRIPT}
-    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
+  add_custom_command(OUTPUT ${OUTSCRIPT} 
+    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} 
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE} using ${CONFIGFILE}"
     COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
     )
@@ -353,7 +353,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET (NPMREADME
     ${LIBRARY_OUTPUT_PATH}/README.md )
   add_custom_command(OUTPUT ${NPMREADME}
-    DEPENDS ${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md
+    DEPENDS ${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md ${LIBNAME}
     PRE_BUILD COMMENT "Creating npm README.md"
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md" ${NPMREADME}
     )
@@ -362,7 +362,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
-    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE}
+    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE} ${LIBNAME}
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
     )
@@ -382,7 +382,7 @@ IF (BIS_A_EMSCRIPTEN)
     SET(MODULE_LIST_FILENAME "${MODULE_DIR}/ModuleList.txt")
     MESSAGE("Creating Scripts ${MODULE_LIST_FILENAME}, ${MODULE_DIR}")
     add_custom_command(OUTPUT ${MODULE_LIST_FILENAME}
-      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt
+      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Unix)"
       COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
 
@@ -390,11 +390,11 @@ IF (BIS_A_EMSCRIPTEN)
     SET(MODULE_LIST_FILENAME2 "${MODULE2_DIR}/ModuleList.txt")
     MESSAGE("Creating Scripts ${MODULE_LIST_FILENAME2}, ${MODULE2_DIR}")
     add_custom_command(OUTPUT ${MODULE_LIST_FILENAME2}
-      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt
+      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
       COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
     
-    add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2})
+    add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME})
 
     install (DIRECTORY ${MODULE_DIR}  DESTINATION bisweb
       PATTERN "*.txt" EXCLUDE

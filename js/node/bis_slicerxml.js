@@ -1,4 +1,4 @@
-const bisdate=require('bisdate.js');
+const bisdate=require('biswasmdate.js');
 
 module.exports={
 

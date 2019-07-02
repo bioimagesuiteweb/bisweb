@@ -275,7 +275,7 @@ function createDate() {
         const git = require('git-rev');
         git.long( (str) => {
             bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.appinfo.version);
-            bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.appinfo.version);
+            bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.js'),str,internal.appinfo.version);
             resolve();
         });
     });

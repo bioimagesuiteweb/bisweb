@@ -38,14 +38,14 @@ for (let i=0;i<process.argv.length;i++) {
 
 let toolname=process.argv[2] || '';
 
-
+let ver=bisweb.biswasmdate.version+' ('+bisweb.biswasmdate.date+','+bisweb.biswasmdate.time+')';
 
 bisweb.loadUserPreferences().then( () => {
-    console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
-    console.log('++++ Executing module '+toolname);
-    console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+    console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+    console.log('++++ Executing bisweb v'+ver+', module '+toolname);
+    console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
     bisweb.loadParse(args, toolname).then( () => {
-        console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
         process.exit(0);
     }).catch((e) => { 
         console.log(e); 
