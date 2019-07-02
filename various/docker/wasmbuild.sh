@@ -14,8 +14,6 @@ source ${BDIR}/emsdk_portable/emsdk_env.sh
 
 
 
-rm -rf   ${BDIR}/install
-mkdir -p ${BDIR}/install
 mkdir -p ${BDIR}/wasm
 
 
@@ -39,9 +37,13 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
 make ${BISMAKEJ} install
 cd ${BDIR}/install/bisweb
 npm pack
-mv *tgz ${BDIR}
-cd ${BDIR}
-ls -lrt *tgz
+mv *tgz ${BDIR}/install
+echo "-----------------------------------------------------------------------"
+
+cd ${BDIR}/install
+pwd
+ls -lrt *tgz *.tar.gz *zip
+
 echo "-----------------------------------------------------------------------"
 echo " Done with WASM and Command Line JS"
 echo "-----------------------------------------------------------------------"

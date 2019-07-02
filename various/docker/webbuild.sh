@@ -1,25 +1,38 @@
 #!/bin/bash
 
+EXTRA=""
+
 BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
+BDIST=${BDIR}/dist
+
+mkdir -p ${BDIR}/web
+mkdir -p ${BDIST}
+
+touch ${BDIR}/web/LICENSE
+
 # Create server zip file
 cd ${SRCDIR}
-touch ${BDIR}/dist/a.zip
-rm ${BDIR}/dist/*zip
+touch ${BDIST}/a.zip
+rm ${BDIST}/*zip
 
-gulp build 
+gulp build ${EXTRA} 
 gulp zip
-mv ${BDIR}/dist/*zip ${BDIR}
+mv ${BDIST}/*zip ${BDIR}/install
 
 # Create npm package biswebbrowser
 cd ${SRCDIR}
 gulp npmpack
-cd ${BDIR}/dist/biswebbrowser
+cd ${BDIST}/biswebbrowser
 npm pack
-cp *tgz ${BDIR}
-cd ${BDIR}/dist/
-ls -lrt *tgz
+cp *tgz ${BDIR}/install
+cd ${BDIR}/install
+
+
+echo "-----------------------------------------------------------------------"
+pwd
+ls -lrt *tgz *.tar.gz *zip
 
 echo "-----------------------------------------------------------------------"
 echo " Done with Web Based Tools"

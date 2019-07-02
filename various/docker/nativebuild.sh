@@ -7,6 +7,7 @@ SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 echo "-----------------------------------------------------------------------"
 # Build NATIVE
+mkdir -p ${BDIR}/native
 cd ${BDIR}/native
 touch CMakeCache.txt
 rm CMakeCache.txt
@@ -19,12 +20,14 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
       -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
       ${SRCDIR}/cpp
-../cmake_full_native.sh
+
 make ${BISMAKEJ} install
 make package
-cp *tar.gz ${BDIR}
-cd {$BDIR}
-ls -lrt *tgz
+cp *tar.gz ${BDIR}/install
+cd ${BDIR}/install
+echo "-----------------------------------------------------------------------"
+pwd
+ls -lrt *tgz *zip
 
 
 echo "-----------------------------------------------------------------------"
