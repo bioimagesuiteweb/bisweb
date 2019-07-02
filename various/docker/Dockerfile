@@ -53,41 +53,10 @@ RUN git pull
 
 WORKDIR /opt/bisweb/src/build/wasm
 RUN ../cmake_full.sh
-RUN make 
-RUN make install
-
-# Create npm package biswebnode
-WORKDIR /usr/local/bisweb
-RUN npm pack
-RUN cp *tgz /opt/bisweb
-
-# Create npm package biswebbrowser
-WORKDIR /opt/bisweb/src/
-RUN gulp build
-RUN gulp npmpack
-WORKDIR /opt/bisweb/src/build/dist/biswebbrowser
-RUN ls -l 
-RUN npm pack
-RUN cp *tgz /opt/bisweb
 
 # Build NATIVE
 WORKDIR /opt/bisweb/src/build/native
 RUN ../cmake_full_native.sh
-RUN make -j2
-RUN make package
-RUN cp *.gz /opt/bisweb
 
-# END
-WORKDIR /opt/bisweb
-RUN ls -l *gz
-RUN node src/js/bin/bisweb -h
-
-
-# Run quick tests
-WORKDIR /opt/bisweb/src/test
-RUN mocha   test_module.js --input local --last 2
-RUN python3 test_module.py --last 5
-
-# Done
-WORKDIR /opt/bisweb
+# Expose server
 EXPOSE 8080

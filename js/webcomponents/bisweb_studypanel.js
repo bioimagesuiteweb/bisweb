@@ -18,7 +18,7 @@ const SEPARATOR = bis_genericio.getPathSeparator();
 
 require('jstree');
 require('bootstrap-slider');
-require('bootstrap-toggle');
+
 
 /**
  * <bisweb-treepanel

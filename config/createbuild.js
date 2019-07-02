@@ -26,6 +26,7 @@ const main=async function() {
     util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
     util.copyFileSync(DIR,'../compiletools/cmake_native.sh',DIR,'cmake_native.sh');
     util.copyFileSync(DIR,'../compiletools/ccmake_native.sh',DIR,'ccmake_native.sh');
+    util.copyFileSync(DIR,'../compiletools/fullbuild.sh',DIR,'fullbuild.sh');
     console.log("++++");
     await util.executeCommand('chmod +x *make*.sh',DIR);
 

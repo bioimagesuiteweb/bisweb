@@ -154,7 +154,6 @@ let internal = {
         "./lib/css/bootstrap_dark_edited.css", 
         "./node_modules/jstree/dist/themes/default/style.css",
         "./node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css",
-        "./node_modules/bootstrap-toggle/css/bootstrap-toggle.min.css",
         "./web/biscommon.css"
     ],
     biscss2     : 'bislib_bright.css', // Bright Mode
