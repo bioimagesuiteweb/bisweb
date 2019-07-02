@@ -39,18 +39,32 @@ RUN node config/createbuild.js
 
 # Build the JS code first
 WORKDIR /opt/bisweb/src
-RUN touch /opt/bisweb/src/build/web/LICENSE
 RUN git pull
 
 # Now C++ Build for WASM
 WORKDIR /opt/bisweb/src/build
-COPY fullbuild.sh /opt/bisweb/src/build/fullbuild.sh
+RUN echo "Copying files "
+COPY fullbuild.sh   /opt/bisweb/src/build/fullbuild.sh
+COPY wasmbuild.sh   /opt/bisweb/src/build/wasmbuild.sh
+COPY webbuild.sh    /opt/bisweb/src/build/webbuild.sh
+COPY nativebuild.sh /opt/bisweb/src/build/nativebuild.sh
+COPY testbuild.sh   /opt/bisweb/src/build/testbuild.sh
+RUN dos2unix /opt/bisweb/src/build/*.sh
 RUN chmod +x /opt/bisweb/src/build/*.sh
-RUN ./fullbuild.sh
+RUN ls -l *.sh
+RUN /opt/bisweb/src/build/fullbuild.sh
 
 # Expose server
 EXPOSE 8080
 
+
+
 # Build NATIVE
 WORKDIR /opt/bisweb/src/
 RUN echo "done setting up docker machine"
+
+COPY dotbashrc /root/.bashrc
+RUN echo "Type "
+RUN echo "    docker run -p 8080:8080 -it xeniosp/bisweb bash"
+
+

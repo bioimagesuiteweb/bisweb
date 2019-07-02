@@ -1,0 +1,13 @@
+# Copy this to .bashrc on Linux or .bash_profile on MacOS
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias ll='ls -l'                              
+alias la='ls -A'                              
+
+PS1="\h:\w>"
+export PS1
+
+
+

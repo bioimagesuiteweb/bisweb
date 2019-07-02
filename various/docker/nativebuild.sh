@@ -1,0 +1,32 @@
+#!/bin/bash
+
+BISMAKEJ="-j8"
+
+BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SRCDIR="$( cd ${BDIR}/.. && pwd )"
+
+echo "-----------------------------------------------------------------------"
+# Build NATIVE
+cd ${BDIR}/native
+touch CMakeCache.txt
+rm CMakeCache.txt
+
+cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
+      -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
+      -DCMAKE_VERBOSE_MAKEFILE=OFF \
+      -DBIS_A_MATLAB=ON \
+      -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
+      -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
+      -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
+      ${SRCDIR}/cpp
+../cmake_full_native.sh
+make ${BISMAKEJ} install
+make package
+cp *tar.gz ${BDIR}
+cd {$BDIR}
+ls -lrt *tgz
+
+
+echo "-----------------------------------------------------------------------"
+echo " Done with Python/Matlab Tools"
+echo "-----------------------------------------------------------------------"
