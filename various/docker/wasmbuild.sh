@@ -34,7 +34,9 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
       ${SRCDIR}/cpp
 
 
-make ${BISMAKEJ} install
+make ${BISMAKEJ} libbiswasm
+make install
+
 cd ${BDIR}/install/bisweb
 npm pack
 mv *tgz ${BDIR}/install

@@ -9,5 +9,5 @@ alias la='ls -A'
 PS1="\h:\w>"
 export PS1
 
-
+echo "------------------------ In Docker -------------------------"
 

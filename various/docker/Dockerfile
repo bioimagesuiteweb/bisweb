@@ -7,7 +7,7 @@ MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 RUN apt-get -yqq update
 RUN apt-get install -yqq python-pip python-dev python3 python3-pip
 RUN apt-get install -yqq unzip g++ gcc cmake cmake-curses-gui
-RUN apt-get install -yqq curl openjdk-8-jdk git make
+RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs
 
@@ -37,13 +37,10 @@ WORKDIR /opt/bisweb/src
 RUN npm install -d
 RUN node config/createbuild.js
 
-# Build the JS code first
-WORKDIR /opt/bisweb/src
-RUN git pull
-
 # Now C++ Build for WASM
 WORKDIR /opt/bisweb/src/build
-RUN echo "Copying files "
+RUN echo "Copying files"
+
 COPY fullbuild.sh   /opt/bisweb/src/build/fullbuild.sh
 COPY wasmbuild.sh   /opt/bisweb/src/build/wasmbuild.sh
 COPY webbuild.sh    /opt/bisweb/src/build/webbuild.sh
@@ -51,20 +48,16 @@ COPY nativebuild.sh /opt/bisweb/src/build/nativebuild.sh
 COPY testbuild.sh   /opt/bisweb/src/build/testbuild.sh
 RUN dos2unix /opt/bisweb/src/build/*.sh
 RUN chmod +x /opt/bisweb/src/build/*.sh
-RUN ls -l *.sh
 RUN /opt/bisweb/src/build/fullbuild.sh
 
 # Expose server
 EXPOSE 8080
-
-
 
 # Build NATIVE
 WORKDIR /opt/bisweb/src/
 RUN echo "done setting up docker machine"
 
 COPY dotbashrc /root/.bashrc
-RUN echo "Type "
-RUN echo "    docker run -p 8080:8080 -it xeniosp/bisweb bash"
+
 
 
