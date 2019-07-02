@@ -21,11 +21,9 @@ RUN npm install -g electron --unsafe-perm=true --allow-root
 RUN npm install -g electron-packager
 
 # Checkout bisweb source
-ADD bisweb /opt/bisweb
+RUN mkdir /opt/bisweb
 WORKDIR /opt/bisweb
 RUN git clone https://github.com/bioimagesuiteweb/bisweb src
-RUN ls
-RUN ls src
 WORKDIR /opt/bisweb/src
 RUN git branch -l
 RUN git checkout devel
@@ -46,12 +44,16 @@ RUN touch /opt/bisweb/src/build/web/LICENSE
 RUN gulp build
 
 # Now C++ Build for WASM
-ADD scripts /opt/scripts
 WORKDIR /opt/bisweb/src/build/wasm
-RUN cp /opt/scripts/*.sh /opt/bisweb/src/build
+RUN cp /opt/bisweb/src/various/scripts/*.sh /opt/bisweb/src/build
 RUN chmod +x /opt/bisweb/src/build/*.sh
+
+WORKDIR /opt/bisweb/src
+RUN git pull
+
+WORKDIR /opt/bisweb/src/build/wasm
 RUN ../cmake_full.sh
-RUN make -j2
+RUN make 
 RUN make install
 
 # Create npm package biswebnode
