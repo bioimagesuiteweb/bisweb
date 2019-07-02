@@ -1,11 +1,10 @@
-gi# Base
+# Base
 FROM ubuntu:18.04
 
 MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 
 # install system-wide deps for python and node
 RUN apt-get -yqq update
-RUN echo "hello"
 RUN apt-get install -yqq python-pip python-dev python3 python3-pip
 RUN apt-get install -yqq unzip g++ gcc cmake cmake-curses-gui
 RUN apt-get install -yqq curl openjdk-8-jdk git make
@@ -35,16 +34,17 @@ RUN git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
 
 # Create BUILD Setup
 WORKDIR /opt/bisweb/src
-RUN npm install 
+RUN npm install -d
 RUN node config/createbuild.js
 
 # Build the JS code first
 WORKDIR /opt/bisweb/src
 RUN touch /opt/bisweb/src/build/web/LICENSE
-
+RUN git pull
 
 # Now C++ Build for WASM
 WORKDIR /opt/bisweb/src/build
+COPY fullbuild.sh /opt/bisweb/src/build/fullbuild.sh
 RUN chmod +x /opt/bisweb/src/build/*.sh
 RUN ./fullbuild.sh
 
@@ -53,4 +53,4 @@ EXPOSE 8080
 
 # Build NATIVE
 WORKDIR /opt/bisweb/src/
-RUN gulp serve
+RUN echo "done setting up docker machine"

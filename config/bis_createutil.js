@@ -126,6 +126,7 @@ let initialize=function(DIR,exit=true) {
     copyFileSync2(WASMDIR,`libbiswasm.wasm`,DIR,`wasm`);
     copyFileSync2(WASMDIR,`libbiswasm_nongpl.wasm`,DIR,`wasm`);
     copyFileSync2(WASMDIR,`libbiswasm_wrapper.js`,DIR,`wasm`);
+    copyFileSync2(`WASMDIR,`biswasmdate.js`,DIR,`wasm`);
 }
 
 module.exports = {
