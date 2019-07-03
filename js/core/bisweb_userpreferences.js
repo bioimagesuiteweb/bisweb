@@ -34,6 +34,7 @@ let count=1;
  * @alias biswebUserPreferences.userPreferences
  */
 
+ //TODO: Remove favoriteFolders ? 
 const userPreferences = {
     orientationOnLoad : 'None',
     snapshotscale : 2,
@@ -41,6 +42,8 @@ const userPreferences = {
     filesource : 'local',
     showwelcome : true,
     favoriteFolders : [],
+    s3Folders : [],
+    localFolders : [],
     internal : false,
     darkmode : true,
     enables3 : false,
