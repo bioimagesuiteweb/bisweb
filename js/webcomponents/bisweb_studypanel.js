@@ -193,9 +193,10 @@ class StudyPanel extends HTMLElement {
                         tasksfound = true;
                 }).catch((e) => {
                     console.log('An error occured while trying to parse tsv files', e);
-
                 }).finally(() => {
                     this.taskManager.createGUI();
+                    this.taskManager.plotTaskData();
+
                     let a = '(No Tasks defined)';
                     if (tasksfound)
                         a = '(Study includes task definitions)';
@@ -223,10 +224,8 @@ class StudyPanel extends HTMLElement {
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
 
                 if (parsedData.tasks) {
-                    //parse stored task data to be the full object used to create charts
-                    bisweb_taskutils.parseFile(parsedData.tasks).then((parsedFile) => {
-                        this.taskManager.setTaskData(parsedFile, false);
-                    });
+                    this.taskManager.setTaskData(parsedData.tasks, false);
+                    this.taskManager.plotTaskData();
                 }
                 this.taskManager.createGUI();
             });
