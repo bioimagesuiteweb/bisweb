@@ -997,8 +997,6 @@ class BaseViewerElement extends HTMLElement {
     /** info box */
     viewerInformation() {
 
-
-            
                 
         let a="No image loaded";
         if (this.internal.volume) {
@@ -1012,7 +1010,9 @@ class BaseViewerElement extends HTMLElement {
 
         let txt=a+'<BR> <BR>'+b;
 
-        const output=`<div style="margin-left:5px; margin-right:5px; margin-top:5px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000;">`+txt+`</div>`;
+        let dh=Math.round(this.internal.layoutcontroller.getviewerheight()*0.7);
+        
+        const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
         
         bootbox.dialog({
             title: 'Viewer Information',

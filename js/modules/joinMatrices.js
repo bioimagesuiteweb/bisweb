@@ -36,7 +36,7 @@ class JoinMatricesModule extends BaseModule {
         let des={
             "name": "Join Matrices",
             "description": "Takes two matrices and adds them either by row or columns.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs" : [
                 {

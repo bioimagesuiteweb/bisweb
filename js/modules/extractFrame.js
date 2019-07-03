@@ -37,12 +37,13 @@ class ExtractFrameModule extends BaseModule {
         return {
             "name": "Extract Frame",
             "description": "This element will extract a single frame from a time-series.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Extract",
             "shortname" : "fr",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Frame",

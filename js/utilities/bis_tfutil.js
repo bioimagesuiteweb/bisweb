@@ -1,7 +1,8 @@
 const BisWebImage=require('bisweb_image');
 const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
-
+const bisweb_tf=require('./bis_tfjs');
+const slicerupd = require('bis_slicerprogress');
 /**
  * tf recon module
  */
@@ -16,7 +17,7 @@ let tfjsModule=null;
 class TFWrapper {
 
     
-    constructor(tf,mode='') {
+    constructor(tf,mode='',transpose=true) {
 
         if (mode.length>1)
             this.mode=mode+' '+tf.getBackend();
@@ -26,6 +27,7 @@ class TFWrapper {
         this.tf=tf;
         this.models={};
         this.modelcount=0;
+        this.transpose=transpose;
 
     }
 
@@ -44,7 +46,8 @@ class TFWrapper {
         tensor.dispose();
     }
 
-    predict(model,patch,shape,debug=false) {
+
+    async predict(model,patch,shape,debug=false) {
 
         // shape[0] can be a string so map this to an integer
         // Needed in electron when crossing boundaries
@@ -54,19 +57,40 @@ class TFWrapper {
             shape[0]=1;
         }
         
-        return new Promise( (resolve) => {
-            //            if (debug)
-            //console.log('++++ creating tensor',shape,'patch=',patch.length);
-            const tensor= this.tf.tensor(patch, shape);
-            const output=this.models[model.index].predict(tensor);
-            /*const tmp=this.tf.split(tensor,5,3);
-              console.log('Num elements=',tmp.length,tmp[0].shape);
-              const output=tmp[0];//this.tf.slice(tensor,5,3);*/
+        const tensor= this.tf.tensor(patch, shape);
+
+        let output=null;
+            
+        if (this.tranpose) {
+            let tshape=[0,2,1];
+            if (tensor.shape.length>3) {
+                tshape.push(3);
+            }
+
             if (debug)
-                console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
-            tensor.dispose();
-            resolve(output);
-        });
+                console.log('++++ creating transposed tensor',shape,'patch=',patch.length,tshape);
+
+            const t_tensor= this.tf.transpose(tensor,tshape);
+            const t_output=this.models[model.index].predict(t_tensor);
+            let tshapeout=[0,2,1];
+            if (t_output.shape.length>3)
+                tshapeout.push(3);
+            output= this.tf.transpose(t_output,tshapeout);
+            
+            t_tensor.dispose();
+            t_output.dispose();
+        } else {
+            if (debug)
+                console.log('++++ creating tensor',shape,'patch=',patch.length,tensor.shape);
+
+            output=this.models[model.index].predict(tensor);
+        }
+        
+        tensor.dispose();
+        
+        if (debug)
+            console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
+        return Promise.resolve(output);
     }
 
     loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
@@ -94,6 +118,7 @@ class TFWrapper {
             console.log('___\t Warm up model with zero input',shape.join(','));
             this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
             console.log('___\t Warm up done');
+            slicerupd.update(0.2);
         });
     }
 }
@@ -112,7 +137,6 @@ class BisWebTensorFlowRecon {
     constructor(tfwrapper,input,model,padding=16,debug=false) {
 
         this.debug=debug;
-        console.log('Debug=',this.debug, ' debug');
         this.input=input;
         this.output=new BisWebImage();
         this.output.cloneImage(this.input);
@@ -158,8 +182,10 @@ class BisWebTensorFlowRecon {
             'numframes' : dims[3]*dims[4],
             'dims' : dims,
         };
-        console.log('PatchInfo=',this.patchinfo);
+        if (this.debug)
+            console.log('PatchInfo=',JSON.stringify(this.patchinfo));
         this.patch=null;
+        //        this.tpatch=null;
     }
 
     /** create temporary patch typedarray
@@ -170,6 +196,7 @@ class BisWebTensorFlowRecon {
         this.patchinfo.patchslicesize=this.patchinfo.width*this.patchinfo.height;
         this.patchinfo.patchslabsize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
         this.patch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
+        //        this.tpatch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
         if (this.debug)
             console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchslabsize,'*',this.patchinfo.batchsize,')');
     }
@@ -222,6 +249,10 @@ class BisWebTensorFlowRecon {
             offset : offset
 
         };
+
+        //console.log(' ===== ',JSON.stringify(obj,null,2));
+
+
         
         if (store) {
 
@@ -308,14 +339,15 @@ class BisWebTensorFlowRecon {
             
             let limits=this.getPatchLimits(sl,frame,row,col,false);
             let index=(slice-minslice)+batchindex*this.patchinfo.patchslabsize;
-            if (this.debug)
-                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}, index=${index}`);
 
             let iextra=0;
             if (limits.endi>=dims[0]) {
                 iextra=(limits.endi-(dims[0]-1))*this.patchinfo.numslices;
                 limits.endi=dims[0]-1;
             }
+            
+            if (this.debug)
+                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}, index=${index}`);
 
             for (let j=limits.beginj;j<=limits.endj;j++) {
                 let input_index=limits.offset+j*dims[0]+limits.begini;
@@ -434,7 +466,7 @@ class BisWebTensorFlowRecon {
             this.createPatch(batchsize);
             let shape=this.model.shape;
 
-            console.log(`+++\n+++ Beginning Prediction: numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}, padding=${this.patchinfo.padding}\n+++`);
+            console.log(`+++\n+++ Beginning Prediction: numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}, padding=${this.patchinfo.padding} transpose=${tfwrapper.transpose}\n+++`);
             let startTime=new Date();
             
             let step=Math.round(patchindexlist.length/20);
@@ -443,7 +475,7 @@ class BisWebTensorFlowRecon {
             for (let pindex=0;pindex<patchindexlist.length;pindex+=batchsize) {
                 
                 let numpatches=patchindexlist.length-pindex;
-                
+
                 if (numpatches<batchsize)
                     this.createPatch(numpatches);
                 else
@@ -452,19 +484,43 @@ class BisWebTensorFlowRecon {
                 if (this.debug || (pindex-last>step) || pindex===0) {
                     let per=Math.round( (100.0*pindex)/patchindexlist.length);
                     console.log(`+++ ${bisutil.getTime()}\t ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
+                    slicerupd.updatePercentage(per);
                     last=pindex;
                 }
+
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
                     this.extractPatch(elem,inner);
                 }
+
+                //for (let i=0;i<256;i++) {
+                //                    for (let j=0;j<256;j++) {
+                //                        this.tpatch[i*256+j]=this.patch[i+256*j];
+                //                    }
+                //}
                 
-                let patch=this.getPatch();
+
+                
+                /*let img=new BisWebImage();
+                img.createImage({ dimensions : [ 256,256,1 ],
+                                  type : 'float',
+                                  orientation : 'LPS',
+                                });
+                let imgdata=img.getImageData();
+                for (let i=0;i<imgdata.length;i++)
+                    imgdata[i]=this.patch[i];
+                
+                await img.save("patch.nii.gz");
+                console.log('Patch saved');
+                process.exit(0);*/
+             
+
                 shape[0]=numpatches;
 
-                const output=await tfwrapper.predict(this.model,patch,shape,this.debug);
+                const output=await tfwrapper.predict(this.model,this.patch,shape,this.debug);
                 let predict=output.dataSync();
+
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
@@ -495,7 +551,7 @@ class BisWebTensorFlowRecon {
 /** if tf module is not set try to set it 
  * @returns{Boolean} -- success or failure to initialize 
  */
-let initializeTFModule=function(forcebrowser=false) {
+let initializeTFModule=function(forcebrowser=false,transpose=true) {
 
     let environment=bisgenericio.getmode();
 
@@ -518,7 +574,7 @@ let initializeTFModule=function(forcebrowser=false) {
             let obj=window.BISELECTRON.loadtf(mode);
             if (obj.tf !== null) {
                 let md=obj.name || 'electron';
-                tfjsModule=new TFWrapper(obj.tf,md);
+                tfjsModule=new TFWrapper(obj.tf,md,transpose);
                 resolve(md);
                 return;
             } else {
@@ -529,7 +585,7 @@ let initializeTFModule=function(forcebrowser=false) {
         if (environment === 'browser' ) {
             
             if (window.tf) {
-                tfjsModule=new TFWrapper(window.tf,'loaded from script');
+                tfjsModule=new TFWrapper(window.tf,'loaded from script',transpose);
                 resolve('Using preloaded tfjs module');
                 return;
             }
@@ -538,7 +594,7 @@ let initializeTFModule=function(forcebrowser=false) {
             let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
             apiTag.src = url;
             apiTag.onload = ( () => {
-                tfjsModule=new TFWrapper(window.tf,url);
+                tfjsModule=new TFWrapper(window.tf,url,transpose);
                 resolve('Module loaded from '+url);
             });
             
@@ -551,17 +607,9 @@ let initializeTFModule=function(forcebrowser=false) {
         }
 
         if (environment === 'node') {
-            try {
-                let tf=require("@tensorflow/tfjs");
-                require('@tensorflow/tfjs-node');
-                tfjsModule=new TFWrapper(tf,'tfjs-node');
-                resolve('Module loaded from tfjs-node');
-                return;
-            } catch(e) {
-                tfjsModule=null;
-                reject('Failed to load tfjs-node');
-                return;
-            }
+            let fn=bisweb_tf;
+            tfjsModule=new TFWrapper(fn(),'tfjs node',transpose);
+            resolve('Module loaded from tfjs node');
         }
     });
 };
@@ -691,3 +739,4 @@ module.exports = {
     getTFJSModule :     getTFJSModule,
     loadAndWarmUpModel : loadAndWarmUpModel,
 };
+

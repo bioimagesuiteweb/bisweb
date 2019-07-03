@@ -131,6 +131,7 @@ if (output === "bislib.js" || output ==="index.js") {
                         path.resolve(mypath,'js/export'),
                         path.resolve(mypath,'js/webtest'),
                         path.resolve(mypath,'build/wasm'),
+                        path.resolve(mypath,'build/web'),
                         path.resolve(mypath,'web/images'),
                       ]
         },

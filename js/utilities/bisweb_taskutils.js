@@ -43,6 +43,7 @@ let parseFile = (taskfile) => {
             
             //parse raw task data
             try {
+                console.log('parsed data', parsedData);
                 let runs = Object.keys(parsedData.runs);
     
                 for (let run of runs) {
@@ -148,6 +149,5 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
 
 module.exports = {
     parseEntry : parseEntry,
-    parseFile : parseFile,
-    parseData : parseData
+    parseFile : parseFile
 };

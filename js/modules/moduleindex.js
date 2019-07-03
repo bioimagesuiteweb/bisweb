@@ -29,6 +29,7 @@ const moduleImports = {
     extractslice : require('extractSlice.js'),
     extractframe : require('extractFrame.js'),
     normalizeimage : require('normalizeImage.js'),
+    quantilenormalizeimage : require('quantileNormalizeImage.js'),
     clusterthreshold : require('clusterThreshold.js'),
     prepareregistration : require('prepareRegistration.js'),
     resampleimage : require('resampleImage.js'),
@@ -68,8 +69,7 @@ const moduleImports = {
     linearregistration : require('linearRegistration.js'),
     nonlinearregistration : require('nonlinearRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
-
-    //    skullstrip:require('skullStrip.js'),
+    skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),

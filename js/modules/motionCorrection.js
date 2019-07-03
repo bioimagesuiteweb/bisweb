@@ -44,6 +44,7 @@ class MotionCorrectionModule extends BaseModule {
             "version": "1.0",
             "buttonName": "Execute",
             "shortname" : "mot",
+            "slicer" : true,
             "inputs": baseutils.getRegistrationInputs(),
             "outputs" : baseutils.getRegistrationOutputs(),
             "params": baseutils.getRegistrationParams()

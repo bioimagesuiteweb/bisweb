@@ -38,12 +38,13 @@ class SegmentImageModule extends BaseModule {
         let des={
             "name": "Segment Image",
             "description": "Performs image segmentation using a histogram-based method if smoothness = 0.0 or using plus mrf segmentation if smoothness > 0.0",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Segment",
             "shortname" : "sgm",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Num Classes",
@@ -139,7 +140,7 @@ class SegmentImageModule extends BaseModule {
                 },
                 {
                     "name": "Internal Iterations",
-                    "description": "Number of Internal iterations",
+                    "description": "Number of internal iterations",
                     "priority": 100,
                     "advanced": true,
                     "gui": "slider",

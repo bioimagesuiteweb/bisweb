@@ -36,13 +36,14 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
     createDescription() {
         return {
             "name": "Create Mask",
-            "description": "This element will threshold an image and force to binary",
+            "description": "This element will threshold an image and create a binary mask",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs("The output mask","viewer1","overlay"),
             "buttonName": "Create",
             "shortname" : "bthr",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Low Threshold",

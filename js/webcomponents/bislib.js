@@ -34,7 +34,7 @@ const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const BisWebPanel = require('bisweb_panel');
 const dat = require('bisweb_datgui');
-
+const bisdate=require('bisdate.js');
 
 // ES6 Imports for modules that need that
 
@@ -83,9 +83,8 @@ exportobj.biswebpanel=BisWebPanel;
 exportobj.dat=dat;
 exportobj.SubViewer=require('bisweb_subviewer');
 exportobj.CrossHair=require('bis_3dcrosshairgeometry');
-
 exportobj.Elements=Elements;
-
+exportobj.bisdate=bisdate;
 
 exportobj.setDarkMode=function(f) {
     webutil.setDarkMode(f);

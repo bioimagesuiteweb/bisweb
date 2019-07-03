@@ -36,12 +36,13 @@ class ExtractSliceModule extends BaseModule {
         return {
             "name": "Extract Slice",
             "description": "This element will extract a slice from a single frame of a time-series.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Extract",
             "shortname" : "sl",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Plane",

@@ -3,37 +3,22 @@ const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
 const webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
-const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager = require('bisweb_studytaskmanager');
 
-/** TODO
- *
- *  1.  (DONE) Import BIDS Directory should also import TSV Files and create task definition stuff (call studytaskmanager.setTaskData()
- *  2.  (DONE) Save Study --> .biswebstudy this should include the task definition JSON as a field
- *  3.  (DONE) Load Study, create tree and tasks (call studytaskmanager.setTaskData())
- *  4.  (DONE) Import Task Defintion
-        1. a warning if we have data .. not to overwrite
-        2. a yes/no question as to whether to create tsv files for full BIDS compatibility
- *  Hide this Convert task to tsv (advanced)  yes/no question before it does anything
+const SEPARATOR = bis_genericio.getPathSeparator();
 
-To Test
-   Load Study  (.biswebstudy)
-   Save Study  (.biswebstudy)
-   DICOM -> NII (with and without BIDS)
-
-   Convert task to tsv
-
-   Have Steph read the help file.
-
-   Try to avoid embedding to much Jquery code directly ... use webutil.
-*/
+/** 
+ * TODO: 
+ *  Have Steph read the help file.
+ */
 
 require('jstree');
 require('bootstrap-slider');
+
 
 /**
  * <bisweb-treepanel
@@ -47,22 +32,23 @@ require('bootstrap-slider');
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
 
-const IMAGETYPES= [ 'Image','Task','Rest','DWI','3DAnat','2DAnat' ];
-const IMAGEVALUES= [ 'image','task','rest','dwi','3danat','2danat' ];
+const IMAGETYPES = ['Image', 'Task', 'Rest', 'DWI', '3DAnat', '2DAnat'];
+const IMAGEVALUES = ['image', 'task', 'rest', 'dwi', '3danat', '2danat'];
 
 class StudyPanel extends HTMLElement {
 
     constructor() {
         super();
         this.rendered = false;
-        this.listContainer=null;
-        this.elementsContainer=null;
-        this.taskManager=null;
+        this.listContainer = null;
+        this.elementsContainer = null;
+        this.taskManager = null;
+        this.dicomModal = null;
     }
 
     connectedCallback() {
 
-        webutil.runAfterAllLoaded( () => {
+        webutil.runAfterAllLoaded(() => {
             this.id = this.getAttribute('id');
             this.viewerid = this.getAttribute('bis-viewerid');
             this.viewertwoid = this.getAttribute('bis-viewerid2');
@@ -81,10 +67,10 @@ class StudyPanel extends HTMLElement {
                 width: '400',
                 dual: false,
                 mode: 'sidebar',
-                helpButton: true
+                //helpButton: true
             });
 
-            this.setHelpModalMessage();
+            //this.setHelpModalMessage();
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             this.dismissPopoverFn = (e) => {
@@ -107,8 +93,8 @@ class StudyPanel extends HTMLElement {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'File Info',
-                'action': () => {
-                    this.showInfoModal();
+                'action': (node) => {
+                    this.createFileInfoModal(node);
                 }
             },
             'Load': {
@@ -135,14 +121,14 @@ class StudyPanel extends HTMLElement {
                     this.openTaskRenamingModal(node);
                 }
             },
-            'StudySettings' : {
+            /*'StudySettings': {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'Show Study Settings',
-                'action': () => {
-                    this.showStudySettingsModal();
+                'action': (node) => {
+                    this.showStudySettingsModal(node);
                 }
-            }
+            }*/
         };
 
     }
@@ -152,7 +138,7 @@ class StudyPanel extends HTMLElement {
      */
     show() {
         this.panel.show();
-        if (!this.rendered) { 
+        if (!this.rendered) {
             this.createcreateGUI();
         }
 
@@ -163,8 +149,7 @@ class StudyPanel extends HTMLElement {
      */
     createcreateGUI() {
         let parent = this.panel.getWidget();
-        this.createLoadSaveStudyButtons(parent);
-        this.createImportButtons(parent);
+        this.createStudyButtons(parent);
         parent.append($('<HR width="90%">'));
 
         //file list container is generated each time because jstree cannot reuse the same div to make a new tree
@@ -173,46 +158,59 @@ class StudyPanel extends HTMLElement {
         parent.append(listContainerDiv);
 
         parent.append($('<HR width="90%">'));
-        this.elementsContainer =  webutil.creatediv(
-            { parent: parent ,
-              css : { 'height': '200px',
-                      'max-height' : '1500px',
-                      'overflow': 'auto',
-                      'width': '95%',
-                      'margin-top': '5px' }
+        this.elementsContainer = webutil.creatediv(
+            {
+                parent: parent,
+                css: {
+                    'height': '200px',
+                    'max-height': '1500px',
+                    'overflow': 'auto',
+                    'width': '95%',
+                    'margin-top': '5px'
+                }
             });
 
         parent.append($('<HR width="90%">'));
-        this.taskManager=new BisWebTaskManager(this,this.viewerid);
+        this.taskManager = new BisWebTaskManager(this, this.viewerid);
         this.rendered = true;
     }
 
-    importFilesFromDirectory(filename) {
+    importBIDSDirectory(filename) {
 
         getFileList(filename).then((fileinfo) => {
             if (fileinfo.files.length > 0) {
                 console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(filename, fileinfo.files) || filename;
-                fileinfo.type='directory import';
+                fileinfo.type = 'directory import';
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
+                console.log('BaseDir=', baseDir);
                 webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
 
                 //look in the study file for tsv files, then parse them and add them as this study's current task data
-                this.parseStudyTSVFiles(baseDir).then( () => {
+                let tasksfound = false;
+                this.parseStudyTSVFiles(baseDir).then((obj) => {
+                    if (obj)
+                        tasksfound = true;
+                }).catch((e) => {
+                    console.log('An error occured while trying to parse tsv files', e);
+                }).finally(() => {
                     this.taskManager.createGUI();
                     this.taskManager.plotTaskData();
-                }).catch( (e) => {
-                    console.log('An error occured while trying to parse tsv files', e);
-                    this.taskManager.createGUI();
+
+                    let a = '(No Tasks defined)';
+                    if (tasksfound)
+                        a = '(Study includes task definitions)';
+                    webutil.createAlert('Loaded study from ' + filename + ' ' + a, false, 0, 3000);
+
                 });
-                
+
             } else {
                 webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
             }
         });
     }
 
-    importFilesFromJSON(filename) {
+    loadStudy(filename) {
         bis_genericio.read(filename).then((obj) => {
             let jsonData = obj.data, parsedData;
             try {
@@ -238,32 +236,31 @@ class StudyPanel extends HTMLElement {
      * Searches a BIDS directory for the directory containing tsv files, then parses these into a task file.
      */
     parseStudyTSVFiles(basedir) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let matchstring = basedir + '/**/*.tsv';
-            bis_genericio.getMatchingFiles(matchstring).then( (match) => {
-                
+            bis_genericio.getMatchingFiles(matchstring).then((match) => {
+
                 //TODO: This assumes that there is only one directory that contains TSV files while in a study with multiple subjects there may be more than one
                 //This would require changing the task definition file in the future!
                 if (match.length > 0) {
                     let splitTsvDirname = match[0].split('/');
                     let tsvDirname = splitTsvDirname.slice(0, splitTsvDirname.length - 1).join('/');
-                    console.log('tsv dirname', tsvDirname);
 
-                    bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then( (obj) => {
-                        bisweb_taskutils.parseFile(obj).then( (formattedObj) => {
+                    bis_bidsutils.parseTaskFileFromTSV(tsvDirname, '', false).then((obj) => {
+                        bisweb_taskutils.parseFile(obj).then((formattedObj) => {
                             this.taskManager.setTaskData(formattedObj, false);
                             resolve(formattedObj);
-                        }).catch( (e) => { reject(e); });
-                    }).catch( (e) => {
+                        }).catch((e) => { reject(e); });
+                    }).catch((e) => {
                         reject(e);
                     });
 
                 } else {
-                    console.log('No tsv files found for this study, cannot parse tasks.');
+                    //console.log('No tsv files found for this study, cannot parse tasks.');
                     resolve();
                 }
 
-            }).catch( (e) => {
+            }).catch((e) => {
                 reject(e);
             });
         });
@@ -277,9 +274,9 @@ class StudyPanel extends HTMLElement {
      */
     updateFileTree(files, baseDirectory, type) {
 
-        if (bis_genericio.getPathSeparator() === '\\')
-            baseDirectory = util.filenameWindowsToUnix(baseDirectory);
-
+        if (bis_genericio.getPathSeparator() === '\\') {
+            baseDirectory = baseDirectory.trim().replace(/\\/g, '/');
+        }
         this.baseDirectory = baseDirectory;
 
         this.studyType = type;
@@ -287,26 +284,28 @@ class StudyPanel extends HTMLElement {
 
         //alpabetize tree entries
         sortEntries(fileTree);
-        let len=fileTree.length;
-        for (let i=0;i<len;i++) {
-            let elem=fileTree[i];
+        let len = fileTree.length;
+        for (let i = 0; i < len; i++) {
+            let elem = fileTree[i];
             if (!elem.state)
-                elem.state={};
-            elem['state']['opened']=true;
+                elem.state = {};
+            elem['state']['opened'] = true;
         }
 
         let listContainerDiv = this.panel.getWidget().find('#' + this.listContainerDivID);
         listContainerDiv.empty();
 
         this.listContainer = webutil.creatediv(
-            { parent: listContainerDiv,
-              css : { 'height': '350px',
-                      'max-height' : '1500px',
-                      'width': '95%',
-                      'overflow': 'auto',
-                      'margin-top': '5px' }
+            {
+                parent: listContainerDiv,
+                css: {
+                    'height': '350px',
+                    'max-height': '1500px',
+                    'width': '95%',
+                    'overflow': 'auto',
+                    'margin-top': '5px'
+                }
             });
-        console.log('list container', this.listContainer, listContainerDiv);
 
         let tree = this.listContainer.jstree({
             'core': {
@@ -347,7 +346,6 @@ class StudyPanel extends HTMLElement {
         if (this.viewertwo) {
             delete newSettings.Load;
 
-            //console.log('new settings', newSettings);
             newSettings = Object.assign(newSettings, {
                 'Viewer1': {
                     'separator_before': false,
@@ -379,16 +377,16 @@ class StudyPanel extends HTMLElement {
 
             let elementsDiv = this.elementsContainer;
             let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm bisweb-load-enable' disabled>Load image</button>`);
-            loadImageButton.on('click', () => { this.loadImageFromTree();  });
-            
-            let loaddiv =  webutil.creatediv({ parent : elementsDiv,css : { 'width' : '95%' }});
+            loadImageButton.on('click', (e) => { e.preventDefault(); this.loadImageFromTree(); });
+
+            let loaddiv = webutil.creatediv({ parent: elementsDiv, css: { 'width': '95%' } });
             loaddiv.append(loadImageButton);
             loaddiv.append(`<span class = "bisweb-file-import-label" style="font-size:80%; margin-left:20px; font-style:italic">Current — ${type}</span>`);
-            
+
             //create load button and static tag select menu
-            let tagSelectDiv =  webutil.creatediv({ parent : elementsDiv,  css : { 'width' : '95%' }});
-            let lab=$(`<label>Tag of Selected Image:</label>`);
-            lab.css({'margin' : '5px'});
+            let tagSelectDiv = webutil.creatediv({ parent: elementsDiv, css: { 'width': '95%' } });
+            let lab = $(`<label>Tag of Selected Image:</label>`);
+            lab.css({ 'margin': '5px' });
             tagSelectDiv.append(lab);
             this.staticTagSelectMenu = this.createTagSelectMenu({ 'setDefaultValue': false, 'listenForTagEvents': true });
             tagSelectDiv.append(this.staticTagSelectMenu);
@@ -411,7 +409,7 @@ class StudyPanel extends HTMLElement {
             for (let file of files) {
                 //trim the common directory name from the filtered out name
                 if (bis_genericio.getPathSeparator() === '\\')
-                    file = util.filenameWindowsToUnix(file);
+                    file = file.trim().replace(/\\/g, '/');
 
                 let trimmedName = file.replace(baseDirectory, '');
                 let splitName = trimmedName.split('/');
@@ -515,19 +513,18 @@ class StudyPanel extends HTMLElement {
      * 
      * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
      */
-    createLoadSaveStudyButtons(listElement) {
-        
-        
-        let buttonBar = $(`<div></div>`);
+    createStudyButtons(listElement) {
+
+        let topbar = webutil.creatediv({ 'parent': listElement, 'css' :  { 'text-align' : 'center' } });
 
         //Route study load and save through bis_webfileutil file callbacks
         bis_webfileutil.createFileButton({
-            'type': 'success',
+            'type': 'info',
+            'css' : { 'margin-top' : '10px' },
             'name': 'Load study file',
-            'css' : { 'margin' : '5px', 'width' : '45%' },
-            'parent' : buttonBar,
+            'parent': topbar,
             'callback': (f) => {
-                this.importFilesFromJSON(f);
+                this.loadStudy(f);
             },
         }, {
                 'title': 'Load study',
@@ -539,10 +536,10 @@ class StudyPanel extends HTMLElement {
             });
 
         let saveStudyButton = bis_webfileutil.createFileButton({
-            'type': 'info',
-            'css' : { 'margin' : '10px', 'width' : '40%' },
+            'type': 'danger',
             'name': 'Save study file',
-            'parent' : buttonBar,
+            'css' : { 'margin-left' : '5px', 'margin-top' : '10px' },
+            'parent': topbar,
             'callback': (f) => {
                 this.exportStudy(f);
             },
@@ -555,10 +552,107 @@ class StudyPanel extends HTMLElement {
                 initialCallback: () => { return this.getDefaultFilename(); },
             });
 
-
+        //.bisweb-load-enable becomes enabled once a study has been loaded
         saveStudyButton.addClass('bisweb-load-enable');
         saveStudyButton.prop('disabled', 'true');
-        listElement.append(buttonBar);
+
+        bis_webfileutil.createFileButton({
+            'type': 'success',
+            'parent': topbar,
+            'name': 'Import directory',
+            'css' : { 'margin-left' : '5px', 'margin-top' : '10px' },
+            'callback': (f) => {
+                this.importBIDSDirectory(f);
+            },
+        }, {
+                'title': 'Import study from directory',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+                'serveronly': true,
+            });
+
+
+
+    }
+
+    showDICOMImportModal() {
+        if (!this.dicomModal) {
+            let dicomModal = webutil.createmodal('DICOM Import', 'modal-md');
+
+            let text = $(`<P align="center"><B>This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.<B></p>
+
+            <p>Choose a directory that contains raw DICOM images and a directory where you would like to save the converted NIFTI .nii.gz images, then press 'Convert' to start the process. 
+            This process requires you to (i) either be connected to the BioImage Suite Web File Server Helper, or (ii) to be running the application via Electron (the Electron app <a href="binaries.html" target="_blank">may be found here</a>).</p>
+ 
+            <p><B>Note:</B> If the "BIDS" checkbox is selected, the NIFTI .nii.gz files will be sorted to create a directory structure that is based on <a href="https://bids.neuroimaging.io/">the BIDS specification</a> after converting the raw files. </p>`);
+            
+            dicomModal.body.append(text, $(`<HR width="90%"></HR>`));
+            let inputDirectoryTextboxId = webutil.getuniqueid(), outputDirectoryTextboxId = webutil.getuniqueid();
+            let inputSearchButtonId = webutil.getuniqueid(), outputSearchButtonId = webutil.getuniqueid();
+            let doBidsId=webutil.getuniqueid();
+                        
+            let inputGroups = $(`
+                <div style='width: 90%; margin: 0 auto;'>
+                    <label>Input directory</label>
+                    <div class='input-group bisweb-filepath'>
+                        <input id=${inputDirectoryTextboxId} type='search' class='form-control' placeholder='Enter an input directory...'>
+                        <span class='input-group-btn'>
+                            <button id=${inputSearchButtonId} class='btn btn-primary' type='button'>. . .</button>
+                        </span>
+                    </div>
+                    <label>Output directory</label>
+                    <div class='input-group bisweb-filepath'>
+                        <input id=${outputDirectoryTextboxId} type='search' class='form-control' placeholder='Enter an output directory...'>
+                        <span class='input-group-btn'>
+                            <button id=${outputSearchButtonId} class='btn btn-primary' type='button'>. . .</button>
+                        </span>
+                    </div>
+                    <div>
+                    <input id="${doBidsId}" style="margin-left:30%" type="checkbox">
+                    <label style="margin-left:5px;">Reorganize Files to BIDS</label>
+                    </div>
+                </div>
+            `);
+
+            $(inputGroups).find(`#${inputSearchButtonId}`).on('click', () => { searchButtonCallback(inputDirectoryTextboxId, 'Select a directory containing raw DICOM images'); });
+            $(inputGroups).find(`#${outputSearchButtonId}`).on('click', () => { searchButtonCallback(outputDirectoryTextboxId, 'Select the destination directory for the converted DICOM files'); });
+            let bidsCheck=$('#'+doBidsId);
+            dicomModal.body.append(inputGroups);
+            dicomModal.footer.empty();
+
+
+            webutil.createbutton({
+                'name' : 'Convert',
+                'type' : 'success',
+                parent : dicomModal.footer,
+                'callback' : () => {
+                    let inputDirectoryName = $('#' + inputDirectoryTextboxId).val();
+                    let outputDirectoryName = $('#' + outputDirectoryTextboxId).val();
+                    let toggleState = bidsCheck.is(":checked") || false;
+                    this.importDICOMImages(inputDirectoryName, outputDirectoryName, toggleState);
+                }
+            });
+            
+            
+            dicomModal.dialog.modal('show');
+            this.dicomModal = dicomModal;
+        }
+
+        this.dicomModal.dialog.modal('show');
+
+        function searchButtonCallback(textInputId, titleText) {
+            bis_webfileutil.genericFileCallback({
+                'title': titleText,
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+                'serveronly': true,
+            }, (directory) => {
+                console.log('directory', directory);
+                $(`#${textInputId}`).val(directory);
+            });
+        }
     }
 
     /**
@@ -582,7 +676,6 @@ class StudyPanel extends HTMLElement {
             let existingTreeSettings = tree.settings.contextmenu.items;
             let enabledButtons = { 'RenameTask': true };
 
-            //console.log('node', tree.get_node(data.node.parent), data.node, existingTreeSettings);
             //dual viewer applications have a 'load to viewer 1' and 'load to viewer 2' button instead of just one load
             if (existingTreeSettings.Load) {
                 enabledButtons.Load = true;
@@ -592,10 +685,10 @@ class StudyPanel extends HTMLElement {
             }
 
             if (data.node.original.type === 'directory') {
-                if (enabledButtons.Load) { 
-                    enabledButtons.Load = false; 
-                } else { 
-                    enabledButtons.Viewer1 = false; 
+                if (enabledButtons.Load) {
+                    enabledButtons.Load = false;
+                } else {
+                    enabledButtons.Viewer1 = false;
                     enabledButtons.Viewer2 = false;
                 }
             } if (data.node.parent === '#' || tree.get_node(data.node.parent).original.text !== 'func') {
@@ -701,12 +794,7 @@ class StudyPanel extends HTMLElement {
     exportStudy(filepath) {
 
         let reconstructedTree = this.parseTreeToJSON();
-
-        console.log('Base Directory', this.baseDirectory, filepath);
-
         let base = this.baseDirectory;
-        if (bis_genericio.getPathSeparator() === '\\')
-            base = util.filenameUnixToWindows(base);
 
         bis_genericio.getFileStats(base).then((stats) => {
 
@@ -718,10 +806,21 @@ class StudyPanel extends HTMLElement {
             };
 
             let taskInfo = this.taskManager.getTaskData() || null;
-            if (taskInfo) { treeMetadataContainer.tasks = taskInfo; }
+            if (taskInfo) {
+                //trim unnecessary fields from task info and join all the array in runs to match the format expected for task files on disk
+                let runs = taskInfo.runs, keys = Object.keys(runs);
+                for (let i = 0; i < keys.length; i++) {
+                    delete runs[keys[i]].parsedRegions;
+                    for (let taskKey of Object.keys(runs[keys[i]])) {
+                        runs[keys[i]][taskKey] = joinArray(runs[keys[i]][taskKey]);
+                    }
+                }
+                console.log('runs', runs);
+                treeMetadataContainer.tasks = { 'runs': runs };
+            }
 
             let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
-            
+
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
             if (splitPath.length < 2 || splitPath[1] !== 'biswebstudy' || splitPath[1] !== 'biswebstudy') {
@@ -729,11 +828,25 @@ class StudyPanel extends HTMLElement {
             }
 
             filepath = splitPath.join('.');
-            bis_genericio.write(filepath, stringifiedFiles, false);
+            bis_genericio.write(filepath, stringifiedFiles, false).then(() => {
+                webutil.createAlert('Saved study file ' + filepath + ' successfully');
+            });
         }).catch((e) => {
             console.log('an error occured while saving to disk', e);
             webutil.createAlert('An error occured while saving the study files to disk.', false);
         });
+
+        function joinArray(array) {
+            console.log('array', array);
+            if (Array.isArray(array[0])) {
+                for (let i = 0; i < array.length; i++) {
+                    array[i] = joinArray(array[i]);
+                }
+                return array;
+            }
+
+            return array.join('-');
+        }
     }
 
     /**
@@ -772,12 +885,85 @@ class StudyPanel extends HTMLElement {
 
     }
 
-    showInfoModal() {
+    createFileInfoModal(node) {
+        console.log('node', node);
+        let fileModal = webutil.createmodal('File info', 'modal-lg');
+        let nodeName = this.constructNodeName(node); 
 
-        bis_genericio.isDirectory(this.constructNodeName()).then((isDirectory) => {
-            bis_genericio.getFileStats(this.constructNodeName()).then((stats) => {
+        let fileInfoLayout = $(`
+            <div class='container-fluid'> 
+                <div class='row justify-content-start'>
+                    <div class='col-lg-4'>
+                        <ul class='list-group bisweb-file-list'>
+                        </ul>
+                    </div>
+                    <div class='col-lg-8 bisweb-file-info'>
+                        <pre>Content here...</pre>
+                    </div>
+                </div>
+            </div>
+        `);
 
-                console.log('stats', stats, 'node', this.currentlySelectedNode);
+        fileModal.body.append(fileInfoLayout);
+
+        bis_bidsutils.getSettingsEntry(this.baseDirectory, nodeName).then( (settingsEntry) => {
+            let filelist = fileModal.body.find('.bisweb-file-list');
+            filelist.empty();
+
+
+            //add image file to file list, then the supporting files
+            let imageli = $(`<li class='list-group-item bisweb-li'>${bis_genericio.getBaseName(nodeName)}</li>`);
+            filelist.append(imageli);
+            for (let file of settingsEntry.supportingfiles) {
+                let basename = bis_genericio.getBaseName(file);
+                let li = $(`<li class='list-group-item bisweb-li'>${basename}</li>`);
+                filelist.append(li);
+            }
+            
+
+            //add 'active' class to element on click and remove 'active' from all others
+            //then change bisweb-file-info to be the info of the selected item
+            fileModal.body.find('.bisweb-file-list>.list-group-item').on('click', function() {
+                console.log('this text', $(this));
+                fileInfoLayout.find('.bisweb-file-list>.list-group-item').removeClass('active');
+                $(this).addClass('active');
+                let basename = $(this).html();
+                changeDisplayedInfo(basename);
+            });
+
+            fileModal.dialog.modal('show');
+        }).catch( (e) => { console.log('An error occured while creating the file info modal', e); });
+
+        const self = this;
+        function changeDisplayedInfo(basename) {
+            console.log('base name', basename, 'node name', nodeName);
+            //create full name of file in list by replacing base of node name with basename
+            let splitName = nodeName.split(SEPARATOR); 
+            splitName[splitName.length - 1] = basename;
+            let filename = splitName.join(SEPARATOR); 
+
+            if (filename.includes('.nii.gz')) {
+                let fileInfoPane = fileModal.body.find('.bisweb-file-info');
+                fileInfoPane.empty();
+
+                self.getFileInfo(filename).then( (fileInfo) => {
+                    let fileInfoContent = $(`<p>${fileInfo}</p>`);
+                    fileInfoPane.append(fileInfoContent);
+                });
+            } else {
+                /*bis_genericio.read(filename).then( (obj) => {
+                    try {
+                        let 
+                    }
+                });*/
+            }
+        }
+    }
+
+    getFileInfo(filename) {
+        return new Promise((resolve, reject) => {
+            bis_genericio.getFileStats(filename).then((stats) => {
+
                 //make file size something more readable than bytes
                 let displayedSize, filetype;
                 let kb = stats.size / 1000;
@@ -792,20 +978,12 @@ class StudyPanel extends HTMLElement {
                 let accessedTime = new Date(stats.atimeMs);
                 let createdTime = new Date(stats.birthtimeMs);
                 let modifiedTime = new Date(stats.mtimeMs);
-                let parsedIsDirectory = isDirectory ? 'Yes' : 'No';
-
-                console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
 
                 //make info dialog
-                let infoDisplay = `Name: ${this.currentlySelectedNode.text}<br> File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag || 'None'}`;
-
-                bootbox.dialog({
-                    'title': 'File Info',
-                    'message': infoDisplay
-                });
-            });
+                let infoDisplay = `Name: ${filename}<br> File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime}`;
+                resolve(infoDisplay);
+            }).catch((e) => { reject('There was an error getting file stats', e); });
         });
-
     }
 
     openTaskRenamingModal() {
@@ -821,10 +999,10 @@ class StudyPanel extends HTMLElement {
                 for (let node of selectedNodes) {
                     let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
                     //task names should be the second or third bullet, so if it's not there then we know not to change them
-                    if (splitName.length >= 2 && splitName[1].includes('Task')) {
+                    if (splitName.length >= 2 && splitName[1].includes('task')) {
                         taskName = splitName[1];
                         index = 1;
-                    } else if (splitName.length >= 3 && splitName[2].includes('Task')) {
+                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
                         taskName = splitName[2];
                         index = 2;
                     }
@@ -842,6 +1020,11 @@ class StudyPanel extends HTMLElement {
                         //move the file on disk 
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
+
+                        //replace forward slashes with separator character for the given platform
+                        srcFile = srcFile.replace(/[/]/g, SEPARATOR), dstFile = dstFile.replace(/[/]/g, SEPARATOR);
+
+                        console.log('source', srcFile, 'dest', dstFile);
                         bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
                         movedFiles.push({ 'old': srcFile, 'new': dstFile });
                     }
@@ -855,7 +1038,7 @@ class StudyPanel extends HTMLElement {
                         if (fileExtension.toLowerCase() === 'json') {
 
                             //open file, update 'TaskName', then write it to disk
-                            let fullname = this.baseDirectory + '/' + file;
+                            let fullname = this.baseDirectory + SEPARATOR + file;
                             bis_genericio.read(fullname).then((obj) => {
                                 try {
                                     let parsedJSON = JSON.parse(obj.data);
@@ -881,10 +1064,10 @@ class StudyPanel extends HTMLElement {
                 if (newName) {
                     confirmName = newName;
                     bootbox.confirm({
-                        'size' : 'small',
-                        'title' : 'Confirm task rename',
-                        'message' : 'Rename task to ' + confirmName + '?',
-                        'callback' : renameFn.bind(this, newName)
+                        'size': 'small',
+                        'title': 'Confirm task rename',
+                        'message': 'Rename task to ' + confirmName + '?',
+                        'callback': renameFn.bind(this, newName)
                     });
                 }
             }
@@ -908,7 +1091,8 @@ class StudyPanel extends HTMLElement {
             this.popoverDisplayed = true;
         });
 
-        dropdownMenu[0].addEventListener('change', () => {
+        dropdownMenu[0].addEventListener('change', (e) => {
+            e.preventDefault();
             popover.popover('hide');
         });
 
@@ -930,8 +1114,8 @@ class StudyPanel extends HTMLElement {
     }
 
     /**
-     * Constructs the full filename of the node based on
-     * @param {Object} node - Object describing the jstree node. If not specified this will infer that the currently selected node is to be used. 
+     * Constructs the full filename of the node based on an identifier from a node in the tree. 
+     * @param {Object} node - Object describing the jstree node, from tree.get_node, a reference passed by the contextmenu, etc. If not specified this will infer that the currently selected node is to be used. 
      */
     constructNodeName(node = null) {
 
@@ -939,8 +1123,10 @@ class StudyPanel extends HTMLElement {
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.listContainer.jstree();
 
-        if (node) {
+        if (node && node.id) {
             currentNode = tree.get_node(node.id);
+        } else if (node && node.reference) {
+            currentNode = tree.get_node(node.reference);
         }
 
         while (currentNode.parent) {
@@ -952,8 +1138,6 @@ class StudyPanel extends HTMLElement {
 
         name = this.stripTaskName(name);
         let finalname = this.baseDirectory + name;
-        if (bis_genericio.getPathSeparator() === '\\')
-            finalname = util.filenameUnixToWindows(finalname);
 
         return finalname;
 
@@ -982,20 +1166,10 @@ class StudyPanel extends HTMLElement {
     createTagSelectMenu(options = {}) {
 
         let tagSelectMenu = webutil.createselect({
-            values : IMAGETYPES,
-            index : 0
+            values: IMAGETYPES,
+            index: 0
         });
-        tagSelectMenu.prop('disabled','1');
-        
-        /*let tagSelectMenu = $(
-            `<select class='form-control' disabled> 
-            <option value='image'>Image</option>
-            <option value='Task'>Task</option>
-            <option value='Rest'>Rest</option>
-            <option value='dwi'>DWI</option>
-            <option value='3danat'>3DAnat</option>
-            <option value='2danat'>2DAnat</option>
-        </select>`);*/
+        tagSelectMenu.prop('disabled', '1');
 
         if (options.enabled) {
             tagSelectMenu.prop('disabled', '');
@@ -1011,10 +1185,12 @@ class StudyPanel extends HTMLElement {
             });
         }
 
-        tagSelectMenu.on('change', () => {
-            let index=tagSelectMenu.val();
+        tagSelectMenu.on('change', (e) => {
+            e.preventDefault();
+
+            let index = tagSelectMenu.val();
             let selectedValue = IMAGEVALUES[index].toLowerCase();
-            console.log('Index=',index,selectedValue);
+            console.log('Index=', index, selectedValue);
             this.currentlySelectedNode.original.tag = selectedValue;
 
             //create bootbox modal with task select slider
@@ -1031,9 +1207,9 @@ class StudyPanel extends HTMLElement {
         });
 
         return tagSelectMenu;
-        
-        
-        
+
+
+
         function createTaskSelectorWindow(node, listContainer) {
             let minSliderValue = 1;
             let maxSliderValue = 10;
@@ -1085,16 +1261,16 @@ class StudyPanel extends HTMLElement {
                 let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
                 box.find('.modal-body').append(numberInput);
 
-                numberInput.on('keyup change', () => {
-                    console.log('val', numberInput.val());
+                numberInput.on('keyup change', (e) => {
+                    e.preventDefault();
                     let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
                     val = val > maxSliderValue ? maxSliderValue : val;
                     box.find('.bootstrap-task-slider').slider('setValue', val);
                 });
 
-                box.find('.bootstrap-task-slider').on('slide', (event) => {
-                    console.log('value', event.value);
-                    numberInput.val(event.value);
+                box.find('.bootstrap-task-slider').on('slide', (e) => {
+                    e.preventDefault();
+                    numberInput.val(e.value);
                 });
             });
 
@@ -1124,14 +1300,14 @@ class StudyPanel extends HTMLElement {
 
     changeTagSelectMenu(menu, node) {
         let selection = node.original.tag || 'image';
-        selection=selection.toLowerCase();
+        selection = selection.toLowerCase();
         if (selection.includes('task')) {
             selection = 'Task';
         }
-        
-        let index= IMAGEVALUES.indexOf(selection);
-        if (index<0)
-            index=0;
+
+        let index = IMAGEVALUES.indexOf(selection);
+        if (index < 0)
+            index = 0;
         menu.val(index);
     }
 
@@ -1164,28 +1340,32 @@ class StudyPanel extends HTMLElement {
     }
 
     /** Loads dicom_job_info.json (or whatever the most recent settings file is) and displays it. */
-    showStudySettingsModal() {
-        let settingsFilename = this.baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
-        bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
+    showStudySettingsModal(node) {
+        let nodeName = this.constructNodeName(node); 
+
+        bis_bidsutils.getSettingsFile().then( (settings) => {
+            let filename = bis_genericio.getBaseName(nodeName).split('.')[0]; //sometimes name may not include the extension
+            
+            //find the entry with the same filename as the one invoked from the contextmenu
+            for (let file of settings.files) {
+                if (file.name.includes(filename)) {
+                    settings = file;
+                    break;
+                }
+            }
+
             let settingsString;
             try {
                 settingsString = JSON.stringify(settings, null, 2);
-            } catch(e) {
+            } catch (e) {
                 console.log('An error occured while trying to display settings', e);
             }
 
-            let settingsModal = bootbox.alert({
-               'size' : 'large',
-               'title' : 'DICOM Job Settings',
-               'message' : `<pre>${settingsString}</pre>`,
-               'backdrop' : true,
-               'scrollable' : true,
-            });
-
-
-            settingsModal.on('shown.bs.modal', () => {
-                console.log('modal shown', settingsModal);
-                $(settingsModal).scrollTop(0);
+            bootbox.alert({
+                'title': 'DICOM Job Settings',
+                'message': `<pre>${settingsString}</pre>`,
+                'backdrop': true,
+                'scrollable': true,
             });
         });
     }
@@ -1197,60 +1377,6 @@ class StudyPanel extends HTMLElement {
         return this.fileTree;
     }
 
-    createImportButtons(parent) {
-
-        let inputGroup = $(`<div class='btn-group' style='width: 100%; margin: 0px;'></div>`);
-        parent.append(inputGroup);
-
-        bis_webfileutil.createFileButton({ 
-            type : 'info',
-            name : 'DICOM->NII',
-            parent : inputGroup,
-            css : { 'width' : '30%','margin-left':'5px' },
-            callback : (f) => {
-                let saveFileCallback = (o) => { 
-                    //get whether to convert to BIDS or not from toggle
-                    let convertToBids = inputGroup.find('.bisweb-bids-toggle').hasClass('active');
-                    this.importDICOMImages(f, o, convertToBids);
-                };
-                
-                bis_webfileutil.genericFileCallback( 
-                    {
-                        'title' : 'Choose output directory',
-                        'filters' : 'DIRECTORY',
-                        'save' : false
-                    }, saveFileCallback);
-            },
-        },{
-            title: 'Directory to import study from',
-            filters:  'DIRECTORY',
-            suffix:  'DIRECTORY',
-            save : false,
-            serveronly : true,
-        });
-        inputGroup.append(`<button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 15%'>BIDS</button>`);
-
-        bis_webfileutil.createFileButton({
-            'type': 'success',
-            'parent' : inputGroup,
-            'css' : { 'margin-left' : '15px', 'width' : '40%' },
-            'name': 'Import BIDS Directory',
-            'callback': (f) => {
-                this.importFilesFromDirectory(f);
-            },
-        }, {
-                'title': 'Import study from directory',
-                'filters': 'DIRECTORY',
-                'suffix': 'DIRECTORY',
-                'save': false,
-            'serveronly': true,
-        });
-
-
-
-
-    }
-
 
     /**
      * Invokes the program DCM2NII to parse raw DICOM images to NIFTI format.
@@ -1260,19 +1386,19 @@ class StudyPanel extends HTMLElement {
      * @param {String} inputDirectory 
      * @param {String} outputDirectory 
      */
-    importDICOMImages(inputDirectory, outputDirectory,doBIDS=true) {
-        
+    importDICOMImages(inputDirectory, outputDirectory, doBIDS = true) {
+
         if (!bis_webfileutil.candoComplexIO(true)) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
         }
 
-        let a='';
+        let a = '';
         if (doBIDS)
-            a='/BIDS';
-        
-        webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
-        
+            a = '/BIDS';
+
+        webutil.createAlert('Converting raw DICOM files to NII' + a + ' format...', false, 0, 1000000000, { 'makeLoadSpinner': true });
+
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
         }
@@ -1281,20 +1407,20 @@ class StudyPanel extends HTMLElement {
         }
 
 
-        let promise=null;
+        let promise = null;
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
-        
-            promise=bis_genericio.runDICOMConversion({
-                'fixpaths' : true,
+
+            promise = bis_genericio.runDICOMConversion({
+                'fixpaths': true,
                 'inputDirectory': inputDirectory,
-                'outputDirectory' : outputDirectory,
-                'convertbids' : doBIDS
+                'outputDirectory': outputDirectory,
+                'convertbids': doBIDS
             });
         } else {
             //if on electron just run the module directly
             let dicomModule = new DicomModule();
-            promise = dicomModule.execute( {}, { 'inputDirectory' : inputDirectory, 'outputDirectory' : outputDirectory, 'convertbids' : doBIDS });
+            promise = dicomModule.execute({}, { 'inputDirectory': inputDirectory, 'outputDirectory': outputDirectory, 'convertbids': doBIDS });
         }
 
         promise.then((fileConversionOutput) => {
@@ -1302,9 +1428,9 @@ class StudyPanel extends HTMLElement {
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             webutil.dismissAlerts();
-            this.importFilesFromDirectory(output);
-            this.showTreePanel();
-        }).catch( (e) => {
+            this.show();
+            this.importBIDSDirectory(output);
+        }).catch((e) => {
             console.log('An error occured during file conversion', e);
         });
     }
@@ -1392,6 +1518,9 @@ let readParamsFile = (sourceDirectory) => {
  * @returns A promise resolving the study files
  */
 let getFileList = (filename) => {
+
+    console.log('Filename=', filename);
+
     return new Promise((resolve, reject) => {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
@@ -1406,6 +1535,7 @@ let getFileList = (filename) => {
         }
 
         readParamsFile(filename).then((data) => {
+            console.log('Filename');
 
             let type = data.type || data.acquisition || data.bisformat || 'Unknown type';
             bis_genericio.getMatchingFiles(queryString).then((files) => {
@@ -1431,6 +1561,7 @@ let getFileList = (filename) => {
  * @returns Base directory rooted at 'sourcedata', or null if sourcedata is not in any file's path (not a BIDS directory).
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
+
     let formattedBase = findBaseDirectory(baseDirectory);
 
     if (!formattedBase) {
@@ -1439,14 +1570,14 @@ let formatBaseDirectory = (baseDirectory, contents) => {
         formattedBase = findBaseDirectory(file);
     }
 
-    //console.log('formatted base', formattedBase);
+    console.log('formatted base', formattedBase);
     return formattedBase;
 
     function findBaseDirectory(directory) {
-        let splitBase = directory.split('/'), formattedBase = null;
+        let splitBase = directory.split(SEPARATOR), formattedBase = null;
         for (let i = 0; i < splitBase.length; i++) {
             if (splitBase[i] === 'sourcedata') {
-                formattedBase = splitBase.slice(0, i + 1).join('/');
+                formattedBase = splitBase.slice(0, i + 1).join(SEPARATOR);
             }
         }
 

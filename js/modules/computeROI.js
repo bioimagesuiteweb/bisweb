@@ -37,7 +37,7 @@ class ComputeROIModule extends BaseModule {
         let des={
             "name": "Compute ROI",
             "description": "Takes an input time series and ROI map and returns the mean intensity in the roi as a matrix of frames(rows)*roiindex(columns)",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs('Load the image (time series) to be averaged into regions'),
             "outputs":  baseutils.getMatrixToMatrixOutputs(),

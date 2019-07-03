@@ -38,12 +38,13 @@ class ThresholdImageModule extends BaseModule {
         return {
             "name": "Threshold",
             "description": "This element will threshold an image -- values between the thresholds will be considered 'input' and values outside will be considered 'out'",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Threshold",
             "shortname" : "thr",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Low Threshold",
