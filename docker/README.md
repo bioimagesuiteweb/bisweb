@@ -24,7 +24,8 @@ bisweb build environment container.
     cd /root/bisweb/src
     gulp
   
-Details as to how the build is performed can be found in the four component scripts:
+Details as to how the build is performed can be found in the four component
+scripts (which are also copied to /root/bisweb/src/build on the container disk):
   
 * nativebuild.sh -- builds the C++ code for use from python/matlab
 * testbuild.sh -- runs some regression tests
