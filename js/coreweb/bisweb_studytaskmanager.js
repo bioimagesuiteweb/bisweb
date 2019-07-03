@@ -444,6 +444,7 @@ class StudyTaskManager {
     /** Plot data for a single run */
     plotTaskDataRun(runName) {
 
+        console.log('runName', runName, 'taskdata', this.taskdata);
         const taskNames = this.taskdata.taskNames;
 
         let canvas=this.canvas;
@@ -489,9 +490,10 @@ class StudyTaskManager {
             let runpairs=runInfo[task];
 
             // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
-            if (typeof runpairs[0] === "number")
+            /*if (typeof runpairs[0] === "number")
                 runpairs=[runpairs]; 
-
+            */
+           
             for (let i=0;i<runpairs.length;i++) {
                 let m=parseFloat(runpairs[i][1]);
                 if (m>maxt)
