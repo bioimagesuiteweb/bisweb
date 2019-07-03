@@ -942,20 +942,25 @@ class StudyPanel extends HTMLElement {
             splitName[splitName.length - 1] = basename;
             let filename = splitName.join(SEPARATOR); 
 
+
+            let fileInfoPane = fileModal.body.find('.bisweb-file-info');
+            fileInfoPane.empty();
+
             if (filename.includes('.nii.gz')) {
-                let fileInfoPane = fileModal.body.find('.bisweb-file-info');
-                fileInfoPane.empty();
 
                 self.getFileInfo(filename).then( (fileInfo) => {
                     let fileInfoContent = $(`<p>${fileInfo}</p>`);
                     fileInfoPane.append(fileInfoContent);
                 });
             } else {
-                /*bis_genericio.read(filename).then( (obj) => {
-                    try {
-                        let 
-                    }
-                });*/
+                bis_genericio.read(filename).then( (obj) => {
+                	let data = obj.data;
+                	console.log('data', data);
+
+                	let fileInfoPane = fileModal.body.find('.bisweb-file-info');
+                	let content = $(`<pre>${data}</pre>`);
+                	fileInfoPane.append(content);
+                });
             }
         }
     }
