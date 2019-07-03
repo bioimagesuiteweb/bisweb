@@ -224,10 +224,12 @@ class StudyPanel extends HTMLElement {
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
 
                 if (parsedData.tasks) {
-                    this.taskManager.setTaskData(parsedData.tasks, false);
-                    this.taskManager.plotTaskData();
+                    bisweb_taskutils.parseFile(parsedData.tasks).then( (formattedTasks) => {
+                        this.taskManager.setTaskData(formattedTasks, false);
+                        this.taskManager.plotTaskData();
+                        this.taskManager.createGUI();
+                    });
                 }
-                this.taskManager.createGUI();
             });
         });
     }
