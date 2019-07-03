@@ -18,12 +18,12 @@
 'use strict';
 
 const BaseModule = require('basemodule.js');
-const baseutils = require('baseutils.js');
-const genericio = require('bis_genericio.js');
+const bis_baseutils = require('baseutils.js');
+const bis_genericio = require('bis_genericio.js');
+const path = bis_genericio.getpathmodule();
 
 /**
- * Runs linear registration on an image set given a reference image and returns the set of transformations required
- * to align the image set to the reference image. Applies only affine (linear) transformations (no stretch/shear). 
+ * Combines a set of parameter files and connectivity matrices in a given directory into a single file
  */
 class MakeConnMatrixFileModule extends  BaseModule {
     constructor() {
@@ -59,9 +59,27 @@ class MakeConnMatrixFileModule extends  BaseModule {
     directInvokeAlgorithm(vals) {
 
         console.log('oooo invoking: Make Connectivity Matrix File', JSON.stringify(vals),'\noooo'); 
-        let indir = vals.indir;
+        let indir = vals.indir, sep = bis_genericio.getPathSeparator();
 
         return new Promise( (resolve, reject) => {
+            let behaviorMatchString = indir + sep + '*+(_behavior)*';
+            let connMatchString = indir + sep + '*+(conn)+([0-9])*'
+            
+            let behaviorPromise = bis_genericio.getMatchingFiles(behaviorMatchString);
+            let connPromise = bis_genericio.getMatchingFiles(connMatchString);
+
+            Promise.all( [behaviorPromise, connPromise]).then( async (obj) => {
+                let behaviorFiles = obj[0], connFiles = obj[1];
+                let combinedFile = {};
+
+                for (let file of behaviorFiles.concat(connFiles)) {
+                    let contents = await bis_genericio.read(path.resolve(file));
+                    combinedFile[bis_genericio.getBaseName(file)] = contents;
+                }
+
+                console.log('combined file', combinedFile);
+                
+            })
 
         }).catch((e) => {
             reject(e.stack);

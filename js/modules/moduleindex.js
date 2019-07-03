@@ -74,6 +74,7 @@ const moduleImports = {
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),
     individualizedparcellation : require('individualizedParcellation.js'),
+    makeconnmatrixfile : require('makeConnectivityMatrixFile.js'),
 
     // these are here so that can be accessed by electron
     'dicomconversion' : require('./dicommodule.js'),
