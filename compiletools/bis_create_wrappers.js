@@ -375,7 +375,7 @@ var parse_function_argument_list=function(lst,var_types,wrapper_mode) {
             process.exit(1);
         }
         
-//        let isobj = false;
+        //        let isobj = false;
         
         if (varname==='paramobj')
             hasparam=true;
@@ -894,7 +894,7 @@ if ( (program.bisdate || null ) !==null) {
     output_text=`module.exports = ${output_text};`;
     fs.writeFileSync(program.bisdate,output_text+'\n');
     console.log('++++ Created date file='+program.bisdate+' ('+output_text+')');
-};
+}
 
     
 

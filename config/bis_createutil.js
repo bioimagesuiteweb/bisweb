@@ -47,40 +47,40 @@ let executeCommand=function(command,dir,force=false) {
 
         try { 
             let proc=child_process.exec(command, { cwd : dir });
-	    if (force) {
-		proc.stdout.pipe(process.stdout);
-		proc.stderr.pipe(process.stderr);
+            if (force) {
+                proc.stdout.pipe(process.stdout);
+                proc.stderr.pipe(process.stderr);
 
-		let sleep=function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));};
-		
-		let fn= (async() => {
-		    while (done) {
-			console.log('fn');
-			proc.stdout.write();
-			process.stdout.write();
-			await sleep(1000);
-		    }
-		});
-		fn();
-	    } else {
-		proc.stdout.on('data', function(data) {
-		    let d=data.trim();
-		    let show=true;
-		    if (d.length<1)
-			show=false;
-		    if (d.indexOf('inflating')>=0)
-			show=false;
-		    
-		    if (show)
-			console.log('____ '+d.split('\n').join('\n____ '));
-		});
-		proc.stderr.on('data', function(data) {
+                let sleep=function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));};
+                
+                let fn= (async() => {
+                    while (done) {
+                        console.log('fn');
+                        proc.stdout.write();
+                        process.stdout.write();
+                        await sleep(1000);
+                    }
+                });
+                fn();
+            } else {
+                proc.stdout.on('data', function(data) {
+                    let d=data.trim();
+                    let show=true;
+                    if (d.length<1)
+                        show=false;
+                    if (d.indexOf('inflating')>=0)
+                        show=false;
+                    
+                    if (show)
+                        console.log('____ '+d.split('\n').join('\n____ '));
+                });
+                proc.stderr.on('data', function(data) {
                     console.log('---- Error: '+data);
-		});
-	    }
-	    
+                });
+            }
+            
             proc.on('exit', function(code) {
-		done=true;
+                done=true;
                 if (code===0)
                     resolve();
                 else
@@ -127,7 +127,7 @@ let initialize=function(DIR,exit=true) {
     copyFileSync2(WASMDIR,`libbiswasm_nongpl.wasm`,DIR,`wasm`);
     copyFileSync2(WASMDIR,`libbiswasm_wrapper.js`,DIR,`wasm`);
     copyFileSync2(WASMDIR,`biswasmdate.js`,DIR,`wasm`);
-}
+};
 
 module.exports = {
     makeDir : makeDir,

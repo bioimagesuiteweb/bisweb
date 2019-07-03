@@ -954,12 +954,12 @@ class StudyPanel extends HTMLElement {
                 });
             } else {
                 bis_genericio.read(filename).then( (obj) => {
-                	let data = obj.data;
-                	console.log('data', data);
+                        let data = obj.data;
+                        console.log('data', data);
 
-                	let fileInfoPane = fileModal.body.find('.bisweb-file-info');
-                	let content = $(`<pre>${data}</pre>`);
-                	fileInfoPane.append(content);
+                        let fileInfoPane = fileModal.body.find('.bisweb-file-info');
+                        let content = $(`<pre>${data}</pre>`);
+                        fileInfoPane.append(content);
                 });
             }
         }
