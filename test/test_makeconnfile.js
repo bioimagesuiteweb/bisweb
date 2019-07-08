@@ -28,7 +28,7 @@ const colors = require('colors/safe');
 const sep = path.sep;
 
 let cleanRow = (line) => {
-    return line.trim().replace(/\t/g,' ').replace(/ +/g,' ').replace(/ /g,',').replace(/\n/g,';').replace(/\r/g,'');
+    return line.trim().replace(/\t/g,' ').replace(/ +/g,' ').replace(/ /g,'').replace(/\n/g,'').replace(/\r/g,'');
 };
 
 describe('Testing make connectivity .csv file (the thing that Dustin asked for)', () => {
@@ -51,7 +51,6 @@ describe('Testing make connectivity .csv file (the thing that Dustin asked for)'
             let indir = ['.', 'testdata', 'sample_csvs'], baseconnfile = ['.', 'testdata', 'sample_csvs', 'sample_connmatrixfile.json'];
             let contents = await connModule.execute({}, { 'indir': indir.join(sep), 'writeout': false });
             let correctContents = await bis_genericio.read(baseconnfile.join(sep));
-            console.log('contents', contents, 'correct contents', correctContents);
             let cleanContents = cleanRow(JSON.stringify(contents)), cleanCorrectContents = cleanRow(correctContents.data);
 
 
