@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* global window,document,setTimeout,HTMLElement,Event,Image*/
 
@@ -27,145 +27,76 @@ const util=require('bis_util');
 const BisConnectivityMatrix=require('bis_connmatrix');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
-const bisCrossHair=require('bis_3dcrosshairgeometry');
+
 const BisParcellation=require('bis_parcellation');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const bismni2tal=require('bis_mni2tal');
 const BisWebMatrix=require('bisweb_matrix');
-const THREE=require('three');
+
 const BisWebPanel = require('bisweb_panel.js');
 const dat = require('bisweb_datgui');
-
+const humanmni=require('atlases/humanmni.json');
+const connectvis=require('bisweb_connectivityvis');
+const connectvis3d=require('bisweb_connectivityvis3d');
 
 
 // -------------------------------------------------------------------------
-const brain_vertexshader_text = 
-      'attribute vec3 lookupScalar;\n'+
-      'varying vec3 vNormal;\n'+
-      //        'varying vec3 vLookup;\n'+
-      'void main() {\n'+
-      //        '     vLookup.x=lookupScalar.x;\n'+
-      //        '     vLookup.y=lookupScalar.y;\n'+
-      //        '     vLookup.z=lookupScalar.z;\n'+
-      '     vNormal = normalize( normalMatrix * normal );\n'+
-      '     vec3 transformed = vec3( position );\n'+
-      '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
-      '     gl_Position = projectionMatrix * mvPosition;\n'+
-      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
-      '}\n';
-
-const brain_fragmentshader_text=
-      'uniform float opacity;\n'+
-      'uniform vec3 diffuse;\n'+
-      'varying vec3 vNormal;\n'+
-      //        'varying vec3 vLookup;\n'+
-      'void main() {\n'+
-      '   float v=max(0.0,-vNormal.z)*0.7+0.3;\n'+
-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
-      '}';
-
-const sphere_vertexshader_text = 
-      'varying vec3 vNormal;\n'+
-      'void main() {\n'+
-      '     vNormal = normalize( normalMatrix * normal );\n'+
-      '     vec3 transformed = vec3( position );\n'+
-      '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
-      '     gl_Position = projectionMatrix * mvPosition;\n'+
-      '}\n';
-
-const sphere_fragmentshader_text=
-      'uniform float opacity;\n'+
-      'uniform vec3 diffuse;\n'+
-      'varying vec3 vNormal;\n'+
-      'void main() {\n'+
-      '   float v=max(0.0,-vNormal.z);\n'+
-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
-      '}';
-
+// Parse Data
 // -------------------------------------------------------------------------
 
-const gui_Lobes = {
-    1: 'R-Prefrontal',
-    2: 'R-MotorStrip',  3: 'R-Insula',
-    4: 'R-Parietal',    5: 'R-Temporal',
-    6: 'R-Occipital',   7: 'R-Limbic',
-    8: 'R-Cerebellum',  9: 'R-Subcortical',
-    10: 'R-Brainstem', 11: 'L-Prefrontal',
-    12: 'L-MotorStrip',13: 'L-Insula',
-    14: 'L-Parietal',  15: 'L-Temporal',
-    16: 'L-Occipital', 17: 'L-Limbic',
-    18: 'L-Cerebellum',19: 'L-Subcortical',
-    20: 'L-Brainstem' };
+const gui_Lobes = humanmni.labels.data[0].labels;
+const gui_BrodLabels = humanmni.labels.data[3].labels;
+const gui_Lobes_Values = [];
+let keys=Object.keys(gui_Lobes);
+for (let i=0;i<keys.length;i++) {
+    gui_Lobes_Values.push(gui_Lobes[keys[i]]);
+}
 
-const gui_BrodLabels = {
-    1 : 'PrimSensory (1)',   4 : 'PrimMotor (4)',
-    5 : 'SensoryAssoc (5)',  6 : 'BA6',
-    7 : 'BA7',              8 : 'BA8',
-    9 : 'BA9',              10 : 'BA10',
-    11 : 'BA11',            13 : 'Insula (13)',
-    14 : 'BA14',            17 : 'PrimVisual (17)',
-    18 : 'VisualAssoc (18)', 19 : 'BA19',
-    20 : 'BA20',            21 : 'BA21',
-    22 : 'BA22',            23 : 'BA23',
-    24 : 'BA24',            25 : 'BA25',
-    30 : 'BA30',            31 : 'BA31',
-    32 : 'BA32',            34 : 'BA34',
-    36 : 'Parahip (36)',     37 : 'Fusiform (37)',
-    38 : 'BA38',            39 : 'BA39',
-    40 : 'BA40',            41 : 'PrimAuditory (41)',
-    44 : 'BA44',            45 : 'BA45',
-    46 : 'BA46',            47 : 'BA47',
-    48 : 'Caudate (48)',     49 : 'Putamen (49)',
-    50 : 'Thalamus (50)',    51 : 'GlobPal (51)',
-    52 : 'NucAccumb (52)',   53 : 'Amygdala (53)',
-    54 : 'Hippocampus (54)', 55 : 'Hypothalamus (55)',
-    58 : 'BrainStem',        57 : 'Cerebellum',
-};
+const gui_Networks_Array = [
+    humanmni.labels.data[2].labels,
+    humanmni.labels.data[4].labels
+];
 
-const gui_Lobes_Values = [ 'R-Prefrontal', 'R-MotorStrip',  'R-Insula',
-                           'R-Parietal',   'R-Temporal',
-                           'R-Occipital',   'R-Limbic',
-                           'R-Cerebellum',  'R-Subcortical',
-                           'R-Brainstem',  'L-Prefrontal',
-                           'L-MotorStrip', 'L-Insula',
-                           'L-Parietal',   'L-Temporal',
-                           'L-Occipital',  'L-Limbic',
-                           'L-Cerebellum', 'L-Subcortical',
-                           'L-Brainstem' ];
+const gui_Networks_ArrayShort = [
+    humanmni.labels.data[2].shortlabels,
+    humanmni.labels.data[4].shortlabels
+];
 
-const gui_Networks = {
-    1:  'Somato-Motor',
-    3:  'Cingular-opercular',
-    4:  'Auditory',
-    5:  'Default Mode',
-    7:  'Visual',
-    8:  'Frontal-Parietal',
-    9:  'Salience',
-    10: 'Subcortical',
-    11: 'Ventral-Attention',
-    12: 'Dorsal-Attention'
-};
+// Critical flag for now, eventually make it an option
 
-const gui_Networks_Values = [
-    'Somato-Motor',
-    'Cingular-opercular',
-    'Auditory',
-    'Default Mode',
-    'Visual',
-    'Frontal-Parietal',
-    'Salience',
-    'Subcortical',
-    'Ventral-Attention',
-    'Dorsal-Attention'];
 
 
 const gui_Lines = [ 'Positive', 'Negative', 'Both'];
-
 const gui_Modes = [ 'All', 'Single Node', 'Single Lobe','Single Network'];
 
-const lobeoffset=10.0;
-const axisoffset=[0,5.0,20.0];
+const createNetworkNames = function(useyale=true,internal=null) {
+        
+    let index=0;
+    
+    if (useyale) {
+        index=1;
+        internal.networkAttributeIndex=4;
+    } else {
+        index=0;
+        internal.networkAttributeIndex=2;
+    }
+    
+    internal.gui_Networks=gui_Networks_Array[index];
+    let keys=Object.keys(internal.gui_Networks);
+    internal.gui_Networks_Names=[];
+    internal.gui_Networks_ShortNames=[];
+    for (let i=0;i<keys.length;i++) { 
+        internal.gui_Networks_Names.push(internal.gui_Networks[keys[i]]);
+        internal.gui_Networks_ShortNames.push(gui_Networks_ArrayShort[index][keys[i]]);
+    }
+    //    console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
+    
+    internal.parameters.lobe=gui_Lobes[1];
+    internal.parameters.mode=gui_Modes[1];
+    internal.parameters.network=internal.gui_Networks[1];
+};
+
 
 
 // --------------------------------------------------------------------------------
@@ -177,8 +108,23 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // Control State variables
     // -------------------------------------------------------------------------
 
+
+    
     let internal = {
 
+        // store here
+        gui_Lines : gui_Lines,
+        gui_Modes : gui_Modes,
+        gui_Lobes : gui_Lobes,
+        
+        
+        // Network stuff
+        networkAttributeIndex : 4,
+        gui_Networks : null,
+        gui_Networks_Names : null,
+        gui_Networks_ShortNames : null,
+
+        
         // global stuff
         initialized : false,
         this : null,
@@ -204,9 +150,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // DAT
         datgui : null,
         parameters : {
-            lobe : gui_Lobes[19],
-            mode : gui_Modes[1],
-            network : gui_Networks[10],
             node  : 200,
             linestodraw : gui_Lines[2],
             degreethreshold : 10,
@@ -216,6 +159,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             negcolor : "#00dddd",
             radius : 1.0,
             matrixthreshold : 0.1,
+            filter : 'Sum',
+            opacity : 0.7,
+            mode3d : 'Uniform',
+            display3d : 'Both',
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
@@ -230,26 +177,34 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //
         showlegend : true,
         rendermode : 7,
-        meshes : [ ],
-        brainmesh : [ null,null],
-        axisline  : [ null,null,null],
-        planemesh : null,
         subviewers : null,
-        // dialogs
+        // meshes
+        meshes : [],
+        axisline : [null,null,null ],
         
         // state stuff
         inrestorestate : false,
         parcellationtext : null,
         lastnode : 0,
+
+        // Info for external use
+        laststate : null,
+
+
     };
 
 
-    internal.conndata.offset=lobeoffset;
+    
+    internal.conndata.offset=connectvis3d.lobeoffset;
 
+    connectvis.initialize(internal);
+    connectvis3d.initialize(internal);
+    //    createNetworkNames(useYaleNetworks,internal);
+    
     // -------------------------------------------------------------------------
     // Undo Stuff
     // -------------------------------------------------------------------------
-    var addStateToUndo = function() {
+    internal.addStateToUndo = function() {
         var undoobj = {
             stack : internal.linestack
         };
@@ -282,7 +237,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             elem=internal.undostack.getRedo();
         else
             elem=internal.undostack.getUndo();
-
+        
         if (elem === null) 
             return;
         
@@ -320,19 +275,22 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // ----------------------------------------------------------------------------
     // Toggle Mode
     // ----------------------------------------------------------------------------
-    var togglemode = function(doupdate) {
+    var togglemode = function(doupdate=true) {
 
-        if (doupdate!==false)
-            doupdate=true;
         
         if (internal.parcellation===null)
             return;
+        
         if (doupdate) {
             internal.rendermode=internal.rendermode+1;
             if (internal.rendermode>8)
-                internal.rendermode=6;
-        } 
-        let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
+                internal.rendermode=5;
+            if (internal.rendermode===6)
+                internal.rendermode+=1;
+        }
+
+        internal.orthoviewer.setRenderMode(internal.rendermode,doupdate);
+        let vp=internal.orthoviewer.getRenderModeViewports();
         let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
         internal.parcellation.viewport.x1=parcvp.x1;
@@ -341,6 +299,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         update(true);
         if (internal.showlegend)
             setnode(Math.round(internal.parameters.node-1));
+
     };
     
     // ----------------------------------------------------------------------------
@@ -443,7 +402,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         }
         actualcontext.restore();
 
-    
+        
     };
     
     var drawMatricesAndLegendsAsImages = function() {
@@ -535,6 +494,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
                 internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
                                                  midx,y0_0);
+                if (internal.networkAttributeIndex===4)
+                    internal.overlaycontext.fillText('Using Yale network definitions from Noble at al 2018.',midx,y0_0+20);
+                else
+                    internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
             }
             
             internal.overlaycontext.restore();
@@ -573,7 +536,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             
             if (internal.showlegend && image!==null) {
-                    
+                
                 internal.overlaycontext.save();
                 internal.overlaycontext.lineWidth=1;
                 internal.overlaycontext.fillStyle="rgb(0,0,0)";
@@ -637,9 +600,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     
     // Update Display skip3d -- if true skip 3d updates
-    var update = function(skip3d) {
+    var update = function(skip3d=false) {
 
-        skip3d=skip3d || false;
         if (internal.parcellation===null)
             return;
 
@@ -652,6 +614,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             skip2d=true;
         }
 
+        drawColorScale();
+        
         if (skip2d && skip3d)
             return;
         
@@ -669,7 +633,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!skip3d) {
             internal.meshes.forEach(function(m) {
                 m.visible=false;
-                internal.subviewers[3].scene.remove(m);
+                internal.subviewers[3].getScene().remove(m);
             });
         }
 
@@ -687,11 +651,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             for (let i=0;i<internal.linestack.length;i++) {
                 ok=1;
                 if (!skip2d)
-                    ok=drawlines(internal.linestack[i]);
+                    ok=connectvis.drawlines(internal.linestack[i]);
                 if (ok===0)
                     i=internal.linestack.length;
                 else if (!skip3d)
-                    drawlines3d(internal.linestack[i],true);
+                    connectvis3d.drawlines3d(internal.linestack[i],true);
             }
 
             
@@ -714,10 +678,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //if (internal.showlegend === true)
         drawMatricesAndLegendsAsImages();
 
-        if (!skip3d)
-            internal.layoutmanager.getrenderer().render(internal.subviewers[3].scene,
-                                                        internal.subviewers[3].camera);
+
+        if (!skip3d) {
+            internal.orthoviewer.renderSubViewer(3);
+        }
+
     };
+
     
     var setnode = function(node) {
 
@@ -738,7 +705,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.orthoviewer.setcoordinates(coords);
         drawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
-            draw3dcrosshairs();
+            connectvis3d.draw3dcrosshairs();
         } else {
             internal.axisline[0].visible=false;
             internal.axisline[1].visible=false;
@@ -748,25 +715,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         updatetext();
     };
 
-    var draw3dcrosshairs = function () {
-        if (internal.axisline[0]===null)
-            return;
-        
-        let coords = internal.mni2tal.getMMCoordinates(internal.mni);
-        if (internal.mni[0]<0.0)
-            coords[0]=(-coords[0]);
-        else
-            coords[0]=(-coords[0]-2*lobeoffset);
-        coords[1]+=axisoffset[1];
-        coords[2]+=axisoffset[2];
-        
-        internal.axisline[0].position.set(0.0,coords[1],coords[2]);
-        internal.axisline[1].position.set(coords[0],0.0,coords[2]);
-        internal.axisline[2].position.set(coords[0],coords[1],0.0);
-        internal.axisline[0].visible=true;
-        internal.axisline[1].visible=true;
-        internal.axisline[2].visible=true;
-    };
     
     // Update Text
     var updatetext = function() {
@@ -791,9 +739,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
             internal.parameters.lobe=lobe;
+
+            // 
             
-            let n=internal.parcellation.rois[orignode].attr[2];
-            let network=gui_Networks[n];
+            let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
+            let network=internal.gui_Networks[n];
             if (network===undefined) {
                 network="unknown";
             } else {
@@ -804,7 +754,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (brod===undefined) {
                 brod="n/a";
             } 
-            s_text='Node:'+humannumber+' ( '+lobe+', '+network+', '+brod+').';
+            s_text='Node:'+humannumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
             s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
 
             if (internal.conndata.statMatrix!==null) {
@@ -852,6 +802,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.negFileInfo=[ "NONE", 0 ];
         internal.undostack.initialize();
         internal.linestack=[];
+        connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
+        connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+        internal.parameters.mode3d='Uniform';
+        for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+            internal.datgui_controllers[ia].updateDisplay();
         update();
     };
     
@@ -860,8 +815,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {string} filename - file to load from
     // @param {callback} done - call this when loaded (used for sample)
     // @param {boolean} sample - if sample then no alert
+    // @param {boolean} updatemeshes - if true then update surface
     //
-    var loadmatrix = function(index,filename,done,sample) {
+    var loadmatrix = function(index,filename,done,sample,updatemeshes=true) {
 
         done= done || null;
         sample = sample || false;
@@ -904,6 +860,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.undostack.initialize();
             internal.linestack=[];
 
+
+
             if (n>0) {
                 if (index===0) {
                     internal.posFileInfo[0]=filename;
@@ -923,6 +881,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.datgui_degreethresholdcontroller.updateDisplay();
                     update();
                     setnode(internal.conndata.maxsumnode);
+
+                    
+                    if (updatemeshes) {
+                        connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                                    internal.parameters.mode3d,
+                                                    internal.parameters.display3d);
+                        setTimeout( () => { drawColorScale(); },1000);
+                    }
+                    
                     if (!sample) {
                         if (filename.name)
                             filename=filename.name;
@@ -944,7 +911,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         return false;
     };
 
-
+    
     // Parses Parcellation
     // @param {string} text - parcellation text
     // @param {string} filename - file to load from (either .json or .txt)
@@ -974,96 +941,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
     };
-
-    // Parses Brain Surface
-    // @alias BisGUIConnectivityControls~parsebrainsurface from json file
-    // @param {array} text - brain surfaces  to parse (as json)
-    var parsebrainsurface = function(textstring,filename) {
-
-        let meshindex=0;
-        let isright=filename.lastIndexOf("right");
-        if (isright>=0)
-            meshindex=1;
-        
-        let obj= JSON.parse(textstring);
-        let values=[0.8,0.9];
-        
-        let vertices = new Float32Array(obj.points.length);
-        let indices = new Uint16Array(obj.triangles.length);
-
-        console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
-        for (let i=0;i<obj.points.length;i+=3) {
-            vertices[i+0]=180.0-obj.points[i+0];
-            if (meshindex===1)
-                vertices[i]-=lobeoffset;
-            else
-                vertices[i]+=lobeoffset;
-            vertices[i+1]=obj.points[i+1];
-            vertices[i+2]=obj.points[i+2];
-        }
-        for (let i=0;i<obj.triangles.length;i++) 
-            indices[i]=obj.triangles[i];
-
-        if (internal.brainmesh[meshindex]!==null) {
-            internal.brainmesh[meshindex].visible=false;
-            internal.subviewers[3].scene.remove(internal.brainmesh[meshindex]);
-        }
-        
-        let buf=new THREE.BufferGeometry();
-        buf.setIndex( new THREE.BufferAttribute( indices, 1));
-        buf.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-        buf.computeVertexNormals();
-
-        let material = new THREE.ShaderMaterial({
-            transparent : true,
-            "uniforms": {
-                "diffuse": {  "type":"c","value":
-                              {"r":values[meshindex],
-                               "g":values[meshindex],
-                               "b":values[meshindex]}},
-                "opacity": {"type":"f","value":1.0}
-            },
-            vertexShader : brain_vertexshader_text,
-            fragmentShader : brain_fragmentshader_text,
-        });
-        
-        internal.brainmesh[meshindex] = new THREE.Mesh(buf,material);
-        internal.brainmesh[meshindex].visible=true;
-        internal.subviewers[3].scene.add(internal.brainmesh[meshindex]);
-
-        if (internal.axisline[0]===null) {
-            // create axis line meshes
-            let p_indices = new Uint16Array(2);
-            p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
-            for (let axis=0;axis<=2;axis++) {
-                let p_vertices = new Float32Array(6);
-                p_vertices[0]=180.0+lobeoffset-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
-                p_vertices[3]=180.0+lobeoffset-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
-                if (axis===0) {
-                    p_vertices[3]=-lobeoffset+axisoffset[0];
-                } else if (axis===1) {
-                    p_vertices[4]=216.0+axisoffset[1];
-                } else {
-                    p_vertices[5]=170.0;
-                }
-                let pbuf=new THREE.BufferGeometry();
-                pbuf.setIndex( new THREE.BufferAttribute( p_indices, 1));
-                pbuf.addAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
-                internal.axisline[axis] = new THREE.Line(pbuf,
-                                                         new THREE.LineBasicMaterial( {
-                                                             color: 0xff8800, 
-                                                             transparent: false,
-                                                             opacity: 1.0,
-                                                         }));
-                internal.axisline[axis].visible=false;
-                internal.subviewers[3].scene.add(internal.axisline[axis]);
-            }
-            if (internal.showlegend)
-                setnode(Math.round(internal.parameters.node-1));
-
-            window.dispatchEvent(new Event('resize'));
-        }
-    };
     // Loads Parcellation. 
     // @param {string} in_filename - file to load from (either .json or .txt)
     var loadparcellation = function(in_filename) {
@@ -1072,6 +949,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         bisgenericio.read(in_filename).then( (obj) => {
             parseparcellation( obj.data,obj.filename);
         }).catch( (msg) => {
+            console.log('msg=',msg,in_filename);
             bootbox.alert(msg);
         });
         return false;
@@ -1215,7 +1093,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         d[3]=truedim[3];
         s[3]=truespa[3];
 
-        console.log('\n\n\n\n\n'+numeric.sub(d,truedim));
+
         let diff=numeric.norminf(numeric.sub(d,truedim));
 
         console.log(numeric.sub(s,truespa));
@@ -1242,7 +1120,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     // actual GUI creation when main class is ready
     // The parent element is internal.parentDomElement
-    var onDemandCreateGUI = function () {
+    var onDemandCreateGUI = function (useYale=true) {
+
+        createNetworkNames(useYale,internal);
         
         if (internal.parentDomElement===null)
             return;
@@ -1260,7 +1140,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         let coords = gui.addFolder('Core');
         coords.open();
+
+
+        
         let disp = gui.addFolder('Display');
+        let disp2 = gui.addFolder('Display 3D');
+        let adv = gui.addFolder('Advanced');
         let clist = [];
         clist.push(coords.add(data,'mode',gui_Modes).name("Mode"));
         let a1=coords.add(data,'node',1,400).name("Node");
@@ -1271,17 +1156,41 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.datgui_nodecontroller=a1;
         
         clist.push(coords.add(data,'lobe',gui_Lobes_Values).name("Lobe"));
-        clist.push(coords.add(data,'network',gui_Networks_Values).name("Network"));
+        clist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
         clist.push(internal.datgui_degreethresholdcontroller);
         clist.push(coords.add(data,'linestodraw',gui_Lines).name("Lines to Draw"));
         
         clist.push(disp.add(data,'length',10,100).name("Length"));
         clist.push(disp.add(data,'thickness',1,4).name("Thickness"));
-        clist.push(disp.add(data,'radius',0.2,4.0).name("Radius (3D)"));
         clist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
         clist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
 
+
+
+        clist.push(adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold'));
+        clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
+
+        let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+        });
+        let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
+        da2.onChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            if (data.mode3d!=='Uniform')
+                data.opacity=1.0;
+            da1.updateDisplay();
+            setTimeout( () => { drawColorScale(); },200);
+        });
+        let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
+        da3.onChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+        });
+        clist.push(disp2.add(data,'radius',0.2,4.0).name("Radius (3D)"));
+        
+        clist.push(da1);
+        clist.push(da2);
+        clist.push(da3);
 
         internal.datgui_controllers=clist;
         
@@ -1319,7 +1228,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                css : { "margin": "5px"},
                                tooltip : "Click this to create lines",
                                parent : bbar2,
-                               callback : createlines,
+                               callback : connectvis.createlines,
                              });
 
         webutil.createbutton({ type : "default",
@@ -1328,295 +1237,176 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                css : { "margin": "5px"},
                                tooltip : "Click this to clear the lines",
                                parent : bbar2,
-                               callback : removelines,
+                               callback : connectvis.removelines,
+                             });
+
+        let bbar3 = webutil.createbuttonbar({ parent : basediv });
+        webutil.createbutton({ type : "info",
+                               name : "Chord Plot",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to draw a chord diagram from the lines on screen",
+                               parent : bbar3,
+                               callback : () => {
+                                   //                                   console.log('Internal=',internal);
+                                   connectvis.drawchords();
+                               },
+                             });
+        
+        
+        webutil.createbutton({ type : "info",
+                               name : "Summary Matrix",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to draw a chord diagram from the lines on screen",
+                               parent : bbar3,
+                               callback : () => {
+                                   //console.log('Internal=',internal);
+                                   connectvis.corrmap();
+                               },
                              });
 
 
+        
 
         webutil.tooltip(internal.parentDomElement);
-
 
         // ------------------------------------------------
         // On to interesting dialog
         // ------------------------------------------------
     };
 
-    var createlines = function() {
+    var drawColorScale=function() {
 
-        if (internal.conndata.statMatrix===null) {
-            bootbox.alert('No connectivity data loaded');
+        if (internal.rendermode===8)
             return;
-        }
+        
+        let context=internal.layoutmanager.overlaycontext;
+        let fullwidth=internal.layoutmanager.getviewerwidth();
+        let dw=fullwidth*internal.orthoviewer.cleararea[1];
+        let dh=internal.layoutmanager.getviewerheight();
+        let y0=30;
+        
+        let fnsize=webutil.getfontsize(context.canvas);
+        if (dw<1700)
+            fnsize=Math.round((dw/1000)*fnsize);
+        
+        let minv=connectvis3d.transferfunction.minth;
+        let maxv=connectvis3d.transferfunction.maxth;
+        let numsteps=14;
 
-
-        let getKeyByValue = function( obj,value,base ) {
-            for( let prop in obj ) {
-                if( obj.hasOwnProperty( prop ) ) {
-                    if( obj[prop ] === value )
-                        return prop;
-                }
-            }
-            return base;
-        };
-        internal.lastopisclear = false;
-        //          internal.parcellation.drawCircles(internal.context);
+        let wd=(0.25*dw)/(numsteps+1);
+        let dvalue=maxv-minv;
+        let dv=dvalue/numsteps;
+        
+        let x0=0.7*dw;
+        x0=x0+internal.orthoviewer.cleararea[0]*fullwidth;
+        
+        y0+=2;
+        let ht=0.5*(dh-y0);
+        if (ht>wd)
+            ht=wd;
+        
+        let power=10.0;
+        if (dvalue>100)
+            power=1.0;
+        if (dvalue<0.1)
+            power=100.0;
         
         
-        
-        let mode=2;
-        if (internal.parameters.mode===gui_Modes[0]) // All
-            mode=0;
-        if (internal.parameters.mode==gui_Modes[1]) // Single Node
-            mode=1;
+        context.font=fnsize+"px Arial";
+        context.textAlign="center";
+        context.textBaseline="top";
 
-        let singlevalue=-1,attribcomponent=0;
-        if (mode === 1) {
-            singlevalue=Math.round(internal.parameters.node)-1;
-            //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
-        } else if (mode===2 ) {
-            if (internal.parameters.mode===gui_Modes[2]) { // Lobe
-                attribcomponent=0;
-                singlevalue=getKeyByValue(gui_Lobes,internal.parameters.lobe,1);
-            } else {
-                attribcomponent=2;
-                singlevalue=getKeyByValue(gui_Networks,internal.parameters.network,1);
-            }
-        }
+        context.fillStyle="#ffffff";
+        context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,3.0*ht);
 
-        let degreethreshold=Math.round(internal.parameters.degreethreshold);
-        let matrixthreshold=internal.parameters.matrixthreshold;
-        let filter=2;
-        
-
-        let state = { mode: mode,
-                      guimode : internal.parameters.mode,
-                      node : internal.parameters.node,
-                      lobe : internal.parameters.lobe,
-                      network : internal.parameters.network,
-                      degreethreshold : degreethreshold,
-                      poscolor : internal.parameters.poscolor,
-                      negcolor : internal.parameters.negcolor,
-                      length : internal.parameters.length,
-                      thickness: internal.parameters.thickness,
-                      linestodraw : internal.parameters.linestodraw,
-                      singlevalue: singlevalue,
-                      attribcomponent : attribcomponent,
-                      filter: filter,
-                      radius : internal.parameters.radius,
-                      matrixthreshold : matrixthreshold};
-
-        if (internal.hadlinesonce)
-            addStateToUndo();
-        internal.hadlinesonce=true;
-        internal.linestack.push(state);
-        update();
-    };
-    
-    var drawlines=function(state) {
-
-        let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                  state.mode, // mode
-                                                  state.singlevalue, // singlevalue
-                                                  state.attribcomponent, // attribcomponent
-                                                  state.degreethreshold, // metric threshold
-                                                  state.filter); // sum
-
-        if (ok===0) {
-            bootbox.alert('Failed to create flag matrix for connectivity data!');
-            return 0;
-        }
-        
-
-        let total=0;
-
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
-            total+=pos.length;
-            internal.conndata.drawLines(internal.parcellation,pos,
-                                        state.poscolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        }
-        if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            let neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
-            total+=neg.length;
-            internal.conndata.drawLines(internal.parcellation,neg,
-                                        state.negcolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        }
-
-        if (total===0)
-            return -1;
-        return total;
-    };
-    
-
-    var removelines = function() {
-        if (internal.conndata.statMatrix===null) {
-            bootbox.alert('No connectivity data loaded');
+        if (connectvis3d.transferfunction.map===null)
             return;
-        }
+        context.drawImage(connectvis3d.displayimg[0],x0,y0,wd*15,ht);
 
-        addStateToUndo();
-        internal.linestack = [];
-        update();
-    };
+        context.strokeStyle="#888888";
+        context.lineWidth=1;
+        context.beginPath();
+        context.moveTo(x0,y0);
+        context.lineTo(x0+wd*15,y0);
+        context.lineTo(x0+wd*15,y0+ht);
+        context.lineTo(x0,y0+ht);
+        context.lineTo(x0,y0);
+        context.stroke();
+
+        context.strokeStyle="#000000";
+        context.lineWidth=2;
+
+        for (let i=0;i<=numsteps;i++) {
+            if (i===0 || i===numsteps || i===numsteps/2) {
 
 
-    
-    var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
-
-
-        doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
-
-        //        console.log('Rendermode=',internal.rendermode);
-        if (internal.rendermode===6)
-            doNotUpdateFlagMatrix=false;
-        
-        if (internal.parcellations=== null ||
-            internal.subviewers === null)
-            return 0;
-        
-
-        if (!doNotUpdateFlagMatrix) {
-            console.log('Updating Flag Matrix\n');
-            let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                      state.mode, // mode
-                                                      state.singlevalue, // singlevalue
-                                                      state.attribcomponent, // attribcomponent
-                                                      state.degreethreshold, // metric threshold
-                                                      state.filter); // sum
+                context.beginPath();
+                context.moveTo(x0+0.5*(wd-1),y0+0.5*ht);
+                context.lineTo(x0+0.5*(wd-1),y0+1.3*ht);
+                context.stroke();
+                let w0=context.measureText('-').width*-0.5;
+                context.fillStyle = "#000000";
+                let data=i*dv+minv;
+                context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+            }
             
-            if (ok===0) {
-                bootbox.alert('Failed to create flag matrix for 3D connectivity data!');
-                return 0;
-            }
+            x0+=wd;
         }
-        
-
-
-        // Now add lines
-        let pos=[],neg=[],total=0;
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            total+=pos.length;
-        }
-        if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            total+=neg.length;
-        }
-        if (total===0)
-            return 0;
-
-        
-        let color = [ state.poscolor, 
-                      state.negcolor,
-                      state.poscolor,
-                      state.negcolor  ];
-
-        //        console.log('Drawing 3D',state.poscolor,state.negcolor);
-        
-        let lparr = internal.conndata.draw3DLines(internal.parcellation,pos,neg);
-        for (let i=0;i<=1;i++) {
-            let lp=lparr[i];
-            if (lp.indices!==null) {
-                let buf=new THREE.BufferGeometry();
-                buf.setIndex(  new THREE.BufferAttribute( lp.indices, 1 ) );
-                buf.addAttribute( 'position', new THREE.BufferAttribute( lp.vertices, 3 ) );
-                let linemesh = new THREE.LineSegments(buf,
-                                                      new THREE.LineBasicMaterial( {
-                                                          color: color[i],
-                                                          linewidth : 1,
-                                                          linecap : "square",
-                                                      }));
-                linemesh.visbile=true;
-                internal.subviewers[3].scene.add(linemesh);
-                internal.meshes.push(linemesh);
-            }
-        }
-
-        let sphere = new THREE.SphereGeometry(state.radius,16,16);
-        let presphere = bisCrossHair.createpregeometry([sphere]);
-
-        for (let j=2;j<=5;j++) {
-            let sph=lparr[j];
-            let scale=255.0;
-            if (sph.positions.length>0) {
-                let cl=util.hexToRgb(color[j-2]);
-                if (j>3)
-                    scale=500.0;
-                //                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
-
-                let spherematerial = new THREE.ShaderMaterial({
-                    transparent : true,
-                    "uniforms": {
-                        "diffuse": {  "type":"c","value":
-                                      {"r":cl.r/scale,
-                                       "g":cl.g/scale,
-                                       "b":cl.b/scale}},
-                        "opacity": {"type":"f","value":0.5},
-                    },
-                    vertexShader : sphere_vertexshader_text,
-                    fragmentShader : sphere_fragmentshader_text,
-                });
-                let geom=bisCrossHair.createcopies(presphere,sph.positions,sph.scales);
-                geom.computeVertexNormals();
-                let spheremesh=new THREE.Mesh(geom,spherematerial);
-                spheremesh.visbile=true;
-                internal.subviewers[3].scene.add(spheremesh);
-                internal.meshes.push(spheremesh);
-            }
-        }
-        
-        
-        return total;
     };
+    
     
     // -------------------------------------------------------------------------------------------
     // Public Interface from here on
     // -------------------------------------------------------------------------------------------
     let control= {
+
+        // Internal stuff
+        internal : internal,
+        setnode : setnode,
+        
         
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
-        // @param {Bis_SubViewer} subviewers - subviewers to place info in
+        // @param {BisWebSubViewer[]} subviewers - subviewers to place info in
         // @param {BisWebImage} volume - new image (not used)
         initialize : function(subviewers) { 
 
             if (internal.inrestorestate)
                 return;
-            
+
             internal.subviewers=subviewers;
-            onDemandCreateGUI();
+            onDemandCreateGUI(true);
             const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
             
             bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
-                parsebrainsurface(obj.data,obj.filename);
+                connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
             
             bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
-                parsebrainsurface(obj.data,obj.filename);
+                connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
-                              
+            
             update(false);
             setTimeout(function() {
                 window.dispatchEvent(new Event('resize'));
             },10);
         },
 
+        // recreate gui
+        setNetworksToYale(flag=true) {
 
+            if (flag && internal.networkAttributeIndex===4)
+                return;
+            if (!flag && internal.networkAttributeIndex===2)
+                return;
+            onDemandCreateGUI(flag);
+            setnode(Math.round(internal.parameters.node-1));
+            this.handleresize();
+        },
+        
         // Loads a parcellation from fname (json or txt)
         // @memberof BisGUIConnectivityControl.prototype
         loadparcellationfile : function(fname) {
@@ -1646,7 +1436,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                                    internal.overlaycontext);
             } 
 
-            draw3dcrosshairs();
+            connectvis3d.draw3dcrosshairs();
             updatetext();
         },
         
@@ -1668,11 +1458,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         loadsamplematrices : function(filenames) {
 
             let loadnext = function() {
-                loadmatrix(1,filenames[1],null,true);
+                loadmatrix(1,filenames[1],null,true,true);
                 webutil.createAlert('Sample connectivity matrices loaded.');
                 //window.dispatchEvent(new Event('resize'));
             };
-            loadmatrix(0,filenames[0],loadnext,true);
+            loadmatrix(0,filenames[0],loadnext,true,false);
 
         },
 
@@ -1733,6 +1523,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         clearmatrices : function() {
             cleanmatrixdata();
+
         },
 
         undo : function() {
@@ -1772,103 +1563,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         
-        viewInteresting : function() {
-
-            if (internal.conndata.statMatrix===null) {
-                bootbox.alert('No connectivity data loaded');
-                return;
-            }
-
-            if (internal.keynodedlg!==null) {
-                //                  console.log('Calling show on '+internal.keynodedlg);
-                internal.keynodedlg.show();
-                return;
-            }
-            
-            
-            let c_data=internal.conndata.getSortedNodesByDegree(2);
-            let numnodes=c_data.length-1;
-            let maxnodes=Math.round(0.1*numnodes);
-
-            let ch=internal.context.canvas.height;
-            let cw=internal.context.canvas.width;
-            let vp=internal.parcellation.viewport;
-            let width  = 350;
-            console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
-
-            let showdialog=new BisWebPanel(internal.layoutmanager,
-                                           {
-                                               name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
-                                               width : width,
-                                               mode : 'sidebar',
-                                               dual : false,
-                                           });
-
-
-            let templates=webutil.getTemplates();
-            let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
-            let stable=$('#'+newid);
-            
-            let buttonnodepairs = [];
-            let callback = function(e) {
-                let id=e.target.id;
-                let node=buttonnodepairs[id];
-                internal.parameters.mode="Single Node";
-                console.log('Node=',node);
-                setnode(node);
-            };
-
-            let thead = stable.find(".bisthead");
-            let tbody = stable.find(".bistbody",stable);
-
-            thead.empty();
-            tbody.empty();
-            tbody.css({'font-size':'12px',
-                       'user-select': 'none'});
-            thead.css({'font-size':'12px',
-                       'user-select': 'none'});
-            
-            let hd=$('<tr>'+
-                     ' <td width="5%">#</th>'+
-                     ' <td width="15%">Node</th>'+
-                     ' <td width="80%">Details</th>'+
-                     '</tr>');
-            thead.append(hd);
-            thead.css({ font: "Arial 12px"});
-
-
-            for (let i=0;i<maxnodes;i++) {
-
-                let node=c_data[numnodes-i].node;
-                let degree=c_data[numnodes-i].degree;
-                if (degree>0) {
-                    let c = [ internal.parcellation.rois[node].x,
-                              internal.parcellation.rois[node].y,
-                              internal.parcellation.rois[node].z];
-                    
-                    let s0= i+1+".";
-                    let s1= node+1;
-                    let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
-                    
-                    let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
-                    let nid=webutil.getuniqueid();
-                    
-                    let w=$(`<tr>
-                              <td width="5%">${s0}</td>
-                              <td width="15%">${s1}</td>
-                              <td width="80%" id="${nid}" class="btn-link">${s2}</td>
-                            </tr>`);
-                    tbody.append(w);
-                    $('#'+nid).click(callback);
-                    buttonnodepairs[nid]=(node);
-                }
-            }
-
-            showdialog.getWidget().append(stable);
-            showdialog.show();
-            window.dispatchEvent(new Event('resize'));
-            internal.keynodedlg=showdialog;
-        },
 
         // -------------------------------------------------------------------
         /** Set the element state from a dictionary object 
@@ -1879,7 +1573,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
-            //console.log('New Render mode=',dt.rendermode);
+            console.log('New Render mode=',dt.rendermode);
             togglemode(false);
 
             internal.posFileInfo=[ "NONE", 0 ];
@@ -1911,8 +1605,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.parameters[attr] = dt.parameters[attr];
                 } 
             }
-            console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
-            console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
+            //console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
+            //console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
             for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
                 internal.datgui_controllers[ia].updateDisplay();
 
@@ -1920,13 +1614,18 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.linestack=dt.linestack;
                 update();
             }
-            
+
             internal.showlegend=!dt.showlegend;
             toggleshowlegend();
-
+            connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                        internal.parameters.mode3d,
+                                        internal.parameters.display3d
+                                       );
             internal.inrestorestate=false;
+            setTimeout( () => { drawColorScale();},20);
+
         },
-    
+        
         /** Get State as Object 
             @returns {object} -- the state of the element as a dictionary*/
         getElementState : function() {
@@ -1970,15 +1669,30 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         /** Disable Mouse Updates */
         disableMouseUpdates : function() {
             internal.inrestorestate=true;
+        },
+
+        setRenderMode(md) {
+            internal.rendermode=md-1;
+
+            togglemode(true);
+        },
+
+        /** get the rendermode externally */
+        getRenderMode() {
+            return internal.rendermode;
         }
 
+        
     };
 
+    internal.updateFn=update;
+    internal.setnodeFn=setnode;
     internal.this=control;
     internal.parentDomElement=parent;
     let basediv=$("<div>To appear...</div>");
     internal.parentDomElement.append(basediv);
     internal.orthoviewer=orthoviewer;
+    internal.orthoviewer.extraWidth3D=connectvis3d.lobeoffset;
     internal.orthoviewer.addMouseObserver(internal.this);
     internal.orthoviewer.addResizeObserver(internal.this);
 
@@ -2068,7 +1782,105 @@ class ConnectivityControlElement extends HTMLElement {
     resetdefault() { this.innercontrol.resetdefault(); }
     
     /* shows a popup dialog listing the most "interesting" nodes */
-    viewInteresting() { this.innercontrol.viewInteresting(); }
+    viewInteresting() {
+
+        const internal=this.innercontrol.internal;
+        
+        if (internal.conndata.statMatrix===null) {
+            bootbox.alert('No connectivity data loaded');
+            return;
+        }
+
+        if (internal.keynodedlg!==null) {
+            //                  console.log('Calling show on '+internal.keynodedlg);
+            internal.keynodedlg.show();
+            return;
+        }
+        
+        
+        let c_data=internal.conndata.getSortedNodesByDegree(2);
+        let numnodes=c_data.length-1;
+        let maxnodes=Math.round(0.1*numnodes);
+
+        let ch=internal.context.canvas.height;
+        let cw=internal.context.canvas.width;
+        let vp=internal.parcellation.viewport;
+        let width  = 350;
+        console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
+
+        let showdialog=new BisWebPanel(internal.layoutmanager,
+                                       {
+                                           name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
+                                           width : width,
+                                           mode : 'sidebar',
+                                           dual : false,
+                                       });
+
+
+        let templates=webutil.getTemplates();
+        let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+        let stable=$('#'+newid);
+        
+        let buttonnodepairs = [];
+
+        let callback = (e) => {
+            let id=e.target.id;
+            let node=buttonnodepairs[id];
+            internal.parameters.mode="Single Node";
+            this.innercontrol.setnode(node);
+        };
+
+        let thead = stable.find(".bisthead");
+        let tbody = stable.find(".bistbody",stable);
+
+        thead.empty();
+        tbody.empty();
+        tbody.css({'font-size':'12px',
+                   'user-select': 'none'});
+        thead.css({'font-size':'12px',
+                   'user-select': 'none'});
+        
+        let hd=$('<tr>'+
+                 ' <td width="5%">#</th>'+
+                 ' <td width="15%">Node</th>'+
+                 ' <td width="80%">Details</th>'+
+                 '</tr>');
+        thead.append(hd);
+        thead.css({ font: "Arial 12px"});
+
+
+        for (let i=0;i<maxnodes;i++) {
+
+            let node=c_data[numnodes-i].node;
+            let degree=c_data[numnodes-i].degree;
+            if (degree>0) {
+                let c = [ internal.parcellation.rois[node].x,
+                          internal.parcellation.rois[node].y,
+                          internal.parcellation.rois[node].z];
+                
+                let s0= i+1+".";
+                let s1= node+1;
+                let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
+                
+                let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
+                let nid=webutil.getuniqueid();
+                
+                let w=$(`<tr>
+                              <td width="5%">${s0}</td>
+                              <td width="15%">${s1}</td>
+                              <td width="80%" id="${nid}" class="btn-link">${s2}</td>
+                            </tr>`);
+                tbody.append(w);
+                $('#'+nid).click(callback);
+                buttonnodepairs[nid]=(node);
+            }
+        }
+
+        showdialog.getWidget().append(stable);
+        showdialog.show();
+        window.dispatchEvent(new Event('resize'));
+        internal.keynodedlg=showdialog;
+    }
 
     /* displays the matrices */
     showmatrices() { this.innercontrol.showmatrices(); }
@@ -2103,7 +1915,18 @@ class ConnectivityControlElement extends HTMLElement {
         this.innercontrol.disableMouseUpdates();
     }
 
+    /** set the rendermode externally */
+    setRenderMode(md) {
+        this.innercontrol.setRenderMode(md);
+    }
+    
+    getRenderMode() {
+        return this.innercontrol.getRenderMode();
+    }
 
+    setNetworksToYale(flag=true) {
+        return this.innercontrol.setNetworksToYale(flag);
+    }
 }
 
 

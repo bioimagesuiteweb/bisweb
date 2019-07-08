@@ -22,7 +22,7 @@
 
 const THREE = require('three');
 const util=require('bis_util');
-const BISCameraControls = require('bis_3dorthographiccameracontrols');
+
 const bis3dOrthogonalSlice=require('bis_3dorthogonalslice');
 const bis3dVolume=require('bis_3dvolume');
 const bisCrossHair=require('bis_3dcrosshairgeometry');
@@ -31,7 +31,7 @@ const $=require('jquery');
 const bootbox=require('bootbox');
 const BaseViewerElement=require('bisweb_baseviewerelement');
 const dat = require('bisweb_datgui');
-
+const BisWebSubViewer=require('bisweb_subviewer');
 
 
 
@@ -65,38 +65,71 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.rendermode=8;
         this.internal.origviewports = [
             // Slices=0
-            [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0},  { x0:0.03, y0:0.55, x1:0.48, y1:1.0},
-              { x0:0.03, y0:0.09, x1:0.48,  y1:0.54}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01 } , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 } ],
+            [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0 },
+              { x0:0.03, y0:0.55, x1:0.48,  y1:1.0 },
+              { x0:0.03, y0:0.09, x1:0.48,  y1:0.54},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01} ,
+              { x0:0.00, y0:0.0,  x1:0.0,   y1:0.0 } ],
             // Sagittal=1
-            [ { x0:0.05, y0:0.09, x1:0.95, y1:0.99},  { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
-              { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.05, y0:0.09, x1:0.95, y1:1.00},
+              { x0:0.0,  y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.0,  y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // Coronal=2
-            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.05, y0:0.09, x1:0.95, y1:0.99},
-              { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.0,  y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.05, y0:0.09, x1:0.95, y1:1.00},
+              { x0:0.0,  y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0,  y0:0.0,  x1:0.0,  y1:0.0 }],
             // Axial=3
-            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.05, y0:0.09, x1:0.95, y1:0.99},   { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.0,  y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.0,  y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.05, y0:0.09, x1:0.95, y1:1.00},
+              { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0, y0:0.0,x1:0.0,y1:0.0 }],
             // 3D +Slices=4
-            [ { x0:0.6, y0:0.81, x1:0.79, y1:1.0},  { x0:0.0, y0:0.81, x1:0.19, y1:1.0},
-              { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.21, y0:0.0,  x1:1.0, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0 },
+              { x0:0.03, y0:0.55, x1:0.48,  y1:1.0 },
+              { x0:0.03, y0:0.09, x1:0.48,  y1:0.54},
+              { x0:0.52, y0:0.09, x1:0.97,  y1:0.54} ,
+              { x0:0.00, y0:0.0,  x1:0.0,   y1:0.0 } ],
             // 3D Only=5
-            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.01, y0:0.01, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
-            // Conn 1=6
-            [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
-              { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.01,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
-            // Conn 2=7
-            [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
-              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.6, y0:0.30,  x1:0.99, y1:0.99 }, { x0:0.01, y0:0.30,  x1:0.59, y1:0.99}],
-            // Conn 3=8
-            [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
-              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}],
+            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0, y0:0.1,  x1:1.0,  y1:1.0 },
+              { x0:0.0, y0:0.0,  x1:0.0,  y1:0.0 }],
+            // Simple + 3D = 6
+            [ { x0:0.01, y0:0.07, x1:0.26, y1:0.32},
+              { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
+              { x0:0.01, y0:0.69, x1:0.26, y1:0.94},
+              { x0:0.27, y0:0.1,  x1:1.00, y1:1.00},
+              { x0:0.0,  y0:0.0,  x1:0.0,  y1:0.0 }],
+            // Conn 1 = 7
+            [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},
+              { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
+              { x0:0.69, y0:0.0,  x1:0.95, y1:0.27},
+              { x0:0.6,  y0:0.30, x1:1.00, y1:1.00},
+              { x0:0.00, y0:0.30, x1:0.59, y1:1.00}],
+            // Conn 2= 8
+            [ { x0:0.05, y0:0.01, x1:0.31,  y1:0.27},
+              { x0:0.37, y0:0.01, x1:0.63,  y1:0.27},
+              { x0:0.69, y0:0.0,  x1:0.95,  y1:0.27},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01},
+              { x0:0.00, y0:0.29, x1:1.0,   y1:1.0}],
             // Simple Mode=9
-            [ { x0:0.05, y0:0.10, x1:0.31, y1:0.9},  { x0:0.37, y0:0.10, x1:0.63, y1:0.90},
-              { x0:0.69, y0:0.10, x1:0.95, y1:0.9},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ],
+            [ { x0:0.01, y0:0.10, x1:0.32,  y1:1.00},
+              { x0:0.34, y0:0.10, x1:0.65,  y1:1.00},
+              { x0:0.67, y0:0.10, x1:0.99,  y1:1.00},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01}],
             // Simple Mode=10
-            [ { x0:0.05, y0:0.01, x1:0.36, y1:0.31},  { x0:0.37, y0:0.01, x1:0.63, y1:0.31},
-              { x0:0.69, y0:0.01, x1:0.95, y1:0.31},  { x0:0.01, y0:0.33, x1:0.99, y1:0.99}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ]
+            [ { x0:0.05, y0:0.1,  x1:0.36,  y1:0.31},
+              { x0:0.37, y0:0.1,  x1:0.63,  y1:0.31},
+              { x0:0.69, y0:0.1,  x1:0.95,  y1:0.31},
+              { x0:0.00, y0:0.33, x1:1.00,  y1:1.00},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01}]
             
 
         ];
@@ -127,12 +160,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.guidisplaynames = [
             'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only','Simple Mode', 'Simple + 3D','Simple + 3D 2'];
         
-        this.internal.displaymodes= [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only',
-                                      'Simple + 3D','Conn 2','Conn 3' ,
+        this.internal.displaymodes= [ 'Slices',
+                                      'Sagittal', 'Coronal', 'Axial',
+                                      'Slices+3D','3D Only',  'Simple + 3D',
+                                      'Conn 1','Conn 2' ,
                                       'Simple Mode', 'Simple + 3D 2'];
         this.setObjectMapFunction=null;
         this.volumeRendering=false;
         this.internal.origin=null;
+        this.minLabelWidth=250;
+        this.extraWidth3D=0;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -172,36 +209,32 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     createsliceview(renderer,vol,orthoslice,width,depth) {
         
-        var plane=orthoslice.getplane();
+        let plane=orthoslice.getplane();
         this.internal.slicecoord[plane]=orthoslice.getsliceno();
+
+        let zs=1.0;
+        if (this.internal.simplemode)
+            zs = 0.5;
+
+
+        let subviewer=new BisWebSubViewer(renderer,plane,this.internal.viewports[1][plane],
+                                          orthoslice,
+                                          {
+                                              width : width,
+                                              depth : depth,
+                                              rotateSpeed : 10.0,
+                                              zoomSpeed : zs,
+                                              panSpeed : 5.0,
+                                              noZoom : false,
+                                              noPan : false,
+                                              noRotate : true,
+                                          });
         
-        var scene = new THREE. Scene();
-        var light = new THREE.AmbientLight(0xffffff);
-        scene.add(light);
-        scene.doubleSided=true;
+        
+        let scene=subviewer.getScene();
         orthoslice.addtoscene(scene);
         
-        var camera = new THREE.OrthographicCamera(-width,width,-width,width,0.01,2.0*depth);
-        var lkv=orthoslice.positioncamera(camera);
-        
-        var controls = new BISCameraControls(camera,plane,lkv,renderer.domElement);
-        controls.rotateSpeed = 10.0;
-        if (this.internal.simplemode)
-            controls.zoomSpeed = 0.5;
-        else
-            controls.zoomSpeed = 1.0;
-        controls.panSpeed = 5.0;
-        controls.noZoom=false;
-        controls.noPan=false;
-        //
-        controls.normViewport=this.internal.viewports[1][plane];
-        
-        
-        return  {
-            scene : scene,
-            controls: controls,
-            camera : camera,
-        };
+        return subviewer;
     }
     
     // ------------------------------------------------------------------------------------
@@ -216,44 +249,35 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @returns {Bis_SubViewer} the subviewer collection object
      */
     create3dview(ren,vol,cardslice,width,depth ) {
-        
-        var scene = new THREE.Scene();
-        var light = new THREE.AmbientLight(0xffffff);
-        scene.add(light);
-        scene.doubleSided=true;
-        
 
-        var camera = new THREE.OrthographicCamera(-width,width,-width,width,0.01,2.0*depth);
-        
-        cardslice.addtoscene(scene,ren,camera);
-        
-
-        var lkv=cardslice.positioncamera(camera);
-        
-        var controls = new BISCameraControls(camera,3,lkv,ren.domElement);
-        controls.rotateSpeed = 4.0;
+        let zoom=1.0;
         if (this.internal.simplemode)
-            controls.zoomSpeed = 3.0;
-        else
-            controls.zoomSpeed = 1.0;
-        controls.panSpeed = 5.0;
-        controls.noZoom=false;
-        controls.noPan=false;
-        controls.normViewport=this.internal.viewports[1][3];
+            zoom = 3.0;
+
+        
+        let subviewer=new BisWebSubViewer(ren,3,this.internal.viewports[1][3],
+                                          cardslice,
+                                          {
+                                              width : width,
+                                              depth : depth,
+                                              rotateSpeed : 4.0,
+                                              zoomSpeed : zoom,
+                                              panSpeed : 5.0,
+                                              noZoom : false,
+                                              noPan : false
+                                          });
+        
+        cardslice.addtoscene(subviewer.getScene(),ren,subviewer.getCamera());
         
         var wd=this.internal.imagespa[0] * 4;
         
         if (!this.internal.simplemode) {
             this.internal.origin=new THREE.Mesh(bisCrossHair.createcrosshair(wd,this.internal.imagespa[0],false), 
                                       new THREE.MeshBasicMaterial( {color: 0xffffff, wireframe:false}));
-            scene.add(this.internal.origin);
+            subviewer.getScene().add(this.internal.origin);
         }
         
-        return {
-            scene : scene,
-            camera : camera,
-            controls : controls,
-        };
+        return subviewer;
     }
 
 
@@ -467,7 +491,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 old[pl]=this.internal.slicecoord[pl];
                 this.internal.slicecoord[pl]=this.internal.slices[pl].setsliceno(sl[pl],imgframe,
                                                                                  this.internal.imagetransferfunction);
-                this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].camera,
+                this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].getCamera(),
                                                           this.internal.maxspa*0.5);
 
                 if (old[pl]!==this.internal.slicecoord[pl]) {
@@ -844,8 +868,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
         for (var pl=0;pl<=3;pl++) {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
-            var vp  =this.internal.subviewers[pl].controls.normViewport;
-            if ((vp.x1-vp.x0)*dw>200) {
+            var vp  =this.internal.subviewers[pl].getNormViewport();
+
+            //console.log('Lab=',lab,(vp.x1-vp.x0)*dw,this.minLabelWidth);
+            
+            if ((vp.x1-vp.x0)*dw>this.minLabelWidth) {
                 if (pl<=2) {
 
                     let dx=0.25*vp.shiftx*dw;
@@ -924,7 +951,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 context.beginPath();
                 
                 if (pl===3)
-                    vp=this.internal.subviewers[pl].controls.normViewport.old;
+                    vp=this.internal.subviewers[pl].getNormViewport().old;
+
+                
                 context.moveTo(vp.x0*dw,(1-vp.y0)*dh);
                 context.lineTo(vp.x0*dw,(1-vp.y1)*dh);
                 context.lineTo(vp.x1*dw,(1-vp.y1)*dh);
@@ -972,11 +1001,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------------------
     /** handle window resize. Calls {@link ViewerLayoutElement}.handleresize.
      * to do most of the work and then adjusts the viewports
+     * @param{Boolean} resizecontrols -- if true update zooms also
      */
-    handleresize() {
+    handleresize(resizecontrols=true) {
 
         super.handleresize();
-        this.setrendermodeinternal(this.internal.rendermode,true);
+        this.setrendermodeinternal(this.internal.rendermode,true,resizecontrols);
         this.drawcrosshairs();
         this.updateResizeObservers();
         this.drawtext();
@@ -990,11 +1020,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
     /** gui callback. Set the rendermode to either single slice, three-slice view, three-slice +3D etc.
      * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only', 9='Simple Mode'
      * @param {boolean} force - force update otherwise do as needed
+     * @param {boolean} updateviewportsize - update viewport sizes if true 
      */
-    setrendermodeinternal(mode,force) {
-        
-        force = force || false;
-        mode  = mode ||  0;
+    setrendermodeinternal(mode=0,force=false,updateviewportsize=true) {
         
         if (mode===this.internal.rendermode && force===false)
             return;
@@ -1009,6 +1037,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let ind=this.internal.rendermode;
         this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
 
+        //console.log('Rendermode=',this.internal.rendermode,updateviewportsize);
         
         for (var pl=0;pl<this.internal.subviewers.length;pl++) {
             var trueplane=pl;
@@ -1017,7 +1046,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 trueplane=invorientaxis[pl];
             }
             
-            var vp0=this.internal.viewports[this.internal.rendermode][trueplane];
+            var vp0=this.internal.viewports[this.internal.rendermode][trueplane] || { x0:0.00, y0:0.0,  x1:0.0,   y1:0.0 };
             var vp= { 
                 x0 : vp0.x0,
                 x1 : vp0.x1,
@@ -1039,6 +1068,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.x1=ratio*vp.x1+(midx-scalemidx);
                 vp.shiftx=(midx-scalemidx);
                 vp.shifty=0;
+                vp.ratio=ratio;
             } else if (fullh>fullw) {
                 ratio=fullw/fullh;
                 var midy=0.5*(vp.y0+vp.y1);
@@ -1047,9 +1077,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.y1=ratio*vp.y1+(midy-scalemidy);
                 vp.shifty=(midy-scalemidy);
                 vp.shiftx=0;
-                
+                vp.ratio=ratio;
             }
-            this.internal.subviewers[pl].controls.normViewport=vp;
+            this.internal.subviewers[pl].setNormViewport(vp,updateviewportsize);
+            //this.internal.subviewers[pl].controls.this.reset();
+            // When switching mode force a resize
+            //this.internal.subviewers[pl].controls.handleResize();
         }
         
         this.drawlabels();
@@ -1149,7 +1182,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                                  this.internal.volume,this.internal.slices[i],
                                                                  s_width,s_depth);
             } else {
-                this.internal.slices[i].addtoscene(this.internal.subviewers[i].scene);
+                this.internal.slices[i].addtoscene(this.internal.subviewers[i].getScene());
             }
         }
         
@@ -1163,9 +1196,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
                                                           this.internal.volume,
                                                           this.internal.slices[3],
-                                                          s_width,s_depth);
+                                                          s_width+this.extraWidth3D,s_depth);
         } else {
-            this.internal.slices[3].addtoscene(this.internal.subviewers[3].scene);
+            this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
         }                
         
         // Activate renderloop
@@ -1181,9 +1214,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
             };
             
             for (let j=0;j<this.internal.subviewers.length;j++)
-                this.internal.subviewers[j].controls.coordinateChangeCallback=mousefn;
-            
-            this.setrendermodeinternal(this.internal.rendermode,true);
+                this.internal.subviewers[j].coordinateChangeCallback=mousefn;
+
+            this.setrendermodeinternal(this.internal.rendermode,true,true);
         }
         
         this.drawcrosshairs();
@@ -1196,7 +1229,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (samesize===false) {
             if (this.internal.imagedim[2]<2) 
                 this.internal.rendermode=3;
-            this.handleresize();
+            this.handleresize(true);
         }
 
         this.updateImageChangedObservers('image');
@@ -1272,7 +1305,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         for (i=0;i<=2;i++) {
             this.internal.overlayslices[i]=bis3dOrthogonalSlice.create2dslice(this.internal.objectmap,i,0,true);
-            this.internal.overlayslices[i].addtoscene(this.internal.subviewers[i].scene);
+            this.internal.overlayslices[i].addtoscene(this.internal.subviewers[i].getScene());
             this.internal.overlayslices[i].setsliceinmm(this.internal.slices[i],objcoord[i],
                                                         this.internal.slicecoord[3],this.internal.objectmaptransferfunction,true);
         }
@@ -1291,7 +1324,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
 
         
-        this.internal.overlayslices[3].addtoscene(this.internal.subviewers[3].scene);
+        this.internal.overlayslices[3].addtoscene(this.internal.subviewers[3].getScene());
 
         if (this.internal.maxnumframes>this.internal.imagedim[3]) {
             this.createdatgui(false);
@@ -1322,7 +1355,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         this.deleteoldobjectmap();
         this.internal.cmapcontroller.removeobjectmap();
-        this.internal.objectmaptransferinfo={ isfunctional : false, 'colormode' : 'Objectmap' };
+        this.internal.objectmaptransferinfo={ showcolorbar : false, 'colormode' : 'Objectmap' };
         this.drawtext();
         this.updateImageChangedObservers('overlay');
     }
@@ -1390,10 +1423,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.slices[3]===null || this.internal.subviewers[3]===null)
             return;
         
-        this.internal.slices[3].positioncamera(this.internal.subviewers[3].camera,plane,back);
-        var renderer=this.internal.layoutcontroller.renderer;
-        renderer.render(this.internal.subviewers[3].scene,
-                        this.internal.subviewers[3].camera);
+        this.internal.slices[3].positioncamera(this.internal.subviewers[3].getCamera(),plane,back);
+        this.renderSubViewer(3);
     }
     
     
@@ -1572,7 +1603,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         let s="Reset Slices";
         if (this.internal.simplemode) {
-            s="Reset 2D/3D Views";
+            s="Reset Views";
             cmapfolder.open();
         }
         
@@ -1646,9 +1677,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // -----------------------------------------------------------------------------
     /** sets the rendermode from outside and return current viewports!
      */
-    setRenderMode(mode=3) {
-        this.setrendermodeinternal(mode,true);
+    setRenderMode(mode=3,updateviewportsize=true) {
+        this.setrendermodeinternal(mode,true,updateviewportsize);
         this.updateDatGUIControllers();
+        return this.internal.viewports[this.internal.rendermode];
+    }
+
+    getRenderModeViewports() {
         return this.internal.viewports[this.internal.rendermode];
     }
 

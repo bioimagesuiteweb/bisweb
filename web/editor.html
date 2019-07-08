@@ -32,7 +32,9 @@
                                  Dept of Radiology and Biomedical Imaging,
                                  Yale School of Medicine">
 
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
     <link rel="icon" href="images/favicon.ico">
+
 
 
     <!-- begin webpack/gulp modifications -->
@@ -102,42 +104,24 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-painttoolelement>
 
-    <bisweb-graphelement
-      id="bisweb_graphelement"
-      bis-viewerid="#viewer">
-    </bisweb-grapherelement>
-
-    <bisweb-filetreepanel
-      id="bis_filetreepanel"
-      bis-layoutwidgetid="#viewer_layout" 
-      bis-viewerid="#viewer"
-      bis-viewerapplicationid="#viewer_application"
-      bis-graphelementid="#bisweb_graphelement"
-      bis-painttoolid="#painttool"
-      bis-algocontrollerid="#algoelement"
-    ></bisweb-filetreepanel>
-
-    <bisweb-dicomimportelement
-      id="dicom_import"
-      bis-viewerid="#viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#bis_filetreepanel">
-    </bisweb-dicomimportelement>
-
     <bisweb-landmarkcontrolelement
       id="landmarkcontrol"
       bis-layoutwidgetid="#viewer_layout"
       bis-viewerid="#viewer">
     </bisweb-landmarkcontrolelement>
-    
+
+<!--    <bisweb-electrodegridcontrolelement
+      id="gridcontrol"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-viewerid="#viewer">
+    </bisweb-electrodegridcontrolelement>-->
+
     <bisweb-viewerapplication
       id="viewer_application"
       bis-menubarid="#viewer_menubar"
       bis-painttoolid="#painttool"
       bis-landmarkcontrolid="#landmarkcontrol"
-      bis-dicomimportid="#dicom_import"
-      bis-viewerid="#viewer"
-      bis-graphtoolid="#bisweb_graphelement">
+      bis-viewerid="#viewer">
     </bisweb-viewerapplication>
 
   </div>

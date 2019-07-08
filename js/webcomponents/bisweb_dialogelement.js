@@ -35,7 +35,7 @@ class BisWebDialogElement extends HTMLElement {
         this.name="";
         this.closecallback=null;
         this.dialog=null;
-
+        this.div=null;
         this.widget=null;
         this.header=null;
         this.footer=null;
@@ -85,6 +85,9 @@ class BisWebDialogElement extends HTMLElement {
      * @returns {JQueryElement} 
      */
     getContent() { return this.content; }
+
+    /** returns the containing div */
+    getContainingFrame() { return this.div; }
 
     /** returns the widget base */
     getWidgetBase() { return this.widgetbase; }
@@ -252,6 +255,11 @@ class BisWebDialogElement extends HTMLElement {
         this.hide();
     }
 
+    setTitle(name) {
+        this.headertext.text(name);
+    }
+    
+
     /** Returns the dimensions of the dialog
      * @returns {Object} - { left, top, width, height }
      */
@@ -271,10 +279,10 @@ class BisWebDialogElement extends HTMLElement {
      */
     create(name, w=400, h=400, x=100, y=100, zindex=5000,motion=true,closecallback=null) {
 
-        if (y<100)
-            y=100;
-        if (x<40)
-            x=40;
+        if (y<10)
+            y=10;
+        if (x<10)
+            x=10;
 
         let grow=false;
         if (h<0) {
@@ -293,6 +301,7 @@ class BisWebDialogElement extends HTMLElement {
         var newid = webutil.createWithTemplate(webutil.getTemplates().bisdialog, $('body'));
         var div = $('#' + newid);
 
+        this.div = div;
         this.headertext=div.find('.modal-title');
         this.headertext.text(name);
         this.dialog=div.find('.modal-dialog');

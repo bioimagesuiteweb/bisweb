@@ -26,6 +26,12 @@
 	    "dopython": true
 	},
 	{
+	    "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false --usejs true",
+	    "test"    : "--test_target testdata/newtests/goldcorrelation.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
 	    "command" : "regressOut -i testdata/newtests/drift_input.csv -r testdata/newtests/drift.csv",
 	    "test"    : "--test_target testdata/simpleregress.csv --test_type matrix --test_comparison ssd --test_threshold 0.1",
 	    "result"  : true,
@@ -42,6 +48,18 @@
 	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : false,
 	    "dopython": true
+	},
+	{
+	    "command" : "regressOut -i testdata/newtests/driftw_input.csv -r testdata/newtests/drift2.csv -w testdata/newtests/drift_weights.matr --usejs true",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "regressOut -i testdata/newtests/driftw_input.csv -r testdata/newtests/drift2.csv",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv --test_type matrix --test_comparison ssd --test_threshold 0.01 --usejs true",
+	    "result"  : false,
+	    "dopython": false
 	},
 	{
 	    "command" : "regressGlobal -i testdata/newtests/global_inp.matr --debug true ",
@@ -74,6 +92,24 @@
 	    "dopython": true
 	},
 	{
+	    "command" : "computeROI -i testdata/simple4dtest.nii.gz -r testdata/simpleroi.nii.gz --debug true --usejs true",
+	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "computeROI -i testdata/ras_avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
+	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": true
+	},
+        {
+	    "command" : "computeROI -i testdata/MNI_6mm.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
+	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
 	    "command" : "thresholdImage -i testdata/MNI_6mm.nii.gz --low 128.0 --high 1000 --debug 1",
 	    "test"    : "--test_target testdata/newtests/MNI_thr.nii.gz ",
 	    "result"  : true,
@@ -98,10 +134,10 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 3 --usewasm false --debug true",
+	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 3 --usejs true --debug true",
 	    "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
 	    "result"  : true,
-	    "dopython": true
+	    "dopython": false
 	},
 	{
 	    "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",
@@ -530,7 +566,7 @@
             "dopython": false
         },
         {
-            "command"  : "tfrecon -i testdata/tfjs64/sample1.nii.gz --modelname testdata/tfjs64 --padding 8 --batchsize 1",
+            "command"  : "tfrecon -i testdata/tfjs64/sample1.nii.gz --modelname testdata/tfjs64 --padding 8 --batchsize 1 --transpose false",
             "test"     : "--test_target testdata/tfjs64/sampleout.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.5",
             "result"   : true,
             "dopython" : false,
@@ -538,6 +574,13 @@
         },
         {
             "command"  : "tfrecon -i testdata/sanitytf/0001_1_Y__crp.nii.gz --modelname testdata/sanitytf --padding 16 --batchsize 4",
+            "test"     : "--test_target testdata/sanitytf/0001_1_Y__shsc__crp.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.01",
+            "result"   : true,
+            "dopython" : false,
+            "webworker": false
+        },
+        {
+            "command"  : "tfrecon -i testdata/sanitytf/0001_1_Y__crp.nii.gz --modelname testdata/sanitytf --padding 16 --batchsize 4 --transpose false",
             "test"     : "--test_target testdata/sanitytf/0001_1_Y__shsc__crp.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.01",
             "result"   : true,
             "dopython" : false,
@@ -562,8 +605,268 @@
             "result"  : true,
             "dopython": false,
             "noweb"   : true
+        },
+        {
+            "command" : "infomodule",
+            "test"    : "--test_type smoketest",
+            "result"  : true,
+            "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "bisserver --createconfig",
+            "test"    : "--test_type smoketest",
+            "result"  : true,
+            "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "regressiontests --testname infomodule --run 1",
+            "test"    : "--test_type smoketest",
+            "result"  : true,
+            "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "gradientImage --input testdata/gradin.nii.gz --sigma 2.0 --inmm true --debug true",
+            "test"    : "--test_target testdata/grad.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+            "command" : "gradientImage --input testdata/badimage.nii.gz --sigma 2.0 --inmm true --debug true",
+            "test"    : "--test_target testdata/grad.nii.gz",
+            "result"  : false,
+            "dopython": true
+        },
+        {
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
+            "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary false",
+            "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
+            "result"  : false,
+            "dopython": true
+        },
+        {
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true",
+            "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
+            "test"    : "--test_target testdata/indiv/indivp.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+	    "command" : "resampleImage -i testdata/avg152T1_LR_nifti.nii.gz --interpolation 1 --debug false --backgroundvalue 0.0 --xsp 2.5 --ysp 4.5 --zsp 6.5 --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+        
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 1 --debug true --backgroundvalue 0.0 --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 0 --debug false --backgroundvalue 0.0 --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced_NN.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 3 --debug false --backgroundvalue 0.0 --forcefloat true --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced_Cubic.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd -y testdata/resample.matr --forcefloat true --interpolation 1",
+            "test" : "--test_target testdata/comboreslice.nii.gz --test_type image",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd -y testdata/resample.matr --usejs true --forcefloat true",
+            "test" : "--test_target testdata/comboreslice.nii.gz",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --forcefloat true --interpolation 1",
+            "test" : "--test_target testdata/gridreslice.nii.gz",
+            "result" : true,
+            "dopython": true
+        },
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --forcefloat true --interpolation 1 --usejs true",
+            "test" : "--test_target testdata/gridreslice.nii.gz",
+            "result" : true,
+            "dopython": false
+        },
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  low --tr 1.0 --low 0.15",
+	    "test"    : "--test_target testdata/newtests/but_low_out.matr.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  high --tr 1.0 --high 0.03 --debug true",
+	    "test"    : "--test_target testdata/newtests/but_high_out.matr.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  band --tr 1.0 --high 0.03 --low 0.15",
+	    "test"    : "--test_target testdata/newtests/but_band.nii.gz --test_type image --test_comparison ssd --test_threshold 16 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressOutImage -i testdata/newtests/drift_input.csv.nii.gz -r testdata/newtests/drift.csv",
+	    "test"    : "--test_target testdata/simpleregress.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.1",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressOutImage -i testdata/newtests/driftw_input.csv.nii.gz -r testdata/newtests/drift2.csv -w testdata/newtests/drift_weights.matr",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressOutImage -i testdata/newtests/driftw_input.csv.nii.gz -r testdata/newtests/drift2.csv",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
+	    "command" : "driftCorrectImage --input testdata/newtests/drift_input.csv.nii.gz --order 1 --debug true",
+	    "test"    : "--test_target testdata/simpleregress.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.1",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "driftCorrectImage --input testdata/newtests/driftw_input.csv.nii.gz --order 1 -w testdata/newtests/drift_weights.matr",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+        {
+            "command" : "seedCorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore false --debug true",
+            "test"    : "--test_target testdata/imagefmri/Seed_raw.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+            "command" : "seedCorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore true --debug true",
+            "test"    : "--test_target testdata/imagefmri/Seed_zscore.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+	    "command" : "computeROI -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz --loadall false",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns2.nii -r testdata/glm/objectmap.nii.gz --loadall false",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz --loadall true",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns2.nii -r testdata/glm/objectmap.nii.gz --loadall true",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "joinmatrices --matr1 testdata/matr/9x3.matr --matr2 testdata/matr/200x3.matr --dim row",
+            "test" : "--test_target testdata/matr/209x3.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "joinmatrices --matr1 testdata/matr/9x2.matr --matr2 testdata/matr/9x3.matr --dim col",
+            "test" : "--test_target testdata/matr/9x5.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "joinmatrices --matr1 testdata/matr/200x3.matr --matr2 testdata/matr/9x2.matr",
+            "test" : "--test_target testdata/matr/209x3.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : false,
+            "dopython": false
+        },
+        {
+            "command" : "joinmatrices --matr1 testdata/matr/9x2.matr --matr2 testdata/matr/9x3.matr",
+            "test" : "--test_target testdata/matr/9x5.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "joinmatrices --matr1 testdata/matr/200x3.matr --matr2 testdata/matr/0x0.matr",
+            "test" : "--test_target testdata/matr/209x3.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : false,
+            "dopython": false
+        },
+        {
+            "command" : "removematrixcols --input testdata/matr/9x3.matr --cols 3",
+            "test" : "--test_target testdata/matr/9x2.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "removematrixcols --input testdata/matr/9x3.matr --cols 1,3",
+            "test" : "--test_target testdata/matr/9x1_middlecol.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "removematrixcols --input testdata/matr/9x3.matr --cols 2,3",
+            "test" : "--test_target testdata/matr/9x1.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "removematrixcols --input testdata/matr/9x3.matr --cols 1,2,3",
+            "test" : "--test_target testdata/matr/0x0.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "quantilenormalizeimage --input testdata/nn/ex_S01_0001__rsp.nii.gz",
+            "test" : "--test_target testdata/nn/ex_S01_0001_quantile__rsp.nii.gz --test_type image --test_comparison cc --test_threshold 0.999",
+            "result" : true,
+            "dopython": false
         }
     ]
 }
-
 

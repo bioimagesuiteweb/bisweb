@@ -184,6 +184,8 @@ def printResult(diff,threshold,toolname,dtype):
 
 def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,test_comparison):
 
+    test_type=test_type.strip();
+    
     threshold =test_threshold;
     if (threshold==None):
         threshold=0.01;
@@ -202,7 +204,7 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
 
     
     print('====\n==================================================================\n====');
-    print('==== comparing ',test_type,' using ',comparison,' and threshold=',threshold,'.\n====');
+    print('==== comparing ('+test_type+') using ('+comparison+') and threshold='+str(threshold)+'.\n====');
 
     print('==== files=',resultFile,test_target);
     
@@ -212,14 +214,19 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
             gold = bis_objects.bisImage();
             if (gold.load(test_target)!=False) :
                 diff = 0;
-                if (comparison=='cc'):
-                    diff=-computeCC(out.get_data(),gold.get_data());
-                    threshold=-threshold;
-                elif comparison=='ssd':
-                    diff=computeNorm2(out.get_data(),gold.get_data());
-                else:
-                    diff=maxabsdiff(gold.get_data(),out.get_data());
-                return printResult(diff,threshold,toolname,test_type);
+                print(gold);
+                try:
+                    if (comparison=='cc'):
+                        diff=-computeCC(out.get_data(),gold.get_data());
+                        threshold=-threshold;
+                    elif comparison=='ssd':
+                        diff=computeNorm2(out.get_data(),gold.get_data());
+                    else:
+                        diff=maxabsdiff(gold.get_data(),out.get_data());
+                    return printResult(diff,threshold,toolname,test_type);
+                except:
+                    print('---- Failed to compare gold=',gold.dimensions,' vs out=', out.dimensions);
+                    return False;
             else:
                 print('---- Failed to load gold standard image');
                 return False;
@@ -288,7 +295,6 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
 
 
 if __name__ == '__main__':
-
 
     # This works for recon
 

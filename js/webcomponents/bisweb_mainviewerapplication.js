@@ -97,7 +97,7 @@ class ViewerApplicationElement extends HTMLElement {
             this.extraManualHTML='imageeditor.html';
         
         this.applicationInitializedPromiseList= [ ];
-
+        this.oldgraphtool=null;
         
         
     }
@@ -372,7 +372,10 @@ class ViewerApplicationElement extends HTMLElement {
                         webutil.createAlert('Image loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setimage(img);
                         resolve();
-                    }).catch( (e) => { reject(e); });
+                    }).catch( (e) => { 
+                        webutil.createAlert('An error occured while displaying image ' + fname, true);
+                        reject(e); 
+                    });
             },10);
         });
     }
@@ -735,14 +738,16 @@ class ViewerApplicationElement extends HTMLElement {
                     painttool = document.querySelector(painttoolid);
                     
                     painttool.createMenu(objmenu[viewerno]);
-                    
-                    let graphtoolid = self.getAttribute('bis-graphtoolid');
-                    let graphtool = document.querySelector(graphtoolid);
                     webutil.createMenuItem(objmenu[viewerno], 'VOI Analysis',
-                                           function () {
-                                               graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
+                                           () => {
+                                               if (self.oldgraphtool===null)  {
+                                                   self.oldgraphtool=document.createElement('bisweb-oldgrapherelement');
+                                                   document.body.appendChild(self.oldgraphtool);
+                                               }
+                                               console.log('Old=',self.oldgraphtool,viewerno);
+                                               self.oldgraphtool.parseViewer(self.VIEWERS[paintviewerno]);
+
                                            });
-                    
                 } else {
                     
                     webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
@@ -897,7 +902,7 @@ class ViewerApplicationElement extends HTMLElement {
         webfileutil.createFileSourceSelector(hmenu);
 
         if (!webutil.inElectronApp()) { 
-            userPreferences.safeGetItem("internal").then( (f) =>  {
+            userPreferences.safeGetItem("enables3").then( (f) =>  {
                 if (f) {
                     webutil.createMenuItem(hmenu, ''); // separator
                     webutil.createMenuItem(hmenu, 'Open AWS Selector', 
@@ -1159,31 +1164,31 @@ class ViewerApplicationElement extends HTMLElement {
 
         
         // ----------------------------------------------------------
-        // DICOM
+        // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
-        userPreferences.safeGetItem("internal").then( (f) =>  {
-            if (f) {
-                const dicomid = this.getAttribute('bis-dicomimportid') || null;
-                if (dicomid) {
-                    let dicommodule = document.querySelector(dicomid) || null;
-                    webutil.createMenuItem(bmenu,'');
-                    webutil.createMenuItem(bmenu, 'Import DICOM', () => {
-                        dicommodule.show();
-                    });
-                }
-            }
-                                                              
+        const dicomid = this.getAttribute('bis-dicomimportid') || null;
+        if (dicomid) {
+            let dicommodule = document.querySelector(dicomid) || null;
             webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Restart Application',
-                                   function () {
-                                       bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                       function(e) {
-                                                           if (e)
-                                                               window.open(self.applicationURL,'_self');
-                                                       }
-                                                      );
-                                   });
-        });
+            webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
+                dicommodule.show();
+            });
+
+            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+                dicommodule.showDICOMImportModal();
+            });
+        }
+        
+        webutil.createMenuItem(bmenu,'');
+        webutil.createMenuItem(bmenu, 'Restart Application',
+                               function () {
+                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                                   function(e) {
+                                                       if (e)
+                                                           window.open(self.applicationURL,'_self');
+                                                   }
+                                                  );
+                               });
         return bmenu;
     }
 
@@ -1496,22 +1501,19 @@ class ViewerApplicationElement extends HTMLElement {
             if (painttoolid !== null || landmarkcontrolid !==null) {
                 
                 let toolmenu = webutil.createTopMenuBarMenu('Tools', menubar);
-                let p=Promise.resolve();
                 if (painttoolid) {
                     let painttool = document.querySelector(painttoolid);
-                    p=painttool.addTools(toolmenu);
+                    painttool.addTools(toolmenu);
                 }
                 if (landmarkcontrolid) {
                     let landmarkcontrol=document.querySelector(landmarkcontrolid);
-                    p.then( () => {
-                        if (painttoolid)
-                            webutil.createMenuItem(toolmenu,'');
-                        
-                        webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
-                            landmarkcontrol.show();
-                        });
+                    if (painttoolid)
+                        webutil.createMenuItem(toolmenu,'');
+                    
+                    webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
+                        landmarkcontrol.show();
                     });
-                }   
+                }
             }
         } else {
             editmenu=webutil.createTopMenuBarMenu("Edit", menubar);

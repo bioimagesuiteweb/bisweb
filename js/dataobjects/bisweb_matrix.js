@@ -100,7 +100,7 @@ class BisWebMatrix extends BisWebDataObject{
             genericio.read(fobj, false).then((contents) => {
                 self.parseFromText(contents.data,contents.filename,reject);
                 self.setFilename(contents.filename);
-                console.log('++++\t loaded matrix  '+this.getDescription());
+                console.log('++++\t loaded matrix  '+this.filename,' ',this.getDescription());
                 resolve('loaded matrix transformation from '+contents.filename);
                 
             }).catch( (e) => { reject(e); });
@@ -334,7 +334,7 @@ class BisWebMatrix extends BisWebDataObject{
                 else
                     i=sz[0];
             }
-            console.log('Input rows=',sz[0],'output=',rows);
+            console.log('++++\t\t setting from Numeric Matrix. Input rows=',sz[0],'output rows=',rows);
             sz[0]=rows;
 
             
@@ -416,17 +416,17 @@ class BisWebMatrix extends BisWebDataObject{
         if (ext==='csv') {
             let output="";
             for (let row=0;row<this.dimensions[0];row++) {
-                for (let col=0;col<this.dimensions[1];row++) {
-                    output=output+this.data[row*this.dimensions[1]+col];
+                for (let col=0;col<this.dimensions[1];col++) {
+                    output=output+`${this.data[row*this.dimensions[1]+col]}`;
                     if (col!=(this.dimensions[1]-1))
                         output+=", ";
                 }
-                if (row!=(this.dimensions[0]-1))
+                if (row!=(this.dimensions[0]-1)) 
                     output=output+"\n";
             }
             return output;
         }
-        
+
         if (ext === 'matr' ) {
             let mat=this.getNumericMatrix();
             let name='matrix';

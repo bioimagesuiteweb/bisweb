@@ -211,13 +211,15 @@ class BisWebComboTransformation extends BisWebBaseTransformation {
      */
     transformPointToVoxel(X, TX, spa) {
         let tmp = [X[0], X[1], X[2]];
+        //console.log('tmp=',tmp);
         for (let i = this.internal.gridTransformationList.length - 1; i >= 0; i = i - 1) {
-            this.internal.gridTransformationList.transformPoint(tmp, TX);
+            this.internal.gridTransformationList[i].transformPoint(tmp, TX);
             tmp[0] = TX[0];
             tmp[1] = TX[1];
             tmp[2] = TX[2];
         }
         this.internal.linearTransformation.transformPointToVoxel(tmp, TX, spa);
+        //        console.log('tmp=',tmp,TX);
     }
 
     /** transforms input point in mm to a mm coordinate using the bspline grid and the linear transformation

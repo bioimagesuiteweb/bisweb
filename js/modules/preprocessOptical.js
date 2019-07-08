@@ -43,8 +43,8 @@ class PreprocessOpticalModule extends BaseModule {
 
     getDescription() {
         let des={
-            "name": "Preprocess Optical",
-            "description": "Preprocess optical images from zebrafish",
+            "name": "Preprocess Zebrafish Optical",
+            "description": "Preprocesses optical images from zebrafish",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Execute",

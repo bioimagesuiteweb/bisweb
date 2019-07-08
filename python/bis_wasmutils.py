@@ -45,8 +45,12 @@ def load_library(name=''):
     else:
         name=os.path.abspath(name);
     m=ctypes.CDLL(name);
-    #    print(type(m));
-    print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)\n____');
+    if (m.uses_gpl()):
+        print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)');
+        print('____\t (This includes the GPL plugin addon. See https://github.com/bioimagesuiteweb/gplcppcode.)\n____');
+    else:
+        print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)\n____');
+
     __Module=m;
     return m;
 
@@ -268,6 +272,10 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
     datatype=get_dtype(header[1]);
     beginoffset=header[2]+16+offset;
     total=beginoffset+header[3];
+
+    if (dims[0]<1):
+        raise Exception('----- Zero Data Length');
+    
     if (debug>0):
         itemsize=np.dtype(datatype).itemsize
         print('__ dims=',dims,' spa=',spa,' dtype=',datatype,' totalsize=',total,'datasize=',total-(16+header[2]),itemsize);

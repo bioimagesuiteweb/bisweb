@@ -135,6 +135,10 @@ class AtlasControlElement extends HTMLElement {
     }
     
     /** Called by OrthoViewer when the image changes */
+    /** initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
+     * @param {BisWebSubViewer} subviewers[] - subviewers to place info in
+     * @param {BisImage} volume - new image
+     */
     initialize(subviewers,volume,samesize=false) {
 
         
@@ -342,10 +346,6 @@ class AtlasControlElement extends HTMLElement {
         return results;
     }
 
-        /** initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
-     * @param {Bis_SubViewer} subviewers - subviewers to place info in
-     * @param {BisImage} volume - new image
-     */
     connectedCallback() {
 
         let viewerid=this.getAttribute('bis-viewerid');

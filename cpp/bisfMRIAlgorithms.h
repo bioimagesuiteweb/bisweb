@@ -136,6 +136,17 @@ namespace bisfMRIAlgorithms {
    * @return 1 if pass, 0 if failed
    */
   int computeCorrelationMatrix(Eigen::MatrixXf& input,int toz,Eigen::VectorXf& weights,Eigen::MatrixXf& output);
+
+  /** This function computes a correlation matrix from a set of timeseries. Weights are binary either use or do not use frame (>0.01 = use)
+   * @alias BisfMRIMatrixConnectivity.computeSeedMapImage
+   * @param {Image} input - the input timeseries vectors as image
+   * @param {Matrix} seedtime series -- seed timeseries vectors as matrix (rows = frames);
+   * @param {boolean} toz - if true compute r->z transform and return z-values else r's (default = false)
+   * @param {array} weights - the input regressors vectors (weights for each row)
+   * @returns {Matrix} seed map image
+   */
+  int computeSeedMapImage(bisSimpleImage<float>* input,Eigen::MatrixXf& roi,int toz,Eigen::VectorXf& weights,bisSimpleImage<float>* output);
+  
 }
 
 

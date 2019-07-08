@@ -50,7 +50,7 @@ let d=path.dirname(__dirname);
  'lib/js',
  'js/',
  'js/node',
- 'js/legacy',
+ 'js/utilities',
  'js/core',
  'js/export',
  'js/dataobjects',

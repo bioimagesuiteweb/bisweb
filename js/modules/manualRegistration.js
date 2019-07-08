@@ -35,7 +35,7 @@ class ManualRegistrationModule extends BaseModule {
     createDescription() {
         return {
             "name": "Manual Registration",
-            "description": "This algorithm performes manual image registration",
+            "description": "This algorithm performs manual image registration, where the user specifies the parameters directly",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs" : baseutils.getRegistrationInputs(false),
@@ -160,6 +160,15 @@ class ManualRegistrationModule extends BaseModule {
                     "type": "boolean",
                     "default": false,
                     "varname": "usefullheaderxy"
+                },
+		{
+                    "name": "Do Reslice",
+                    "description": "dummy option ignored",
+                    "priority": 100,
+                    "advanced": true,
+                    "type": "boolean",
+                    "default": true,
+                    "varname": "doreslice"
                 },
                 {
                     "name": "Interpolation",

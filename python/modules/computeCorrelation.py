@@ -45,7 +45,7 @@ class computeCorrelation(bis_basemodule.baseModule):
             
         try:
             out = libbis.computeCorrelationMatrixWASM(input, weight, {
-                "zscore" : self.parseBoolean(vals['zscore'])
+                "toz" : self.parseBoolean(vals['zscore'])
             },self.parseBoolean(vals['debug']));
             self.outputs['output']=bis_objects.bisMatrix();
             self.outputs['output'].create(out);

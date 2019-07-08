@@ -22,6 +22,8 @@ const BaseModule = require('basemodule.js');
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BisWebTransformCollection = require('bisweb_transformationcollection');
+const BisWebImage = require('bisweb_image');
+const smreslice=require('bis_imagesmoothreslice');
 
 class ResliceImageModule extends BaseModule {
     constructor(md) {
@@ -41,9 +43,10 @@ class ResliceImageModule extends BaseModule {
         return {
             "name": "Reslice Image",
             "description": "Reslices an existing image to match a reference and a transformation",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "shortname" : "rsl",
+            "slicer" : true,
             "buttonName": "Reslice",
             "inputs":   [
                 {
@@ -120,7 +123,7 @@ class ResliceImageModule extends BaseModule {
                 },
                 {
                     "name": "Force Float",
-                    "description": "If true force output to float",
+                    "description": "If true, force output to float",
                     "priority": 100,
                     "advanced": true,
                     "type": "boolean",
@@ -139,7 +142,7 @@ class ResliceImageModule extends BaseModule {
                 },
                 {
                     "name": "Add Grid",
-                    "description": "If true adds a grid overlay to the image",
+                    "description": "If true, adds a grid overlay to the image to visualize the effect of the transformation(s)",
                     "priority": 37,
                     "advanced": true,
                     "gui": "check",
@@ -172,6 +175,17 @@ class ResliceImageModule extends BaseModule {
                     "step" : 0.1,
                     "varname": "gridvalue"
                 },
+                {
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "usejs",
+                    "type": 'boolean',
+                    "default": false,
+                    "jsonly" : true,
+                },
                 baseutils.getDebugParam(),
             ]
         };
@@ -181,37 +195,60 @@ class ResliceImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: resliceImage with vals', JSON.stringify(vals));
+        let xform = this.inputs['xform'] || null;
+        let input = this.inputs['input'];
+        let reference = this.inputs['reference'] || input ;
+        
+        if (xform === null || input===null) {
+            return Promise.reject('Either no image or no transformation specified');
+        }
+        
+        let xform2=this.inputs['xform2'] || null;
+        let xform3=this.inputs['xform3'] || null;
+        
+        if (xform2 || xform3) {
+            let coll=new BisWebTransformCollection();
+            coll.addTransformation(xform);
+            if (xform2)
+                coll.addTransformation(xform2);
+            if (xform3)
+                coll.addTransformation(xform3);
+            xform=coll;
+        }
+        
+        let spa=reference.getSpacing();
+        let dim=reference.getDimensions();
+        let dt="-1";
+        if (vals.forcefloat) {
+            dt="float";
+        }
+
+        if (super.parseBoolean(vals.usejs)) {
+
+            console.log('+++ Using the JS Implementation of resliceImage');
+            if (dt==="-1")
+                dt='same';
+            var output=new BisWebImage();
+            let obj={ 'dimensions' : [dim[0],dim[1],dim[2]],  'spacing' : [ spa[0],spa[1],spa[2]], 'type' : dt  };
+            console.log('+++ Reslice params=',JSON.stringify(obj));
+            output.cloneImage(input, obj);
+
+            smreslice.resliceImage(input,output,
+                                   xform,
+                                   parseInt(vals.interpolation),
+                                   null,
+                                   parseFloat(vals.backgroundvalue));
+            this.outputs['output']=output;
+            this.outputs['output'].copyOrientationInfo(reference);
+            return Promise.resolve();
+        }
+
+
+        
         return new Promise((resolve, reject) => {
-            let xform = this.inputs['xform'] || null;
-            let input = this.inputs['input'];
-            let reference = this.inputs['reference'] || input ;
-
-            if (xform === null || input===null) {
-                reject('Either no image or no transformation specified');
-            }
-
-            let xform2=this.inputs['xform2'] || null;
-            let xform3=this.inputs['xform3'] || null;
-                            
-            if (xform2 || xform3) {
-                let coll=new BisWebTransformCollection();
-                coll.addTransformation(xform);
-                if (xform2)
-                    coll.addTransformation(xform2);
-                if (xform3)
-                    coll.addTransformation(xform3);
-                xform=coll;
-            }
             
             biswrap.initialize().then(() => {
 
-                let spa=reference.getSpacing();
-                let dim=reference.getDimensions();
-                let dt="-1";
-                if (vals.forcefloat) {
-                    dt="float";
-                }
-                
                 
                 let dogrid=this.parseBoolean(vals.addgrid);
                 if (dogrid) {

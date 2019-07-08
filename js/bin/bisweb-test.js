@@ -97,7 +97,9 @@ else if (test_type==="registration")
     tempName=dirname+'/out.json';
 else if (test_type==="text")
     tempName=dirname+'/makefile.txt';
-args.push('--output', tempName);
+if (test_type !== "smoketest") {
+    args.push('--output', tempName);
+}
 
 if (test_type==="registration") {
     tempName=dirname+"/out_resl.nii.gz";
@@ -106,6 +108,9 @@ if (test_type==="registration") {
     test_type="image";
 }
 
+if (test_type==="smoketest") {
+    // Nothing to do here
+}   
 
 if (test_type==="tfjs") {
     test_type="image";
@@ -128,13 +133,20 @@ console.log('................................................');
 
 commandline.loadParse(args, toolname, basedirectory).then(() => {
     console.log('.... -------------------------------------------------------');
-    commandline.processTestResult(toolname,tempName,
-                                  basedirectory+program.test_target,
-                                  test_type,
-                                  program.test_threshold,
-                                  program.test_comparison,
-                                  cleanupAndExit);
+    if (test_type !== "smoketest") {
+        commandline.processTestResult(toolname,tempName,
+                                      basedirectory+program.test_target,
+                                      test_type,
+                                      program.test_threshold,
+                                      program.test_comparison,
+                                      cleanupAndExit);
+    } else {
+        console.log('++++ Smoke test worked');
+        cleanupAndExit(0);
+    }
 }).catch((e) => {
-    console.log(e);
+    console.log('----------------------------- ');
+    console.log(e || '');
+    console.log('---- exiting');
     cleanupAndExit(1);
 });

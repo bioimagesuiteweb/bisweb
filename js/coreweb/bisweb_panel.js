@@ -210,6 +210,15 @@ class BisWebPanel {
 
 
         if (this.options.initialstate === "docked" && this.options.dual===false) {
+
+            if (this.options.helpButton) {
+                this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+                this.dockHelpButton.click( (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.displayHelpModal();
+                });
+            }
             return;
         }
 

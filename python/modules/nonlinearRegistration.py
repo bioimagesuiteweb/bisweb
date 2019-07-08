@@ -46,6 +46,10 @@ class nonlinearRegistration(bis_basemodule.baseModule):
         transform = self.inputs['initial'];
         linearmode = bis_baseutils.getLinearModeCode(vals['linearmode']);
 
+        if (reference.hasSameOrientation(target,'Reference Image','Target Image',True)==False):
+            return False;
+
+
         initial=transform;
         if (linearmode>=0):
             try:

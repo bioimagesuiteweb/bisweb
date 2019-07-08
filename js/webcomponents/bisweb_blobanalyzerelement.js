@@ -353,10 +353,6 @@ than zero.</LI> </OL></div>`));
 
 
     
-    /** initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
-     * @param {Bis_SubViewer} subviewers - subviewers to place info in
-     * @param {BisImage} volume - new image
-     */
     connectedCallback() {
 
         let viewerid=this.getAttribute('bis-viewerid');

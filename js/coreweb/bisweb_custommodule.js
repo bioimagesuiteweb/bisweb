@@ -94,6 +94,7 @@ class CustomModule {
             width : width,
             hasfooter : false,
             dual : this.dual,
+            helpButton : true,
         });
 
         let paramsMargin = opts.paramsMargin || '10px';
@@ -118,6 +119,57 @@ class CustomModule {
 
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
+        this.createHelpMessage(this.panel);
+    }
+
+    /** Create help message */
+    createHelpMessage(panel) {
+
+        
+        let description = this.module.getDescription();
+        let dtext=description.description.trim();
+        if (dtext.lastIndexOf('.')!==dtext.length-1)
+            dtext+='.';
+        let help=`<H3>Module: ${description.name}</H3><P>${dtext}</p>`;
+
+        if (description.webdescription)
+            help+='<P>'+description.webdescription+'</p>';
+        help+=`<HR width='50%'>`;
+        
+        let params=description.params;
+        help+="<B>Parameters</B>";
+        
+        params = params.sort((a, b) => {
+            let sa=0,sb=0;
+            if (a.advanced)
+                sa=10000;
+            if (b.advanced)
+                sb=10000;
+            return (a.priority+sa - (b.priority+sb));
+        });
+
+        help+='<UL>';
+
+        let addedadv=false;
+
+        for (let i=0;i<params.length;i++) {
+            let p=params[i];
+            if (p.advanced && addedadv===false) {
+                addedadv=true;
+                if (i>0)
+                    help+='</UL><details><summary><b>Advanced Parameters</b></summary><UL>';
+            }
+            help+=`<LI><B>${p.name}</B>: ${p.description}</LI>`;
+        }
+
+        if (addedadv)
+            help+="</details>";
+        /*else {}
+            help+="</details>";
+        */
+       
+        help+=`</UL>`;
+        panel.setHelpModalMessage(help);
     }
 
     /** Returns the current panel object

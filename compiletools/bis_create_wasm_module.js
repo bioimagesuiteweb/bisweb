@@ -42,6 +42,7 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-i, --input  <s>','input .wasm file')
+    .option('-g, --gpl  <n>','gpl flag')
     .option('-o, --output  <s>','output js file wrapper for wasm')
     .on('--help',function() {
             help();
@@ -103,6 +104,12 @@ try {
     process.exit(1);
 }
 
+let usesgpl=true;
+if (program.gpl===0 || fname2.indexOf('nongpl')>0) {
+    usesgpl=false;
+}
+
+
 let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
@@ -129,6 +136,7 @@ let output_text=`
     const bioimagesuitewasmpack= {
         binary: "${str}",
         date : "${a}, ${b}",
+        usesgpl : ${usesgpl},
         filename : "external js module: ${inputfilename}",
         initialize : biswasm_initialize_function,
     };
@@ -141,7 +149,7 @@ let output_text=`
 })();
 `;
         
-console.log(`++++ Writing webpack-wasm module to ${program.output}`);
+console.log(`++++ Writing webpack-wasm module to ${program.output} (usesgpl=${usesgpl})`);
 fs.writeFileSync(program.output,output_text);
 
 process.exit(0);

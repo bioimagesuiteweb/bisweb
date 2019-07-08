@@ -35,7 +35,7 @@ class ProjectImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Project 3D->2D",
-            "description": "This algorithm performes image projecting to a 2D image using eigher MIP or shaded projection",
+            "description": "This algorithm performs image projection from a 3D image to a 2D image using eigher MIP or shaded projection",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs" : [
@@ -167,10 +167,18 @@ class ProjectImageModule extends BaseModule {
     }
 
     directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: projectImage with vals', JSON.stringify(vals));
-        return new Promise( (resolve, reject) => {
-            let input = this.inputs['input'];
 
+        console.log('oooo invoking: projectImage with vals', JSON.stringify(vals));
+        let input = this.inputs['input'];
+        let usemask=this.parseBoolean(vals.usemask);
+        let mask=0;
+        if (usemask) {
+            mask=this.inputs['mask'] || 0;
+            if (!input.hasSameOrientation(mask,'image','mask',true))
+                return Promise.reject('Failed');
+        }
+
+        return new Promise( (resolve, reject) => {
 
             let axis=-1;
             if (vals.axis.indexOf("z")>=0) {
@@ -199,11 +207,6 @@ class ProjectImageModule extends BaseModule {
                 if (vals.mode==='average')
                     gradsigma=0.0;
 
-                let mask=0;
-                let usemask=this.parseBoolean(vals.usemask);
-                if (usemask)
-                    mask=this.inputs['mask'] || 0;
-                
                 this.outputs['output'] = biswrap.projectImageWASM(input,mask, {
                     "domip": domip,
                     "flip":  this.parseBoolean(vals.flip),

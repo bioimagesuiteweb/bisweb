@@ -17,7 +17,11 @@
 
 'use strict';
 
-//TODO: store DCM2NIIX for each platform (package dcm2niix appropriately). stringify dcm2niix and store it somewhere on disk, then read it and parse it before using it.
+
+/*
+  This  file is in this directory even though it does not work in the browser for access through electron
+*/
+
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const sysutils = require('bis_filesystemutils.js');
@@ -40,7 +44,7 @@ class DicomModule extends BaseModule {
         return {
             "name": "Dicom Conversion",
             "description": "This module converts raw DICOM data into NIFTI form using dcm2niix, then formats it to BIDS specifications",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": [],
             "outputs": [
@@ -62,6 +66,7 @@ class DicomModule extends BaseModule {
                     "advanced": true,
                     "type": "string",
                     "varname": "inputDirectory",
+                    "shortname" : "i",
                     "default": ""
                 },
                 {
@@ -71,6 +76,7 @@ class DicomModule extends BaseModule {
                     "required": false,
                     "type": "string",
                     "varname": "outputDirectory",
+                    "shortname" : "o",
                     "default": ""
                 },
                 {
@@ -80,7 +86,17 @@ class DicomModule extends BaseModule {
                     "required": false,
                     "type": "boolean",
                     "varname": "convertbids",
-                    "default": true
+                    "shortname" : "b",
+                    "default": false,
+                },
+                {
+                    "name": "Fix Paths",
+                    "description": "Used by bisserver on windows",
+                    "advanced": true,
+                    "required": false,
+                    "type": "boolean",
+                    "varname": "fixpaths",
+                    "default": false
                 },
                 baseutils.getDebugParam()
             ]
@@ -135,16 +151,23 @@ class DicomModule extends BaseModule {
     
     async directInvokeAlgorithm(vals) {
 
+        if (bis_genericio.getmode()==='browser') {
+            return Promise.reject('Do not call this module from the Browser. Electron/Node only');
+        }
+        
         console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
         // -------------------- Check Directories and create as needed --------------------
         let indir = vals.inputDirectory, outdir = vals.outputDirectory, tmpdir = null;
+        let fixpaths = super.parseBoolean(vals.fixpaths);
+        if (path.sep !== '\\')
+            fixpaths=false;
 
         if (indir.length<1 || outdir.length<1) {
             return Promise.reject('No input or output directory specified.');
         }
         
-        if (path.sep === '\\')  {
+        if (fixpaths)  {
             indir = bis_util.filenameUnixToWindows(indir);
         }
         
@@ -156,7 +179,7 @@ class DicomModule extends BaseModule {
         // Output Directory
         // --------------------------------------------
         let outdir2 = outdir;
-        if (path.sep === '\\')  
+        if (fixpaths)
             outdir2=bis_util.filenameUnixToWindows(outdir);
         
         if (!sysutils.validateFilename(outdir2)) 
@@ -213,23 +236,22 @@ class DicomModule extends BaseModule {
                 
             if (vals.convertbids) {
                 let bidsmodule = new BidsModule();
+                console.log('converting to bids...');
+                let bidsoutput=null;
                 try {
-                    console.log('converting to bids...');
-                    let bidsoutput = await bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir,
-                                                                              'outputDirectory' : outdir,
-                                                                              'dcm2nii' : true});
-                    console.log('.... removing temporary directory = '+tmpdir);
-                    await bis_genericio.deleteDirectory(tmpdir);
-                    console.log('.... all done (bids), returning output path = '+outdir);
-                    resolve(bidsoutput);
-                    return true;
-                } catch (e) {
-                    console.log('.... removing temporary directory', tmpdir);
-                    await bis_genericio.deleteDirectory(tmpdir);
-
+                    bidsoutput = await bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir,
+                                                                          'outputDirectory' : outdir,
+                                                                          'dcm2nii' : true});
+                } catch(e) {
+                    console.log('Bids conversion error',e);
                     reject(e);
-                    return false;
+                } finally {
+                    console.log('....\n.... removing temporary directory = '+tmpdir);
+                    await bis_genericio.deleteDirectory(tmpdir);
                 }
+                console.log('.... all done (bids), returning output path = '+outdir);
+                resolve(bidsoutput);
+                return true;
             }
             console.log('.... all done (no bids), returning output path = '+outdir);
             resolve(outdir);

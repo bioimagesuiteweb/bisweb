@@ -1,3 +1,8 @@
+
+This directory contains modules that can run in both node.js and the browser.
+
+---
+
 ##Custom Modules
 * This folder is dedicated to the the specifications of modules designed to be run either through the BioImageSuite website or through the command line (see 'scripts' folder).
 

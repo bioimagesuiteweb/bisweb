@@ -35,7 +35,7 @@ class BackProjectImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "BackProject 2D->3D",
-            "description": "This algorithm performes back projecting from 2D to 3D",
+            "description": "This algorithm performs back projection from 2D to 3D. This is meant for mapping 2D optical images to 3D MRI images",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "BackProject",
@@ -134,7 +134,7 @@ class BackProjectImageModule extends BaseModule {
                 },
                 {
                     "name": "reduce",
-                    "description": "Factor to reduce resolution by as 2D res >> 3d res",
+                    "description": "Factor to reduce the resolution of the 2D image by",
                     "priority": 5,
                     "advanced": false,
                     "gui": "slider",
@@ -165,9 +165,15 @@ class BackProjectImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: backProjectImage with vals', JSON.stringify(vals));
+        let input = this.inputs['input'];
+        let threed= this.inputs['target'];
+        
+        if (!input.hasSameOrientation(threed,'image1','image2',true))
+            return Promise.reject('Failed');
+
         return new Promise( (resolve, reject) => {
-            let input = this.inputs['input'];
-            let threed= this.inputs['target'];
+
+            
             console.log('des=',input.getDescription(),threed.getDescription());
 
             let axis=-1;

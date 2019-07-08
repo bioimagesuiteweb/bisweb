@@ -21,6 +21,8 @@ const program = require('commander');
 const modules = require('nodemoduleindex.js');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const baseutils = require('baseutils');
+const slicerxml = require('bis_slicerxml');
+const slicerupd = require('bis_slicerprogress');
 const genericio=require('bis_genericio');
 const biswrap = require('libbiswasm_wrapper');
 const boldon = "";
@@ -32,7 +34,7 @@ let initialError = function (extra) {
     console.log(` Type 'node bisweb [function name] --help' for more information`);
     let outstring = modules.getModuleNames().join("\n");
 
-    console.log('\tThe list of available modules is :\n', outstring);
+    console.log('\tThe list of available modules is :\n\n'+outstring);
 };
 
 
@@ -124,12 +126,15 @@ let loadParse = function (args, toolname,basedirectory='') {
         program.version('1.0.0');
         attachFlags(mod, program);
         program
-            .option('--paramfile [s]', 'Specifies that parameters should be read from a file as opposed to parsed from the command line.');
+            .option('--paramfile [s]', 'Specifies that parameters should be read from a file as opposed to parsed from the command line.')
+            .option('--slicerprogress [s]', 'true or false. If true print slicer progress messages.');
 
         let a=mod.getExtraArgument();
         if (a!==null) {
             attachSingleFlag(a, program);
         }
+
+        
         
         
         program.on('-h, --help', function () {
@@ -145,7 +150,10 @@ let loadParse = function (args, toolname,basedirectory='') {
             else
                 outargs.push(args[i]);
         }
+
         program.parse(outargs);
+
+        
         let objinputs=mod.getDescription().inputs;
         let max=3;
         if (objinputs.length<1)
@@ -191,36 +199,58 @@ let loadParse = function (args, toolname,basedirectory='') {
             });
         }
 
+        let slprog=program.slicerprogress;
+        if (slprog === '1' || slprog === 'true' || slprog === true)
+            slprog = true;
+        else
+            slprog = false;
+
 
         readparam.then( () => {
             // Parse From Command Line
+            if (slprog)  {
+                let des = mod.getDescription();
+                let filtername='bisweb-'+des.name;
+                slicerupd.start(filtername,des.description);
+            }
+            
             mod.loadInputs(program,basedirectory).then( () => {
                 console.log('oooo\noooo Loaded all inputs.');
+                slicerupd.update(0.1);
                 let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
                 modArguments.extraArgs=[];
                 for (let i=0;i<program.args.length;i++)
                     modArguments.extraArgs.push(basedirectory+program.args[i]);
-                
                 console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
                 if (mod.typeCheckParams(modArguments)) {
                     console.log('oooo\noooo Invoking module', mod.getDescription().name, '....');
+                    slicerupd.update(0.2);
                     mod.directInvokeAlgorithm(modArguments).then(() => {
                         console.log('oooo -------------------------------------------------------');
                         mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
                         console.log('oooo');
+                        slicerupd.update(0.9);
                         mod.saveOutputs(program).then((m) => {
                             if (m.length>0)
                                 console.log('oooo\noooo Saved outputs.');
+                            slicerupd.end();
                             resolve( 'Done Saving');
                         }).catch((e) => {
+                            slicerupd.end();
                             reject('An error occured saving'+e);
                         });
                     }).catch((e) => {
+                        slicerupd.end();
                         reject('---- Failed to invoke algorithm'+e);
                     });
                 } else {
+                    slicerupd.end();
                     reject('---- Type checking of Arguements failed');
                 }
+            }).catch( (e) => {
+                slicerupd.end();
+                console.log('----- error loading inputs');
+                reject(e);
             });
         }).catch((e) => {
             console.log('error');
@@ -294,9 +324,18 @@ let processTestResult = function (toolname, resultFile, test_target, test_type, 
                });
 };
 
+// --------------------------------------------------------------------------
+/** creates XML string for Slicer CLP */
+let createXML = function(toolname) {
+    const mod = modules.getModule(toolname);
+    return slicerxml.createXMLDescription(mod);
+};
+
+
 
 module.exports = {
     loadParse: loadParse,
+    createXML : createXML,
     processTestResult: processTestResult
 };
 

@@ -509,9 +509,9 @@ class ViewerLayoutElement extends HTMLElement {
             this.context.fillStyle = "#dd7700";
             
             if (this.defaulttext.length<4) {
-                this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',20,100);
-                this.context.fillText(' or an application viewer file (.biswebstate)',20,140);
-                this.context.fillText('and it will appear here!',30,180);
+                //this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',20,100);
+                //                this.context.fillText(' or an application viewer file (.biswebstate)',20,140);
+                //                this.context.fillText('and it will appear here!',30,180);
             } else {
                 let ch=this.context.canvas.height;
                 let cw=this.context.canvas.width;

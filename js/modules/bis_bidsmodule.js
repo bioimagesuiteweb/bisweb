@@ -12,9 +12,9 @@ class BidsModule extends BaseModule {
     createDescription() {
 
         return {
-            "name": "Dicom Conversion",
+            "name": "BIDS Conversion",
             "description": "This module converts raw DICOM data into NIFTI form using dcm2niix, then formats it to BIDS specifications",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": [],
             "outputs": [
@@ -53,15 +53,16 @@ class BidsModule extends BaseModule {
         };
     }
 
-    async directInvokeAlgorithm(vals) {
-        
-        let msg = await bidsutils.dicom2BIDS({ 'indir': vals.inputDirectory, 'outdir': vals.outputDirectory, 'dcm2nii' : vals.dcm2nii });
-        return new Promise((resolve, reject) => {
-            if (msg.split(' ').length > 1) {
-                reject('An error occured during conversion', msg);
-            }  else {
-                resolve(msg);
-            }
+    directInvokeAlgorithm(vals) {
+
+        return new Promise( (resolve,reject) => {
+            bidsutils.dicom2BIDS({ 'indir': vals.inputDirectory, 'outdir': vals.outputDirectory, 'dcm2nii' : vals.dcm2nii }).then( (msg) => {
+                if (msg.split(' ').length > 1) {
+                    reject('An error occured during conversion', msg);
+                }  else {
+                    resolve(msg);
+                }
+            });
         });
     }
 

@@ -20,6 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
+const smreslice=require('bis_imagesmoothreslice');
 
 // Image1 + Image2 + Transformation -> Output
 // Reslices Image2 using Transformation to make an image that looks like Image1
@@ -42,12 +43,13 @@ class ResampleImageModule extends BaseModule {
         return {
             "name": "Resample Image",
             "description": "Resamples an existing image",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Resample",
             "shortname" : "rsp",
+            "slicer" : true,
             "params": [
                 {
                     "name": "XSpacing",
@@ -93,13 +95,24 @@ class ResampleImageModule extends BaseModule {
                 },
                 {
                     "name": "Background Value", 
-                    "description": "value to use for outside the image",
+                    "description": "value to use for outside the region covered by the original image (at the boundaries)",
                     "priority": 100,
                     "advanced": true,
                     "gui": "entrywidget",
                     "type": "float",
                     "varname": "backgroundvalue",
                     "default" : 0.0,
+                },
+                {
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "usejs",
+                    "type": 'boolean',
+                    "default": false,
+                    "jsonly" : true,
                 },
                 baseutils.getDebugParam()
             ]
@@ -109,8 +122,19 @@ class ResampleImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: resampleImage with vals', JSON.stringify(vals));
+        let input = this.inputs['input'];
+        
+        if (super.parseBoolean(vals.usejs)) {
+            console.log('+++ Using the JS Implementation of resampleImage');
+            this.outputs['output']=smreslice.resampleImage(input,
+                                                           [parseFloat(vals.xsp), parseFloat(vals.ysp), parseFloat(vals.zsp)],
+                                                           parseInt(vals.interpolation),
+                                                           parseFloat(vals.backgroundvalue));
+            return Promise.resolve();
+        }
+        
         return new Promise((resolve, reject) => {
-            let input = this.inputs['input'];
+
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.resampleImageWASM(input, {
                     "spacing" : [parseFloat(vals.xsp), parseFloat(vals.ysp), parseFloat(vals.zsp)],

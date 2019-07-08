@@ -70,6 +70,7 @@ class BisWebImage extends BisWebDataObject {
                 name     : 'uchar'
             }
         };
+        this.tmpheaderinfo=null;
         this.debug=false;
         this.extensions=".nii.gz";
     }
@@ -164,7 +165,7 @@ class BisWebImage extends BisWebDataObject {
                     self.internal.header.setExtensionsFromArray(self.commentlist);
                 }else {
                     try {
-                        self.parseNII(obj.data.buffer,forceorient);
+                        self.parseNIIModular(obj.data.buffer,forceorient);
                     } catch(e) {
                         reject('Failed to load from '+fobj + '('+e+')');
                         reject(e);
@@ -221,7 +222,7 @@ class BisWebImage extends BisWebDataObject {
         super.parseFromDictionary(obj);
         let forceorient = forceorientin || '';
         let arr=bisgenericio.fromzbase64(obj.data);
-        this.parseNII(arr.buffer,forceorient);
+        this.parseNIIModular(arr.buffer,forceorient);
         return true;
     }
 
@@ -263,11 +264,11 @@ class BisWebImage extends BisWebDataObject {
         let opts = {
             type : nifti_info[0],
             numframes :  wasmobj.dimensions[3] ,
-            numcomponentes:  wasmobj.dimensions[4] ,
+            numcomponents:  wasmobj.dimensions[4] ,
             dimensions :  [ wasmobj.dimensions[0], wasmobj.dimensions[1], wasmobj.dimensions[2] ],
             spacing :  [ wasmobj.spacing[0], wasmobj.spacing[1], wasmobj.spacing[2] ],
         };
-            
+
         if (baseimage !==0 ) {
             this.cloneImage(baseimage,opts);
             this.setCommentList(baseimage.getCommentList());
@@ -346,6 +347,7 @@ class BisWebImage extends BisWebDataObject {
     initialize() {
         this.internal.header=new bisheader();
         this.internal.header.initializenifti();
+        this.tmpheaderinfo=null;
     }
 
 
@@ -438,8 +440,9 @@ class BisWebImage extends BisWebDataObject {
      * @param {string} opts.numcomponents - number of components in frame in clone (null or 0->same)
      * @param {array} opts.dimensions - new dimensions (null or 'same' ->same). This can be a 3 or a 4-array to also change frames. opts.numframes overrides this.
      * @param {array} opts.spacing - new spacing (null or 'same' ->same)
+     * @param {Boolean} force - if true ignore lack of pixeldata
      */
-    cloneImage(inputimage,opts={}) {
+    cloneImage(inputimage,opts={},force=false) {
 
         const internal=this.internal;
         
@@ -449,14 +452,15 @@ class BisWebImage extends BisWebDataObject {
         let newdims = opts.dimensions || 'same';
         let newspacing = opts.spacing || 'same';
         
-        if (inputimage.getRawData()===null) {
+        if (inputimage.getRawData()===null && !force) {
             console.log('bad image, can not clone');
             return null;
         }
         
         this.initialize();
         let headerdata=inputimage.getHeaderData(true);
-        this.parseNII(headerdata.data.buffer,false,true);
+        this.parseNIIModular(headerdata.data.buffer);
+        
         
         let headerstruct=internal.header.struct;
         
@@ -499,13 +503,18 @@ class BisWebImage extends BisWebDataObject {
                 newnumframes=util.range(newnumframes,1,9999);
                 internal.header.struct.dim[4]=newnumframes;
                 internal.dimensions[3]=newnumframes;
+                if (newnumframes>1)
+                    internal.header.struct.dim[0]=4;
+                else
+                    internal.header.struct.dim[0]=3;
             }
 
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
                 internal.dimensions[4]=newnumcomponents;
-                
+                if (newnumcomponents>1)
+                    internal.header.struct.dim[0]=5;
             }
             internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
                 internal.dimensions[2]*internal.dimensions[3]*internal.dimensions[4];
@@ -578,12 +587,18 @@ class BisWebImage extends BisWebDataObject {
                 newnumframes=util.range(newnumframes,1,9999);
                 internal.header.struct.dim[4]=newnumframes;
                 internal.dimensions[3]=newnumframes;
+                if (newnumframes>1)
+                    internal.header.struct.dim[0]=4;
+                else
+                    internal.header.struct.dim[0]=3;
             }
             
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
                 internal.dimensions[4]=newnumcomponents;
+                if (newnumcomponents>1)
+                    internal.header.struct.dim[0]=5;
             }
         }
         internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
@@ -745,7 +760,28 @@ class BisWebImage extends BisWebDataObject {
         return maxd;
     }
 
-    /** compare dimensions and spacing, return true if same 
+    /** compare orientation, return true if same 
+     * @param{BisWebImage} otherimage - the image to compare to
+     @returns {Boolean} true if this image and other image have same dimensions */
+    hasSameOrientation(otherimage,name1='',name2='',debug=false) {
+        let o1=this.getOrientationName();
+        let o2=otherimage.getOrientationName();
+
+        let same=false;
+        if (o1===o2)
+            same=true;
+
+        if (debug) {
+            if (same)
+                console.log(`++++ ${name1} and ${name2} have the same orientation ${o1} == ${o2}. Good!`);
+            else
+                console.log(`---- ${name1} and ${name2} have different orientations ${o1} vs ${o2}`);
+        }
+        return same;
+    }
+
+
+    /** compare dimensions, spacing and orientation return true if same 
      * @param{BisWebImage} otherimage - the image to compare to
      * @param{number} threshold - spacing comparison threshold (default=0.001)
      * @param{Boolean} spaceonly - if true (default=false) then only x,y,z dims are compared
@@ -838,8 +874,6 @@ class BisWebImage extends BisWebDataObject {
 
 
     
-    
-
     /** serialize to NII Binary array 
      * creates a uint8 array with all the data
      * @return {Uint8Array}
@@ -851,7 +885,8 @@ class BisWebImage extends BisWebDataObject {
         let typename=internal.header.getniftitype(dt);
         if (this.debug)
             console.log('+++++++ serialiazing dt=',dt,' tpname=',typename);
-        
+
+
         internal.header.setExtensionsFromArray(this.commentlist);
         let headerbin=this.getHeaderData(true);
         let rawdata=this.getRawData();
@@ -875,7 +910,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
      * @param {boolean} forcecopy -- if false then potential store image in existing inputbuffer (use this for large images)
      */
-    parseNII(_inputbuffer,forceorient_in,forcecopy=false) {
+    parseNIILegacy(_inputbuffer,forceorient_in,forcecopy=false) {
 
         forcecopy = true;
         
@@ -952,10 +987,7 @@ class BisWebImage extends BisWebDataObject {
         // Store key things
         // -------------------------------------------------------
         BisWebImage.parseHeaderAndComputeOrientation(internal,debug);
-        //if (debug)    
-        //      console.log('+++++ orientation: name=',internal.orient.name,'(axis = ',internal.orient.axis, ' flip=', internal.orient.flip,' imginfo',internal.imginfo,'dims=',internal.dimensions);
         let headerlength=internal.header.struct.vox_offset;
-        //      console.log('headerlength=',headerlength,'\n\n\n\n');
         internal.rawsize=internal.volsize*internal.header.struct.bitpix/8;
         let Imginfo=internal.imginfo.type;
         let imgend=headerlength+internal.rawsize;
@@ -1821,6 +1853,204 @@ class BisWebImage extends BisWebDataObject {
         // Finally axis is done
         internal.orient.axis=[0,1,2];
     }
+
+    // ------------------------------------------------------------------------------
+    /** parses a binary buffer (nifti image) to create the image
+     * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
+     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
+     * @param {Number} parseMode --  2=normal, 0=header only,1 =data only
+     */
+    parseNIIModular(_inputbuffer,forceorient_in,parseMode=2) {
+
+        let forcecopy = true;
+        
+        let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
+        const debug=this.debug;
+        const internal=this.internal;
+        
+        if (debug)
+            console.log('..... in PARSENII Modular BUFFER forceorient='+forceorient,'parseMode='+parseMode+' forcecopy='+forcecopy);
+
+        internal.singlebuffer=null;
+        
+        if (parseMode!==1) {
+            
+            // First do header stuff
+            let tmpfloat=new Float32Array(_inputbuffer,108,1);
+            //console.log('tmpfloat=',tmpfloat[0]);
+            let len=Math.floor(tmpfloat[0]);
+            let swap=false;
+            if (len<300) {
+                let orig=new Uint8Array(_inputbuffer,108,4);
+                let tmp=new Uint8Array(4);
+                tmp[0]=orig[3];
+                tmp[1]=orig[2];
+                tmp[2]=orig[1];
+                tmp[3]=orig[0];
+                let tmpfloat=new Float32Array(tmp.buffer);
+                len=Math.floor(tmpfloat);
+                swap=true;
+            }
+            if (debug)
+                console.log('Len = ',len,' swap=',swap);
+            
+            
+            if (len<1) {
+                throw new Error('BAD BAD BAD ..... in PARSENII BUFFER len='+len);
+            }
+        
+            
+            let tmpheaderdata;
+            if (forceorient!=="None" || forcecopy===true) {
+                tmpheaderdata=_inputbuffer.slice(0,len);
+                internal.header.parse(tmpheaderdata,len,swap);
+            } else {
+                internal.header.parse(_inputbuffer,len,swap);
+                internal.singlebuffer=_inputbuffer;
+                if (debug)
+                    console.log('Linking data ... not copying');
+            }
+            
+            if (internal.header.struct.dim[1]===0) {
+                throw new Error('BAD dimensions');
+            }
+            
+            if (debug) {
+                console.log('+++++ dims=',internal.header.struct.dim[1],internal.header.struct.dim[2],internal.header.struct.dim[3],internal.header.struct.dim[4]);
+                console.log('+++++ Read header type = ',Object.prototype.toString.call(tmpheaderdata),' off',internal.header.struct.vox_offset);
+            }
+            tmpheaderdata=null;
+            
+            // Next get ready for the real thing
+            let dt=internal.header.struct.datatype;
+            let typename=internal.header.getniftitype(dt);
+            if (debug)
+                console.log('+++++++ dt=',dt,' tpname=',typename);
+            
+            internal.imginfo =  {
+                type: typename[1],
+                size: internal.header.struct.bitpix/8,
+                name: typename[0],
+            };
+            if (debug)
+                console.log('+++++ imginfo',internal.imginfo.type,' tn=',typename,' dt=',dt);
+            // -------------------------------------------------------
+            // Store key things
+            // -------------------------------------------------------
+            BisWebImage.parseHeaderAndComputeOrientation(internal,debug);
+            let headerlength=internal.header.struct.vox_offset;
+            internal.rawsize=internal.volsize*internal.header.struct.bitpix/8;
+
+
+            this.tmpheaderinfo = {
+                'type' : internal.imginfo,
+                'imgend' : headerlength+internal.rawsize,
+                'swap' : swap,
+                'headerlength' : headerlength,
+            };
+        }
+
+        if (parseMode===0) {
+            return;
+        }
+
+        let headerlength=this.tmpheaderinfo.headerlength;   
+        let imgend=this.tmpheaderinfo.end;
+        let Imginfo=internal.imginfo.type;
+        let swap=this.tmpheaderinfo.swap;
+        
+
+        if (parseMode===1) {
+            imgend=this.tmpheaderinfo.end-headerlength;
+            headerlength=0;
+        }
+        
+        if (swap) {
+            let _tmp=new Uint8Array(_inputbuffer,headerlength,internal.rawsize);            
+            let sizeoftype=internal.imginfo.size;
+            let half=sizeoftype/2;
+            console.log('Byte swapping data',headerlength,internal.rawsize,sizeoftype,half);
+            
+            for (let i=0;i<internal.rawsize;i++) {
+                let offset=i*sizeoftype;
+                for (let j=0;j<half;j++) {
+                    let j1=j+offset;
+                    let tmp1=_tmp[j1];
+                    let j2=offset+sizeoftype-(j+1);
+                    _tmp[j1]=_tmp[j2];
+                    _tmp[j2]=tmp1;
+                }
+            }
+        }
+
+        
+        if (forceorient === "None" || forceorient === internal.orient.name) {
+            if (debug) console.log('++++++ not permuting data');
+            internal._rawdata=new Uint8Array(_inputbuffer.slice(headerlength,imgend));
+            internal.imgdata=new Imginfo(internal._rawdata.buffer);
+            internal.forcedorientationchange=false;
+        } else  {
+            let newbuffer=new ArrayBuffer(internal.rawsize);
+            internal._rawdata=new Uint8Array(newbuffer);
+            internal.imgdata=new Imginfo(newbuffer);
+            let origdata=new Imginfo(_inputbuffer);
+            if (debug)
+                console.log('+++++ permuting data ',forceorient);
+            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient,debug);
+            internal.forcedorientationchange=true;
+        }
+        
+        
+        // Eliminate Nan's
+        for (let i=0;i<internal.imgdata.length;i++) {
+            if (internal.imgdata[i]!==internal.imgdata[i])
+                internal.imgdata[i]=0;
+        }
+        
+        this.commentlist=internal.header.parseExtensionsToArray();
+        this.computeIntensityRange();
+        
+    }
+
+    
+    // ---- Load part of a NIFTI image
+    /**
+     * Loads part of an image from a filename or file object (Node/Electron)
+     * @param {filename} - this is the filename of the file to read
+     * @param {Boolean} debug - if true turn debug on
+     * @return {Promise} a promise that is fuilfilled when the image is loaded. The payload is the image type
+     */
+    async loadHeaderOnly(filename,debug=false) {
+
+        if (bisgenericio.getmode() ==='browser') {
+            return Promise.reject('Load Header Only can only be used in Node or Electron');
+
+        }
+
+        let filesize=0;
+        try {
+            filesize=await bisgenericio.getFileSize(filename);
+        } catch(e) {
+            return Promise.reject(e);
+        }
+
+        if (debug)
+            console.log('++++ Reading ',filename,' file size=',filesize);
+        
+        this.initialize();
+        let headerBuffer=null;
+        try {
+            headerBuffer=await bisgenericio.readPartialDataFromStartOfFile(filename,65535);
+        }  catch(e) {
+            console.log('e=',e);
+            return Promise.reject(e);
+        }
+        
+        this.parseNIIModular(headerBuffer,false,0);
+        this.tmpheaderinfo['headerBuffer']=headerBuffer;
+        return Promise.resolve(this.tmpheaderinfo);
+    }
+
 
 }
 

@@ -32,7 +32,9 @@
                                  Dept of Radiology and Biomedical Imaging,
                                  Yale School of Medicine">
 
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
     <link rel="icon" href="images/favicon.ico">
+
 
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
@@ -120,20 +122,13 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-modulemanager>
     
-    <bisweb-filetreepanel
-      id="bis_filetreepanel"
+    <bisweb-studypanel
+      id="dicom_import"
       bis-layoutwidgetid="#viewer_layout" 
       bis-viewerid="#viewer"
-      bis-viewerid2="#viewer2"
-      bis-viewerapplicationid="#viewer_application">
-    </bisweb-filetreepanel>
-
-    <bisweb-dicomimportelement
-      id="dicom_import"
-      bis-viewerid="#viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#bis_filetreepanel">
-    </bisweb-dicomimportelement>
+      bis-viewerapplicationid="#viewer_application"
+      bis-painttoolid="#painttool">
+    </bisweb-studypanel>
 
     <bisweb-viewerapplication
       id="viewer_application"

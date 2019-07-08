@@ -24,15 +24,6 @@
  */
 
 
-/** A simple object with elements to describe a subviewer (i.e. one of the four viewers in orthoviewer or any one of the many viewers in mosaicviewer).
- * It has three children -- scene (a ThreeJs-Scene object), controls (a BIS_3dOrthographicCameraControls object) and a camera  object.
- * @typedef Bis_SubViewer
- * @property {ThreeJS-Scene} scene - a ThreeJS - Scene object
- * @property {Bis_3dOrthograpicCameraControls} controls - a camera controls object
- * @property {ThreeJS-OrthographicCamera} camera - a camera obejct
- */
-
-
 "use strict";
 
 const THREE = require('three');

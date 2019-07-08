@@ -20,6 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
+const smreslice=require('bis_imagesmoothreslice');
 /**
  * Applies Gaussian smoothing to an image using a given sigma (kernel size and strength) and radius factor. 
  */
@@ -32,13 +33,14 @@ class SmoothImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Smooth",
-            "description": "This algorithm performes image smoothing using a 2D/3D Gaussian kernel",
-            "author": "Zach Saltzman",
+            "description": "This algorithm performs image smoothing using a 2D/3D Gaussian kernel",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
-            "inputs": baseutils.getImageToImageInputs('Load the image to be smoothed'),
+            "inputs": baseutils.getImageToImageInputs('input'),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Smooth",
             "shortname" : "sm",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Sigma",
@@ -63,6 +65,37 @@ class SmoothImageModule extends BaseModule {
                     "default": true,
                 },
                 {
+                    "name": "FWHMAX?",
+                    "description": "If true treat kernel in units of full-width-at-half max (FWHM) (not as the actual value of the sigma in the gaussian filter.)",
+                    "priority": 8,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "fwhmax",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "usejs",
+                    "type": 'boolean',
+                    "default": false,
+                    "jsonly" : true,
+                },
+                {
+                    "name": "vtkboundary",
+                    "description": "If true mimic how VTK handles boundary conditions for smoothing (instead of tiling default)",
+                    "priority": 10,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "vtkboundary",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
                     "name": "Radius Factor",
                     "description": "This affects the size of the convolution kernel which is computed as sigma*radius+1",
                     "priority": 2,
@@ -82,15 +115,33 @@ class SmoothImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: smoothImage with vals', JSON.stringify(vals));
+        let input = this.inputs['input'];
+        let s = parseFloat(vals.sigma);
+        if (super.parseBoolean(vals.fwhmax)) {
+            s=s*0.4247;
+        }
+        
+        if (super.parseBoolean(vals.usejs)) {
+            let outdata={};
+            console.log('+++ Using the JS Implementation of smoothImage');
+            this.outputs['output']=smreslice.smoothImage(input, [s,s,s],
+                                                         super.parseBoolean(vals.inmm),
+                                                         parseFloat(vals.radiusfactor),
+                                                         outdata,
+                                                         super.parseBoolean(vals.vtkboundary));
+            if (super.parseBoolean(vals.debug)) {
+                console.log('+++ actualsigmas=',outdata);
+            }
+            return Promise.resolve();
+        }
+
         return new Promise( (resolve, reject) => {
-            let input = this.inputs['input'];
-            let s = parseFloat(vals.sigma);
-            
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.gaussianSmoothImageWASM(input, {
                     "sigmas": [s, s, s],
                     "inmm": super.parseBoolean(vals.inmm),
-                    "radiusfactor": parseFloat(vals.radiusfactor)
+                    "radiusfactor": parseFloat(vals.radiusfactor),
+                    "vtkboundary" : super.parseBoolean(vals.vtkboundary)
                 }, super.parseBoolean(vals.debug));
                 resolve();
             }).catch( (e) => {

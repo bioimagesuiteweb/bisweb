@@ -3,7 +3,18 @@ of the BioImage Suite Web package. See the LICENSE file in this directory for mo
 
 Before you do anything else you must install Node.js version 10.x. You may obtain this from https://nodejs.org/en/
 
-To run the scripts
+__Note: In the rest of this document the directory this file is located in is
+refered to as BISWEBDIR__
+
+---
+
+To run the modules:
+
+0. The first time you do this -- you need to install the prerequities by
+typing npm install in the bisweb directory
+
+   cd BISWEBDIR
+   npm install
 
 1. Optionally set your paths
 
@@ -17,9 +28,14 @@ On MS-Windows type
 
    setpaths.bat
 
-2. Then execute the tool of your choice. (The scripts are in the bin, or
-winbin if on MS-WINDOWS, directory.) As an example to run the smooth image
-script (and get its help page) type:
+2. Then execute the tool of your choice.As an example to run the smooth image
+tool (and get its help page) type:
 
-   bw_smoothImage -h
+    bisweb.js smoothImage -h
 
+
+If you did not set the paths then simply type
+
+   BISWEBDIR/lib/bisweb.js smoothImage -h
+
+_Note:_ The list of modules can be found in the file BISWEBDIR/ModuleList.txt

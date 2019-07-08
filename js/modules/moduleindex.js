@@ -29,6 +29,7 @@ const moduleImports = {
     extractslice : require('extractSlice.js'),
     extractframe : require('extractFrame.js'),
     normalizeimage : require('normalizeImage.js'),
+    quantilenormalizeimage : require('quantileNormalizeImage.js'),
     clusterthreshold : require('clusterThreshold.js'),
     prepareregistration : require('prepareRegistration.js'),
     resampleimage : require('resampleImage.js'),
@@ -46,15 +47,17 @@ const moduleImports = {
     preprocessoptical : require('preprocessOptical.js'),
     diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
-
-
-    
+// FIltering
     butterworthfilter : require('butterworthFilter.js'),
+    butterworthfilterimage : require('butterworthFilterImage.js'),
     regressglobal : require('regressGlobal.js'),
     regressout : require('regressOut.js'),
+    regressoutimage : require('regressOutImage.js'),
+    driftcorrectimage : require('driftCorrectImage.js'),
     computecorrelation : require('computeCorrelation.js'),
+    seedcorrelation : require('seedCorrelation.js'),
     computeroi : require('computeROI.js'),
-    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
+//    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
 
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
@@ -66,16 +69,18 @@ const moduleImports = {
     linearregistration : require('linearRegistration.js'),
     nonlinearregistration : require('nonlinearRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
-
     skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),
-    indivparcellation: require('indivParcellation.js'),
+    individualizedparcellation : require('individualizedParcellation.js'),
+
+    joinmatrices : require('joinMatrices.js'),
+    removematrixcols : require('removeMatrixCols.js'),
 
     // these are here so that can be accessed by electron
-    'dicomconversion' : require('./dicommodule.js'),
-    'bidsconversion' : require('./bis_bidsmodule.js'),
+    dicomconversion : require('./dicommodule.js'),
+    bidsconversion : require('./bis_bidsmodule.js'),
 
 };
 

@@ -36,13 +36,14 @@ class ReorientImageModule extends BaseModule {
 
         let des= {
             "name": "Reorient Image",
-            "description": "This algorithm reorients an image to a fixed orientation",
+            "description": "This algorithm reorients an image to a fixed orientation. The letters refer to the direction towards the individual axes are increasing. RAS, for example, means an image where the first axis goes from left-to-Right, the second axis from posterior-to-Anterior and the third axis from inferior-to-Superior",
             "author": "Xenios Papademetris",
             "version": "1.0",
-            "inputs": baseutils.getImageToImageInputs('Load the image to be blanked'),
+            "inputs": baseutils.getImageToImageInputs('input'),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
             "shortname" : "reornt",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Orientation",
@@ -82,7 +83,7 @@ class ReorientImageModule extends BaseModule {
         let output=new BisWebImage();
         output.initialize();
         output.debug=debug;
-        output.parseNII(dat.buffer,vals.orient);
+        output.parseNIIModular(dat.buffer,vals.orient);
         output.debug=false;
         this.outputs['output']=output;
 
