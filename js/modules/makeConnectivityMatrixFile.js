@@ -49,7 +49,19 @@ class MakeConnMatrixFileModule extends  BaseModule {
                 "advanced": false,
                 "gui": "text",
                 "varname": "indir",
-                "type": "string"
+                "shortname" : "i",
+                "type": "string",
+                "required": true
+            },{
+                "name": "Output filename",
+                "description" : "Name of the output matrix connectivity params file",
+                "priority": 2,
+                "advanced": false,
+                "gui": "text",
+                "varname": "outdir",
+                "shortname": "o",
+                "required": false,
+                "default" : ""
             }],
         };
 
@@ -59,7 +71,18 @@ class MakeConnMatrixFileModule extends  BaseModule {
     directInvokeAlgorithm(vals) {
 
         console.log('oooo invoking: Make Connectivity Matrix File', JSON.stringify(vals),'\noooo'); 
-        let indir = vals.indir, sep = bis_genericio.getPathSeparator();
+        let indir = vals.indir, sep = bis_genericio.getPathSeparator(), outdir;
+        let combinedFile = {};
+
+        //make default output filename if none is specified
+        if (!vals.outdir) {
+
+            let splitindir = path.resolve(indir).split(sep);
+            splitindir.push('connmatrixfile.json');
+            outdir = splitindir.join(sep);
+        } else {
+            outdir = vals.outdir;
+        }
 
         return new Promise( (resolve, reject) => {
             let behaviorMatchString = indir + sep + '*+(_behavior)*';
@@ -70,20 +93,36 @@ class MakeConnMatrixFileModule extends  BaseModule {
 
             Promise.all( [behaviorPromise, connPromise]).then( async (obj) => {
                 let behaviorFiles = obj[0], connFiles = obj[1];
-                let combinedFile = {};
+                
 
                 for (let file of behaviorFiles.concat(connFiles)) {
                     let contents = await bis_genericio.read(path.resolve(file));
-                    combinedFile[bis_genericio.getBaseName(file)] = contents;
+                    addEntry(bis_genericio.getBaseName(file), contents.data);
                 }
 
-                console.log('combined file', combinedFile);
+                console.log('combined file', combinedFile, outdir);
                 
-            })
+                await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
+                resolve();
+            }).catch((e) => {
+                reject(e.stack);
+            });
 
-        }).catch((e) => {
-            reject(e.stack);
-        });
+        })
+
+        function addEntry(filename, contents) {
+            let splitName = filename.split('_');
+            let subjectNumberRegex = /sub\d*(\d)/;
+            let regexMatch = subjectNumberRegex.exec(splitName[0]);
+            console.log('regex match', regexMatch);
+            let escapedSubjectName = 'sub' + regexMatch[1];
+
+            if (!combinedFile[escapedSubjectName]) {
+                combinedFile[escapedSubjectName] = {}
+            }
+
+            combinedFile[escapedSubjectName][filename] = contents;
+        }
     }
 
 }
