@@ -788,7 +788,7 @@ let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
             // ------ Write tsv file with the parsed values and a few other parameters gleaned from the task file
             let offset;
             if (typeof parsedData['offset'] === 'string') { offset = parseInt(parsedData['offset']); }
-            else { offset = parsedData['offset']; }
+            else { offset = parsedData['offset'] || 0; }
 
             let tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
@@ -807,7 +807,7 @@ let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
             // ------ Correlate tsv files with their respective entries in the BIDS directory, e.g. the run marked 'run1' in the task file should go with the scan with 'run-01' in its name.
             //        Note that tsv files will always go with func data.
             //        This will be called only if save is specified at the top
-            let correlateAndWriteTSVFiles = () => {
+            let findAndWriteTSVFiles = () => {
                 return new Promise((resolve, reject) => {
                     let jobInfoFilename = baseDirectory + SEPARATOR + dicomParametersFilename, promiseArray = [];
                     bis_genericio.read(jobInfoFilename).then((obj) => {
@@ -870,7 +870,7 @@ let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
             };
 
             if (save) {
-                correlateAndWriteTSVFiles().then( () => {
+                findAndWriteTSVFiles().then( () => {
                     console.log('write done');
                     resolve();
                 });
@@ -885,7 +885,7 @@ let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
         // then checks the two numbers to see whether they are either lower than the lowest value seen so far or higher than the highest
         function parseEntry(entry, range) {
 
-            if (Array.isArray(entry) && Array.isArray(entry[0])) {
+            if (Array.isArray(entry)) {
                 let entryArray = [];
                 for (let item of entry)
                     entryArray.push(parseEntry(item, range));
@@ -894,9 +894,8 @@ let convertTASKFileToTSV = (file, baseDirectory, save = true) => {
             }
 
             //entry may be a string if the file was loaded from disk, so we want to parse it into an array in that case
-            let entryRange;
-            if (Array.isArray(entry)) { entryRange = entry;}
-            else if (typeof entry === 'string') { 
+            let entryRange; 
+            if (typeof entry === 'string') { 
                 entryRange = entry.split('-'); 
                 for (let i = 0; i < entryRange.length; i++) { entryRange[i] = parseInt(entryRange[i]); }
             }

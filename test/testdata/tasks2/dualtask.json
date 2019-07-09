@@ -1,7 +1,5 @@
 {
-    "units": "frames",
-    "TR": 1,
-    "offset": 0,
+	"offset" : 0,
     "runs" : {
  	"run1": {
 	    "motor": "0-20",
