@@ -43,106 +43,99 @@ const tsvPath2_2 = path.normalize(path.resolve('./testdata/tasks2/task-sample_ru
    if frames  10-0.5TR, 11+0.5*TR
 */
 
-let errFn = (e, done) => {
+let errFn = (e) => {
     console.log(colors.red('---- An error occured while reading', e)); 
-    done(e);
 };
 
 let cleanRow=function(line) {
-    return line.trim().replace(/\t/g,' ').replace(/ +/g,' ').replace(/ /g,',').replace(/\n/g,';').replace(/\r/g,'');
+    return line.trim().replace(/\t/g,'').replace(/ +/g,'').replace(/ /g,'').replace(/\n/g,'').replace(/\r/g,'').replace(/\[/g,'').replace(/\]/g,'');
 };
 
 
 describe('Convert .json to .tsv', () => {
 
-    it('Parses .json to .tsv', (done) => {
-        bis_genericio.read(tsvPath).then( (obj) => {
-            bis_bidsutils.convertTASKFileToTSV(jsonPath, null, false).then( (tsvData) => {
-                console.log(colors.cyan(' ++++ tsv data parsed from', jsonPath, JSON.stringify(tsvData, null, 2)));
+    it('Parses .json to .tsv', async () => {
+        try {
+            let sampleTsvData = await bis_genericio.read(tsvPath);
+            let parsedTsvData = await bis_bidsutils.convertTASKFileToTSV(jsonPath, null, false);
 
-                obj.data=cleanRow(obj.data);
-                tsvData.run1=cleanRow(tsvData.run1);
-                assert.strictEqual(obj.data, tsvData.run1);
-                console.log('-------------------------------------');
-                done();
-            }).catch( (e) => {
-                errFn(e, done);
-            });
-        }).catch( (e) => {
-            errFn(e, done);
-        });
+            console.log(colors.cyan(' ++++ tsv data parsed from', jsonPath, JSON.stringify(parsedTsvData, null, 2)));
+    
+            sampleTsvData = cleanRow(sampleTsvData.data);
+            parsedTsvData = cleanRow(parsedTsvData.run1);
+            assert.strictEqual(parsedTsvData, sampleTsvData);
+            console.log('-------------------------------------');
+            return Promise.resolve();
+        } catch(e) {
+            errFn(e);
+            return Promise.reject(e);
+        }
+       
     });
 
-    it('Parses .tsv to .json', (done) => {
-        bis_genericio.read(jsonPath).then( (obj) => {
-            bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, false).then( (jsonData) => {
+    it('Parses .tsv to .json', async () => {
+        try {
+            let sampleJsonData = await bis_genericio.read(jsonPath);
+            let parsedJsonData = await bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, false);
 
-                console.log('jsonData=',jsonData);
-               
-                let stringifiedData = JSON.stringify(jsonData);
-                console.log(colors.cyan(' ++++ json data parsed from tsv files in', tsvDir, JSON.stringify(jsonData)));
+            console.log(colors.cyan(' ++++ json data parsed from', tsvDir, JSON.stringify(parsedJsonData, null, 2)));
 
-                /* eslint-disable no-useless-escape */
-                //remove spaces and brackets (data on disk may have brackets that parsed data won't)
-                stringifiedData = stringifiedData.replace(/[ \t\n\[\]]/g, ''); 
-                let despacedData = obj.data.replace(/[ \t\n\[\]]/g, '');
-                /* eslint-enable no-useless-escape */ 
+            //remove spaces and brackets (data on disk may have brackets that parsed data won't)
+            parsedJsonData = cleanRow(JSON.stringify(parsedJsonData));
+            sampleJsonData = cleanRow(sampleJsonData.data);
 
-                assert.strictEqual(stringifiedData, despacedData);
-                console.log('-------------------------------------');
-                done();
-            }).catch( (e) => {
-                errFn(e, done);
-            });
-        }).catch( (e) => {
-            errFn(e, done);
-        });
+            assert.strictEqual(parsedJsonData, sampleJsonData);
+            console.log('-------------------------------------');
+            return Promise.resolve();
+        } catch (e) {
+            errFn(e);
+            return Promise.reject(e);
+        }
+
     });
 
     it('Parses .tsv  x2 to .json', async () => {
-
-        console.log('Reading',jsonPath2,tsvDir2);
+        try {
+            let sampleJsonData = await bis_genericio.read(jsonPath2);
+            let parsedJsonData = await bis_bidsutils.parseTaskFileFromTSV(tsvDir2, null, false);
+                
+            console.log(colors.cyan(' ++++ json data parsed from', tsvDir2, JSON.stringify(parsedJsonData, null, 2)));
+            
+            parsedJsonData = cleanRow(JSON.stringify(parsedJsonData));
+            sampleJsonData = cleanRow(sampleJsonData.data);
+            
+            assert.strictEqual(parsedJsonData, sampleJsonData);
+            console.log('-------------------------------------');
+            return Promise.resolve();
+        } catch(e) {
+            errFn(e);
+            return Promise.reject(e);
+        }
         
-        let obj=await bis_genericio.read(jsonPath2);
-        console.log('Obj=',obj.data);
-        let jsonData=await bis_bidsutils.parseTaskFileFromTSV(tsvDir2, null, false);
-               
-        let stringifiedData = JSON.stringify(jsonData);
-        console.log(colors.cyan(' ++++ json data parsed from tsv files in', tsvDir2, JSON.stringify(jsonData)));
-        
-        //remove spaces and brackets
-        /* eslint-disable no-useless-escape */
-        stringifiedData = stringifiedData.replace(/[ \t\n\[\]]/g, ''); 
-        let despacedData = obj.data.replace(/[ \t\n\[\]]/g, '');
-        /* eslint-enable no-useless-escape */
-        
-        assert.strictEqual(despacedData, stringifiedData);
-        console.log('-------------------------------------');
-        return Promise.resolve('done');
     });
 
     it('Parses .json to .tsv x2 ', async () => {
-        
-        let obj1=(await bis_genericio.read(tsvPath2_1)).data;
-        let obj2=(await bis_genericio.read(tsvPath2_2)).data;
-
-        let tsvData=await bis_bidsutils.convertTASKFileToTSV(jsonPath2, null, false);
-        tsvData.run1= cleanRow(tsvData.run1);
-        tsvData.run2= cleanRow(tsvData.run2);
-        obj1=cleanRow(obj1);
-        obj2=cleanRow(obj2);
-
-        let eq1=(obj1 === tsvData.run1);
-        let eq2=(obj2 === tsvData.run2);
-
-        console.log('Equal1 =',eq1,' \t('+tsvData.run1+')\t('+obj1+')');
-        console.log('Equal2 =',eq2,' \t('+tsvData.run2+')\t('+obj2+')');
-        
-        
-        let equal = eq1 && eq2;
-        assert.strictEqual(equal,true);
-        return Promise.resolve('done');
+        try {
+            let sampleTsvData1 = (await bis_genericio.read(tsvPath2_1)).data;
+            let sampleTsvData2 = (await bis_genericio.read(tsvPath2_2)).data;
+    
+            let parsedTsvData = await bis_bidsutils.convertTASKFileToTSV(jsonPath2, null, false);
+    
+            console.log(colors.cyan(' ++++ json data parsed from', tsvPath2_1, 'and', tsvPath2_2, JSON.stringify(parsedTsvData, null, 2)));
+            parsedTsvData.run1 = cleanRow(parsedTsvData.run1);
+            parsedTsvData.run2 = cleanRow(parsedTsvData.run2);
+            sampleTsvData1 = cleanRow(sampleTsvData1);
+            sampleTsvData2 = cleanRow(sampleTsvData2);
+    
+            let eq1 = (sampleTsvData1 === parsedTsvData.run1);
+            let eq2 = (sampleTsvData2 === parsedTsvData.run2);
+    
+            let equal = eq1 && eq2;
+            assert.strictEqual(equal,true);
+            return Promise.resolve();
+        } catch(e) {
+            errFn(e);
+            return Promise.reject();
+        }
     });
-
-
 });
