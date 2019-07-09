@@ -470,7 +470,6 @@ class StudyTaskManager {
             context.fillStyle=`rgba(${cl[0]},${cl[1]},${cl[2]},${OPACITY})`;
             context.fillRect(x,y,this.textWidth,1.25*texth);
             context.fillStyle="#000000";
-            console.log('X=',x+OFFSET/2);
             context.fillText(taskNames[i],Math.floor(x+this.textWidth/2),Math.floor(y+0.625*texth));
         }
 
@@ -481,23 +480,19 @@ class StudyTaskManager {
         const parsedRuns = this.taskdata.runs;
         const runInfo=parsedRuns[runName];
 
-
-        
         let maxt=0;
         for (let i=0;i<taskNames.length;i++) {
             let task=taskNames[i];
-            let runpairs=runInfo[task];
+            let runpairs=runInfo[task] || [];
 
-            // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
-            if (typeof runpairs[0] === "number")
-                runpairs=[runpairs]; 
-
-            for (let i=0;i<runpairs.length;i++) {
-                let m=parseFloat(runpairs[i][1]);
-                if (m>maxt)
-                    maxt=m;
+            for (let i = 0; i < runpairs.length; i++) {
+                let m = parseFloat(runpairs[i][1]);
+                if (m > maxt)
+                    maxt = m;
             }
+
         }
+
         maxt=Math.ceil(maxt/20)*20;
 
         // draw Time axis;
@@ -518,10 +513,8 @@ class StudyTaskManager {
 
         for (let i=0;i<taskNames.length;i++) {
             let task=taskNames[i];
-            let runpairs=runInfo[task];
-            // TODO: Fix this in parsing runpairs SHOULD ALWAYS by an array of arrays!
-            if (typeof runpairs[0] === "number")
-                runpairs=[runpairs];
+            let runpairs=runInfo[task] || [];
+
             let maxy=this.htaskbase+this.htask*(i+1)+OFFSET;
             let miny=maxy-0.8*this.htask;
             

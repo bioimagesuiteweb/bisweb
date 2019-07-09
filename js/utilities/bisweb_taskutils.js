@@ -14,7 +14,7 @@ let parseEntry = (entry, range) => {
     if (Array.isArray(entry)) {
         let entryArray = [];
         for (let item of entry)
-            entryArray.push(parseEntry(item, range));
+            entryArray.push(parseEntry(item, range)[0]); //parse entry returns an array of arrays by default, so unwrap it in this case
 
         return entryArray;
     }
@@ -25,7 +25,7 @@ let parseEntry = (entry, range) => {
     if (range.lowRange < 0 || range.lowRange > entryRange[0]) { range.lowRange = entryRange[0]; }
     if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
 
-    return entryRange;
+    return [entryRange];
 };
 
 /**
