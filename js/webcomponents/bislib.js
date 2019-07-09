@@ -28,6 +28,7 @@ require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_studypanel.js");
 require('bisweb_oldgrapherelement.js');
+require('bisweb_filetreepipeline.js');
 
 
 const webutil = require('bis_webutil');
