@@ -27,8 +27,8 @@ const path = bis_genericio.getpathmodule();
 class MakeConnMatrixFileModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'linearRegistration';
-        this.useworker=true;
+        this.name = 'makeConnMatrixFile';
+        this.useworker=false;
     }
 
     createDescription() {
@@ -95,7 +95,7 @@ class MakeConnMatrixFileModule extends BaseModule {
 
         return new Promise( (resolve, reject) => {
             let behaviorMatchString = indir + sep + '*+(_behavior)*';
-            let connMatchString = indir + sep + '*+(conn)+([0-9])*'
+            let connMatchString = indir + sep + '*+(conn)+([0-9])*';
             
             let behaviorPromise = bis_genericio.getMatchingFiles(behaviorMatchString);
             let connPromise = bis_genericio.getMatchingFiles(connMatchString);
@@ -126,7 +126,7 @@ class MakeConnMatrixFileModule extends BaseModule {
                 reject(e.stack);
             });
 
-        })
+        });
 
         function addEntry(filename, contents) {
             let splitName = filename.split('_');
@@ -135,7 +135,7 @@ class MakeConnMatrixFileModule extends BaseModule {
             let escapedSubjectName = 'sub' + regexMatch[1];
 
             if (!combinedFile[escapedSubjectName]) {
-                combinedFile[escapedSubjectName] = {}
+                combinedFile[escapedSubjectName] = {};
             }
 
             combinedFile[escapedSubjectName][filename] = contents;
