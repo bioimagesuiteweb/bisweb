@@ -1,6 +1,5 @@
 'use strict';
 
-//const AWS = require('aws-sdk');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
@@ -8,9 +7,12 @@ const BaseServerClient = require('bis_baseserverclient.js');
 const bis_genericio = require('bis_genericio.js');
 const pako = require('pako');
 const localforage = require('localforage');
-let AWS=null;
+
+const AWSCognitoAuth = require('amazon-cognito-auth-js');
+let AWS = null;
 const $ = require('jquery');
 
+//TODO: Investigate AWS being null when trying to create new bucket
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
  * Does not require the use of an app key like Dropbox and Google Drive. 
@@ -43,22 +45,25 @@ class AWSModule extends BaseServerClient {
         });
 
         this.awsbucketstorage.getItem('currentAWS', (err, value) => {
-            if (err) {
-                //console.log('an error occured fetching from aws bucket storage', err);
-            }
-            try {
+            if (err) { console.log('an error occured fetching from aws bucket storage', err); return; }
 
+            try {
                 let parsedAWS = JSON.parse(value);
-                if (parsedAWS.bucketName && parsedAWS.identityPoolId)
+                if (parsedAWS.bucketName && parsedAWS.identityPoolId) {
                     this.currentAWS = JSON.parse(value);
-                else
+                    this.changeBuckets(parsedAWS);
+                } else {
                     this.currentAWS = null;
+                }
 
             } catch (e) {
-               //console.log('current aws', this.currentAWS);
+                console.log('Could not parse the saved AWS bucket, defaulting to none.');
                 this.currentAWS = null;
             }
-        }).catch( () => { });
+        }).catch( (e) => { 
+            console.log('Could not get a saved AWS bucket from localstorage', e);
+            console.log('Defaulting to no aws bucket.');
+        });
 
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
@@ -66,8 +71,8 @@ class AWSModule extends BaseServerClient {
             this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
             this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
             bis_webutil.loadJavaScriptModule('https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js').then( (m) => {
-                console.log('--- '+m);
-                AWS=window.AWS;
+                console.log('--- Loaded AWS '+m);
+                AWS = window.AWS;
             });
         });
     }
@@ -98,7 +103,6 @@ class AWSModule extends BaseServerClient {
      * @param {String} opts.suffixes - Comma separated list of file extensions for files that should be displayed in the modal. 
      */
     createLoadModal(opts) {
-        console.log('loadmodal', opts);
         opts.server = 'amazonaws';
         this.s3.listObjectsV2({ 'Delimiter': '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
@@ -190,7 +194,6 @@ class AWSModule extends BaseServerClient {
 
             //a leading '/' will create an empty folder with no name in the s3 bucket, so we want to trim it here.
             if (filename[0] === '/') filename = filename.substring(1, filename.length);
-            console.log('filename', filename);
 
             let uploadParams = {
                 'Key': filename,
@@ -335,7 +338,7 @@ class AWSModule extends BaseServerClient {
                     reject(err);
                 } else {
                     bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000);
-                    resolve(filename);//'Upload successful');
+                    resolve(filename);
                 }
             });
         });
@@ -391,12 +394,10 @@ class AWSModule extends BaseServerClient {
         return new Promise((resolve, reject) => {
 
             let splitString = queryString.split('/');
-            console.log('query string', queryString, 'split string', splitString);
 
             let handlePrefixExpansion = (values = null) => {
 
                 if (currentDirectoryIndex + 1 > splitString.length) {
-                    console.log('values on finish', values);
 
                     //file tree panel expects a list of filenames, so format them like that before resolving
                     let formattedValues = [];
@@ -429,7 +430,6 @@ class AWSModule extends BaseServerClient {
         function expandPrefixes(directory, prefixList = {}) {
             return new Promise((resolve, reject) => {
 
-                console.log('prefix list', prefixList);
                 let promiseList = [];
 
                 if (directory === '') {
@@ -457,7 +457,6 @@ class AWSModule extends BaseServerClient {
 
                         //some file extensions are more than one part long (e.g. .nii.gz), so we only want to strip off the filename and rejoin the rest
                         filterString = filterString.slice(1).join('.');
-                        console.log('filter string', filterString);
 
                         let filteredFiles = { 'files': [], 'commonPrefixes': [] };
 
@@ -516,7 +515,6 @@ class AWSModule extends BaseServerClient {
      * @param {Object} opts.AWSParameters - AWS parameters related to the bucket the user is trying to log in to.
      */
     wrapInAuth(command, opts) {
-        console.log('opts', opts);
         let parseCommand = () => {
             switch (command) {
                 case 'showfiles': {
@@ -542,10 +540,7 @@ class AWSModule extends BaseServerClient {
 
         //check if the user has an AWS bucket selected and if their credentials are still valid
         if (!this.currentAWS) {
-            if (!this.bucketMenuModal) {
-                this.createAWSBucketMenu();
-            }
-            console.log('Items=',this.awsbucketstorage);
+            if (!this.bucketMenuModal) { this.createAWSBucketMenu(); }
             return;
         } else if (expireTime < Date.now() || this.refreshCredentials) {
             this.refreshCredentials = false;
@@ -554,13 +549,11 @@ class AWSModule extends BaseServerClient {
         } else {
             parseCommand();
         }
-
-
     }
 
     /**
      * Begins the AWS authentication process by opening a new winbow with the URL specified as 'biswebaws.html'. This performs the following steps:
-     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for teeeheir Amazon Cognito credentials. The user may create an account at this time.
+     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for their Amazon Cognito credentials. The user may create an account at this time.
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
@@ -588,69 +581,79 @@ class AWSModule extends BaseServerClient {
             'cognitoParams': AWSParameters.getCurrentCognitoParams()
         };
 
+        //When biswebaws.html alerts that it's ready for credentials, send them. 
         window.addEventListener('awsready', () => {
-            console.log('received awsready');
             authWindow.authParams = authParams;
+            //authWindow.accountId = 
             authWindow.dispatchEvent(new CustomEvent('handleIncoming'));
         });
 
+        createExchangeFlow();
+        
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
+        
+        //inject AWS SDK and Cognito Auth API into new window to avoid having to load them there
+        authWindow.outerScope = AWSCognitoAuth; 
+        //authWindow.AWS = AWS;
 
-        //set timeout in case window doesn't return a storage event
-        let timeoutEvent = setTimeout(() => {
-            bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
-            window.removeEventListener('storage', idTokenEvent);
-            //authWindow.close();
-        }, 20000);
+        const self = this;
+        function createExchangeFlow() {
 
-        let idTokenEvent = (data) => {
-            if (data.key === 'aws_id_token') {
+            let idTokenEvent = (data) => {
+                if (data.key === 'aws_id_token') {
+                    window.removeEventListener('storage', idTokenEvent);
+                    clearTimeout(timeoutEvent);
+
+                    //---------------------------------------------------------------
+                    // 2.) log into identity pool
+                    //---------------------------------------------------------------
+
+                    let login = {}, cognitoUserPoolKey = `cognito-idp.${AWSParameters.RegionName}.amazonaws.com/${AWSParameters.authParams.UserPoolId}`;
+
+                    //construct credentials request from id token fetched from user pool, and the id of the identity pool
+                    //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
+                    login[cognitoUserPoolKey] = data.newValue;
+                    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                        'IdentityPoolId': AWSParameters.IdentityPoolId(),
+                        'Logins': login,
+                        'RoleSessionName': 'web'
+                    });
+
+                    AWS.config.credentials.get((err) => {
+                        if (err) {
+                            console.log(err);
+                            authWindow.postMessage({ 'failure': 'auth failed', 'error': err.toString() }, '*');
+                        } else {
+                            console.log('Exchanged access token for access key');
+                            authWindow.postMessage({ 'success': 'auth complete' }, '*');
+
+                            //TODO: determine whether refresh is necessary
+                            AWS.config.credentials.refresh((err) => {
+                                if (err) { console.log('an error occured refreshing', err); }
+                                else {
+                                    console.log('refresh successful.');
+                                    self.s3 = self.createS3(AWSParameters.BucketName(), AWS.config.credentials);
+                                    authWindow.close();
+                                    cb();
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+
+             //set timeout in case window doesn't return a storage event
+            let timeoutEvent = setTimeout(() => {
+                bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
                 window.removeEventListener('storage', idTokenEvent);
-                clearTimeout(timeoutEvent);
+                //authWindow.close();
+            }, 20000);
 
-                //---------------------------------------------------------------
-                // 2.) log into identity pool
-                //---------------------------------------------------------------
-
-                let login = {}, cognitoUserPoolKey = `cognito-idp.${AWSParameters.RegionName}.amazonaws.com/${AWSParameters.authParams.UserPoolId}`;
-
-                //construct credentials request from id token fetched from user pool, and the id of the identity pool
-                //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
-                login[cognitoUserPoolKey] = data.newValue;
-                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                    'IdentityPoolId': AWSParameters.IdentityPoolId(),
-                    'Logins': login,
-                    'RoleSessionName': 'web'
-                });
-
-                AWS.config.credentials.get((err) => {
-                    if (err) {
-                        console.log(err);
-                        authWindow.postMessage({ 'failure': 'auth failed', 'error': err.toString() }, '*');
-                    } else {
-                        console.log('Exchanged access token for access key');
-                        authWindow.postMessage({ 'success': 'auth complete' }, '*');
-
-                        //TODO: determine whether refresh is necessary
-                        AWS.config.credentials.refresh((err) => {
-                            if (err) { console.log('an error occured refreshing', err); }
-                            else {
-                                console.log('refresh successful.');
-                                this.s3 = this.createS3(AWSParameters.BucketName(), AWS.config.credentials);
-                                authWindow.close();
-                                cb();
-                            }
-                        });
-                    }
-                });
-            }
-        };
-
-        window.addEventListener('storage', idTokenEvent);
+            window.addEventListener('storage', idTokenEvent);
+        }
     }
 
     changeBuckets(newBucketInfo) {
-        this.s3 = this.createS3(newBucketInfo.bucketName);
         this.currentAWS = {
             'bucketName': newBucketInfo.bucketName,
             'identityPoolId': newBucketInfo.identityPoolId,
@@ -832,8 +835,6 @@ class AWSModule extends BaseServerClient {
 
         });
 
-        console.log('nav tabs', navTabs);
-
         return tabView;
     }
 
@@ -950,12 +951,11 @@ class AWSModule extends BaseServerClient {
                         try {
                             parsedVal = JSON.parse(val);
                         } catch (e) {
-                            console.log('could not parsed val', val);
+                            console.log('could not parse val', val);
                         }
 
                         this.createAWSEditModal(selectedItemId, parsedVal)
                             .then((params) => {
-                                console.log('params', params);
                                 tableContainer.find('table .bucket-name')[0].innerHTML = params.bucketName;
                                 tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
                                 tableContainer.find('table .user-pool-id')[0].innerHTML = params.userPoolId;
@@ -963,7 +963,6 @@ class AWSModule extends BaseServerClient {
                                 tableContainer.find('table .web-domain')[0].innerHTML = params.appWebDomain;
 
                                 refreshDropdown().then((dropdown) => {
-                                    console.log('refresh dropdown', dropdown, 'bucket name', params.bucketName);
                                     dropdown.val(params.bucketName);
                                 });
                             })
@@ -1005,7 +1004,6 @@ class AWSModule extends BaseServerClient {
             let selectedItemInfo = this.awsstoredbuckets[selectedItem.id];
             selectedItemInfo['id'] = selectedItem.id;
 
-            console.log('selectedItemInfo', selectedItemInfo);
 
             this.awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
             this.changeBuckets(selectedItemInfo);
@@ -1021,7 +1019,6 @@ class AWSModule extends BaseServerClient {
         entryButton.on('click', (e) => {
             e.preventDefault();
             let newBucketTab = awsmodal.body.find('#entry-tab');
-            console.log('new bucket tab');
             newBucketTab.click();
         });
 
@@ -1056,7 +1053,6 @@ class AWSModule extends BaseServerClient {
             let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
             let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
 
-            console.log('old params', oldParams);
             editContainer.find('.edit-bucket-input').val(oldParams.bucketName);
             editContainer.find('.edit-identity-pool-input').val(oldParams.identityPoolId);
             editContainer.find('.edit-user-pool-input').val(oldParams.userPoolId);
@@ -1231,18 +1227,15 @@ class AWSModule extends BaseServerClient {
     attachImportFileCallback(importButton, webfileutil, awsmodal) {
         webfileutil.attachFileCallback(importButton, (file) => {
 
-            console.log('file', file);
             //the file object will differ between data sources, e.g. if it comes from Google Drive it will be a parsed response, if it comes from disk it will be a Blob, etc.
             //so some disambiguation is required.
             file = file.data ? (file.data.result ? file.data.result : file.data) : file;
-            console.log('typeof file', file instanceof File);
             if (file instanceof File) {
                 let fileReader = new FileReader(file);
                 fileReader.addEventListener('loadend', (e) => {
                     try {
                         let parsedJSON = JSON.parse(e.target.result);
                         awsmodal.dialog.modal('show');
-                        console.log('parsedJSON', parsedJSON);
                         fillOutModalFields(awsmodal.dialog, parsedJSON);
                     } catch (e) {
                         console.log('An error occured while parsing', file.name, e);

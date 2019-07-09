@@ -1302,6 +1302,7 @@ const webutil = {
             apiTag.src = url;
             apiTag.onload = ( () => {
                 console.log(' URL=',url);
+                resolve(url);
             });
             
             apiTag.onerror=( (e) => {
