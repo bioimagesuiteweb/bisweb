@@ -10,7 +10,7 @@ const baseutils=require("baseutils");
 // -------------------------------------------------------------------------
 
 // To add a %%inputs%% to specifies all inputs one after the other on the command line
-// options "--output %out3% %%input%%"
+// options "--output %out3% #input#"
 // biswebnode concatenateImages --output something.nii.gz MNI_2mm_orig.nii.gz MNI_2mm_resliced.nii.gz MNI_2mm_scaled.nii.gz
 // biswebnode concatenateImages --output "something.nii.gz" "MNI_2mm_orig.nii.gz" "MNI_2mm_resliced.nii.gz" "MNI_2mm_scaled.nii.gz"
 

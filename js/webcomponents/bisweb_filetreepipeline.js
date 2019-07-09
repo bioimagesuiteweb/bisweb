@@ -22,8 +22,6 @@ class FileTreePipeline extends HTMLElement {
     }
 
     connectedCallback() {
-
-        console.log('pipeline module', pipelineModule);
         let algocontrollerid = this.getAttribute('bis-algocontrollerid');
         bis_webutil.runAfterAllLoaded( () => {     
             this.algocontroller = document.querySelector(algocontrollerid);
@@ -263,7 +261,14 @@ class FileTreePipeline extends HTMLElement {
         //format the saved modules to use the pipeline creation tool.
         let pipeline = { 
             'command' : 'biswebnode',
-            'inputs' : {},
+            'inputs' : [{
+                'name' : 'input',
+                'files' : [
+                    '/home/zach/javascript/bisweb/test/testdata/MNI_2mm_orig.nii.gz',
+                    '/home/zach/javascript/bisweb/test/testdata/MNI_2mm_resliced.nii.gz',
+                    '/home/zach/javascript/bisweb/test/testdata/MNI_2mm_scaled.nii.gz'
+                ]
+            }],
             'jobs' : []
         };
         for (let i = 0; i < params.length; i++) {
@@ -271,7 +276,14 @@ class FileTreePipeline extends HTMLElement {
             let entry = {
                 'name' : `Command ${i}`,
                 'subcommand' : params[i].name,
-                'options' : `--input %${inputName}% --output %${outputName}% `
+                'options' : `--input %${inputName}% --output %${outputName}% `,
+                'outputs' : [
+                    {
+                        'name' : outputName,
+                        'depends' : [ `%${inputName}%`],
+                        'naming' : `${params[i].name}_%${inputName}%.nii.gz`
+                    }
+                ]
             }
 
             for (let p of Object.keys(params[i].params)) {
