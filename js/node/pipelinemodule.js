@@ -531,7 +531,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
 class PipelineModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'Hash';
+        this.name = 'MakePipeline';
     }
 
     createDescription() {

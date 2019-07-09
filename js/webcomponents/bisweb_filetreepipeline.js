@@ -4,8 +4,12 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const moduleIndex = require('moduleindex.js');
 const bisweb_custommodule = require('bisweb_custommodule.js');
 
+const bis_genericio = require('bis_genericio.js');
 const bootbox = require('bootbox');
 const $ = require('jquery');
+
+//TODO: Find a more permanent solution to this? Ask Xenios about how to index this with webpack?
+const pipelineModule = require('../node/pipelinemodule.js');
 
 class FileTreePipeline extends HTMLElement {
     
@@ -19,8 +23,9 @@ class FileTreePipeline extends HTMLElement {
 
     connectedCallback() {
 
+        console.log('pipeline module', pipelineModule);
         let algocontrollerid = this.getAttribute('bis-algocontrollerid');
-        bis_webutil.runAfterAllLoaded( () => {
+        bis_webutil.runAfterAllLoaded( () => {     
             this.algocontroller = document.querySelector(algocontrollerid);
         });
     }
@@ -151,7 +156,7 @@ class FileTreePipeline extends HTMLElement {
             pipelineModal.footer.empty();
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
-            let saveModulesButton = bis_webutil.createbutton({ 'name' : 'Save pipeline', 'type' : 'primary'});
+
             addModuleButton.on('click', () => {
                 let moduleIndexKeys = moduleIndex.getModuleNames();
                 let moduleIndexArray = [];
@@ -207,23 +212,18 @@ class FileTreePipeline extends HTMLElement {
                 });
             });
 
-            saveModulesButton.on('click', () => {
-                let params = [];
-                $('.bisweb-pipeline-list').empty();
-                for (let i = 0; i < this.modules.length; i++) {
-                    let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
-                    params.push(param);
-
-                    //update pipeline list 
-                    let moduleName = moduleIndex.getModule(this.modules[i].name).getDescription().name;
-                    let listItem = this.createPipelineListItem(moduleName);
-                    $('.bisweb-pipeline-list').append(listItem);
-                }
-
-                this.savedParameters = params;
-                pipelineModal.dialog.modal('hide');
-
-                bis_webutil.createAlert('Pipeline saved.');
+            let saveModulesButton = bis_webfileutil.createFileButton({ 
+                'name': 'Save Modules',
+                'type': 'primary',
+                'callback': (f) => { this.savePipelineToDisk(f); pipelineModal.dialog.modal('hide'); },
+                }, {
+                    'title': 'Save Pipeline to Disk',
+                    'save': true,
+                    'filters': [{ name: 'JSON Files', extensions: ['json'] }],
+                    'suffix': 'json',
+                    'initialCallback': () => {
+                        return 'pipeline.json';
+                    }
             });
 
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
@@ -241,6 +241,50 @@ class FileTreePipeline extends HTMLElement {
         }
 
         this.pipelineModal.dialog.modal('show');
+    }
+
+    savePipelineToDisk(filename) {
+        let params = [];
+        $('.bisweb-pipeline-list').empty();
+        for (let i = 0; i < this.modules.length; i++) {
+            let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
+            params.push(param);
+
+            //update pipeline list 
+            let moduleName = moduleIndex.getModule(this.modules[i].name).getDescription().name;
+            let listItem = this.createPipelineListItem(moduleName);
+            $('.bisweb-pipeline-list').append(listItem);
+        }
+
+        this.savedParameters = params;
+
+        console.log('saved parameters', this.savedParameters);
+        
+        //format the saved modules to use the pipeline creation tool.
+        let pipeline = { 
+            'command' : 'biswebnode',
+            'inputs' : {},
+            'jobs' : []
+        };
+        for (let i = 0; i < params.length; i++) {
+            let inputName = (i === 0 ? 'input' : 'out' + i), outputName = 'out' + (i + 1);
+            let entry = {
+                'name' : `Command ${i}`,
+                'subcommand' : params[i].name,
+                'options' : `--input %${inputName}% --output %${outputName}% `
+            }
+
+            for (let p of Object.keys(params[i].params)) {
+                entry.options = entry.options.concat(`--${p} ${params[i].params[p]} `);
+            }
+
+            pipeline.jobs.push(entry);
+        }
+
+        let stringifiedPipeline = JSON.stringify(pipeline, null, 2);
+        bis_genericio.write(filename, stringifiedPipeline).then( () => {
+            bis_webutil.createAlert('Pipeline saved.');
+        });
     }
 
     /**
