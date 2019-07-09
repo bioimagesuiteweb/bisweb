@@ -82,11 +82,13 @@ describe('Convert .json to .tsv', () => {
                 let stringifiedData = JSON.stringify(jsonData);
                 console.log(colors.cyan(' ++++ json data parsed from tsv files in', tsvDir, JSON.stringify(jsonData)));
 
-                //remove spaces
-                stringifiedData = stringifiedData.replace(/[ \t\n]/g, ''); 
-                let despacedData = obj.data.replace(/[ \t\n]/g, '');
-                
-                assert.strictEqual(despacedData, stringifiedData);
+                /* eslint-disable no-useless-escape */
+                //remove spaces and brackets (data on disk may have brackets that parsed data won't)
+                stringifiedData = stringifiedData.replace(/[ \t\n\[\]]/g, ''); 
+                let despacedData = obj.data.replace(/[ \t\n\[\]]/g, '');
+                /* eslint-enable no-useless-escape */ 
+
+                assert.strictEqual(stringifiedData, despacedData);
                 console.log('-------------------------------------');
                 done();
             }).catch( (e) => {
@@ -108,9 +110,11 @@ describe('Convert .json to .tsv', () => {
         let stringifiedData = JSON.stringify(jsonData);
         console.log(colors.cyan(' ++++ json data parsed from tsv files in', tsvDir2, JSON.stringify(jsonData)));
         
-        //remove spaces
-        stringifiedData = stringifiedData.replace(/[ \t\n]/g, ''); 
-        let despacedData = obj.data.replace(/[ \t\n]/g, '');
+        //remove spaces and brackets
+        /* eslint-disable no-useless-escape */
+        stringifiedData = stringifiedData.replace(/[ \t\n\[\]]/g, ''); 
+        let despacedData = obj.data.replace(/[ \t\n\[\]]/g, '');
+        /* eslint-enable no-useless-escape */
         
         assert.strictEqual(despacedData, stringifiedData);
         console.log('-------------------------------------');
