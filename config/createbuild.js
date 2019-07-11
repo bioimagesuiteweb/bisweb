@@ -26,6 +26,14 @@ const main=async function() {
     util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
     util.copyFileSync(DIR,'../compiletools/cmake_native.sh',DIR,'cmake_native.sh');
     util.copyFileSync(DIR,'../compiletools/ccmake_native.sh',DIR,'ccmake_native.sh');
+    util.copyFileSync(DIR,'../docker/fullbuild.sh',DIR,'fullbuild.sh');
+    util.copyFileSync(DIR,'../docker/wasmbuild.sh',DIR,'wasmbuild.sh');
+    util.copyFileSync(DIR,'../docker/webbuild.sh',DIR,'webbuild.sh');
+    util.copyFileSync(DIR,'../docker/nativebuild.sh',DIR,'nativebuild.sh');
+    util.copyFileSync(DIR,'../docker/testbuild.sh',DIR,'testbuild.sh');
+
+
+
     console.log("++++");
     await util.executeCommand('chmod +x *make*.sh',DIR);
 
@@ -49,8 +57,8 @@ const main=async function() {
     let f=path.normalize(`${DIR}/../various/download/emsdk-portable.tar.gz`);
     await util.executeCommand(`tar xvfz ${f}`, DIR);
     await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk update`,`${DIR}/emsdk_portable`,true);
-    await util.executeCommand(`python3 ${DIR}/emsdk_portable/emsdk install latest`,`${DIR}/emsdk_portable`,true);
-    await util.executeCommand(`python3 ${DIR}/emsdk_portable/emsdk activate latest`,`${DIR}/emsdk_portable`);
+    await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install latest`,`${DIR}/emsdk_portable`,true);
+    await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate latest`,`${DIR}/emsdk_portable`);
     console.log('++++');
 };
 
