@@ -605,9 +605,8 @@ let isSaveDownload =function() {
 };
 
 
-// TODO: Let's rename this to dicomConversion
 /**
- * Runs file conversion for a given filetype using server utilities. 
+ * Runs DICOM file conversion through the fileserver. 
  * 
  * @param {Object} params - Parameter object for the file conversion. 
  * @param {String} params.inputDirectory - The input directory to run file conversions in. 
@@ -627,10 +626,29 @@ let runDICOMConversion = (params,external=false) => {
                     resolve(obj);
                 }).catch((e) => { reject(e); });
         } else {
-            reject('No fileserver client defined');
+            reject('No fileserver defined, cannot run DICOM conversion');
         }
     });
 };
+
+/**
+ * Runs the pipeline creation module through the file server
+ * @param {Object} params - Parameters for the pipeline module 
+ */
+let runPipelineModule = (params, savemanually = false) => {
+    return new Promise( (resolve, reject) => {
+        if (fileServerClient) {
+            fileServerClient.runModule('pipeline', params, false, console.log, true)
+                .then( (obj) => {
+                    console.log('Pipeline module done', obj);
+                    resolve(obj);
+                }).catch( (e) => { reject(e); });
+        } else {
+            reject('No fileserver defined, cannot run pipeline');
+        }
+    });
+};
+
 /**
  * Makes a SHA256 checksum for a given image file. Currently only functional if a file server is specified.
  * Note that this function only works when calling from the web environment. Bisweb modules calculate their own checksums due to genericio not being directly compatible with modules.
@@ -798,6 +816,7 @@ const bisgenericio = {
     //
     isSaveDownload : isSaveDownload,
     runDICOMConversion : runDICOMConversion,
+    runPipelineModule : runPipelineModule,
     makeFileChecksum : makeFileChecksum,
     //
     readPartialDataFromStartOfFile : readPartialDataFromStartOfFile

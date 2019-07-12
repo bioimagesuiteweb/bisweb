@@ -73,7 +73,7 @@ class BaseModule {
      * @param {dictionary} parameters -- input parameters
      * @returns {Promise} 
      */
-    execute(inputs, params = {}) {
+    execute(inputs, params = {}, savemanually = false) {
         
         let fullparams = this.parseValuesAndAddDefaults(params);
         let des = this.getDescription();
@@ -102,7 +102,8 @@ class BaseModule {
         return new Promise( (resolve,reject) => { 
             self.directInvokeAlgorithm(fullparams).then( (m) => {
                 self.storeCommentsInOutputs(baseutils.getExecutableArguments(name), params, baseutils.getSystemInfo(biswrap));
-                resolve(m);
+                if (savemanually) { this.saveOutputs().then( () => { resolve(m); }); }
+                else { resolve(m);}
             }).catch( (e) => {
                 console.log('Error=',e.stack,e);
                 reject(e);
