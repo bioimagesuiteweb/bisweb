@@ -8,9 +8,6 @@ const bis_genericio = require('bis_genericio.js');
 const bootbox = require('bootbox');
 const $ = require('jquery');
 
-//TODO: Find a more permanent solution to this? Ask Xenios about how to index this with webpack?
-const pipelineModule = require('../node/pipelinemodule.js');
-
 //TODO: When Xenios gets back have him update biswebnode
 class FileTreePipeline extends HTMLElement {
     
@@ -287,7 +284,7 @@ class FileTreePipeline extends HTMLElement {
                         'naming' : `${params[i].name}_%${inputName}%.nii.gz`
                     }
                 ]
-            }
+            };
 
             for (let p of Object.keys(params[i].params)) {
                 entry.options = entry.options.concat(`--${p} ${params[i].params[p]} `);
@@ -298,8 +295,25 @@ class FileTreePipeline extends HTMLElement {
 
         let stringifiedPipeline = JSON.stringify(pipeline, null, 2);
         bis_genericio.write(filename, stringifiedPipeline).then( () => {
-            bis_webutil.createAlert('Pipeline saved.');
+
+            //construct default output directory and Makefile names from the user-provided filename
+            //splitByPathSeparator used for platform agnosticity
+            let splitOutputFilename = splitByPathSeparator(filename), splitOdirFilename = splitByPathSeparator(filename);
+            splitOutputFilename.name[splitOutputFilename.name.length - 1] = 'Makefile', splitOdirFilename.name[splitOdirFilename.name.length - 1] = 'FilesCreatedByPipeline';
+
+            let outputFilename = splitOutputFilename.name.join(splitOutputFilename.sep);
+            let odirFilename = splitOdirFilename.name.join(splitOdirFilename.sep);
+
+            //savemanually flag needed in order to save the output Makefile (modules run directly through the server don't hit the saving hooks from the command line)
+            bis_genericio.runPipelineModule({ 'input' : filename, 'output' :  outputFilename, 'odir' : odirFilename }, true).then( () => {
+                bis_webutil.createAlert('Pipeline Makefile created.');
+            });
         });
+
+        function splitByPathSeparator(filename) {
+            if (filename.includes('/')) { return  { 'name' : filename.split('/'), 'sep' : '/'}; }
+            if (filename.includes('\\')) { return  { 'name' : filename.split('\\'), 'sep' : '\\' }; }
+        }
     }
 
     /**
