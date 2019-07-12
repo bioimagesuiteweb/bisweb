@@ -11,6 +11,7 @@ const $ = require('jquery');
 //TODO: Find a more permanent solution to this? Ask Xenios about how to index this with webpack?
 const pipelineModule = require('../node/pipelinemodule.js');
 
+//TODO: When Xenios gets back have him update biswebnode
 class FileTreePipeline extends HTMLElement {
     
     constructor() {
@@ -259,8 +260,10 @@ class FileTreePipeline extends HTMLElement {
         console.log('saved parameters', this.savedParameters);
         
         //format the saved modules to use the pipeline creation tool.
+        //TODO: Format this to use biswebnode maybe? 
+        let command = ['', 'home', 'zach', 'javascript', 'bisweb', 'js', 'bin', 'bisweb.js'].join('/');
         let pipeline = { 
-            'command' : 'biswebnode',
+            'command' : 'node ' + command,
             'inputs' : [{
                 'name' : 'input',
                 'files' : [
