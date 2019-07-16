@@ -918,7 +918,6 @@ class ViewerApplicationElement extends HTMLElement {
             let filetreepipeline = document.querySelector(filetreepipelineid);
             webutil.createMenuItem(hmenu, 'Open File Tree Pipeline', 
                                     () => {
-                                        console.log('file tree pipeline', filetreepipeline);
                                         filetreepipeline.openPipelineCreationModal();
                                     });
         }
