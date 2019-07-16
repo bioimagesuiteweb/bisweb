@@ -3,8 +3,8 @@ const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
 const bootbox=require('bootbox');
 const userPreferences=require('bisweb_userpreferences');
+const bisweb_keylistener = require('bisweb_keylistener.js');
 
-require('jstree');
 
 /**
  * When loading a file from the server, the user must be able to browse the files. 
@@ -52,6 +52,7 @@ class SimpleFileDialog {
         this.favorites = [];
         this.lastFavorite=null;
 
+        bisweb_keylistener.addKeyListeners();
     }
 
     getCombinedFilename(dname,fname) {
@@ -373,7 +374,7 @@ class SimpleFileDialog {
 
     /**
      * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
-     * Uses jstree to render the list.
+     * Uses Bootstrap tables to render the list.
      * 
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
@@ -452,27 +453,38 @@ class SimpleFileDialog {
 
         let elementlist=[];
 
-        let callback = (e,doubleclick=false) => {
+        let onclick = (e, w, doubleclick=false) => {
             e.preventDefault();
             e.stopPropagation();
-            let id=e.target.id;
-            if (!id) {
-                id=e.target.parentElement.id;
-                if (!id)
-                    id=e.target.parentElement.parentElement.id;
-            }
+
+            let id = $(w).find('td span').attr('id');
 
             let elem=elementlist[id];
             let fname=elem.path;
             if (elem.type === 'file' || elem.type ==='picture') {
 
+                //remove selected attribute from other elements 
+
+                //listen for key events if it's a load modal
+                if (doubleclick) {
+                    this.filenameCallback();
+                } else if (this.mode === 'load') {
+                    if (bisweb_keylistener.shiftPressed) {
+
+                    } else if (bisweb_keylistener.ctrlPressed) { 
+
+                    }
+                } 
+
+                this.clearFileHighlighting(fileList);
+                w.addClass('bisweb-filedialog-selected');
+
+                //if no modifiers then go into default flow
                 let ind=fname.lastIndexOf(this.separator);
                 let dname=fname;
                 if (ind>0)
                     dname=fname.substr(ind+1,fname.length);
                 this.filenameEntry.val(dname);
-                if (doubleclick) 
-                    this.filenameCallback();
 
             } else if ( elem.type=== 'directory') {
                 this.changeDirectory(fname);
@@ -503,8 +515,8 @@ class SimpleFileDialog {
                     <td width="20%" align="right">${sz}</td></tr>
                     </tr>`);
             tbody.append(w);
-            $('#'+nid).click( (e) => { callback(e,false); });
-            $('#'+nid).dblclick( (e) => { callback(e,true);});
+            $(w).on('click', ( (e) => { onclick(e, w, false); }));
+            $(w).on('dblclick', ( (e) => { onclick(e, w, true);}));
 
             elementlist[nid]=elem;
         }
@@ -753,8 +765,15 @@ class SimpleFileDialog {
         return false;
     }
     
-
-
+    /**
+     * Removes highlighting from all elements in a file dialog.
+     * 
+     * @param {JQuery} body - A file dialog containing highlighted entries. 
+     */
+    clearFileHighlighting(body) {
+        let highlightedEntries = body.find('.bisweb-filedialog-selected');
+        highlightedEntries.removeClass('bisweb-filedialog-selected');
+    }
 
 }
 
