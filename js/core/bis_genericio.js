@@ -635,7 +635,7 @@ let runDICOMConversion = (params,external=false) => {
  * Runs the pipeline creation module through the file server
  * @param {Object} params - Parameters for the pipeline module 
  */
-let runPipelineModule = (params, savemanually = false) => {
+let runPipelineModule = (params) => {
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
             fileServerClient.runModule('pipeline', params, false, console.log, true)
