@@ -250,7 +250,6 @@ class FileTreePipeline extends HTMLElement {
         let downButton = $(`<span class='glyphicon glyphicon-chevron-down style='float: right'></span`);
 
         upButton.on('click', () => {
-            console.log('clicked up button', this.modules);
             let prevElem, currentElem; 
             for (let i = 0; i < this.modules.length; i++) {
                 if (this.modules[i].id === id) { 
@@ -265,18 +264,35 @@ class FileTreePipeline extends HTMLElement {
                 }
             }
 
-            console.log('prev elem', prevElem, 'current elem', currentElem);
             $(currentElem).detach();
             $(currentElem).insertBefore(prevElem);
 
         });
 
+        downButton.on('click', () => {
+            let nextElem, currentElem; 
+            for (let i = 0; i < this.modules.length; i++) {
+                if (this.modules[i].id === id) { 
+                    if (i === this.modules.length - 1) { return; } //can't move down if this is the last item in the list
+                    nextElem = $(modal.body).find('#' + this.modules[i + 1].id);
+                    currentElem = $(modal.body).find('#' + this.modules[i].id);
+
+                    console.log('next elem', nextElem, 'current elem', currentElem);
+                    //move module down one in list
+                    let moveElem = this.modules.splice(i, 1);
+                    this.modules.splice(i + 1, 0, moveElem[0]);
+                    console.log('modules', this.modules);
+                    i = this.modules.length; //needed to avoid double-counting the element after it's moved into place.
+                }
+            }
+
+            $(currentElem).detach();
+            $(currentElem).insertAfter(nextElem);
+
+        });
+
         $(moduleContainer).append(upButton);
         $(moduleContainer).append(downButton);
-
-        function moveModule(direction) {
-
-        }
     }
 
     savePipelineToDisk(filename) {
