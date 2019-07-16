@@ -145,7 +145,11 @@ class FileTreePipeline extends HTMLElement {
         return pipelineBody;
     }
 
+    /**
+     * Opens a modal that will allow a user to create a pipeline from the full set of BioImageSuite Web Modules. Should be called by outside scope!
+     */
     openPipelineCreationModal() {
+        console.log('modules', this.modules);
         if (!this.pipelineModal) {
 
             let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
@@ -170,12 +174,13 @@ class FileTreePipeline extends HTMLElement {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
 
-                            let width = pipelineModal.body.width() / 4;
+                            let width = pipelineModal.body.width() / 3;
                             let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px', 'width' : width });
                             customModule.createOrUpdateGUI({ 'width' : width });
                             centerCustomElement($(customModule.panel.widget));
 
-                            this.modules.push({ 'name' : moduleName, 'module' : customModule});
+                            let id = bis_webutil.getuniqueid();
+                            this.modules.push({ 'name' : moduleName, 'module' : customModule, 'id' : id});
 
                             let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
                             let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
@@ -196,12 +201,13 @@ class FileTreePipeline extends HTMLElement {
                             });
 
                             //put label and element inside a containing div
-                            let id = bis_webutil.getuniqueid();
                             let moduleLabel = $(`<span>${prettyModuleName}</span>`);
 
                             $(customModule.panel.widget).find('.bisweb-customelement-footer').append(removeButton);
                             $(customModule.panel.widget).prepend(moduleLabel);
                             $(customModule.panel.widget).attr('id', id);
+                            
+                            this.addArrowButtons(id, this.pipelineModal, customModule.panel.widget);
                             pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
@@ -237,6 +243,40 @@ class FileTreePipeline extends HTMLElement {
         }
 
         this.pipelineModal.dialog.modal('show');
+    }
+
+    addArrowButtons(id, modal, moduleContainer) {
+        let upButton = $(`<span class='glyphicon glyphicon-chevron-up style='float: right'></span>`);
+        let downButton = $(`<span class='glyphicon glyphicon-chevron-down style='float: right'></span`);
+
+        upButton.on('click', () => {
+            console.log('clicked up button', this.modules);
+            let prevElem, currentElem; 
+            for (let i = 0; i < this.modules.length; i++) {
+                if (this.modules[i].id === id) { 
+                    if (i === 0) { return; } //can't move up if this is the first item in the list
+                    prevElem = $(modal.body).find('#' + this.modules[i - 1].id);
+                    currentElem = $(modal.body).find('#' + this.modules[i].id);
+
+                    //move module up one in list
+                    let moveElem = this.modules.splice(i, 1);
+                    this.modules.splice(i - 1, 0, moveElem[0]);
+                    console.log('modules', this.modules);
+                }
+            }
+
+            console.log('prev elem', prevElem, 'current elem', currentElem);
+            $(currentElem).detach();
+            $(currentElem).insertBefore(prevElem);
+
+        });
+
+        $(moduleContainer).append(upButton);
+        $(moduleContainer).append(downButton);
+
+        function moveModule(direction) {
+
+        }
     }
 
     savePipelineToDisk(filename) {
