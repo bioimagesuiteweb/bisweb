@@ -207,7 +207,7 @@ class FileTreePipeline extends HTMLElement {
                             $(customModule.panel.widget).prepend(moduleLabel);
                             $(customModule.panel.widget).attr('id', id);
                             
-                            this.addArrowButtons(id, this.pipelineModal, customModule.panel.widget);
+                            this.addArrowButtons(id, this.pipelineModal, $(customModule.panel.widget).find('.dg.main') );
                             pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
@@ -246,8 +246,8 @@ class FileTreePipeline extends HTMLElement {
     }
 
     addArrowButtons(id, modal, moduleContainer) {
-        let upButton = $(`<span class='glyphicon glyphicon-chevron-up style='float: right'></span>`);
-        let downButton = $(`<span class='glyphicon glyphicon-chevron-down style='float: right'></span`);
+        let upButton = $(`<span class='glyphicon glyphicon-chevron-up bisweb-glyphicon-right'></span>`);
+        let downButton = $(`<span class='glyphicon glyphicon-chevron-down bisweb-glyphicon-right'></span`);
 
         upButton.on('click', () => {
             let prevElem, currentElem; 
@@ -260,13 +260,11 @@ class FileTreePipeline extends HTMLElement {
                     //move module up one in list
                     let moveElem = this.modules.splice(i, 1);
                     this.modules.splice(i - 1, 0, moveElem[0]);
-                    console.log('modules', this.modules);
                 }
             }
 
             $(currentElem).detach();
             $(currentElem).insertBefore(prevElem);
-
         });
 
         downButton.on('click', () => {
@@ -277,21 +275,18 @@ class FileTreePipeline extends HTMLElement {
                     nextElem = $(modal.body).find('#' + this.modules[i + 1].id);
                     currentElem = $(modal.body).find('#' + this.modules[i].id);
 
-                    console.log('next elem', nextElem, 'current elem', currentElem);
                     //move module down one in list
                     let moveElem = this.modules.splice(i, 1);
                     this.modules.splice(i + 1, 0, moveElem[0]);
-                    console.log('modules', this.modules);
                     i = this.modules.length; //needed to avoid double-counting the element after it's moved into place.
                 }
             }
 
             $(currentElem).detach();
             $(currentElem).insertAfter(nextElem);
-
         });
 
-        $(moduleContainer).append(upButton);
+        $(moduleContainer).prepend(upButton);
         $(moduleContainer).append(downButton);
     }
 
