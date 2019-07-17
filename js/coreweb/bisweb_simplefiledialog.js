@@ -33,9 +33,16 @@ class SimpleFileDialog {
         // This are the callbacks
         // Call this to get updated directory
         this.fileListFn=null;
+
         // Call this to pass the selected filename back to the main code
         // (this is in fact the final callback from outside code)
         this.fileRequestFn=null;
+
+        // Whether shift or ctrl are enabled for this file dialog
+        this.altkeys = false;
+
+        //list of multiple selected items in the modal, or none, if multiple items aren't selected.
+        this.selectedItems = null;
 
         // Entries
         this.fileList = null;
@@ -98,12 +105,20 @@ class SimpleFileDialog {
             return;
         }
 
-        let outname=this.getCombinedFilename(this.currentDirectory,name);
+        let out;
+        if (this.selectedItems.length > 1) {
+            out = [];
+            for (let item of this.selectedItems) {
+                out.push(this.getCombinedFilename(this.currentDirectory, item));
+            }
+        } else {
+            out=this.getCombinedFilename(this.currentDirectory,name);
+        }
         
         let sendCallback= (() => {
             this.modal.dialog.modal('hide');
             setTimeout( () => {
-                this.fileRequestFn(outname);
+                this.fileRequestFn(out);
             },10);
         });
         
@@ -113,14 +128,14 @@ class SimpleFileDialog {
         }
 
         // Save Stuff
-        bis_genericio.getFileSize(outname).then( () => {
-            bootbox.confirm("The file "+outname+" exists. Are you sure you want to overwrite this?", ( (result) => {
+        bis_genericio.getFileSize(out).then( () => {
+            bootbox.confirm("The file "+out+" exists. Are you sure you want to overwrite this?", ( (result) => {
                 if (result)  {
                     sendCallback();
                 }
             }));
         }).catch( () => {
-            outname=this.addExtensionToFilnameIfNeeded(outname,this.activeFilterList);
+            out=this.addExtensionToFilnameIfNeeded(out,this.activeFilterList);
             sendCallback();
         });
     }
@@ -245,6 +260,7 @@ class SimpleFileDialog {
      * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed. These are Electron style
      * @param {String} opts.startDirectory - This is the directory at which the file dialog will start (i.e. a user supplied path. If none supplied then this goes to the base directory of the server)
      * @param {Object} opts.rootDirectory - In case where the server has multiple "drives" or baseDirectories (/home /tmp --- rootDirectory of /home/xenios/Desktop is /home)
+     * @param {Boolean} opts.altkeys - Whether or not alt keys are enabled for this dialog (shift or ctrl). False by default.
      */
     openDialog(list,opts=null) {
 
@@ -253,6 +269,8 @@ class SimpleFileDialog {
         }
         
         this.newFilters=true;
+        this.altkeys = opts.altkeys;
+
         //null or undefined startDirectory and rootDirectory should default to null;
         let startDirectory = opts.startDirectory || '';
         let rootDirectory = opts.rootDirectory || '';
@@ -469,32 +487,16 @@ class SimpleFileDialog {
                 if (doubleclick) {
                     this.filenameCallback();
                 } else if (this.mode === 'load') {
-                    if (bisweb_keylistener.shiftPressed()) {
-                        let selectedIndex = w.index();
-                        console.log('highlighted items', this.highlightedItems(fileList), 'index', w.index());
-                        if (this.highlightedItems(fileList) >= 1) {
-                            //find selected item, then highlighted the greatest contiguous region between the two
-                            let selectedItems = $(fileList).find('.bisweb-filedialog-selected'), greatestIndex, leastIndex;
-                            for (let item of selectedItems) {
-                                let index = $(item).index();
-                                if (!greatestIndex || index > greatestIndex) { greatestIndex = index; }
-                                if (!leastIndex || index < leastIndex) { leastIndex = index; }
-                            }
-                            
-                            if (selectedIndex < greatestIndex) {
-                                selectRegion(fileList, selectedIndex, greatestIndex);
-                            } else if (selectedIndex > leastIndex) {
-                                selectRegion(fileList, leastIndex, selectedIndex);
-                            }
 
-                            return;
-                        }
-
-                    } else if (bisweb_keylistener.ctrlPressed) { 
-
+                    if (bisweb_keylistener.shiftPressed() && this.altkeys) {
+                        doShiftClick(w, fileList);
+                        return; 
+                    } else if (bisweb_keylistener.ctrlPressed() && this.altkeys) { 
+                        doCtrlClick(w);
+                        return;
                     }
                 } 
-                console.log('w', w);
+
                 this.clearFileHighlighting(fileList);
                 w.addClass('bisweb-filedialog-selected');
 
@@ -504,6 +506,7 @@ class SimpleFileDialog {
                 if (ind>0)
                     dname=fname.substr(ind+1,fname.length);
                 this.filenameEntry.val(dname);
+                this.selectedItems = [dname]; //set list of items to be only the one that was just selected.
 
             } else if ( elem.type=== 'directory') {
                 this.changeDirectory(fname);
@@ -530,8 +533,8 @@ class SimpleFileDialog {
 
             
             let w=$(`<tr>
-                    <td width="80%"><span id="${nid}">${c} ${name}</span></td>
-                    <td width="20%" align="right">${sz}</td></tr>
+                    <td class='bisweb-col-name' width="80%"><span id="${nid}">${c} ${name}</span></td>
+                    <td class='bisweb-col-size' width="20%" align="right">${sz}</td></tr>
                     </tr>`);
             tbody.append(w);
             $(w).on('click', ( (e) => { onclick(e, w, false); }));
@@ -545,12 +548,58 @@ class SimpleFileDialog {
         fileList.append(stable);
         this.updateFileNavbar(lastfilename,rootDirectory);
 
+        
+        const self = this;
+
+        //performs ctrl-click behavior for the modal. selects individual files without deselecting them.
+        //row is the clicked row.
+        function doCtrlClick(row) {
+            let name = row.find('.bisweb-col-name').text().trim();
+            if (!self.selectedItems) { self.selectedItems = []; }
+
+            if (row.hasClass('bisweb-filedialog-selected')) { 
+                row.removeClass('bisweb-filedialog-selected'); 
+                self.selectedItems.splice(self.selectedItems.indexOf(name), 1);
+            } else { 
+                row.addClass('bisweb-filedialog-selected'); 
+                self.selectedItems.push(name);
+            }
+        }
+
+        //performs shift-click behavior for the modal. selects contiguous blocks of files in the modal.
+        //row is the clicked row, body is the body of the file modal (the container for the <tr>s)
+        function doShiftClick(row, body) {
+            let selectedIndex = row.index();
+            if (self.highlightedItems(body) >= 1) {
+
+                //find selected item, then highlighted the greatest contiguous region between the two
+                let selectedItems = $(body).find('.bisweb-filedialog-selected'), greatestIndex, leastIndex;
+                for (let item of selectedItems) {
+                    let index = $(item).index();
+                    if (!greatestIndex || index > greatestIndex) { greatestIndex = index; }
+                    if (!leastIndex || index < leastIndex) { leastIndex = index; }
+                }
+                
+                if (selectedIndex < greatestIndex) {
+                    selectRegion(body, selectedIndex, greatestIndex);
+                } else if (selectedIndex > leastIndex) {
+                    selectRegion(body, leastIndex, selectedIndex);
+                }
+
+                return;
+            }
+        }
+
         function selectRegion(body, lowIndex, highIndex) {
             let listItems = body.find('tr');
+            self.clearFileHighlighting(body);
+            self.selectedItems = [];
+
             for (let i = 0; i < listItems.length; i++) {
                 if (i >= lowIndex && i <= highIndex) { 
                     listItems.eq(i).addClass('bisweb-filedialog-selected'); 
-                    console.log('select item', listItems.eq(i)); 
+                    let name = listItems.eq(i).find('.bisweb-col-name').text().trim();
+                    self.selectedItems.push(name);
                 }
             }
         }

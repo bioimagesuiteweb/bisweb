@@ -236,6 +236,7 @@ class FileTreePipeline extends HTMLElement {
                     'save': false,
                     'filters': 'NII',
                     'suffix': 'NII',
+                    'altkeys' : true
             });
 
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
