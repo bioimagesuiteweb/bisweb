@@ -469,7 +469,11 @@ class SimpleFileDialog {
                 if (doubleclick) {
                     this.filenameCallback();
                 } else if (this.mode === 'load') {
-                    if (bisweb_keylistener.shiftPressed) {
+                    if (bisweb_keylistener.shiftPressed()) {
+                        console.log('shift listener');
+                        if (this.itemsAreContiguous(fileList)) {
+                            
+                        }
 
                     } else if (bisweb_keylistener.ctrlPressed) { 
 
@@ -765,6 +769,39 @@ class SimpleFileDialog {
         return false;
     }
     
+    /**
+     * Returns true if body contains selected items, false otherwise. 
+     * 
+     * @param {JQuery} body - The file dialog modal. 
+     * @returns True if body contains highlighted items, false otherwise. 
+     */
+    highlightedItems(body) {
+        return body.find('.bisweb-filedialog-selected').length;
+    }
+
+    /**
+     * Returns whether all highlighted items in the file dialog are contiguous. 
+     * 
+     * @param {JQuery} body - The file dialog modal.
+     * @returns True if contiguous, false otherwise.
+     */
+    itemsAreContiguous(body) {
+        let tableBody = body.find('tbody');
+        let highlightedItems = tableBody.find('.bisweb-filedialog-selected');
+        let firstHighlightedIndex = tableBody.find('.bisweb-filedialog-selected:first').index();
+        let currentHighlightedIndex = firstHighlightedIndex - 1;
+
+        console.log('highlighted items', highlightedItems, 'first index', firstHighlightedIndex);
+        if (highlightedItems.length === 0) { return false; }
+        for (let i = 0; i < highlightedItems.length; i++) {
+            let index = $(highlightedItems[i]).index();
+            if (index !== currentHighlightedIndex + 1) { return false; }   
+            currentHighlightedIndex = index; 
+        }
+
+        return true;
+    }
+
     /**
      * Removes highlighting from all elements in a file dialog.
      * 
