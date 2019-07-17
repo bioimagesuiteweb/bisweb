@@ -470,16 +470,31 @@ class SimpleFileDialog {
                     this.filenameCallback();
                 } else if (this.mode === 'load') {
                     if (bisweb_keylistener.shiftPressed()) {
-                        console.log('shift listener');
-                        if (this.itemsAreContiguous(fileList)) {
+                        let selectedIndex = w.index();
+                        console.log('highlighted items', this.highlightedItems(fileList), 'index', w.index());
+                        if (this.highlightedItems(fileList) >= 1) {
+                            //find selected item, then highlighted the greatest contiguous region between the two
+                            let selectedItems = $(fileList).find('.bisweb-filedialog-selected'), greatestIndex, leastIndex;
+                            for (let item of selectedItems) {
+                                let index = $(item).index();
+                                if (!greatestIndex || index > greatestIndex) { greatestIndex = index; }
+                                if (!leastIndex || index < leastIndex) { leastIndex = index; }
+                            }
                             
+                            if (selectedIndex < greatestIndex) {
+                                selectRegion(fileList, selectedIndex, greatestIndex);
+                            } else if (selectedIndex > leastIndex) {
+                                selectRegion(fileList, leastIndex, selectedIndex);
+                            }
+
+                            return;
                         }
 
                     } else if (bisweb_keylistener.ctrlPressed) { 
 
                     }
                 } 
-
+                console.log('w', w);
                 this.clearFileHighlighting(fileList);
                 w.addClass('bisweb-filedialog-selected');
 
@@ -529,6 +544,16 @@ class SimpleFileDialog {
         fileDisplay.append(fileList);
         fileList.append(stable);
         this.updateFileNavbar(lastfilename,rootDirectory);
+
+        function selectRegion(body, lowIndex, highIndex) {
+            let listItems = body.find('tr');
+            for (let i = 0; i < listItems.length; i++) {
+                if (i >= lowIndex && i <= highIndex) { 
+                    listItems.eq(i).addClass('bisweb-filedialog-selected'); 
+                    console.log('select item', listItems.eq(i)); 
+                }
+            }
+        }
     }
 
     /**

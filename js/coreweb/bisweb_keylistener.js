@@ -7,7 +7,7 @@ let keyListenersOn = false;
 //add listener for whether the control key or shift key are held 
 //https://api.jquery.com/event.which/
 let keydownEvent = (e) => {
-    if (e.which === 16) { shiftPressed = true; console.log('shift pressed', shiftPressed);}
+    if (e.which === 16) { shiftPressed = true; }
     if (e.which === 17) { ctrlPressed = true; }
 };
 
