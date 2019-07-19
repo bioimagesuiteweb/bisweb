@@ -539,3 +539,7 @@ tspan {
 .bisweb-filedialog-selected {
     background-color : rgb(70, 69, 69) !important;
 }
+
+.bisweb-pipeline-input-list {
+  overflow-wrap : break-word;
+}

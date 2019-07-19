@@ -161,8 +161,6 @@ class FileTreePipeline extends HTMLElement {
                         <div class='col-lg-4'>
                             <div class='bisweb-pipeline-input-list'>
                                 <ul>
-                                    <li>Hello!</li>
-                                    <li>What's up?</li>
                                 </ul>
                             </div>
                         </div>
@@ -354,11 +352,7 @@ class FileTreePipeline extends HTMLElement {
             'command' : 'node ' + command,
             'inputs' : [{
                 'name' : 'input',
-                'files' : [
-                    '/home/zach/javascript/bisweb/test/testdata/MNI_2mm_orig.nii.gz',
-                    '/home/zach/javascript/bisweb/test/testdata/MNI_2mm_resliced.nii.gz',
-                    '/home/zach/javascript/bisweb/test/testdata/MNI_2mm_scaled.nii.gz'
-                ]
+                'files' : this.pipelineInputs
             }],
             'jobs' : []
         };
@@ -414,7 +408,6 @@ class FileTreePipeline extends HTMLElement {
      * @returns The set of filenames.
      */
     importInputsFromDisk(f) {
-        console.log('f', f);
 
         if (this.pipelineInputs) {
             bootbox.confirm({
@@ -437,18 +430,27 @@ class FileTreePipeline extends HTMLElement {
                         this.pipelineInputs = Array.isArray(f) ? f : [f];
                     }
 
+                    this.updateInputListElement(this.pipelineInputs);  
                     console.log('pipeline inputs', this.pipelineInputs);
                 }
             });
         } else {
             this.pipelineInputs = Array.isArray(f) ? f : [f];
+            this.updateInputListElement(f);  
         }
-
-        this.updateInputListElement();    
+  
     }
 
-    updateInputListElement() {
+    updateInputListElement(fileList) {
+        let fileListElement = $(this.pipelineModal.body).find('.bisweb-pipeline-input-list ul');
+        $(fileListElement).empty();
 
+        fileList = Array.isArray(fileList) ? fileList : [fileList];
+
+        for (let item of fileList) {
+            let listItem = $(`<li>${item}</li>`);
+            fileListElement.append(listItem);
+        }
     }
 
     /**
