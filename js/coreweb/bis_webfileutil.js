@@ -76,6 +76,19 @@ let iosFileDialog=null;
 const webfileutils = {
 
     /**
+     * Checks whether one of Google Drive, Dropbox, or OneDrive has usable keys in the current configuration.
+     * These keys live in the 'internal' directory outside of the rest of the codebase. 
+     *
+     * TODO: Revert this to normal!
+     */
+    needModes : function() {
+        /* if (dkey.length>0 || gkey.length>0 || mkey.length>0)
+            return true;
+        return false; */
+        return true;
+    },
+
+    /**
      * Returns the current file mode of the application. May be one of Google Drive, Dropbox, OneDrive, Amazon AWS, Local Server, or standard File I/O (<input type='file'>)
      */
     getMode: function() {
