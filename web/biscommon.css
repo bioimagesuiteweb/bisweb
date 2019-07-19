@@ -530,3 +530,12 @@ tspan {
 .bisweb-li:hover {
     background-color : rgba(0, 188, 140, 0.5);
 }
+
+.bisweb-glyphicon-right {
+    float: right;
+    font-size: 15px;
+}
+
+.bisweb-filedialog-selected {
+    background-color : rgb(70, 69, 69) !important;
+}

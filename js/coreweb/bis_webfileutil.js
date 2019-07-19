@@ -290,6 +290,7 @@ const webfileutils = {
      * @param {String} fileopts.suffix - if in file mode and web use this to filter web style
      * @param {String} fileopts.force - force file selection mode (e.g. 'local');
      * @param {string}  fileopts.serveronly - if true only for server operations (or electron)
+     * @param {boolean} fileopts.altkeys - if true, enables alt keys for the file dialog (shift and ctrl). false by default
      * @param {Function} callback - Callback to call when done. Typically this is provided by bis_genericio and will put the loaded image onto the viewer or perform any necessary actions after saving an image. 
      */
     webFileCallback: function (fileopts, callback) {
@@ -298,6 +299,8 @@ const webfileutils = {
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
         fileopts.serveronly=fileopts.serveronly || false;
+        fileopts.altkeys=fileopts.altkeys || false;
+
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
@@ -331,7 +334,8 @@ const webfileutils = {
                        'title' : title,
                        'suffix' : suffix,
                        'mode' : 'load' ,
-                       'filters' : fileopts.filters
+                       'filters' : fileopts.filters,
+                       'altkeys' : fileopts.altkeys
                      };
 
 
@@ -519,6 +523,7 @@ const webfileutils = {
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
      * @param {string}  fileopts.serveronly - if true only for server operations (or electron)
+     * @param {boolean} fileopts.altkeys - if true, enables shift and ctrl keybinds. disabled by default.
      */
     attachFileCallback : function(button,callback,fileopts={}) {
 

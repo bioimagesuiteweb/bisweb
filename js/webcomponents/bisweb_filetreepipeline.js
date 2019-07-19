@@ -145,6 +145,9 @@ class FileTreePipeline extends HTMLElement {
         return pipelineBody;
     }
 
+    /**
+     * Opens a modal that will allow a user to create a pipeline from the full set of BioImageSuite Web Modules. Should be called by outside scope!
+     */
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
@@ -170,12 +173,13 @@ class FileTreePipeline extends HTMLElement {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
 
-                            let width = pipelineModal.body.width() / 4;
+                            let width = pipelineModal.body.width() / 3;
                             let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px', 'width' : width });
                             customModule.createOrUpdateGUI({ 'width' : width });
                             centerCustomElement($(customModule.panel.widget));
 
-                            this.modules.push({ 'name' : moduleName, 'module' : customModule});
+                            let id = bis_webutil.getuniqueid();
+                            this.modules.push({ 'name' : moduleName, 'module' : customModule, 'id' : id});
 
                             let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
                             let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
@@ -196,12 +200,13 @@ class FileTreePipeline extends HTMLElement {
                             });
 
                             //put label and element inside a containing div
-                            let id = bis_webutil.getuniqueid();
                             let moduleLabel = $(`<span>${prettyModuleName}</span>`);
 
                             $(customModule.panel.widget).find('.bisweb-customelement-footer').append(removeButton);
                             $(customModule.panel.widget).prepend(moduleLabel);
                             $(customModule.panel.widget).attr('id', id);
+                            
+                            this.addArrowButtons(id, this.pipelineModal, $(customModule.panel.widget).find('.dg.main') );
                             pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
@@ -222,6 +227,18 @@ class FileTreePipeline extends HTMLElement {
                     }
             });
 
+            let importInputsButton = bis_webfileutil.createFileButton({
+                'name': 'Import Inputs',
+                'type': 'info',
+                'callback': (f) => { this.importInputsFromDisk(f); },
+                }, {
+                    'title': 'Import inputs from disk',
+                    'save': false,
+                    'filters': 'NII',
+                    'suffix': 'NII',
+                    'altkeys' : true
+            });
+
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
             pipelineModal.dialog.on('show.bs.modal', () => {
                 if (!this.savedParameters) {
@@ -233,12 +250,71 @@ class FileTreePipeline extends HTMLElement {
 
             pipelineModal.footer.append(addModuleButton);
             pipelineModal.footer.append(saveModulesButton);
+            pipelineModal.footer.append(importInputsButton);
             this.pipelineModal = pipelineModal;
         }
 
         this.pipelineModal.dialog.modal('show');
     }
 
+    /**
+     * Adds arrow buttons that will allow a user to move a module up or down in the pipeline. 
+     * 
+     * @param {String} id - Id associated with a module currently in the pipeline modal.
+     * @param {JQuery} modal - The pipeline modal.
+     * @param {JQuery} moduleContainer - The div containing the module to move up or down.
+     */
+    addArrowButtons(id, modal, moduleContainer) {
+        let upButton = $(`<span class='glyphicon glyphicon-chevron-up bisweb-glyphicon-right'></span>`);
+        let downButton = $(`<span class='glyphicon glyphicon-chevron-down bisweb-glyphicon-right'></span`);
+
+        upButton.on('click', () => {
+            let prevElem, currentElem; 
+            for (let i = 0; i < this.modules.length; i++) {
+                if (this.modules[i].id === id) { 
+                    if (i === 0) { return; } //can't move up if this is the first item in the list
+                    prevElem = $(modal.body).find('#' + this.modules[i - 1].id);
+                    currentElem = $(modal.body).find('#' + this.modules[i].id);
+
+                    //move module up one in list
+                    let moveElem = this.modules.splice(i, 1);
+                    this.modules.splice(i - 1, 0, moveElem[0]);
+                }
+            }
+
+            $(currentElem).detach();
+            $(currentElem).insertBefore(prevElem);
+        });
+
+        downButton.on('click', () => {
+            let nextElem, currentElem; 
+            for (let i = 0; i < this.modules.length; i++) {
+                if (this.modules[i].id === id) { 
+                    if (i === this.modules.length - 1) { return; } //can't move down if this is the last item in the list
+                    nextElem = $(modal.body).find('#' + this.modules[i + 1].id);
+                    currentElem = $(modal.body).find('#' + this.modules[i].id);
+
+                    //move module down one in list
+                    let moveElem = this.modules.splice(i, 1);
+                    this.modules.splice(i + 1, 0, moveElem[0]);
+                    i = this.modules.length; //needed to avoid double-counting the element after it's moved into place.
+                }
+            }
+
+            $(currentElem).detach();
+            $(currentElem).insertAfter(nextElem);
+        });
+
+        $(moduleContainer).prepend(upButton);
+        $(moduleContainer).append(downButton);
+    }
+
+    /**
+     * Saves the modules to disk, in order, with the parameters the user specified.
+     * Also runs the pipeline module and saves a Makefile for the modules specified and an output directory for the files that will be created by it.
+     * 
+     * @param {String} filename - Name for the pipeline parameters file. 
+     */
     savePipelineToDisk(filename) {
         let params = [];
         $('.bisweb-pipeline-list').empty();
@@ -253,8 +329,6 @@ class FileTreePipeline extends HTMLElement {
         }
 
         this.savedParameters = params;
-
-        console.log('saved parameters', this.savedParameters);
         
         //format the saved modules to use the pipeline creation tool.
         //TODO: Format this to use biswebnode maybe? 
@@ -317,8 +391,19 @@ class FileTreePipeline extends HTMLElement {
     }
 
     /**
+     * Imports a filename or set of filenames from disk and returns them to be listed in the modal.
+     * 
+     * @param {String} f - A filename or a set of filenames.
+     * @returns The set of filenames.
+     */
+    importInputsFromDisk(f) {
+        console.log('f', f);
+    }
+
+    /**
      * Creates a list item to represent an entry in the current saved pipeline. 
      * 
+     * @param {String} moduleName - The name of a BioImageSuite Web module. 
      * @returns A formatted bootstrap list item.
      */
     createPipelineListItem(moduleName) {
@@ -336,6 +421,7 @@ class FileTreePipeline extends HTMLElement {
     /**
      * Opens a small bootstrap modal to edit the parameters of a module in the currently saved pipeline. 
      * 
+     * @param {JQuery} item - A Bootstrap-formatted list item containing the name of a BioImageSuite Web module.
      */
     openModuleEditingModal(item) {
         let name = $(item).html();
@@ -382,41 +468,6 @@ class FileTreePipeline extends HTMLElement {
         modal.footer.prepend(saveButton);
         modal.dialog.modal('show');
     }
-
-    
-
-    /** parseTaskMatrix(taskdata, taskNames) {
-        let taskMatrix = new BiswebMatrix();
-        let cols = taskNames.length;
-
-        let runNames = Object.keys(taskdata);
-        let randomRun = taskdata[runNames[0]].parsedRegions;
-        let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
-        let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
-
-        //sort run names so tasks are created in order
-        runNames.sort((a, b) => {
-            let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
-            if (aIndex && !bIndex) { return a; }
-            if (bIndex && !aIndex) { return b; }
-            if (!aIndex && !bIndex) { return a.localeCompare(b); }
-            else { return aIndex - bIndex; }
-        });
-
-        taskMatrix.allocate(rows, cols);
-        let currentRun;
-        for (let i = 0; i < rows; i++) {
-            currentRun = runNames[Math.floor(i / runLength)];
-            for (let j = 0; j < cols; j++) {
-                //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
-                let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
-                let datapoint = taskArray ? taskArray[i % runLength] : 0;
-                taskMatrix.setElement(i, j, datapoint);
-            }
-        }
-
-        return { 'matrix': taskMatrix, 'runs': runNames };
-    } */
 }
 
 //Adds 'bisweb-centered-customelement' class to custom element

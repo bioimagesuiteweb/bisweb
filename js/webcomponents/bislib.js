@@ -29,6 +29,7 @@ require("bisweb_misactool.js");
 require("bisweb_studypanel.js");
 require('bisweb_oldgrapherelement.js');
 require('bisweb_filetreepipeline.js');
+require('bisweb_keylistener.js');
 
 
 const webutil = require('bis_webutil');
