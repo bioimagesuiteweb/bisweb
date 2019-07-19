@@ -17,6 +17,7 @@ class FileTreePipeline extends HTMLElement {
         this.pipelineModal = null;
         this.modules = [];
         this.savedParameters = null;
+        this.pipelineInputs = null;
     }
 
     connectedCallback() {
@@ -398,6 +399,40 @@ class FileTreePipeline extends HTMLElement {
      */
     importInputsFromDisk(f) {
         console.log('f', f);
+
+        if (this.pipelineInputs) {
+            bootbox.confirm({
+                'size': 'small',
+                'message': 'There are already inputs defined for this pipeline. Replace the existing inputs with these, or add them to the end?',
+                'buttons': {
+                    'confirm': {
+                        'label': 'Add',
+                        'className': 'btn-success'
+                    },
+                    'cancel': {
+                        'label' :  'Replace',
+                        'className': 'btn-warning'
+                    } 
+                },
+                'callback' : (add) => {
+                    if (add) {
+                        this.pipelineInputs = Array.isArray(f) ? this.pipelineInputs.concat(f) : this.pipelineInputs.concat([f]);
+                    } else {
+                        this.pipelineInputs = Array.isArray(f) ? f : [f];
+                    }
+
+                    console.log('pipeline inputs', this.pipelineInputs);
+                }
+            });
+        } else {
+            this.pipelineInputs = Array.isArray(f) ? f : [f];
+        }
+
+        this.updateInputListElement();    
+    }
+
+    updateInputListElement() {
+
     }
 
     /**
