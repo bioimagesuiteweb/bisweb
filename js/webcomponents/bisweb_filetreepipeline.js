@@ -108,11 +108,6 @@ class FileTreePipeline extends HTMLElement {
             this.graphelement.chartInvokedFrom = 'task';
             this.filetree.parseTaskImagesFromTree();
         });
-
-        let drawingInterfaceButton = bis_webutil.createbutton({ 'name' : 'Open drawing interface', 'type' : 'primary' });
-        drawingInterfaceButton.on('click', () => {
-            this.startDrawingInterface();
-        });
         
         plotTasksButton.addClass('bisweb-load-enable');
         plotTasksButton.prop('disabled', 'true');
@@ -154,6 +149,27 @@ class FileTreePipeline extends HTMLElement {
 
             let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
             pipelineModal.footer.empty();
+
+            //create bootstrap layout for pipeline creation modal 
+            let layout = $(`
+                <div class='container-fluid'>
+                    <div class='row'>
+                        <div class='col-lg-8'>
+                            <div class='bisweb-pipeline-module-list'>
+                            </div>
+                        </div>
+                        <div class='col-lg-4'>
+                            <div class='bisweb-pipeline-input-list'>
+                                <ul>
+                                    <li>Hello!</li>
+                                    <li>What's up?</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            $(pipelineModal.body).append(layout);
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
 
@@ -208,7 +224,7 @@ class FileTreePipeline extends HTMLElement {
                             $(customModule.panel.widget).attr('id', id);
                             
                             this.addArrowButtons(id, this.pipelineModal, $(customModule.panel.widget).find('.dg.main') );
-                            pipelineModal.body.append(customModule.panel.widget);
+                            $(layout).find('.bisweb-pipeline-module-list').append(customModule.panel.widget);
                         }
                     }
                 });
