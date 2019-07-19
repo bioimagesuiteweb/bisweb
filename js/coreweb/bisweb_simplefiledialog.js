@@ -106,7 +106,7 @@ class SimpleFileDialog {
         }
 
         let out;
-        if (this.selectedItems.length > 1) {
+        if (this.selectedItems && this.selectedItems.length > 1) {
             out = [];
             for (let item of this.selectedItems) {
                 out.push(this.getCombinedFilename(this.currentDirectory, item));
