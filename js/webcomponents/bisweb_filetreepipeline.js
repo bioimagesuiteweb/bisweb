@@ -147,19 +147,21 @@ class FileTreePipeline extends HTMLElement {
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
-            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg modal-scrollable');
             pipelineModal.footer.empty();
+
+            pipelineModal.dialog.find('.modal-content').addClass('bisweb-capped-modal');
 
             //create bootstrap layout for pipeline creation modal 
             let layout = $(`
-                <div class='container-fluid'>
+                <div class='container-fluid bisweb-scrollable-container'>
                     <div class='row'>
                         <div class='col-lg-8'>
                             <div class='bisweb-pipeline-module-list'>
                             </div>
                         </div>
                         <div class='col-lg-4'>
-                            <div class='bisweb-pipeline-input-list'>
+                            <div class='bisweb-pipeline-input-list' style='overflow-wrap: break-word;'>
                                 <ul>
                                 </ul>
                             </div>
