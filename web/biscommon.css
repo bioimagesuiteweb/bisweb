@@ -548,3 +548,13 @@ tspan {
   overflow: auto;
   max-height: var(--capped-modal-list-height) ;
 }
+
+.bisweb-pipeline-input-list {
+  position : -webkit-sticky;
+  position : sticky;
+  top : 0;
+}
+
+.bisweb-list-group-item { 
+  font-size : 9pt;
+}

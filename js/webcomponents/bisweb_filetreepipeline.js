@@ -152,6 +152,14 @@ class FileTreePipeline extends HTMLElement {
 
             pipelineModal.dialog.find('.modal-content').addClass('bisweb-capped-modal');
 
+            let infoButton = $(`<button type='button' class='btn-sm btn-link' style='float: right'>
+                                    <span class='glyphicon glyphicon-info-sign'></span>&nbspFile Info
+                                </button>`);
+
+            let removeButton = $(`<button type='button' class='btn-sm btn-link' style='float: right'> 
+                                    <span class='glyphicon glyphicon-remove'></span>&nbspRemove
+                                </button>`);
+
             //create bootstrap layout for pipeline creation modal 
             let layout = $(`
                 <div class='container-fluid bisweb-scrollable-container'>
@@ -169,7 +177,12 @@ class FileTreePipeline extends HTMLElement {
                     </div>
                 </div>
             `);
+
             $(pipelineModal.body).append(layout);
+            $(pipelineModal.body).find('.bisweb-pipeline-input-list').append(removeButton, infoButton);
+
+            let bottomButtons = $(layout).find('.btn-link');
+            bottomButtons.css('visibility', 'hidden');
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
 
@@ -247,13 +260,35 @@ class FileTreePipeline extends HTMLElement {
             let importInputsButton = bis_webfileutil.createFileButton({
                 'name': 'Import Inputs',
                 'type': 'info',
-                'callback': (f) => { this.importInputsFromDisk(f); },
+                'callback': (f) => { this.importInputsFromDisk(f); $(bottomButtons).css('visibility', 'visible'); },
                 }, {
                     'title': 'Import inputs from disk',
                     'save': false,
                     'filters': 'NII',
                     'suffix': 'NII',
                     'altkeys' : true
+            });
+
+            removeButton.on('click', () => {
+                //use partial filename to find the full entry in the internal list
+                let fileList = $(layout).find('.bisweb-pipeline-input-list');
+                let selectedItem = $(fileList).find('.active');
+                console.log('selected item', selectedItem);
+
+                if (selectedItem.length === 0) { bootbox.alert('No item selected'); return; }
+
+                let filename = $(selectedItem).html().toString();
+                console.log('filename', filename);
+
+                for (let i = 0; i < this.pipelineInputs.length; i++) {
+                    if (this.pipelineInputs[i].includes(filename)) {
+                        this.pipelineInputs.splice(i, 1);
+                        i = this.pipelineInputs.length;
+                    }
+                }
+
+                $(selectedItem).remove();
+                console.log('inputs', this.pipelineInputs);
             });
 
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
@@ -450,9 +485,16 @@ class FileTreePipeline extends HTMLElement {
         fileList = Array.isArray(fileList) ? fileList : [fileList];
 
         for (let item of fileList) {
-            let listItem = $(`<li>${item}</li>`);
+            let sep = item.includes('\\') ? '\\' : '/';
+            let splitFilename = item.split(sep), filename = splitFilename[splitFilename.length - 1];
+
+            let listItem = $(`<a href='#' class='list-group-item list-group-item-action bisweb-list-group-item'>${filename}</a>`);
             fileListElement.append(listItem);
         }
+
+        //set on click behavior for new elements
+        let groupItems = fileListElement.find('.list-group-item');
+        groupItems.on('click', (e) => { groupItems.removeClass('active'); $(e.target).addClass('active'); });
     }
 
     /**
