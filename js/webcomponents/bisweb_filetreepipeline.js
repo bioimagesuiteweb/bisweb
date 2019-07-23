@@ -271,14 +271,11 @@ class FileTreePipeline extends HTMLElement {
 
             removeButton.on('click', () => {
                 //use partial filename to find the full entry in the internal list
-                let fileList = $(layout).find('.bisweb-pipeline-input-list');
-                let selectedItem = $(fileList).find('.active');
-                console.log('selected item', selectedItem);
+                let inputList = $(layout).find('.bisweb-pipeline-input-list');
+                let filename = this.getActiveItemName(inputList); 
+                let selectedItem = inputList.find('.active');
 
-                if (selectedItem.length === 0) { bootbox.alert('No item selected'); return; }
-
-                let filename = $(selectedItem).html().toString();
-                console.log('filename', filename);
+                if (!filename) { return; }
 
                 for (let i = 0; i < this.pipelineInputs.length; i++) {
                     if (this.pipelineInputs[i].includes(filename)) {
@@ -289,6 +286,45 @@ class FileTreePipeline extends HTMLElement {
 
                 $(selectedItem).remove();
                 console.log('inputs', this.pipelineInputs);
+            });
+
+            infoButton.on('click', () => {
+                let inputList = $(layout).find('.bisweb-pipeline-input-list');
+                let filename = this.getActiveItemName(inputList);
+
+                if (!filename) { return; }
+
+                let fullname;
+                for (let item of this.pipelineInputs) {
+                    if (item.includes(filename)) {
+                        fullname = item;
+                    }
+                }
+
+                this.getFileInfo(fullname).then( (info) => {
+
+                    //format size to be a readable format 
+                    console.log('size', info.size);
+                    let fileSize = info.size, i = 0, fileSizeString;
+                    while (fileSize > 1024) {
+                        fileSize = fileSize / 1024;
+                        i = i + 1;
+                    }
+
+                    let suffix = 'B';
+                    switch (i) {
+                        case 1 : suffix = 'kB'; break;
+                        case 2 : suffix = 'MB'; break;
+                        case 3 : suffix = 'GB'; break;
+                        case 4 : suffix = 'TB'; break;
+                    }
+
+                    console.log('i', i);
+                    fileSizeString = '' + fileSize + suffix;
+
+                    let modalText = `File size: ${fileSizeString}<br>Created: ${info.stats.ctime}<br>Last accessed: ${info.stats.atime}`;
+                    bootbox.alert(modalText);
+                });
             });
 
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
@@ -307,6 +343,22 @@ class FileTreePipeline extends HTMLElement {
         }
 
         this.pipelineModal.dialog.modal('show');
+    }
+
+    /**
+     * Returns the currently selected item in the pipeline modal (item with class 'active'), or displays an error message if nothing is selected.
+     * 
+     * @param {JQuery} list - The pipeline input list.
+     * @returns Active item, if any. 
+     */
+    getActiveItemName(list) {
+        let selectedItem = $(list).find('.active');
+        if (selectedItem.length === 0) { 
+            bootbox.alert('No item selected'); 
+            return false; 
+        } else { 
+            return $(selectedItem).html(); 
+        }
     }
 
     /**
@@ -495,6 +547,18 @@ class FileTreePipeline extends HTMLElement {
         //set on click behavior for new elements
         let groupItems = fileListElement.find('.list-group-item');
         groupItems.on('click', (e) => { groupItems.removeClass('active'); $(e.target).addClass('active'); });
+    }
+
+    getFileInfo(f) {
+        return new Promise( (resolve, reject) => {
+            bis_genericio.getFileSize(f).then( (size) => {
+                bis_genericio.getFileStats(f).then( (stats) => {
+                    console.log('size', size);
+                    console.log('stats', stats);
+                    resolve({ 'stats' : stats, 'size' : size})
+                });
+            });
+        });
     }
 
     /**
