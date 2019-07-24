@@ -171,7 +171,6 @@ class FileTreePipeline extends HTMLElement {
                 }
 
                 $(selectedItem).remove();
-                console.log('inputs', this.pipelineInputs);
             });
 
             infoButton.on('click', () => {
@@ -190,7 +189,6 @@ class FileTreePipeline extends HTMLElement {
                 this.getFileInfo(fullname).then( (info) => {
 
                     //format size to be a readable format 
-                    console.log('size', info.size);
                     let fileSize = info.size, i = 0, fileSizeString;
                     while (fileSize > 1024) {
                         fileSize = fileSize / 1024;
@@ -205,7 +203,6 @@ class FileTreePipeline extends HTMLElement {
                         case 4 : suffix = 'TB'; break;
                     }
 
-                    console.log('i', i);
                     fileSizeString = '' + fileSize + suffix;
 
                     let modalText = `File size: ${fileSizeString}<br>Created: ${info.stats.ctime}<br>Last accessed: ${info.stats.atime}`;
@@ -396,7 +393,6 @@ class FileTreePipeline extends HTMLElement {
                     }
 
                     this.updateInputListElement(this.pipelineInputs);  
-                    console.log('pipeline inputs', this.pipelineInputs);
                 }
             });
         } else {
@@ -406,6 +402,11 @@ class FileTreePipeline extends HTMLElement {
   
     }
 
+    /**
+     * Regenerates the list of input elements in the pipeline modal with a new set of inputs.
+     * 
+     * @param {Array} fileList - List of filenames to regenerate the list with.
+     */
     updateInputListElement(fileList) {
         let fileListElement = $(this.pipelineModal.body).find('.bisweb-pipeline-input-list ul');
         $(fileListElement).empty();
@@ -425,12 +426,16 @@ class FileTreePipeline extends HTMLElement {
         groupItems.on('click', (e) => { groupItems.removeClass('active'); $(e.target).addClass('active'); });
     }
 
+    /**
+     * Gets the size and stats for a given file. Simply a combination of bis_genericio.getFileSize and bis_genericio.getFileStats.
+     * 
+     * @param {String} f - Name of a file on disk. 
+     * @returns Promise resolving the file size and stats, or rejecting with an error.
+     */
     getFileInfo(f) {
         return new Promise( (resolve, reject) => {
             bis_genericio.getFileSize(f).then( (size) => {
                 bis_genericio.getFileStats(f).then( (stats) => {
-                    console.log('size', size);
-                    console.log('stats', stats);
                     resolve({ 'stats' : stats, 'size' : size});
                 }).catch( (e) => { reject(e); });
             }).catch( (e) => { reject(e); });
@@ -480,7 +485,6 @@ class FileTreePipeline extends HTMLElement {
         modal.dialog.on('shown.bs.modal', () => {
             //modal body padding is 20px by default
             let width = $(modal.body).outerWidth() - 40;
-            console.log('width', width);
             customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '0px', 'buttonsMargin' : '0px', 'width' : width });
             modal.body.append(customModule.panel.widget);
             customModule.createOrUpdateGUI( {'width' : width});
@@ -493,7 +497,6 @@ class FileTreePipeline extends HTMLElement {
         let saveButton = bis_webutil.createbutton({ 'name' : 'Save', 'type' : 'btn-primary' });
         saveButton.on('click', () => {
             this.modules[index].module = customModule;
-            console.log('module', this.modules[index]);
             modal.dialog.modal('hide');
         });
 
