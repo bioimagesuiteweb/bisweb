@@ -8,6 +8,7 @@ const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager = require('bisweb_studytaskmanager');
+const BiswebImage = require('bisweb_image.js');
 
 const SEPARATOR = bis_genericio.getPathSeparator();
 

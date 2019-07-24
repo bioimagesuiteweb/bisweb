@@ -115,7 +115,6 @@ class FileTreePipeline extends HTMLElement {
         taskButtonBar.append(importTaskButton);
         taskButtonBar.append(clearTaskButton);
         taskButtonBar.append(plotTasksButton);
-        taskButtonBar.append(drawingInterfaceButton);
 
         return taskButtonBar;
     }
@@ -555,9 +554,9 @@ class FileTreePipeline extends HTMLElement {
                 bis_genericio.getFileStats(f).then( (stats) => {
                     console.log('size', size);
                     console.log('stats', stats);
-                    resolve({ 'stats' : stats, 'size' : size})
-                });
-            });
+                    resolve({ 'stats' : stats, 'size' : size});
+                }).catch( (e) => { reject(e); });
+            }).catch( (e) => { reject(e); });
         });
     }
 
