@@ -219,6 +219,10 @@ class SimpleFileDialog {
         this.modal.footer.prepend(this.okButton);
         this.modal.body.append(this.container);        
 
+        //clear selected items when the modal is hidden
+        this.modal.dialog.on('hidden.bs.modal', () => {
+            this.selectedItems = null;
+        });
 
     }
 

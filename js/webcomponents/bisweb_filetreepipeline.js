@@ -32,7 +32,8 @@ class FileTreePipeline extends HTMLElement {
      *  
      * @param {HTMLElement|JQueryElement} parent - The parent element in which to render the menu.
      */
-    createPanel(parent) {
+    //TODO: Delete this? 
+    /*createPanel(parent) {
         let body = bis_webutil.createCollapseElement(parent, 'Study Tools', false);
 
         let panelBody = $(`
@@ -56,7 +57,7 @@ class FileTreePipeline extends HTMLElement {
         panelBody.find('#bisweb-panel-pipeline').append(pipelineButtonBar);
         console.log('panel body', panelBody.find('#bisweb-panel-pipeline'));
         
-    }
+    }*/
 
     /**
      * Create the set of buttons used to manage loading and clearing task files. 
@@ -420,7 +421,7 @@ class FileTreePipeline extends HTMLElement {
      */
     savePipelineToDisk(filename) {
         let params = [];
-        $('.bisweb-pipeline-list').empty();
+        //$('.bisweb-pipeline-list').empty();
         for (let i = 0; i < this.modules.length; i++) {
             let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
             params.push(param);
@@ -433,8 +434,10 @@ class FileTreePipeline extends HTMLElement {
 
         this.savedParameters = params;
         
+        console.log('filename', filename);
         //format the saved modules to use the pipeline creation tool.
         //TODO: Format this to use biswebnode maybe? 
+        //TODO: Find a way to use path.sep
         let command = ['', 'home', 'zach', 'javascript', 'bisweb', 'js', 'bin', 'bisweb.js'].join('/');
         let pipeline = { 
             'command' : 'node ' + command,
