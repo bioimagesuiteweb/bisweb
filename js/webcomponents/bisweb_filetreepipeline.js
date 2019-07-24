@@ -159,17 +159,12 @@ class FileTreePipeline extends HTMLElement {
                 //use partial filename to find the full entry in the internal list
                 let inputList = $(layout).find('.bisweb-pipeline-input-list');
                 let filename = this.getActiveItemName(inputList); 
-                let selectedItem = inputList.find('.active');
 
                 if (!filename) { return; }
 
-                for (let i = 0; i < this.pipelineInputs.length; i++) {
-                    if (this.pipelineInputs[i].includes(filename)) {
-                        this.pipelineInputs.splice(i, 1);
-                        i = this.pipelineInputs.length;
-                    }
-                }
-
+                let selectedItem = inputList.find('.active');
+                let selectedItemIndex = $(selectedItem).index();
+                this.pipelineInputs.splice(selectedItemIndex, 1);
                 $(selectedItem).remove();
             });
 
@@ -179,12 +174,8 @@ class FileTreePipeline extends HTMLElement {
 
                 if (!filename) { return; }
 
-                let fullname;
-                for (let item of this.pipelineInputs) {
-                    if (item.includes(filename)) {
-                        fullname = item;
-                    }
-                }
+                let selectedItem = inputList.find('.active');
+                let fullname = this.pipelineInputs[$(selectedItem).index()];
 
                 this.getFileInfo(fullname).then( (info) => {
 
