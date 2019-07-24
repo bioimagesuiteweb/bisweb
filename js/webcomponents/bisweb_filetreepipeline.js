@@ -318,7 +318,7 @@ class FileTreePipeline extends HTMLElement {
         
         //format the saved modules to use the pipeline creation tool.
         //TODO: Format this to use biswebnode maybe? 
-        let command = ['', 'home', 'zach', 'javascript', 'bisweb', 'js', 'bin', 'bisweb.js'].join('/');
+        let command = ['', 'home', 'zach', 'javascript', 'bisweb', 'js', 'bin', 'bisweb.js'].join(sep);
         let pipeline = { 
             'command' : 'node ' + command,
             'inputs' : [{
