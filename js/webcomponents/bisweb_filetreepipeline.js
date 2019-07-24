@@ -26,120 +26,6 @@ class FileTreePipeline extends HTMLElement {
             this.algocontroller = document.querySelector(algocontrollerid);
         });
     }
-    
-    /**
-     * Creates the collapsible HTML element inside a parent object, most typically the left sidebar.
-     *  
-     * @param {HTMLElement|JQueryElement} parent - The parent element in which to render the menu.
-     */
-    //TODO: Delete this? 
-    /*createPanel(parent) {
-        let body = bis_webutil.createCollapseElement(parent, 'Study Tools', false);
-
-        let panelBody = $(`
-            <div>
-                <div id='bisweb-panel-tasks'>
-                    <label>Tasks</label><br>
-                </div>
-                <div id='bisweb-panel-pipeline'>
-                    <label>Pipeline Tools</label><br>
-                </div> 
-            </div>
-        `);
-
-       
-        body.append(panelBody);
-
-        let taskButtonBar = this.createTaskElements();
-        panelBody.find('#bisweb-panel-tasks').append(taskButtonBar);
-
-        let pipelineButtonBar = this.createPipelineElements();
-        panelBody.find('#bisweb-panel-pipeline').append(pipelineButtonBar);
-        console.log('panel body', panelBody.find('#bisweb-panel-pipeline'));
-        
-    }*/
-
-    /**
-     * Create the set of buttons used to manage loading and clearing task files. 
-     */
-    createTaskElements() {
-
-        let taskButtonBar = bis_webutil.createbuttonbar();
-
-        let importTaskButton = bis_webfileutil.createFileButton({
-            'type': 'info',
-            'name': 'Import task file',
-            'callback': (f) => {
-                this.graphelement.chartInvokedFrom = 'task';
-                this.loadStudyTaskData(f);
-            },
-        },
-            {
-                'title': 'Import task file',
-                'filters': [
-                    { 'name': 'Task Files', extensions: ['json'] }
-                ],
-                'suffix': 'json',
-                'save': false,
-            });
-
-        let clearTaskButton = bis_webutil.createbutton({ 'name': 'Clear tasks', 'type': 'primary' });
-        clearTaskButton.on('click', () => {
-            bootbox.confirm({
-                'message': 'Clear loaded task data?',
-                'buttons': {
-                    'confirm': {
-                        'label': 'Yes',
-                        'className': 'btn-success'
-                    },
-                    'cancel': {
-                        'label': 'No',
-                        'className': 'btn-danger'
-                    }
-                },
-                'callback': (result) => {
-                    if (result) { this.graphelement.taskdata = null; }
-                }
-            });
-            this.graphelement.taskdata = null;
-        });
-
-        let plotTasksButton = bis_webutil.createbutton({ 'name': 'Plot task charts', 'type': 'info' });
-        plotTasksButton.on('click', () => {
-            this.graphelement.chartInvokedFrom = 'task';
-            this.filetree.parseTaskImagesFromTree();
-        });
-        
-        plotTasksButton.addClass('bisweb-load-enable');
-        plotTasksButton.prop('disabled', 'true');
-
-        taskButtonBar.append(importTaskButton);
-        taskButtonBar.append(clearTaskButton);
-        taskButtonBar.append(plotTasksButton);
-
-        return taskButtonBar;
-    }
-
-    createPipelineElements() {
-        let pipelineButtonBar = bis_webutil.createbuttonbar();
-
-        let pipelineCreationButton = bis_webutil.createbutton({ 'name' : 'Create pipeline', 'type' : 'info'});
-        pipelineCreationButton.on('click', () => {
-            this.openPipelineCreationModal();
-        });
-
-        let pipelineBody = $(`<div></div>`);
-        let pipelineTable = $(`
-            <ul class='list-group bisweb-pipeline-list'>
-            </ul>
-        `);
-
-        pipelineButtonBar.append(pipelineCreationButton);
-        pipelineBody.append(pipelineButtonBar);
-        pipelineBody.append(pipelineTable);
-
-        return pipelineBody;
-    }
 
     /**
      * Opens a modal that will allow a user to create a pipeline from the full set of BioImageSuite Web Modules. Should be called by outside scope!
@@ -244,7 +130,7 @@ class FileTreePipeline extends HTMLElement {
             });
 
             let saveModulesButton = bis_webfileutil.createFileButton({ 
-                'name': 'Save Modules',
+                'name': 'Save Pipeline',
                 'type': 'primary',
                 'callback': (f) => { this.savePipelineToDisk(f); pipelineModal.dialog.modal('hide'); },
                 }, {
@@ -421,23 +307,17 @@ class FileTreePipeline extends HTMLElement {
      */
     savePipelineToDisk(filename) {
         let params = [];
-        //$('.bisweb-pipeline-list').empty();
         for (let i = 0; i < this.modules.length; i++) {
             let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
             params.push(param);
-
-            //update pipeline list 
-            let moduleName = moduleIndex.getModule(this.modules[i].name).getDescription().name;
-            let listItem = this.createPipelineListItem(moduleName);
-            $('.bisweb-pipeline-list').append(listItem);
         }
 
         this.savedParameters = params;
         
-        console.log('filename', filename);
+        let sep = this.pipelineInputs[0].includes('\\') ? '\\' : '/';
+        
         //format the saved modules to use the pipeline creation tool.
         //TODO: Format this to use biswebnode maybe? 
-        //TODO: Find a way to use path.sep
         let command = ['', 'home', 'zach', 'javascript', 'bisweb', 'js', 'bin', 'bisweb.js'].join('/');
         let pipeline = { 
             'command' : 'node ' + command,
@@ -473,23 +353,17 @@ class FileTreePipeline extends HTMLElement {
         bis_genericio.write(filename, stringifiedPipeline).then( () => {
 
             //construct default output directory and Makefile names from the user-provided filename
-            //splitByPathSeparator used for platform agnosticity
-            let splitOutputFilename = splitByPathSeparator(filename), splitOdirFilename = splitByPathSeparator(filename);
-            splitOutputFilename.name[splitOutputFilename.name.length - 1] = 'Makefile', splitOdirFilename.name[splitOdirFilename.name.length - 1] = 'FilesCreatedByPipeline';
+            let splitOutputFilename = filename.split(sep), splitOdirFilename = filename.split(sep);
+            splitOutputFilename[splitOutputFilename.length - 1] = 'Makefile', splitOdirFilename[splitOdirFilename.length - 1] = 'FilesCreatedByPipeline';
 
-            let outputFilename = splitOutputFilename.name.join(splitOutputFilename.sep);
-            let odirFilename = splitOdirFilename.name.join(splitOdirFilename.sep);
+            let outputFilename = splitOutputFilename.join(sep);
+            let odirFilename = splitOdirFilename.join(sep);
 
             //savemanually flag needed in order to save the output Makefile (modules run directly through the server don't hit the saving hooks from the command line)
             bis_genericio.runPipelineModule({ 'input' : filename, 'output' :  outputFilename, 'odir' : odirFilename }, true).then( () => {
                 bis_webutil.createAlert('Pipeline Makefile created.');
             });
         });
-
-        function splitByPathSeparator(filename) {
-            if (filename.includes('/')) { return  { 'name' : filename.split('/'), 'sep' : '/'}; }
-            if (filename.includes('\\')) { return  { 'name' : filename.split('\\'), 'sep' : '\\' }; }
-        }
     }
 
     /**
