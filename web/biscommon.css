@@ -550,9 +550,13 @@ tspan {
 }
 
 .bisweb-pipeline-input-list {
-  position : -webkit-sticky;
-  position : sticky;
-  top : 0;
+  overflow-wrap: break-word;
+}
+
+.bisweb-sticky-container {
+    position : -webkit-sticky;
+    position : sticky;
+    top: 0;
 }
 
 .bisweb-list-group-item { 

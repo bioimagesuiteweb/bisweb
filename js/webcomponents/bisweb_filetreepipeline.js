@@ -167,8 +167,8 @@ class FileTreePipeline extends HTMLElement {
                             <div class='bisweb-pipeline-module-list'>
                             </div>
                         </div>
-                        <div class='col-lg-4'>
-                            <div class='bisweb-pipeline-input-list' style='overflow-wrap: break-word;'>
+                        <div class='col-lg-4 bisweb-sticky-container'>
+                            <div class='bisweb-pipeline-input-list'>
                                 <ul>
                                 </ul>
                             </div>
