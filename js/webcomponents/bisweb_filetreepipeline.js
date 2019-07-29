@@ -122,32 +122,39 @@ class FileTreePipeline extends HTMLElement {
                             if (moduleInputs.length > 1) {
                                 let inputFormSelectId = bis_webutil.getuniqueid();
                                 let inputsButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='right'>Add inputs</button>`);
-                                let popoverContent = $(`
-                                <div class='form-group'>
-                                    <label for=${inputFormSelectId}>Select an input</label>
-                                    <select class='form-control' id=${inputFormSelectId}>
-                                    </select>
-                                </div>
-                                <div class='list-group' style='visibility: hidden'>
-                                    <a href='#' class='list-group-item list-group-item-action'>Load input from disk</a>
-                                    <a href='#' class='list-group-item list-group-item-action'>Use previous module's output</a>
-                                </div>
-                                `);
+                                let popoverContent = $(
+                                    `<div>
+                                        <div class='form-group'>
+                                            <label for=${inputFormSelectId}>Select an input</label>
+                                            <select class='form-control' id=${inputFormSelectId}>
+                                            </select>
+                                        </div>
+                                        <div class='list-group' style='visibility: hidden'>
+                                            <a href='#' class='list-group-item list-group-item-action'>Load input from disk</a>
+                                            <a href='#' class='list-group-item list-group-item-action'>Use previous module's output</a>
+                                        </div>
+                                    </div>`
+                                );
 
                                 let formSelect = $(popoverContent).find('#' + inputFormSelectId);
+                                formSelect.append(`<option>Select an input...</option>`);
+                                formSelect.on('change', () => { console.log($(popoverContent).find('.list-group')); $(popoverContent).find('.list-group').css('visibility', 'visible'); });
                                 for (let input of moduleInputs) {
-                                    let option = $(`<option>${input}</option>`);
+                                    let option = $(`<option>${input.name}</option>`);
                                     formSelect.append(option);
-                                    console.log('option', option);
                                 }
+                                
 
-                                formSelect.on('click', () => { $(popoverContent).find('.list-group').css('visibility', 'visible'); });
                                 inputsButton.on('click', () => {
                                     $(inputsButton).popover({
                                         'title' : 'Select input source',
                                         'trigger' : 'click',
+                                        'html' : true,
+                                        'placement' : 'right',
+                                        'container' : 'body',
                                         'content' : popoverContent
                                     });
+                                   
                                 });
                                 $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
                             }
