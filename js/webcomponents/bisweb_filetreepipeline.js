@@ -1,5 +1,6 @@
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
+const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 
 const moduleIndex = require('moduleindex.js');
 const bisweb_custommodule = require('bisweb_custommodule.js');
@@ -25,6 +26,8 @@ class FileTreePipeline extends HTMLElement {
         bis_webutil.runAfterAllLoaded( () => {     
             this.algocontroller = document.querySelector(algocontrollerid);
         });
+
+        bisweb_popoverhandler.addPopoverDismissHandler();
     }
 
     /**

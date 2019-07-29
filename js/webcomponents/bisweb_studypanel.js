@@ -1,11 +1,14 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
-const bisweb_panel = require('bisweb_panel.js');
+
 const webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
+const bisweb_panel = require('bisweb_panel.js');
+const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
+
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager = require('bisweb_studytaskmanager');
 const BiswebImage = require('bisweb_image.js');
@@ -71,22 +74,7 @@ class StudyPanel extends HTMLElement {
                 //helpButton: true
             });
 
-            //this.setHelpModalMessage();
-
-            //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
-            this.dismissPopoverFn = (e) => {
-                if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
-                    if (this.popoverDisplayed) {
-                        $('[data-original-title]').popover('hide');
-                        this.popoverDisplayed = false;
-                    }
-                }
-            };
-
-            $('html').on('click', this.dismissPopoverFn);
-            $('html').on('contextmenu', this.dismissPopoverFn);
-
-
+            bisweb_popoverhandler.addPopoverDismissHandler();
         });
 
         this.contextMenuDefaultSettings = {
