@@ -98,7 +98,8 @@ class FileTreePipeline extends HTMLElement {
                             centerCustomElement($(customModule.panel.widget));
 
                             let id = bis_webutil.getuniqueid();
-                            this.modules.push({ 'name' : moduleName, 'module' : customModule, 'id' : id});
+                            let currentModule = { 'name' : moduleName, 'module' : customModule, 'id' : id};
+                            this.modules.push(currentModule);
 
                             let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
                             let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
@@ -130,21 +131,28 @@ class FileTreePipeline extends HTMLElement {
                                             </select>
                                         </div>
                                         <div class='list-group' style='visibility: hidden'>
-                                            <a href='#' class='list-group-item list-group-item-action'>Load input from disk</a>
-                                            <a href='#' class='list-group-item list-group-item-action'>Use previous module's output</a>
+                                            <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Load input from disk</a>
+                                            <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous module's output</a>
                                         </div>
                                     </div>`
                                 );
 
                                 let formSelect = $(popoverContent).find('#' + inputFormSelectId);
+                                let listGroup = $(popoverContent).find('.list-group');
                                 formSelect.append(`<option>Select an input...</option>`);
-                                formSelect.on('change', () => { console.log($(popoverContent).find('.list-group')); $(popoverContent).find('.list-group').css('visibility', 'visible'); });
+                                formSelect.on('change', () => { 
+                                    if (formSelect.val() === 'Select an input...') {
+                                        listGroup.css('visibility', 'hidden');
+                                    } else {
+                                        listGroup.css('visibility', 'visible'); 
+                                    }
+                                });
+
                                 for (let input of moduleInputs) {
                                     let option = $(`<option>${input.name}</option>`);
                                     formSelect.append(option);
                                 }
                                 
-
                                 inputsButton.on('click', () => {
                                     $(inputsButton).popover({
                                         'title' : 'Select input source',
@@ -154,7 +162,19 @@ class FileTreePipeline extends HTMLElement {
                                         'container' : 'body',
                                         'content' : popoverContent
                                     });
-                                   
+                                });
+
+                                let loadInputButton = $(listGroup).find('.list-group-item').get(0);
+                                let usePreviousButton = $(listGroup).find('.list-group-item').get(1);
+
+                                $(loadInputButton).on('click', () => {
+                                    bisweb_popoverhandler.dismissPopover();
+                                    bis_webfileutil.genericFileCallback({
+                                        'title': 'Load input for ' + formSelect.val(),
+                                        'save': false
+                                    }, (f) => {
+                                        console.log('f', f, 'currentModule', currentModule.module);
+                                    });
                                 });
                                 $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
                             }

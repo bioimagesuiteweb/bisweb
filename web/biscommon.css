@@ -545,12 +545,12 @@ tspan {
 }
 
 .bisweb-scrollable-container {
-  overflow: auto;
-  max-height: var(--capped-modal-list-height) ;
+    overflow: auto;
+    max-height: var(--capped-modal-list-height) ;
 }
 
 .bisweb-pipeline-input-list {
-  overflow-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .bisweb-sticky-container {
@@ -560,5 +560,9 @@ tspan {
 }
 
 .bisweb-list-group-item { 
-  font-size : 9pt;
+    font-size : 9pt;
+}
+
+.bisweb-list-group-item:hover {
+    background-color : rgba(12, 227, 172, 0.2);
 }
