@@ -131,7 +131,7 @@ class FileTreePipeline extends HTMLElement {
                                         </div>
                                         <div class='list-group' style='visibility: hidden'>
                                             <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Load input from disk</a>
-                                            <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous module's output</a>
+                                            <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous input</a>
                                         </div>
                                     </div>`
                                 );
@@ -175,8 +175,28 @@ class FileTreePipeline extends HTMLElement {
                                         'save': false
                                     }, (f) => {
                                         console.log('f', f, 'currentModule', customModule.module);
-                                        customModule.module.setInputObject(f, varname);
+                                        //get module from this.modules by id then set the given input 
+                                        let currentModule;
+                                        for (let mod  of this.modules) {
+                                            if (mod.id === id) { 
+                                                if (!mod.inputs) { mod.inputs = {}; }
+                                                mod.inputs[varname] = f; 
+                                                return;
+                                            }
+                                        }
                                     });
+                                });
+
+                                $(usePreviousButton).on('click', () => {
+                                    bisweb_popoverhandler.dismissPopover();
+                                    let varname = formSelect.val();
+                                    for (let mod of this.modules) {
+                                        if (mod.id === id) {
+                                            if (!mod.inputs) { mod.inputs = {}; }
+                                            mod.inputs[varname] = -1; //number to avoid ambiguity with a filename
+                                            return;
+                                        }
+                                    }
                                 });
                                 $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
                             }
@@ -361,9 +381,11 @@ class FileTreePipeline extends HTMLElement {
      * @param {String} filename - Name for the pipeline parameters file. 
      */
     savePipelineToDisk(filename) {
+        console.log('modules', this.modules);
         let params = [];
         for (let i = 0; i < this.modules.length; i++) {
             let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
+            if (this.modules[i].inputs) { param['inputs'] = this.modules[i].inputs; }
             params.push(param);
         }
 
@@ -396,6 +418,23 @@ class FileTreePipeline extends HTMLElement {
                     }
                 ]
             };
+
+            if (params[i].inputs) { 
+                entry.options = ''
+                for (let inputKey of Object.keys(params[i].inputs)) {
+                    let line = '--' + inputKey, inputVal = params[i].inputs[inputKey];
+                    
+                    if (typeof inputVal === 'number') {
+                        line = line.concat(` %${inputName}% `);
+                    } else {
+                        line = line.concat(` ${inputVal} `);
+                    }
+
+                    entry.options = entry.options.concat(line);
+                }
+
+                entry.options = entry.options.concat(` --output %${outputName}% `);
+            }
 
             for (let p of Object.keys(params[i].params)) {
                 entry.options = entry.options.concat(`--${p} ${params[i].params[p]} `);
