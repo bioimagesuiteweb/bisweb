@@ -135,6 +135,11 @@ class FileTreePipeline extends HTMLElement {
         this.pipelineModal.dialog.modal('show');
     }
 
+    /**
+     * Creates the UI elements for a new module in the modal, including the dat.gui custom element UI, buttons to move the module up and down in the pipeline, and to perform operations related to the individual module.
+     * 
+     * @param {String} moduleName - The name of the module to add to the modal. 
+     */
     addNewModule(moduleName) {
         let mod = moduleIndex.getModule(moduleName);
 
@@ -167,9 +172,13 @@ class FileTreePipeline extends HTMLElement {
             }
         });
 
-        let moduleInputs = moduleIndex.getModule(moduleName).getDescription().inputs;
-        if (moduleInputs.length > 1) {
-           this.addInputsButton(id, customModule, moduleInputs);
+        let moduleDescription = moduleIndex.getModule(moduleName).getDescription(); 
+        if (moduleDescription.inputs.length > 1) {
+           this.addInputsButton(id, customModule, moduleDescription.inputs);
+        } 
+
+        if (moduleDescription.outputs.length > 1) {
+            this.addOutputsButton(id, customModule, moduleDescription.outputs);
         }
 
         //put label and element inside a containing div
@@ -269,6 +278,76 @@ class FileTreePipeline extends HTMLElement {
             }
         });
         $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
+    }
+
+    /**
+     * Adds the 'Add outputs' button to a module with a popover to specify which outputs to save.
+     * 
+     * @param {String} id - The id of the module to add the output button for.
+     */
+    addOutputsButton(id, customModule, moduleOutputs) {
+        let outputFormSelectId = bis_webutil.getuniqueid();
+        let outputsButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='right'>Add outputs</button>`);
+        let popoverContent = $(
+            `<div>
+                <div class='form-group'>
+                    <label for=${outputFormSelectId}>Select an output</label>
+                    <select class='form-control' id=${outputFormSelectId}>
+                    </select>
+                </div>
+                <div class='list-group' style='visibility: hidden'>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Save output</a>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Don't save output</a>
+                </div>
+            </div>`
+        );
+
+        let formSelect = $(popoverContent).find('#' + outputFormSelectId);
+        let listGroup = $(popoverContent).find('.list-group');
+        formSelect.append(`<option>Select an output...</option>`);
+        formSelect.on('change', () => {
+            if (formSelect.val() === 'Select an output...') {
+                listGroup.css('visibility', 'hidden');
+            } else {
+                listGroup.css('visibility', 'visible');
+            }
+        });
+
+        for (let output of moduleOutputs) {
+            let option = $(`<option>${output.varname}</option>`);
+            formSelect.append(option);
+        }
+
+        let saveOutputButton = $(listGroup).find('.list-group-item').get(0);
+        let dropOutputButton = $(listGroup).find('.list-group-item').get(1);
+        
+        console.log('save output', saveOutputButton, 'drop output', dropOutputButton);
+        $(outputsButton).popover({
+            'title': 'Select output source',
+            'trigger': 'click',
+            'html': true,
+            'placement': 'right',
+            'container': 'body',
+            'content': popoverContent
+        });
+        $(outputsButton).on( 'click', () => { $(outputsButton).popover('toggle'); });
+
+        let setUseOutput = (useOutput) => {
+            bisweb_popoverhandler.dismissPopover();
+            let varname = $(formSelect).val();
+            for (let mod of this.modules) {
+                if (mod.id === id) {
+                    if (!mod.outputs) { mod.outputs = {}; }
+                    console.log('use output', useOutput);
+                    mod.outputs[varname] = useOutput;
+                }
+            }
+        };
+
+        $(saveOutputButton).on('click', () => { setUseOutput(true); console.log('outputs', this.modules); });
+        $(dropOutputButton).on('click', () => { setUseOutput(false); console.log('outputs', this.modules); });
+
+        $(customModule.panel.widget).find('.bisweb-customelement-footer').append(outputsButton);
     }
 
     /**
@@ -436,7 +515,7 @@ class FileTreePipeline extends HTMLElement {
             let entry = {
                 'name' : `Command ${i}`,
                 'subcommand' : params[i].name,
-                'options' : `--input %${inputName}% --output %${outputName}% `,
+                'options' : '',
                 'outputs' : [
                     {
                         'name' : outputName,
@@ -447,7 +526,6 @@ class FileTreePipeline extends HTMLElement {
             };
 
             if (params[i].inputs) { 
-                entry.options = '';
                 for (let inputKey of Object.keys(params[i].inputs)) {
                     let line = '--' + inputKey, inputVal = params[i].inputs[inputKey];
                     
@@ -459,7 +537,18 @@ class FileTreePipeline extends HTMLElement {
 
                     entry.options = entry.options.concat(line);
                 }
+            } else {
+                entry.options = entry.options.concat(` --input %${inputName}% `);
+            }
 
+            if (params[i].outputs) {
+                for (let outputKey of Object.keys(params[i].outputs)) {
+                    if (params[i].outputs[outputKey]) {
+                        entry.options = entry.options.concat(` --${outputKey} %${outputName}% `);
+                        break;
+                    }
+                }
+            } else {
                 entry.options = entry.options.concat(` --output %${outputName}% `);
             }
 
