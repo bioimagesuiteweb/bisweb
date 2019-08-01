@@ -9,6 +9,23 @@ const bis_genericio = require('bis_genericio.js');
 const bootbox = require('bootbox');
 const $ = require('jquery');
 
+const layoutTemplate = `
+    <div class='container-fluid bisweb-scrollable-container'>
+        <div class='row'>
+            <div class='col-lg-8'>
+                <div class='bisweb-pipeline-module-list'>
+                </div>
+            </div>
+            <div class='col-lg-4 bisweb-sticky-container'>
+                <div class='bisweb-pipeline-input-list'>
+                    <ul>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+
 //TODO: When Xenios gets back have him update biswebnode
 class FileTreePipeline extends HTMLElement {
     
@@ -31,190 +48,47 @@ class FileTreePipeline extends HTMLElement {
     }
 
     /**
-     * Opens a modal that will allow a user to create a pipeline from the full set of BioImageSuite Web Modules. Should be called by outside scope!
+     * Opens a modal that will allow a user to create a pipeline from the full set of BioImageSuite Web Modules. 
      */
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
-            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg modal-scrollable');
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
+            this.pipelineModal = pipelineModal;
             pipelineModal.footer.empty();
 
-            pipelineModal.dialog.find('.modal-content').addClass('bisweb-capped-modal');
-
-            let infoButton = $(`<button type='button' class='btn-sm btn-link' style='float: right'>
-                                    <span class='glyphicon glyphicon-info-sign'></span>&nbspFile Info
-                                </button>`);
-
-            let removeButton = $(`<button type='button' class='btn-sm btn-link' style='float: right'> 
-                                    <span class='glyphicon glyphicon-remove'></span>&nbspRemove
-                                </button>`);
-
             //create bootstrap layout for pipeline creation modal 
-            let layout = $(`
-                <div class='container-fluid bisweb-scrollable-container'>
-                    <div class='row'>
-                        <div class='col-lg-8'>
-                            <div class='bisweb-pipeline-module-list'>
-                            </div>
-                        </div>
-                        <div class='col-lg-4 bisweb-sticky-container'>
-                            <div class='bisweb-pipeline-input-list'>
-                                <ul>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-
+            let layout = $(layoutTemplate);
             $(pipelineModal.body).append(layout);
-            $(pipelineModal.body).find('.bisweb-pipeline-input-list').append(removeButton, infoButton);
+            
+            this.addInputListButtons(layout);
 
             let bottomButtons = $(layout).find('.btn-link');
             bottomButtons.css('visibility', 'hidden');
 
-            let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
-
-            addModuleButton.on('click', () => {
-                let moduleIndexKeys = moduleIndex.getModuleNames();
-                let moduleIndexArray = [];
-                
-                for (let key of moduleIndexKeys) {
-                    moduleIndexArray.push({ 'text' : moduleIndex.getModule(key).getDescription().name, 'value' : key });
-                }
-
-                bootbox.prompt({
-                    'size' : 'small', 
-                    'title' : 'Choose a module',
-                    'inputType' : 'select',
-                    'inputOptions' : moduleIndexArray,
-                    'callback' : (moduleName) => {
-                        if (moduleName) {
-                            let mod = moduleIndex.getModule(moduleName);
-
-                            let width = pipelineModal.body.width() / 3;
-                            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px', 'width' : width });
-                            customModule.createOrUpdateGUI({ 'width' : width });
-                            centerCustomElement($(customModule.panel.widget));
-
-                            let id = bis_webutil.getuniqueid();
-                            this.modules.push({ 'name' : moduleName, 'module' : customModule, 'id' : id});
-
-                            let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
-                            let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
-
-                            //add 'remove' button to modal button bar
-                            let removeButton = bis_webutil.createbutton({ 'name': 'Remove', 'type' : 'danger' });
-                            removeButton.on('click', () => {
-                                bootbox.confirm({
-                                    'message' : `Remove module ${prettyModuleName}?`,
-                                    'size' : 'small',
-                                    'callback' : (result) => {
-                                        if (result) {
-                                            this.modules.splice(moduleLocation, 1);
-                                            pipelineModal.body.find(`#${id}`).remove();
-                                        }
-                                    }
-                                });
-                            });
-
-                            let moduleInputs = moduleIndex.getModule(moduleName).getDescription().inputs;
-                            if (moduleInputs.length > 1) {
-                                let inputFormSelectId = bis_webutil.getuniqueid();
-                                let inputsButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='right'>Add inputs</button>`);
-                                let popoverContent = $(
-                                    `<div>
-                                        <div class='form-group'>
-                                            <label for=${inputFormSelectId}>Select an input</label>
-                                            <select class='form-control' id=${inputFormSelectId}>
-                                            </select>
-                                        </div>
-                                        <div class='list-group' style='visibility: hidden'>
-                                            <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Load input from disk</a>
-                                            <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous input</a>
-                                        </div>
-                                    </div>`
-                                );
-
-                                let formSelect = $(popoverContent).find('#' + inputFormSelectId);
-                                let listGroup = $(popoverContent).find('.list-group');
-                                formSelect.append(`<option>Select an input...</option>`);
-                                formSelect.on('change', () => { 
-                                    if (formSelect.val() === 'Select an input...') {
-                                        listGroup.css('visibility', 'hidden');
-                                    } else {
-                                        listGroup.css('visibility', 'visible'); 
-                                    }
-                                });
-
-                                console.log('module inputs', moduleInputs);
-                                for (let input of moduleInputs) {
-                                    let option = $(`<option>${input.varname}</option>`);
-                                    formSelect.append(option);
-                                }
-
-                                $(inputsButton).popover({
-                                    'title' : 'Select input source',
-                                    'trigger' : 'click',
-                                    'html' : true,
-                                    'placement' : 'right',
-                                    'container' : 'body',
-                                    'content' : popoverContent
-                                });
-                                
-                                inputsButton.on('click', () => {
-                                    $(inputsButton).popover('toggle');
-                                });
-
-                                let loadInputButton = $(listGroup).find('.list-group-item').get(0);
-                                let usePreviousButton = $(listGroup).find('.list-group-item').get(1);
-
-                                $(loadInputButton).on('click', () => {
-                                    bisweb_popoverhandler.dismissPopover();
-                                    let varname = formSelect.val();
-                                    bis_webfileutil.genericFileCallback({
-                                        'title': 'Load input for ' + varname,
-                                        'save': false
-                                    }, (f) => {
-                                        console.log('f', f, 'currentModule', customModule.module);
-                                        //get module from this.modules by id then set the given input 
-                                        for (let mod  of this.modules) {
-                                            if (mod.id === id) { 
-                                                if (!mod.inputs) { mod.inputs = {}; }
-                                                mod.inputs[varname] = f; 
-                                                return;
-                                            }
-                                        }
-                                    });
-                                });
-
-                                $(usePreviousButton).on('click', () => {
-                                    bisweb_popoverhandler.dismissPopover();
-                                    let varname = formSelect.val();
-                                    for (let mod of this.modules) {
-                                        if (mod.id === id) {
-                                            if (!mod.inputs) { mod.inputs = {}; }
-                                            mod.inputs[varname] = -1; //number to avoid ambiguity with a filename
-                                            return;
-                                        }
-                                    }
-                                });
-                                $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
-                            }
-
-
-                            //put label and element inside a containing div
-                            let moduleLabel = $(`<span>${prettyModuleName}</span>`);
-
-                            $(customModule.panel.widget).find('.bisweb-customelement-footer').append(removeButton);
-                            $(customModule.panel.widget).prepend(moduleLabel);
-                            $(customModule.panel.widget).attr('id', id);
-                            
-                            this.addArrowButtons(id, this.pipelineModal, $(customModule.panel.widget).find('.dg.main') );
-                            $(layout).find('.bisweb-pipeline-module-list').append(customModule.panel.widget);
-                        }
+            let addModuleButton = bis_webutil.createbutton({ 
+                'name' : 'Add module', 
+                'type' : 'success',
+                'callback' : () => {
+                    let moduleIndexKeys = moduleIndex.getModuleNames();
+                    let moduleIndexArray = [];
+                    
+                    for (let key of moduleIndexKeys) {
+                        moduleIndexArray.push({ 'text' : moduleIndex.getModule(key).getDescription().name, 'value' : key });
                     }
-                });
+    
+                    bootbox.prompt({
+                        'size' : 'small', 
+                        'title' : 'Choose a module',
+                        'inputType' : 'select',
+                        'inputOptions' : moduleIndexArray,
+                        'callback' : (moduleName) => {
+                            if (moduleName) {
+                               this.addNewModule(moduleName);
+                            }
+                        }
+                    });
+                }
             });
 
             let saveModulesButton = bis_webfileutil.createFileButton({ 
@@ -243,52 +117,7 @@ class FileTreePipeline extends HTMLElement {
                     'altkeys' : true
             });
 
-            removeButton.on('click', () => {
-                //use partial filename to find the full entry in the internal list
-                let inputList = $(layout).find('.bisweb-pipeline-input-list');
-                let filename = this.getActiveItemName(inputList); 
-
-                if (!filename) { return; }
-
-                let selectedItem = inputList.find('.active');
-                let selectedItemIndex = $(selectedItem).index();
-                this.pipelineInputs.splice(selectedItemIndex, 1);
-                $(selectedItem).remove();
-            });
-
-            infoButton.on('click', () => {
-                let inputList = $(layout).find('.bisweb-pipeline-input-list');
-                let filename = this.getActiveItemName(inputList);
-
-                if (!filename) { return; }
-
-                let selectedItem = inputList.find('.active');
-                let fullname = this.pipelineInputs[$(selectedItem).index()];
-
-                this.getFileInfo(fullname).then( (info) => {
-
-                    //format size to be a readable format 
-                    let fileSize = info.size, i = 0, fileSizeString;
-                    while (fileSize > 1024) {
-                        fileSize = fileSize / 1024;
-                        i = i + 1;
-                    }
-
-                    let suffix = 'B';
-                    switch (i) {
-                        case 1 : suffix = 'kB'; break;
-                        case 2 : suffix = 'MB'; break;
-                        case 3 : suffix = 'GB'; break;
-                        case 4 : suffix = 'TB'; break;
-                    }
-
-                    fileSizeString = '' + fileSize + suffix;
-
-                    let modalText = `File size: ${fileSizeString}<br>Created: ${info.stats.ctime}<br>Last accessed: ${info.stats.atime}`;
-                    bootbox.alert(modalText);
-                });
-            });
-
+            
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
             pipelineModal.dialog.on('show.bs.modal', () => {
                 if (!this.savedParameters) {
@@ -301,26 +130,142 @@ class FileTreePipeline extends HTMLElement {
             pipelineModal.footer.append(addModuleButton);
             pipelineModal.footer.append(saveModulesButton);
             pipelineModal.footer.append(importInputsButton);
-            this.pipelineModal = pipelineModal;
         }
 
         this.pipelineModal.dialog.modal('show');
     }
 
-    /**
-     * Returns the currently selected item in the pipeline modal (item with class 'active'), or displays an error message if nothing is selected.
-     * 
-     * @param {JQuery} list - The pipeline input list.
-     * @returns Active item, if any. 
-     */
-    getActiveItemName(list) {
-        let selectedItem = $(list).find('.active');
-        if (selectedItem.length === 0) { 
-            bootbox.alert('No item selected'); 
-            return false; 
-        } else { 
-            return $(selectedItem).html(); 
+    addNewModule(moduleName) {
+        let mod = moduleIndex.getModule(moduleName);
+
+        let width = this.pipelineModal.body.width() / 3;
+        let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px', 'width' : width });
+        customModule.createOrUpdateGUI({ 'width' : width });
+        centerCustomElement($(customModule.panel.widget));
+
+        let id = bis_webutil.getuniqueid();
+        this.modules.push({ 'name' : moduleName, 'module' : customModule, 'id' : id});
+
+        let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
+        let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
+
+        //add 'remove' button to modal button bar
+        let removeButton = bis_webutil.createbutton({ 'name': 'Remove', 'type' : 'danger' });
+        removeButton.on('click', () => {
+            bootbox.confirm({
+                'message' : `Remove module ${prettyModuleName}?`,
+                'size' : 'small',
+                'callback' : (result) => {
+                    if (result) {
+                        this.modules.splice(moduleLocation, 1);
+                        this.pipelineModal.body.find(`#${id}`).remove();
+                    }
+                }
+            });
+        });
+
+        let moduleInputs = moduleIndex.getModule(moduleName).getDescription().inputs;
+        if (moduleInputs.length > 1) {
+           this.addInputsButton(id, customModule, moduleInputs);
         }
+
+        //put label and element inside a containing div
+        let moduleLabel = $(`<span>${prettyModuleName}</span>`);
+
+        $(customModule.panel.widget).find('.bisweb-customelement-footer').append(removeButton);
+        $(customModule.panel.widget).prepend(moduleLabel);
+        $(customModule.panel.widget).attr('id', id);
+        
+        this.addArrowButtons(id, this.pipelineModal, $(customModule.panel.widget).find('.dg.main'));
+        $(this.pipelineModal.body).find('.bisweb-pipeline-module-list').append(customModule.panel.widget);
+    }
+
+
+    /**
+     * Adds the 'Add inputs' button to a module with a popover to specify which images or matrices or gradients to use for which input. 
+     * 
+     * @param {String} id - The id of the module to add the input button for.
+     * @param {JQuery} customModule - The html of the custom element to add the input button to.
+     * @param {Array} moduleInputs - The list of inputs images, matrices, etc. for the module.
+     */
+    addInputsButton(id, customModule, moduleInputs) {
+        let inputFormSelectId = bis_webutil.getuniqueid();
+        let inputsButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='right'>Add inputs</button>`);
+        let popoverContent = $(
+            `<div>
+                <div class='form-group'>
+                    <label for=${inputFormSelectId}>Select an input</label>
+                    <select class='form-control' id=${inputFormSelectId}>
+                    </select>
+                </div>
+                <div class='list-group' style='visibility: hidden'>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Load input from disk</a>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous input</a>
+                </div>
+            </div>`
+        );
+
+        let formSelect = $(popoverContent).find('#' + inputFormSelectId);
+        let listGroup = $(popoverContent).find('.list-group');
+        formSelect.append(`<option>Select an input...</option>`);
+        formSelect.on('change', () => {
+            if (formSelect.val() === 'Select an input...') {
+                listGroup.css('visibility', 'hidden');
+            } else {
+                listGroup.css('visibility', 'visible');
+            }
+        });
+
+        for (let input of moduleInputs) {
+            let option = $(`<option>${input.varname}</option>`);
+            formSelect.append(option);
+        }
+
+        $(inputsButton).popover({
+            'title': 'Select input source',
+            'trigger': 'click',
+            'html': true,
+            'placement': 'right',
+            'container': 'body',
+            'content': popoverContent
+        });
+
+        inputsButton.on('click', () => { $(inputsButton).popover('toggle'); });
+
+        //add behaviors to popover buttons
+        let loadInputButton = $(listGroup).find('.list-group-item').get(0);
+        let usePreviousButton = $(listGroup).find('.list-group-item').get(1);
+
+        $(loadInputButton).on('click', () => {
+            bisweb_popoverhandler.dismissPopover();
+            let varname = formSelect.val();
+            bis_webfileutil.genericFileCallback({
+                'title': 'Load input for ' + varname,
+                'save': false
+            }, (f) => {
+                //get module from this.modules by id then set the given input 
+                for (let mod of this.modules) {
+                    if (mod.id === id) {
+                        if (!mod.inputs) { mod.inputs = {}; }
+                        mod.inputs[varname] = f;
+                        return;
+                    }
+                }
+            });
+        });
+
+        $(usePreviousButton).on('click', () => {
+            bisweb_popoverhandler.dismissPopover();
+            let varname = formSelect.val();
+            for (let mod of this.modules) {
+                if (mod.id === id) {
+                    if (!mod.inputs) { mod.inputs = {}; }
+                    mod.inputs[varname] = -1; //number to designate to use the previous input (avoids ambiguity with a filename)
+                    return;
+                }
+            }
+        });
+        $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
     }
 
     /**
@@ -373,6 +318,85 @@ class FileTreePipeline extends HTMLElement {
 
         $(moduleContainer).prepend(upButton);
         $(moduleContainer).append(downButton);
+    }
+
+    /**
+     * Adds the 'Remove' and 'File info' buttons under the file list.
+     * 
+     * @param {JQuery} layout - The layout for the modal.
+     */
+    addInputListButtons(layout) {
+        let infoButton = $(`<button type='button' class='btn-sm btn-link' style='float: right'>
+                                <span class='glyphicon glyphicon-info-sign'></span>&nbspFile Info
+                            </button>`);
+
+        let removeButton = $(`<button type='button' class='btn-sm btn-link' style='float: right'> 
+                                <span class='glyphicon glyphicon-remove'></span>&nbspRemove
+                            </button>`);
+        
+        removeButton.on('click', () => {
+            //use partial filename to find the full entry in the internal list
+            let inputList = $(layout).find('.bisweb-pipeline-input-list');
+            let filename = this.getActiveItemName(inputList);
+
+            if (!filename) { return; }
+
+            let selectedItem = inputList.find('.active');
+            let selectedItemIndex = $(selectedItem).index();
+            this.pipelineInputs.splice(selectedItemIndex, 1);
+            $(selectedItem).remove();
+        });
+
+        infoButton.on('click', () => {
+            let inputList = $(layout).find('.bisweb-pipeline-input-list');
+            let filename = this.getActiveItemName(inputList);
+
+            if (!filename) { return; }
+
+            let selectedItem = inputList.find('.active');
+            let fullname = this.pipelineInputs[$(selectedItem).index()];
+
+            this.getFileInfo(fullname).then((info) => {
+
+                //format size to be a readable format 
+                let fileSize = info.size, i = 0, fileSizeString;
+                while (fileSize > 1024) {
+                    fileSize = fileSize / 1024;
+                    i = i + 1;
+                }
+
+                let suffix = 'B';
+                switch (i) {
+                    case 1: suffix = 'kB'; break;
+                    case 2: suffix = 'MB'; break;
+                    case 3: suffix = 'GB'; break;
+                    case 4: suffix = 'TB'; break;
+                }
+
+                fileSizeString = '' + fileSize + suffix;
+
+                let modalText = `File size: ${fileSizeString}<br>Created: ${info.stats.ctime}<br>Last accessed: ${info.stats.atime}`;
+                bootbox.alert(modalText);
+            });
+        });
+
+        $(this.pipelineModal.body).find('.bisweb-pipeline-input-list').append(removeButton, infoButton);
+    }
+
+    /**
+     * Returns the currently selected item in the pipeline modal (item with class 'active'), or displays an error message if nothing is selected.
+     * 
+     * @param {JQuery} list - The pipeline input list.
+     * @returns Active item, if any. 
+     */
+    getActiveItemName(list) {
+        let selectedItem = $(list).find('.active');
+        if (selectedItem.length === 0) { 
+            bootbox.alert('No item selected'); 
+            return false; 
+        } else { 
+            return $(selectedItem).html(); 
+        }
     }
 
     /**
