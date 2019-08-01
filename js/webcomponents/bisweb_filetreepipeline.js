@@ -150,18 +150,21 @@ class FileTreePipeline extends HTMLElement {
         let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
 
         //add 'remove' button to modal button bar
-        let removeButton = bis_webutil.createbutton({ 'name': 'Remove', 'type' : 'danger' });
-        removeButton.on('click', () => {
-            bootbox.confirm({
-                'message' : `Remove module ${prettyModuleName}?`,
-                'size' : 'small',
-                'callback' : (result) => {
-                    if (result) {
-                        this.modules.splice(moduleLocation, 1);
-                        this.pipelineModal.body.find(`#${id}`).remove();
+        let removeButton = bis_webutil.createbutton({ 
+            'name': 'Remove', 
+            'type' : 'danger', 
+            'callback' : () => {
+                bootbox.confirm({
+                    'message' : `Remove module ${prettyModuleName}?`,
+                    'size' : 'small',
+                    'callback' : (result) => {
+                        if (result) {
+                            this.modules.splice(moduleLocation, 1);
+                            this.pipelineModal.body.find(`#${id}`).remove();
+                        }
                     }
-                }
-            });
+                });
+            }
         });
 
         let moduleInputs = moduleIndex.getModule(moduleName).getDescription().inputs;
@@ -406,7 +409,6 @@ class FileTreePipeline extends HTMLElement {
      * @param {String} filename - Name for the pipeline parameters file. 
      */
     savePipelineToDisk(filename) {
-        console.log('modules', this.modules);
         let params = [];
         for (let i = 0; i < this.modules.length; i++) {
             let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
@@ -562,73 +564,6 @@ class FileTreePipeline extends HTMLElement {
                 }).catch( (e) => { reject(e); });
             }).catch( (e) => { reject(e); });
         });
-    }
-
-    /**
-     * Creates a list item to represent an entry in the current saved pipeline. 
-     * 
-     * @param {String} moduleName - The name of a BioImageSuite Web module. 
-     * @returns A formatted bootstrap list item.
-     */
-    createPipelineListItem(moduleName) {
-        let listItemId = bis_webutil.getuniqueid();
-        let listItem = $(`<li id='${listItemId}' class='list-group-item bisweb-pipeline-list-item'>${moduleName}</li>`);
-        listItem.on('click', (e) => {
-            e.preventDefault(); 
-            e.stopPropagation();
-            this.openModuleEditingModal(listItem);
-        });
-
-        return listItem;
-    }
-
-    /**
-     * Opens a small bootstrap modal to edit the parameters of a module in the currently saved pipeline. 
-     * 
-     * @param {JQuery} item - A Bootstrap-formatted list item containing the name of a BioImageSuite Web module.
-     */
-    openModuleEditingModal(item) {
-        let name = $(item).html();
-        let modal = bis_webutil.createmodal(`Change parameters for ${name}`, 'modal-sm');
-
-        //generate custom element gui with current params 
-        //note that index in visual list will match index in internal list, so we can determine which internal list item to use by finding this element in the visual list
-        let listItems = $('#bisweb-panel-pipeline').find('.bisweb-pipeline-list').children();
-        let index = null;
-
-        for (let i = 0; i < listItems.length; i++) {
-            if ($(listItems[i]).attr('id') === $(item).attr('id')) { index = i; i = listItems.length; }
-        }
-
-        let baseMod = moduleIndex.getModule(this.modules[index].name);
-        let customModule;
-
-        //modal has to be displayed before width can be read.
-        modal.dialog.on('shown.bs.modal', () => {
-            //modal body padding is 20px by default
-            let width = $(modal.body).outerWidth() - 40;
-            customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '0px', 'buttonsMargin' : '0px', 'width' : width });
-            modal.body.append(customModule.panel.widget);
-            customModule.createOrUpdateGUI( {'width' : width});
-            customModule.updateParams(this.savedParameters[index]);
-        });
-        
-
-        //add save button to modal
-        modal.footer.empty();
-        let saveButton = bis_webutil.createbutton({ 'name' : 'Save', 'type' : 'btn-primary' });
-        saveButton.on('click', () => {
-            this.modules[index].module = customModule;
-            modal.dialog.modal('hide');
-        });
-
-        let closeButton = bis_webutil.createButton({ 'name' : 'Close'});
-        closeButton.on('click', () => {
-            modal.dialog.modal('hide');
-        });
-
-        modal.footer.prepend(saveButton);
-        modal.dialog.modal('show');
     }
 }
 
