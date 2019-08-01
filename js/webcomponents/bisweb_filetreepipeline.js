@@ -152,16 +152,18 @@ class FileTreePipeline extends HTMLElement {
                                     let option = $(`<option>${input.varname}</option>`);
                                     formSelect.append(option);
                                 }
+
+                                $(inputsButton).popover({
+                                    'title' : 'Select input source',
+                                    'trigger' : 'click',
+                                    'html' : true,
+                                    'placement' : 'right',
+                                    'container' : 'body',
+                                    'content' : popoverContent
+                                });
                                 
                                 inputsButton.on('click', () => {
-                                    $(inputsButton).popover({
-                                        'title' : 'Select input source',
-                                        'trigger' : 'click',
-                                        'html' : true,
-                                        'placement' : 'right',
-                                        'container' : 'body',
-                                        'content' : popoverContent
-                                    });
+                                    $(inputsButton).popover('toggle');
                                 });
 
                                 let loadInputButton = $(listGroup).find('.list-group-item').get(0);
@@ -176,7 +178,6 @@ class FileTreePipeline extends HTMLElement {
                                     }, (f) => {
                                         console.log('f', f, 'currentModule', customModule.module);
                                         //get module from this.modules by id then set the given input 
-                                        let currentModule;
                                         for (let mod  of this.modules) {
                                             if (mod.id === id) { 
                                                 if (!mod.inputs) { mod.inputs = {}; }
@@ -420,7 +421,7 @@ class FileTreePipeline extends HTMLElement {
             };
 
             if (params[i].inputs) { 
-                entry.options = ''
+                entry.options = '';
                 for (let inputKey of Object.keys(params[i].inputs)) {
                     let line = '--' + inputKey, inputVal = params[i].inputs[inputKey];
                     
