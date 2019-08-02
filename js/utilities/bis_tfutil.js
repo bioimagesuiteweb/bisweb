@@ -3,6 +3,7 @@ const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
 const bisweb_tf=require('./bis_tfjs');
 const slicerupd = require('bis_slicerprogress');
+const util=require('bis_util');
 /**
  * tf recon module
  */
@@ -32,7 +33,8 @@ class TFWrapper {
     }
 
     getMode() {  return this.mode;   }
-    
+
+    numTensors() { return this.tf.memory().numTensors; }
 
     disposeVariables(model) {
         return new Promise( (resolve) => {
@@ -47,7 +49,7 @@ class TFWrapper {
     }
 
 
-    async predict(model,patch,shape,debug=false) {
+    predict(model,patch,shape,debug=false) {
 
         // shape[0] can be a string so map this to an integer
         // Needed in electron when crossing boundaries
@@ -58,18 +60,18 @@ class TFWrapper {
         }
         
         const tensor= this.tf.tensor(patch, shape);
-
+        
         let output=null;
-            
+        
         if (this.tranpose) {
             let tshape=[0,2,1];
             if (tensor.shape.length>3) {
                 tshape.push(3);
             }
-
+            
             if (debug)
                 console.log('++++ creating transposed tensor',shape,'patch=',patch.length,tshape);
-
+            
             const t_tensor= this.tf.transpose(tensor,tshape);
             const t_output=this.models[model.index].predict(t_tensor);
             let tshapeout=[0,2,1];
@@ -82,7 +84,7 @@ class TFWrapper {
         } else {
             if (debug)
                 console.log('++++ creating tensor',shape,'patch=',patch.length,tensor.shape);
-
+            
             output=this.models[model.index].predict(tensor);
         }
         
@@ -90,7 +92,7 @@ class TFWrapper {
         
         if (debug)
             console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
-        return Promise.resolve(output);
+        return output;
     }
 
     loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
@@ -116,7 +118,9 @@ class TFWrapper {
         shape[0]=1;
         this.tf.tidy( () => {
             console.log('___\t Warm up model with zero input',shape.join(','));
-            this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
+            this.tf.tidy( () => { 
+                this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
+            });
             console.log('___\t Warm up done');
             slicerupd.update(0.2);
         });
@@ -518,7 +522,13 @@ class BisWebTensorFlowRecon {
 
                 shape[0]=numpatches;
 
-                const output=await tfwrapper.predict(this.model,this.patch,shape,this.debug);
+                const output=tfwrapper.predict(this.model,this.patch,shape,this.debug);
+
+                if (typeof window !== undefined) {
+                    console.log('NumTensors=',tfwrapper.numTensors());
+                    await util.sleep(1);
+                }
+                
                 let predict=output.dataSync();
 
                 

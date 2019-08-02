@@ -36,24 +36,17 @@ let getScope=function() {
 let run_tf_module=async function(img) {
 
     const viewer=document.querySelector("#viewer");
-    const URL=getScope()+extra;
+    const URL= 'https://bioimagesuiteweb.github.io/models/abcd_leave_out_site01_tfjs_256/';
 
     let tfrecon=bisweb.createModule('tfrecon');
-    if (viewer)
-        viewer.disable_renderloop();
 
     console.log('Looking for URL=',URL);
 
     let batchsize=1;
-    if (window.BISELECTRON) {
-        batchsize=64;
-    }
-    tfrecon.execute( { input : img }, {  padding : 8, batchsize : batchsize, modelname : URL, forcebrowser : true }).then( () => { 
+    tfrecon.execute( { input : img }, {  padding : 0, batchsize : batchsize, modelname : URL, transpose : false,forcebrowser : true }).then( () => { 
         let output=tfrecon.getOutputObject('output');
         
         if (viewer) {
-            viewer.enable_renderloop();
-            viewer.renderloop();
             viewer.setobjectmap(output);
         } else {
             output.save('recon.nii.gz');
@@ -91,16 +84,16 @@ window.onload = function() {
     }*/
 
     
-    let fn=( (name) => {
+    let fn=( () => {
 
         //        console.clear();
         console.log('Loading object=',URL);
-        bisweb.loadObject(`${URL}/${name}.nii.gz`,'image').then( (img) => {
+        bisweb.loadObject(`midbrain.nii.gz`,'image').then( (img) => {
 
             setTimeout( () => {
                 run_tf_module(img);
                 
-                // Set the image to the viewer
+                //Set the image to the viewer
                 if (viewer)
                     viewer.setimage(img);
             },1000);

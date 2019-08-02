@@ -214,6 +214,8 @@ class ModuleManagerElement extends HTMLElement {
             this.createModule('Segment Image',2, true, modules.getModule('segmentImage'), moduleoptions);
             this.createModule('Deface Head Image',2, true, modules.getModule('defaceImage'), moduleoptions);
         }
+        this.createModule('Skull Strip Image (DL)',2, true, modules.getModule('skullStrip'), moduleoptions);                    
+
         this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);
         this.createModule('Mask Image', 2, false, modules.getModule('maskImage'), moduleoptions);
 

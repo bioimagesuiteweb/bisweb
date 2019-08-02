@@ -21,6 +21,7 @@ const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const bistfutil = require('bis_tfutil.js');
 const biswrap = require('libbiswasm_wrapper');
+const util=require('bis_util');
 
 class BisWebTFJSReconModule extends BaseModule {
     constructor() {
@@ -181,13 +182,43 @@ class BisWebTFJSReconModule extends BaseModule {
         console.log('----------------------------------------------------------');
         let recon=new bistfutil.BisWebTensorFlowRecon(this.tfjsModule,input,model,padding,vals.debug);
         let output=null;
+
+
+        let viewerlist=null;
+        if (typeof window !== undefined) {
+            viewerlist=document.querySelectorAll("bisweb-orthogonalviewer");
+            if (viewerlist.length<1)
+                viewerlist=null;
+            else
+                console.log('Viewer0=',viewerlist);
+        }
+
+        if (viewerlist) {
+            console.log('Disabling render loop',viewerlist[0]);
+            viewerlist[0].disable_renderloop('Starting Deep Learning Job -- Rendering Disabled');
+            viewerlist[0].style.display='none';
+            await util.sleep(200);
+        }
+
+        
+        
         try {
             output=await recon.reconstruct(this.tfjsModule,bistfutil.fixBatchSize(batchsize));
         } catch(e) {
+            if (viewerlist) {
+                viewerlist[0].enable_renderloop();
+                viewerlist[0].renderloop();
+            }
             return Promise.reject(e);
         }
 
         console.log('----------------------------------------------------------');
+        if (viewerlist) {
+            viewerlist[0].enable_renderloop();
+            viewerlist[0].renderloop();
+        }
+
+        
         let num=0;
         try {
             num=await this.tfjsModule.disposeVariables(model);

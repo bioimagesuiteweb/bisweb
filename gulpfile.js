@@ -506,7 +506,7 @@ gulp.task('package', gulp.series('commonfiles','commonfileselectron','packageint
 gulp.task('clean', (done) => { 
 
     rimraf.sync(options.outdir+'tmp');
-    gulp.src([ options.outdir+'libbiswasm*.js', options.outdir+'LICENSE' ]).
+    gulp.src([ options.outdir+'libbiswasm*.js']).
         pipe(gulp.dest(options.outdir+'/tmp')).on('end', () => {
             const del = require('del');
             let arr = [options.outdir+'#*',
@@ -522,7 +522,7 @@ gulp.task('clean', (done) => {
                        options.outdir+'fonts',
                        options.outdir+'images',
                        options.outdir+'doc/*',
-                           options.outdir+'node_modules',
+                       options.outdir+'node_modules',
                        options.outdir+'test',
                        options.distdir+"/*",
                       ];

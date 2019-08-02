@@ -94,10 +94,13 @@ class BaseViewerElement extends HTMLElement {
             // movie playing
             framecontroller : null,
             enable_renderloop_flag : true,
+            webgl_enabled_flag : true,
             play_movie_controller : null,
 
             // pending render
             pending_render : false,
+            has_context_callbacks : false,
+            
         };
 
         this.is_slave_viewer=false;
@@ -327,28 +330,57 @@ class BaseViewerElement extends HTMLElement {
 
     
     /** disable renderloop */
-    disable_renderloop() {
-        this.enable_renderloop_flag=false;
+    disable_renderloop(msg='') {
+        this.internal.enable_renderloop_flag=false;
         this.playStopMovie(false);
 
         if (this.internal.play_movie_controller!==null)
             this.internal.play_movie_controller.updateDisplay();
+
+
+        const renderer=this.internal.layoutcontroller.renderer;
+        renderer.context.canvas.style.visibility='hidden';
+        
+        if (msg.length>1)
+            webutil.createAlert(msg,true);
+
     }
 
     /** enable renderloop */
-    enable_renderloop() {
-        this.enable_renderloop_flag=true;
+    enable_renderloop(msg='') {
+        this.internal.enable_renderloop_flag=true;
+        const renderer=this.internal.layoutcontroller.renderer;
+        renderer.context.canvas.style.visibility='visible';
+        if (msg.length>1)
+            webutil.createAlert(msg);
     }
     
     /** main renderloop function (run in loop using window.requestAnimationFrame) */
     renderloop() {
-
+        
         const self=this;
+        
+        if (this.internal.has_context_callbacks===false) {
+            this.internal.has_context_callbacks=true;
+            
+            const renderer=self.internal.layoutcontroller.renderer;
+            renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
+                console.log('Caught');
+                self.internal.webgl_enabled_flag=false;                
+                event.preventDefault();
+            }, false);
+            
+            renderer.context.canvas.addEventListener("webglcontextrestored", function(event) {
+                console.log('Restored');
+                self.internal.webgl_enabled_flag=true;
+                event.preventDefault();
+            }, false);
+        }
+        
         let numviewers=self.getmaxviewers();
         this.internal.pending_render=false;
         
-        if (this.enable_renderloop_flag || this.slave_viewer!==null)  {
-            
+        if (this.internal.enable_renderloop_flag || this.slave_viewer!==null)  {
             if (!this.is_slave_viewer) {
                 var fn=function() {
                     self.renderloop();
@@ -358,7 +390,8 @@ class BaseViewerElement extends HTMLElement {
             }
         }
         
-        if (this.enable_renderloop_flag)  {                                             
+        if (this.internal.enable_renderloop_flag &&
+            this.internal.webgl_enabled_flag) {
             let subviewers=this.internal.subviewers;
             let renderer=this.internal.layoutcontroller.renderer;
             if (!this.is_slave_viewer)
@@ -378,15 +411,15 @@ class BaseViewerElement extends HTMLElement {
             let renderer=this.internal.layoutcontroller.renderer;
             let t=renderer.domElement.toDataURL();
             this.internal.preservesnapshot=false;
-
+            
             let hasColorbar=true;
             if (this.internal.simplemode)
                 hasColorbar=false;
             
             this.internal.snapshotcontroller.update(t,hasColorbar);//this.internal.ismosaic);
         }
-
-        if (this.slave_viewer!==null)
+        
+        if (this.slave_viewer!==null && this.internal.webgl_enabled_flag)
             this.slave_viewer.renderloop();
         
         return 0;
@@ -551,7 +584,10 @@ class BaseViewerElement extends HTMLElement {
      * to do most of the work and then adjusts the viewports
      */
     handleresize() {
-        
+
+        if (!this.internal.enable_renderloop_flag)
+            return;
+
         let width=this.internal.layoutcontroller.getviewerwidth();
         if (width<2 || width===undefined)
             return;

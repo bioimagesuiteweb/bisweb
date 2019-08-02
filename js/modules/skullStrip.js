@@ -303,7 +303,7 @@ class SkullStripImageModule extends BaseModule {
             console.log('oooo deep Learning Now');
             let modelname = vals.modelname;
             if (modelname.length<2)
-                modelname='http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/';
+                modelname='https://bioimagesuiteweb.github.io/models/abcd_leave_out_site01_tfjs_256/';
             
             let mod0=new tfRecon();
             mod0.makeInternal();
