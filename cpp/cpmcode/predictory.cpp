@@ -26,6 +26,12 @@ predictory::predictory(Group group,double* phenotype,cpm_options op){
 
 }
 
+predictory::~predictory() {
+  delete [] this->predicted;
+}
+
+double predictory::getPredicted(int i) { return this->predicted[i]; }
+
 void predictory::evaluate(){
 	cout<<"#########predicted############"<<endl;
 	double mse = 0.0;
@@ -186,7 +192,7 @@ void predictory::searchList(vector<double> theArray, int sizeOfTheArray, double 
 
 	if (foundIndices.size()!=0){
 		//cout << " Found in index: ";
-		for (int i = 0; i < foundIndices.size(); i++){
+          for (unsigned int i = 0; i < foundIndices.size(); i++){
 			// cout << foundIndices[i]+1 << " ";
 			index.push_back( foundIndices[i]+1);
 		}
@@ -208,7 +214,7 @@ void predictory::Rank(vector<double> vec,vector<double> orig_vect, vector<double
 	vector<double> vect2(vec); // vect2 is a sorted list
 	int length = vect2.size();
 	// assign rank for Sorted list	
-	for(int k=0;k<vec.size();k++) {	
+	for(unsigned int k=0;k<vec.size();k++) {	
 		R.push_back(k+1); // starting with 1		
 	}	
 
@@ -220,18 +226,18 @@ void predictory::Rank(vector<double> vec,vector<double> orig_vect, vector<double
 
 
 	//Break Ties
-	for (int k=0;k<vec.size();k++){
+	for (unsigned int k=0;k<vec.size();k++){
 		// Search for the index position by value
 		Indices.clear();		
 		searchList(vect2,length,vec[k],Indices);		
 		// Find mean position
 		double sum = 0;
-		for (int i=0;i<Indices.size();i++){
+		for (unsigned int i=0;i<Indices.size();i++){
 			sum+=R[Indices[i]-1];
 		}				
 		double mean_index =   sum / Indices.size();
 		//change the rank at ties position
-		for(int j=0;j<Indices.size();j++){
+		for(unsigned int j=0;j<Indices.size();j++){
 			R[Indices[j]-1] = mean_index;
 		}		
 	}	
@@ -239,7 +245,7 @@ void predictory::Rank(vector<double> vec,vector<double> orig_vect, vector<double
 	// Search sorted list for index of item on original vector	
 	double nPosition;
 
-	for(int k=0; k < orig_vect.size();k++){
+	for(unsigned int k=0; k < orig_vect.size();k++){
 		Indices.clear();		
 		searchList(vect2,length,orig_vect[k],Indices);
 		nPosition = Indices[0]; // just need one ocurrence		
@@ -863,17 +869,17 @@ void predictory::timestamp ( )
 # define TIME_SIZE 40
 
   static char time_buffer[TIME_SIZE];
-  const struct tm *tm;
-  size_t len;
-  time_t now;
+  //const struct tm *tm;
+  //  size_t len;
+  //time_t now;
 
-  now = time ( NULL );
-  tm = localtime ( &now );
+  //  now = time ( NULL );
+  //tm = localtime ( &now );
 
-  len = strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
+  //len = strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
 
   cout << time_buffer << "\n";
-
+  
   return;
 # undef TIME_SIZE
 }

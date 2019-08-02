@@ -6,6 +6,8 @@
  * @author Javid Dadashkarimi
  * Group is a class to simulate each agent player
  */
+
+
 struct group_options{
 	int num_subj;
 	int num_edges;

@@ -1,6 +1,6 @@
 #include "CPM.hpp"
 using namespace std;
-using namespace Eigen;
+//using namespace Eigen;
 
 /*
  * Here I'm creating a dynamic array of size numAgents
