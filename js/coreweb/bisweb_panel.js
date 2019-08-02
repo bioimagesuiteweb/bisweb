@@ -46,6 +46,7 @@ class BisWebPanel {
      * @param {number} options.mode - the mode of the panel (one of "docked", "sidebar" )
      * @param {number} options.dual - if true , enable hopping from docked to sidebar
      * @param {number} options.permanent - if true and in docked, this does not get count towards globalDockedPanels max limits
+     * @param {Boolean} options.helpButton - if true, creates a help button for this panel. 
      */
     constructor(layoutcontroller=null,options={}) {
 
@@ -209,6 +210,15 @@ class BisWebPanel {
 
 
         if (this.options.initialstate === "docked" && this.options.dual===false) {
+
+            if (this.options.helpButton) {
+                this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+                this.dockHelpButton.click( (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.displayHelpModal();
+                });
+            }
             return;
         }
 

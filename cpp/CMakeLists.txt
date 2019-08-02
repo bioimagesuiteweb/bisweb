@@ -34,7 +34,7 @@ GET_FILENAME_COMPONENT(TEST_DIR ${PROJECT_SOURCE_DIR}/../test ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
 SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
-SET (MODULE_LIST_SCRIPT ${TOOLS_DIR}/bis_createmodulelist.js)
+SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
@@ -80,7 +80,7 @@ SET(KITSRCS
 SET(LIBNAME libbiswasm)
 SET (PRE_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_pre.js")
 SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
-SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
+
 
 # ---------------------------------------------------------------------------------------------
 # Native/Python/Matlab Stuff
@@ -281,7 +281,9 @@ IF (BIS_A_EMSCRIPTEN)
   
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
-  
+
+  MESSAGE("DIRS=${EXECUTABLE_OUTPUT_PATH}, ${LIBRARY_OUTPUT_PATH}")
+
   IF (BIS_BUILDNONGPL)
     MESSAGE("-- Also building Pure Apache C++ Library excluding GPL-Code from ${BIS_GPL_DIR}")
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
@@ -290,21 +292,29 @@ IF (BIS_A_EMSCRIPTEN)
   ELSE (BIS_BUILDNONGPL)
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
     SET (LIBLIST ${LIBNAME})
+    
   ENDIF (BIS_BUILDNONGPL)
 
   foreach(lib ${LIBLIST})
-  
+
+    IF (BIS_USEGPL)
+      SET(GPL 1)
+    ELSE (BIS_USEGPL)
+      SET(GPL 0)
+    ENDIF (BIS_USEGPL)
+      
+    
     SET_TARGET_PROPERTIES(${lib} PROPERTIES LINK_DEPENDS "${POST_JS};${PRE_JS}")
     SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${lib}.js")
     SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${lib}.wasm")
     install (FILES ${FVAR2} DESTINATION bisweb/lib)
     
     SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${lib}_wasm.js")
-    # ------------------ create webpack wasm module ---------------
+    # ------------------ create webpack wasm module for web-based tools ---------------
     ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
       DEPENDS ${lib} ${TOOLS_DIR}/bis_create_wasm_module.js
       COMMENT "\nCreating Webpack Wasm Module"
-      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE})
+      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE} --gpl ${GPL})
     add_custom_target(wasm_${lib} ALL DEPENDS ${WEBPACK_WASM_MODULE})
   endforeach(lib ${LIBLIST})
 
@@ -313,17 +323,16 @@ IF (BIS_A_EMSCRIPTEN)
   configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY ) 
   
   # ------------------ create wrapper ---------------------------
-
-  add_custom_command(OUTPUT ${JS_WRAP_OUTPUT}
+  SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
+  SET (JS_WRAP_OUTPUT2 ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
+  add_custom_command(OUTPUT ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2}
     DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
     PRE_BUILD COMMENT "Creating JS Wrappers"
-    COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH})
-  add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT})
+    COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
+  add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
   
   # ---- create library for command line  -----------
-  FILE(GLOB H1 ${PROJECT_SOURCE_DIR}/../legacy/*.js)
-  FILE(GLOB H2 ${PROJECT_SOURCE_DIR}/../js/*/*.js)
-  SET(JSFILES ${H1} ${H2})
+  FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/*.js)
 
   # bioimagesuiteweblib.js
   SET (BISWEBLIBFILE bioimagesuiteweblib.js)
@@ -335,8 +344,8 @@ IF (BIS_A_EMSCRIPTEN)
 
 
   
-  add_custom_command(OUTPUT ${OUTSCRIPT}
-    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
+  add_custom_command(OUTPUT ${OUTSCRIPT} 
+    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} 
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE} using ${CONFIGFILE}"
     COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
     )
@@ -350,6 +359,9 @@ IF (BIS_A_EMSCRIPTEN)
   SET (MAINSCRIPT  ${PROJECT_SOURCE_DIR}/../js/bin/bisweb.js )
   install (FILES ${MAINSCRIPT} DESTINATION bisweb/lib PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
+  SET (TFSCRIPT  ${PROJECT_SOURCE_DIR}/../js/utilities/bis_tfjs.js )
+  install (FILES ${TFSCRIPT} DESTINATION bisweb/lib PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+
   SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -358,7 +370,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET (NPMREADME
     ${LIBRARY_OUTPUT_PATH}/README.md )
   add_custom_command(OUTPUT ${NPMREADME}
-    DEPENDS ${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md
+    DEPENDS ${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md ${LIBNAME}
     PRE_BUILD COMMENT "Creating npm README.md"
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md" ${NPMREADME}
     )
@@ -367,7 +379,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
-    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE}
+    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE} ${LIBNAME}
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
     )
@@ -381,30 +393,39 @@ IF (BIS_A_EMSCRIPTEN)
 
   # ---- create scripts for command line  -----------
   # Read the modules
-  SET (MODULE_LIST_FILENAME ${LIBRARY_OUTPUT_PATH}/ModuleList.txt)
-  execute_process(COMMAND node ${MODULE_LIST_SCRIPT} -o ${MODULE_LIST_FILENAME})
-  install (FILES ${MODULE_LIST_FILENAME} DESTINATION bisweb/)
-  FILE (STRINGS ${MODULE_LIST_FILENAME} JSMODULES)
-
   IF(BIS_BUILDSCRIPTS)
 
-    # ---- Tests -------------------------------
+    GET_FILENAME_COMPONENT(MODULE_DIR ${LIBRARY_OUTPUT_PATH}/bin ABSOLUTE)
+    SET(MODULE_LIST_FILENAME "${MODULE_DIR}/ModuleList.txt")
+    MESSAGE("Creating Scripts ${MODULE_LIST_FILENAME}, ${MODULE_DIR}")
+    add_custom_command(OUTPUT ${MODULE_LIST_FILENAME}
+      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
+      PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Unix)"
+      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
 
-    MESSAGE("++++ Creating individual node.js script files")
-    SET(OUTFILES "")
-    SET(OUTFILESWIN "")
-    foreach(item ${JSMODULES})
-      SET (OFILE ${LIBRARY_OUTPUT_PATH}/bw_${item})
-      SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/bw_${item}.bat)
-      configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.in ${OFILE} @ONLY )
-      configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.bat.in ${OFILE2} @ONLY )
-      SET(OUTFILES ${OUTFILES} ${OFILE})
-      SET(OUTFILESWIN ${OUTFILESWIN} ${OFILE2})
-    endforeach(item ${JSMODULES})
-    install (FILES ${OUTFILES} DESTINATION bisweb/bin 
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    GET_FILENAME_COMPONENT(MODULE2_DIR ${LIBRARY_OUTPUT_PATH}/winbin ABSOLUTE)
+    SET(MODULE_LIST_FILENAME2 "${MODULE2_DIR}/ModuleList.txt")
+    MESSAGE("Creating Scripts ${MODULE_LIST_FILENAME2}, ${MODULE2_DIR}")
+    add_custom_command(OUTPUT ${MODULE_LIST_FILENAME2}
+      DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
+      PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
+      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
+    
+    add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME})
+
+    install (DIRECTORY ${MODULE_DIR}  DESTINATION bisweb
+      PATTERN "*.txt" EXCLUDE
+      PATTERN "*.sh"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+      PATTERN "*.xml"
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+
+    install (DIRECTORY ${MODULE2_DIR}  DESTINATION bisweb
+      PATTERN "*.txt" EXCLUDE
+      PATTERN "*.bat"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+      PATTERN "*.xml"
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
   ENDIF()
   
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
@@ -472,7 +493,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat")
+    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat -Wint-in-bool-context")
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11" CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)

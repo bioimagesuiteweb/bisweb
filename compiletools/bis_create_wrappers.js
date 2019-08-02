@@ -22,6 +22,7 @@
 require('../config/bis_checknodeversion');
 const fs=require('fs');
 const path=require('path');
+let appinfo=require(path.join(__dirname,'../package.json'));
 
 // --------------------------------------------------------------------------
 // names, argtype, isptr, isstring
@@ -58,6 +59,37 @@ const python_types = {
     'ParamObj' : [ 'paramobj' , 'ctypes.c_char_p', false ,false],
 };
 
+// --------------------------------------------------------------------------
+var getTime=function(nobracket=0) {
+    //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
+
+    var date = new Date();
+
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+
+    var min  = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+
+    var sec  = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+
+    if (nobracket===0)
+        return  "[" + hour + ":" + min + ":" + sec +"]";
+    return  hour + ":" + min + ":" + sec;
+};
+
+var getDate=function(sep="_") {
+    //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
+
+    var date = new Date();
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+    return  year+sep+month+sep+day;
+};
 // --------------------------------------------------------------------------
 
 var scan_header_file = function(onames) {
@@ -343,7 +375,7 @@ var parse_function_argument_list=function(lst,var_types,wrapper_mode) {
             process.exit(1);
         }
         
-//        let isobj = false;
+        //        let isobj = false;
         
         if (varname==='paramobj')
             hasparam=true;
@@ -804,6 +836,7 @@ var help = function() {
 program.version('1.0.0')
     .option('-o, --output  <s>','output js (or python) filename')
     .option('-p, --python', 'Python Mode')
+    .option('--bisdate <s>', 'create bisdate file')
     .option('-m, --matlab', 'Matlab Mode')
     .option('-e, --extra [s]', 'Extra Path to copy output to')
     .option('-i, --input <s>', 'Input header files to parse')
@@ -852,5 +885,17 @@ try {
 } catch(e) {
     console.log('----- Not copying extra');
 }
+
+if ( (program.bisdate || null ) !==null) {
+    let a=getDate("/");
+    let b=getTime(1);
+    let t= new Date().getTime();
+    let output_text=` { "date" : "${a}", "time" : "${b}", "absolutetime" : ${t} , "version": "${appinfo.version}" }`;
+    output_text=`module.exports = ${output_text};`;
+    fs.writeFileSync(program.bisdate,output_text+'\n');
+    console.log('++++ Created date file='+program.bisdate+' ('+output_text+')');
+}
+
+    
 
 process.exit(0);

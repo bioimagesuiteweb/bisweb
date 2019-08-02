@@ -35,11 +35,12 @@ class maskModule extends BaseModule {
     createDescription() {
         return {
             "name": "Mask Image",
-            "description": "This algorithm masks an image",
+            "description": "This algorithm masks an image using an image mask. In regions where the mask is below a threshold, the image values are set to zero, else they maintain their original values",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Mask",
             "shortname" : "msk",
+            "slicer" : true,
             "inputs" : [
                 {
                     'type': 'image',
@@ -67,7 +68,7 @@ class maskModule extends BaseModule {
             "params": [
                 {
                     "name": "Threshold",
-                    "description": "The threshold below which values will be masked out",
+                    "description": "The threshold (applied to the mask image) below which values in the input image will be masked out",
                     "priority": 1,
                     "advanced": false,
                     "gui": "slider",

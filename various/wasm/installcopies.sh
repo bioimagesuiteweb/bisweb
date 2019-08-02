@@ -16,6 +16,7 @@ cp ${WASMDIR}/libbiswasm_nongpl.js ${DIR}/wasm/
 cp ${WASMDIR}/libbiswasm.wasm ${DIR}/wasm/
 cp ${WASMDIR}/libbiswasm_nongpl.wasm ${DIR}/wasm/
 cp ${WASMDIR}/libbiswasm_wrapper.js ${DIR}/wasm/
+cp ${WASMDIR}/biswasbdate.js ${DIR}/wasm/
 
 
 echo "------------------------------------------------------------------------------------"

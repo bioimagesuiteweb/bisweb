@@ -37,7 +37,7 @@ class WeightedRegressGlobalModule extends BaseModule {
         return {
             "name": "Regress Global Signal",
             "description": "Regresses the global signal (average) from a time series with the option to specify a weight matrix",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs":  baseutils.getMatrixToMatrixInputs(true),
             "outputs":  baseutils.getMatrixToMatrixOutputs(),

@@ -1,0 +1,12 @@
+{
+  "sub1": {
+    "sub01_behaviors.csv": "0,1,2,3,4,5\n",
+    "sub01_conn01.csv": "1,2,3\n4,5,6\n7,8,9",
+    "sub01_conn02.csv": "1,2,3\n4,5,9\n7,8,9\n",
+    "sub1_conn02.csv": "1,2,3\n4,5,9\n7,8,9\n"
+  },
+  "sub2": {
+    "sub02_behaviors.csv": "1,2,3\n",
+    "sub2_conn01.csv": "1,2,3\n5,5,5\n7,8,9"
+  }
+}

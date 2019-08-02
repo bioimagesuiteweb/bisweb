@@ -266,7 +266,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                               noZoom : false,
                                               noPan : false
                                           });
-
+        
         cardslice.addtoscene(subviewer.getScene(),ren,subviewer.getCamera());
         
         var wd=this.internal.imagespa[0] * 4;
@@ -1046,7 +1046,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 trueplane=invorientaxis[pl];
             }
             
-            var vp0=this.internal.viewports[this.internal.rendermode][trueplane];
+            var vp0=this.internal.viewports[this.internal.rendermode][trueplane] || { x0:0.00, y0:0.0,  x1:0.0,   y1:0.0 };
             var vp= { 
                 x0 : vp0.x0,
                 x1 : vp0.x1,
@@ -1215,7 +1215,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             
             for (let j=0;j<this.internal.subviewers.length;j++)
                 this.internal.subviewers[j].coordinateChangeCallback=mousefn;
-            
+
             this.setrendermodeinternal(this.internal.rendermode,true,true);
         }
         

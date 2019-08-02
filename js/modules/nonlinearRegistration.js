@@ -40,12 +40,13 @@ class NonLinearRegistrationModule extends BaseModule {
         let des= {
             "name": "Non-Linear Registration",
             "description": "Runs non-linear registration using a reference image, target image, and a transformation specified as a transformation. Returns a transformation.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs" : baseutils.getRegistrationInputs(),
             "outputs" : baseutils.getRegistrationOutputs(),
             "buttonName": "Run",
             "shortname" : "nlr",
+            "slicer" : true,
             "params": baseutils.getRegistrationParams(),
         };
 

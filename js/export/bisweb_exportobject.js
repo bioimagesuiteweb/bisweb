@@ -17,7 +17,7 @@ const BisWebLinearTransformation=require('bisweb_lineartransformation');
 const BisWebGridTransformation=require('bisweb_gridtransformation');
 const BisWebTransformationCollection=require('bisweb_transformationcollection');
 const userPreferences = require('bisweb_userpreferences.js');
-const bisdate=require('bisdate.js');
+const biswasmdate=require('biswasmdate.js');
 
 /**
  * A set of utility functions. <BR>
@@ -75,7 +75,6 @@ module.exports= {
     bisutil : bisutil,
     genericio : genericio,
     // Bisweb info
-    bisdate : bisdate,
     userPreferences :     userPreferences,
     // Core Data Structures
     BisWebDataObject : BisWebDataObject,
@@ -91,8 +90,8 @@ module.exports= {
     bisxformutil : bisxformutil,
     // Tensor Flow
     bistfutil: bistfutil,
-
-    
+    // WASM build time,
+    biswasmdate : biswasmdate,
 };
 
 

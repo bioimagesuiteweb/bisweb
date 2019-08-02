@@ -578,28 +578,34 @@ class BaseViewerElement extends HTMLElement {
      */
     updatetransferfunctions(input) {
 
-        let num=this.internal.slices.length;
+
 
         this.internal.colormapControllerPayload=input;
+        let num=this.internal.slices.length;
         
         if (input.image!==null) {
             this.internal.imagetransferfunction=input.image;
-            for (let pl=0;pl<num;pl++) 
-                this.internal.slices[pl].setnexttimeforce(); 
+            for (let pl=0;pl<num;pl++)  {
+                if (this.internal.slices[pl])
+                    this.internal.slices[pl].setnexttimeforce();
+            }
         }
-        for (let pl=0;pl<num;pl++)
-            this.internal.slices[pl].interpolate(input.interpolate);
-        
+        for (let pl=0;pl<num;pl++) {
+            if (this.internal.slices[pl])
+                this.internal.slices[pl].interpolate(input.interpolate);
+        }
+
+        let numov=this.internal.overlayslices.length;
         if (this.internal.overlayslices[0]!==null) {
             if (input.objectmap!==null) {
                 this.internal.objectmaptransferfunction=input.objectmap;
                 this.internal.objectmaptransferinfo=input.functionalparams;
-                for (let pl=0;pl<num;pl++) {
+                for (let pl=0;pl<numov;pl++) {
                     if (this.internal.overlayslices[pl]!==null)
                         this.internal.overlayslices[pl].setnexttimeforce();
                 }
             }
-            for (let pl=0;pl<num;pl++) {
+            for (let pl=0;pl<numov;pl++) {
                 if (this.internal.overlayslices[pl]!==null)
                     this.internal.overlayslices[pl].interpolate(input.objinterpolate);
             }
@@ -686,7 +692,7 @@ class BaseViewerElement extends HTMLElement {
     }
     
     /** update all mouse observers with new coordinates 
-     *  Called from {@link BisWebOrthogonalViewerElementElementThis.Internal.updatescene}.
+     *  Called from {@link BisWebOrthogonalViewerElementElement.updatescene}.
      * @param {array} mm - [ x,y,z ] array with current position in mm
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
      * @param {number} mousestate - 0=click 1=move 2=release
@@ -991,8 +997,6 @@ class BaseViewerElement extends HTMLElement {
     /** info box */
     viewerInformation() {
 
-
-            
                 
         let a="No image loaded";
         if (this.internal.volume) {
@@ -1006,7 +1010,9 @@ class BaseViewerElement extends HTMLElement {
 
         let txt=a+'<BR> <BR>'+b;
 
-        const output=`<div style="margin-left:5px; margin-right:5px; margin-top:5px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000;">`+txt+`</div>`;
+        let dh=Math.round(this.internal.layoutcontroller.getviewerheight()*0.7);
+        
+        const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
         
         bootbox.dialog({
             title: 'Viewer Information',

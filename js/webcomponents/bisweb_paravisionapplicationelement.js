@@ -88,18 +88,17 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
 
         
         if (modulemanager!==null)  {
-            modulemanager.initializeElements(menubar,self.VIEWERS).then( (menus) => {
-                userPreferences.safeGetItem("internal").then( (f) =>  {
-                    if (f) {
-                        let misactool=document.createElement('bisweb-misactool');
-                        let algoid=this.getAttribute('bis-algorithmcontrollerid');
-                        misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
-                        document.body.appendChild(misactool);
-                        let regmenu=menus[3] || editmenu;
-                        webutil.createMenuItem(regmenu, ''); // separator
-                        misactool.addtomenu(regmenu);
-                    }
-                });
+            let menus=modulemanager.initializeElements(menubar,self.VIEWERS);
+            userPreferences.safeGetItem("internal").then( (f) =>  {
+                if (f) {
+                    let misactool=document.createElement('bisweb-misactool');
+                    let algoid=this.getAttribute('bis-algorithmcontrollerid');
+                    misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
+                    document.body.appendChild(misactool);
+                    let regmenu=menus[3] || editmenu;
+                    webutil.createMenuItem(regmenu, ''); // separator
+                    misactool.addtomenu(regmenu);
+                }
             });
         }
         

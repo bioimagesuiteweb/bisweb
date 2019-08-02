@@ -32,7 +32,7 @@ class ViewerCopyModule extends BaseModule {
     createDescription() {
         return {
             "name": "Advanced Transfer Images",
-            "description": "This algorithm performes image projecting to a 2D image using eigher MIP or shaded projection",
+            "description": "This algorithm performs image projecting to a 2D image using eigher MIP or shaded projection",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs('Image to be copied'),

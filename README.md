@@ -24,8 +24,8 @@ You may also download desktop and command line versions from
 
 For end-user documentation please see the [User Manual (_Draft_)](https://bioimagesuiteweb.github.io/bisweb-manual/). (The sources for this are also on github at [the manual repository](https://github.com/bioimagesuiteweb/bisweb-manual).)
 
-For developer documentation please look in the [docs](docs) directory of this
-repository, starting with [docs/README.md](docs/README.md).
+_For developer documentation please look in the [docs](docs) directory of this
+repository, starting with [docs/README.md](docs/README.md)._
 
 __Licensing__: The source code of the core BioImage Suite Web (as found in
 this repository) is made available freely under the terms of the
