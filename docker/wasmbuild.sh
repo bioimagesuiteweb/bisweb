@@ -15,6 +15,9 @@ source ${BDIR}/emsdk_portable/emsdk_env.sh
 
 
 mkdir -p ${BDIR}/wasm
+mkdir -p ${BDIR}/wasm/lib
+mkdir -p ${BDIR}/wasm/lib/bin
+mkdir -p ${BDIR}/install
 
 
 
