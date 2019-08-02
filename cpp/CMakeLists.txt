@@ -186,7 +186,14 @@ IF (BIS_USECPM)
     cpmcode/RCPM.cpp
     cpmcode/Subject.cpp
     cpmcode/tools.cpp
+    cpmcode/bisCPM.cpp
     )
+
+  SET (PARSE_HEADERS
+    ${PARSE_HEADERS}
+    ${CPP_SOURCE_DIR}/cpmcode/bisCPM.h
+    )
+
 ENDIF (BIS_USECPM)
 
 IF (BIS_USEGPL)
