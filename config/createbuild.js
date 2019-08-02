@@ -79,14 +79,14 @@ const main=async function() {
 	let f=path.normalize(`${DIR}/../various/download/emsdk-portable.tar.gz`);
 	await util.executeCommand(`tar xvfz ${f}`, DIR);
 	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk update`,`${DIR}/emsdk_portable`,true);
-	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install clang-e1.38.30-64bit`,`${DIR}/emsdk_portable`,true);
-	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate clang-e1.38.30-64bit`,`${DIR}/emsdk_portable`,true);
+	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
 	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
 	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install  emscripten-1.38.30`,`${DIR}/emsdk_portable`,true);
-	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate emscripten-1.38.30`,`${DIR}/emsdk_portable`,true);
-	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install sdk-1.38.30-64bit`,`${DIR}/emsdk_portable`,true);
-	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate sdk-1.38.30-64bit`,`${DIR}/emsdk_portable`,true);
+	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install  emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
+	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
+	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
 	await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk list`);
     }
     console.log('++++');
