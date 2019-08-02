@@ -130,7 +130,6 @@ the electron installer which requires a more complex command:
 
      sudo npm install -g electron --unsafe-perm=true --allow-root
 
-
 The JS development environment is now complete.
 
 ## Building and Running BioImage Suite Web
@@ -177,9 +176,21 @@ The source code for the project may be found on [Github](https://github.com/bioi
 
 ---
 
+## Docker Environment (Advanced)
+
+If you are comfortable with Docker, then you can create and build bisweb in a
+docker environment. Simply `cd docker` from the bisweb source and type
+
+    ./build.sh
+
+
 ## Building the JS Code
 
-Assuming the steps above, the BioImageSuite Web code should be inside a folder named ``bisweb``. This will be used as the name of the root directory for the project, but you can name it whatever you'd like so long as you're consistent. 
+The steps below are for doing the process by hand.
+
+Assuming the steps above, the BioImageSuite Web code should be inside a folder
+named ``bisweb``. This will be used as the name of the root directory for the
+project, but you can name it whatever you'd like so long as you're consistent.
 
     cd bisweb
 
@@ -245,7 +256,21 @@ At this point the JS-development directory should be fully functional.
 
 ## Building the C++ Code as a WebAssembly Library
 
-The previous sections used prebaked versions of the WebAssembly binaries. This section will describe how to build this final part of the software, the C++/WebAssembly binaries. These instructions are for Unix-style operating systems, e.g. Linux, MacOS and the [WSL version of Ubuntu Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) that can be installed from the MS-Windows Store.
+The previous sections used prebaked versions of the WebAssembly binaries. This
+section will describe how to build this final part of the software, the
+C++/WebAssembly binaries. These instructions are for Unix-style operating
+systems, e.g. Linux, MacOS and the
+[WSL version of Ubuntu Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+that can be installed from the MS-Windows Store.
+
+The default scripts assume that you have the gpl plugin installed side-by-side
+with the source tree (assumed to be in a directory called `bisweb`)
+
+
+    cd bisweb/..
+    mkdir gpl
+    git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
+
 
 This process requires three tools:
 
@@ -254,39 +279,30 @@ This process requires three tools:
   C++ to WebAssembly
 * [_Eigen_](http://eigen.tuxfamily.org/index.php?title=Main_Page) : A numerical linear algebra library. This is the only external library used by BioImage Suite Web.
 
-### Installing CMake
+### Installing CMake and Python
 
 #### Ubuntu/Debian
 
 Ubuntu and Debian support CMake through their built-in package manager, [``apt``](https://help.ubuntu.com/lts/serverguide/apt.html). Enter the following:
 
     sudo apt-get install cmake cmake-curses-gui
-
-#### MacOS
-
-On MacOS install CMake from [their website](https://cmake.org/download/) and then from the GUI follow the instructions under Tools | How to Install for CommandLine Use to install it for command line use. The easiest option is propabably to create symbolic links in ``/usr/local`` as follows:
-
-    sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install
     
-
-
-### Installing Python v3.5 or later
-
-Emscripten needs a modern version of Python, i.e. v3.5 or later, and will fail to install without one.
-
-On Ubuntu type:
+You probably should also install python3.
 
     sudo apt-get install python3
+    
+#### MacOS
 
-MacOS has its own package manager, [brew](https://brew.sh/), that maintains versions of Python. If ``brew`` is installed, the latest version of python can be installed using:
+We need both a modern python2 and python3 for some applications. We recommend
+using the [brew](https://brew.sh/) package manager.
 
-    brew install python3
+    brew install python3 python2 cmake
 
-Ensure that `python3` is in your path. If it is, then
+You will probably also need to link the _modern_ version of python2 over the
+system provided one using
 
-    which python3
+    brew link python2
 
-should return a response that looks like `/usr/bin/python3` or `/usr/local/bin/python3`.
 
 #### Python Packages
 
@@ -309,9 +325,26 @@ Run the script:
     node ./config/createbuild.js
 
 
-This will install Eigen v3, the latest cut of Emscripten and then create the build directories and a bunch of scripts all inside a directory called `build` in your source tree. For the curious, a detailed description of createbuild [can be found at the end of this document](#Detailed-description-of-createbuild.sh).
+This will install Eigen v3, IGL, a version of Emscripten and then create the
+build directories and a bunch of scripts all inside a directory called `build`
+in your source tree. For the curious, a detailed description of createbuild
+[can be found at the end of this document](#Detailed-description-of-createbuild.sh).
 
-### Configuring and Building
+## Configuring and Building -- The Quick Way
+
+Simply run the script `fullbuild.sh` from the `build` directory. This calls
+the following
+
+* wasmbuild.sh -- this builds the C++ WASM code
+* webbuild.sh -- this builds the web-based application
+* nativebuild.sh -- this builds the python and matlab libraries and scripts
+  (this needs wasmbuild.sh to be run first)
+* testbuild.sh -- this runs a subset of the tests
+
+
+## Configuring and Building -- The Manual Way
+
+### The WASM Code
 
 __This requires some understanding of CMake.__ There is lots of info online on this.
 
@@ -368,7 +401,7 @@ This will run the regression tests. It will take a while but hopefully everythin
 
 ---
 
-## Building the C++ Code as a Native Shared Library for Python/Matlab
+### Building the C++ Code as a Native Shared Library for Python/Matlab
 
 __You will need to install Python 3.5 or higher for this to work__.
 
@@ -455,78 +488,6 @@ A cool little trick is to `make install` both the WASM and the Python tools to t
 
 ---
 
-## Detailed description of createbuild.sh
-
-We discuss below the internals of `config\createbuild.sh` for any one who is curious. What follows is an annotated simplified version of this script (with the print statements removed to shorten it). If you prefer, you can invoke the steps below one at a time instead of the script. In that case set the environment variable DIR to point to the location of the build directory.
-
-1. Find the location of this script and the build directory
-
-        DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-        DIR="${DIR}/../build"
-
-2. Create the build directory if needed
-
-        mkdir -p ${DIR}
-        cd ${DIR}
-
-3. Install Eigen 3
-
-        mkdir -p ${DIR}/eigen3
-        cd ${DIR}/eigen3
-        unzip ${DIR}/../various/download/Eigen.zip
-
-4. Install Emscripten
-    
-        cd ${DIR}
-        tar xvfz ${DIR}/../various/download/emsdk-portable.tar.gz
-        cd emsdk_portable
-        chmod +x emsdk
-        ${DIR}/emsdk_portable/emsdk update
-        ${DIR}/emsdk_portable/emsdk install latest
-        ${DIR}/emsdk_portable/emsdk activate latest 
-
-
-
-
-5. Create the remaining build directories
-
-        mkdir -p ${DIR}/web
-        mkdir -p ${DIR}/wasm
-        mkdir -p ${DIR}/cpp
-        mkdir -p ${DIR}/dist
-
-6. Copy the scripts
-
-        cp ${DIR}/../config/setpaths_build.sh ${DIR}/setpaths.sh
-        cp ${DIR}/../compiletools/cmake.sh ${DIR}/cmake.sh
-        cp ${DIR}/../compiletools/ccmake.sh ${DIR}/ccmake.sh
-        cp ${DIR}/../compiletools/cmake_native.sh ${DIR}/cmake_native.sh
-        cp ${DIR}/../compiletools/ccmake_native.sh ${DIR}/ccmake_native.sh
-
-7. Make the cmake scripts executable
-
-        chmod +x ${DIR}/cmake*.sh
-        chmod +x ${DIR}/ccmake*.sh
-
-This will create a set of directories (if they are not already there)
-
-* build/web -- for bundling the web-app code
-* build/wasm -- for building the Web Assembly code
-* build/native -- for building the native C++ libraries (for Python)
-* build/dist -- for outputing desktop applications
-
-Next it will install emscripten in `build/emsk_portable` and Eigen v3 in `build/eigen3`. The Emscripten installation might take a while depending on your internet connection. See also the [instructions on the WebAssembly Developer's Guide](http://webassembly.org/getting-started/developers-guide/) if you want to understand what is going on under the hood..
-
-Next it will create five scripts in the build directory.
-
-* setpaths.sh -- a bash file for setting your paths when compiling Web Assembly. Simply source build/setpaths.sh to set this up
-* cmake.sh -- a wrapper around cmake for building the Web Assembly code.
-* ccmake.sh -- a wrapper around ccmake for the same purpose
-* cmake_native.sh - a wrapper around cmake for building the native libraries for Python
-* ccmake_native.sh - a wrapper around ccmake for building the native libraries for Python
-
-
----
 ## Dropbox and Google Drive Keys
 
 The only source file that is not publicly supplied is the file containing keys
@@ -564,7 +525,7 @@ If you are not planning to modify the C++ code then you can simply build this on
 
 ---
 
-### Web-based Tests (_experimental_)
+### Web-based Tests 
 
 __Browser__:
 
