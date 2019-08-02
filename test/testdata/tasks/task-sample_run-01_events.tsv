@@ -1,0 +1,4 @@
+onset	duration	trial_type
+0	50	motor
+50	50	visual
+200	100	auditory

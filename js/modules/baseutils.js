@@ -293,7 +293,7 @@ module.exports = {
         let arr = [
             {
                 "name": "Reslice",
-                "description": "If true also output a resliced targed image using the current transform",
+                "description": "If true, also output a resliced targed image using the current transform",
                 "priority": 100,
                 "advanced": true,
                 "gui": "check",
@@ -303,7 +303,7 @@ module.exports = {
             },
             {
                 "name": "Normalize",
-                "description": "If true normalize input intensities by saturating using cumulative histogram",
+                "description": "If true, normalize input intensities by saturating using cumulative histogram",
                 "priority": 101,
                 "advanced": true,
                 "gui": "check",
@@ -373,7 +373,7 @@ module.exports = {
 
         return {
             "name": name,
-            "description": extra + "registration mode, one of [ " + opt.join(" ") + " ]",
+            "description": extra + "registration mode, one of  " + opt.join(" "),
             "priority": 10,
             "advanced": false,
             "gui": "dropdown",

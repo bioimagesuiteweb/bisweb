@@ -59,7 +59,7 @@ class BaseModule {
      * @return JSON description of module
      */
     getDescription() {
-        if (this.description === null) {
+        if (!this.description) {
             this.description = this.createDescription();
         }
         return this.description;
@@ -88,8 +88,13 @@ class BaseModule {
             }
         });
 
+
         if (error.length > 0)
             return Promise.reject(error.join("\n"));
+
+        if (params.extraArgs)
+            fullparams.extraArgs=params.extraArgs;
+        
 
         const self=this;
         let name=this.name;
@@ -99,6 +104,7 @@ class BaseModule {
                 self.storeCommentsInOutputs(baseutils.getExecutableArguments(name), params, baseutils.getSystemInfo(biswrap));
                 resolve(m);
             }).catch( (e) => {
+                console.log('Error=',e.stack,e);
                 reject(e);
             });
         });
@@ -123,6 +129,8 @@ class BaseModule {
         let des = this.getDescription();
         let out = {};
         let parsedCmd = {};
+
+
 
         //make case insensitive directory of input parameters
         let cmdKeys = Object.keys(cmd);
@@ -249,9 +257,13 @@ class BaseModule {
 
         param.type = param.type || "string";
 
-        if (param.default === undefined && param.type !== 'string') {
-            console.log('Parameter', param.name, 'does not have a default value');
-            return false;
+        if (param.default === undefined) {
+            if (param.type !== 'string' && param.type !=='filename') {
+                console.log('Parameter', param.name, 'does not have a default value');
+                return false;
+            } else {
+                param.default = '';
+            }
         }
 
         switch (param.type.toLowerCase())
@@ -262,6 +274,7 @@ class BaseModule {
             case 'int':
             case 'integer': return (isNaN(parseFloat(val, 10)) === false);
             case 'string':
+            case 'filename' :
             case 'extra':
             case '': break;
             default: console.log('warning: could not interpret param', val);
@@ -571,6 +584,8 @@ class BaseModule {
             }).catch((e) => { reject(e); });
         });
     }
+
+    
 }
 
 

@@ -36,7 +36,7 @@ class ComputeGLMModule extends BaseModule {
         let des= {
             "name": "Compute GLM",
             "description": "Calculates the Generalized linear model (GLM) for fMRI data sets",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "outputs":  baseutils.getImageToImageOutputs("Output beta map image"),
             "buttonName": "Calculate",

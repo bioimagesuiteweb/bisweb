@@ -631,8 +631,8 @@ class SimpleFileDialog {
 
         let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span>Bookmark</button>`);
         favoriteButtons.append(favoriteButton);
-        let favoriteButton2 = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-remove'></span> Remove</button>`);
-        favoriteButtons.append(favoriteButton2);
+        let removeButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-remove'></span> Remove</button>`);
+        favoriteButtons.append(removeButton);
 
         let pillsHTML = $(`<ul class='nav nav-pills nav-stacked btn-sm'></ul>`);
         favoriteBar.append(pillsHTML);
@@ -663,18 +663,21 @@ class SimpleFileDialog {
             if (!found) {
                 this.favorites.push(elem);
                 this.addFavorite(pillsBar,elem);
-                userPreferences.setItem('favoriteFolders',this.favorites,true);
+
+                this.setFsFavoritesFolder(this.favorites);
+                //userPreferences.setItem('favoriteFolders',this.favorites,true);
             }
         });
 
-        favoriteButton2.on('click', (event) => {
+        removeButton.on('click', (event) => {
             event.preventDefault();
             let i=0;
             while (i<this.favorites.length) {
                 if (this.lastFavorite===this.favorites[i].path) {
                     this.favorites.splice(i,1);
                     this.addAllFavorites(pillsBar);
-                    userPreferences.setItem('favoriteFolders',this.favorites,true);
+                    this.setFsFavoritesFolder(this.favorites);
+                    //userPreferences.setItem('favoriteFolders',this.favorites,true);
                     this.lastFavorite=null;
                     return;
                 } 
@@ -683,7 +686,7 @@ class SimpleFileDialog {
         });
             
 
-        userPreferences.safeGetItem('favoriteFolders').then( (f) => {
+        this.getFsFavoritesFolder().then( (f) => {
             if (f) {
                 this.favorites=f;
                 this.addAllFavorites(pillsBar);
@@ -754,7 +757,33 @@ class SimpleFileDialog {
     }
     
 
+    getFsFavoritesFolder() {
+        return new Promise( (resolve, reject) => {
+            userPreferences.safeGetItem('filesource').then( (obj) => {
+                let folderPromise;
+                if (obj === 'amazonaws') {
+                    folderPromise = userPreferences.safeGetItem('s3Folders');
+                } else if (obj === 'server') {
+                    folderPromise = userPreferences.safeGetItem('favoriteFolders');
+                }
 
+                folderPromise
+                    .then( (folders) => { resolve(folders); })
+                    .catch( (e) => { reject(e); });
+                
+            });
+        });
+    }
+
+    setFsFavoritesFolder(newFolder) {
+        userPreferences.safeGetItem('filesource').then( (obj) => {
+            if (obj === 'amazonaws') {
+                userPreferences.setItem('s3Folders', newFolder, true);
+            } else if (obj === 'server') {
+                userPreferences.setItem('favoriteFolders', newFolder, true);
+            }
+        });
+    }
 
 }
 

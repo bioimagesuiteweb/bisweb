@@ -38,7 +38,7 @@ class ApproximateFieldModule extends BaseModule {
         let des = {
             "name": "Approximate Displacement Field",
             "description": "Calculates the displacement field for a given transformation for a given image.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs("Load the displacement field image to approximate"),
             "buttonName" : "Execute",

@@ -1,0 +1,2 @@
+FIRST_fl3d_ce_axial_20100120110712_5.json -> sub-01_run-01_unknown.json
+FIRST_fl3d_ce_axial_20100120110712_5.nii.gz -> sub-01_run-01_unknown.nii.gz

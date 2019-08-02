@@ -41,6 +41,7 @@
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css" href="../node_modules/jstree/dist/themes/default/style.css">
     <link rel="stylesheet" type="text/css" href="../node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css">
+    <link rel="stylesheet" type="text/css" href="../node_modules/bootstrap-toggle/css/bootstrap-toggle.min.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
@@ -111,40 +112,21 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-modulemanager>
 
-    <bisweb-graphelement
-      id="bisweb_graphelement"
-      bis-viewerid="#viewer">
-    </bisweb-grapherelement>
-
-    <bisweb-filetreepanel
-      id="bis_filetreepanel"
+    <bisweb-studypanel
+      id="dicom_import"
       bis-layoutwidgetid="#viewer_layout" 
       bis-viewerid="#viewer"
       bis-viewerapplicationid="#viewer_application"
-      bis-graphelement="#bisweb_graphelement">
-    </bisweb-filetreepanel>
-
-    <bisweb-dicomimportelement
-      id="dicom_import"
-      bis-viewerid="#viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#bis_filetreepanel">
-    </bisweb-dicomimportelement>
-
-    <!-- bisweb-brukerimportelement
-      id="bruker_import"
-      bis-viewerid="viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#bis_filetreepanel">
-    </bisweb-brukerimportelement -->
+      bis-painttoolid="#painttool">
+    </bisweb-studypanel>
     
     <bisweb-viewerapplication
       id="viewer_application"
       bis-menubarid="#viewer_menubar"
-      bis-modulemanagerid="#modulemanager"
+      bis-graphelementid="#bisweb_graphelement"
       bis-dicomimportid="#dicom_import"
-      bis-viewerid="#viewer"
-      bis-graphtoolid="#bisweb_graphelement">
+      bis-modulemanagerid="#modulemanager"
+      bis-viewerid="#viewer">
     </bisweb-viewerapplication>
 
   </div>

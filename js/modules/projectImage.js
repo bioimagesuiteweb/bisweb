@@ -35,7 +35,7 @@ class ProjectImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Project 3D->2D",
-            "description": "This algorithm performes image projecting to a 2D image using eigher MIP or shaded projection",
+            "description": "This algorithm performs image projection from a 3D image to a 2D image using eigher MIP or shaded projection",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs" : [

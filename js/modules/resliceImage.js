@@ -43,9 +43,10 @@ class ResliceImageModule extends BaseModule {
         return {
             "name": "Reslice Image",
             "description": "Reslices an existing image to match a reference and a transformation",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "shortname" : "rsl",
+            "slicer" : true,
             "buttonName": "Reslice",
             "inputs":   [
                 {
@@ -122,7 +123,7 @@ class ResliceImageModule extends BaseModule {
                 },
                 {
                     "name": "Force Float",
-                    "description": "If true force output to float",
+                    "description": "If true, force output to float",
                     "priority": 100,
                     "advanced": true,
                     "type": "boolean",
@@ -141,7 +142,7 @@ class ResliceImageModule extends BaseModule {
                 },
                 {
                     "name": "Add Grid",
-                    "description": "If true adds a grid overlay to the image",
+                    "description": "If true, adds a grid overlay to the image to visualize the effect of the transformation(s)",
                     "priority": 37,
                     "advanced": true,
                     "gui": "check",

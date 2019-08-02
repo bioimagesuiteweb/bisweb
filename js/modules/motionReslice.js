@@ -44,6 +44,7 @@ class MotionResliceModule extends BaseModule {
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Execute",
+            "slicer" : true,
             "shortname" : "motresl",
             "inputs": [
                 {

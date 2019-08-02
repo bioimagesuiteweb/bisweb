@@ -35,13 +35,14 @@ class DriftCorrectImageModule extends BaseModule {
     createDescription() {
         let des={
             "name": "Drift Correct Image" ,
-            "description": "Drift Corrects an Image",
+            "description": "Drift Corrects an Image by fitting and removing a polynomial to each voxel time series separately.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs":  baseutils.getImageToImageOutputs(),
             "buttonName": "Drift Correct",
             "shortname" : "drift",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Order",

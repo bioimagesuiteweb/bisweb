@@ -7,9 +7,21 @@ const environment=genericio.getenvironment();
 
 module.exports={
 
+
+    getelectronpath : function() {
+        const path=genericio.getpathmodule();
+        return path.dirname(scope.substr(8,scope.length))+'/test';
+    },
+    
     islocal : function() {
 
         if (environment==='electron') {
+
+            let p=this.getelectronpath();
+            const fs=genericio.getfsmodule();
+            if (fs.existsSync(p)){
+                return true;
+            } 
             return false;
         }
         
@@ -19,15 +31,18 @@ module.exports={
     },
 
     getbase: function(forcegithub=false,display=false) {
-        
+
         
         let extra='/';
         if (display)
             extra='/webtestdata';
 
-
         if (forcegithub)
             return 'https://bioimagesuiteweb.github.io/test/1.1'+extra;
+
+        if (environment==='electron') {
+            return this.getelectronpath()+extra;
+        }
         
         let testDataRootDirectory='';
         

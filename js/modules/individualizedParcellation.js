@@ -44,8 +44,9 @@ class IndivParcellationModule extends BaseModule {
             "author": "Mehraveh Salehi",
             "version": "1.0",
             "outputs":  baseutils.getImageToImageOutputs("Output: the individualized parcellation",'viewer1','overlay'),
-            "buttonName": "Individualize!",
+            "buttonName": "Compute",
             "shortname" : "indiv",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Num Regions",

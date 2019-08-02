@@ -37,7 +37,7 @@ class ButterworthFilterModule extends BaseModule {
         return {
             "name": "Butterworth Filter",
             "description": "This element will apply a Butterworth Filter to an input matrix",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs":  baseutils.getMatrixToMatrixInputs(),
             "outputs":  baseutils.getMatrixToMatrixOutputs(),

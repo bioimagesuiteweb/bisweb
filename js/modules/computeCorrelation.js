@@ -38,7 +38,7 @@ class ComputeCorrelationModule extends BaseModule {
         return {
             "name": "Compute Correlation",
             "description": "Computes the correlation matrix for an input matrix (pairwise) with weights",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getMatrixToMatrixInputs(true),
             "outputs":  baseutils.getMatrixToMatrixOutputs(),

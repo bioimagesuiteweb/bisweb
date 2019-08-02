@@ -255,6 +255,11 @@ class BisWebDialogElement extends HTMLElement {
         this.hide();
     }
 
+    setTitle(name) {
+        this.headertext.text(name);
+    }
+    
+
     /** Returns the dimensions of the dialog
      * @returns {Object} - { left, top, width, height }
      */
@@ -274,10 +279,10 @@ class BisWebDialogElement extends HTMLElement {
      */
     create(name, w=400, h=400, x=100, y=100, zindex=5000,motion=true,closecallback=null) {
 
-        if (y<100)
-            y=100;
-        if (x<40)
-            x=40;
+        if (y<10)
+            y=10;
+        if (x<10)
+            x=10;
 
         let grow=false;
         if (h<0) {
@@ -361,6 +366,8 @@ class BisWebDialogElement extends HTMLElement {
 
         if (motion)
             this.bindMouseEvents();
+
+        return this;
     }
     
 }

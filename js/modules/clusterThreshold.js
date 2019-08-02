@@ -39,13 +39,14 @@ class ClusterThresholdModule extends BaseModule {
     createDescription() {
         return {
             "name": "Cluster Threshold",
-            "description": "This element will separate an image into clusters and apply binary thresholding",
-            "author": "Zach Saltzman",
+            "description": "This element will separate an image into clusters and apply binary thresholding. The image is first thresholded using a threshold. Then it is filtered to remove binary blobs that smaller than the cluster size selected.",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0", 
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs('The output image','viewer1','overlay'),
             "buttonName": "Threshold",
             "shortname" : "thr",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Threshold",
@@ -101,7 +102,7 @@ class ClusterThresholdModule extends BaseModule {
                 },
                 {
                     "name": "OutputClusterNo",
-                    "description": "It true output cluster number instead of image",
+                    "description": "It true the output image is filled with the cluster number instead of the actual image values",
                     "priority": 20,
                     "advanced": false,
                     "gui": "check",
