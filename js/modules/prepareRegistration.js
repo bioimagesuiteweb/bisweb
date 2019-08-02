@@ -35,7 +35,7 @@ class PrepareRegistrationModule extends BaseModule {
         return {
             "name": "Prepare Registration",
             "description": "Prepares an image for registration by extracting a frame from the image then smoothing, resampling, and normalizing it.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),

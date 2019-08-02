@@ -24,6 +24,10 @@ const moduleImports = {
     'infomodule': require('./infomodule.js'),
     'makechecksum' : require('./bis_hashmodule.js'),
     'regressiontests': require('./regressiontestmodule.js'),
+    'pipeline' : require('./pipelinemodule.js'),
+    'concatenateimages' : require('./concatenateImages.js'),
+    'headerinfo' : require('./bis_headerinfo.js'),
+    'computeroilarge' : require('./computeROILarge.js')
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

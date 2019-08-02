@@ -4,6 +4,9 @@
 
 // Get access to the computational tools 
 const bisweb=window.bioimagesuiteweb;
+const webutil=bisweb.webutil;
+
+console.log(webutil.aboutText(''));
 
 let extra="test/testdata/tfjs64";
 // In development mode

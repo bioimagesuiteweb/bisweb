@@ -50,13 +50,14 @@ class CropImageModule extends BaseModule {
 
         return {
             "name": "Crop",
-            "description": "This algorithm performs image cropping",
+            "description": "This algorithm performs image cropping in 4 dimensions. Step refers to the sample rate, e.g. step=2 means every second voxel.",
             "author": "Xenios Papdemetris",
             "version": "1.0",
-            "inputs": baseutils.getImageToImageInputs('Load the image to be cropped'),
+            "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Crop",
             "shortname" : "crp",
+            "slicer" : true,
             "params": [
                 createParam('i','Start','i0',0,1),
                 createParam('i','End','i1',10,2),

@@ -36,13 +36,14 @@ class ButterworthFilterImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Butterworth Filter Image",
-            "description": "This element will apply a Butterworth Filter to an input image",
+            "description": "This module performs temporal Butterworth filtering to an input image. This is performed separately for each voxel",
             "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs":  baseutils.getImageToImageInputs(),
             "outputs":  baseutils.getImageToImageOutputs(),
             "buttonName": "Filter",
             "shortname" : "bwf",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Type",

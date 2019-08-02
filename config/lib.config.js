@@ -37,7 +37,7 @@ const obj = {
 	modules : [ path.resolve(mypath,'node_modules'),
                     path.resolve(mypath,'lib/js'),
                     path.resolve(mypath,'js'),
-                    path.resolve(mypath,'js/legacy'),
+                    path.resolve(mypath,'js/utilities'),
                     path.resolve(mypath,'js/core'),
                     path.resolve(mypath,'js/dataobjects'),
                     path.resolve(mypath,'js/node'),
@@ -58,10 +58,11 @@ let webdeps=Object.keys(webonlydependencies);
 
 // Make sure this is external
 dependencies.push("colors/safe");
+dependencies.push("@tensorflow/tfjs");
+dependencies.push("@tensorflow/tfjs-node");
+dependencies.push("./bis_tfjs");
+dependencies.push("colors/safe");
 // Exclude this
-webdeps.push("@tensorflow/tfjs-node");
-
-
 let externals = {};
 for (let i=0;i<dependencies.length;i++) {
     let key=dependencies[i];
@@ -70,7 +71,8 @@ for (let i=0;i<dependencies.length;i++) {
 }
 
 obj.externals=externals;
-//console.log('--------------------------- Running Webpack -------------------------');
+console.log('--------------------------- Running Webpack -------------------------');
 //console.log("externals=",JSON.stringify(externals,null,2));
+
 
 module.exports=obj;

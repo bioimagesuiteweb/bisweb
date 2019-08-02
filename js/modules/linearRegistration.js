@@ -38,12 +38,13 @@ class LinearRegistrationModule extends  BaseModule {
         let des={
             "name": "Linear Registration",
             "description": "Computes a linear registration between the reference image and target image. Returns a matrix transformation.",
-            "author": "Zach Saltzman",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
             "inputs" : baseutils.getRegistrationInputs(),
             "outputs" : baseutils.getRegistrationOutputs(),
             "buttonName": "Run",
             "shortname" : "lrg",
+            "slicer" : true,
             "params": baseutils.getRegistrationParams(),
         };
 

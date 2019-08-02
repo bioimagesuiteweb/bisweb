@@ -500,7 +500,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         
         
-        let eversion ="4.0.1";
+        let eversion ="5.0.6";
         let ep=getToolPath('electron-packager');
         
         let cmdline=ep+' '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+

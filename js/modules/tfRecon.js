@@ -20,7 +20,7 @@
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const bistfutil = require('bis_tfutil.js');
-
+const biswrap = require('libbiswasm_wrapper');
 
 class BisWebTFJSReconModule extends BaseModule {
     constructor() {
@@ -36,21 +36,23 @@ class BisWebTFJSReconModule extends BaseModule {
             "name": "Model name",
             "description": "Location of Model to use",
             "priority": 20,
-            "advanced": true,
+            "advanced": false,
             "varname": 'modelname',
-            "type": 'string',
+            "type": 'filename',
+            "gui" : 'directory',
             "default" : '',
         };
     }
     
     createDescription() {
         let obj= {
-            "name": "Apply Model",
+            "name": "Apply TF Model",
             "description": "Applies TensorFlow Models on an image to get an output",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs('The Input Image'),
             "outputs": baseutils.getImageToImageOutputs(),
+            "slicer" : true,
             "params": [
                 {
                     "name": "Padding",
@@ -63,6 +65,26 @@ class BisWebTFJSReconModule extends BaseModule {
                     "varname": "padding",
                     "fields" : [ 0,2,4,8,12,16,32 ],
                     "restrictAnswer" : [ 0,2,4,8,12,16,32 ],
+                },
+                {
+                    "name": "Quantile Normalize",
+                    "description": "If true perform median normalization",
+                    "priority": 10,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "norm",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
+                    "name": "Transpose",
+                    "description": "If true (default) transpose tensors to match Python",
+                    "priority": 12,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "transpose",
+                    "type": 'boolean',
+                    "default": true,
                 },
                 {
                     "name": "Batch Size",
@@ -109,7 +131,7 @@ class BisWebTFJSReconModule extends BaseModule {
     }
     
     /** Invoke the algorithm with parameters */
-    directInvokeAlgorithm(vals) {
+    async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: tfReconModule with vals', JSON.stringify(vals));
 
         let input = this.inputs['input'];
@@ -119,48 +141,63 @@ class BisWebTFJSReconModule extends BaseModule {
         if (modelname.length<2)
             modelname=this.modelname;
 
-        return new Promise( async(resolve,reject) => {
-
-            if (this.tfjsModule===null) {
-                try {
-                    console.log('---------------------------------------');
-                    let msg=await bistfutil.initializeTFModule(vals.forcebrowser);
-                    console.log('\t initialize done');
-                    console.log('---',msg);
-                    console.log('--- \tinput image dims=',input.getDimensions().join(','));
-                    console.log('---------------------------------------');
-                    this.tfjsModule=bistfutil.getTFJSModule();
-                } catch(e) {
-                    reject('TFRecon Error '+e);
-                    return;
-                }
-            } else {
-                console.log("--- Using preset TFJSModule");
-            }
-            
-            let model=null;
+        let transpose=(this.parseBoolean(vals.transpose));
+        
+        if (this.parseBoolean(vals.norm)) {
+            console.log('oooo\noooo Quantile Normalize Image\noooo');
             try {
-                model=await bistfutil.loadAndWarmUpModel(this.tfjsModule,bistfutil.fixModelName(modelname),true);
+                await biswrap.initialize();
             } catch(e) {
-                console.log('--- Failed load model from',modelname,e);
-                reject('Failed to load model');
-                return;
+                return Promise.reject(e);
             }
+            let out=biswrap.medianNormalizeImageWASM(input,1);
+            input=out;
+        }
+        
+        if (this.tfjsModule===null) {
+            try {
+                console.log('---------------------------------------');
+                let msg=await bistfutil.initializeTFModule(vals.forcebrowser,transpose);
+                console.log('\t initialize done');
+                console.log('---',msg);
+                console.log('--- \tinput image dims=',input.getDimensions().join(','));
+                console.log('---------------------------------------');
+                this.tfjsModule=bistfutil.getTFJSModule();
+            } catch(e) {
+                return Promise.reject('TFRecon Error '+e);
+            }
+        } else {
+            console.log("--- Using preset TFJSModule");
+        }
+            
+        let model=null;
+        try {
+            model=await bistfutil.loadAndWarmUpModel(this.tfjsModule,bistfutil.fixModelName(modelname),true);
+        } catch(e) {
+            console.log('--- Failed load model from',modelname,e);
+            return Promise.reject('Failed to load model');
+        }
 
-            console.log('----------------------------------------------------------');
-            let recon=new bistfutil.BisWebTensorFlowRecon(this.tfjsModule,input,model,padding,vals.debug);
-            recon.reconstruct(this.tfjsModule,bistfutil.fixBatchSize(batchsize)).then( (output) => {
-                console.log('----------------------------------------------------------');
-                this.tfjsModule.disposeVariables(model).then( (num) => {
-                    console.log('--- Cleanup num_tensors=',num);
-                    this.outputs['output']=output;
-                    console.log('--- Recon finished :',output.getDescription());
-                    resolve('Done');
-                });
-            }).catch( (e) => {
-                reject(e);
-            });
-        });
+        console.log('----------------------------------------------------------');
+        let recon=new bistfutil.BisWebTensorFlowRecon(this.tfjsModule,input,model,padding,vals.debug);
+        let output=null;
+        try {
+            output=await recon.reconstruct(this.tfjsModule,bistfutil.fixBatchSize(batchsize));
+        } catch(e) {
+            return Promise.reject(e);
+        }
+
+        console.log('----------------------------------------------------------');
+        let num=0;
+        try {
+            num=await this.tfjsModule.disposeVariables(model);
+        }  catch(e) {
+            return Promise.reject(e);
+        }
+        console.log('--- Cleanup num_tensors=',num);
+        this.outputs['output']=output;
+        console.log('--- Recon finished :',output.getDescription());
+        return Promise.resolve('Done');
     }
 }
 

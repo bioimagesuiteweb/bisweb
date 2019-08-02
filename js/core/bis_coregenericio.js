@@ -1069,7 +1069,7 @@ let getimagepath=function() {
 
     } else {
         const path=getpathmodule();
-        console.log('Dirname=',__dirname);
+        //console.log('++++ Image Dirname=',__dirname);
         imagepath=path.resolve(__dirname, '../../web/images');
         if (!fs.existsSync(imagepath))
             imagepath=path.resolve(__dirname, '../images');

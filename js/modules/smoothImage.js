@@ -33,13 +33,14 @@ class SmoothImageModule extends BaseModule {
     createDescription() {
         return {
             "name": "Smooth",
-            "description": "This algorithm performes image smoothing using a 2D/3D Gaussian kernel",
-            "author": "Zach Saltzman",
+            "description": "This algorithm performs image smoothing using a 2D/3D Gaussian kernel",
+            "author": "Zach Saltzman and Xenios Papademetris",
             "version": "1.0",
-            "inputs": baseutils.getImageToImageInputs('Load the image to be smoothed'),
+            "inputs": baseutils.getImageToImageInputs('input'),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Smooth",
             "shortname" : "sm",
+            "slicer" : true,
             "params": [
                 {
                     "name": "Sigma",
@@ -65,7 +66,7 @@ class SmoothImageModule extends BaseModule {
                 },
                 {
                     "name": "FWHMAX?",
-                    "description": "If true treat kernel in FHWM (not as Gaussian sigma)",
+                    "description": "If true treat kernel in units of full-width-at-half max (FWHM) (not as the actual value of the sigma in the gaussian filter.)",
                     "priority": 8,
                     "advanced": false,
                     "gui": "check",
