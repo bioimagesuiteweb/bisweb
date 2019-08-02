@@ -14,7 +14,7 @@
 #include <vector>
 #include <sstream>
 #include <random>
-#include <unsupported/Eigen/SpecialFunctions>
+#include <eigen3/unsupported/Eigen/SpecialFunctions>
 
 
 /*

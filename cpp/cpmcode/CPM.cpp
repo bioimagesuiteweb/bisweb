@@ -39,7 +39,7 @@ void CPM::run(){
 	cout<<"T1:"<<t1<<" T:"<<t2<<endl;//pow(tthresh*(n-2)/(1-tthresh),0.5)<<endl;
 	//tthresh = pow(tthresh*(n-2)/(1-tthresh),0.5);
 
-	for(int i=0;i<n;i++){
+	/*for(int i=0;i<n;i++){
 		for(int j=0;j<p;j++){
 			cout<<X[i*p+j]<<" ";
 		}
@@ -51,11 +51,11 @@ void CPM::run(){
 		cout<<y[i]<<" ";
 	}
 	cout<<endl;
-
-	int* indices = this->kfold(n,this->k);
+	
 	for(int i=0;i<n;i++)
 		cout<<indices[i]<<" ";
-	cout<<endl;
+	cout<<endl;*/
+	int* indices = this->kfold(n,this->k);
 	for(int fold=0;fold<this->k;fold++){
 		cout<<"fold "<<fold<<endl;
 
@@ -145,7 +145,7 @@ void CPM::run(){
 		}
 
 
-		double* coefficients=new double[order + 1]; // resulting array of coefs
+		double coefficients[order + 1]; // resulting array of coefs
 		//		// Perform the polyfit
 		int result = polyfit(train_sum,
 				ytrain,
@@ -167,15 +167,11 @@ void CPM::run(){
 		cout<<endl;
 		if(result==-1)
 			cout<<"polynomial fit before convergance.."<<endl;
-		delete [] xtrain;
-		delete [] xtest;
-		delete [] ytrain;
-                delete [] coefficients;
+		delete[] xtrain;
+		delete[] xtest;
+		delete[] ytrain;
 	}
-	cout<<"#########predicted############"<<endl;
-	for(int i=0;i<n;i++){
-		cout<<this->predicted[i]<<endl;
-	}
+	
 }
 
 int CPM::polyfit(const double* const dependentValues,
