@@ -185,12 +185,14 @@ class BisWebTFJSReconModule extends BaseModule {
 
 
         let viewerlist=null;
-        if (typeof window !== undefined) {
+        try {
             viewerlist=document.querySelectorAll("bisweb-orthogonalviewer");
             if (viewerlist.length<1)
                 viewerlist=null;
             else
                 console.log('Viewer0=',viewerlist);
+        } catch(e) {
+            console.log('+++ In node.js: no viewer to disable');
         }
 
         if (viewerlist) {

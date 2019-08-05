@@ -525,7 +525,7 @@ class BisWebTensorFlowRecon {
                 const output=tfwrapper.predict(this.model,this.patch,shape,this.debug);
 
                 if (typeof window !== undefined) {
-                    console.log('NumTensors=',tfwrapper.numTensors());
+                    //console.log('NumTensors=',tfwrapper.numTensors());
                     await util.sleep(1);
                 }
                 

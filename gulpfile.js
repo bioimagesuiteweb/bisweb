@@ -45,7 +45,7 @@ program
     .option('-i, --input <s>','mainscript to build')
     .option('-m, --minify','flag to minify')
     .option('-l, --platform  <s>','platform')
-    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition, 2=using zip distribution for node_modules, 3 run npm install',parseInt)
+    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
     .option('--nomain','if present do not build the main bislib.js bundle')
@@ -100,13 +100,9 @@ if (program.eslint === undefined)
 
 
 
-if (options.tensorflow === false) {
-    if (options.dopack===2)
-        options.dopack=3;
+if (options.tensorflow) {
+    options.dopack=2;
 }
-
-//console.log('Tensorflow=',options.tensorflow,options.dopack);
-
 
 
 const mainoption=program.rawArgs[2];

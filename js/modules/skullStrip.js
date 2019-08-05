@@ -34,7 +34,7 @@ const numeric=require('numeric');
 class SkullStripImageModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'defaceImage';
+        this.name = 'skullStripDL';
         this.JSOnly=true;
     }
 
@@ -127,7 +127,7 @@ class SkullStripImageModule extends BaseModule {
                     "name": "Padding",
                     "description": "Padding to apply when doing patch-based reconstruction",
                     "priority": 1,
-                    "advanced": true,
+                    "advanced": false,
                     "gui": "dropdown",
                     "type": "int",
                     "default" : "0",
@@ -166,7 +166,7 @@ class SkullStripImageModule extends BaseModule {
                     "default": true,
                 },
                 {
-                    "name": "Num Dilations/Erosions",
+                    "name": "Num_Dilations/Erosions",
                     "description": "Number of erosions/dilations (2)",
                     "priority": 22,
                     "advanced": false,
@@ -243,7 +243,7 @@ class SkullStripImageModule extends BaseModule {
         
         let reslicedInput=baseutils.resliceRegistrationOutput(biswrap,images[0],input,matr,1,0);
 
-        reslicedInput.save('resl.nii.gz');
+        //        reslicedInput.save('resl.nii.gz');
         
         if (this.parseBoolean(vals.mnimask)) {
             console.log("Resliced = ",reslicedInput.getDescription());
@@ -303,7 +303,7 @@ class SkullStripImageModule extends BaseModule {
             console.log('oooo deep Learning Now');
             let modelname = vals.modelname;
             if (modelname.length<2)
-                modelname='https://bioimagesuiteweb.github.io/models/abcd_leave_out_site01_tfjs_256/';
+                modelname='https://bioimagesuiteweb.github.io/models/abcd_leave_out_site01_tfjs_64/';
             
             let mod0=new tfRecon();
             mod0.makeInternal();

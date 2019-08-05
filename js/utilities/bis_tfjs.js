@@ -9,8 +9,13 @@ module.exports = function() {
 
     console.log('++++ Loading TF');
     try {
-        tf=require("@tensorflow/tfjs");
-        require('@tensorflow/tfjs-node');
+        try {
+            console.log('++++ Trying to Load tfjs-node-gpu');
+            tf=require('@tensorflow/tfjs-node-gpu');
+        } catch(e) {
+            console.log('Failed to load gpu version '+e);
+            tf=require('@tensorflow/tfjs-node');
+        }
     } catch(e) {
         console.log('Failed to load tensorflow',e);
     }
