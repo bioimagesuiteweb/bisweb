@@ -23,25 +23,21 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
   int ok=params->parseJSONString(jsonstring);
   if (!ok) 
     return 0;
- std::cerr<<"something else javid"<<std::endl;
 
   if (debug)
     params->print();
 
   std::unique_ptr<bisSimpleMatrix<double> > inp_matrix(new bisSimpleMatrix<double>("inp_matrix"));
-  if (!inp_matrix->linkIntoPointer(stackedmatrix))
+  if (!inp_matrix->linkIntoPointer(stackedmatrix)) {
+    std::cerr << "Failed to parse inp_matrix" << std::endl;
     return 0;
+  }
 
-  std::cerr << "This far 1" << std::endl;
-  
   std::unique_ptr<bisSimpleMatrix<double> > beh_vec(new bisSimpleMatrix<double>("beh_vector"));
-  if (!beh_vec->linkIntoPointer(behaviorvector))
+  if (!beh_vec->linkIntoPointer(behaviorvector)) {
+    std::cerr << "Failed to parse beh_vector" << std::endl;
     return 0;
-
-  std::cerr << "This far 2" << std::endl;
-  
-  if (debug) 
-    std::cout << "Data parsed" << std::endl;
+  }
   
   int numrows=inp_matrix->getNumRows();
   int numcols=inp_matrix->getNumCols();
@@ -62,7 +58,7 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
 
   group_options opg = {};
   opg.num_task = params->getIntValue("numtasks",0);
-  opg.num_node = params->getIntValue("numnodes",3);
+  opg.num_node = params->getIntValue("numnodes",268);
   opg.num_subj = numsubjects;
   opg.num_edges= numcols;
 
@@ -74,35 +70,34 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
     return 0;
   }
   
-  Subject* subjects=new Subject[opg.num_subj];
   double* phenotype=new double[opg.num_subj];
 
   if (debug)
     std::cout << "Numbers= " << numrows << "," << numcols << "," << numsubjects << std::endl;
-  
+
   double *matrixdata=inp_matrix->getData();
   
-  double* xi = new double[numcols]; 
+  for (int i=0;i<15;i++)
+    std::cout << "matrixdata=" << i << " = " << matrixdata[i] << std::endl;
+  
+
+  
   for (int i=0;i<opg.num_subj;i++)
     {
-      std::cout << "Creating Subject " << i+1 << "/" << opg.num_subj << std::endl;
-      for(int j=0;j<numcols;j++){
-        xi[j]=matrixdata[i*numcols+j];
-      }
-      subjects[i].setConnectome(xi);
       phenotype[i]=beh_vec->getData()[i];
       cout<<phenotype[i]<<endl;
     }
-  delete [] xi;
 
 
   if (debug)
     std::cout << "Calling CPM " << std::endl;
-  Group group = Group(subjects,opg);
+  Group group = Group(matrixdata,opg);
   CPM* c = new CPM(group,phenotype,opc); 
   c->run();
   c->evaluate();
 
+  if (debug)
+    std::cout << "Done with CPM" << std::endl;
 
   std::unique_ptr<bisSimpleVector<double> > results(new bisSimpleVector<double>());
   results->allocate(opg.num_subj);

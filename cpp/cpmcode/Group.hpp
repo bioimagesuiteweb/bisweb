@@ -28,11 +28,13 @@ class Group{
 		/*
 		 * construct an agent object
 		 */
-		Group(Subject* subjects, group_options op);
-		Group();
-		double* getX();
-		int getSize();
-		int getNumEdges();
+  Group(Subject* subjects, group_options op);
+  Group(double* stacked_connectome, group_options op);
+  Group();
+  
+  double* getX();
+  int getSize();
+  int getNumEdges();
 
 };
 #endif

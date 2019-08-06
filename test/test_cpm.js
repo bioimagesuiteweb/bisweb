@@ -26,17 +26,35 @@ const assert = require("assert");
 const numeric=require('numeric');
 const libbiswasm=require('libbiswasm_wrapper');
 const BisWebMatrix=require('bisweb_matrix');
+const util=require('bis_util');
 
 numeric.precision = 2;
 
-const truedim = [ [ 50, (268*267)/2 ], [ 50 , 1 ]];
+const truedim = [ [ 5,3 ],[ 5,1]];// [ [ 50, (268*267)/2 ], [ 50 , 1 ]];
 
+let printmatrix=function(mat) {
+
+    let dim=mat.getDimensions();
+    let dat=mat.data;
+    let out='';
+
+    for (let row=0;row<dim[0];row++) {
+        out+='[ ';
+        for (let col=0;col<dim[1];col++) {
+            out+=dat[row*dim[1]+col];
+            if (col<(dim[1]-1))
+                out+='\t';
+        }
+        out+=']\n';
+    }
+    return out;
+}
 
 describe('Testing CPM Code', function() {
 
 
     let matrices = [ new BisWebMatrix(),new BisWebMatrix() ];
-    let names = [ 'connectome.csv','phenotype.csv' ];
+    let names = [ 'connectome.txt','phenotype.txt' ];
     let fullnames = [ '','','',''   ];
     for (let i=0;i<=1;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/cpm/'+names[i]);
@@ -45,12 +63,19 @@ describe('Testing CPM Code', function() {
         let p=[ matrices[0].load(fullnames[0]),
                 matrices[1].load(fullnames[1]),
                 libbiswasm.initialize()  ];
-        Promise.all(p).then( () => { done(); });
+        Promise.all(p).then( () => {
+
+            console.log('Mat 0=',printmatrix(matrices[0]));
+            console.log('Mat 1=',printmatrix(matrices[1]));
+            done();
+        });
     });
     
 
     it ('check loading',function() {
 
+
+        
         let diff=0;
         
         for (let i=0;i<=1;i++) {
@@ -63,7 +88,7 @@ describe('Testing CPM Code', function() {
 
 
     it ('check cpm',function() {
-        let v=libbiswasm.computeCPMWASM(matrices[0],matrices[1], { "numnodes" : 268 } , 1);
+        let v=libbiswasm.computeCPMWASM(matrices[0],matrices[1], { "numnodes" : 3 } , 1);
         console.log('Result=',v.getDescription());
         console.log('Inp v Predicted');
         let d=v.getDimensions();
