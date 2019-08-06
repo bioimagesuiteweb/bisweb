@@ -22,6 +22,7 @@
   Gabriele Lohmann, Johannes Stelzer, Eric Lacosse, Vinod J. Kumar, Karsten Mueller, Esther Kuehn, Wolfgang Grodd & Klaus Scheffler 
   LISA improves statistical analysis for fMRI
   Nature Communications : 2018
+  https://www.nature.com/articles/s41467-018-06304-z
 
 Original LICENSE
 
