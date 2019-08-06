@@ -27,8 +27,8 @@ void run(){ // main function
 
 	opg.num_task = 0;
 	opg.num_node = 268;
-	opg.num_edges = 3;//268*267/2;
-	opg.num_subj = 5;
+	opg.num_edges = 268*267/2;
+	opg.num_subj = 50;
 
 	double phenotype[opg.num_subj];
 	Group group = buildGroup(phenotype,opg);
