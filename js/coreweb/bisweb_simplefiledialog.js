@@ -880,6 +880,9 @@ class SimpleFileDialog {
             currentHighlightedIndex = index; 
         }
 
+        return true;
+    }
+
     getFsFavoritesFolder() {
         return new Promise( (resolve, reject) => {
             userPreferences.safeGetItem('filesource').then( (obj) => {
@@ -896,9 +899,6 @@ class SimpleFileDialog {
                 
             });
         });
-    }
-
-        return true;
     }
 
     /**
