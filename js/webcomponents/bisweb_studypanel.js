@@ -619,11 +619,12 @@ class StudyPanel extends HTMLElement {
 
             $(inputGroups).find(`#${inputSearchButtonId}`).on('click', () => { searchButtonCallback(inputDirectoryTextboxId, 'Select a directory containing raw DICOM images'); });
             $(inputGroups).find(`#${outputSearchButtonId}`).on('click', () => { searchButtonCallback(outputDirectoryTextboxId, 'Select the destination directory for the converted DICOM files'); });
-            let bidsCheck=$('#'+doBidsId);
+            
+            let bidsCheck=$(inputGroups).find('#'+doBidsId);
             dicomModal.body.append(inputGroups);
             dicomModal.footer.empty();
 
-
+            bidsCheck.trigger('click');
             webutil.createbutton({
                 'name' : 'Convert',
                 'type' : 'success',
@@ -631,7 +632,7 @@ class StudyPanel extends HTMLElement {
                 'callback' : () => {
                     let inputDirectoryName = $('#' + inputDirectoryTextboxId).val();
                     let outputDirectoryName = $('#' + outputDirectoryTextboxId).val();
-                    let toggleState = bidsCheck.is(":checked") || false;
+                    let toggleState = bidsCheck.prop('checked') || false;
                     this.importDICOMImages(inputDirectoryName, outputDirectoryName, toggleState);
                 }
             });
