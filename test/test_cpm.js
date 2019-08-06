@@ -36,16 +36,16 @@ let printmatrix=function(mat) {
 
     let dim=mat.getDimensions();
     let dat=mat.data;
-    let out='';
+    let out='\t\n';
 
     for (let row=0;row<dim[0];row++) {
-        out+='[ ';
+        out+='\t[ ';
         for (let col=0;col<dim[1];col++) {
             out+=dat[row*dim[1]+col];
             if (col<(dim[1]-1))
                 out+='\t';
         }
-        out+=']\n';
+        out+=' ]\n';
     }
     return out;
 }
@@ -53,20 +53,22 @@ let printmatrix=function(mat) {
 describe('Testing CPM Code', function() {
 
 
-    let matrices = [ new BisWebMatrix(),new BisWebMatrix() ];
-    let names = [ 'connectome.txt','phenotype.txt' ];
+    let matrices = [ new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix() ];
+    let names = [ 'connectome.txt','phenotype.txt', 'result.csv' ];
     let fullnames = [ '','','',''   ];
-    for (let i=0;i<=1;i++)
+    for (let i=0;i<=2;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/cpm/'+names[i]);
 
     before(function(done){
         let p=[ matrices[0].load(fullnames[0]),
                 matrices[1].load(fullnames[1]),
+                matrices[2].load(fullnames[2]),
                 libbiswasm.initialize()  ];
         Promise.all(p).then( () => {
 
-            console.log('Mat 0=',printmatrix(matrices[0]));
-            console.log('Mat 1=',printmatrix(matrices[1]));
+            console.log('Conenctome=',printmatrix(matrices[0]));
+            console.log('Phenotype=',printmatrix(matrices[1]));
+            console.log('Expected Result=',printmatrix(matrices[2]));
             done();
         });
     });
@@ -80,7 +82,7 @@ describe('Testing CPM Code', function() {
         
         for (let i=0;i<=1;i++) {
             let s=matrices[i].getDimensions();
-            console.log('Loaded ',fullnames[0],' ' ,matrices[i].getDescription(),' should be=',truedim[i]);
+            console.log('Testing dimensions of ',fullnames[i],' ' ,matrices[i].getDescription(),' should be=',truedim[i]);
             diff+=Math.abs(truedim[i][0]-s[0])+Math.abs(truedim[i][1]-s[1]);
         }
         assert.equal(diff, 0);
@@ -88,15 +90,22 @@ describe('Testing CPM Code', function() {
 
 
     it ('check cpm',function() {
-        let v=libbiswasm.computeCPMWASM(matrices[0],matrices[1], { "numnodes" : 3 } , 1);
-        console.log('Result=',v.getDescription());
-        console.log('Inp v Predicted');
-        let d=v.getDimensions();
-        console.log('D=',d);
-        for (let i=0;i<d[0];i++) {
-            console.log('i=',i,d[0]);
-            console.log(i,' ',matrices[1].data[i],' vs', v.data[i]);
-        }
+        console.log('___________________________________');
+        console.log('        Invoking CPM C++ Code      ');
+        console.log('___________________________________');
+
+        let pred=libbiswasm.computeCPMWASM(matrices[0],matrices[1],
+                                        {
+                                            "numnodes" : 3,
+                                            "numtasks" : 0,
+                                        } , 0);
+        console.log('___________________________________');
+        console.log('         CPM Done');
+        console.log('___________________________________');
+        console.log('Prediced Result=',printmatrix(pred));
+        let res=pred.compareWithOther(matrices[2],"maxabs",0.05);
+        console.log('Test result=', JSON.stringify(res,null,2));
+        assert.equal(res.testresult,true);
     });
         
 });

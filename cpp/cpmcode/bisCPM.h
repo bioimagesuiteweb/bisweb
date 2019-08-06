@@ -46,7 +46,7 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized vector
    */
-  // BIS: { 'computeCPMWASM', 'Vector', [ 'Matrix', 'Matrix', 'ParamObj', 'debug' ] }
+  // BIS: { 'computeCPMWASM', 'Matrix', [ 'Matrix', 'Matrix', 'ParamObj', 'debug' ] }
   BISEXPORT unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behaviorvector,const char* jsonstring,int debug);
 
 }

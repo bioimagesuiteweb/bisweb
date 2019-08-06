@@ -24,26 +24,29 @@
  *
  */
 class CPM: public predictory{
-	public:
-		/* constructs
-		 * a simulator for numAgents agents. The first numOne of 
-		 * these have initial choice 1;
-		 * the remainder have initial choice 0. seed is used to i
-		 * itialize the random number
-		 * generator random().
-		 * */
-		CPM(Group group,double* phenotype, cpm_options op);
-		/*
-		 * runs the simulation for as many rounds as it takesto reach
-		 * consensus. The number of communication rounds used is stored in th
-		 * output parameter rounds. The consensus value is returned
-		 *
-		 */		
-		void run();
-		int polyfit(const double* const dependentValues,
-				const double* const independentValues,
-				unsigned int        countOfElements,
-				unsigned int        order,
-				double*             coefficients);
+public:
+  /* constructs
+   * a simulator for numAgents agents. The first numOne of 
+   * these have initial choice 1;
+   * the remainder have initial choice 0. seed is used to i
+   * itialize the random number
+   * generator random().
+   * */
+  CPM(Group group,double* phenotype, cpm_options op,int debug=0);
+  /*
+   * runs the simulation for as many rounds as it takesto reach
+   * consensus. The number of communication rounds used is stored in th
+   * output parameter rounds. The consensus value is returned
+   *
+   */		
+  void run();
+  int polyfit(const double* const dependentValues,
+              const double* const independentValues,
+              unsigned int        countOfElements,
+              unsigned int        order,
+              double*             coefficients);
+
+
+
 };
 #endif

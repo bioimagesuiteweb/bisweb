@@ -21,7 +21,8 @@ Group::Group(Subject* subjects, group_options op){
     for(int j=0;j<p;j++){
       X[i*p+j] = s[j];
     }
-    delete s;
+    // Extremely dangerous
+    delete [] s;
   }
 }
 

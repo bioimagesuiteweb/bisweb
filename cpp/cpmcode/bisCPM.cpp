@@ -44,8 +44,8 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
   int numsubjects=beh_vec->getLength();
 
   if (debug)
-    std::cout << "Numbers= " << numrows << "," << numcols << "," << numsubjects << std::endl;
-  
+    std::cout << "\t Numrows=" << numrows << ", Numcols=" << numcols << ", NumSubjects=" << numsubjects << std::endl;
+
   if (numrows!=numsubjects) {
     std::cerr << "Bad Input Data " << numrows << "*" << numcols << " vs " << numsubjects << std::endl;
     return 0;
@@ -61,52 +61,36 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
   opg.num_node = params->getIntValue("numnodes",268);
   opg.num_subj = numsubjects;
   opg.num_edges= numcols;
-
+  
   if (debug)
-    std::cout << "Done with Parameters= " << opg.num_task << "," << opg.num_node << "," << opc.threshold << std::endl;
+    std::cout << "Done with Parameters. Num Tasks=" << opg.num_task << ", Num Nodes=" << opg.num_node << ", Threshold=" << opc.threshold << std::endl;
   
   if (opg.num_edges != (opg.num_node*(opg.num_node-1)/2 * (opg.num_task+1))) {
     std::cerr << "Bad Connectome Data " << opg.num_edges << " vs " << opg.num_node << " and num_task " << opg.num_task << std::endl; 
     return 0;
   }
   
-  double* phenotype=new double[opg.num_subj];
-
-  if (debug)
-    std::cout << "Numbers= " << numrows << "," << numcols << "," << numsubjects << std::endl;
-
+  
   double *matrixdata=inp_matrix->getData();
-  
-  for (int i=0;i<15;i++)
-    std::cout << "matrixdata=" << i << " = " << matrixdata[i] << std::endl;
-  
-
-  
-  for (int i=0;i<opg.num_subj;i++)
-    {
-      phenotype[i]=beh_vec->getData()[i];
-      cout<<phenotype[i]<<endl;
-    }
-
-
   if (debug)
-    std::cout << "Calling CPM " << std::endl;
+    std::cout << "---------------------" << std::endl << "____ Calling CPM " << std::endl;
+
   Group group = Group(matrixdata,opg);
-  CPM* c = new CPM(group,phenotype,opc); 
+  CPM* c = new CPM(group,beh_vec->getData(),opc,debug); 
   c->run();
   c->evaluate();
 
   if (debug)
-    std::cout << "Done with CPM" << std::endl;
-
-  std::unique_ptr<bisSimpleVector<double> > results(new bisSimpleVector<double>());
-  results->allocate(opg.num_subj);
+    std::cout << std::endl << "____ Done with CPM" << std::endl;
+  
+  std::unique_ptr<bisSimpleMatrix<double> > results(new bisSimpleMatrix<double>());
+  results->allocate(opg.num_subj,1);
   double* resdata=results->getData();
 
   for (int i=0;i<opg.num_subj;i++)
     resdata[i]=c->getPredicted(i);
 
-  delete [] phenotype;
+
   delete c;
 
   return results->releaseAndReturnRawArray();

@@ -23,7 +23,7 @@ predictory::predictory(Group group,double* phenotype,cpm_options op){
 	this->num_subj = this->group.getSize();
 	this->num_edges = this->group.getNumEdges();
 	this->predicted = new double[this->num_subj];
-
+        this->debug=0;
 }
 
 predictory::~predictory() {
@@ -56,7 +56,8 @@ CORDAT predictory::corr(double* x,double* y,int n,int p1,int p2){
 	string tail = "b"; // both
 	double* dmx = dmean(x,n,p1);
 	double* dmy = dmean(y,n,p2);
-	cout<<n<<" "<<p1<<endl;
+        if (this->debug)
+          cout<<"++++  n=" << n<<" p1="<<p1<<endl;
 	double * coef = new double[p1];
 	double * xp = new double[n*p1];
 
@@ -304,14 +305,14 @@ double predictory::spearman(vector<double> v1, vector<double> v2){
 }
 
 int* predictory::kfold(int size,int k){
-	int* indices = new int[ size ];
-
-	for (int i = 0; i < size; i++ )
-		indices[ i ] = i%k;
-
-	this->shuffleArray( indices, size );
-
-	return indices;
+  int* indices = new int[ size ];
+  
+  for (int i = 0; i < size; i++ )
+    indices[ i ] = i%k;
+  
+  this->shuffleArray( indices, size );
+  
+  return indices;
 }
 void predictory::shuffleArray(int* array,int size) 
 {
