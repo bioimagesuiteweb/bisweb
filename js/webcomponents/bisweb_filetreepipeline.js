@@ -201,7 +201,7 @@ class FileTreePipeline extends HTMLElement {
      * @param {Array} moduleInputs - The list of inputs images, matrices, etc. for the module.
      */
     addInputsButton(id, customModule, moduleInputs) {
-        let inputFormSelectId = bis_webutil.getuniqueid();
+        let inputFormSelectId = bis_webutil.getuniqueid(), usePreviousId = bis_webutil.getuniqueid();
         let inputsButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='right'>Add inputs</button>`);
         let popoverContent = $(
             `<div>
@@ -212,7 +212,11 @@ class FileTreePipeline extends HTMLElement {
                 </div>
                 <div class='list-group' style='visibility: hidden'>
                     <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Load input from disk</a>
-                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous input</a>
+                    <div class='dropdown'>
+                        <a href='#' id=${usePreviousId} class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous input</a>
+                        <ul class='dropdown-menu' style='biswebpanel' aria-labeledby=${usePreviousId}>
+                        </ul>
+                    </div>    
                 </div>
             </div>`
         );
@@ -268,17 +272,36 @@ class FileTreePipeline extends HTMLElement {
 
         //TODO: Add previous inputs to the previous inputs thing (currently hardcoded to be single output)
         $(usePreviousButton).on('click', () => {
-            bisweb_popoverhandler.dismissPopover();
             let varname = formSelect.val();
-            for (let mod of this.modules) {
+            for (let i = 0; i < this.modules.length; i++) {
+                let mod = this.modules[i];
+                if (!mod.inputs) { mod.inputs = {}; }
+
                 if (mod.id === id) {
-                    if (!mod.inputs) { mod.inputs = {}; }
-                    mod.inputs[varname] = -1; //number to designate to use the previous input (avoids ambiguity with a filename)
+                    //if the previous module has multiple outputs, populate a second dropdown list that contains them. otherwise simply use the only output from the last one.
+                    let moduleOutputs =  this.modules[i-1] ? this.modules[i-1].module.getDescription().outputs : null;
+                    if (this.modules[i-1] && moduleOutputs.length > 1) {
+                        generatePreviousInputsDropdown(i);
+                    } else {
+                        mod.inputs[varname] = moduleOutputs ? moduleOutputs[0] : null;
+                    }
+
                     return;
                 }
             }
         });
         $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
+
+        let modules = this.modules;
+        function generatePreviousInputsDropdown(currentModuleIndex) {
+            let previousModule = modules[currentModuleIndex - 1];
+            if (!previousModule) { console.log('Error: no previous module'); return; }
+
+            let inputList = $(popoverContent).find('ul.dropdown');
+            console.log('input list', inputList);
+
+            
+        }
     }
 
     /**
