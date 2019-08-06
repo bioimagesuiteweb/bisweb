@@ -179,6 +179,8 @@ class ModuleManagerElement extends HTMLElement {
         let usesgpl=window.bioimagesuitewasmpack.usesgpl;
 
         this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
+        this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+        
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
