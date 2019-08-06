@@ -53,31 +53,35 @@ let printmatrix=function(mat) {
 describe('Testing CPM Code', function() {
 
 
-    let matrices = [ new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix() ];
-    let names = [ 'connectome.txt','phenotype.txt', 'result.csv' ];
-    let fullnames = [ '','','',''   ];
-    for (let i=0;i<=2;i++)
+    let matrices = [ new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix(),
+                     new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix(),
+                   ];
+    let names = [ 'connectome.txt','phenotype.txt', 'result.csv' ,
+                  'connectome2.csv','phenotype2.csv', 'result2.csv' ,
+                ];
+    let fullnames = [ '','','','' ,'','',''  ];
+    for (let i=0;i<=5;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/cpm/'+names[i]);
 
     before(function(done){
         let p=[ matrices[0].load(fullnames[0]),
                 matrices[1].load(fullnames[1]),
                 matrices[2].load(fullnames[2]),
+                matrices[3].load(fullnames[3]),
+                matrices[4].load(fullnames[4]),
+                matrices[5].load(fullnames[5]),
+                
                 libbiswasm.initialize()  ];
         Promise.all(p).then( () => {
-
-            console.log('Conenctome=',printmatrix(matrices[0]));
-            console.log('Phenotype=',printmatrix(matrices[1]));
-            console.log('Expected Result=',printmatrix(matrices[2]));
+            console.log('Small Conenctome=',printmatrix(matrices[0]));
+            console.log('Small Phenotype=',printmatrix(matrices[1]));
+            console.log('Small Expected Result=',printmatrix(matrices[2]));
             done();
         });
     });
     
 
     it ('check loading',function() {
-
-
-        
         let diff=0;
         
         for (let i=0;i<=1;i++) {
@@ -107,6 +111,26 @@ describe('Testing CPM Code', function() {
         console.log('Test result=', JSON.stringify(res,null,2));
         assert.equal(res.testresult,true);
     });
+
+    it ('check cpm large',function() {
+        console.log('___________________________________');
+        console.log('        Invoking CPM C++ Code      ');
+        console.log('___________________________________');
         
+        let pred=libbiswasm.computeCPMWASM(matrices[3],matrices[4],
+                                           {
+                                               "numnodes" : 268,
+                                               "numtasks" : 0,
+                                               "kfold" : 3,
+                                           } , 0);
+        console.log('___________________________________');
+        console.log('         CPM Done');
+        console.log('___________________________________');
+        console.log('Prediced Result=',printmatrix(pred));
+        let res=pred.compareWithOther(matrices[5],"maxabs",0.05);
+        console.log('Test result=', JSON.stringify(res,null,2));
+        assert.equal(res.testresult,true);
+    });
+
 });
 
