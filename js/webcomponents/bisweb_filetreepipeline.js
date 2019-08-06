@@ -266,6 +266,7 @@ class FileTreePipeline extends HTMLElement {
             });
         });
 
+        //TODO: Add previous inputs to the previous inputs thing (currently hardcoded to be single output)
         $(usePreviousButton).on('click', () => {
             bisweb_popoverhandler.dismissPopover();
             let varname = formSelect.val();
@@ -320,8 +321,7 @@ class FileTreePipeline extends HTMLElement {
 
         let saveOutputButton = $(listGroup).find('.list-group-item').get(0);
         let dropOutputButton = $(listGroup).find('.list-group-item').get(1);
-        
-        console.log('save output', saveOutputButton, 'drop output', dropOutputButton);
+    
         $(outputsButton).popover({
             'title': 'Select output source',
             'trigger': 'click',
@@ -338,7 +338,6 @@ class FileTreePipeline extends HTMLElement {
             for (let mod of this.modules) {
                 if (mod.id === id) {
                     if (!mod.outputs) { mod.outputs = {}; }
-                    console.log('use output', useOutput);
                     mod.outputs[varname] = useOutput;
                 }
             }
@@ -492,6 +491,7 @@ class FileTreePipeline extends HTMLElement {
         for (let i = 0; i < this.modules.length; i++) {
             let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
             if (this.modules[i].inputs) { param['inputs'] = this.modules[i].inputs; }
+            if (this.modules[i].outputs) { param['outputs'] = this.modules[i].outputs; }
             params.push(param);
         }
 
@@ -510,19 +510,15 @@ class FileTreePipeline extends HTMLElement {
             }],
             'jobs' : []
         };
+
+        let numOutputs = 0;
         for (let i = 0; i < params.length; i++) {
-            let inputName = (i === 0 ? 'input' : 'out' + i), outputName = 'out' + (i + 1);
+            let inputName = (numOutputs === 0 ? 'input' : 'out' + numOutputs);
             let entry = {
                 'name' : `Command ${i}`,
                 'subcommand' : params[i].name,
                 'options' : '',
-                'outputs' : [
-                    {
-                        'name' : outputName,
-                        'depends' : [ `%${inputName}%`],
-                        'naming' : `${params[i].name}_%${inputName}%.nii.gz`
-                    }
-                ]
+                'outputs' : []
             };
 
             if (params[i].inputs) { 
@@ -543,13 +539,28 @@ class FileTreePipeline extends HTMLElement {
 
             if (params[i].outputs) {
                 for (let outputKey of Object.keys(params[i].outputs)) {
+                    console.log('output key', outputKey, params[i].outputs[outputKey]);
+
                     if (params[i].outputs[outputKey]) {
+                        numOutputs = numOutputs + 1;
+                        let outputName = 'out' + numOutputs;
                         entry.options = entry.options.concat(` --${outputKey} %${outputName}% `);
-                        break;
+                        entry.outputs.push({
+                            'name' : outputName,
+                            'depends' : [], //fill in previous inputs!
+                            'naming' : `${params[i].name}_%${inputName}%.nii.gz`
+                        });
                     }
                 }
-            } else {
+            } else { //default flow for single-output modules
+                numOutputs = numOutputs + 1;
+                let outputName = 'out' + numOutputs;
                 entry.options = entry.options.concat(` --output %${outputName}% `);
+                entry.outputs.push({
+                    'name' : outputName,
+                    'depends' : [ `%${inputName}%`],
+                    'naming' : `${params[i].name}_%${inputName}%.nii.gz`
+                });
             }
 
             for (let p of Object.keys(params[i].params)) {
