@@ -57,6 +57,7 @@ const moduleImports = {
     computecorrelation : require('computeCorrelation.js'),
     seedcorrelation : require('seedCorrelation.js'),
     computeroi : require('computeROI.js'),
+    bilateralfilter : require('bilateralfilter.js'),
 //    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
 
     computeglm : require('computeGLM.js'),
