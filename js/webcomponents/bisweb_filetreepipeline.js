@@ -248,9 +248,12 @@ class FileTreePipeline extends HTMLElement {
 
         inputsButton.on('click', () => { $(inputsButton).popover('toggle'); });
 
+        console.log('group item', $(listGroup).find('.list-group-item'));
         //add behaviors to popover buttons
         let loadInputButton = $(listGroup).find('.list-group-item').get(0);
-        let usePreviousButton = $(listGroup).find('.list-group-item').get(1);
+        let usePreviousButton = $(listGroup).find('.dropdown');
+
+        console.log('use previous', usePreviousButton);
 
         $(loadInputButton).on('click', () => {
             bisweb_popoverhandler.dismissPopover();
@@ -273,17 +276,20 @@ class FileTreePipeline extends HTMLElement {
         //TODO: Add previous inputs to the previous inputs thing (currently hardcoded to be single output)
         $(usePreviousButton).on('click', () => {
             let varname = formSelect.val();
+            console.log('clicked use previous', this.modules, id);
             for (let i = 0; i < this.modules.length; i++) {
-                let mod = this.modules[i];
-                if (!mod.inputs) { mod.inputs = {}; }
+                if (this.modules[i].id === id) {
+                    let mod = this.modules[i];
+                    if (!mod.inputs) { mod.inputs = {}; }
 
-                if (mod.id === id) {
                     //if the previous module has multiple outputs, populate a second dropdown list that contains them. otherwise simply use the only output from the last one.
                     let moduleOutputs =  this.modules[i-1] ? this.modules[i-1].module.getDescription().outputs : null;
                     if (this.modules[i-1] && moduleOutputs.length > 1) {
                         generatePreviousInputsDropdown(i);
                     } else {
+                        console.log('module outputs', moduleOutputs);
                         mod.inputs[varname] = moduleOutputs ? moduleOutputs[0] : null;
+                        bis_webutil.createAlert('Set output to ' + moduleOutputs[0].varname);
                     }
 
                     return;
@@ -300,7 +306,8 @@ class FileTreePipeline extends HTMLElement {
             let inputList = $(popoverContent).find('ul.dropdown');
             console.log('input list', inputList);
 
-            
+            let moduleOutputList = previousModule.module.getDescription().outputs;
+            console.log('module output list', moduleOutputList);
         }
     }
 
