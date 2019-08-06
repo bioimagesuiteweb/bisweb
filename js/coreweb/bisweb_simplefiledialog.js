@@ -3,8 +3,8 @@ const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
 const bootbox=require('bootbox');
 const userPreferences=require('bisweb_userpreferences');
+const bisweb_keylistener = require('bisweb_keylistener.js');
 
-require('jstree');
 
 /**
  * When loading a file from the server, the user must be able to browse the files. 
@@ -33,9 +33,16 @@ class SimpleFileDialog {
         // This are the callbacks
         // Call this to get updated directory
         this.fileListFn=null;
+
         // Call this to pass the selected filename back to the main code
         // (this is in fact the final callback from outside code)
         this.fileRequestFn=null;
+
+        // Whether shift or ctrl are enabled for this file dialog
+        this.altkeys = false;
+
+        //list of multiple selected items in the modal, or none, if multiple items aren't selected.
+        this.selectedItems = null;
 
         // Entries
         this.fileList = null;
@@ -52,6 +59,7 @@ class SimpleFileDialog {
         this.favorites = [];
         this.lastFavorite=null;
 
+        bisweb_keylistener.addKeyListeners();
     }
 
     getCombinedFilename(dname,fname) {
@@ -97,12 +105,20 @@ class SimpleFileDialog {
             return;
         }
 
-        let outname=this.getCombinedFilename(this.currentDirectory,name);
+        let out;
+        if (this.selectedItems && this.selectedItems.length > 1) {
+            out = [];
+            for (let item of this.selectedItems) {
+                out.push(this.getCombinedFilename(this.currentDirectory, item));
+            }
+        } else {
+            out=this.getCombinedFilename(this.currentDirectory,name);
+        }
         
         let sendCallback= (() => {
             this.modal.dialog.modal('hide');
             setTimeout( () => {
-                this.fileRequestFn(outname);
+                this.fileRequestFn(out);
             },10);
         });
         
@@ -112,14 +128,14 @@ class SimpleFileDialog {
         }
 
         // Save Stuff
-        bis_genericio.getFileSize(outname).then( () => {
-            bootbox.confirm("The file "+outname+" exists. Are you sure you want to overwrite this?", ( (result) => {
+        bis_genericio.getFileSize(out).then( () => {
+            bootbox.confirm("The file "+out+" exists. Are you sure you want to overwrite this?", ( (result) => {
                 if (result)  {
                     sendCallback();
                 }
             }));
         }).catch( () => {
-            outname=this.addExtensionToFilnameIfNeeded(outname,this.activeFilterList);
+            out=this.addExtensionToFilnameIfNeeded(out,this.activeFilterList);
             sendCallback();
         });
     }
@@ -203,6 +219,10 @@ class SimpleFileDialog {
         this.modal.footer.prepend(this.okButton);
         this.modal.body.append(this.container);        
 
+        //clear selected items when the modal is hidden
+        this.modal.dialog.on('hidden.bs.modal', () => {
+            this.selectedItems = null;
+        });
 
     }
 
@@ -244,6 +264,7 @@ class SimpleFileDialog {
      * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed. These are Electron style
      * @param {String} opts.startDirectory - This is the directory at which the file dialog will start (i.e. a user supplied path. If none supplied then this goes to the base directory of the server)
      * @param {Object} opts.rootDirectory - In case where the server has multiple "drives" or baseDirectories (/home /tmp --- rootDirectory of /home/xenios/Desktop is /home)
+     * @param {Boolean} opts.altkeys - Whether or not alt keys are enabled for this dialog (shift or ctrl). False by default.
      */
     openDialog(list,opts=null) {
 
@@ -252,6 +273,8 @@ class SimpleFileDialog {
         }
         
         this.newFilters=true;
+        this.altkeys = opts.altkeys;
+
         //null or undefined startDirectory and rootDirectory should default to null;
         let startDirectory = opts.startDirectory || '';
         let rootDirectory = opts.rootDirectory || '';
@@ -373,7 +396,7 @@ class SimpleFileDialog {
 
     /**
      * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
-     * Uses jstree to render the list.
+     * Uses Bootstrap tables to render the list.
      * 
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
@@ -452,27 +475,42 @@ class SimpleFileDialog {
 
         let elementlist=[];
 
-        let callback = (e,doubleclick=false) => {
+        let onclick = (e, w, doubleclick=false) => {
             e.preventDefault();
             e.stopPropagation();
-            let id=e.target.id;
-            if (!id) {
-                id=e.target.parentElement.id;
-                if (!id)
-                    id=e.target.parentElement.parentElement.id;
-            }
+
+            let id = $(w).find('td span').attr('id');
 
             let elem=elementlist[id];
             let fname=elem.path;
             if (elem.type === 'file' || elem.type ==='picture') {
 
+                //remove selected attribute from other elements 
+
+                //listen for key events if it's a load modal
+                if (doubleclick) {
+                    this.filenameCallback();
+                } else if (this.mode === 'load') {
+
+                    if (bisweb_keylistener.shiftPressed() && this.altkeys) {
+                        doShiftClick(w, fileList);
+                        return; 
+                    } else if (bisweb_keylistener.ctrlPressed() && this.altkeys) { 
+                        doCtrlClick(w);
+                        return;
+                    }
+                } 
+
+                this.clearFileHighlighting(fileList);
+                w.addClass('bisweb-filedialog-selected');
+
+                //if no modifiers then go into default flow
                 let ind=fname.lastIndexOf(this.separator);
                 let dname=fname;
                 if (ind>0)
                     dname=fname.substr(ind+1,fname.length);
                 this.filenameEntry.val(dname);
-                if (doubleclick) 
-                    this.filenameCallback();
+                this.selectedItems = [dname]; //set list of items to be only the one that was just selected.
 
             } else if ( elem.type=== 'directory') {
                 this.changeDirectory(fname);
@@ -499,12 +537,12 @@ class SimpleFileDialog {
 
             
             let w=$(`<tr>
-                    <td width="80%"><span id="${nid}">${c} ${name}</span></td>
-                    <td width="20%" align="right">${sz}</td></tr>
+                    <td class='bisweb-col-name' width="80%"><span id="${nid}">${c} ${name}</span></td>
+                    <td class='bisweb-col-size' width="20%" align="right">${sz}</td></tr>
                     </tr>`);
             tbody.append(w);
-            $('#'+nid).click( (e) => { callback(e,false); });
-            $('#'+nid).dblclick( (e) => { callback(e,true);});
+            $(w).on('click', ( (e) => { onclick(e, w, false); }));
+            $(w).on('dblclick', ( (e) => { onclick(e, w, true);}));
 
             elementlist[nid]=elem;
         }
@@ -513,6 +551,62 @@ class SimpleFileDialog {
         fileDisplay.append(fileList);
         fileList.append(stable);
         this.updateFileNavbar(lastfilename,rootDirectory);
+
+        
+        const self = this;
+
+        //performs ctrl-click behavior for the modal. selects individual files without deselecting them.
+        //row is the clicked row.
+        function doCtrlClick(row) {
+            let name = row.find('.bisweb-col-name').text().trim();
+            if (!self.selectedItems) { self.selectedItems = []; }
+
+            if (row.hasClass('bisweb-filedialog-selected')) { 
+                row.removeClass('bisweb-filedialog-selected'); 
+                self.selectedItems.splice(self.selectedItems.indexOf(name), 1);
+            } else { 
+                row.addClass('bisweb-filedialog-selected'); 
+                self.selectedItems.push(name);
+            }
+        }
+
+        //performs shift-click behavior for the modal. selects contiguous blocks of files in the modal.
+        //row is the clicked row, body is the body of the file modal (the container for the <tr>s)
+        function doShiftClick(row, body) {
+            let selectedIndex = row.index();
+            if (self.highlightedItems(body) >= 1) {
+
+                //find selected item, then highlighted the greatest contiguous region between the two
+                let selectedItems = $(body).find('.bisweb-filedialog-selected'), greatestIndex, leastIndex;
+                for (let item of selectedItems) {
+                    let index = $(item).index();
+                    if (!greatestIndex || index > greatestIndex) { greatestIndex = index; }
+                    if (!leastIndex || index < leastIndex) { leastIndex = index; }
+                }
+                
+                if (selectedIndex < greatestIndex) {
+                    selectRegion(body, selectedIndex, greatestIndex);
+                } else if (selectedIndex > leastIndex) {
+                    selectRegion(body, leastIndex, selectedIndex);
+                }
+
+                return;
+            }
+        }
+
+        function selectRegion(body, lowIndex, highIndex) {
+            let listItems = body.find('tr');
+            self.clearFileHighlighting(body);
+            self.selectedItems = [];
+
+            for (let i = 0; i < listItems.length; i++) {
+                if (i >= lowIndex && i <= highIndex) { 
+                    listItems.eq(i).addClass('bisweb-filedialog-selected'); 
+                    let name = listItems.eq(i).find('.bisweb-col-name').text().trim();
+                    self.selectedItems.push(name);
+                }
+            }
+        }
     }
 
     /**
@@ -756,6 +850,35 @@ class SimpleFileDialog {
         return false;
     }
     
+    /**
+     * Returns true if body contains selected items, false otherwise. 
+     * 
+     * @param {JQuery} body - The file dialog modal. 
+     * @returns True if body contains highlighted items, false otherwise. 
+     */
+    highlightedItems(body) {
+        return body.find('.bisweb-filedialog-selected').length;
+    }
+
+    /**
+     * Returns whether all highlighted items in the file dialog are contiguous. 
+     * 
+     * @param {JQuery} body - The file dialog modal.
+     * @returns True if contiguous, false otherwise.
+     */
+    itemsAreContiguous(body) {
+        let tableBody = body.find('tbody');
+        let highlightedItems = tableBody.find('.bisweb-filedialog-selected');
+        let firstHighlightedIndex = tableBody.find('.bisweb-filedialog-selected:first').index();
+        let currentHighlightedIndex = firstHighlightedIndex - 1;
+
+        console.log('highlighted items', highlightedItems, 'first index', firstHighlightedIndex);
+        if (highlightedItems.length === 0) { return false; }
+        for (let i = 0; i < highlightedItems.length; i++) {
+            let index = $(highlightedItems[i]).index();
+            if (index !== currentHighlightedIndex + 1) { return false; }   
+            currentHighlightedIndex = index; 
+        }
 
     getFsFavoritesFolder() {
         return new Promise( (resolve, reject) => {
@@ -775,14 +898,18 @@ class SimpleFileDialog {
         });
     }
 
-    setFsFavoritesFolder(newFolder) {
-        userPreferences.safeGetItem('filesource').then( (obj) => {
-            if (obj === 'amazonaws') {
-                userPreferences.setItem('s3Folders', newFolder, true);
-            } else if (obj === 'server') {
-                userPreferences.setItem('favoriteFolders', newFolder, true);
-            }
-        });
+        return true;
+    }
+
+    /**
+     * Removes highlighting from all elements in a file dialog.
+     * 
+     * @param {JQuery} body - A file dialog containing highlighted entries. 
+     */
+    clearFileHighlighting(body) {
+        let highlightedEntries = body.find('.bisweb-filedialog-selected');
+        highlightedEntries.removeClass('bisweb-filedialog-selected');
+
     }
 
 }

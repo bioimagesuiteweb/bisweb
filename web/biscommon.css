@@ -530,3 +530,39 @@ tspan {
 .bisweb-li:hover {
     background-color : rgba(0, 188, 140, 0.5);
 }
+
+.bisweb-glyphicon-right {
+    float: right;
+    font-size: 15px;
+}
+
+:root {
+  --capped-modal-list-height : 75vh;
+}
+
+.bisweb-filedialog-selected {
+    background-color : rgb(70, 69, 69) !important;
+}
+
+.bisweb-scrollable-container {
+    overflow: auto;
+    max-height: var(--capped-modal-list-height) ;
+}
+
+.bisweb-pipeline-input-list {
+    overflow-wrap: break-word;
+}
+
+.bisweb-sticky-container {
+    position : -webkit-sticky;
+    position : sticky;
+    top: 0;
+}
+
+.bisweb-list-group-item { 
+    font-size : 9pt;
+}
+
+.bisweb-list-group-item:hover {
+    background-color : rgba(12, 227, 172, 0.2);
+}

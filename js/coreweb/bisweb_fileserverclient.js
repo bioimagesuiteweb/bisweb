@@ -99,7 +99,7 @@ class BisWebFileServerClient extends BisFileServerClient {
     // ------------------------- File Dialog Functions ---------------------------------
     
     /**
-     * Renders a file list fetched by requestFileList in the file tree modal using jstree. 
+     * Renders a file list fetched by requestFileList in the file tree modal. 
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.

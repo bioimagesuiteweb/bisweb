@@ -1,13 +1,17 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
-const bisweb_panel = require('bisweb_panel.js');
+
 const webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
+const bisweb_panel = require('bisweb_panel.js');
+const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
+
 const DicomModule = require('dicommodule.js');
 const BisWebTaskManager = require('bisweb_studytaskmanager');
+const BiswebImage = require('bisweb_image.js');
 
 const SEPARATOR = bis_genericio.getPathSeparator();
 
@@ -70,22 +74,7 @@ class StudyPanel extends HTMLElement {
                 //helpButton: true
             });
 
-            //this.setHelpModalMessage();
-
-            //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
-            this.dismissPopoverFn = (e) => {
-                if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
-                    if (this.popoverDisplayed) {
-                        $('[data-original-title]').popover('hide');
-                        this.popoverDisplayed = false;
-                    }
-                }
-            };
-
-            $('html').on('click', this.dismissPopoverFn);
-            $('html').on('contextmenu', this.dismissPopoverFn);
-
-
+            bisweb_popoverhandler.addPopoverDismissHandler();
         });
 
         this.contextMenuDefaultSettings = {
@@ -676,7 +665,7 @@ class StudyPanel extends HTMLElement {
         let handleRightClick = (data) => {
             let tree = this.fileTree.jstree(true);
             let existingTreeSettings = tree.settings.contextmenu.items;
-            let enabledButtons = { 'RenameTask': true };
+            let enabledButtons = { 'RenameTask': true, 'ShowTaskChart' : true };
 
             //dual viewer applications have a 'load to viewer 1' and 'load to viewer 2' button instead of just one load
             if (existingTreeSettings.Load) {
@@ -696,6 +685,7 @@ class StudyPanel extends HTMLElement {
             } if (data.node.parent === '#' || tree.get_node(data.node.parent).original.text !== 'func') {
                 //'#' is the parent of the top level node in the tree
                 enabledButtons.RenameTask = false;
+                enabledButtons.ShowTaskChart = false;
             }
 
             this.toggleContextMenuLoadButtons(tree, enabledButtons);
@@ -1106,6 +1096,27 @@ class StudyPanel extends HTMLElement {
         popover.popover('show');
     }
 
+    /**
+     * Loads task data from a given task image in the tree, finds the appropriate task timings from the imported task file, and graphs it. 
+     * Opened from the jstree context menu.
+     * 
+     * @param {Object} node - The node given by the contextmenu.
+     */
+    openTaskChart(node) {
+
+        if (this.graphelement.hasTaskData()) {
+                let parsedNode = this.fileTree.jstree(true).get_node(node.reference[0]);
+            let filename = this.constructNodeName(parsedNode);
+
+            console.log('filename', filename);
+            let img = new BiswebImage();
+            img.load(filename).then( () => {
+                this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, img);
+            });
+        } else {
+            console.log('Could not find task data');
+        }
+    }    
 
     /**
      * Changes the context menu buttons (right-click menu) for the file tree currently being displayed according to the keys specified in settings. 

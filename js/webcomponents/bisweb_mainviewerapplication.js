@@ -913,7 +913,14 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
-
+        const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
+        if (filetreepipelineid) {
+            let filetreepipeline = document.querySelector(filetreepipelineid);
+            webutil.createMenuItem(hmenu, 'Open File Tree Pipeline', 
+                                    () => {
+                                        filetreepipeline.openPipelineCreationModal();
+                                    });
+        }
 
         return hmenu;
     }
