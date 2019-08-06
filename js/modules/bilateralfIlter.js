@@ -145,7 +145,10 @@ class BilateralFilterModule extends BaseModule {
  * @returns {BisImage} out - smooth image
  */
 var BilateralFilter = function(src, radius, rvar, svar, numiter) {
-    console.log('----- SMOOTHING WITH NEW ALGORITHM -----');
+    
+    console.log('----- SMOOTHING WITH LISA ALGORITHM -----');
+    console.log('----- See Lohmann et al, Nature Communications 2018.');
+
     let timer = Date.now();
 
     let dest = new BisWebImage();
