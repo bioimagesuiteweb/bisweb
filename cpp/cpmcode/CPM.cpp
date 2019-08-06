@@ -21,7 +21,8 @@ void CPM::run(){
 	double MIN =0.1E-05;
 	int order =1;
 	int k=this->k;
-	double a=0.5,b=(int)((double)(k-1.0)/(k)*n/2-1);//%(n-2)/2.0,xth,fx;
+	
+	double a=0.5,b=(double)((double)(k-1.0)/(k)*n/2-1);//%(n-2)/2.0,xth,fx;
 	int ifault;
 	//double th = 0.01;//this->threshold;
 	//cin>>th;
@@ -30,8 +31,8 @@ void CPM::run(){
 		+ lgamma ( b )
 		- lgamma ( a + b );
 	//cout<<"0.01 -> "<<this->InverseBeta(0.01,0.5,(n-2)/2,0,10)<<" "<<xinbta ( a, b, beta_log,0.01, ifault)<<endl;
-
-	cout<<b<<" "<<a<<" $$$$$ "<<k<<endl;
+	cout<<"$$$$$$$$$"<<endl;
+	cout<<b<<" "<<a<<" $$$$$ "<<k<<" "<<((double)(k-1.0)/(k)*n/2-1)<<" threshold:"<<this->threshold<<endl;
 	double t1 = xinbta ( b, a, beta_log, this->threshold, ifault );
 	double t2 = xinbta ( a, b, beta_log, 1.0-this->threshold, ifault );
 	
@@ -39,12 +40,12 @@ void CPM::run(){
 	cout<<"T1:"<<t1<<" T:"<<t2<<endl;//pow(tthresh*(n-2)/(1-tthresh),0.5)<<endl;
 	//tthresh = pow(tthresh*(n-2)/(1-tthresh),0.5);
 
-	/*for(int i=0;i<n;i++){
+	for(int i=0;i<n;i++){
 		for(int j=0;j<p;j++){
 			cout<<X[i*p+j]<<" ";
 		}
 		cout<<endl;
-	}
+	}/*
 
 	cout<<"================="<<endl;
 	for(int i=0;i<n;i++){
@@ -56,6 +57,16 @@ void CPM::run(){
 		cout<<indices[i]<<" ";
 	cout<<endl;*/
 	int* indices = this->kfold(n,this->k);
+	indices[0]=0;	
+	indices[1]=0;	
+	indices[2]=1;	
+	indices[3]=1;	
+	indices[4]=2;	
+	cout<<"###indices###"<<endl;
+	for(int i=0;i<n;i++){
+		cout<<indices[i]<<"";
+	}
+	cout<<endl;
 	for(int fold=0;fold<this->k;fold++){
 		cout<<"fold "<<fold<<endl;
 
@@ -103,6 +114,7 @@ void CPM::run(){
 
 		CORDAT c = this->corr(xtrain,ytrain,n-testCount,p,1);
 
+		cout<<"train_sum"<<endl;
 		for(int i=0;i<n-testCount;i++){
 			for(int j=0;j<p;j++){
 				if(c.lower[j]){
@@ -121,6 +133,7 @@ void CPM::run(){
 					}
 				}
 			}
+			cout<<train_sum[i]<<endl;
 		}
 
 		for(int i=0;i<testCount;i++){
@@ -158,8 +171,8 @@ void CPM::run(){
 		for(int i=0;i<n;i++){
 			if(indices[i]==fold){
 				this->predicted[i]=test_sum[testInd]*coefficients[1]+coefficients[0];
-				if(this->predicted[i]<MIN)
-					this->predicted[i] = 0.0;
+				//if(this->predicted[i]<MIN)
+				//	this->predicted[i] = 0.0;
 				testInd++;
 			}
 		}
@@ -171,7 +184,10 @@ void CPM::run(){
 		delete[] xtest;
 		delete[] ytrain;
 	}
-	
+	for(int i=0;i<n;i++){
+		cout<<this->predicted[i]<<endl;
+	}
+
 }
 
 int CPM::polyfit(const double* const dependentValues,

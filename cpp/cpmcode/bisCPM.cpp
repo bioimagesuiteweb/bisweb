@@ -23,17 +23,18 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
   int ok=params->parseJSONString(jsonstring);
   if (!ok) 
     return 0;
+ std::cerr<<"something else javid"<<std::endl;
 
   if (debug)
     params->print();
 
-  std::unique_ptr<bisSimpleMatrix<float> > inp_matrix(new bisSimpleMatrix<float>("inp_matrix"));
+  std::unique_ptr<bisSimpleMatrix<double> > inp_matrix(new bisSimpleMatrix<double>("inp_matrix"));
   if (!inp_matrix->linkIntoPointer(stackedmatrix))
     return 0;
 
   std::cerr << "This far 1" << std::endl;
   
-  std::unique_ptr<bisSimpleMatrix<float> > beh_vec(new bisSimpleMatrix<float>("beh_vector"));
+  std::unique_ptr<bisSimpleMatrix<double> > beh_vec(new bisSimpleMatrix<double>("beh_vector"));
   if (!beh_vec->linkIntoPointer(behaviorvector))
     return 0;
 
@@ -55,13 +56,13 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
   }
   
   cpm_options opc = {};
-  opc.threshold=params->getFloatValue("threshold",0.01);
-  opc.k=params->getFloatValue("kfold",10);
-  opc.lambda=params->getFloatValue("lambda",0.0001);
+  opc.threshold=params->getFloatValue("threshold",0.5);
+  opc.k=params->getFloatValue("kfold",3);
+  opc.lambda=params->getFloatValue("lambda",0.001);
 
   group_options opg = {};
   opg.num_task = params->getIntValue("numtasks",0);
-  opg.num_node = params->getIntValue("numnodes",268);
+  opg.num_node = params->getIntValue("numnodes",3);
   opg.num_subj = numsubjects;
   opg.num_edges= numcols;
 
@@ -79,16 +80,18 @@ unsigned char* computeCPMWASM(unsigned char* stackedmatrix, unsigned char* behav
   if (debug)
     std::cout << "Numbers= " << numrows << "," << numcols << "," << numsubjects << std::endl;
   
-  float *matrixdata=inp_matrix->getData();
+  double *matrixdata=inp_matrix->getData();
   
   double* xi = new double[numcols]; 
   for (int i=0;i<opg.num_subj;i++)
     {
       std::cout << "Creating Subject " << i+1 << "/" << opg.num_subj << std::endl;
-      for(int j=0;j<numcols;j++)
+      for(int j=0;j<numcols;j++){
         xi[j]=matrixdata[i*numcols+j];
+      }
       subjects[i].setConnectome(xi);
       phenotype[i]=beh_vec->getData()[i];
+      cout<<phenotype[i]<<endl;
     }
   delete [] xi;
 
