@@ -62,7 +62,7 @@ class BilateralFilterModule extends BaseModule {
     createDescription() {
         return {
             "name": "BilateralFilter",
-            "description": "This algorithm performes a Bilateral Filter",
+            "description": 'This algorithm performes a Bilateral Filter. The original code and notes can be found in the original  <a target="_blank" href="https://github.com/lipsia-fmri/lipsia">source code repository</a>.',
             "author": "Kol Crooks",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs('Load the image to be Filtered'),
