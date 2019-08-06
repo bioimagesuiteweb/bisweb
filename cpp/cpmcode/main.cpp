@@ -33,7 +33,7 @@ void run(){ // main function
 	double phenotype[opg.num_subj];
 	Group group = buildGroup(phenotype,opg);
 
-	CPM* c = new CPM(group,phenotype,opc); 
+	CPM* c = new CPM(group,phenotype,opc,1); 
 	c->run();
 	c->evaluate();
 }
