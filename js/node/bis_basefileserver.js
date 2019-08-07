@@ -69,8 +69,6 @@ class BaseFileServer {
 
         this.opts = {};
 
-        this.opts.dcm2nii = '/usr/bin/dcm2niix';
-
         for (let i = 0; i < server_fields.length; i++) {
             let name = server_fields[i].name;
             this.opts[name] = server_fields[i].value;
