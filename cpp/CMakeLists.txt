@@ -333,7 +333,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
   SET (JS_WRAP_OUTPUT2 ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2}
-    DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
+    DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt ${LIBNAME}
     PRE_BUILD COMMENT "Creating JS Wrappers"
     COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
