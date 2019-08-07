@@ -20,8 +20,8 @@ int main(int argc, char *argv[]){
 void run(){ // main function
 	cpm_options opc = {};
 	group_options opg = {};
-	opc.threshold = 0.01;
-	opc.k=10;
+	opc.threshold = 0.5;
+	opc.k=3;
 	opc.seed=870;
 	opc.lambda = 0.0001;
 
@@ -33,7 +33,7 @@ void run(){ // main function
 	double phenotype[opg.num_subj];
 	Group group = buildGroup(phenotype,opg);
 
-	CPM* c = new CPM(group,phenotype,opc); 
+	CPM* c = new CPM(group,phenotype,opc,1); 
 	c->run();
 	c->evaluate();
 }
@@ -50,7 +50,7 @@ Group buildGroup(double* phenotype,const group_options opg){
 		string y;
 		inFile1>>y;
 		//cout<<(rand() % static_cast<int>(20 + 1))<<" ";
-		phenotype[i]=stoi(y);//(rand() % static_cast<int>(20 + 1));
+		phenotype[i]=stod(y);//(rand() % static_cast<int>(20 + 1));
 	}
 	for(int i=0;i<opg.num_subj;i++){
 		double* xi = new double[opg.num_edges]; 
@@ -59,6 +59,8 @@ Group buildGroup(double* phenotype,const group_options opg){
 			string edge;
 			inFile2>>edge;
 			//cout<<i<<" "<<j<<" "<<edge<<endl;
+			//cout<<edge<<endl;
+			//cout<<i<<" "<<edge<<" "<<j<<endl;
 			xi[j]=stod(edge);//(rand() % static_cast<int>(4 + 1));
 			//cout<<xi[j]<<endl;
 		}	

@@ -47,6 +47,8 @@ protected:
   int seed;
   float lambda; // value of the lambda, if not provided, cross-validation will be used
   double* predicted;
+  int debug;
+
 public:
   /* constructs
    * a simulator for numAgents agents. The first numOne of 
@@ -87,5 +89,7 @@ public:
   double xinbta ( double p, double q, double beta, double alpha, int &ifault );
   void timestamp ( );
   double InverseBeta(double p, double alpha, double beta, double A, double B);
+
+  
 };
 #endif

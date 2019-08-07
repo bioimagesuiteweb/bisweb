@@ -26,36 +26,67 @@ const assert = require("assert");
 const numeric=require('numeric');
 const libbiswasm=require('libbiswasm_wrapper');
 const BisWebMatrix=require('bisweb_matrix');
+const util=require('bis_util');
 
 numeric.precision = 2;
 
-const truedim = [ [ 50, (268*267)/2 ], [ 50 , 1 ]];
+const truedim = [ [ 5,3 ],[ 5,1]];// [ [ 50, (268*267)/2 ], [ 50 , 1 ]];
 
+let printmatrix=function(mat) {
+
+    let dim=mat.getDimensions();
+    let dat=mat.data;
+    let out='\t\n';
+
+    for (let row=0;row<dim[0];row++) {
+        out+='\t[ ';
+        for (let col=0;col<dim[1];col++) {
+            out+=dat[row*dim[1]+col];
+            if (col<(dim[1]-1))
+                out+='\t';
+        }
+        out+=' ]\n';
+    }
+    return out;
+}
 
 describe('Testing CPM Code', function() {
 
 
-    let matrices = [ new BisWebMatrix(),new BisWebMatrix() ];
-    let names = [ 'connectome.csv','phenotype.csv' ];
-    let fullnames = [ '','','',''   ];
-    for (let i=0;i<=1;i++)
+    let matrices = [ new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix(),
+                     new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix(),
+                   ];
+    let names = [ 'connectome.txt','phenotype.txt', 'result.csv' ,
+                  'connectome2.csv','phenotype2.csv', 'result2.csv' ,
+                ];
+    let fullnames = [ '','','','' ,'','',''  ];
+    for (let i=0;i<=5;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/cpm/'+names[i]);
 
     before(function(done){
         let p=[ matrices[0].load(fullnames[0]),
                 matrices[1].load(fullnames[1]),
+                matrices[2].load(fullnames[2]),
+                matrices[3].load(fullnames[3]),
+                matrices[4].load(fullnames[4]),
+                matrices[5].load(fullnames[5]),
+                
                 libbiswasm.initialize()  ];
-        Promise.all(p).then( () => { done(); });
+        Promise.all(p).then( () => {
+            console.log('Small Conenctome=',printmatrix(matrices[0]));
+            console.log('Small Phenotype=',printmatrix(matrices[1]));
+            console.log('Small Expected Result=',printmatrix(matrices[2]));
+            done();
+        });
     });
     
 
     it ('check loading',function() {
-
         let diff=0;
         
         for (let i=0;i<=1;i++) {
             let s=matrices[i].getDimensions();
-            console.log('Loaded ',fullnames[0],' ' ,matrices[i].getDescription(),' should be=',truedim[i]);
+            console.log('Testing dimensions of ',fullnames[i],' ' ,matrices[i].getDescription(),' should be=',truedim[i]);
             diff+=Math.abs(truedim[i][0]-s[0])+Math.abs(truedim[i][1]-s[1]);
         }
         assert.equal(diff, 0);
@@ -63,16 +94,43 @@ describe('Testing CPM Code', function() {
 
 
     it ('check cpm',function() {
-        let v=libbiswasm.computeCPMWASM(matrices[0],matrices[1], { "numnodes" : 268 } , 1);
-        console.log('Result=',v.getDescription());
-        console.log('Inp v Predicted');
-        let d=v.getDimensions();
-        console.log('D=',d);
-        for (let i=0;i<d[0];i++) {
-            console.log('i=',i,d[0]);
-            console.log(i,' ',matrices[1].data[i],' vs', v.data[i]);
-        }
+        console.log('___________________________________');
+        console.log('        Invoking CPM C++ Code      ');
+        console.log('___________________________________');
+
+        let pred=libbiswasm.computeCPMWASM(matrices[0],matrices[1],
+                                        {
+                                            "numnodes" : 3,
+                                            "numtasks" : 0,
+                                        } , 0);
+        console.log('___________________________________');
+        console.log('         CPM Done');
+        console.log('___________________________________');
+        console.log('Prediced Result=',printmatrix(pred));
+        let res=pred.compareWithOther(matrices[2],"maxabs",0.05);
+        console.log('Test result=', JSON.stringify(res,null,2));
+        assert.equal(res.testresult,true);
     });
+
+    it ('check cpm large',function() {
+        console.log('___________________________________');
+        console.log('        Invoking CPM C++ Code      ');
+        console.log('___________________________________');
         
+        let pred=libbiswasm.computeCPMWASM(matrices[3],matrices[4],
+                                           {
+                                               "numnodes" : 268,
+                                               "numtasks" : 0,
+                                               "kfold" : 3,
+                                           } , 0);
+        console.log('___________________________________');
+        console.log('         CPM Done');
+        console.log('___________________________________');
+        console.log('Prediced Result=',printmatrix(pred));
+        let res=pred.compareWithOther(matrices[5],"maxabs",0.05);
+        console.log('Test result=', JSON.stringify(res,null,2));
+        assert.equal(res.testresult,true);
+    });
+
 });
 
