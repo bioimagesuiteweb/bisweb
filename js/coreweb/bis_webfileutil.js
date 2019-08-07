@@ -450,8 +450,10 @@ const webfileutils = {
 
         
         
+        let multiple = fileopts.altkeys ? 'multiple' : ''; //enables shift and ctrl in native file select
         if (!genericio.inIOS()) {
-            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}" ${multiple}/>`);
+            console.log('multiple', multiple);
             fileInputElements.push(loadelement);
 
             loadelement[0].addEventListener('change', function (f) {
@@ -467,7 +469,7 @@ const webfileutils = {
             if (fileopts.title.length<1)
                 fileopts.title='Select File';
             iosFileDialog.titlediv.append(`<H4>${fileopts.title}</H4>`);
-            let loadelement = $(`<input type="file" id="${nid}" accept="${suffix}"/>`);
+            let loadelement = $(`<input type="file" id="${nid}" accept="${suffix}" ${multiple}/>`);
             fileInputElements.push(loadelement);
             loadelement[0].addEventListener('change', function (f) {
                 iosFileDialog.dialog.modal('hide');
