@@ -630,7 +630,7 @@ class FileTreePipeline extends HTMLElement {
                 });
             } else if (bis_genericio.getenvironment !== 'browser') { //TODO: test this!
                 //node-only code is kept separate from the more pure web codebase
-                //so in order to run it we have to invoke the command through node
+                //so in order to run it we have to invoke the command through the command line
                 let command = `biswebnode pipeline --input ${filename} --output ${outputFilename} --odir ${odirFilename}`;
                 let child_process = bis_genericio.getchildprocessmodule();
                 child_process.exec(command);
@@ -648,7 +648,9 @@ class FileTreePipeline extends HTMLElement {
      * @returns The set of filenames.
      */
     importInputsFromDisk(f) {
-
+        //some contexts may return a single string split by commas, so we reformat it to avoid multiple parsings
+        if (typeof f === 'string') { f = f.split(','); }
+        
         if (this.pipelineInputs) {
             bootbox.confirm({
                 'size': 'small',
