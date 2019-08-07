@@ -624,9 +624,20 @@ class FileTreePipeline extends HTMLElement {
             let odirFilename = splitOdirFilename.join(sep);
 
             //savemanually flag needed in order to save the output Makefile (modules run directly through the server don't hit the saving hooks from the command line)
-            bis_genericio.runPipelineModule({ 'input' : filename, 'output' :  outputFilename, 'odir' : odirFilename }, true).then( () => {
-                bis_webutil.createAlert('Pipeline Makefile created.');
-            });
+            if (bis_genericio.getenvironment() === 'browser') {
+                bis_genericio.runPipelineModule({ 'input' : filename, 'output' :  outputFilename, 'odir' : odirFilename }, true).then( () => {
+                    bis_webutil.createAlert('Pipeline Makefile created.');
+                });
+            } else if (bis_genericio.getenvironment !== 'browser') { //TODO: test this!
+                //node-only code is kept separate from the more pure web codebase
+                //so in order to run it we have to invoke the command through node
+                let command = `biswebnode pipeline --input ${filename} --output ${outputFilename} --odir ${odirFilename}`;
+                let child_process = bis_genericio.getchildprocessmodule();
+                child_process.exec(command);
+            } else {
+                bis_webutil.createAlert('Cannot run pipeline in browser with no fileserver defined. Please select the fileserver option if you want to perform this operation', null, true);
+            }
+            
         });
     }
 
