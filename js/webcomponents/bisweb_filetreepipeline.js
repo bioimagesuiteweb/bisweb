@@ -211,8 +211,8 @@ class FileTreePipeline extends HTMLElement {
                     </select>
                 </div>
                 <div class='list-group' style='visibility: hidden'>
-                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Load input from disk</a>
-                    <div class='dropdown'>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt' data-toggle='dropdown'>Load input from disk</a>
+                    <div class='dropright'>
                         <a href='#' id=${usePreviousId} class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Use previous input</a>
                         <ul class='dropdown-menu' style='biswebpanel' aria-labeledby=${usePreviousId}>
                         </ul>
@@ -251,9 +251,7 @@ class FileTreePipeline extends HTMLElement {
         console.log('group item', $(listGroup).find('.list-group-item'));
         //add behaviors to popover buttons
         let loadInputButton = $(listGroup).find('.list-group-item').get(0);
-        let usePreviousButton = $(listGroup).find('.dropdown');
-
-        console.log('use previous', usePreviousButton);
+        let usePreviousButton = $(listGroup).find('.dropright');
 
         $(loadInputButton).on('click', () => {
             bisweb_popoverhandler.dismissPopover();
@@ -273,10 +271,8 @@ class FileTreePipeline extends HTMLElement {
             });
         });
 
-        //TODO: Add previous inputs to the previous inputs thing (currently hardcoded to be single output)
         $(usePreviousButton).on('click', () => {
             let varname = formSelect.val();
-            console.log('clicked use previous', this.modules, id);
             for (let i = 0; i < this.modules.length; i++) {
                 if (this.modules[i].id === id) {
                     let mod = this.modules[i];
@@ -285,7 +281,7 @@ class FileTreePipeline extends HTMLElement {
                     //if the previous module has multiple outputs, populate a second dropdown list that contains them. otherwise simply use the only output from the last one.
                     let moduleOutputs =  this.modules[i-1] ? this.modules[i-1].module.getDescription().outputs : null;
                     if (this.modules[i-1] && moduleOutputs.length > 1) {
-                        generatePreviousInputsDropdown(i);
+                        generatePreviousInputsDropdown(i, mod);
                     } else {
                         console.log('module outputs', moduleOutputs);
                         mod.inputs[varname] = moduleOutputs ? moduleOutputs[0] : null;
@@ -299,15 +295,34 @@ class FileTreePipeline extends HTMLElement {
         $(customModule.panel.widget).find('.bisweb-customelement-footer').append(inputsButton);
 
         let modules = this.modules;
-        function generatePreviousInputsDropdown(currentModuleIndex) {
+        function generatePreviousInputsDropdown(currentModuleIndex, outputMod, inputVarname) {
+            $(usePreviousButton).find('.dropdown-menu').empty();
             let previousModule = modules[currentModuleIndex - 1];
             if (!previousModule) { console.log('Error: no previous module'); return; }
 
-            let inputList = $(popoverContent).find('ul.dropdown');
-            console.log('input list', inputList);
-
+            let inputList = $(popoverContent).find('ul');
             let moduleOutputList = previousModule.module.getDescription().outputs;
-            console.log('module output list', moduleOutputList);
+
+            for (let output of moduleOutputList) {
+                bis_webutil.createDropdownItem(inputList, output.varname, () => {
+                    outputMod.inputs[inputVarname] = output.varname;
+                });
+            }
+
+            let dropdownMenu = $(usePreviousButton).find('.dropdown-menu');
+            dropdownMenu.dropdown('toggle');
+            let dropdownDismissFn = (e) => {
+                console.log('dismiss fn');
+                if (!$.contains(dropdownMenu, e.target)) {
+                    console.log('unbinding listener');
+                    $(usePreviousButton).find('.dropdown-menu').dropdown('toggle');
+                    $(document).off('click', dropdownDismissFn);
+                }
+                
+            };
+    
+            //attach dismiss listener once popover has finished displaying (otherwise the first click will eat the dismiss function)
+            $(dropdownMenu).one('shown.bs.dropdown', () => { console.log('attached listener'); $(document.body).on('click', dropdownDismissFn); });
         }
     }
 
@@ -530,10 +545,8 @@ class FileTreePipeline extends HTMLElement {
         let sep = this.pipelineInputs[0].includes('\\') ? '\\' : '/';
         
         //format the saved modules to use the pipeline creation tool.
-        //TODO: Format this to use biswebnode maybe? 
-        let command = ['', 'home', 'zach', 'javascript', 'bisweb', 'js', 'bin', 'bisweb.js'].join(sep);
         let pipeline = { 
-            'command' : 'node ' + command,
+            'command' : 'biswebnode',
             'inputs' : [{
                 'name' : 'input',
                 'files' : this.pipelineInputs
