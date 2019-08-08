@@ -883,6 +883,9 @@ class SimpleFileDialog {
         return true;
     }
 
+    /**
+     * Gets the appropriate favorites folder based on which filesource is currently selected. Currently supports different folder lists between S3 and the local file system.
+     */
     getFsFavoritesFolder() {
         return new Promise( (resolve, reject) => {
             userPreferences.safeGetItem('filesource').then( (obj) => {
@@ -901,6 +904,9 @@ class SimpleFileDialog {
         });
     }
 
+     /**
+     * Sets the appropriate favorites folder based on which filesource is currently selected. Currently supports different folder lists between S3 and the local file system.
+     */
     setFsFavoritesFolder() {
         userPreferences.safeGetItem('filesource').then((obj) => {
             if (obj === 'amazonaws') {
