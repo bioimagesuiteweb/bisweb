@@ -112,6 +112,8 @@ if (bis_genericio.getmode() === 'node' ||
      */
     let validateDirectories = (lst, name = "", verbose = true) => {
 
+        console.log('Validating directories'+lst+' '+name);
+        
         let newlist = [];
         for (let i = 0; i < lst.length; i++) {
 
@@ -122,10 +124,10 @@ if (bis_genericio.getmode() === 'node' ||
             p = path.normalize(p);
             let stats = null;
             try {
-
                 stats = fs.lstatSync(p);
             } catch (e) {
                 p = null;
+                console.log('---- Directory '+p+' not found '+e);
             }
 
 
@@ -139,6 +141,7 @@ if (bis_genericio.getmode() === 'node' ||
 
                 if (!stats.isDirectory()) {
                     p = null;
+                    console.log('---- Directory '+p+' is not a directory ');
                 }
 
                 if (p.lastIndexOf(path.sep) == (p.length - 1)) {
@@ -154,8 +157,10 @@ if (bis_genericio.getmode() === 'node' ||
                     let ignore = false;
                     if (p !== '/tmp') {
                         let l = p.split('/');
-                        if (l.length < 3)
+                        if (l.length < 3) {
                             ignore = true;
+                            console.log('---- ignoring '+p+' as l.length <3'+l.join(','));
+                        }
                     }
                     if (!ignore)
                         newlist.push(p);
