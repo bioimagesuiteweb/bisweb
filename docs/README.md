@@ -111,6 +111,7 @@ are already on your system)
 
     sudo apt-get -yqq update
     sudo apt-get install -yqq python-pip python-dev python3 python3-pip unzip g++ gcc cmake cmake-curses-gui
+    sudo apt-get install -yqq doxygen graphviz
     sudo apt-get install -yqq curl openjdk-8-jdk git make dos2unix
     sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash
     sudo apt-get install -yq nodejs
@@ -142,7 +143,7 @@ if you do not already have these installed.
 Then install the pre-requisite packages using brew -- the instructions below
 are for Node V.10.
 
-    brew install python2 python3 nodejs cmake node@10
+    brew install python2 python3 nodejs cmake node@10 doxygen graphviz
     brew link python2
     brew link --force node@10
     brew cask install java
