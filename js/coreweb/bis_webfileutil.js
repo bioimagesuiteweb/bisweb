@@ -305,6 +305,7 @@ const webfileutils = {
         fileopts.serveronly=fileopts.serveronly || false;
         fileopts.altkeys=fileopts.altkeys || false;
 
+        console.log('altkeys', fileopts);
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';

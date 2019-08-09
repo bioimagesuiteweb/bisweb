@@ -87,6 +87,12 @@ class SimpleFileDialog {
         }
 
         if (this.mode.indexOf('dir')>=0) {
+            if (this.selectedItems.length > 1) {
+                setTimeout( () => {
+                    this.fileRequestFn(this.selectedItems.join(','));
+                    return;
+                },10);
+            }
             // Directory Mode
             if (name.length>0) {
                 // Make a directory
@@ -98,8 +104,7 @@ class SimpleFileDialog {
             setTimeout( () => {
                 this.fileRequestFn(this.currentDirectory);
             },10);
-        }
-        
+        } 
         
         if (name.length<1) {
             return;
@@ -483,6 +488,17 @@ class SimpleFileDialog {
 
             let elem=elementlist[id];
             let fname=elem.path;
+
+            if (this.mode === 'load' || this.mode === 'directory') {
+                if (bisweb_keylistener.shiftPressed() && this.altkeys) {
+                    doShiftClick(w, fileList);
+                    return; 
+                } else if (bisweb_keylistener.ctrlPressed() && this.altkeys) { 
+                    doCtrlClick(w);
+                    return;
+                }
+            } 
+
             if (elem.type === 'file' || elem.type ==='picture') {
 
                 //remove selected attribute from other elements 
@@ -490,16 +506,7 @@ class SimpleFileDialog {
                 //listen for key events if it's a load modal
                 if (doubleclick) {
                     this.filenameCallback();
-                } else if (this.mode === 'load') {
-
-                    if (bisweb_keylistener.shiftPressed() && this.altkeys) {
-                        doShiftClick(w, fileList);
-                        return; 
-                    } else if (bisweb_keylistener.ctrlPressed() && this.altkeys) { 
-                        doCtrlClick(w);
-                        return;
-                    }
-                } 
+                }
 
                 this.clearFileHighlighting(fileList);
                 w.addClass('bisweb-filedialog-selected');
@@ -591,6 +598,8 @@ class SimpleFileDialog {
                 }
 
                 return;
+            } else {
+                selectRegion(body, selectedIndex, selectedIndex);
             }
         }
 

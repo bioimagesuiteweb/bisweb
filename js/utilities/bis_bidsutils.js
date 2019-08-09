@@ -518,7 +518,7 @@ let parseDate = (dcm2niiImage) => {
     let dateRegex = /\d{14}/g;
     let fileString = dcm2niiImage;
     let dateMatch = dateRegex.exec(fileString);
-    return dateMatch[0];
+    return dateMatch[0] || 'no-date';
 };
 
 /**
