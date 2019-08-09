@@ -165,13 +165,14 @@ BioImage Suite Web is currently compiled/packaged in directories inside the sour
 * build — The core build directory.
     - build/wasm — The build directory for the WebAssembly code. You can move this out if your prefer; however, the key output files will be redirected to the build directory so that webpack can find them.
     - build/dist — The output directory for ``.zip`` files or packaged Electron applications.
-    - build/cpp — (optional) This is where the native libraries for accessing the C++ code from Python and Matlab will be built.
+    - build/native — (optional) This is where the native libraries for accessing the C++ code from Python and Matlab will be built.
     - build/web — The output directory for creating the final web-applications and associated ``.css``, ``.html`` files etc.
 
 * compiletools — Scripts and configuration files to help with compiling.
 * config — Configuration files for webpack, JSDoc etc.
 * cpp — C++ code.
 * doc — Directory containing this and other documentation files.
+* docker — The docker configuration files
 * js — Directory containing all js code
 * lib — Directory containing js external libraries and some css/html that are either not distributed via npm or are customized in some way.
 * matlab — Directory containing the primitive Matlab wrapper code.
@@ -264,11 +265,10 @@ _Note: The observant reader may notice that the `.html` files live in the `web` 
 
 The regression tests should function by this point. These should be executed to test proper integration of the WebAssembly code. To do so, type:
 
+    cd bisweb/test
     mocha test
 
-This will take a few minutes to finish. The results will be stored in ``.js`` files under ``tests``. If not all tests are reported as successful, there may be a problem with the WebAssembly code.
-
-At this point the JS-development directory should be fully functional.
+This will take a few minutes to finish. At this point the JS-development directory should be fully functional.
 
 ---
 
