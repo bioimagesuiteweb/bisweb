@@ -901,6 +901,16 @@ class SimpleFileDialog {
         });
     }
 
+    setFsFavoritesFolder() {
+        userPreferences.safeGetItem('filesource').then((obj) => {
+            if (obj === 'amazonaws') {
+                userPreferences.setItem('s3Folders', this.favorites);
+            } else if (obj === 'server') {
+                userPreferences.setItem('favoriteFolder', this.favorites);
+            }
+        });
+    }
+
     /**
      * Removes highlighting from all elements in a file dialog.
      * 
