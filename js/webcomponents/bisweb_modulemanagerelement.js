@@ -179,6 +179,7 @@ class ModuleManagerElement extends HTMLElement {
         let usesgpl=window.bioimagesuitewasmpack.usesgpl;
 
         this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
+        
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
@@ -186,6 +187,7 @@ class ModuleManagerElement extends HTMLElement {
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
+                this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);

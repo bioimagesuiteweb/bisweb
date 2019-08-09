@@ -19,5 +19,6 @@ package-lock.json
 *.pem
 **/dcm2nii*
 **/screenshots
+**/*.o
 **/libbiswasm_wasm.js
 web/LICENSE

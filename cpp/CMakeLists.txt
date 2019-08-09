@@ -96,6 +96,7 @@ SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
 OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" OFF)
+OPTION(BIS_USECPM "Include additional files for the CPM Code" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 
@@ -175,7 +176,26 @@ IF (BIS_USEINDIV)
     )
   FIND_PACKAGE(IGL REQUIRED)
 ENDIF (BIS_USEINDIV)
-    
+
+IF (BIS_USECPM)
+  SET (KITSRCS
+    ${KITSRCS}
+    cpmcode/CPM.cpp
+    cpmcode/Group.cpp
+    cpmcode/predictory.cpp
+    cpmcode/RCPM.cpp
+    cpmcode/Subject.cpp
+    cpmcode/tools.cpp
+    cpmcode/bisCPM.cpp
+    )
+
+  SET (PARSE_HEADERS
+    ${PARSE_HEADERS}
+    ${CPP_SOURCE_DIR}/cpmcode/bisCPM.h
+    )
+
+ENDIF (BIS_USECPM)
+
 IF (BIS_USEGPL)
   SET(PARSE_HEADERS
     ${PARSE_HEADERS}
@@ -257,6 +277,9 @@ IF (BIS_A_EMSCRIPTEN)
   IF (BIS_USEINDIV)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${IGL_INCLUDE_DIRS}")
   ENDIF (BIS_USEINDIV)
+  IF (BIS_USECPM)
+    SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${PROJECT_SOURCE_DIR}/cpmcode")
+  ENDIF (BIS_USECPM)
 
     
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
@@ -310,7 +333,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
   SET (JS_WRAP_OUTPUT2 ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2}
-    DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
+    DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt ${LIBNAME}
     PRE_BUILD COMMENT "Creating JS Wrappers"
     COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
@@ -460,8 +483,12 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISASHN_Standard_Deviation.nii.gz DESTINATION bisweb/images)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Mask.nii.gz DESTINATION bisweb/images)
 
-  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/README.md DESTINATION bisweb/lib/dcm2nii_binaries)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/license.txt DESTINATION bisweb/lib/dcm2nii_binaries)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/windows/dcm2niix.exe DESTINATION bisweb/lib/dcm2nii_binaries/windows)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/linux/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/linux)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/mac/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/mac)
   install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
   
 ELSE(BIS_A_EMSCRIPTEN)
@@ -477,7 +504,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat -Wint-in-bool-context")
+    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat")
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11" CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
@@ -486,9 +513,15 @@ ELSE(BIS_A_EMSCRIPTEN)
   include_directories ( ${EIGEN3_INCLUDE_DIRS} )
 
   IF (BIS_USEINDIV)
-    
     include_directories ( ${IGL_INCLUDE_DIRS} )
   ENDIF (BIS_USEINDIV)
+
+  IF (BIS_USECPM)
+    include_directories( "${PROJECT_SOURCE_DIR}/cpmcode")
+  ENDIF (BIS_USECPM)
+
+
+  
   include_directories (${PROJECT_SOURCE_DIR})
 
       
@@ -656,3 +689,4 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
 
 INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
+

@@ -41,7 +41,6 @@
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css" href="../node_modules/jstree/dist/themes/default/style.css">
     <link rel="stylesheet" type="text/css" href="../node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css">
-    <link rel="stylesheet" type="text/css" href="../node_modules/bootstrap-toggle/css/bootstrap-toggle.min.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
@@ -73,7 +72,6 @@
       bis-dockwidth="300"
       bis-coreopen="true"
       bis-fixed="1"
-      bis-webgl="2"
       bis-defaulttext="">
     </bisweb-viewerlayoutelement>
     
@@ -119,15 +117,22 @@
       bis-viewerapplicationid="#viewer_application"
       bis-painttoolid="#painttool">
     </bisweb-studypanel>
-    
+
+    <bisweb-filetreepipeline
+      id="filetreepipeline"
+      bis-algocontrollerid="#algoelement">
+    </bisweb-filetreepipeline>
+
     <bisweb-viewerapplication
       id="viewer_application"
       bis-menubarid="#viewer_menubar"
       bis-graphelementid="#bisweb_graphelement"
       bis-dicomimportid="#dicom_import"
       bis-modulemanagerid="#modulemanager"
-      bis-viewerid="#viewer">
+      bis-viewerid="#viewer"
+      bis-filetreepipelineid="#filetreepipeline">
     </bisweb-viewerapplication>
+
 
   </div>
 

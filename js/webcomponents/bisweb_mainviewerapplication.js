@@ -913,7 +913,15 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
-
+        const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
+        if (filetreepipelineid) {
+            let filetreepipeline = document.querySelector(filetreepipelineid);
+            webutil.createMenuItem(hmenu, '');
+            webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
+                                    () => {
+                                        filetreepipeline.openPipelineCreationModal();
+                                    });
+        }
 
         return hmenu;
     }
@@ -1174,9 +1182,9 @@ class ViewerApplicationElement extends HTMLElement {
                 dicommodule.show();
             });
 
-            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-                dicommodule.showDICOMImportModal();
-            });
+            //webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+            //                dicommodule.showDICOMImportModal();
+            //});
         }
         
         webutil.createMenuItem(bmenu,'');

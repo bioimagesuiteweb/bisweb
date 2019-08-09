@@ -378,7 +378,7 @@ class BisWebMatrix extends BisWebDataObject{
 
             if (ext==="txt") {
                 // Make this into CSV file
-                console.log(text);
+                //console.log(text);
                 let s=text.split('\n');
                 text="";
                 for (let i=0;i<s.length;i++) {

@@ -366,110 +366,6 @@ input[type="radio"] .styled:checked + label::after {
     transform: scale(-1, 1);
 }
 
-.bisweb-taucharts-container {
-    background-color : rgb(12,12,12);
-}
-
-.bisweb-taucharts-container > svg {
-    display : block;
-}
-
-.bisweb-taucharts-container text {
-    fill : black;
-}
-
-.single-chart {
-    height : 100%;
-    width : 100%;
-}
-
-.short-chart {
-  height : 95%;
-  width : 100%;
-}
-
-.task-chart {
-    height : 40%;
-    width : 100%;
-}
-
-.tau-chart__layout__content {
-    position : relative;
-    top : 0%;
-    width : 85%;
-    height : 100%;
-}
-
-.tau-chart__layout__header {
-  height : 0px;
-}
-
-.tau-chart__legend {
-    float : right;
-    position: relative;
-    width : 15%;
-    height : 25%;
-    padding-left : 30px;
-    padding-top : 5px;
-}
-
-.tau-chart__label {
-    font-size : 11px;
-}
-
-tspan {
-    fill : white;
-    font-weight : bold;
-    font-size : 12px;
-}
-
-.tau-chart__tooltip {
-    display : block; 
-    position : absolute;
-    border-width : 1px;
-    border-style : solid;
-    border-color : white;
-    background-color : rgba(27, 35, 83, 0.5);
-    z-index : 1000;
-}
-
-.tau-chart__tooltip__clickable:hover {
-    background-color : rgba(47, 12, 102, 0.5);
-}
-
-.tau-chart__legend__item {
-    padding: 5px;
-}
-
-.tau-chart__legend__item:hover {
-    background-color :  rgba(27, 35, 83, 0.8);
-}
-
-.tau-chart__legend__reset:hover {
-    background-color : rgba(202, 0, 0, 0.4);
-}
-
-.tau-chart__legend__guide--color {
-    height : 5px;
-}
-
-.tau-chart__line {
-    transition : opacity 1s;
-    opacity : 0.7;
-}
-
-.tau-chart__bar {
-    transition : opacity 1s;
-}
-
-.tau-chart__highlighted {
-    opacity : 1.0;
-}
-
-.tau-chart__dimmed {
-    opacity : 0.3;
-}
-
 .i-role-label {
     fill : rgba(255,255,255,1.0) !important;
     font-size : 12px !important;
@@ -529,4 +425,40 @@ tspan {
 
 .bisweb-li:hover {
     background-color : rgba(0, 188, 140, 0.5);
+}
+
+.bisweb-glyphicon-right {
+    float: right;
+    font-size: 15px;
+}
+
+:root {
+  --capped-modal-list-height : 75vh;
+}
+
+.bisweb-filedialog-selected {
+    background-color : rgb(70, 69, 69) !important;
+}
+
+.bisweb-scrollable-container {
+    overflow: auto;
+    max-height: var(--capped-modal-list-height) ;
+}
+
+.bisweb-pipeline-input-list {
+    overflow-wrap: break-word;
+}
+
+.bisweb-sticky-container {
+    position : -webkit-sticky;
+    position : sticky;
+    top: 0;
+}
+
+.bisweb-list-group-item { 
+    font-size : 9pt;
+}
+
+.bisweb-list-group-item:hover {
+    background-color : rgba(12, 227, 172, 0.2);
 }
