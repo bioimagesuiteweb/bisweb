@@ -483,8 +483,12 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISASHN_Standard_Deviation.nii.gz DESTINATION bisweb/images)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Mask.nii.gz DESTINATION bisweb/images)
 
-  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/README.md DESTINATION bisweb/lib/dcm2nii_binaries)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/license.txt DESTINATION bisweb/lib/dcm2nii_binaries)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/windows/dcm2niix.exe DESTINATION bisweb/lib/dcm2nii_binaries/windows)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/linux/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/linux)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/mac/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/mac)
   install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
   
 ELSE(BIS_A_EMSCRIPTEN)
