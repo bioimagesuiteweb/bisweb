@@ -78,59 +78,84 @@ Editing code also requires a text editor. Users with no prior experience may wan
 
 More information about each of these tools may be found in the links contained in this section.
 
-### Aside: If you are using Microsoft Windows
-
-The instructions in this documents are primarily for Linux (Ubuntu) and secondarily MacOS. These are Unix-y operating systems with a common set of commandline tools and package managers which make life a little easier.
-
-If you are developing on a Windows machine, it is strongly recommended to compile/build BioImage Suite Web using the Ubuntu distribution available from the Windows Store as of 2016. This is part of the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and will simplify your life immensely. See also [https://github.com/QMonkey/wsl-tutorial](https://github.com/QMonkey/wsl-tutorial) and also the section [ Microsoft Windows and WSL](#Microsoft-Windows-and-WSL) at the end of the document for more details.
-
 ---
 
-### Installing Git
+# Setting up your Development Environment
 
-Git may already be installed on Linux and Mac. ``which git`` will  return the path for Git if it is installed, or an error message otherwise. For MS-Windows please see [this page](https://git-scm.com/download/win). This will also install a `bash`
-command line shell which can be used in the same way as a standard `bash` shell (the shell that ships with MacOS and Linux).
+## Option 1. Docker Environment (Advanced)
 
-To test that git is correctly installed type:
+If you are comfortable with Docker, then you can create and build bisweb in a
+docker environment. See
+[our docker repository]([https://hub.docker.com/r/xeniosp/bisweb).
 
-    git --version
+In particular you will need to 
 
-If it returns a descriptive answer (e.g. ``git version ...``) then Git is properly installed.
+1. Install the container
 
-### Installing Node.js
+    docker pull xeniosp/bisweb
+    
+2. Log in to the container
 
-It it recommended the install the latest version of Node.js from the
-[Node.js webpage](https://nodejs.org/en/) (download the latest stable version which should be
-10.x LTS). The ``node`` and ``npm`` binary may need to be added to ``PATH``.
+    sudo docker run -p 8080:8080 -it xeniosp/bisweb bash
+    
+3. The source tree for bisweb will be in the directory /root/bisweb/src and /root/bisweb/gpl (for the gpl plugin). See the [Dockerfile](../docker/Dockerfile)
+   for more information. You can update the source (this is mapped to `devel`
+   branch) using `git pull` as usual.
 
-To test a correct installation type
+## Option 2. Linux/Ubuntu
 
-    node -v
+Compiling BisWeb requires a number of prerequisites.
 
-If it returns a descriptive answer, e.g. ``v10.15.0``, then Node is correctly installed.
+For Ubuntu you will need to run the following commands (unless these packages
+are already on your system)
 
-### Setting up
+    sudo apt-get -yqq update
+    sudo apt-get install -yqq python-pip python-dev python3 python3-pip unzip g++ gcc cmake cmake-curses-gui
+    sudo apt-get install -yqq curl openjdk-8-jdk git make dos2unix
+    sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash
+    sudo apt-get install -yq nodejs
 
-Once both Git and Node are set up, install the rest of the tools as follows: on MacOS or Linux open a terminal and type
+Then install the following 2 python packages (if you are interested in python)
+
+    sudo pip3 install numpy nibabel
+
+Then install the following npm dependencies:
 
     sudo npm install -g gulp mocha rimraf
+    sudo npm install -g electron --unsafe-perm=true --allow-root
+    sudo npm install -g electron-packager
 
-or on Windows type
+These steps are identical to what is used for the Docker-based devel setup
+described above.
 
+### Aside: Microsoft Windows
+
+We suggest using the
+[Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10). Install
+the Ubuntu VM and follow the same steps as for Linux/Ubuntu above.
+
+## Option 3. MacOS 10.14
+
+This is similar to Linux. First install Xcode and [homebrew](https://brew.sh/)
+if you do not already have these installed.
+
+Then install the pre-requisite packages using brew -- the instructions below
+are for Node V.10.
+
+    brew install python2 python3 nodejs cmake node@10
+    brew link python2
+    brew link --force node@10
+    brew cask install java
+
+
+Then install the python and npm dependencies as in the Ubuntu case using:
+
+    pip3 install numpy nibabel
     npm install -g gulp mocha rimraf
+    npm install -g electron --unsafe-perm=true --allow-root
+    npm install -g electron-packager
 
-This will install the core tools. Please note that the '-g' flag stands for
-'global', which means these modules are installed in the global package
-directory (e.g. /usr/local/node_modules) instead of the local package
-directory. If there is an error or the server times out, simply re-run the
-same command until it is complete.
-
-Next install Electron and its associated tools. As of April 2018, there is bug in
-the electron installer which requires a more complex command:
-
-     sudo npm install -g electron --unsafe-perm=true --allow-root
-
-The JS development environment is now complete.
+---
 
 ## Building and Running BioImage Suite Web
 
@@ -171,22 +196,16 @@ them; a folder named 'bisweb' or something similar in the home directory will wo
     cd ~
     mkdir bisweb
     git clone https://github.com/bioimagesuiteweb/bisweb bisweb
+    
+You should also get the gpl plugin
+
+    git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
+
 
 The source code for the project may be found on [Github](https://github.com/bioimagesuiteweb/bisweb).
+   
 
----
-
-## Docker Environment (Advanced)
-
-If you are comfortable with Docker, then you can create and build bisweb in a
-docker environment. Simply `cd docker` from the bisweb source and type
-
-    ./build.sh
-
-
-## Building the JS Code
-
-The steps below are for doing the process by hand.
+## Building the Code
 
 Assuming the steps above, the BioImageSuite Web code should be inside a folder
 named ``bisweb``. This will be used as the name of the root directory for the
@@ -209,20 +228,19 @@ _Note 2:_ If npm install fails to install tensorfow.js (probably because you
 do not have a proper node-gyp) setup, simply delete the line containing
 `tensorflow` from `package.json` and try again. This is optional at this point.
 
- To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.js` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, Bisweb comes with a prebaked version of the wasm binaries:
+To create the WebAssembly binaries and ``build`` folder structure from the
+source files, use the `createbuild.js` script
 
     node ./config/createjsbuild.js
 
-This will create three directories, ``build/web``, ``build/wasm``, and ``build/dist`` and copy the wasm binary in ``various/wasm`` to the build folders. This will perform the same function as making the WebAssembly binaries from the C++ code, though the prebaked binaries may not be fully up-to-date in every version of the software.
+This will create three directories, ``build/web``, ``build/wasm``,
+``build/dist`` and ``build/native`  and also install emscripten as needed.
 
-__Important: The build tools (Gulp, webpack, etc.) will look for the files in exactly these locations, so moving them elsewhere may cause build steps to fail.__ The curious may want to look at the configuration files `config/webpack_config.js`, `config/app_config.js` and `config/bisweb_pathconfig.js`.
+Then you can perform a full initial build using
 
-
-The last step is to build the entire application:
-
-    gulp build
-
-This will copy core files to `build/web`, the destination for the both the web and Electron builds.
+    cd build
+    ./fullbuild.sh
+    
 
 ### Open the Web Applications
 
@@ -254,92 +272,19 @@ At this point the JS-development directory should be fully functional.
 
 ---
 
-## Building the C++ Code as a WebAssembly Library
+# Under the Hood
 
-The previous sections used prebaked versions of the WebAssembly binaries. This
-section will describe how to build this final part of the software, the
-C++/WebAssembly binaries. These instructions are for Unix-style operating
-systems, e.g. Linux, MacOS and the
-[WSL version of Ubuntu Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
-that can be installed from the MS-Windows Store.
+The `fullbuild.sh` script calls 4 container scripts
 
-The default scripts assume that you have the gpl plugin installed side-by-side
-with the source tree (assumed to be in a directory called `bisweb`)
+1. `wasmbuild.sh` -- this builds the C++ code as a WebAssembly Library
+2. `webbuild.sh` -- this builds the JS bunles for the Web application (this
+   depends on wasmbuild.sh)
+3. `nativebuild.sh` -- this builds the Python and Matlab bindings (this also
+   depends on wasmbuild.sh being run at least once)
+4. `testbuild.sh` -- this runs a small subset of the regression tests.
 
-
-    cd bisweb/..
-    mkdir gpl
-    git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
-
-
-This process requires three tools:
-
-* [_CMake_](https://cmake.org/) : The cross-platform ``make`` tool originally created for the needs of the [Insight Toolkit (ITK)](https://itk.org/).
-* [_Emscripten_](https://github.com/kripken/emscripten): A project from Mozilla that can be used to compile
-  C++ to WebAssembly
-* [_Eigen_](http://eigen.tuxfamily.org/index.php?title=Main_Page) : A numerical linear algebra library. This is the only external library used by BioImage Suite Web.
-
-### Installing CMake and Python
-
-#### Ubuntu/Debian
-
-Ubuntu and Debian support CMake through their built-in package manager, [``apt``](https://help.ubuntu.com/lts/serverguide/apt.html). Enter the following:
-
-    sudo apt-get install cmake cmake-curses-gui
-    
-You probably should also install python3.
-
-    sudo apt-get install python3
-    
-#### MacOS
-
-We need both a modern python2 and python3 for some applications. We recommend
-using the [brew](https://brew.sh/) package manager.
-
-    brew install python3 python2 cmake
-
-You will probably also need to link the _modern_ version of python2 over the
-system provided one using
-
-    brew link python2
-
-
-#### Python Packages
-
-Please install the packages `numpy` and `nibabel` using the pip package manager as follows:
-
-    sudo pip3 install numpy nibabel
-
-These are used by the Python regression tests.
-
-### Installing Emscripten and Eigen and Configuring your Build Directories
-
-The C++ BisWeb code has a single external library dependency — Eigen. We also need to install Emscripten to compile the C++ code to Web Assembly. Both the installation of these tools and the creation of the correct development directories is automated using the [createbuild.js](../config/createbuild.js) script from the config directory as follows:
-
-First go to your source directory
-
-    cd SOURCE_DIR
-
-Run the script:
-
-    node ./config/createbuild.js
-
-
-This will install Eigen v3, IGL, a version of Emscripten and then create the
-build directories and a bunch of scripts all inside a directory called `build`
-in your source tree. For the curious, a detailed description of createbuild
-[can be found at the end of this document](#Detailed-description-of-createbuild.sh).
-
-## Configuring and Building -- The Quick Way
-
-Simply run the script `fullbuild.sh` from the `build` directory. This calls
-the following
-
-* wasmbuild.sh -- this builds the C++ WASM code
-* webbuild.sh -- this builds the web-based application
-* nativebuild.sh -- this builds the python and matlab libraries and scripts
-  (this needs wasmbuild.sh to be run first)
-* testbuild.sh -- this runs a subset of the tests
+If you simply want to rebuild one of these components, just run the individual
+script (e.g. `webbuild.sh` to rebuild the web application)
 
 
 ## Configuring and Building -- The Manual Way
@@ -350,11 +295,7 @@ __This requires some understanding of CMake.__ There is lots of info online on t
 
 You will need to run cmake to configure the project as a "cross-compiled" application. The easiest way to do this (if you follow our instructions completely) is as follows:
 
-    cd build
-    source setpaths.sh
-    cd wasm
-
-__Note:__ You should always `source setpaths.sh` before any make/cmake operations in the future as well.
+    cd build/wasm
 
 Then to accept all defaults type
 
@@ -457,10 +398,10 @@ The final output will go in the directory `build/doc/doxygen/html`.
 
 The first is for the webpage itself. To do this type
 
-    gulp build -m 1 
+    gulp build -m 
     gulp zip
 
-The setting `-m 1` turns on minification of the JS code and turns off debug statements. The final result should be a zip file in `build/dist` that can simply be uploaded to a web server.
+The setting `-m` turns on minification of the JS code and turns off debug statements. The final result should be a zip file in `build/dist` that can simply be uploaded to a web server.
 
 ### Electron Application
 
@@ -510,18 +451,6 @@ for Google Drive and Dropbox access. A skeleton files is provided in
 The parameter "--internal 1" instructs webpack to include the code from the internal directory and not include the boilerplate from `js/nointernal` -- see `config/webpack.config.js` if you are curious as to how this happens.
 
 ---
-
-## Microsoft Windows and WSL
-
-The one weakness of compiing BisWeb under the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10) is that Electron does not run under WSL at this point (it does run but lacks the WebGL integration we need for the viewers.) If you need to work with both C++ code and Electron, here is a recipe that works:
-
-1. Checkout the bisweb source tree under both WSL (e.g. /home/user/bisweb) and under "Native" Windows (e.g. c:\users\user\bisweb)
-
-2. Configure the Windows version to just build the JS distribution (i.e. no WebAssembly)
-
-3. Configure the WSL (Ubuntu effectively) version to build the full version (including Web Assembly)
-
-If you are not planning to modify the C++ code then you can simply build this once under WSL and just copy the three files above manually.
 
 ---
 
