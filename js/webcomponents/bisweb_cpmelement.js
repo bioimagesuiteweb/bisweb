@@ -19,6 +19,7 @@
 
 "use strict";
 const $ = require('jquery');
+
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
@@ -60,11 +61,13 @@ class CPMElement extends HTMLElement {
 
             this.fileListFormId = bis_webutil.getuniqueid();
             this.fileListForm = $(`
-                <div class='form-group'>
-                    <label for=${this.fileListFormId}>Select an input</label>
-                    <select class='form-control' id=${this.fileListFormId}>
-                    </select>
-                </div>`);
+            <label for=${this.fileListFormId}>Select an input</label>
+            <div class='form-group'>
+                <select class='form-control' id=${this.fileListFormId}>
+                </select>
+            </div>
+            <button class='btn btn-success'>Load</button>
+            `);
 
             let inputButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
@@ -90,8 +93,8 @@ class CPMElement extends HTMLElement {
     createCPMPopoverButton() {
         let importFileButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
-                this.importFiles(f);
                 if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
+                this.importFiles(f);
             }
         }, {
             'title': 'Import connectivity index file',
@@ -101,8 +104,8 @@ class CPMElement extends HTMLElement {
 
         let importDirectoryButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
+                if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
                 this.importFiles(f);
-                if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm);}
             }
         }, {
             'mode' : 'directory',
@@ -158,9 +161,12 @@ class CPMElement extends HTMLElement {
     }
 
     populateFileElementList(fileList) {
+        let formSelect = this.fileListForm.find('select');
+        formSelect.empty();
         for (let file of fileList) {
             let basename = bis_genericio.getBaseName(file);
-
+            let option = $(`<option value=${basename}>${basename}</file>`);
+            formSelect.append(option);
         }
     }
 }
