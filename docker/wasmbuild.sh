@@ -37,7 +37,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
       ${SRCDIR}/cpp
 
 
-make ${BISMAKEJ} libbiswasm
+make ${BISMAKEJ} 
 make install
 
 cd ${BDIR}/install/bisweb
@@ -52,3 +52,4 @@ ls -lrt *tgz *.tar.gz *zip
 echo "-----------------------------------------------------------------------"
 echo " Done with WASM and Command Line JS"
 echo "-----------------------------------------------------------------------"
+--------"

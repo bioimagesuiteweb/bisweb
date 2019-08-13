@@ -7,6 +7,7 @@ MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 RUN apt-get -yqq update
 RUN apt-get install -yqq python-pip python-dev python3 python3-pip
 RUN apt-get install -yqq unzip g++ gcc cmake cmake-curses-gui
+RUN apt-get install -yqq doxygen graphviz
 RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs

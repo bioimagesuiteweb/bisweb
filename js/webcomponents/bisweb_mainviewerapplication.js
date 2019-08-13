@@ -916,7 +916,8 @@ class ViewerApplicationElement extends HTMLElement {
         const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
         if (filetreepipelineid) {
             let filetreepipeline = document.querySelector(filetreepipelineid);
-            webutil.createMenuItem(hmenu, 'Open File Tree Pipeline', 
+            webutil.createMenuItem(hmenu, '');
+            webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
                                     () => {
                                         filetreepipeline.openPipelineCreationModal();
                                     });
@@ -1181,9 +1182,9 @@ class ViewerApplicationElement extends HTMLElement {
                 dicommodule.show();
             });
 
-            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-                dicommodule.showDICOMImportModal();
-            });
+            //webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+            //                dicommodule.showDICOMImportModal();
+            //});
         }
         
         webutil.createMenuItem(bmenu,'');

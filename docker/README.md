@@ -3,11 +3,11 @@ bisweb build environment container.
 
 * Dockerfile -- the actual spec file
 
-* build.sh -- a short script to create the container (basically the one line)
+* dockerbuild.sh -- a short script to create the container (basically the one line)
 
         docker build -t xeniosp/bisweb .
 
-* run.sh -- a short script to run a created container in interactive mode
+* dockerrun.sh -- a short script to run a created container in interactive mode
 
         sudo docker run -p 8080:8080 -it xeniosp/bisweb bash
 
