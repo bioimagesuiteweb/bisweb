@@ -21,6 +21,7 @@
 
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
+const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 const moduleIndex = require('moduleindex.js');
 
 const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
@@ -40,6 +41,8 @@ class CPMElement extends HTMLElement {
             let dockbar = layoutElement.elements.dockbarcontent;
             this.createMenubarItems(menubar, dockbar);
         });
+
+        bisweb_popoverhandler.addPopoverDismissHandler();
     }
 
     createMenubarItems(menubar, dockbar) {
@@ -53,18 +56,7 @@ class CPMElement extends HTMLElement {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
             this.cpmPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
 
-            let importButton = bis_webfileutil.createFileButton({
-                'name' : 'Import CPM File',
-                'type' : 'primary',
-                'callback' : (f) => {
-                    this.importFiles(f);
-                }
-            }, {
-                'title': 'Import connectivity index file',
-                'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
-                'suffix' : 'json'
-            });
-
+            let inputButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
                 'name' : 'Export CPM File',
                 'type' : 'warning',
@@ -78,11 +70,63 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            this.cpmPanel.append(importButton, exportButton);
+            this.cpmPanel.append(inputButton, exportButton);
         } else {
             console.log('cpm panel parent', this.cpmPanel.parent());
             this.cpmPanel.parent().addClass('in');
         }
+    }
+
+    createCPMPopoverButton() {
+        let importFileButton = bis_webfileutil.createFileButton({
+            'callback' : (f) => {
+                this.importFiles(f);
+            }
+        }, {
+            'title': 'Import connectivity index file',
+            'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
+            'suffix' : 'json'
+        });
+
+        let importDirectoryButton = bis_webfileutil.createFileButton({
+            'callback' : (f) => {
+                this.importFiles(f);
+            }
+        }, {
+            'mode' : 'directory',
+            'title': 'Import connectivity files from directory',
+            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
+        });
+
+        let inputButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM File</button>`);
+        let popoverContent = $(
+            `<div>
+                <div class='list-group'>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Import from CPM File</a>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Import from directory</a>
+                </div>
+            </div>`
+        );
+
+        $(inputButton).popover({
+            'title': 'Select input source',
+            'trigger': 'click',
+            'html': true,
+            'placement': 'left',
+            'container': 'body',
+            'content': popoverContent
+        });
+
+        //workaround to make popover appear on first click
+        inputButton.on('click', () => { $(inputButton).popover('toggle'); });
+
+        let popoverFileButton = popoverContent.find('.list-group-item').get(0);
+        let popoverDirectoryButton = popoverContent.find('.list-group-item').get(1);
+
+        $(popoverFileButton).on('click', () => { importFileButton.click(); bisweb_popoverhandler.dismissPopover(); });
+        $(popoverDirectoryButton).on('click', () => { importDirectoryButton.click(); bisweb_popoverhandler.dismissPopover(); });
+
+        return inputButton;
     }
 
     importFiles(f) {
