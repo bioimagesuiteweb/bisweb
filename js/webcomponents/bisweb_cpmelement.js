@@ -20,6 +20,7 @@
 "use strict";
 
 const bis_webutil = require('bis_webutil.js');
+const bis_webfileutil = require('bis_webfileutil.js');
 const moduleIndex = require('moduleindex.js');
 
 const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
@@ -27,19 +28,64 @@ class CPMElement extends HTMLElement {
 
     constructor() {
         super();
+        this.cpmPanel = null;
     }
 
     connectedCallback() {
         this.menubarid = this.getAttribute('bis-menubarid');
+        this.layoutelementid = this.getAttribute('bis-layoutelementid');
         bis_webutil.runAfterAllLoaded( () => {
             let menubar = document.querySelector(this.menubarid).getMenuBar();
-            this.createMenubarItems(menubar);
+            let layoutElement = document.querySelector(this.layoutelementid);
+            let dockbar = layoutElement.elements.dockbarcontent;
+            this.createMenubarItems(menubar, dockbar);
         });
     }
 
-    createMenubarItems(menubar) {
+    createMenubarItems(menubar, dockbar) {
         let topmenu = bis_webutil.createTopMenuBarMenu('CPM', menubar);
-        bis_webutil.createMenuItem(topmenu, 'Open Connectivity File Loader');
+        bis_webutil.createMenuItem(topmenu, 'Open Connectivity File Loader', () => { this.openCPMSidebar(dockbar); });
+
+    }
+
+    openCPMSidebar(dockbar) {
+        if (!this.cpmPanel) {
+            let panelGroup = bis_webutil.createpanelgroup(dockbar);
+            this.cpmPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
+
+            let importButton = bis_webfileutil.createFileButton({
+                'name' : 'Import CPM File',
+                'type' : 'primary',
+                'callback' : (f) => {
+                    this.importFiles(f);
+                }
+            }, {
+                'title': 'Import connectivity index file',
+                'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
+                'suffix' : 'json'
+            });
+
+            let exportButton = bis_webfileutil.createFileButton({
+                'name' : 'Export CPM File',
+                'type' : 'warning',
+                'callback' : (f) => {
+                    this.exportFiles(f);
+                }
+            }, {
+                'title': 'Export connectivity index file',
+                'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
+                'save' : true,
+                'suffix' : 'json'
+            });
+
+            this.cpmPanel.append(importButton, exportButton);
+        } else {
+            console.log('cpm panel parent', this.cpmPanel.parent());
+            this.cpmPanel.parent().addClass('in');
+        }
+    }
+
+    importFiles(f) {
 
     }
 }
