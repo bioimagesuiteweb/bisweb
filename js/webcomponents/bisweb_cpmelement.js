@@ -21,8 +21,27 @@
 
 const bis_webutil = require('bis_webutil.js');
 const moduleIndex = require('moduleindex.js');
+const scatterplot = require('bisweb_scatterplot.js');
 
 const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
+
+/**
+ * 
+ * @param {ViewerLayoutElement} layoutwidget 
+ */
+let cpmGuiManager = function(layoutwidget){
+    /**
+     * @type {CanvasRenderingContext2D}
+     */
+    let ctx = layoutwidget.getCanvas().getContext("2d");
+
+    //Draw svg to fake canvas
+    let tempElement = document.createElement('div');
+    let dims = [layoutwidget.getInnerWidth(), layoutwidget.getInnerHeight()];
+
+    let Scatter = new Scatter.scatterplot(tempElement, dims, ctx, [0,0]);
+};
+
 class CPMElement extends HTMLElement {
 
     constructor() {
@@ -31,10 +50,18 @@ class CPMElement extends HTMLElement {
 
     connectedCallback() {
         this.menubarid = this.getAttribute('bis-menubarid');
+        this.layoutwidgetid = this.getAttribute('bis-layoutwidgetid');
+
         bis_webutil.runAfterAllLoaded( () => {
             let menubar = document.querySelector(this.menubarid).getMenuBar();
             this.createMenubarItems(menubar);
+
+            let layoutwidget = document.querySelector(this.layoutwidgetid);
+            this.guiManager = cpmGuiManager(layoutwidget);
         });
+
+        
+        
     }
 
     createMenubarItems(menubar) {
