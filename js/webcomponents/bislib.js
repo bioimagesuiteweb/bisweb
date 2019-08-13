@@ -31,6 +31,7 @@ require('bisweb_oldgrapherelement.js');
 require('bisweb_filetreepipeline.js');
 require('bisweb_keylistener.js');
 require('bisweb_popoverhandler.js');
+require('bisweb_cpmelement.js');
 
 
 const webutil = require('bis_webutil');
