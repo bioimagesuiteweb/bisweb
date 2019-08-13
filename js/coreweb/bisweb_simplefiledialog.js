@@ -86,24 +86,34 @@ class SimpleFileDialog {
             }
         }
 
+
+        // Directory Mode
         if (this.mode.indexOf('dir')>=0) {
             if (this.selectedItems.length > 1) {
+                this.modal.dialog.modal('hide');
                 setTimeout( () => {
-                    this.fileRequestFn(this.selectedItems.join(','));
+                    let formattedItemList = [], currentEntry;
+                    let separator = this.currentDirectory.includes('/') ? '/' : '\\';
+                    for (let item of this.selectedItems) {
+                        currentEntry = this.currentDirectory + separator + item;
+                        formattedItemList.push(currentEntry);
+                    }
+
+                    this.fileRequestFn(formattedItemList.join(','));
                     return;
                 },10);
+            } else {
+                if (name.length>0) {
+                    // Make a directory
+                    return this.createDirectoryCallback(name);
+                }
+    
+                // We are done
+                this.modal.dialog.modal('hide');
+                setTimeout( () => {
+                    this.fileRequestFn(this.currentDirectory);
+                },10);
             }
-            // Directory Mode
-            if (name.length>0) {
-                // Make a directory
-                return this.createDirectoryCallback(name);
-            }
-
-            // We are done
-            this.modal.dialog.modal('hide');
-            setTimeout( () => {
-                this.fileRequestFn(this.currentDirectory);
-            },10);
         } 
         
         if (name.length<1) {
