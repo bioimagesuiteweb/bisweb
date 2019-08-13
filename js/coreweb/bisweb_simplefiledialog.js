@@ -297,7 +297,6 @@ class SimpleFileDialog {
                 }
             }
 
-            //console.log('mode', opts.mode);
             if (opts.mode) 
                 this.mode = opts.mode;
 
@@ -316,9 +315,8 @@ class SimpleFileDialog {
                 initialfilename=opts.initialFilename;
         }
 
-        //console.log('opts.mode', opts.mode);
-        if (opts.mode === 'directory') 
-            this.activeFilterList = ['directories'];
+        /*if (opts.mode === 'directory') 
+            this.activeFilterList = ['directories'];*/
         
 
         this.updateDialog(list,startDirectory,rootDirectory,initialfilename);
