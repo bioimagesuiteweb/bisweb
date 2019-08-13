@@ -12,22 +12,33 @@ const globalParams = {
  * @param {Element} parentDiv 
  * @param {number[]} dim 
  * @param {CanvasRenderingContext2D} ctx if you would like it to be rendered to a canvas input the ctx.
- * @param {number[]} pos position for the scatterplot to be drawn to on the canvas
+ * @param {number[]} pos position for the scatterplot to be drawn to
  */
-let scatterplot = function(parentDiv, dim, ctx = null, pos = null){
+let scatterplot = function(parentDiv, dim, pos, ctx = null){
     globalParams.Id=webutil.getuniqueid();
     
     //Some Size Settings
     let sizeOffset = 30;
-    let svgDim = Math.min(dim[0]/2, dim[1] - 150);
+    let svgDim = Math.min(dim[0], dim[1]);
     let innerDim = svgDim - sizeOffset;
     
     //Create the svg that will contain the scatter chart
-    let scatterChart = d3.select(parentDiv).append("svg").attr("id", globalParams.Id)
-                        .attr("width", svgDim)
-                        .attr("height", svgDim)
-                        .append("g")
-                        .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
+    let SVG = d3.select(parentDiv).append("svg").attr("id", globalParams.Id)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .attr('class', 'bis-scatterplotchart')
+                .attr("width", svgDim)
+                .attr("height", svgDim)
+                .attr("transform", `translate(${pos[0]},${pos[1]})`);
+                
+    let scatterChart = SVG.append("g")
+                        .attr("transform", `translate(${sizeOffset/2},${sizeOffset/2})`);
+    scatterChart.append('rect')
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .attr('width', svgDim)
+                    .attr('height', svgDim)
+                    .attr('fill', '#FFFFFF')
+                    .attr("transform", `translate(${-sizeOffset},${-sizeOffset/2})`);
 
 
     //Setup x-Scale and x-Axis
@@ -39,6 +50,7 @@ let scatterplot = function(parentDiv, dim, ctx = null, pos = null){
     
     let xAxis = d3.svg.axis()
                 .orient("bottom")
+                .ticks(7)
                 .scale(xScale);
     
                 
@@ -49,28 +61,29 @@ let scatterplot = function(parentDiv, dim, ctx = null, pos = null){
 
     let yAxis = d3.svg.axis()
                     .orient("left")
+                    .ticks(7)
                     .scale(yScale);
     
     //draw the Axes to the screen
     scatterChart.append("g")
-                .attr("class", "x axis")
+                .attr("class", "bis-axis")
                 .attr("transform", `translate(${sizeOffset},${innerDim-sizeOffset})`)
                 .call(xAxis);
 
     scatterChart.append("g")
-                .attr("class", "y axis")
+                .attr("class", "bis-axis")
                 .attr("transform", `translate(${sizeOffset},0)`)
                 .call(yAxis);
 
     scatterChart.append('text')
                 .text('Predicted')
                 .attr("transform", `translate(${svgDim/2},${innerDim})`)
-                .attr('class','x label');
+                .attr('class','bis-label');
 
 scatterChart.append('text')
                 .text('Actual')
                 .attr("transform", `translate(0,${innerDim/2})rotate(-90)`)
-                .attr('class','y label');
+                .attr('class','bis-label');
 
     let genScatter = (points, lobf) =>{
         scatterChart.selectAll('.dot').remove();
@@ -91,18 +104,20 @@ scatterChart.append('text')
                     .attr('r', 1);
 
         dots.exit().remove();
-            if(!lobf) return;
-            let { m, b } = lobf;
+            if(lobf){
+                let { m, b } = lobf;
 
-            scatterChart.selectAll('.LOBF').remove();
-            //Draw regression to the screen
-            scatterChart.append("line")
-                    .attr("x1", xScale(xMin)+sizeOffset)
-                    .attr("y1", yScale(b))
-                    .attr("x2", xScale(xMax)+sizeOffset)
-                    .attr("y2", yScale(m*xMax+b))
-                    .attr("class","LOBF");
+                scatterChart.selectAll('.LOBF').remove();
+                //Draw regression to the screen
+                scatterChart.append("line")
+                        .attr("x1", xScale(xMin)+sizeOffset)
+                        .attr("y1", yScale(b))
+                        .attr("x2", xScale(xMax)+sizeOffset)
+                        .attr("y2", yScale(m*xMax+b))
+                        .attr("class","LOBF");
+            }
 
+        console.log(SVG);
         //Draw To the canvas if ctx is not null;
         if(!ctx) return;
 
@@ -111,20 +126,17 @@ scatterChart.append('text')
         /*
         * SVG to Canvas code adapted from http://bl.ocks.org/armollica/99f18720eb9762351febd64236bb1b9e
         */
-        let DOMURL = window.URL || window.webkitURL || window;
 
-        let svgString = $(`#${globalParams.Id}`)[0].outerHTML;
-	
-        let image = new Image();
-        let svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-        let url = DOMURL.createObjectURL(svgBlob);
+       let img = new Image(),
+       serializer = new XMLSerializer(),
+       svgStr = serializer.serializeToString(SVG[0][0]);
 
-        image.onload = function() {
-            ctx.drawImage(image, pos[0], pos[1]);
-            DOMURL.revokeObjectURL(url);
-        };
+        img.src = 'data:image/svg+xml;base64,'+window.btoa(svgStr);
 
-        image.src = url;
+        img.addEventListener('load', ()=>{
+            ctx.drawImage(img, pos[0], pos[1]);
+            ctx.save();
+        });
     };
 
 

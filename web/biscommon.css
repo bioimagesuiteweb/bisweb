@@ -462,3 +462,23 @@ input[type="radio"] .styled:checked + label::after {
 .bisweb-list-group-item:hover {
     background-color : rgba(12, 227, 172, 0.2);
 }
+
+.bis-axis{
+    font-size: 1rem;
+}
+
+.bis-linregressionline{
+    stroke: black;
+    stroke-width: 3;
+    stroke-dasharray: 4;
+    pointer-events: none;
+}
+
+.bis-scatterplotchart{
+    z-index: 1000;
+	position: relative;
+}
+
+.bis-chartlabel {
+	font-size: 15px;
+}

@@ -21,7 +21,7 @@
 
 const bis_webutil = require('bis_webutil.js');
 const moduleIndex = require('moduleindex.js');
-const scatterplot = require('bisweb_scatterplot.js');
+const Scatter = require('bisweb_scatterplot.js');
 
 const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
 
@@ -30,16 +30,9 @@ const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
  * @param {ViewerLayoutElement} layoutwidget 
  */
 let cpmGuiManager = function(layoutwidget){
-    /**
-     * @type {CanvasRenderingContext2D}
-     */
-    let ctx = layoutwidget.getCanvas().getContext("2d");
-
-    //Draw svg to fake canvas
-    let tempElement = document.createElement('div');
-    let dims = [layoutwidget.getInnerWidth(), layoutwidget.getInnerHeight()];
-
-    let Scatter = new Scatter.scatterplot(tempElement, dims, ctx, [0,0]);
+    let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 3];
+    let pos = [layoutwidget.viewerwidth * (1 / 3) , 10]
+    let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
 };
 
 class CPMElement extends HTMLElement {
