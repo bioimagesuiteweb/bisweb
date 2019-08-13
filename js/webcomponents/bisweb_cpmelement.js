@@ -18,7 +18,8 @@
 /*global window,document,setTimeout,HTMLElement */
 
 "use strict";
-
+const $ = require('jquery');
+const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
@@ -30,6 +31,7 @@ class CPMElement extends HTMLElement {
     constructor() {
         super();
         this.cpmPanel = null;
+        this.fileInputForm = null;
     }
 
     connectedCallback() {
@@ -56,6 +58,14 @@ class CPMElement extends HTMLElement {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
             this.cpmPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
 
+            this.fileListFormId = bis_webutil.getuniqueid();
+            this.fileListForm = $(`
+                <div class='form-group'>
+                    <label for=${this.fileListFormId}>Select an input</label>
+                    <select class='form-control' id=${this.fileListFormId}>
+                    </select>
+                </div>`);
+
             let inputButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
                 'name' : 'Export CPM File',
@@ -81,6 +91,7 @@ class CPMElement extends HTMLElement {
         let importFileButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
                 this.importFiles(f);
+                if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
             }
         }, {
             'title': 'Import connectivity index file',
@@ -91,6 +102,7 @@ class CPMElement extends HTMLElement {
         let importDirectoryButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
                 this.importFiles(f);
+                if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm);}
             }
         }, {
             'mode' : 'directory',
@@ -130,7 +142,26 @@ class CPMElement extends HTMLElement {
     }
 
     importFiles(f) {
+        let extension = f.split('.')[1];
+        console.log('extension', extension, 'f', f);
+        if (!extension) { //flow for a directory of .csv or .tsv files
+            let getMatchingFilesString = `${f}/+(sub*.csv|sub*.tsv)`;
+            bis_genericio.getMatchingFiles(getMatchingFilesString).then( (flist) => {
+                this.populateFileElementList(flist);
+            }); 
+        } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
 
+        } else {
+            console.log('Unrecognized extension', extension, 'for cpm file');
+            bis_webutil.createAlert('Unrecognized extension ' + extension + ' for cpm file', true);
+        } 
+    }
+
+    populateFileElementList(fileList) {
+        for (let file of fileList) {
+            let basename = bis_genericio.getBaseName(file);
+
+        }
     }
 }
 
