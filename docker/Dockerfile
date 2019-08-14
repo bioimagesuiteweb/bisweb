@@ -7,10 +7,10 @@ MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 RUN apt-get -yqq update
 RUN apt-get install -yqq python-pip python-dev python3 python3-pip
 RUN apt-get install -yqq unzip g++ gcc cmake cmake-curses-gui
-RUN apt-get install -yqq doxygen graphviz
 RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs
+RUN apt-get install -yqq doxygen graphviz
 
 # python packages
 RUN pip3 install numpy nibabel
@@ -20,7 +20,8 @@ RUN npm install -g gulp mocha rimraf
 RUN npm install -g electron --unsafe-perm=true --allow-root
 RUN npm install -g electron-packager
 
-# Checkout bisweb source
+# Checkout main bisweb source code
+RUN echo "Checking out bisweb source"
 RUN mkdir /root/bisweb
 WORKDIR /root/bisweb
 RUN git clone https://github.com/bioimagesuiteweb/bisweb src

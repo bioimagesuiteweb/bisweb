@@ -38,12 +38,14 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
 
 
 make ${BISMAKEJ} 
+rm -rf ${BDIR}/install/bisweb
 make install
 
 cd ${BDIR}/install/bisweb
 npm pack
 mv *tgz ${BDIR}/install
 echo "-----------------------------------------------------------------------"
+
 
 cd ${BDIR}/install
 pwd
@@ -52,4 +54,4 @@ ls -lrt *tgz *.tar.gz *zip
 echo "-----------------------------------------------------------------------"
 echo " Done with WASM and Command Line JS"
 echo "-----------------------------------------------------------------------"
---------"
+
