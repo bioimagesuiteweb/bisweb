@@ -213,8 +213,46 @@ class CPMElement extends HTMLElement {
             }
         }
 
-        console.log('raw data', rawData);
         return rawData;
+    }
+
+    /**
+     * Saves the connectivity index file to disk and reformats it to its original file formats (e.g. reverts the internally maintained matrix object to a tab separated string for tsvs)
+     * 
+     * @param {String} f - Filename for the exported connectivity file. 
+     */
+    exportFiles(f) {
+
+        if (!this.connFiles) { bis_webutil.createAlert('No connectivity files in memory, cannot save.', false); return; }
+
+        //revert files to original tab or comma separated form
+        let exportedObj = {};
+        for (let key of Object.keys(this.connFiles)) {
+            exportedObj[key] = {};
+            for (let fileKey of Object.keys(this.connFiles[key])) {
+                let numericMatr = this.connFiles[key][fileKey].getNumericMatrix(), extension = fileKey.split('.')[1];
+
+                let reformattedEntry = [];
+                for (let i = 0; i < numericMatr.length; i++) {
+                    switch (extension) {
+                        case 'tsv': reformattedEntry.push(numericMatr[i].join('\t')); break;
+                        case 'csv': reformattedEntry.push(numericMatr[i].join(',')); break;
+                        default: console.log('Error: unrecognized extension', extension);
+                    }
+                }
+                console.log('reformatted entry', reformattedEntry);
+                exportedObj[key][fileKey] = reformattedEntry.join('\n');
+            }
+        }
+
+        console.log('exported obj', exportedObj);
+        let stringifiedObj = JSON.stringify(exportedObj, null, 2);
+        bis_genericio.write(f, stringifiedObj).then( () => {
+            bis_webutil.createAlert('Saved ' + f + ' successfully', false);
+        }).catch( (e) => { 
+            bis_webutil.createAlert('An error occured while saving ' + f, true); 
+            console.log('An error occured', e); 
+        });
     }
 }
 
