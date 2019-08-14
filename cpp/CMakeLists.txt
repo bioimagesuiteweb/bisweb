@@ -23,7 +23,10 @@ MESSAGE("----------------------------------------------------")
 MESSAGE("-- Building BISWEB")
 MESSAGE("----------------------------------------------------")
 
-SET (BISWEB_VERSION "1.1.1a")
+SET (BISWEB_VERSION_MAJOR 1)
+SET (BISWEB_VERSION_MINOR 1)
+SET (BISWEB_VERSION_PATCH 2a)
+SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
