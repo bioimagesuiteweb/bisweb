@@ -22,6 +22,7 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
       ${SRCDIR}/cpp
 
 make ${BISMAKEJ} install
+rm ${BDIR}/bisweb*python*sh
 make package
 cp *tar.gz ${BDIR}/install
 cd ${BDIR}/install
