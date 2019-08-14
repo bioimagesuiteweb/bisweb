@@ -19,6 +19,7 @@
 
 "use strict";
 const $ = require('jquery');
+const bootbox = require('bootbox');
 
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
@@ -61,18 +62,21 @@ class CPMElement extends HTMLElement {
 
             this.fileListFormId = bis_webutil.getuniqueid();
             this.fileListForm = $(`
-            <label for=${this.fileListFormId}>Select an input</label>
-            <div class='form-group'>
-                <select class='form-control' id=${this.fileListFormId}>
-                </select>
+            <div>
+                <label for=${this.fileListFormId}>Select an input</label>
+                <div class='form-group'>
+                    <select class='form-control' id=${this.fileListFormId}>
+                    </select>
+                </div>
+                <button class='btn btn-success'>View</button>
             </div>
-            <button class='btn btn-success'>Load</button>
             `);
 
             let inputButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
                 'name' : 'Export CPM File',
                 'type' : 'warning',
+                'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
                     this.exportFiles(f);
                 }
@@ -83,7 +87,32 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            this.cpmPanel.append(inputButton, exportButton);
+            let viewButton = this.fileListForm.find('.btn-success');
+            viewButton.on('click', () => {
+                let formName = $('#' + this.fileListFormId).val();
+                console.log('form name', formName);
+
+                //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
+                let subNumRegex = /(sub\d+)/g;
+                let subjectName = subNumRegex.exec(formName)[1], strippedSubjectName;
+                
+                //add two to account for the length of sub
+                if (subjectName.indexOf('0') === subjectName.indexOf('sub') + 2 + 1) {
+                    strippedSubjectName = subjectName.replace(/sub0*/, 'sub');
+                }
+
+                let subVals = this.connFiles[subjectName] || this.connFiles[strippedSubjectName];
+                let connFileVal = subVals[formName];
+                console.log('conn files', this.connFiles, connFileVal);
+                bootbox.alert({
+                    'title' : 'Connectivity file',
+                    'message' : reformatMatrix(formName, connFileVal)
+                });
+            });
+
+            let buttonGroup = bis_webutil.createbuttonbar();
+            $(buttonGroup).append(inputButton, exportButton);
+            this.cpmPanel.append(buttonGroup);
         } else {
             console.log('cpm panel parent', this.cpmPanel.parent());
             this.cpmPanel.parent().addClass('in');
@@ -94,6 +123,7 @@ class CPMElement extends HTMLElement {
         let importFileButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
                 if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
+                this.cpmPanel.find('.btn-group').children().css('visibility', 'visible');
                 this.importFiles(f);
             }
         }, {
@@ -105,6 +135,7 @@ class CPMElement extends HTMLElement {
         let importDirectoryButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
                 if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
+                this.cpmPanel.find('.btn-group').children().css('visibility', 'visible');
                 this.importFiles(f);
             }
         }, {
@@ -230,22 +261,10 @@ class CPMElement extends HTMLElement {
         for (let key of Object.keys(this.connFiles)) {
             exportedObj[key] = {};
             for (let fileKey of Object.keys(this.connFiles[key])) {
-                let numericMatr = this.connFiles[key][fileKey].getNumericMatrix(), extension = fileKey.split('.')[1];
-
-                let reformattedEntry = [];
-                for (let i = 0; i < numericMatr.length; i++) {
-                    switch (extension) {
-                        case 'tsv': reformattedEntry.push(numericMatr[i].join('\t')); break;
-                        case 'csv': reformattedEntry.push(numericMatr[i].join(',')); break;
-                        default: console.log('Error: unrecognized extension', extension);
-                    }
-                }
-                console.log('reformatted entry', reformattedEntry);
-                exportedObj[key][fileKey] = reformattedEntry.join('\n');
+                exportedObj[key][fileKey] = reformatMatrix(fileKey, this.connFiles[key][fileKey]);
             }
         }
 
-        console.log('exported obj', exportedObj);
         let stringifiedObj = JSON.stringify(exportedObj, null, 2);
         bis_genericio.write(f, stringifiedObj).then( () => {
             bis_webutil.createAlert('Saved ' + f + ' successfully', false);
@@ -255,6 +274,21 @@ class CPMElement extends HTMLElement {
         });
     }
 }
+
+let reformatMatrix = (filename, matrix) => {
+    let numericMatr = matrix.getNumericMatrix(), extension = filename.split('.')[1];
+    
+    let reformattedEntry = [];
+    for (let i = 0; i < numericMatr.length; i++) {
+        switch (extension) {
+            case 'tsv': reformattedEntry.push(numericMatr[i].join('\t')); break;
+            case 'csv': reformattedEntry.push(numericMatr[i].join(',')); break;
+            default: console.log('Error: unrecognized extension', extension);
+        }
+    }
+
+    return reformattedEntry.join('\n');
+};
 
 bis_webutil.defineElement('bisweb-cpmelement', CPMElement);
 
