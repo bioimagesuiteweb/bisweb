@@ -26,11 +26,12 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 const moduleIndex = require('moduleindex.js');
 
-const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
+const ConnMatrixModule = moduleIndex.getModule('makeconnmatrixfile');
 class CPMElement extends HTMLElement {
 
     constructor() {
         super();
+        this.connFiles = null;
         this.cpmPanel = null;
         this.fileInputForm = null;
     }
@@ -146,14 +147,31 @@ class CPMElement extends HTMLElement {
 
     importFiles(f) {
         let extension = f.split('.')[1];
-        console.log('extension', extension, 'f', f);
-        if (!extension) { //flow for a directory of .csv or .tsv files
-            let getMatchingFilesString = `${f}/+(sub*.csv|sub*.tsv)`;
-            bis_genericio.getMatchingFiles(getMatchingFilesString).then( (flist) => {
-                this.populateFileElementList(flist);
-            }); 
-        } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
 
+        if (!extension) { //flow for a directory of .csv or .tsv files
+            bis_genericio.runCPMModule({ 'indir' : f, 'makeOutputFile' : false }).then( (obj) => {
+                console.log('combined file', obj);
+                this.connFiles = obj.output.file;
+                this.populateFileElementList(obj.output.filenames);
+            });
+        } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
+            bis_genericio.read(f).then( (obj) => {
+                try {
+                    this.connFiles = JSON.parse(obj.data);
+                } catch(e) {
+                    console.log('Encountered an error while parsing', f, e);
+                    bis_webutil.createAlert('Encountered an error while parsing ' + f, true);
+                }
+                
+                let flist = [];
+                //combine the keys of each subject to get the list of connectivity files
+                for (let key of Object.keys(this.connFiles)) {
+                    for (let filenameKey of Object.keys(this.connFiles[key])) {
+                        flist.push(filenameKey);
+                    }
+                }
+                this.populateFileElementList(flist);
+            });
         } else {
             console.log('Unrecognized extension', extension, 'for cpm file');
             bis_webutil.createAlert('Unrecognized extension ' + extension + ' for cpm file', true);
@@ -168,7 +186,10 @@ class CPMElement extends HTMLElement {
             let option = $(`<option value=${basename}>${basename}</file>`);
             formSelect.append(option);
         }
+
+        console.log('conn file', this.connFiles);
     }
+
 }
 
 bis_webutil.defineElement('bisweb-cpmelement', CPMElement);

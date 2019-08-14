@@ -649,6 +649,20 @@ let runPipelineModule = (params) => {
     });
 };
 
+let runCPMModule = (params) => {
+    return new Promise( (resolve, reject) => {
+        if (fileServerClient) {
+            fileServerClient.runModule('makeconnmatrixfile', params, false, console.log, true)
+                .then( (obj) => {
+                    console.log('Conn matrix module done', obj);
+                    resolve(obj);
+                }).catch( (e) => { reject(e); });
+        } else {
+            reject('No fileserver defined, cannot run pipeline');
+        }
+    });
+};
+
 /**
  * Makes a SHA256 checksum for a given image file. Currently only functional if a file server is specified.
  * Note that this function only works when calling from the web environment. Bisweb modules calculate their own checksums due to genericio not being directly compatible with modules.
@@ -817,6 +831,7 @@ const bisgenericio = {
     isSaveDownload : isSaveDownload,
     runDICOMConversion : runDICOMConversion,
     runPipelineModule : runPipelineModule,
+    runCPMModule : runCPMModule,
     makeFileChecksum : makeFileChecksum,
     //
     readPartialDataFromStartOfFile : readPartialDataFromStartOfFile
