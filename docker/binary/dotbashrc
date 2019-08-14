@@ -1,0 +1,21 @@
+# Bisweb .bash profile
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias ll='ls -l'                              
+alias la='ls -A'                              
+
+PS1="[BISWEBTOOLS]\h:\w>"
+export PS1
+
+source /usr/local/bisweb/setpaths.sh
+
+echo ""
+echo "------------------------ In Bisweb docker image ----------------------------------------"
+echo "To execute the bisweb JS command line tools type: biswebnode"
+echo "The python command line tools and library can be found in /usr/local/bisweb"
+echo "------------------------ ---------------------------------------------------------------"
+echo ""
+
+
