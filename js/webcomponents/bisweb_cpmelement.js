@@ -24,9 +24,8 @@ const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
-const moduleIndex = require('moduleindex.js');
+const BiswebMatrix = require('bisweb_matrix.js');
 
-const ConnMatrixModule = moduleIndex.getModule('makeconnmatrixfile');
 class CPMElement extends HTMLElement {
 
     constructor() {
@@ -150,14 +149,14 @@ class CPMElement extends HTMLElement {
 
         if (!extension) { //flow for a directory of .csv or .tsv files
             bis_genericio.runCPMModule({ 'indir' : f, 'makeOutputFile' : false }).then( (obj) => {
-                console.log('combined file', obj);
-                this.connFiles = obj.output.file;
+                this.connFiles = this.formatLoadedConnData(obj.output.file);
                 this.populateFileElementList(obj.output.filenames);
             });
         } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
             bis_genericio.read(f).then( (obj) => {
+                let rawConnFiles;
                 try {
-                    this.connFiles = JSON.parse(obj.data);
+                    rawConnFiles = JSON.parse(obj.data);
                 } catch(e) {
                     console.log('Encountered an error while parsing', f, e);
                     bis_webutil.createAlert('Encountered an error while parsing ' + f, true);
@@ -165,12 +164,13 @@ class CPMElement extends HTMLElement {
                 
                 let flist = [];
                 //combine the keys of each subject to get the list of connectivity files
-                for (let key of Object.keys(this.connFiles)) {
-                    for (let filenameKey of Object.keys(this.connFiles[key])) {
+                for (let key of Object.keys(rawConnFiles)) {
+                    for (let filenameKey of Object.keys(rawConnFiles[key])) {
                         flist.push(filenameKey);
                     }
                 }
                 this.populateFileElementList(flist);
+                this.connFiles = this.formatLoadedConnData(rawConnFiles);
             });
         } else {
             console.log('Unrecognized extension', extension, 'for cpm file');
@@ -186,10 +186,36 @@ class CPMElement extends HTMLElement {
             let option = $(`<option value=${basename}>${basename}</file>`);
             formSelect.append(option);
         }
-
-        console.log('conn file', this.connFiles);
     }
 
+    /**
+     * Reformats a raw connectivity file from an object containing strings to an object containing BiswebMatrices.
+     * 
+     * @param {Object} rawData - Raw connectivity file data loaded from disk.
+     * @returns Connectivity file data reformatted as matrices.
+     */
+    formatLoadedConnData(rawData) {
+        for (let key of Object.keys(rawData)) {
+            for (let fileKey of Object.keys(rawData[key])) {
+                let data = rawData[key][fileKey].trim().split('\n');
+                let extension = fileKey.split('.')[1];
+                for (let i = 0; i < data.length; i++) {
+                    switch (extension) {
+                        case 'tsv' : data[i] = data[i].split('\t'); break;
+                        case 'csv' : data[i] = data[i].split(','); break;
+                        default : console.log('Error: unrecognized extension', extension);
+                    }
+                }
+
+                let matr = new BiswebMatrix();
+                matr.setFromNumericMatrix(data);
+                rawData[key][fileKey] = matr;
+            }
+        }
+
+        console.log('raw data', rawData);
+        return rawData;
+    }
 }
 
 bis_webutil.defineElement('bisweb-cpmelement', CPMElement);
