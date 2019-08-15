@@ -233,10 +233,11 @@ do not have a proper node-gyp) setup, simply delete the line containing
 To create the WebAssembly binaries and ``build`` folder structure from the
 source files, use the `createbuild.js` script
 
-    node ./config/createjsbuild.js
+    node ./config/createbuild.js
 
-This will create three directories, ``build/web``, ``build/wasm``,
-``build/dist`` and ``build/native`  and also install emscripten as needed.
+This will create a number of sub-directories, (e.g. `build/web`, `build/wasm`,
+`build/dist`, `build/native`, `build/doc` `build/install`) and also install
+emscripten as needed.
 
 Then you can perform a full initial build using
 
