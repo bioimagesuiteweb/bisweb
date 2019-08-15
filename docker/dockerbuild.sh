@@ -1,1 +1,1 @@
-docker build -t xeniosp/bisweb .
+docker build -t bisweb/devel .

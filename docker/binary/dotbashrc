@@ -18,4 +18,4 @@ echo "The python command line tools and library can be found in /usr/local/biswe
 echo "------------------------ ---------------------------------------------------------------"
 echo ""
 
-
+cd /root
