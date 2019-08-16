@@ -1,4 +1,6 @@
 let tf=null;
+let tfn=null;
+let mode='cpu';
 
 module.exports = function() {
 
@@ -9,15 +11,23 @@ module.exports = function() {
 
     console.log('++++ Loading TF');
     try {
+        tf=require("@tensorflow/tfjs");
         try {
             console.log('++++ Trying to Load tfjs-node-gpu');
-            tf=require('@tensorflow/tfjs-node-gpu');
+            tfn=require('@tensorflow/tfjs-node-gpu');
+            mode='gpu';
         } catch(e) {
             console.log('Failed to load gpu version '+e);
-            tf=require('@tensorflow/tfjs-node');
+            tfn=require('@tensorflow/tfjs-node');
         }
     } catch(e) {
         console.log('Failed to load tensorflow',e);
     }
-    return tf;
+
+    let ret={
+        tf : tf,
+        tfn : tfn,
+        mode : 'node-'+mode
+    };
+    return ret;
 };

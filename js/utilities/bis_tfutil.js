@@ -18,18 +18,17 @@ let tfjsModule=null;
 class TFWrapper {
 
     
-    constructor(tf,mode='',transpose=true) {
+    constructor(tfw,mode='',transpose=true) {
 
-        if (mode.length>1)
-            this.mode=mode+' '+tf.getBackend();
-        else
-            this.mode=tf.getBackend();
         
-        this.tf=tf;
+        this.tf=tfw.tf || tfw;
+        this.tfn=tfw.tfn || tfw;
+        this.mode=tfw.mode || mode+' '+this.tf.getBackend();
+        
         this.models={};
         this.modelcount=0;
         this.transpose=transpose;
-
+        console.log('++++ TFWrapper created '+this.mode);
     }
 
     getMode() {  return this.mode;   }
@@ -617,9 +616,10 @@ let initializeTFModule=function(forcebrowser=false,transpose=true) {
         }
 
         if (environment === 'node') {
-            let fn=bisweb_tf;
-            tfjsModule=new TFWrapper(fn(),'tfjs node',transpose);
-            resolve('Module loaded from tfjs node');
+            let tf=bisweb_tf();
+            console.log('Keys=',Object.keys(tf));
+            tfjsModule=new TFWrapper(tf,tf.mode,transpose);
+            resolve('Module loaded from tfjs node' + tf.mode);
         }
     });
 };
