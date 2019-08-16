@@ -1,5 +1,6 @@
 "use strict";
 
+//TODO: integrate node memory size into command
 console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
 
 global.bioimagesuiteweblib=false;

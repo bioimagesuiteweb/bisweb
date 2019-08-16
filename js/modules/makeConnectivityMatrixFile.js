@@ -113,7 +113,6 @@ class MakeConnMatrixFileModule extends BaseModule {
                         addEntry(bis_genericio.getBaseName(file), contents.data);
                     }
 
-                    console.log('combined file', combinedFile, outdir);
                     if (vals.writeout) {
                         await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
                     }

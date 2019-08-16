@@ -105,18 +105,36 @@ class CPMElement extends HTMLElement {
 
                 let subVals = this.connFiles[subjectName] || this.connFiles[strippedSubjectName];
                 let connFileVal = subVals[formName];
-                console.log('conn files', this.connFiles, connFileVal);
-                bootbox.alert({
-                    'title' : 'Connectivity file',
-                    'message' : reformatMatrix(formName, connFileVal)
-                });
+
+                //if bigger than 10kB, ask whether user is sure they want to display it
+                if (getMatrixSize(connFileVal) > 1024 * 10) {
+                    bootbox.confirm({
+                        'title' : 'Load selected file?',
+                        'message' : 'The selected file is greater than 10kB. Are you sure you want to load the full file?',
+                        'callback' : (accept) => {
+                            if (accept) {
+                                showConnFile();
+                            }
+                        }
+                    });
+                } else {
+                    showConnFile();
+                }
+
+
+
+                function showConnFile() {
+                    bootbox.alert({
+                        'title' : 'Connectivity file',
+                        'message' : $(`<pre>${reformatMatrix(formName, connFileVal)}</pre>`)
+                    });
+                }
             });
 
             let buttonGroup = bis_webutil.createbuttonbar();
             $(buttonGroup).append(inputButton, exportButton);
             this.cpmPanel.append(buttonGroup);
         } else {
-            console.log('cpm panel parent', this.cpmPanel.parent());
             this.cpmPanel.parent().addClass('in');
         }
     }
@@ -184,7 +202,7 @@ class CPMElement extends HTMLElement {
         let extension = f.split('.')[1];
 
         if (!extension) { //flow for a directory of .csv or .tsv files
-            bis_genericio.runCPMMatrixFileModule({ 'indir' : f, 'makeOutputFile' : false }).then( (obj) => {
+            bis_genericio.runCPMMatrixFileModule({ 'indir' : f, 'writeout' : false }).then( (obj) => {
                 this.connFiles = this.formatLoadedConnData(obj.output.file);
                 this.populateFileElementList(obj.output.filenames);
             });
@@ -293,6 +311,10 @@ let reformatMatrix = (filename, matrix) => {
     }
 
     return reformattedEntry.join('\n');
+};
+
+let getMatrixSize = (matrix) => {
+    return matrix.data.BYTES_PER_ELEMENT * matrix.data.length;
 };
 
 bis_webutil.defineElement('bisweb-cpmelement', CPMElement);
