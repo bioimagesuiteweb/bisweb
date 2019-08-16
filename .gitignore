@@ -23,3 +23,5 @@ package-lock.json
 **/libbiswasm_wasm.js
 **/docker/wasm
 web/LICENSE
+docker/binary/*sh
+docker/binary/*tgz

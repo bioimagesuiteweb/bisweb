@@ -104,15 +104,33 @@ let obj = {
     }
 };
 
-
+// TF Version first
+obj.name="biswebnodetf"
 let txt=JSON.stringify(obj,null,4)+"\n";
-console.log('++++ Output = \n'+txt+'++++');
-
-output=path.resolve(path.join(output,"package.json"));
+let origout=output;
+output=path.resolve(path.join(origout,"package.json.tf"));
 fs.writeFileSync(output,txt);
+
+// Non TF Version default
+dependencies={};
+for (let i=0;i<includelist.length;i++) {
+    let key=includelist[i];
+    if (key.indexOf('tensorflow')<0)
+        dependencies[key]=appinfo.dependencies[key];
+}
+
+obj['name']="biswebnode";
+obj["dependencies"]=dependencies;
+
+let txt2=JSON.stringify(obj,null,4)+"\n";
+console.log('++++ Output = \n'+txt2+'++++');
+output=path.resolve(path.join(origout,"package.json"));
+fs.writeFileSync(output,txt2);
+
 
 console.log('++++');
 console.log('++++ Package.json file updated in',output);
 console.log('++++ Once you "make install", run "npm pack" to create the package');
+console.log('++++ if you wish to create the biswebnodetf, after you "make install", copy package.json.tf over package.json and then run "npm pack" to create the package');
 console.log('++++');
 process.exit(0);
