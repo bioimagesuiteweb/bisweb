@@ -21,7 +21,7 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
 
-const libbiswasm = require('libbiswasm');
+const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
@@ -33,19 +33,23 @@ class CPMElement extends HTMLElement {
     constructor() {
         super();
         this.connFiles = null;
-        this.cpmPanel = null;
+        this.cpmDisplayPanel = null;
+        this.cpmComputationPanel = null;
         this.fileInputForm = null;
     }
 
     connectedCallback() {
         this.menubarid = this.getAttribute('bis-menubarid');
         this.layoutelementid = this.getAttribute('bis-layoutelementid');
+        this.initializeWasm = libbiswasm.initialize();
+
         bis_webutil.runAfterAllLoaded( () => {
             let menubar = document.querySelector(this.menubarid).getMenuBar();
             let layoutElement = document.querySelector(this.layoutelementid);
             let dockbar = layoutElement.elements.dockbarcontent;
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
+            //this.openComputationPanel = this.openCPMComputationPanel.bind(this, dockbar);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
@@ -58,9 +62,9 @@ class CPMElement extends HTMLElement {
     }
 
     openCPMSidebar(dockbar) {
-        if (!this.cpmPanel) {
+        if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
-            this.cpmPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
+            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
 
             this.fileListFormId = bis_webutil.getuniqueid();
             this.fileListForm = $(`
@@ -70,10 +74,14 @@ class CPMElement extends HTMLElement {
                     <select class='form-control' id=${this.fileListFormId}>
                     </select>
                 </div>
-                <button class='btn btn-success'>View</button>
+                <div class='btn-group' role='group'>
+                    <button class='btn btn-sm btn-info'>View</button>
+                    <button class='btn btn-sm btn-success'>Run CPM</button>
+                </div>
             </div>
             `);
 
+            let buttonGroup = bis_webutil.createbuttonbar();
             let inputButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
                 'name' : 'Export CPM File',
@@ -94,53 +102,77 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            let viewButton = this.fileListForm.find('.btn-success');
-            viewButton.on('click', () => {
-                let formName = $('#' + this.fileListFormId).val();
-                console.log('form name', formName);
-
-                //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
-                let subNumRegex = /(sub\d+)/g;
-                let subjectName = subNumRegex.exec(formName)[1], strippedSubjectName;
-                
-                //add two to account for the length of sub
-                if (subjectName.indexOf('0') === subjectName.indexOf('sub') + 2 + 1) {
-                    strippedSubjectName = subjectName.replace(/sub0*/, 'sub');
-                }
-
-                let subVals = this.connFiles[subjectName] || this.connFiles[strippedSubjectName];
-                let connFileVal = subVals[formName];
-
-                //if bigger than 10kB, ask whether user is sure they want to display it
-                if (getMatrixSize(connFileVal) > 1024 * 10) {
-                    bootbox.confirm({
-                        'title' : 'Show selected file?',
-                        'message' : 'The selected file is greater than 10kB. Are you sure you want to display the full file?',
-                        'callback' : (accept) => {
-                            if (accept) {
-                                showConnFile();
-                            }
-                        }
-                    });
-                } else {
-                    showConnFile();
-                }
-
-
-                function showConnFile() {
-                    bootbox.alert({
-                        'title' : 'Connectivity file',
-                        'message' : $(`<pre>${reformatMatrix(formName, connFileVal)}</pre>`)
-                    });
-                }
-            });
-
-            let buttonGroup = bis_webutil.createbuttonbar();
-            $(buttonGroup).append(inputButton, exportButton);
-            this.cpmPanel.append(buttonGroup);
+            this.createFormButtons(buttonGroup, inputButton, exportButton);
+            buttonGroup.append(inputButton, exportButton);
+            this.cpmDisplayPanel.append(buttonGroup);
         } else {
-            this.cpmPanel.parent().addClass('in');
+            this.cpmDisplayPanel.parent().addClass('in');
         }
+    }
+
+    createFormButtons(fileButtonGroup, inputButton, exportButton) {
+        let listButtonGroup = $(this.fileListForm).find('.btn-group');
+        let viewButton = listButtonGroup.find('.btn-info');
+        let runButton = listButtonGroup.find('.btn-success');
+
+        viewButton.on('click', () => {
+            let formName = $('#' + this.fileListFormId).val();
+
+            //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
+            let subNumRegex = /(sub\d+)/g;
+            let subjectName = subNumRegex.exec(formName)[1], strippedSubjectName;
+            
+            //add two to account for the length of sub
+            if (subjectName.indexOf('0') === subjectName.indexOf('sub') + 2 + 1) {
+                strippedSubjectName = subjectName.replace(/sub0*/, 'sub');
+            }
+
+            let subVals = this.connFiles[subjectName] || this.connFiles[strippedSubjectName];
+            let connFileVal = subVals[formName];
+
+            //if bigger than 10kB, ask whether user is sure they want to display it
+            if (getMatrixSize(connFileVal) > 1024 * 10) {
+                bootbox.confirm({
+                    'title' : 'Show selected file?',
+                    'message' : 'The selected file is greater than 10kB. Are you sure you want to display the full file?',
+                    'callback' : (accept) => {
+                        if (accept) {
+                            showConnFile();
+                        }
+                    }
+                });
+            } else {
+                showConnFile();
+            }
+
+
+            $(fileButtonGroup).append(inputButton, exportButton);
+            function showConnFile() {
+                bootbox.alert({
+                    'title' : 'Connectivity file',
+                    'message' : $(`<pre>${reformatMatrix(formName, connFileVal)}</pre>`)
+                });
+            }
+        });
+
+        runButton.on('click', () => {
+            console.log('clicked run button');
+        });
+    }
+
+    //TODO: Implement a separate computation panel if there turn out to be a lot of connectivity processes to run
+    openCPMComputationPanel(dockbar) {
+        let panelGroup = bis_webutil.createpanelgroup(dockbar);
+        this.cpmComputationPanel = bis_webutil.createCollapseElement(panelGroup, 'CPM Computation', true);
+
+        let runCPMButton = bis_webutil.createbutton({ 'name' : 'Run CPM', 'type' : 'success'});
+
+
+        let panelContent = $(`
+            <div>
+
+            </div>
+        `);
     }
 
     createCPMPopoverButton() {
@@ -151,8 +183,8 @@ class CPMElement extends HTMLElement {
             this.importFiles(f).then( () => {
                 bis_webutil.dismissAlerts();
                 bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
-                if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
-                this.cpmPanel.find('.btn-group').children().css('visibility', 'visible');
+                if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
+                this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
             });
         };
 
@@ -203,6 +235,8 @@ class CPMElement extends HTMLElement {
 
         return inputButton;
     }
+
+   
 
     /**
      * Imports .csv files from a CPM matrix file or directory. 
@@ -314,6 +348,10 @@ class CPMElement extends HTMLElement {
                 reject(e);
             });
         });
+    }
+
+    runCPMModule(matrix, behaviors) {
+
     }
 }
 
