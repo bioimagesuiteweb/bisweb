@@ -37,8 +37,15 @@ const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
  */
 let cpmGuiManager = function(layoutwidget){
     let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 3];
-    let pos = [layoutwidget.viewerwidth * (1 / 3) , 10]
+    let pos = [layoutwidget.viewerwidth * (1 / 3) , 10];
+
     let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
+
+    $(window).on('resize',()=>{
+        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 3];
+        let pos = [layoutwidget.viewerwidth * (1 / 3) , 10];
+        plot.resize(dims, pos);
+    });
 };
 
 class CPMElement extends HTMLElement {
@@ -195,8 +202,9 @@ class CPMElement extends HTMLElement {
     }
 
     importFiles(f) {
-        let chunks = f.split('.');
-        let extension = chunks[chunks.length-1];
+
+        //TODO: Imporve this later
+        let extension = f.split('.')[1];
 
         if (!extension) { //flow for a directory of .csv or .tsv files
             bis_genericio.runCPMModule({ 'indir' : f, 'writeout' : false }).then( (obj) => {

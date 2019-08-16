@@ -23,12 +23,14 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
     let innerDim = svgDim - sizeOffset;
     
     //Create the svg that will contain the scatter chart
-    let SVG = d3.select(parentDiv).append("svg").attr("id", globalParams.Id)
+    let SVG = d3.select(parentDiv).append('div')
+        .attr('class','bis-ScatterContainer')
+        .attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`)
+        .append("svg").attr("id", globalParams.Id)
                 .attr("xmlns", "http://www.w3.org/2000/svg")
                 .attr('class', 'bis-scatterplotchart')
-                .attr("width", svgDim)
-                .attr("height", svgDim)
-                .attr("transform", `translate(${pos[0]},${pos[1]})`);
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", `0 0 ${svgDim} ${svgDim}`);
                 
     let scatterChart = SVG.append("g")
                         .attr("transform", `translate(${sizeOffset/2},${sizeOffset/2})`);
@@ -166,8 +168,13 @@ scatterChart.append('text')
         genScatter(data, lobf);
     };
 
-    $(`#${globalParams.Id}`).bind('changeData', changeData);
+    this.destroy = () => SVG.remove();
 
+    this.resize = (dim, pos) => {
+        $('.bis-ScatterContainer').attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`);
+    };
+
+    $(`#${globalParams.Id}`).bind('changeData', changeData);
 
 };
 
