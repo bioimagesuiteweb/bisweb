@@ -195,10 +195,11 @@ class CPMElement extends HTMLElement {
     }
 
     importFiles(f) {
-        let extension = f.split('.')[1];
+        let chunks = f.split('.');
+        let extension = chunks[chunks.length-1];
 
         if (!extension) { //flow for a directory of .csv or .tsv files
-            bis_genericio.runCPMModule({ 'indir' : f, 'makeOutputFile' : false }).then( (obj) => {
+            bis_genericio.runCPMModule({ 'indir' : f, 'writeout' : false }).then( (obj) => {
                 this.connFiles = this.formatLoadedConnData(obj.output.file);
                 this.populateFileElementList(obj.output.filenames);
             });
