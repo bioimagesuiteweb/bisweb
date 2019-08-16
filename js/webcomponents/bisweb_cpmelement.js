@@ -80,7 +80,12 @@ class CPMElement extends HTMLElement {
                 'type' : 'warning',
                 'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
-                    this.exportFiles(f);
+                    bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
+                    this.exportFiles(f).then( () => {
+                        bis_webutil.createAlert('Saved ' + f + ' successfully', false);
+                    }).catch( (e) => {
+                        bis_webutil.createAlert('An error occured while saving ' + f, true);
+                    });
                 }
             }, {
                 'title': 'Export connectivity index file',
@@ -109,8 +114,8 @@ class CPMElement extends HTMLElement {
                 //if bigger than 10kB, ask whether user is sure they want to display it
                 if (getMatrixSize(connFileVal) > 1024 * 10) {
                     bootbox.confirm({
-                        'title' : 'Load selected file?',
-                        'message' : 'The selected file is greater than 10kB. Are you sure you want to load the full file?',
+                        'title' : 'Show selected file?',
+                        'message' : 'The selected file is greater than 10kB. Are you sure you want to display the full file?',
                         'callback' : (accept) => {
                             if (accept) {
                                 showConnFile();
@@ -120,7 +125,6 @@ class CPMElement extends HTMLElement {
                 } else {
                     showConnFile();
                 }
-
 
 
                 function showConnFile() {
@@ -142,12 +146,18 @@ class CPMElement extends HTMLElement {
     createCPMPopoverButton() {
 
         //Unattached buttons that are clicked when one of the popover buttons is clicked
-        let importFileButton = bis_webfileutil.createFileButton({
-            'callback' : (f) => {
+        let importFileCallback = (f) => {
+            bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
+            this.importFiles(f).then( () => {
+                bis_webutil.dismissAlerts();
+                bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
                 if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
                 this.cpmPanel.find('.btn-group').children().css('visibility', 'visible');
-                this.importFiles(f);
-            }
+            });
+        };
+
+        let importFileButton = bis_webfileutil.createFileButton({
+            'callback' : importFileCallback
         }, {
             'title': 'Import connectivity index file',
             'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
@@ -155,11 +165,7 @@ class CPMElement extends HTMLElement {
         });
 
         let importDirectoryButton = bis_webfileutil.createFileButton({
-            'callback' : (f) => {
-                if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
-                this.cpmPanel.find('.btn-group').children().css('visibility', 'visible');
-                this.importFiles(f);
-            }
+            'callback' : importFileCallback
         }, {
             'mode' : 'directory',
             'title': 'Import connectivity files from directory',
@@ -198,38 +204,49 @@ class CPMElement extends HTMLElement {
         return inputButton;
     }
 
+    /**
+     * Imports .csv files from a CPM matrix file or directory. 
+     * 
+     * @param {String} f - Filename of the directory or JSON file to load from. 
+     * @returns A Promise resolving once the files have been loaded and the form select populated, or rejecting with an error. 
+     */
     importFiles(f) {
-        let extension = f.split('.')[1];
-
-        if (!extension) { //flow for a directory of .csv or .tsv files
-            bis_genericio.runCPMMatrixFileModule({ 'indir' : f, 'writeout' : false }).then( (obj) => {
-                this.connFiles = this.formatLoadedConnData(obj.output.file);
-                this.populateFileElementList(obj.output.filenames);
-            });
-        } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
-            bis_genericio.read(f).then( (obj) => {
-                let rawConnFiles;
-                try {
-                    rawConnFiles = JSON.parse(obj.data);
-                } catch(e) {
-                    console.log('Encountered an error while parsing', f, e);
-                    bis_webutil.createAlert('Encountered an error while parsing ' + f, true);
-                }
-                
-                let flist = [];
-                //combine the keys of each subject to get the list of connectivity files
-                for (let key of Object.keys(rawConnFiles)) {
-                    for (let filenameKey of Object.keys(rawConnFiles[key])) {
-                        flist.push(filenameKey);
+        return new Promise( (resolve, reject) => {
+            let extension = f.split('.')[1];
+            if (!extension) { //flow for a directory of .csv or .tsv files
+                bis_genericio.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then((obj) => {
+                    this.connFiles = this.formatLoadedConnData(obj.output.file);
+                    this.populateFileElementList(obj.output.filenames);
+                    resolve();
+                }).catch( (e) => { reject(e); });
+            } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
+                bis_genericio.read(f).then((obj) => {
+                    let rawConnFiles;
+                    try {
+                        rawConnFiles = JSON.parse(obj.data);
+                    } catch (e) {
+                        console.log('Encountered an error while parsing', f, e);
+                        bis_webutil.createAlert('Encountered an error while parsing ' + f, true);
                     }
-                }
-                this.populateFileElementList(flist);
-                this.connFiles = this.formatLoadedConnData(rawConnFiles);
-            });
-        } else {
-            console.log('Unrecognized extension', extension, 'for cpm file');
-            bis_webutil.createAlert('Unrecognized extension ' + extension + ' for cpm file', true);
-        } 
+
+                    let flist = [];
+                    //combine the keys of each subject to get the list of connectivity files
+                    for (let key of Object.keys(rawConnFiles)) {
+                        for (let filenameKey of Object.keys(rawConnFiles[key])) {
+                            flist.push(filenameKey);
+                        }
+                    }
+                    this.populateFileElementList(flist);
+                    this.connFiles = this.formatLoadedConnData(rawConnFiles);
+                    resolve();
+                }).catch( (e) => { reject(e); });
+            } else {
+                console.log('Unrecognized extension', extension, 'for cpm file');
+                bis_webutil.createAlert('Unrecognized extension ' + extension + ' for cpm file', true);
+                reject('Unrecognized extension ' + extension);
+            }
+        });
+        
     }
 
     populateFileElementList(fileList) {
@@ -277,23 +294,25 @@ class CPMElement extends HTMLElement {
      */
     exportFiles(f) {
 
-        if (!this.connFiles) { bis_webutil.createAlert('No connectivity files in memory, cannot save.', false); return; }
+        return new Promise( (resolve, reject) => {
+            if (!this.connFiles) { bis_webutil.createAlert('No connectivity files in memory, cannot save.', false); reject('No conn files'); }
 
-        //revert files to original tab or comma separated form
-        let exportedObj = {};
-        for (let key of Object.keys(this.connFiles)) {
-            exportedObj[key] = {};
-            for (let fileKey of Object.keys(this.connFiles[key])) {
-                exportedObj[key][fileKey] = reformatMatrix(fileKey, this.connFiles[key][fileKey]);
+            //revert files to original tab or comma separated form
+            let exportedObj = {};
+            for (let key of Object.keys(this.connFiles)) {
+                exportedObj[key] = {};
+                for (let fileKey of Object.keys(this.connFiles[key])) {
+                    exportedObj[key][fileKey] = reformatMatrix(fileKey, this.connFiles[key][fileKey]);
+                }
             }
-        }
 
-        let stringifiedObj = JSON.stringify(exportedObj, null, 2);
-        bis_genericio.write(f, stringifiedObj).then( () => {
-            bis_webutil.createAlert('Saved ' + f + ' successfully', false);
-        }).catch( (e) => { 
-            bis_webutil.createAlert('An error occured while saving ' + f, true); 
-            console.log('An error occured', e); 
+            let stringifiedObj = JSON.stringify(exportedObj, null, 2);
+            bis_genericio.write(f, stringifiedObj).then(() => {
+                resolve();
+            }).catch((e) => {
+                console.log('An error occured', e);
+                reject(e);
+            });
         });
     }
 }
