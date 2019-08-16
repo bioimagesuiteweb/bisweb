@@ -21,6 +21,7 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
 
+const libbiswasm = require('libbiswasm');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
@@ -44,6 +45,7 @@ class CPMElement extends HTMLElement {
             let layoutElement = document.querySelector(this.layoutelementid);
             let dockbar = layoutElement.elements.dockbarcontent;
             this.createMenubarItems(menubar, dockbar);
+            this.openCPMSidebar(dockbar);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
@@ -120,6 +122,8 @@ class CPMElement extends HTMLElement {
     }
 
     createCPMPopoverButton() {
+
+        //Unattached buttons that are clicked when one of the popover buttons is clicked
         let importFileButton = bis_webfileutil.createFileButton({
             'callback' : (f) => {
                 if (this.cpmPanel.find('#' + this.fileListFormId).length === 0) { this.cpmPanel.append(this.fileListForm); }
@@ -143,6 +147,7 @@ class CPMElement extends HTMLElement {
             'title': 'Import connectivity files from directory',
             'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
         });
+
 
         let inputButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM File</button>`);
         let popoverContent = $(
@@ -179,7 +184,7 @@ class CPMElement extends HTMLElement {
         let extension = f.split('.')[1];
 
         if (!extension) { //flow for a directory of .csv or .tsv files
-            bis_genericio.runCPMModule({ 'indir' : f, 'makeOutputFile' : false }).then( (obj) => {
+            bis_genericio.runCPMMatrixFileModule({ 'indir' : f, 'makeOutputFile' : false }).then( (obj) => {
                 this.connFiles = this.formatLoadedConnData(obj.output.file);
                 this.populateFileElementList(obj.output.filenames);
             });

@@ -649,7 +649,7 @@ let runPipelineModule = (params) => {
     });
 };
 
-let runCPMModule = (params) => {
+let runCPMMatrixFileModule = (params) => {
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
             fileServerClient.runModule('makeconnmatrixfile', params, false, console.log, true)
@@ -831,7 +831,7 @@ const bisgenericio = {
     isSaveDownload : isSaveDownload,
     runDICOMConversion : runDICOMConversion,
     runPipelineModule : runPipelineModule,
-    runCPMModule : runCPMModule,
+    runCPMMatrixFileModule : runCPMMatrixFileModule,
     makeFileChecksum : makeFileChecksum,
     //
     readPartialDataFromStartOfFile : readPartialDataFromStartOfFile
