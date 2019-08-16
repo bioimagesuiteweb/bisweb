@@ -117,7 +117,7 @@ class MakeConnMatrixFileModule extends BaseModule {
                     if (vals.writeout) {
                         await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
                     }
-                    resolve(combinedFile);
+                    resolve({ 'file' : combinedFile, 'filenames' : behaviorFiles.concat(connFiles) });
                 } catch(e) {
                     reject(e);
                 }

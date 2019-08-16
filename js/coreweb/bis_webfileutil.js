@@ -338,7 +338,7 @@ const webfileutils = {
         let cbopts = { 'callback' : callback,
                        'title' : title,
                        'suffix' : suffix,
-                       'mode' : 'load' ,
+                       'mode' : fileopts.mode || 'load',
                        'filters' : fileopts.filters,
                        'altkeys' : fileopts.altkeys
                      };
