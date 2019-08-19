@@ -1,3 +1,4 @@
+
 const BisWebImage=require('bisweb_image');
 const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
@@ -599,7 +600,7 @@ let initializeTFModule=function(forcebrowser=false,transpose=true) {
             }
             
             let apiTag = document.createElement('script');
-            let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
+            let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.27.0/dist/tf.min.js";
             apiTag.src = url;
             apiTag.onload = ( () => {
                 tfjsModule=new TFWrapper(window.tf,url,transpose);
