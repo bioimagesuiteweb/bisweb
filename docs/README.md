@@ -86,17 +86,17 @@ More information about each of these tools may be found in the links contained i
 
 If you are comfortable with Docker, then you can create and build bisweb in a
 docker environment. See
-[our docker repository]([https://hub.docker.com/r/xeniosp/bisweb).
+[our docker repository]([https://hub.docker.com/r/bisweb/devel).
 
 In particular you will need to 
 
 1. Install the container
 
-    docker pull xeniosp/bisweb
+    docker pull bisweb/devel
     
 2. Log in to the container
 
-    sudo docker run -p 8080:8080 -it xeniosp/bisweb bash
+    sudo docker run -p 8080:8080 -it bisweb/devel bash
     
 3. The source tree for bisweb will be in the directory /root/bisweb/src and /root/bisweb/gpl (for the gpl plugin). See the [Dockerfile](../docker/Dockerfile)
    for more information. You can update the source (this is mapped to `devel`
