@@ -4,10 +4,10 @@ const bisgenericio = require('bis_genericio');
 const bisweb_tf=require('./bis_tfjs');
 const slicerupd = require('bis_slicerprogress');
 const util=require('bis_util');
+
 /**
  * tf recon module
  */
-
 
 
 // Pointer to current instance of wrapper
@@ -94,10 +94,9 @@ class TFWrapper {
         return output;
     }
 
-    loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
-
+    loadModel(MODEL_URL)  {
         return new Promise( (resolve,reject) => {
-            this.tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (m) => {
+            this.tf.loadGraphModel(MODEL_URL).then( (m) => {
                 this.modelcount++;
                 this.models[this.modelcount]=m;
                 resolve( {
@@ -617,9 +616,8 @@ let initializeTFModule=function(forcebrowser=false,transpose=true) {
 
         if (environment === 'node') {
             let tf=bisweb_tf();
-            console.log('Keys=',Object.keys(tf));
             tfjsModule=new TFWrapper(tf,tf.mode,transpose);
-            resolve('Module loaded from tfjs node' + tf.mode);
+            resolve('Module loaded from tfjs ' + tf.mode);
         }
     });
 };
@@ -631,7 +629,7 @@ let getTFJSModule=function() { return tfjsModule; };
 
 /** Adds file:// if in electron or node.js to the filename 
  * @param{String} md - the input model name
- * @returns {String} model name to be used as input in loadFrozenModel
+ * @returns {String} model name to be used as input in loadModel
  */
 let fixModelName=function(md) {
 
@@ -720,15 +718,14 @@ let fixBatchSize=function(batchsize) {
 let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
 
     console.log('___ In Load Model',URL);
-    const MODEL_URL =  URL+'/tensorflowjs_model.pb';
-    const WEIGHTS_URL = URL+'/weights_manifest.json';
-
+    const MODEL_URL =  URL+'/model.json';
+    
     return new Promise( (resolve,reject) => {
-        tfwrapper.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
-
+        tfwrapper.loadModel(MODEL_URL).then( (model) => {
+            
             let shape=model.shape;
             console.log('___\t Loaded model with shape',shape.join(','),' num tensors=',model.numtensors);
-
+            
             if (warm) 
                 tfwrapper.warmUp(model);
             resolve(model);
@@ -739,14 +736,12 @@ let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
     });
 };
 
-
 module.exports = {
+    loadAndWarmUpModel : loadAndWarmUpModel,
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
     TFWrapper : TFWrapper,
     initializeTFModule : initializeTFModule,
     fixModelName : fixModelName,
     fixBatchSize : fixBatchSize,
-    getTFJSModule :     getTFJSModule,
-    loadAndWarmUpModel : loadAndWarmUpModel,
+    getTFJSModule : getTFJSModule
 };
-
