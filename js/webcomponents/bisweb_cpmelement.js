@@ -92,6 +92,7 @@ class CPMElement extends HTMLElement {
                     this.exportFiles(f).then( () => {
                         bis_webutil.createAlert('Saved ' + f + ' successfully', false);
                     }).catch( (e) => {
+                        console.log('Error saving CPM file', e);
                         bis_webutil.createAlert('An error occured while saving ' + f, true);
                     });
                 }
@@ -157,11 +158,32 @@ class CPMElement extends HTMLElement {
 
         runButton.on('click', () => {
             console.log('clicked run button');
+            let formVal = this.fileListForm.find('.form-control').val();
+            console.log('form val', formVal);
+
+            //create secondary list for cpm files for the given subject if behavior is specified
+            if (formVal.includes('behavior')) {
+                let formOptions = this.fileListForm.find('option'), valsList = [];
+                for (let option of formOptions) {
+                    console.log('option', option, option.value);
+                    valsList.push(option.value);
+                }
+
+                if (valsList.length === 1) {
+
+                }
+            }
         });
+
+        function runCPM(cpmFile, behaviorFile) {
+            this.initializeWasm().then( () => {
+                libbiswasm.computeCPMWasm(cpmFile, behaviorFile, { 'numnodes' : 3, 'numtasks' : 0 }, 0);
+            });
+        }
     }
 
     //TODO: Implement a separate computation panel if there turn out to be a lot of connectivity processes to run
-    openCPMComputationPanel(dockbar) {
+    /*openCPMComputationPanel(dockbar) {
         let panelGroup = bis_webutil.createpanelgroup(dockbar);
         this.cpmComputationPanel = bis_webutil.createCollapseElement(panelGroup, 'CPM Computation', true);
 
@@ -173,7 +195,7 @@ class CPMElement extends HTMLElement {
 
             </div>
         `);
-    }
+    }*/
 
     createCPMPopoverButton() {
 
