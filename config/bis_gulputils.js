@@ -475,24 +475,11 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         
         cmdlist.push(`${rimrafname} ${appdir}`);
         
-        if (dopackage>=2) {
+        if (dopackage) {
             cmdlist.push(`${rimrafname} ${path.resolve(idir,'node_modules')}`);
-            if (dopackage===3) {
-                cmdlist.push('npm install -d');
-                let modclean=getToolPath('modclean');
-                cmdlist.push(modclean+' -r -a *.ts ');
-            } else if (dopackage===2) {
-                let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
-                try {
-                    let stats = fs.statSync(zname);
-                    let bytes = stats["size"];
-                    console.log('zname = ', zname,bytes);
-                    cmdlist.push(`unzip -q ${zname}`);
-                } catch(e) {
-                    console.log(colors.red(e));
-                    process.exit(1);
-                }
-            }
+            cmdlist.push('npm install -d');
+            let modclean=getToolPath('modclean');
+            cmdlist.push(modclean+' -r -a *.ts ');
         }
         
         let basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
