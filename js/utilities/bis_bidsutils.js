@@ -67,8 +67,20 @@ let dicom2BIDS = async function (opts) {
             return errorfn('No data to convert in ' + indir);
         }
 
+        //try to infer protocol name from the converted file (default format is 'folder-name_protocol-name_timestamp_series-number')
+        let imageFile = bis_genericio.getBaseName(imageFiles[0]), splitImageFile = imageFile.split(/__/), subjectName = '01';
+
+        console.log('image file', imageFile);
+        //determine position of protocol name by position of timestamp (which should be a number)
+        if (!isNaN(splitImageFile[2])) {
+            //extract subject name (pa, pb, pc plus a number) 
+            let matchstring = /(p[A-z]\d*)/g;
+            subjectName = matchstring.exec(splitImageFile[0])[1]; 
+        } 
+
+
         let outputdirectory = bis_genericio.joinFilenames(outdir, sourceDirectoryName);
-        let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, 'sub-01');
+        let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, `sub-${subjectName}`);
 
         //Create BIDS folders and filenames
         if (DEBUG)

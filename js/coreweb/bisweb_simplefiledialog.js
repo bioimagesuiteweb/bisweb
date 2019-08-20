@@ -89,12 +89,13 @@ class SimpleFileDialog {
 
         // Directory Mode
         if (this.mode.indexOf('dir')>=0) {
-            if (this.selectedItems.length > 1) {
+            if (this.selectedItems && this.selectedItems.length > 1) {
                 this.modal.dialog.modal('hide');
                 setTimeout( () => {
                     let formattedItemList = [], currentEntry;
                     let separator = this.currentDirectory.includes('/') ? '/' : '\\';
                     for (let item of this.selectedItems) {
+                        console.log('item', item);
                         currentEntry = this.currentDirectory + separator + item;
                         formattedItemList.push(currentEntry);
                     }
