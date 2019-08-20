@@ -6,7 +6,7 @@ alias mv='mv -i'
 alias ll='ls -l'                              
 alias la='ls -A'                              
 
-PS1="[BISWEBTOOLS]\h:\w>"
+PS1="[BISWEBTOOLS][bisweb]:\w>"
 export PS1
 
 source /usr/local/bisweb/setpaths.sh
@@ -15,7 +15,12 @@ echo ""
 echo "------------------------ In Bisweb docker image ----------------------------------------"
 echo "To execute the bisweb JS command line tools type: biswebnode"
 echo "The python command line tools and library can be found in /usr/local/bisweb"
+echo "The web applications are available under localhost:8080"
 echo "------------------------ ---------------------------------------------------------------"
 echo ""
 
-cd /root
+cd /opt/bisweb
+
+biswebnode bisserver --config /opt/bisweb/conf/server.conf --ipaddr 0.0.0.0 &
+
+sleep 2
