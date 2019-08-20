@@ -20,6 +20,7 @@
 "use strict";
 const $ = require('jquery');
 const bootbox = require('bootbox');
+const dat = require('bisweb_datgui');
 
 const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
@@ -36,6 +37,7 @@ class CPMElement extends HTMLElement {
         this.cpmDisplayPanel = null;
         this.cpmComputationPanel = null;
         this.fileInputForm = null;
+        this.settingsModal = null;
     }
 
     connectedCallback() {
@@ -77,6 +79,7 @@ class CPMElement extends HTMLElement {
                 <div class='btn-group' role='group'>
                     <button class='btn btn-sm btn-info'>View</button>
                     <button class='btn btn-sm btn-success'>Run CPM</button>
+                    <button class='btn btn-sm btn-primary'><span class='glyphicon glyphicon-cog'></span></button>
                 </div>
             </div>
             `);
@@ -115,6 +118,7 @@ class CPMElement extends HTMLElement {
         let listButtonGroup = $(this.fileListForm).find('.btn-group');
         let viewButton = listButtonGroup.find('.btn-info');
         let runButton = listButtonGroup.find('.btn-success');
+        let settingsButton = listButtonGroup.find('.btn-primary');
 
         viewButton.on('click', () => {
             let formName = $('#' + this.fileListFormId).val();
@@ -157,9 +161,7 @@ class CPMElement extends HTMLElement {
         });
 
         runButton.on('click', () => {
-            console.log('clicked run button');
             let formVal = this.fileListForm.find('.form-control').val();
-            console.log('form val', formVal);
 
             //create secondary list for cpm files for the given subject if behavior is specified
             if (formVal.includes('behavior')) {
@@ -170,10 +172,12 @@ class CPMElement extends HTMLElement {
                 }
 
                 if (valsList.length === 1) {
-
+                    runCPM()
                 }
             }
         });
+
+        settingsButton.on('click', () => { this.openSettingsModal(); });
 
         function runCPM(cpmFile, behaviorFile) {
             this.initializeWasm().then( () => {
@@ -258,7 +262,29 @@ class CPMElement extends HTMLElement {
         return inputButton;
     }
 
-   
+    /**
+     * Opens a modal for the user to change the settings of the CPM computation.
+     */
+    openSettingsModal() {
+        if (!this.settingsModal) {
+            let settingsModal = bis_webutil.createmodal('CPM Settings', 'modal-sm');
+            let object = {
+                'message' : 'gui',
+                'slider' : 0.5
+            };
+
+            let container = new dat.GUI({ 'autoPlace' : false });
+            container.add(object, 'message');
+            container.add(object, 'slider', 0, 1);
+
+            console.log('container', container);
+            settingsModal.body.append(container.domElement);
+
+            this.settingsModal = settingsModal;
+        }
+
+        this.settingsModal.dialog.modal('show');
+    }
 
     /**
      * Imports .csv files from a CPM matrix file or directory. 
