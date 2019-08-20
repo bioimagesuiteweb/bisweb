@@ -9,11 +9,6 @@ const baseutil = require('baseutils.js');
 
 const SEPARATOR=bis_genericio.getPathSeparator();
 
-//Need to keep track of labels to know if there are repeats, in which case they should be given a run number
-let labelsMap = {};
-
-
-
 const dicomParametersFilename = 'dicom_job_info.json';
 const sourceDirectoryName = 'sourcedata';
 const DEBUG=false;
@@ -70,7 +65,6 @@ let dicom2BIDS = async function (opts) {
         //try to infer protocol name from the converted file (default format is 'folder-name_protocol-name_timestamp_series-number')
         let imageFile = bis_genericio.getBaseName(imageFiles[0]), splitImageFile = imageFile.split(/__/), subjectName = '01';
 
-        console.log('image file', imageFile);
         //determine position of protocol name by position of timestamp (which should be a number)
         if (!isNaN(splitImageFile[2])) {
             //extract subject name (pa, pb, pc plus a number) 
@@ -115,12 +109,9 @@ let dicom2BIDS = async function (opts) {
         }
 
         await writeDicomMetadataFiles(outputdirectory, dicomobj, changedFilenames);
-
-        labelsMap = {};
         return outputdirectory;
     } catch (e) {
         console.log('An error occured during BIDS conversion', e);
-        labelsMap = {};
     }
 
 };
@@ -424,7 +415,7 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         filename = filename.split('_').join('-');
 
         let bidsLabel = parseBIDSLabel(filename, directory), namesArray;
-        let runNumber = getRunNumber(bidsLabel, fileExtension);
+        let runNumber = getRunNumber(filename);
 
         //may change in the future, though currently looks a bit more specific than needed
         if (directory === 'anat') {
@@ -443,28 +434,17 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         return joinedName.concat(fileExtension);
     }
 
+    function getRunNumber(filename) {
+        let splitFilename = filename.split(/--/);
+        let num = splitFilename[splitFilename.length - 1];
 
-    //Returns the number of runs with the same name name component for a directory type and updates the count in labelsMap (global map of keys seen so far)
-    function getRunNumber(bidsLabel, fileExtension) {
-        let runNum;
-        
-        if (labelsMap[bidsLabel]) {
-            if (fileExtension.includes('nii')) {
-                //supporting files are moved before the image file in the code above
-                //so once we find the image we can safely increment the label in labelsMap
-                runNum = labelsMap[bidsLabel];
-                labelsMap[bidsLabel] = labelsMap[bidsLabel] + 1;
-            } else {
-                runNum = labelsMap[bidsLabel];
-            }
-        } else {
-            labelsMap[bidsLabel] = 1;
-            runNum = 1;
-        }
+        //remove file extension (or anything else that may be attached to the run)
+        num = num.split('-')[0].split('.')[0];
+        if (parseInt(num) < 10) { num = '0' + num; }
 
-        if (runNum < 10) { runNum = '0' + runNum; }
-        return 'run-' + runNum; 
+        return 'run-' + num;
     }
+
 };
 
 /**
