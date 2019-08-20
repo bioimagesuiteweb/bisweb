@@ -14,3 +14,6 @@ module.exports = {
     zlib : require('zlib'),
 };
 
+
+global.fetch = require('node-fetch');
+console.log('Externals loaded');
