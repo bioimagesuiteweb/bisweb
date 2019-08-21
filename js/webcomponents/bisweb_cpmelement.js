@@ -268,17 +268,29 @@ class CPMElement extends HTMLElement {
     openSettingsModal() {
         if (!this.settingsModal) {
             let settingsModal = bis_webutil.createmodal('CPM Settings', 'modal-sm');
-            let object = {
-                'message' : 'gui',
-                'slider' : 0.5
+            let settingsObj = {
+                'threshold' : 0.01,
+                'kfold' : '3',
+                'numtasks' : '0',
+                'numnodes' : '3',
+                'lambda' : 0.001
             };
 
-            let container = new dat.GUI({ 'autoPlace' : false });
-            container.add(object, 'message');
-            container.add(object, 'slider', 0, 1);
+            let listObj = {
+                'kfold' : ['3', '4', '5', '6', '8', '10'],
+                'numtasks' : ['0', '1', '2', '3'],
+                'numnodes' : ['3', '268'],
+            }
 
-            console.log('container', container);
+            let container = new dat.GUI({ 'autoPlace' : false });
+            container.add(settingsObj, 'threshold', 0, 1);
+            container.add(settingsObj, 'kfold', listObj.kfold);
+            container.add(settingsObj, 'numtasks', listObj.numtasks);
+            container.add(settingsObj, 'numnodes', listObj.numnodes),
+            container.add(settingsObj, 'lambda', 0.0001, 0.01);
+
             settingsModal.body.append(container.domElement);
+            $(container.domElement).find('.close-button').remove();
 
             this.settingsModal = settingsModal;
         }
@@ -297,8 +309,8 @@ class CPMElement extends HTMLElement {
             let extension = f.split('.')[1];
             if (!extension) { //flow for a directory of .csv or .tsv files
                 bis_genericio.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then((obj) => {
-                    this.connFiles = this.formatLoadedConnData(obj.output.file);
-                    this.populateFileElementList(obj.output.filenames);
+                    let fileList = this.formatLoadedConnData(obj.output);
+                    this.populateFileElementList(fileList);
                     resolve();
                 }).catch( (e) => { reject(e); });
             } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
@@ -318,8 +330,9 @@ class CPMElement extends HTMLElement {
                             flist.push(filenameKey);
                         }
                     }
-                    this.populateFileElementList(flist);
-                    this.connFiles = this.formatLoadedConnData(rawConnFiles);
+
+                    let fileList = this.formatLoadedConnData(rawConnFiles);
+                    this.populateFileElementList(fileList);
                     resolve();
                 }).catch( (e) => { reject(e); });
             } else {
@@ -342,12 +355,13 @@ class CPMElement extends HTMLElement {
     }
 
     /**
-     * Reformats a raw connectivity file from an object containing strings to an object containing BiswebMatrices.
+     * Reformats a raw connectivity file from an object containing strings to an object containing BiswebMatrices and assigns this.connFiles to be the parsed data.
      * 
      * @param {Object} rawData - Raw connectivity file data loaded from disk.
-     * @returns Connectivity file data reformatted as matrices.
+     * @returns Array containing all the filenames loaded from disk.
      */
     formatLoadedConnData(rawData) {
+        let fileNames = [], formattedData = rawData;
         for (let key of Object.keys(rawData)) {
             for (let fileKey of Object.keys(rawData[key])) {
                 let data = rawData[key][fileKey].trim().split('\n');
@@ -362,11 +376,14 @@ class CPMElement extends HTMLElement {
 
                 let matr = new BiswebMatrix();
                 matr.setFromNumericMatrix(data);
-                rawData[key][fileKey] = matr;
+                formattedData[key][fileKey] = matr;
+
+                fileNames.push(fileKey);
             }
         }
 
-        return rawData;
+        this.connFiles = formattedData;
+        return fileNames;
     }
 
     /**
@@ -398,9 +415,10 @@ class CPMElement extends HTMLElement {
         });
     }
 
-    runCPMModule(matrix, behaviors) {
+    
+    /*runCPMModule(matrix, behaviors) {
 
-    }
+    }*/
 }
 
 let reformatMatrix = (filename, matrix) => {
