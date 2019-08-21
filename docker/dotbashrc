@@ -6,7 +6,7 @@ alias mv='mv -i'
 alias ll='ls -l'                              
 alias la='ls -A'                              
 
-PS1="\h:\w>"
+PS1="[BISWEBDEVEL]:\w>"
 export PS1
 
 echo ""

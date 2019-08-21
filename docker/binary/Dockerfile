@@ -54,8 +54,6 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN dos2unix /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Utility
-RUN npm install -g wscat
 
 ENTRYPOINT ["bash", "/usr/local/bin/entrypoint.sh"]
 
