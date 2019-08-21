@@ -38,6 +38,15 @@ class CPMElement extends HTMLElement {
         this.cpmComputationPanel = null;
         this.fileInputForm = null;
         this.settingsModal = null;
+
+        //default settings for CPM
+        this.settings = {
+            'threshold' : 0.01,
+            'kfold' : '3',
+            'numtasks' : '0',
+            'numnodes' : '3',
+            'lambda' : 0.001
+        };;
     }
 
     connectedCallback() {
@@ -162,17 +171,41 @@ class CPMElement extends HTMLElement {
 
         runButton.on('click', () => {
             let formVal = this.fileListForm.find('.form-control').val();
+            let subjectKey = formVal.split('_')[0];
+            let numRegex = /0*(\d+)/g, subjectNum = numRegex.exec(subjectKey)[1], foundKey = null;
 
+            //subject keys may be zero padded, so search for they key with the same number as the one in the formVal
+            for (let key of Object.keys(this.connFiles)) {
+                let numRegex = /0*(\d+)/g;
+                let num = numRegex.exec(key)[1];
+                if (num === subjectNum) {
+                    foundKey = key;
+                }
+            }
+
+            console.log('found key', foundKey);
             //create secondary list for cpm files for the given subject if behavior is specified
             if (formVal.includes('behavior')) {
                 let formOptions = this.fileListForm.find('option'), valsList = [];
                 for (let option of formOptions) {
-                    console.log('option', option, option.value);
-                    valsList.push(option.value);
+                    let numRegex = /0*(\d+)/g;
+                    console.log('option', option.value);
+                    if ( numRegex.exec(option.value)[1] === subjectNum && !option.value.includes('behavior')) { valsList.push(option.value); }
                 }
 
+                console.log('vals list', valsList);
+                //list of length one means the behavior file could only correlate to one file
                 if (valsList.length === 1) {
-                    runCPM()
+                    console.log('subject files', this.connFiles);
+                    let subjectFileKey, subjectFiles = this.connFiles[foundKey];
+                    let subjectFilesKeys = Object.keys(subjectFiles);
+                    
+                    for (let file of subjectFilesKeys) {
+                        if (!file.includes('behavior')) { subjectFileKey = file; }
+                    }
+
+                    console.log('subject key', subjectKey, 'subject file key', subjectFileKey, 'form val', formVal);
+                    runCPM(this.connFiles[foundKey][subjectFileKey], this.connFiles[foundKey][formVal]);
                 }
             }
         });
@@ -181,7 +214,13 @@ class CPMElement extends HTMLElement {
 
         function runCPM(cpmFile, behaviorFile) {
             this.initializeWasm().then( () => {
-                libbiswasm.computeCPMWasm(cpmFile, behaviorFile, { 'numnodes' : 3, 'numtasks' : 0 }, 0);
+                //cast any string values to numbers before feeding the input to computeCPM
+                for (let key of Object.keys(this.settings)) {
+                    if (typeof this.settings[key] === 'string') { this.settings[key] = parseFloat(this.settings[key])}
+                }
+
+                let cpmResults = libbiswasm.computeCPMWasm(cpmFile, behaviorFile, this.settings , 0);
+                console.log('cmp results', cpmResults);
             });
         }
     }
@@ -268,19 +307,13 @@ class CPMElement extends HTMLElement {
     openSettingsModal() {
         if (!this.settingsModal) {
             let settingsModal = bis_webutil.createmodal('CPM Settings', 'modal-sm');
-            let settingsObj = {
-                'threshold' : 0.01,
-                'kfold' : '3',
-                'numtasks' : '0',
-                'numnodes' : '3',
-                'lambda' : 0.001
-            };
+            let settingsObj = Object.assign({}, this.settings);
 
             let listObj = {
                 'kfold' : ['3', '4', '5', '6', '8', '10'],
                 'numtasks' : ['0', '1', '2', '3'],
-                'numnodes' : ['3', '268'],
-            }
+                'numnodes' : ['3', '268']
+            };
 
             let container = new dat.GUI({ 'autoPlace' : false });
             container.add(settingsObj, 'threshold', 0, 1);
@@ -291,6 +324,34 @@ class CPMElement extends HTMLElement {
 
             settingsModal.body.append(container.domElement);
             $(container.domElement).find('.close-button').remove();
+
+
+            let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'btn-success' });
+            confirmButton.on('click', () => {
+                console.log('settings obj', settingsObj);
+                this.settings = Object.assign({}, settingsObj);
+                settingsModal.dialog.modal('hide');
+            });
+
+            let cancelButton = bis_webutil.createbutton({ 'name' : 'Close', 'type' : 'btn-default' });
+            cancelButton.on('click', () => {
+                for (let key of Object.keys(settingsObj)) {
+                    settingsObj[key] = this.settings[key];
+                }
+
+                //do this on modal hide to avoid the controllers being moved while the user can see it
+                settingsModal.once('hidden.bs.modal', () => {
+                    for (let i in container.__controllers) {
+                        container.__controllers[i].updateDisplay();
+                    }
+                });
+
+                settingsModal.dialog.modal('hide');
+            });
+            
+            settingsModal.footer.empty();
+            settingsModal.footer.append(confirmButton);
+            settingsModal.footer.append(cancelButton);
 
             this.settingsModal = settingsModal;
         }
