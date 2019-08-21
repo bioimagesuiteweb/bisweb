@@ -412,16 +412,18 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         }
 
         //BIDS uses underscores as separator characters to show hierarchy in filenames, so change underscores to hyphens to avoid ambiguity
-        filename = filename.split('_').join('-');
+        let splitFilename = filename.split(/__/);
+        filename = splitFilename.join('-');
 
         let bidsLabel = parseBIDSLabel(filename, directory), namesArray;
-        let runNumber = getRunNumber(filename);
+        let runNumber = getRunNumber(splitFilename);
 
         //may change in the future, though currently looks a bit more specific than needed
         if (directory === 'anat') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'func') {
-            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], 'task-unnamed', runNumber, bidsLabel];
+            let taskName = formatTaskname(splitFilename);
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], `task-${taskName}`, runNumber, bidsLabel];
         } else if (directory === 'localizer') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'dwi') {
@@ -434,8 +436,25 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         return joinedName.concat(fileExtension);
     }
 
-    function getRunNumber(filename) {
-        let splitFilename = filename.split(/--/);
+
+    //Attempts to infer task name from protocol portion of 
+    function formatTaskname(splitFilename) {
+        let taskName = 'unnamed';
+        if (!isNaN(splitFilename[2])) {
+            taskName = splitFilename[1];
+        } else if (!isNaN(splitFilename[1])) {
+            taskName = splitFilename[0];
+        }
+
+        console.log('split name', splitFilename, 'task name', taskName);
+        //remove common phrases and characters from the taskname, then turn it into a single word
+        taskName = taskName.replace(/(bold[^A-Za-z\d]|MB[^A-Za-z\d]|\dmm[^A-Za-z\d])/g, '');
+        taskName = taskName.replace(/[\s_,'-]/, '');
+        return taskName.toLowerCase();
+    }
+
+    //Gets the series number for the image off the number portion of the raw DICOM file
+    function getRunNumber(splitFilename) {
         let num = splitFilename[splitFilename.length - 1];
 
         //remove file extension (or anything else that may be attached to the run)
