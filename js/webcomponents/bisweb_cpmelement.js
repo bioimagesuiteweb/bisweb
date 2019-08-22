@@ -170,57 +170,81 @@ class CPMElement extends HTMLElement {
         });
 
         runButton.on('click', () => {
-            let formVal = this.fileListForm.find('.form-control').val();
-            let subjectKey = formVal.split('_')[0];
-            let numRegex = /0*(\d+)/g, subjectNum = numRegex.exec(subjectKey)[1], foundKey = null;
-
-            //subject keys may be zero padded, so search for they key with the same number as the one in the formVal
-            for (let key of Object.keys(this.connFiles)) {
-                let numRegex = /0*(\d+)/g;
-                let num = numRegex.exec(key)[1];
-                if (num === subjectNum) {
-                    foundKey = key;
-                }
-            }
-
-            console.log('found key', foundKey);
-            //create secondary list for cpm files for the given subject if behavior is specified
-            if (formVal.includes('behavior')) {
-                let formOptions = this.fileListForm.find('option'), valsList = [];
-                for (let option of formOptions) {
-                    let numRegex = /0*(\d+)/g;
-                    console.log('option', option.value);
-                    if ( numRegex.exec(option.value)[1] === subjectNum && !option.value.includes('behavior')) { valsList.push(option.value); }
-                }
-
-                console.log('vals list', valsList);
-                //list of length one means the behavior file could only correlate to one file
-                if (valsList.length === 1) {
-                    console.log('subject files', this.connFiles);
-                    let subjectFileKey, subjectFiles = this.connFiles[foundKey];
-                    let subjectFilesKeys = Object.keys(subjectFiles);
-                    
-                    for (let file of subjectFilesKeys) {
-                        if (!file.includes('behavior')) { subjectFileKey = file; }
-                    }
-
-                    console.log('subject key', subjectKey, 'subject file key', subjectFileKey, 'form val', formVal);
-                    runCPM(this.connFiles[foundKey][subjectFileKey], this.connFiles[foundKey][formVal]);
-                }
-            }
+            this.runCPMFlow()
         });
 
-        settingsButton.on('click', () => { this.openSettingsModal(); });
+        settingsButton.on('click', () => { this.openSettingsModal(); });    
+    }
 
-        function runCPM(cpmFile, behaviorFile) {
-            this.initializeWasm().then( () => {
-                //cast any string values to numbers before feeding the input to computeCPM
-                for (let key of Object.keys(this.settings)) {
-                    if (typeof this.settings[key] === 'string') { this.settings[key] = parseFloat(this.settings[key])}
+    runCPMFlow() {
+        let formVal = this.fileListForm.find('.form-control').val();
+        let subjectKey = formVal.split('_')[0];
+        let numRegex = /0*(\d+)/g, subjectNum = numRegex.exec(subjectKey)[1], foundKey = null;
+
+        //subject keys may be zero padded, so search for they key with the same number as the one in the formVal
+        for (let key of Object.keys(this.connFiles)) {
+            let numRegex = /0*(\d+)/g;
+            let num = numRegex.exec(key)[1];
+            if (num === subjectNum) {
+                foundKey = key;
+            }
+        }
+
+        //create secondary list for cpm files for the given subject if behavior is specified
+        if (formVal.includes('behavior')) {
+            let formOptions = this.fileListForm.find('option'), valsList = [];
+            for (let option of formOptions) {
+                let numRegex = /0*(\d+)/g;
+                console.log('option', option.value);
+                if (numRegex.exec(option.value)[1] === subjectNum && !option.value.includes('behavior')) { valsList.push(option.value); }
+            }
+
+            //list of length one means the behavior file could only correlate to one file
+            if (valsList.length === 1) {
+                console.log('subject files', this.connFiles);
+                let subjectFileKey, subjectFiles = this.connFiles[foundKey];
+                let subjectFilesKeys = Object.keys(subjectFiles);
+
+                for (let file of subjectFilesKeys) {
+                    if (!file.includes('behavior')) { subjectFileKey = file; }
                 }
 
-                let cpmResults = libbiswasm.computeCPMWasm(cpmFile, behaviorFile, this.settings , 0);
-                console.log('cmp results', cpmResults);
+                console.log('subject key', subjectKey, 'subject file key', subjectFileKey, 'form val', formVal);
+                runCPM(this.connFiles[foundKey][subjectFileKey], this.connFiles[foundKey][formVal]);
+            } else { //create a modal that'll allow the user to select a file manually 
+
+                let inputOptions = [];
+                for (let item of valsList) { inputOptions.push({ 'text' : item, 'value' : item }); }
+
+                bootbox.prompt({
+                    'title' : 'Choose a connectivity file',
+                    'size' : 'small',
+                    'inputType' : 'select',
+                    'inputOptions' : inputOptions,
+                    'callback' : (result) => {
+                        if (result) {
+                            console.log('result', result);
+                            runCPM(this.connFiles[foundKey][result], this.connFiles[foundKey][formVal]);
+                        }
+                    }
+                });
+            }
+        }
+
+        const self = this;
+        function runCPM(cpmFile, behaviorFile) {
+            self.initializeWasm.then( () => {
+                //cast any string values to numbers before feeding the input to computeCPM
+                for (let key of Object.keys(self.settings)) {
+                    if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key])}
+                }
+
+                try {
+                    let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings , 0);
+                    console.log('cmp results', cpmResults);
+                } catch (e) {
+                    bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true);
+                }
             });
         }
     }
