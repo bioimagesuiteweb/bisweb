@@ -1,46 +1,65 @@
 #!/bin/bash
 
-# Checkout main bisweb source code
-echo "Checking out bisweb source"
-mkdir /opt/bisweb
-cd /opt/bisweb
+BDIR="$(pwd )"
+echo "-------------------------------------------------"
+echo "Installing and building bisweb in $BDIR"
+echo "-------------------------------------------------"
+sleep 1
+
+cd ${BDIR}
 git clone https://github.com/bioimagesuiteweb/bisweb src
-cd /opt/bisweb/src
+
+cd ${BDIR}/src
 git branch -l
 git checkout devel
 git pull
 
-# checkout bisweb gpl plugin source
-cd /opt/bisweb
+#checkout bisweb gpl plugin source
+cd ${BDIR}
 git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
 
-# Create BUILD Setup
-cd /opt/bisweb/src
+echo "-------------------------------------------------"
+echo "Installing prerequisites"
+echo "-------------------------------------------------"
+sleep 2
+
+
+#Create BUILD Setup
+cd ${BDIR}/src
 npm install -d
 node config/createbuild.js
 
-# Now C++ Build for WASM
-cd /opt/bisweb/src/build
+#Now C++ Build for WASM
+cd ${BDIR}/src/build
 echo "Copying files"
 
-dos2unix /opt/bisweb/src/build/*.sh
-chmod +x /opt/bisweb/src/build/*.sh
-/opt/bisweb/src/build/fullbuild.sh
-/opt/bisweb/src/build/biswebinstall.sh
+# Run dos2unix to convert and make executable
+dos2unix ${BDIR}/src/build/*.sh
+chmod +x ${BDIR}/src/build/*.sh
+dos2unix ${BDIR}/src/compiletools/*.sh
+chmod +x ${BDIR}/src/compiletools/*.sh
 
-# Expose server
-EXPOSE 8080
+echo "-------------------------------------------------"
+echo "Beginning build"
+echo "-------------------------------------------------"
+sleep 2
 
-# Build NATIVE
-cd /opt/bisweb/src/
-echo "done setting up docker machine -- now copying final scripts"
+# Build
+${BDIR}/src/compiletools/fullbuild.sh
 
-# Final configurations
-cd /opt/bisweb/
-COPY dotbashrc /opt/.bashrc
-COPY dockerupdate.sh /opt/bisweb/update.sh
-dos2unix /opt/bisweb/update.sh
-chmod +x /opt/bisweb/update.sh
+
+cd ${BDIR}/src
+
+echo "-------------------------------------------------"
+echo "All set"
+echo "-------------------------------------------------"
+sleep 1
+
+
+
+
+
+
 
 
 

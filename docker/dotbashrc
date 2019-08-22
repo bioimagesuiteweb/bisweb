@@ -9,12 +9,15 @@ alias la='ls -A'
 PS1="[BISWEBDEVEL]:\w>"
 export PS1
 
+export PATH=/usr/local/bin:${PATH}
+
 echo ""
 echo "------------------------ In Bisweb docker image ----------------------------------------"
-echo "To update the bisweb source type: update.sh"
-echo "To execute the bisweb JS command line tools type: biswebnode"
-echo "To rebuild the software type: ./src/build/fullbuild.sh"
-echo "To run the web server for local hosting of bisweb command line tools type: cd src; gulp"
-echo "The python command line tools and library can be found in /usr/local/bisweb"
+echo "To create a bisweb source directory"
+echo "1. Navigate to the desired directory"
+echo "2. Run the script: biswebconfig.sh"
 echo "------------------------ ---------------------------------------------------------------"
 echo ""
+
+cd /hostfiles
+

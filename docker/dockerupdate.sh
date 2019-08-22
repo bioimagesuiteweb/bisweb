@@ -1,21 +1,21 @@
-cd /root/bisweb/gpl
+cd /opt/bisweb/gpl
 git pull
 
-cd /root/bisweb/src
+cd /opt/bisweb/src
 git pull
 
 npm install -d
-cd /root/bisweb/src/docker
+cd /opt/bisweb/src/docker
 
-cp fullbuild.sh /root/bisweb/src/build/fullbuild.sh
-cp wasmbuild.sh /root/bisweb/src/build/wasmbuild.sh
-cp webbuild.sh  /root/bisweb/src/build/webbuild.sh
-cp nativebuild.sh /root/bisweb/src/build/nativebuild.sh
-cp testbuild.sh  /root/bisweb/src/build/testbuild.sh
-cp biswebinstall.sh /root/bisweb/src/build/biswebinstall.sh
-dos2unix /root/bisweb/src/build/*.sh
-chmod +x /root/bisweb/src/build/*.sh
+cp fullbuild.sh /opt/bisweb/src/build/fullbuild.sh
+cp wasmbuild.sh /opt/bisweb/src/build/wasmbuild.sh
+cp webbuild.sh  /opt/bisweb/src/build/webbuild.sh
+cp nativebuild.sh /opt/bisweb/src/build/nativebuild.sh
+cp testbuild.sh  /opt/bisweb/src/build/testbuild.sh
+cp biswebinstall.sh /opt/bisweb/src/build/biswebinstall.sh
+dos2unix /opt/bisweb/src/build/*.sh
+chmod +x /opt/bisweb/src/build/*.sh
 
-cd /root/bisweb/src
+cd /opt/bisweb/src
 
 

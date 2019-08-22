@@ -96,11 +96,42 @@ In particular you will need to
     
 2. Log in to the container
 
-    sudo docker run -p 8080:8080 -it bisweb/devel bash
+        docker run -it --rm -p 8080:80 -p 24000:24000 \
+          --mount src=${HOME},target=/hostfiles,type=bind \
+          -e LOCAL_USER_ID=`id -u $USER` \
+          --name bisweb \
+          bisweb/devel 
+
+This creates a new user bisweb with the same uid as the host user running the
+container and mounts their home directory ($HOME) in a directory called
+/container
+
+Once you start the container you will meet a prompt of the form
+
+     ------------------------ In Bisweb docker image ----------------------------------------
+    To create a bisweb source directory
+    1. Navigate to the desired directory
+    2. Run the script: biswebconfig.sh
+    ------------------------ ---------------------------------------------------------------
+
+    [BISWEBDEVEL]:/hostfiles>
     
-3. The source tree for bisweb will be in the directory /root/bisweb/src and /root/bisweb/gpl (for the gpl plugin). See the [Dockerfile](../docker/Dockerfile)
-   for more information. You can update the source (this is mapped to `devel`
-   branch) using `git pull` as usual.
+If everything goes well you are in your home directory on the host
+machine. From here create your directory e.g.
+
+    mkdir bisweb
+    cd bisweb
+    
+and run the script
+    
+    biswebconfig.sh
+    
+This will download the bisweb source tree and configure and build it as
+needed.  Once this is completed, you now have a full bisweb source directory configured in your
+directory of choice (we will call this `/hostfiles/bisweb`). 
+
+Look below under Building and Running BioImage Suite web for more
+details. Essentially all the steps are configured though.
 
 ## Option 2. Linux/Ubuntu
 
@@ -238,6 +269,8 @@ source files, use the `createbuild.js` script
 This will create a number of sub-directories, (e.g. `build/web`, `build/wasm`,
 `build/dist`, `build/native`, `build/doc` `build/install`) and also install
 emscripten as needed.
+
+### Create an initial build
 
 Then you can perform a full initial build using
 
