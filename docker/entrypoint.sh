@@ -8,18 +8,31 @@
 echo "------------------------------------------------"
 echo "+++ Starting docker container."
 
+USERHOME=/home/user
+
+if [ -d  /hostfiles ]; then
+    USERHOME=/hostfiles/biswebcontainer
+    echo "+++ Creating persisting home directory in ${USERHOME}"
+else
+    echo "+++ Creating home directory inside the container in ${USERHOME}"
+fi
+
 USER_ID=${LOCAL_USER_ID:-9001}
 echo "Starting with UID : $USER_ID"
-useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d /home/bisweb
+useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d ${USERHOME}
 echo "++++ Added user bisweb"
 sleep 2
 
+if [ -d  /hostfiles ]; then
+    chown -R bisweb ${USERHOME}
+fi
+
 echo "------------------------------------------------"
 
-cd /home/bisweb
-cp /usr/local/share/dotbashrc /home/bisweb/.bashrc
-chown bisweb /home/bisweb/.bashrc
-dos2unix /home/bisweb/.bashrc
+cd ${USERHOME}
+cp /usr/local/share/dotbashrc ${USERHOME}/.bashrc
+chown bisweb ${USERHOME}/.bashrc
+dos2unix ${USERHOME}/.bashrc
 
 echo "++++ Configured home directory"
 echo "++++ ------------------------------------------------"
