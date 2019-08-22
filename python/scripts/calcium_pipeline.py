@@ -22,57 +22,14 @@ import pdb
 
 from PIL import Image, ImageSequence
 
-my_path=os.path.dirname(os.path.realpath('test.py'));
-# my_path=os.path.dirname(os.path.realpath(__file__));
-print(__file__);
+my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../../build/native'));
 sys.path.append(os.path.abspath(my_path+'/../../python'));
 
 import biswrapper as libbiswasm;
 import bis_objects as bis
 
-fmri=bis.bisImage().load('some.nii.gz'); 
-print('++++ \t fmri loaded from some.nii.gz, dims=',fmri.dimensions);
-pdb.set_trace()
-fmri.get_data()
-zz = PIL.Image.fromarray
-# fmri.save('some2.nii.gz');
-
-#### Loading / File Manipulation
-# TIFF (multipage) -> [PIL Images]
-img = Image.open('sampleMovie.tiff')
-imgl = []
-for page in ImageSequence.Iterator(img):
-    imgl.append(page.convert(mode='F'))
-    # https://pillow.readthedocs.io/en/3.1.x/handbook/concepts.html#concept-modes
-
-# PIL Image -> BisImage
-# a = bis.bisImage().create(np.array(iml[0]),[1,1,1],np.array(iml[0]))
-imgLB = []
-for img in imgl:
-    imgLB.append(bis.bisImage().create(np.array(img),[1,1,1],np.array(img)))
-
-# PIL Image -> TIFF (multipage)
-# Really slow...
-imgl[0].save("sampleMovieBig.tiff",compression="tiff_deflate",save_all=True,append_images=imgl[1:])
-
-# Nifit -> BisImage
-fmri=bis.bisImage().load('some.nii.gz') 
-
-# BisImage -> Nifit
-# create(self,imagedata,imagespacing,imagematrix):
-blue1 = bis.bisImage().create(np.array(blueL[0]),[1,1,1,1,1],np.eye(4))
-fmri.save('some2.nii.gz')
-# calcium_down_blue_movie1.nii.gz dim=256,250,500,1,1, sp=1,1,1,1,1 orient=RAS type=float
-# test_blue1_down.nii.gz          dim=256,250,1,1,1, sp=1,1,1,1,1 orient=RAS type=float
-
-#########################################################################
-#########################################################################
-#########################################################################
-#########################################################################
-#########################################################################
-#########################################################################
-#########################################################################
+### Loading movie
 img = Image.open('sampleMovie.tiff')
 imgl = []
 for page in ImageSequence.Iterator(img):
@@ -88,7 +45,6 @@ rotationAngle = -43
 downsampledSize = (int(originalSize[0]*downsampleRatio), int(originalSize[1]*downsampleRatio))
 for i in range(len(imgl)):
     imgl[i] = imgl[i].resize(downsampledSize, Image.BILINEAR).rotate(rotationAngle,Image.NEAREST,True)
-rotatedSize = imgl[0].shape
 
 #### Split Channel (and convert to numpy array)
 # TODO: support blue or uv first
@@ -104,6 +60,7 @@ uvMovie = np.empty((uvL[0].size[1], uvL[0].size[0], len(uvL)))
 # uvMovie = np.empty((256,250,500))
 for i in range(len(uvL)):
     uvMovie[:,:,i] = np.array(uvL[i])
+rotatedSize3D = blueMovie.shape
 
 # Output
 if outputEveryStep:
@@ -112,13 +69,13 @@ if outputEveryStep:
     out = bis.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
     out.save('calcium_down_uv_movie.nii.gz')
     
-#### Motation Correction
+#### Motion Correction
 #TODO
 
 #### Top Hat Filter
+topHat = 300
 # Mask (spatial), resize, and rotate
 mask = np.array(Image.open('mask.tif').resize(downsampledSize, Image.BILINEAR).rotate(rotationAngle,Image.NEAREST,True))
-mask = np.argwhere(mask)
 
 # Reshape (assuming always square)
 blueMovie = blueMovie.reshape((blueMovie.shape[0]**2, blueMovie.shape[2]))
@@ -126,15 +83,15 @@ uvMovie = uvMovie.reshape((uvMovie.shape[0]**2, uvMovie.shape[2]))
 mask = mask.reshape((mask.shape[0]**2))
 
 # Creating time padding (invert time)
-bluePadding = np.concatenate([-blueMovie[mask,300:0:-1]+2*blueMovie[mask,0][:,np.newaxis], blueMovie[mask,:]],axis=1)
-uvPadding = np.concatenate([-uvMovie[mask,300:0:-1]+2*uvMovie[mask,0][:,np.newaxis], uvMovie[mask,:]],axis=1)
+bluePadding = np.concatenate([-blueMovie[mask,topHat:0:-1]+2*blueMovie[mask,0][:,np.newaxis], blueMovie[mask,:]],axis=1)
+uvPadding = np.concatenate([-uvMovie[mask,topHat:0:-1]+2*uvMovie[mask,0][:,np.newaxis], uvMovie[mask,:]],axis=1)
 
 # from skimage.morphology import white_tophat
 import skimage.morphology
 
-se = skimage.morphology.rectangle(1,300) #(1, x) shape important!
-blueFiltered = np.empty(rotatedSize)
-uvFiltered = np.empty(rotatedSize)
+se = skimage.morphology.rectangle(1,topHat) #(1, x) shape important!
+blueFiltered = np.empty((mask.sum(), rotatedSize3D[2]+topHat))
+uvFiltered = np.empty((mask.sum(), rotatedSize3D[2]+topHat))
 for i in range(mask.sum()):
     blueFiltered[i,np.newaxis] = skimage.morphology.white_tophat(bluePadding[i,np.newaxis],se)
     uvFiltered[i,np.newaxis] = skimage.morphology.white_tophat(uvPadding[i,np.newaxis],se)
@@ -143,11 +100,11 @@ blueMovieFiltered = np.zeros(blueMovie.shape)
 uvMovieFiltered = np.zeros(uvMovie.shape)
 
 mask_indices = np.squeeze(np.argwhere(mask))
-blueMovieFiltered[mask_indices,:] = blueFiltered[:,300:]
-uvMovieFiltered[mask_indices,:] = uvFiltered[:,300:]
+blueMovieFiltered[mask_indices,:] = blueFiltered[:,topHat:]
+uvMovieFiltered[mask_indices,:] = uvFiltered[:,topHat:]
 
-blueMovieFiltered = blueMovieFiltered.reshape(rotatedSize)
-uvMovieFiltered = uvMovieFiltered.reshape(rotatedSize)
+blueMovieFiltered = blueMovieFiltered.reshape(rotatedSize3D)
+uvMovieFiltered = uvMovieFiltered.reshape(rotatedSize3D)
 
 if outputEveryStep:
     out = bis.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
@@ -156,6 +113,45 @@ if outputEveryStep:
     out.save('calcium_down_uv_movie_mc_rot_filt.nii.gz')
 
 #### Two-wavelength Regression
+from scipy import linalg
+
+blueMovieFiltered = blueMovieFiltered.reshape((blueMovieFiltered.shape[0]**2, blueMovieFiltered.shape[2]))
+uvMovieFiltered = uvMovieFiltered.reshape((uvMovieFiltered.shape[0]**2, uvMovieFiltered.shape[2]))
+
+blueBase = blueMovie - blueMovieFiltered
+uvBase = uvMovie - uvMovieFiltered
+
+blueRec = blueMovieFiltered + np.tile(blueBase.mean(axis=1)[:,np.newaxis],(1,rotatedSize3D[2]))
+uvRec = uvMovieFiltered + np.tile(uvBase.mean(axis=1)[:,np.newaxis],(1,rotatedSize3D[2]))
+
+beta = np.zeros((len(mask_indices)))
+blueReg = np.zeros(blueBase.shape)
+
+for i in range(mask.sum()):
+    beta[i] = linalg.lstsq(uvRec[mask_indices[i],:][:,np.newaxis], blueRec[mask_indices[i],:][:,np.newaxis])[0][0][0]
+    blueReg[mask_indices[i],:] = blueMovieFiltered[mask_indices[i],:] - beta[i]*uvMovieFiltered[mask_indices[i],:]
+
+if outputEveryStep:
+    out = bis.bisImage().create(blueReg.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+    out.save('calcium_down_blue_movie_mc_rot_filt_regress.nii.gz')
+
+#### dF/F
+
+#blue
+blueF = blueMovie[mask,topHat:].mean(axis=1)
+blueDFF = np.zeros(blueMovie.shape)
+blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,rotatedSize3D[2])))
+
+#uv
+uvF = uvMovieFiltered[mask,topHat:].mean(axis=1)
+uvDFF = np.zeros(uvMovieFiltered.shape)
+uvDFF[mask,:] = np.divide(uvMovieFiltered[mask,:],np.tile(uvF[:,np.newaxis],(1,rotatedSize3D[2])))
+
+if outputEveryStep:
+    out = bis.bisImage().create(blueDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+    out.save('calcium_down_blue_movie_mc_rot_filt_regress_dff.nii.gz')
+    out = bis.bisImage().create(uvDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+    out.save('calcium_down_uv_movie_mc_rot_filt_regress_dff.nii.gz')
 
 
 sys.exit();
