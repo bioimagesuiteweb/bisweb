@@ -46,7 +46,7 @@ class CPMElement extends HTMLElement {
             'numtasks' : '0',
             'numnodes' : '3',
             'lambda' : 0.001
-        };;
+        };
     }
 
     connectedCallback() {
@@ -66,12 +66,23 @@ class CPMElement extends HTMLElement {
         bisweb_popoverhandler.addPopoverDismissHandler();
     }
 
+    /**
+     * Creates the Connectivity Files panel and adds the CPM menubar item to the top of the page. 
+     * 
+     * @param {JQuery} menubar - The top menubar of the BioImage Suite page.
+     * @param {JQuery} dockbar - The right panel on the BioImage Suite page.
+     */
     createMenubarItems(menubar, dockbar) {
         let topmenu = bis_webutil.createTopMenuBarMenu('CPM', menubar);
         bis_webutil.createMenuItem(topmenu, 'Open Connectivity File Loader', () => { this.openCPMSidebar(dockbar); });
 
     }
 
+    /**
+     * Opens the CPM panel in the dockbar, creating it if necessary. 
+     * 
+     * @param {JQuery} dockbar - The right panel on the BioImageSuite page.  
+     */
     openCPMSidebar(dockbar) {
         if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
@@ -94,9 +105,9 @@ class CPMElement extends HTMLElement {
             `);
 
             let buttonGroup = bis_webutil.createbuttonbar();
-            let inputButton = this.createCPMPopoverButton();
+            let importButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
-                'name' : 'Export CPM File',
+                'name' : 'Export CPM file',
                 'type' : 'warning',
                 'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
@@ -115,15 +126,22 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            this.createFormButtons(buttonGroup, inputButton, exportButton);
-            buttonGroup.append(inputButton, exportButton);
+            this.createFormButtons(buttonGroup, importButton, exportButton);
+            buttonGroup.append(importButton, exportButton);
             this.cpmDisplayPanel.append(buttonGroup);
         } else {
             this.cpmDisplayPanel.parent().addClass('in');
         }
     }
 
-    createFormButtons(fileButtonGroup, inputButton, exportButton) {
+    /**
+     * Creates the button associated with the form in the connectivity file panel. 
+     * 
+     * @param {JQuery} fileButtonGroup - The button group containing the import and export buttons. 
+     * @param {JQuery} importButton - The 'Import CPM File' button
+     * @param {JQuery} exportButton - The 'Export CPM file' button
+     */
+    createFormButtons(fileButtonGroup, importButton, exportButton) {
         let listButtonGroup = $(this.fileListForm).find('.btn-group');
         let viewButton = listButtonGroup.find('.btn-info');
         let runButton = listButtonGroup.find('.btn-success');
@@ -160,7 +178,7 @@ class CPMElement extends HTMLElement {
             }
 
 
-            $(fileButtonGroup).append(inputButton, exportButton);
+            $(fileButtonGroup).append(importButton, exportButton);
             function showConnFile() {
                 bootbox.alert({
                     'title' : 'Connectivity file',
@@ -170,12 +188,16 @@ class CPMElement extends HTMLElement {
         });
 
         runButton.on('click', () => {
-            this.runCPMFlow()
+            this.runCPMFlow();
         });
 
         settingsButton.on('click', () => { this.openSettingsModal(); });    
     }
 
+    /**
+     * Reads the value from the form input then attempts to run CPM calculations based on which file is selected.
+     * For example, if the file is a behavior file, it will try to find a subject file correlating to the same subject. If there's more than one it will prompt the user to select one.
+     */
     runCPMFlow() {
         let formVal = this.fileListForm.find('.form-control').val();
         let subjectKey = formVal.split('_')[0];
@@ -238,14 +260,14 @@ class CPMElement extends HTMLElement {
                 }
             }
 
-            runCPM(this.connFiles[foundKey][formVal], this.connFiles[foundKey][subjectBehaviorKey])
+            runCPM(this.connFiles[foundKey][formVal], this.connFiles[foundKey][subjectBehaviorKey]);
         }
 
         function runCPM(cpmFile, behaviorFile) {
             self.initializeWasm.then( () => {
                 //cast any string values to numbers before feeding the input to computeCPM
                 for (let key of Object.keys(self.settings)) {
-                    if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key])}
+                    if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key]); }
                 }
 
                 try {
@@ -258,21 +280,9 @@ class CPMElement extends HTMLElement {
         }
     }
 
-    //TODO: Implement a separate computation panel if there turn out to be a lot of connectivity processes to run
-    /*openCPMComputationPanel(dockbar) {
-        let panelGroup = bis_webutil.createpanelgroup(dockbar);
-        this.cpmComputationPanel = bis_webutil.createCollapseElement(panelGroup, 'CPM Computation', true);
-
-        let runCPMButton = bis_webutil.createbutton({ 'name' : 'Run CPM', 'type' : 'success'});
-
-
-        let panelContent = $(`
-            <div>
-
-            </div>
-        `);
-    }*/
-
+    /**
+     * Creates the 'Import CPM File' button that will prompt the user to import a cpm file either from a directory or a .json file in a popover.
+     */
     createCPMPopoverButton() {
 
         //Unattached buttons that are clicked when one of the popover buttons is clicked
@@ -286,7 +296,7 @@ class CPMElement extends HTMLElement {
             });
         };
 
-        let importFileButton = bis_webfileutil.createFileButton({
+        let importFileItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback
         }, {
             'title': 'Import connectivity index file',
@@ -294,7 +304,7 @@ class CPMElement extends HTMLElement {
             'suffix' : 'json'
         });
 
-        let importDirectoryButton = bis_webfileutil.createFileButton({
+        let importDirectoryItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback
         }, {
             'mode' : 'directory',
@@ -303,17 +313,17 @@ class CPMElement extends HTMLElement {
         });
 
 
-        let inputButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM File</button>`);
+        let importButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM file</button>`);
         let popoverContent = $(
             `<div>
                 <div class='list-group'>
-                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Import from CPM File</a>
+                    <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Import from CPM file</a>
                     <a href='#' class='list-group-item list-group-item-action bisweb-list-group-item' style='font-size: 11pt'>Import from directory</a>
                 </div>
             </div>`
         );
 
-        $(inputButton).popover({
+        $(importButton).popover({
             'title': 'Select input source',
             'trigger': 'click',
             'html': true,
@@ -323,15 +333,15 @@ class CPMElement extends HTMLElement {
         });
 
         //workaround to make popover appear on first click
-        inputButton.on('click', () => { $(inputButton).popover('toggle'); });
+        importButton.on('click', () => { $(importButton).popover('toggle'); });
 
         let popoverFileButton = popoverContent.find('.list-group-item').get(0);
         let popoverDirectoryButton = popoverContent.find('.list-group-item').get(1);
 
-        $(popoverFileButton).on('click', () => { importFileButton.click(); bisweb_popoverhandler.dismissPopover(); });
-        $(popoverDirectoryButton).on('click', () => { importDirectoryButton.click(); bisweb_popoverhandler.dismissPopover(); });
+        $(popoverFileButton).on('click', () => { importFileItem.click(); bisweb_popoverhandler.dismissPopover(); });
+        $(popoverDirectoryButton).on('click', () => { importDirectoryItem.click(); bisweb_popoverhandler.dismissPopover(); });
 
-        return inputButton;
+        return importButton;
     }
 
     /**
@@ -438,6 +448,11 @@ class CPMElement extends HTMLElement {
         
     }
 
+    /**
+     * Creates a series of <option> elements that are then added to the select in the connectivity file panel. 
+     * 
+     * @param {Array} fileList - List of filenames read from disk. 
+     */
     populateFileElementList(fileList) {
         let formSelect = this.fileListForm.find('select');
         formSelect.empty();
@@ -508,13 +523,14 @@ class CPMElement extends HTMLElement {
             });
         });
     }
-
-    
-    /*runCPMModule(matrix, behaviors) {
-
-    }*/
 }
 
+/**
+ * Reformats a matrix containing CPM data to be a tsv or csv formatted file. Used while saving or displaying a matrix file. 
+ * 
+ * @param {String} filename - Name of the connectivity file. 
+ * @param {BiswebMatrix} matrix - The matrix associated with a connectivity file.
+ */
 let reformatMatrix = (filename, matrix) => {
     let numericMatr = matrix.getNumericMatrix(), extension = filename.split('.')[1];
     
@@ -530,6 +546,11 @@ let reformatMatrix = (filename, matrix) => {
     return reformattedEntry.join('\n');
 };
 
+/**
+ * Returns the size of a a BiswebMatrix in bytes. 
+ * 
+ * @param {BiswebMatrix} matrix - The matrix associated with a connectivity file.
+ */
 let getMatrixSize = (matrix) => {
     return matrix.data.BYTES_PER_ELEMENT * matrix.data.length;
 };
