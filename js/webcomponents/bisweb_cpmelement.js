@@ -180,6 +180,7 @@ class CPMElement extends HTMLElement {
         let formVal = this.fileListForm.find('.form-control').val();
         let subjectKey = formVal.split('_')[0];
         let numRegex = /0*(\d+)/g, subjectNum = numRegex.exec(subjectKey)[1], foundKey = null;
+        const self = this;
 
         //subject keys may be zero padded, so search for they key with the same number as the one in the formVal
         for (let key of Object.keys(this.connFiles)) {
@@ -229,9 +230,17 @@ class CPMElement extends HTMLElement {
                     }
                 });
             }
+        } else {
+            let subjectBehaviorKey;
+            for (let key of Object.keys(this.connFiles[foundKey])) {
+                if (key.includes('behavior')) {
+                    subjectBehaviorKey = key;
+                }
+            }
+
+            runCPM(this.connFiles[foundKey][formVal], this.connFiles[foundKey][subjectBehaviorKey])
         }
 
-        const self = this;
         function runCPM(cpmFile, behaviorFile) {
             self.initializeWasm.then( () => {
                 //cast any string values to numbers before feeding the input to computeCPM
@@ -336,7 +345,7 @@ class CPMElement extends HTMLElement {
             let listObj = {
                 'kfold' : ['3', '4', '5', '6', '8', '10'],
                 'numtasks' : ['0', '1', '2', '3'],
-                'numnodes' : ['3', '268']
+                'numnodes' : ['3', '9', '268']
             };
 
             let container = new dat.GUI({ 'autoPlace' : false });
@@ -364,7 +373,7 @@ class CPMElement extends HTMLElement {
                 }
 
                 //do this on modal hide to avoid the controllers being moved while the user can see it
-                settingsModal.once('hidden.bs.modal', () => {
+                settingsModal.dialog.one('hidden.bs.modal', () => {
                     for (let i in container.__controllers) {
                         container.__controllers[i].updateDisplay();
                     }
@@ -393,9 +402,9 @@ class CPMElement extends HTMLElement {
         return new Promise( (resolve, reject) => {
             let extension = f.split('.')[1];
             if (!extension) { //flow for a directory of .csv or .tsv files
-                bis_genericio.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then((obj) => {
-                    let fileList = this.formatLoadedConnData(obj.output);
-                    this.populateFileElementList(fileList);
+                bis_genericio.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then( (obj) => {
+                    this.formatLoadedConnData(obj.output.file);
+                    this.populateFileElementList(obj.output.filenames);
                     resolve();
                 }).catch( (e) => { reject(e); });
             } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
@@ -416,8 +425,8 @@ class CPMElement extends HTMLElement {
                         }
                     }
 
-                    let fileList = this.formatLoadedConnData(rawConnFiles);
-                    this.populateFileElementList(fileList);
+                    this.formatLoadedConnData(rawConnFiles);
+                    this.populateFileElementList(flist);
                     resolve();
                 }).catch( (e) => { reject(e); });
             } else {
