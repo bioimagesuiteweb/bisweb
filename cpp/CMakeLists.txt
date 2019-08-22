@@ -23,7 +23,10 @@ MESSAGE("----------------------------------------------------")
 MESSAGE("-- Building BISWEB")
 MESSAGE("----------------------------------------------------")
 
-SET (BISWEB_VERSION "1.1.1a")
+SET (BISWEB_VERSION_MAJOR 1)
+SET (BISWEB_VERSION_MINOR 1)
+SET (BISWEB_VERSION_PATCH 0b2)
+SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -385,13 +388,15 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
-  add_custom_command(OUTPUT ${NPMPACKAGEFILE}
+  set (NPMPACKAGEFILE2 ${LIBRARY_OUTPUT_PATH}/package.json.tf)
+  add_custom_command(OUTPUT ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} 
     DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE} ${LIBNAME}
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
     )
-  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
+  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} )
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
+  install (FILES ${NPMPACKAGEFILE2} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
   # Path Files
   install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)
@@ -483,8 +488,12 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISASHN_Standard_Deviation.nii.gz DESTINATION bisweb/images)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Mask.nii.gz DESTINATION bisweb/images)
 
-  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/README.md DESTINATION bisweb/lib/dcm2nii_binaries)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/license.txt DESTINATION bisweb/lib/dcm2nii_binaries)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/windows/dcm2niix.exe DESTINATION bisweb/lib/dcm2nii_binaries/windows)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/linux/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/linux)
+  install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/mac/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/mac)
   install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
   
 ELSE(BIS_A_EMSCRIPTEN)
@@ -500,7 +509,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat -Wint-in-bool-context")
+    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat")
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11" CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
@@ -685,3 +694,4 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
 
 INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
+

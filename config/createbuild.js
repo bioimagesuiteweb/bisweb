@@ -48,12 +48,12 @@ const main=async function() {
     util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
     util.copyFileSync(DIR,'../compiletools/cmake_native.sh',DIR,'cmake_native.sh');
     util.copyFileSync(DIR,'../compiletools/ccmake_native.sh',DIR,'ccmake_native.sh');
-    util.copyFileSync(DIR,'../docker/fullbuild.sh',DIR,'fullbuild.sh');
-    util.copyFileSync(DIR,'../docker/wasmbuild.sh',DIR,'wasmbuild.sh');
-    util.copyFileSync(DIR,'../docker/webbuild.sh',DIR,'webbuild.sh');
-    util.copyFileSync(DIR,'../docker/nativebuild.sh',DIR,'nativebuild.sh');
-    util.copyFileSync(DIR,'../docker/testbuild.sh',DIR,'testbuild.sh');
-
+    util.copyFileSync(DIR,'../compiletools/fullbuild.sh',DIR,'fullbuild.sh');
+    util.copyFileSync(DIR,'../compiletools/wasmbuild.sh',DIR,'wasmbuild.sh');
+    util.copyFileSync(DIR,'../compiletools/webbuild.sh',DIR,'webbuild.sh');
+    util.copyFileSync(DIR,'../compiletools/nativebuild.sh',DIR,'nativebuild.sh');
+    util.copyFileSync(DIR,'../compiletools/testbuild.sh',DIR,'testbuild.sh');
+    util.copyFileSync(DIR,'../compiletools/biswebinstall.sh',DIR,'biswebinstall.sh');
 
     console.log("++++");
     await util.executeCommand('chmod +x *make*.sh',DIR);

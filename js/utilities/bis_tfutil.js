@@ -1,12 +1,14 @@
+
 const BisWebImage=require('bisweb_image');
 const bisutil=require('bis_util');
 const bisgenericio = require('bis_genericio');
 const bisweb_tf=require('./bis_tfjs');
 const slicerupd = require('bis_slicerprogress');
+const util=require('bis_util');
+
 /**
  * tf recon module
  */
-
 
 
 // Pointer to current instance of wrapper
@@ -17,22 +19,22 @@ let tfjsModule=null;
 class TFWrapper {
 
     
-    constructor(tf,mode='',transpose=true) {
+    constructor(tfw,mode='',transpose=true) {
 
-        if (mode.length>1)
-            this.mode=mode+' '+tf.getBackend();
-        else
-            this.mode=tf.getBackend();
         
-        this.tf=tf;
+        this.tf=tfw.tf || tfw;
+        this.tfn=tfw.tfn || tfw;
+        this.mode=tfw.mode || mode+' '+this.tf.getBackend();
+        
         this.models={};
         this.modelcount=0;
         this.transpose=transpose;
-
+        console.log('++++ TFWrapper created '+this.mode);
     }
 
     getMode() {  return this.mode;   }
-    
+
+    numTensors() { return this.tf.memory().numTensors; }
 
     disposeVariables(model) {
         return new Promise( (resolve) => {
@@ -47,7 +49,7 @@ class TFWrapper {
     }
 
 
-    async predict(model,patch,shape,debug=false) {
+    predict(model,patch,shape,debug=false) {
 
         // shape[0] can be a string so map this to an integer
         // Needed in electron when crossing boundaries
@@ -58,18 +60,18 @@ class TFWrapper {
         }
         
         const tensor= this.tf.tensor(patch, shape);
-
+        
         let output=null;
-            
+        
         if (this.tranpose) {
             let tshape=[0,2,1];
             if (tensor.shape.length>3) {
                 tshape.push(3);
             }
-
+            
             if (debug)
                 console.log('++++ creating transposed tensor',shape,'patch=',patch.length,tshape);
-
+            
             const t_tensor= this.tf.transpose(tensor,tshape);
             const t_output=this.models[model.index].predict(t_tensor);
             let tshapeout=[0,2,1];
@@ -82,7 +84,7 @@ class TFWrapper {
         } else {
             if (debug)
                 console.log('++++ creating tensor',shape,'patch=',patch.length,tensor.shape);
-
+            
             output=this.models[model.index].predict(tensor);
         }
         
@@ -90,13 +92,12 @@ class TFWrapper {
         
         if (debug)
             console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
-        return Promise.resolve(output);
+        return output;
     }
 
-    loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
-
+    loadModel(MODEL_URL)  {
         return new Promise( (resolve,reject) => {
-            this.tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (m) => {
+            this.tf.loadGraphModel(MODEL_URL).then( (m) => {
                 this.modelcount++;
                 this.models[this.modelcount]=m;
                 resolve( {
@@ -116,7 +117,9 @@ class TFWrapper {
         shape[0]=1;
         this.tf.tidy( () => {
             console.log('___\t Warm up model with zero input',shape.join(','));
-            this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
+            this.tf.tidy( () => { 
+                this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
+            });
             console.log('___\t Warm up done');
             slicerupd.update(0.2);
         });
@@ -518,7 +521,13 @@ class BisWebTensorFlowRecon {
 
                 shape[0]=numpatches;
 
-                const output=await tfwrapper.predict(this.model,this.patch,shape,this.debug);
+                const output=tfwrapper.predict(this.model,this.patch,shape,this.debug);
+
+                if (typeof window !== undefined) {
+                    //console.log('NumTensors=',tfwrapper.numTensors());
+                    await util.sleep(1);
+                }
+                
                 let predict=output.dataSync();
 
                 
@@ -591,7 +600,7 @@ let initializeTFModule=function(forcebrowser=false,transpose=true) {
             }
             
             let apiTag = document.createElement('script');
-            let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
+            let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js";
             apiTag.src = url;
             apiTag.onload = ( () => {
                 tfjsModule=new TFWrapper(window.tf,url,transpose);
@@ -607,9 +616,9 @@ let initializeTFModule=function(forcebrowser=false,transpose=true) {
         }
 
         if (environment === 'node') {
-            let fn=bisweb_tf;
-            tfjsModule=new TFWrapper(fn(),'tfjs node',transpose);
-            resolve('Module loaded from tfjs node');
+            let tf=bisweb_tf();
+            tfjsModule=new TFWrapper(tf,tf.mode,transpose);
+            resolve('Module loaded from tfjs ' + tf.mode);
         }
     });
 };
@@ -621,7 +630,7 @@ let getTFJSModule=function() { return tfjsModule; };
 
 /** Adds file:// if in electron or node.js to the filename 
  * @param{String} md - the input model name
- * @returns {String} model name to be used as input in loadFrozenModel
+ * @returns {String} model name to be used as input in loadModel
  */
 let fixModelName=function(md) {
 
@@ -710,15 +719,14 @@ let fixBatchSize=function(batchsize) {
 let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
 
     console.log('___ In Load Model',URL);
-    const MODEL_URL =  URL+'/tensorflowjs_model.pb';
-    const WEIGHTS_URL = URL+'/weights_manifest.json';
-
+    const MODEL_URL =  URL+'/model.json';
+    
     return new Promise( (resolve,reject) => {
-        tfwrapper.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
-
+        tfwrapper.loadModel(MODEL_URL).then( (model) => {
+            
             let shape=model.shape;
             console.log('___\t Loaded model with shape',shape.join(','),' num tensors=',model.numtensors);
-
+            
             if (warm) 
                 tfwrapper.warmUp(model);
             resolve(model);
@@ -729,14 +737,12 @@ let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
     });
 };
 
-
 module.exports = {
+    loadAndWarmUpModel : loadAndWarmUpModel,
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
     TFWrapper : TFWrapper,
     initializeTFModule : initializeTFModule,
     fixModelName : fixModelName,
     fixBatchSize : fixBatchSize,
-    getTFJSModule :     getTFJSModule,
-    loadAndWarmUpModel : loadAndWarmUpModel,
+    getTFJSModule : getTFJSModule
 };
-

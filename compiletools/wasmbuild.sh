@@ -2,7 +2,8 @@
 
 BISMAKEJ="-j8"
 
-BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 echo "-----------------------------------------------------------------------"
@@ -37,13 +38,15 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
       ${SRCDIR}/cpp
 
 
-make ${BISMAKEJ} libbiswasm
+make ${BISMAKEJ} 
+rm -rf ${BDIR}/install/bisweb
 make install
 
 cd ${BDIR}/install/bisweb
 npm pack
 mv *tgz ${BDIR}/install
 echo "-----------------------------------------------------------------------"
+
 
 cd ${BDIR}/install
 pwd
@@ -52,3 +55,4 @@ ls -lrt *tgz *.tar.gz *zip
 echo "-----------------------------------------------------------------------"
 echo " Done with WASM and Command Line JS"
 echo "-----------------------------------------------------------------------"
+

@@ -82,10 +82,11 @@ const webfileutils = {
      * TODO: Revert this to normal!
      */
     needModes : function() {
-        /* if (dkey.length>0 || gkey.length>0 || mkey.length>0)
+        if (dkey.length>0 || gkey.length>0 || mkey.length>0)
             return true;
-        return false; */
-        return true;
+        if (enableaws || enableserver)
+            return true;
+        return false; 
     },
 
     /**

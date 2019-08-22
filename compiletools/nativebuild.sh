@@ -2,8 +2,11 @@
 
 BISMAKEJ="-j8"
 
-BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
+
 
 echo "-----------------------------------------------------------------------"
 # Build NATIVE
@@ -22,12 +25,13 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
       ${SRCDIR}/cpp
 
 make ${BISMAKEJ} install
+rm ${BDIR}/bisweb*python*sh
 make package
-cp *tar.gz ${BDIR}/install
+cp bisweb*python*.sh ${BDIR}/install
 cd ${BDIR}/install
 echo "-----------------------------------------------------------------------"
 pwd
-ls -lrt *tgz *zip
+ls -lrt *tgz *zip *sh
 
 
 echo "-----------------------------------------------------------------------"
