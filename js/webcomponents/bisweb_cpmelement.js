@@ -54,7 +54,7 @@ class CPMElement extends HTMLElement {
             'threshold' : 0.01,
             'kfold' : '3',
             'numtasks' : '0',
-            'numnodes' : '3',
+            'numnodes' : '268',
             'lambda' : 0.001
         };
     }
@@ -70,7 +70,6 @@ class CPMElement extends HTMLElement {
             let dockbar = layoutElement.elements.dockbarcontent;
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
-            //this.openComputationPanel = this.openCPMComputationPanel.bind(this, dockbar);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
@@ -96,7 +95,11 @@ class CPMElement extends HTMLElement {
     openCPMSidebar(dockbar) {
         if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
-            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
+            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true, true);
+
+            let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-help-button');
+            console.log('help button', helpButton, this.cpmDisplayPanel);
+            this.setHelpText(helpButton);
 
             this.fileListFormId = bis_webutil.getuniqueid();
             this.fileListForm = $(`
@@ -569,6 +572,19 @@ class CPMElement extends HTMLElement {
                 console.log('An error occured', e);
                 reject(e);
             });
+        });
+    }
+
+    setHelpText(button) {
+        button.on('click', () => {
+            bootbox.alert(`
+                This panel controls how connectivity files are loaded and how CPM computational code is run.<br>
+                The 'Import CPM file' button will allow you to load connectivity file data from either a .json file containing the full data for a connectivity study, or from a directory containing these files.<br>
+                The 'Export CPM file' button will export an injested file to one of these .json files for later use. <br>
+                The input select will let a user choose a file to either view or run the CPM code on. If a behavior file is chosen, the user may need to specify which connectivity file from the study to associate it with, should there be more than one.<br>
+                The gear icon will allow the user to specify what settings the CPM code is run with. For more information about this, consult the documentation for computeCPMWASM.
+                `
+            );
         });
     }
 }

@@ -764,7 +764,7 @@ const webutil = {
      * @param {boolean} open - if true add 'in' to class list of panel-collapse
      * @returns {JQueryElement} - the panel-body to which to add stuff
      */
-    createCollapseElement: function (parent, title, open) {
+    createCollapseElement: function (parent, title, open, helpbutton = false) {
         open = open || false;
         var parid = parent.attr('id');
         var newid = webutil.createWithTemplate(internal.templates.bispanel, parent);
@@ -776,6 +776,13 @@ const webutil = {
         body.empty();
         if (open)
             body.parent().addClass('in');
+
+        if (helpbutton) {
+            let helpButtonItem = $(`<span class='bisweb-help-button glyphicon glyphicon-question-sign' style='float: right'></span>`);
+            let panelHeading = div.find('.panel-title');
+            panelHeading.append(helpButtonItem);
+        }
+
         // Eliminate div as it is a problem in this case
         $(div).children().appendTo(parent); div.remove();
 
