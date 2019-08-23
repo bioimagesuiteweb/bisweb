@@ -20,6 +20,6 @@ echo "The python command line tools and library can be found in /usr/local/biswe
 echo "The web applications are available under localhost:8080"
 echo "     with a local biweb file server on port 24000"
 echo "------------------------ ------------------------------------------------------------------------"
-echo "Your host directory ${ORIG_DIR} is mapped in to the container directory /data"
+echo "Your host directory ${ORIG_DIR} is mapped to the container directory /data"
 echo "------------------------ ------------------------------------------------------------------------"
 cd /data

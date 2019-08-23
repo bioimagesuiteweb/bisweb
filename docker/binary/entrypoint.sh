@@ -22,7 +22,7 @@ if [ "${BISWEBCMD}" == "**" ] || [ "${BISWEBCMD}" == "*bash*" ]; then
     cp /usr/local/share/dotbashrc ${HDIR}/.bashrc
     chown -R ${USER} ${HDIR}
     cd ${HDIR}
-    exec gosu bisweb bash
+    exec gosu ${USER} bash
 else
     chown -R ${USER} ${HDIR}
     echo "_____ Executing specified command ${CMD}"
