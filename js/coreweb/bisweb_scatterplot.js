@@ -27,7 +27,6 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
         .attr('class','bis-ScatterContainer')
         .attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`)
         .append("svg").attr("id", globalParams.Id)
-                .attr("xmlns", "http://www.w3.org/2000/svg")
                 .attr('class', 'bis-scatterplotchart')
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", `0 0 ${svgDim} ${svgDim}`);
@@ -52,7 +51,6 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
     
     let xAxis = d3.svg.axis()
                 .orient("bottom")
-                .ticks(7)
                 .scale(xScale);
     
                 
@@ -63,7 +61,6 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
 
     let yAxis = d3.svg.axis()
                     .orient("left")
-                    .ticks(7)
                     .scale(yScale);
     
     //draw the Axes to the screen
@@ -79,7 +76,7 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
 
     scatterChart.append('text')
                 .text('Predicted')
-                .attr("transform", `translate(${svgDim/2},${innerDim})`)
+                .attr("transform", `translate(${innerDim/2},${innerDim})`)
                 .attr('class','bis-label');
 
 scatterChart.append('text')

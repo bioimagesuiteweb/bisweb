@@ -37,7 +37,7 @@ const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
  */
 let cpmGuiManager = function(layoutwidget){
     let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 3];
-    let pos = [layoutwidget.viewerwidth * (1 / 3) , 10];
+    let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
 
     let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
 
