@@ -16,4 +16,3 @@ module.exports = {
 
 
 global.fetch = require('node-fetch');
-console.log('Externals loaded');

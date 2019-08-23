@@ -6,19 +6,29 @@
 # fallback to 9001
 
 USER_ID=${LOCAL_USER_ID:-9001}
-echo "Starting with UID : $USER_ID"
-useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d /opt/bisweb
-chown -R bisweb /opt/bisweb
+USER=${LOCAL_USER:bisweb}
+HDIR="/dockerhome/${USER}"
 
-echo ""
-echo "--------------------- Starting apache on port 8080 -----------------"
+mkdir -p /dockerhome
+echo "+++++ Creating user ${USER}:${USER_ID} and home directory=${HDIR}"
+useradd --shell /bin/bash -u $USER_ID -o -c ${USER} -m ${USER} -d ${HDIR}
 
-/usr/sbin/apachectl -DFOREGROUND &
+export CMD="${@}"
+export BISWEBCMD="*${@}*"
 
-sleep 2
+if [ "${BISWEBCMD}" == "**" ] || [ "${BISWEBCMD}" == "*bash*" ]; then
+    echo "+++++ Starting apache server on port 80"
+    /usr/sbin/apachectl -DFOREGROUND > /var/log/apache.log  2>1 &
+    cp /usr/local/share/dotbashrc ${HDIR}/.bashrc
+    chown -R ${USER} ${HDIR}
+    cd ${HDIR}
+    exec gosu bisweb bash
+else
+    chown -R ${USER} ${HDIR}
+    echo "_____ Executing specified command ${CMD}"
+    echo "_____     host directory ${ORIG_DIR} is mapped to /data"
+    exec gosu ${USER} ${CMD}
+fi
 
-echo "--------------------- Starting interactive shell -----------------"
-
-exec gosu bisweb "$@"
 
 

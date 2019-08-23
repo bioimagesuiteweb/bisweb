@@ -14,12 +14,12 @@ RUN apt-get install -yqq gosu dos2unix apache2 unzip
 RUN pip3 install numpy nibabel
 
 # Copy installer files
-RUN mkdir -p /opt/bisweb/installers
-COPY bisweb*python*.sh   /opt/bisweb/installers
-COPY biswebnode*tgz /opt/bisweb/installers
-COPY bisweb_*zip /opt/bisweb/installers
+RUN mkdir -p /usr/local/installers
+COPY bisweb*python*.sh   /usr/local/installers
+COPY biswebnode*tgz /usr/local/installers
+COPY bisweb_*zip /usr/local/installers
 
-WORKDIR /opt/bisweb/installers
+WORKDIR /usr/local/installers
 RUN echo "Installing"
 RUN ls -l
 
@@ -34,16 +34,16 @@ RUN chmod +x /usr/lib/node_modules/biswebnode/lib/dcm2nii_binaries/*/*
 
 # Web
 WORKDIR /var/www/html
-RUN unzip -o /opt/bisweb/installers/bisweb_*zip
+RUN unzip -o /usr/local/installers/bisweb_*zip
 RUN chmod 755 /var/www/html
 
 # Copy bashrc file to home directory
-COPY dotbashrc /opt/bisweb/.bashrc
+COPY dotbashrc /usr/local/share/dotbashrc
+RUN dos2unix /usr/local/share/dotbashrc
 
 # bisweb server config to expose /data directory
-RUN mkdir /opt/bisweb/conf
-COPY server.conf /opt/bisweb/conf/server.conf
-RUN dos2unix /opt/bisweb/conf/server.conf
+COPY server.conf /usr/local/installers/server.conf
+RUN dos2unix /usr/local/installers/server.conf
 
 # Expose web server
 EXPOSE 80

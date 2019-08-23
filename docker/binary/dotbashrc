@@ -10,17 +10,16 @@ PS1="[BISWEBTOOLS][bisweb]:\w>"
 export PS1
 
 source /usr/local/bisweb/setpaths.sh
-
+echo "+++++ Starting bisweb fileserver"
+biswebnode bisserver --config /usr/local/installers/server.conf --ipaddr 0.0.0.0 &
+sleep 2
 echo ""
-echo "------------------------ In Bisweb docker image ----------------------------------------"
+echo "------------------------ In Bisweb docker image w/server ----------------------------------------"
 echo "To execute the bisweb JS command line tools type: biswebnode"
 echo "The python command line tools and library can be found in /usr/local/bisweb"
 echo "The web applications are available under localhost:8080"
-echo "------------------------ ---------------------------------------------------------------"
-echo ""
-
-cd /opt/bisweb
-
-biswebnode bisserver --config /opt/bisweb/conf/server.conf --ipaddr 0.0.0.0 &
-
-sleep 2
+echo "     with a local biweb file server on port 24000"
+echo "------------------------ ------------------------------------------------------------------------"
+echo "Your host directory ${ORIG_DIR} is mapped in to the container directory /data"
+echo "------------------------ ------------------------------------------------------------------------"
+cd /data
