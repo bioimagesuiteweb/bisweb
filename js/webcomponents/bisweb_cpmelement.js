@@ -27,6 +27,9 @@ const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
+
+const bis_dbase = require('bisweb_dbase');
+const bisweb_userprefs = require('bisweb_userpreferences.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
 class CPMElement extends HTMLElement {
@@ -38,6 +41,13 @@ class CPMElement extends HTMLElement {
         this.cpmComputationPanel = null;
         this.fileInputForm = null;
         this.settingsModal = null;
+
+        bisweb_userprefs.initialize(bis_dbase).then( () => {
+            bis_dbase.getItem('showCPMExportWarning').then( (obj) => {
+                this.showExportWarning  = (obj === null || obj === true) ?  true : false;
+                console.log('export warning', this.showExportWarning);
+            });
+        }); 
 
         //default settings for CPM
         this.settings = {
@@ -111,13 +121,51 @@ class CPMElement extends HTMLElement {
                 'type' : 'warning',
                 'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
-                    bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
-                    this.exportFiles(f).then( () => {
-                        bis_webutil.createAlert('Saved ' + f + ' successfully', false);
-                    }).catch( (e) => {
-                        console.log('Error saving CPM file', e);
-                        bis_webutil.createAlert('An error occured while saving ' + f, true);
-                    });
+                    const self = this;
+                    console.log('show export warning', this.showExportWarning);
+                    if (this.showExportWarning) {
+                        bootbox.dialog({
+                            'title' : 'Ensure files are exportable',
+                            'message' : 'Some CPM files may be too large to export without running node with extra memory, i.e. with the --max-old-space-size=[size in MB] flag.',
+                            'buttons' : {
+                                'noshow' : {
+                                    'label' : "Ok, don't show again",
+                                    'className' : 'btn-success' ,
+                                    'callback' : () => {
+                                        this.showExportWarning = false;
+                                        bisweb_userprefs.setItem('showCPMExportWarning', false, true);
+                                        exportFlow();
+                                    }
+                                },
+                                'ok' : {
+                                    'label' : 'Ok',
+                                    'className' : 'btn-info',
+                                    'callback' : () => {
+                                        exportFlow();
+                                    }
+                                },
+                                'cancel' : {
+                                    'label' : 'Cancel',
+                                    'className' : 'btn-primary',
+                                    'callback' : () => {
+                                        return true;
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        exportFlow();
+                    }
+
+                    function exportFlow() {
+                        bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
+                        self.exportFiles(f).then( () => {
+                            bis_webutil.createAlert('Saved ' + f + ' successfully', false);
+                        }).catch( (e) => {
+                            console.log('Error saving CPM file', e);
+                            bis_webutil.createAlert('An error occured while saving ' + f, true);
+                        });
+                    }
                 }
             }, {
                 'title': 'Export connectivity index file',
