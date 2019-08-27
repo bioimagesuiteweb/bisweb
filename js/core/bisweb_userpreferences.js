@@ -34,7 +34,6 @@ let count=1;
  * @alias biswebUserPreferences.userPreferences
  */
 
- //TODO: Rename favoriteFolders to localFolders? S3 now maintains a separate cached list of favorite folders from the server 
 const userPreferences = {
     orientationOnLoad : 'None',
     snapshotscale : 2,
@@ -42,7 +41,6 @@ const userPreferences = {
     filesource : 'local',
     showwelcome : true,
     favoriteFolders : [],
-    s3Folders : [],
     internal : false,
     darkmode : true,
     enables3 : false,
