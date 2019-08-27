@@ -446,7 +446,6 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
             taskName = splitFilename[0];
         }
 
-        console.log('split name', splitFilename, 'task name', taskName);
         //remove common phrases and characters from the taskname, then turn it into a single word
         taskName = taskName.replace(/(bold[^A-Za-z\d]|MB[^A-Za-z\d]|\dmm[^A-Za-z\d])/g, '');
         taskName = taskName.replace(/[\s_,'-]/, '');

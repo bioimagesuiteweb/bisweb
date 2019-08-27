@@ -383,8 +383,6 @@ let moveDirectory=function(url) {
             if (err) { console.log('Encountered an error trying to move file', src, err); reject(false); return; }
             fs.unlink(src, (err) => {
                 if (err) { console.log('Encountered an error trying to delete', src, err); reject(false); return; }
-
-                console.log('Move file operation successful');
                 resolve(true);
             });
         });
