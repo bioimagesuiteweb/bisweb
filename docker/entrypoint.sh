@@ -37,6 +37,6 @@ dos2unix ${USERHOME}/.bashrc
 echo "++++ Configured home directory"
 echo "++++ ------------------------------------------------"
 
-exec gosu bisweb /bin/bash -l
+exec gosu bisweb /bin/bash -i
 
 
