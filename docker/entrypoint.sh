@@ -18,9 +18,9 @@ else
 fi
 
 USER_ID=${LOCAL_USER_ID:-9001}
-echo "Starting with UID : $USER_ID"
+echo "+++ Starting with UID : $USER_ID"
 useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d ${USERHOME}
-echo "++++ Added user bisweb"
+echo "+++ Added user bisweb"
 sleep 2
 
 if [ -d  /hostfiles ]; then
@@ -34,9 +34,11 @@ cp /usr/local/share/dotbashrc ${USERHOME}/.bashrc
 chown bisweb ${USERHOME}/.bashrc
 dos2unix ${USERHOME}/.bashrc
 
-echo "++++ Configured home directory"
-echo "++++ ------------------------------------------------"
+ls -al
 
-exec gosu bisweb /bin/bash -l
+echo "+++ Configured home directory"
+echo "+++ ------------------------------------------------"
+
+exec gosu bisweb /bin/bash -i
 
 

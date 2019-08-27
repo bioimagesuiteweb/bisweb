@@ -17,20 +17,21 @@ echo "------------------------ In Bisweb docker image --------------------------
 cd ${HOME}
 
 
-echo "To create a bisweb source directory"
-echo "1. Navigate to the desired directory"
-echo "2. Run the script: biswebconfig.sh"
-echo "------------------------ ---------------------------------------------------------------"
 
 if [ -d  ${HOME}/bisweb ]; then
     cd ${HOME}/bisweb
     echo "All set you have a  directory ${HOME}/bisweb"
+    echo "To create a bisweb source directory"
+    echo "1. Navigate to the desired directory"
+    echo "2. Run the script: biswebconfig.sh"
+    echo "------------------------ ---------------------------------------------------------------"
 else
-        echo "You do not have a bisweb directory -- auto configuring bisweb for you in ${HOME}/bisweb"
-        echo "------------------------ ---------------------------------------------------------------" 
-        mkdir -p bisweb
-        cd bisweb
-        /usr/local/bin/biswebconfig.sh
+    echo "You do not have a bisweb directory -- auto configuring bisweb for you in ${HOME}/bisweb"
+    echo "------------------------ ---------------------------------------------------------------" 
+    mkdir -p bisweb
+    cd bisweb
+    pwd
+    /usr/local/bin/biswebconfig.sh
 fi      
 
 echo "------------------------ ---------------------------------------------------------------" 
