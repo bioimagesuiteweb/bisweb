@@ -29,6 +29,9 @@ const moduleIndex = require('moduleindex.js');
 const Scatter = require('bisweb_scatterplot.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
+
+const bis_dbase = require('bisweb_dbase');
+const bisweb_userprefs = require('bisweb_userpreferences.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
 const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
@@ -60,12 +63,19 @@ class CPMElement extends HTMLElement {
         this.fileInputForm = null;
         this.settingsModal = null;
 
+        bisweb_userprefs.initialize(bis_dbase).then( () => {
+            bis_dbase.getItem('showCPMExportWarning').then( (obj) => {
+                this.showExportWarning  = (obj === null || obj === true) ?  true : false;
+                console.log('export warning', this.showExportWarning);
+            });
+        }); 
+
         //default settings for CPM
         this.settings = {
             'threshold' : 0.01,
             'kfold' : '3',
             'numtasks' : '0',
-            'numnodes' : '3',
+            'numnodes' : '268',
             'lambda' : 0.001
         };
     }
@@ -84,7 +94,6 @@ class CPMElement extends HTMLElement {
 
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
-            //this.openComputationPanel = this.openCPMComputationPanel.bind(this, dockbar);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
@@ -110,7 +119,11 @@ class CPMElement extends HTMLElement {
     openCPMSidebar(dockbar) {
         if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
-            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true);
+            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true, true);
+
+            let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-help-button');
+            console.log('help button', helpButton, this.cpmDisplayPanel);
+            this.setHelpText(helpButton);
 
             this.fileListFormId = bis_webutil.getuniqueid();
             this.fileListForm = $(`
@@ -135,13 +148,51 @@ class CPMElement extends HTMLElement {
                 'type' : 'warning',
                 'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
-                    bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
-                    this.exportFiles(f).then( () => {
-                        bis_webutil.createAlert('Saved ' + f + ' successfully', false);
-                    }).catch( (e) => {
-                        console.log('Error saving CPM file', e);
-                        bis_webutil.createAlert('An error occured while saving ' + f, true);
-                    });
+                    const self = this;
+                    console.log('show export warning', this.showExportWarning);
+                    if (this.showExportWarning) {
+                        bootbox.dialog({
+                            'title' : 'Ensure files are exportable',
+                            'message' : 'Some CPM files may be too large to export without running node with extra memory, i.e. with the --max-old-space-size=[size in MB] flag.',
+                            'buttons' : {
+                                'noshow' : {
+                                    'label' : "Ok, don't show again",
+                                    'className' : 'btn-success' ,
+                                    'callback' : () => {
+                                        this.showExportWarning = false;
+                                        bisweb_userprefs.setItem('showCPMExportWarning', false, true);
+                                        exportFlow();
+                                    }
+                                },
+                                'ok' : {
+                                    'label' : 'Ok',
+                                    'className' : 'btn-info',
+                                    'callback' : () => {
+                                        exportFlow();
+                                    }
+                                },
+                                'cancel' : {
+                                    'label' : 'Cancel',
+                                    'className' : 'btn-primary',
+                                    'callback' : () => {
+                                        return true;
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        exportFlow();
+                    }
+
+                    function exportFlow() {
+                        bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
+                        self.exportFiles(f).then( () => {
+                            bis_webutil.createAlert('Saved ' + f + ' successfully', false);
+                        }).catch( (e) => {
+                            console.log('Error saving CPM file', e);
+                            bis_webutil.createAlert('An error occured while saving ' + f, true);
+                        });
+                    }
                 }
             }, {
                 'title': 'Export connectivity index file',
@@ -551,6 +602,19 @@ class CPMElement extends HTMLElement {
                 console.log('An error occured', e);
                 reject(e);
             });
+        });
+    }
+
+    setHelpText(button) {
+        button.on('click', () => {
+            bootbox.alert(`
+                This panel controls how connectivity files are loaded and how CPM computational code is run.<br>
+                The 'Import CPM file' button will allow you to load connectivity file data from either a .json file containing the full data for a connectivity study, or from a directory containing these files.<br>
+                The 'Export CPM file' button will export an injested file to one of these .json files for later use. <br>
+                The input select will let a user choose a file to either view or run the CPM code on. If a behavior file is chosen, the user may need to specify which connectivity file from the study to associate it with, should there be more than one.<br>
+                The gear icon will allow the user to specify what settings the CPM code is run with. For more information about this, consult the documentation for computeCPMWASM.
+                `
+            );
         });
     }
 }

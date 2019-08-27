@@ -480,5 +480,9 @@ input[type="radio"] .styled:checked + label::after {
 }
 
 .bis-chartlabel {
-	font-size: 15px;
+  font-size: 15px;
+}
+
+.bisweb-help-button:hover{
+    color : rgb(12, 227, 172);
 }
