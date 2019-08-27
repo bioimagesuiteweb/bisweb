@@ -239,7 +239,48 @@ class CPMElement extends HTMLElement {
         });
 
         runButton.on('click', () => {
-            this.runCPMFlow();
+            this.runCPMFlow().then( (results) => {
+                console.log('results', results);
+                let message = '', data = results.data;
+                for (let item of data) { message = message.concat(`${item}<br>`); }
+
+                let dialogBox = bootbox.dialog({
+                    'title' : 'CPM Results',
+                    'message' : `<pre>${message}</pre>`,
+                    'buttons' : {
+                        'save' : {
+                            'label' : 'Save results',
+                            'className' : 'btn-warning',
+                            'callback' : () => {
+
+                                //create a file button then click it to mimic the button in the modal being the file button
+                                let fileBtn = bis_webfileutil.createFileButton({
+                                'callback' : () => { /* implement matrix save */ }
+                                }, {
+                                    'filename' : 'cpmresults.matr',
+                                    'title' : 'Save CPM results file',
+                                    'filters' : [ { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
+                                    'save' : true,
+                                    'suffix' : '.matr',
+                                });
+
+                                fileBtn.click();
+                            }
+                        },
+                        'cancel' : {
+                            'label' : 'Ok',
+                            'className' : 'btn-primary',
+                            'callback' : () => {
+                                console.log('dialog box', dialogBox);
+                                dialogBox.modal('hide');
+                            }
+                        }
+                    }
+                });
+            }).catch( (e) => { 
+                bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true); 
+                console.log('An error occured while running CPM code', e);
+            });
         });
 
         settingsButton.on('click', () => { this.openSettingsModal(); });    
@@ -255,80 +296,80 @@ class CPMElement extends HTMLElement {
         let numRegex = /0*(\d+)/g, subjectNum = numRegex.exec(subjectKey)[1], foundKey = null;
         const self = this;
 
-        //subject keys may be zero padded, so search for they key with the same number as the one in the formVal
-        for (let key of Object.keys(this.connFiles)) {
-            let numRegex = /0*(\d+)/g;
-            let num = numRegex.exec(key)[1];
-            if (num === subjectNum) {
-                foundKey = key;
-            }
-        }
-
-        //create secondary list for cpm files for the given subject if behavior is specified
-        if (formVal.includes('behavior')) {
-            let formOptions = this.fileListForm.find('option'), valsList = [];
-            for (let option of formOptions) {
+        return new Promise( (resolve, reject) => {
+            //subject keys may be zero padded, so search for they key with the same number as the one in the formVal
+            for (let key of Object.keys(this.connFiles)) {
                 let numRegex = /0*(\d+)/g;
-                console.log('option', option.value);
-                if (numRegex.exec(option.value)[1] === subjectNum && !option.value.includes('behavior')) { valsList.push(option.value); }
+                let num = numRegex.exec(key)[1];
+                if (num === subjectNum) {
+                    foundKey = key;
+                }
             }
 
-            //list of length one means the behavior file could only correlate to one file
-            if (valsList.length === 1) {
-                console.log('subject files', this.connFiles);
-                let subjectFileKey, subjectFiles = this.connFiles[foundKey];
-                let subjectFilesKeys = Object.keys(subjectFiles);
-
-                for (let file of subjectFilesKeys) {
-                    if (!file.includes('behavior')) { subjectFileKey = file; }
+            //create secondary list for cpm files for the given subject if behavior is specified
+            if (formVal.includes('behavior')) {
+                let formOptions = this.fileListForm.find('option'), valsList = [];
+                for (let option of formOptions) {
+                    let numRegex = /0*(\d+)/g;
+                    if (numRegex.exec(option.value)[1] === subjectNum && !option.value.includes('behavior')) { valsList.push(option.value); }
                 }
 
-                console.log('subject key', subjectKey, 'subject file key', subjectFileKey, 'form val', formVal);
-                runCPM(this.connFiles[foundKey][subjectFileKey], this.connFiles[foundKey][formVal]);
-            } else { //create a modal that'll allow the user to select a file manually 
+                //list of length one means the behavior file could only correlate to one file
+                if (valsList.length === 1) {
+                    let subjectFileKey, subjectFiles = this.connFiles[foundKey];
+                    let subjectFilesKeys = Object.keys(subjectFiles);
 
-                let inputOptions = [];
-                for (let item of valsList) { inputOptions.push({ 'text' : item, 'value' : item }); }
+                    for (let file of subjectFilesKeys) {
+                        if (!file.includes('behavior')) { subjectFileKey = file; }
+                    }
 
-                bootbox.prompt({
-                    'title' : 'Choose a connectivity file',
-                    'size' : 'small',
-                    'inputType' : 'select',
-                    'inputOptions' : inputOptions,
-                    'callback' : (result) => {
-                        if (result) {
-                            console.log('result', result);
-                            runCPM(this.connFiles[foundKey][result], this.connFiles[foundKey][formVal]);
+                    console.log('subject key', subjectKey, 'subject file key', subjectFileKey, 'form val', formVal);
+                    runCPM(this.connFiles[foundKey][subjectFileKey], this.connFiles[foundKey][formVal]);
+                } else { //create a modal that'll allow the user to select a file manually 
+
+                    let inputOptions = [];
+                    for (let item of valsList) { inputOptions.push({ 'text': item, 'value': item }); }
+
+                    bootbox.prompt({
+                        'title': 'Choose a connectivity file',
+                        'size': 'small',
+                        'inputType': 'select',
+                        'inputOptions': inputOptions,
+                        'callback': (result) => {
+                            if (result) {
+                                runCPM(this.connFiles[foundKey][result], this.connFiles[foundKey][formVal]);
+                            } else {
+                                reject('No result selected');
+                            }
                         }
+                    });
+                }
+            } else {
+                let subjectBehaviorKey;
+                for (let key of Object.keys(this.connFiles[foundKey])) {
+                    if (key.includes('behavior')) {
+                        subjectBehaviorKey = key;
+                    }
+                }
+                runCPM(this.connFiles[foundKey][formVal], this.connFiles[foundKey][subjectBehaviorKey]);
+            }
+
+            function runCPM(cpmFile, behaviorFile) {
+                self.initializeWasm.then(() => {
+                    //cast any string values to numbers before feeding the input to computeCPM
+                    for (let key of Object.keys(self.settings)) {
+                        if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key]); }
+                    }
+
+                    try {
+                        let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings, 0);
+                        resolve(cpmResults);
+                    } catch (e) { 
+                        reject(e);
                     }
                 });
             }
-        } else {
-            let subjectBehaviorKey;
-            for (let key of Object.keys(this.connFiles[foundKey])) {
-                if (key.includes('behavior')) {
-                    subjectBehaviorKey = key;
-                }
-            }
-
-            runCPM(this.connFiles[foundKey][formVal], this.connFiles[foundKey][subjectBehaviorKey]);
-        }
-
-        function runCPM(cpmFile, behaviorFile) {
-            self.initializeWasm.then( () => {
-                //cast any string values to numbers before feeding the input to computeCPM
-                for (let key of Object.keys(self.settings)) {
-                    if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key]); }
-                }
-
-                try {
-                    let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings , 0);
-                    console.log('cmp results', cpmResults);
-                } catch (e) {
-                    bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true);
-                }
-            });
-        }
+        });
     }
 
     /**
