@@ -38,14 +38,14 @@ const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
  * @param {ViewerLayoutElement} layoutwidget 
  */
 let cpmGuiManager = function(layoutwidget){
-    let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 3];
+    let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
     let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
 
     let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
 
     $(window).on('resize',()=>{
-        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 3];
-        let pos = [layoutwidget.viewerwidth * (1 / 3) , 10];
+        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+        let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
         plot.resize(dims, pos);
     });
 };
@@ -293,9 +293,15 @@ class CPMElement extends HTMLElement {
                 for (let key of Object.keys(self.settings)) {
                     if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key]); }
                 }
-
                 try {
-                    let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings , 0);
+                    let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings , 1);
+                    let data = [];
+                    let d = cpmResults.getDimensions();
+                    for (let i = 0; i < d[0]; i++) {
+                        data.push([behaviorFile.data[i], cpmResults.data[i]]);
+                    }
+
+                    $('.bis-scatterplotchart').trigger('changeData', {scatterData: data});
                     console.log('cmp results', cpmResults);
                 } catch (e) {
                     bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true);

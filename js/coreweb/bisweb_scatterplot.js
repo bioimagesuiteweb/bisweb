@@ -28,6 +28,7 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
         .attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`)
         .append("svg").attr("id", globalParams.Id)
                 .attr('class', 'bis-scatterplotchart')
+                .attr('style','z-index: 1000; position: relative;')
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", `0 0 ${svgDim} ${svgDim}`);
                 
@@ -51,6 +52,7 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
     
     let xAxis = d3.svg.axis()
                 .orient("bottom")
+                .ticks(svgDim/30)
                 .scale(xScale);
     
                 
@@ -61,28 +63,34 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
 
     let yAxis = d3.svg.axis()
                     .orient("left")
+                    .ticks(svgDim/30)
                     .scale(yScale);
     
     //draw the Axes to the screen
     scatterChart.append("g")
-                .attr("class", "bis-axis")
+                .attr("class", "bis-axisX")
+                .attr('style', 'font-size: 10px;')
                 .attr("transform", `translate(${sizeOffset},${innerDim-sizeOffset})`)
                 .call(xAxis);
 
     scatterChart.append("g")
-                .attr("class", "bis-axis")
+                .attr("class", "bis-axisY")
+                .attr('style', 'font-size: 10px;')
                 .attr("transform", `translate(${sizeOffset},0)`)
                 .call(yAxis);
 
     scatterChart.append('text')
                 .text('Predicted')
                 .attr("transform", `translate(${innerDim/2},${innerDim})`)
-                .attr('class','bis-label');
+                .attr('class','bis-chartlabel')
+                .attr('style', 'font-size: 15px;');
 
-scatterChart.append('text')
-                .text('Actual')
-                .attr("transform", `translate(0,${innerDim/2})rotate(-90)`)
-                .attr('class','bis-label');
+
+    scatterChart.append('text')
+                    .text('Actual')
+                    .attr("transform", `translate(0,${innerDim/2})rotate(-90)`)
+                    .attr('class','bis-chartlabel')
+                    .attr('style', 'font-size: 15px;');
 
     let genScatter = (points, lobf) =>{
         scatterChart.selectAll('.dot').remove();
@@ -106,14 +114,15 @@ scatterChart.append('text')
             if(lobf){
                 let { m, b } = lobf;
 
-                scatterChart.selectAll('.LOBF').remove();
+                scatterChart.selectAll('.bis-linregressionline').remove();
                 //Draw regression to the screen
                 scatterChart.append("line")
                         .attr("x1", xScale(xMin)+sizeOffset)
                         .attr("y1", yScale(b))
                         .attr("x2", xScale(xMax)+sizeOffset)
                         .attr("y2", yScale(m*xMax+b))
-                        .attr("class","LOBF");
+                        .attr("class","bis-linregressionline")
+                        .attr('stroke: black; stroke-width: 3; stroke-dasharray: 4; pointer-events: none;');
             }
 
         console.log(SVG);
@@ -150,13 +159,13 @@ scatterChart.append('text')
         xScale.domain([xMin,xMax]);
     
         xAxis.scale(xScale);
-        scatterChart.selectAll('.x.axis').call(xAxis);
+        scatterChart.selectAll('.bis-axisX').call(xAxis);
 
         //Modify Y Scale
-        yScale.domain([Math.min(0, d3.min(data, d => d[1])),d3.max(data, d=> d[1])*1.025]);
+        yScale.domain([Math.min(0, d3.min(data, d => d[1])),Math.max(1,d3.max(data, d=> d[1])*1.025)]);
 
         yAxis.scale(yScale);
-        scatterChart.selectAll('.y.axis').call(yAxis);
+        scatterChart.selectAll('.bis-axisY').call(yAxis);
 
         //Run linear regression
         let reg = regression.linear(data);
@@ -167,12 +176,33 @@ scatterChart.append('text')
 
     this.destroy = () => SVG.remove();
 
+    //On resize
     this.resize = (dim, pos) => {
-        $('.bis-ScatterContainer').attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`);
+        let svgDim = Math.min(dim[0], dim[1]);
+
+        $('.bis-ScatterContainer').attr('style', `width: ${svgDim}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`);
+        xAxis.ticks(svgDim/25);
+        scatterChart.selectAll('.bis-axisX').call(xAxis);
+        yAxis.ticks(svgDim/25);
+        scatterChart.selectAll('.bis-axisY').call(yAxis);
     };
 
-    $(`#${globalParams.Id}`).bind('changeData', changeData);
+    $(`.bis-scatterplotchart`).bind('changeData', changeData);
 
+    //Code for downloading the scatterplot as an SVG
+    //The only way to activate this currently is through the console
+    $(`.bis-scatterplotchart`).bind('download',()=>{
+        //Found download code from https://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
+        var serializer = new XMLSerializer();
+        var source = serializer.serializeToString($(`#${globalParams.Id}`)[0]);
+
+        var svgBlob = new Blob([source], {type:"image/svg+xml;charset=utf-8"});
+        var svgUrl = URL.createObjectURL(svgBlob);
+        var downloadLink = document.createElement("a");
+        downloadLink.href = svgUrl;
+        downloadLink.download = "Correlation_Scatterplot.svg";
+        downloadLink.click();
+    });
 };
 
 module.exports = {
