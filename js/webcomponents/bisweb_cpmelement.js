@@ -25,12 +25,33 @@ const dat = require('bisweb_datgui');
 const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
+const moduleIndex = require('moduleindex.js');
+const Scatter = require('bisweb_scatterplot.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
 const BiswebMatrix = require('bisweb_matrix.js');
+
+const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
+
+/**
+ * 
+ * @param {ViewerLayoutElement} layoutwidget 
+ */
+let cpmGuiManager = function(layoutwidget){
+    let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+    let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
+
+    let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
+
+    $(window).on('resize',()=>{
+        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+        let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
+        plot.resize(dims, pos);
+    });
+};
 
 class CPMElement extends HTMLElement {
 
@@ -68,6 +89,9 @@ class CPMElement extends HTMLElement {
             let menubar = document.querySelector(this.menubarid).getMenuBar();
             let layoutElement = document.querySelector(this.layoutelementid);
             let dockbar = layoutElement.elements.dockbarcontent;
+
+            this.guiManager = cpmGuiManager(layoutElement);
+
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
         });
@@ -320,9 +344,15 @@ class CPMElement extends HTMLElement {
                 for (let key of Object.keys(self.settings)) {
                     if (typeof self.settings[key] === 'string') { self.settings[key] = parseFloat(self.settings[key]); }
                 }
-
                 try {
-                    let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings , 0);
+                    let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings , 1);
+                    let data = [];
+                    let d = cpmResults.getDimensions();
+                    for (let i = 0; i < d[0]; i++) {
+                        data.push([behaviorFile.data[i], cpmResults.data[i]]);
+                    }
+
+                    $('.bis-scatterplotchart').trigger('changeData', {scatterData: data});
                     console.log('cmp results', cpmResults);
                 } catch (e) {
                     bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true);
