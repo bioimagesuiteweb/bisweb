@@ -688,7 +688,7 @@ var createCorrMapSVG=function(parentDiv,
         .orient("right");
     
     key.append("g")
-        .attr("class", "y bis-axis")
+        .attr("class", "y axis")
         .attr("transform", "translate(41," + margin.top + ")")
         .call(yAxis);
     return svg;
