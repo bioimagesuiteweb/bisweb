@@ -244,7 +244,7 @@ class CPMElement extends HTMLElement {
                 let message = '', data = results.data;
                 for (let item of data) { message = message.concat(`${item}<br>`); }
 
-                let dialogBox = bootbox.dialog({
+                bootbox.dialog({
                     'title' : 'CPM Results',
                     'message' : `<pre>${message}</pre>`,
                     'buttons' : {
@@ -255,9 +255,9 @@ class CPMElement extends HTMLElement {
 
                                 //create a file button then click it to mimic the button in the modal being the file button
                                 let fileBtn = bis_webfileutil.createFileButton({
-                                'callback' : () => { /* implement matrix save */ }
+                                    'callback' : (name) => { results.save({ 'filename' : name }); }
                                 }, {
-                                    'filename' : 'cpmresults.matr',
+                                    'initialFilename' : 'cpmresults.matr',
                                     'title' : 'Save CPM results file',
                                     'filters' : [ { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
                                     'save' : true,
@@ -269,11 +269,7 @@ class CPMElement extends HTMLElement {
                         },
                         'cancel' : {
                             'label' : 'Ok',
-                            'className' : 'btn-primary',
-                            'callback' : () => {
-                                console.log('dialog box', dialogBox);
-                                dialogBox.modal('hide');
-                            }
+                            'className' : 'btn-primary'
                         }
                     }
                 });
