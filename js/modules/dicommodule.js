@@ -197,16 +197,13 @@ class DicomModule extends BaseModule {
         
         // Temp Dir 
         // --------------------------------------------
-        
-        if (vals.convertbids) { 
-            tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
+        tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
 
-            try {
-                fs.mkdirSync(tmpdir);
-            } catch (e) {
-                if (e.code !== 'EEXIST') {
-                    return Promise.reject('Failed to create temporary directory ' + tmpdir);
-                }
+        try {
+            fs.mkdirSync(tmpdir);
+        } catch (e) {
+            if (e.code !== 'EEXIST') {
+                return Promise.reject('Failed to create temporary directory ' + tmpdir);
             }
         }
 
@@ -222,9 +219,10 @@ class DicomModule extends BaseModule {
               };*/
             
             let dcm2nii = await this.getdcm2niibinary();
-            let cmd = dcm2nii + ` -z y -f "%f__%p__%t__%s"` + ' -o ' + (vals.convertbids ?  tmpdir : outdir) + ' -ba y -c bisweb ' + indir;
-            console.log('.... executing :'+cmd+'\n....');
 
+            let cmd = dcm2nii + ` -z y -f "%f__%p__%t__%s"` + ' -o ' + tmpdir + ' -ba y -c bisweb ' + indir;
+            console.log('.... executing :'+cmd+'\n....');
+            
             try { 
                 let m = await bis_commandlineutils.executeCommandAndLog(cmd, process.cwd());
                 if (bis_genericio.getmode() !== 'node' )
@@ -233,8 +231,9 @@ class DicomModule extends BaseModule {
                 reject(e);
                 return false;
             }
-                
+
             if (vals.convertbids) {
+                
                 let bidsmodule = new BidsModule();
                 console.log('converting to bids...');
                 let bidsoutput=null;
@@ -249,13 +248,45 @@ class DicomModule extends BaseModule {
                     console.log('....\n.... removing temporary directory = '+tmpdir);
                     await bis_genericio.deleteDirectory(tmpdir);
                 }
+
                 console.log('.... all done (bids), returning output path = '+outdir);
                 resolve(bidsoutput);
                 return true;
+            } else {
+                //reformat file list for non-bids save
+                let fileList = await bis_genericio.getMatchingFiles(tmpdir + '/*');
+                let filePromiseArray = [];
+
+                console.log('file list', fileList);
+                for (let item of fileList) {
+                    let splitItem = bis_genericio.getBaseName(item).split(/__/);
+
+                    //split off file extension and zero pad the run number
+                    //some run numbers have an additional part after the run number, so split that off too.
+                    let splitRunNumber = splitItem[3].split('.'), splitBasename = splitRunNumber[0].split('_');
+                    if (parseInt(splitBasename[0]) < 10) {
+                        splitBasename[0] = '0' + splitBasename[0];
+                        splitRunNumber[0] = splitBasename.join('_');
+                        splitItem[3] = splitRunNumber.join('.');
+                    }
+                    splitItem.splice(2, 1);
+
+                    let baseNewFilename = splitItem.join('_'), newFilename = outdir + path.sep + baseNewFilename;
+                    let promise = bis_genericio.moveDirectory(`${item}&&${newFilename}`);
+                    filePromiseArray.push(promise);
+                }
+
+                Promise.all(filePromiseArray).then(() => {
+                    console.log('.... all done (no bids), returning output path = ' + outdir);
+                }).catch((e) => {
+                    console.log('An error occured during the dicom conversion process', e);
+                }).finally( () => {
+                    console.log('....\n.... removing temporary directory = '+tmpdir);
+                    bis_genericio.deleteDirectory(tmpdir).then( () => {
+                        resolve();
+                    });
+                });
             }
-            console.log('.... all done (no bids), returning output path = '+outdir);
-            resolve(outdir);
-            return true;
         });
     }
 }
