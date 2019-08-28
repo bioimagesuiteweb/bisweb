@@ -255,13 +255,17 @@ class CPMElement extends HTMLElement {
 
                                 //create a file button then click it to mimic the button in the modal being the file button
                                 let fileBtn = bis_webfileutil.createFileButton({
-                                    'callback' : (name) => { results.save({ 'filename' : name }); }
+                                    'callback' : (name) => { 
+                                        //TODO: bypassing bisweb_matrix save method because of some strangeness with how it handles files (method signature requiring an object causes it to bypass the server client save function)
+                                        let serializedMat = results.serializeToText({'name' : name});
+                                        bis_genericio.write(name, serializedMat);
+                                    }
                                 }, {
-                                    'initialFilename' : 'cpmresults.matr',
                                     'title' : 'Save CPM results file',
                                     'filters' : [ { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
                                     'save' : true,
                                     'suffix' : '.matr',
+                                    'initialCallback' : () => { return 'cpmresults.matr' }
                                 });
 
                                 fileBtn.click();
