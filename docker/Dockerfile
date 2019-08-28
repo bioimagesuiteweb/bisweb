@@ -13,12 +13,11 @@ RUN apt-get install -yq nodejs
 RUN apt-get install -yqq doxygen graphviz gosu
 
 # python packages
+RUN pip3 install --upgrade pip
 RUN pip3 install numpy nibabel
 
 # Node.js globals
-RUN npm install -g gulp mocha rimraf
-RUN npm install -g electron --unsafe-perm=true --allow-root
-RUN npm install -g electron-packager
+RUN npm install -g gulp mocha rimraf electron-packager
 
 # Expose server
 EXPOSE 8080

@@ -11,8 +11,10 @@ RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs
 RUN apt-get install -yqq doxygen graphviz gosu
+RUN apt-get install -yqq libgtk-3-dev libxss1
 
 # python packages
+RUN pip3 install --upgrade pip
 RUN pip3 install numpy nibabel
 
 # Node.js globals
