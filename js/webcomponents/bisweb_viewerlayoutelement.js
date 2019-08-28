@@ -26,6 +26,9 @@ const webcss = require('bisweb_css');
 const THREE = require('three');
 const volrenutils = require('bis_3dvolrenutils');
 
+//const WebGLDebugUtils=require('webgl-debug');
+
+
 
 var detectWebGL = function() {
 
@@ -453,12 +456,22 @@ class ViewerLayoutElement extends HTMLElement {
             let context = canvas.getContext( 'webgl2' );
             this.renderer = new THREE.WebGLRenderer( { canvas: canvas, context: context, alpha : true } );
         } else {
+            console.log('Not using webgl2');
             this.renderer = new THREE.WebGLRenderer({alpha:true});
         }
+
+        
         this.renderer.shadowMap.Enabled = true;
         this.renderer.setClearColor(0x000000, 0.0);
         this.renderer.autoClear = false;
         this.elements.rendererbase.append(this.renderer.domElement);
+
+
+        //function throwOnGLError(err, funcName) {
+        //throw WebGLDebugUtils.glEnumToString(err) + " was caused by call to: " + funcName;
+        //}
+        //this.renderer.context = WebGLDebugUtils.makeDebugContext(this.renderer.context, throwOnGLError);
+
         
         const self=this;
         this.context.font="28px Arial";

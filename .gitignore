@@ -23,10 +23,10 @@ package-lock.json
 **/libbiswasm_wasm.js
 **/docker/wasm
 web/LICENSE
-docker/binary/*sh
-docker/binary/*tgz
 **/bioimagesuiteweb-*
 docker/native
 docker/web
 docker/install
-
+docker/binary/b*sh
+docker/binary/*tgz
+docker/binary/*zip

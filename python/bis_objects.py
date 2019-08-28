@@ -246,8 +246,21 @@ class bisImage(bisBaseObject):
 
     def load(self,fname):
         try:
-            tmp = nib.load(fname);
-            self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
+            # Jackson to add
+            # to add tif or anything
+            # check if extension is tif
+            # call a different load function
+            # call self.create
+            tiff=False;
+            if tiff==True:
+                # dosomething
+                # self.create(data,spacing,affinematrix); # spacing 5-array affine=4x4
+                print('Nothing');
+            else :
+               tmp = nib.load(fname);
+               self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
+
+
             self.filename=fname;
             print('++++ loaded ',self.getDescription());
 
