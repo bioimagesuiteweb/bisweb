@@ -265,7 +265,7 @@ class CPMElement extends HTMLElement {
                                     'filters' : [ { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
                                     'save' : true,
                                     'suffix' : '.matr',
-                                    'initialCallback' : () => { return 'cpmresults.matr' }
+                                    'initialCallback' : () => { return 'cpmresults.matr'; }
                                 });
 
                                 fileBtn.click();

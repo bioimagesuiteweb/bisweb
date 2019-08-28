@@ -25,3 +25,8 @@ package-lock.json
 web/LICENSE
 docker/binary/*sh
 docker/binary/*tgz
+**/bioimagesuiteweb-*
+docker/native
+docker/web
+docker/install
+
