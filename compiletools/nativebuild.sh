@@ -2,8 +2,11 @@
 
 BISMAKEJ="-j8"
 
-BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
+
 
 echo "-----------------------------------------------------------------------"
 # Build NATIVE

@@ -126,7 +126,7 @@ class BisWebSubviewer {
         this.noRoll= opts.noRoll || false;
         this.noRotate= opts.noRotate || false;
         this.noPan = opts.noPan || false;
-
+        this.parent=parent;
         this.width=opts.width || 100;
         this.depth=opts.depth || 200;
 

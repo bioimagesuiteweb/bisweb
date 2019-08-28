@@ -40,6 +40,7 @@ const humanmni=require('atlases/humanmni.json');
 const connectvis=require('bisweb_connectivityvis');
 const connectvis3d=require('bisweb_connectivityvis3d');
 
+const userPreferences = require('bisweb_userpreferences.js');
 
 // -------------------------------------------------------------------------
 // Parse Data
@@ -1265,6 +1266,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                    connectvis.corrmap();
                                },
                              });
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                webutil.createbutton({ type : "info",
+                    name : "Graphs",
+                    position : "bottom",
+                    css : { "margin": "5px"},
+                    tooltip : "Click this to display the scatterplot",
+                    parent : bbar3,
+                    callback : connectvis.drawScatterandHisto
+                });
+            }
+        });
+
+
 
 
         

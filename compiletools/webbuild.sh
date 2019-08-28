@@ -2,7 +2,8 @@
 
 EXTRA=""
 
-BDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 BDIST=${BDIR}/dist
@@ -32,7 +33,7 @@ cd ${BDIR}/install
 
 echo "-----------------------------------------------------------------------"
 pwd
-ls -lrt *tgz *.tar.gz *zip
+ls -lrt *tgz  *zip
 
 echo "-----------------------------------------------------------------------"
 echo " Done with Web Based Tools"

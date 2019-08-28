@@ -1,5 +1,5 @@
 # Base
-FROM ubuntu:18.04
+FROM tensorflow/tensorflow:1.13.2-gpu-py3
 
 MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 
@@ -32,7 +32,7 @@ RUN dos2unix /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Configuration script
-COPY biswebconfig.sh /usr/local/bin/biswebconfig.sh
+COPY biswebconfig.gpu.sh /usr/local/bin/biswebconfig.sh
 RUN dos2unix /usr/local/bin/biswebconfig.sh
 RUN chmod +x /usr/local/bin/biswebconfig.sh
 
