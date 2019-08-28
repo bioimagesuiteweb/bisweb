@@ -5,8 +5,8 @@
 	    "url"   : "viewer",
 	    "description" : "The orthogonal viewer + image processing tool.",
 	    "picture" : "images/viewer.png",
-            "width" : "800",
-            "height" : "600"
+            "width" : "1024",
+            "height" : "900"
 	},
 	"connviewer" : {
 	    "title" : "Connectivity Viewer",
@@ -14,7 +14,7 @@
 	    "description" : "The fMRI connectivity display tool.",
 	    "picture" : "images/connviewer.png",
 	    "width" : "1024",
-            "height" : "800"
+            "height" : "900"
 
 	},
 	"mni2tal" : {
@@ -22,8 +22,8 @@
 	    "url"   : "mni2tal",
 	    "description" : "The MNI 2 Talairach Converter program.",
 	    "picture" : "images/mni2tal.png",
-            "width" : "450",
-            "height" : "500"
+            "width" : "800",
+            "height" : "700"
 
 	},
 	"editor" : {
@@ -31,24 +31,24 @@
 	    "url"   : "editor",
 	    "description" : "The orthogonal viewer and editor.",
 	    "picture" : "images/editor.png",
-            "width" : "800",
-            "height" : "600"
+            "width" : "1024",
+            "height" : "900"
 	},
 	"overlayviewer" : {
 	    "title" : "Overlay Viewer",
 	    "url"   : "overlayviewer",
 	    "description" : "The orthogonal and mosaic functional overlay viewer.",
 	    "picture" : "images/overlayviewer.png",
-            "width" : "800",
-            "height" : "600"
+            "width" : "1024",
+            "height" : "900"
 	},
 	"dualviewer" : {
 	    "title" : "Dual Viewer Tool",
 	    "url"   : "dualviewer",
 	    "description" : "A dual registration viewer with linked cursors.",
 	    "picture" : "images/dualviewer.png",
-            "width" : "1024",
-            "height" : "800"
+            "width" : "1280",
+            "height" : "900"
 
 	},
 	"paravision" : {
@@ -57,8 +57,8 @@
 	    "description" : "The paravision import tool.",
 	    "picture" : "images/paravision.png",
 	    "electrononly": true,
-            "width" : "1024",
-            "height" : "800"
+            "width" : "1280",
+            "height" : "900"
 
 	},
         "spectviewer" : {
@@ -68,8 +68,8 @@
 	    "picture" : "",
 	    "electrononly": false,
             "hide" : true,
-            "width" : "800",
-            "height" : "600"
+            "width" : "1280",
+            "height" : "900"
 
 	}
     }
