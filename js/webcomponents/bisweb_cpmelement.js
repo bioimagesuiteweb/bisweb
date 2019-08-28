@@ -31,6 +31,7 @@ const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
+const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
 class CPMElement extends HTMLElement {
@@ -642,7 +643,8 @@ class CPMElement extends HTMLElement {
  */
 let reformatMatrix = (filename, matrix) => {
     let numericMatr = matrix.getNumericMatrix(), extension = filename.split('.')[1];
-    
+    numericMatr = bisweb_matrixutils.compressSymmetricMatrix(numericMatr);
+
     let reformattedEntry = [];
     for (let i = 0; i < numericMatr.length; i++) {
         switch (extension) {
