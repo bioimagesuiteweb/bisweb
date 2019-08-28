@@ -22,8 +22,8 @@
 	    "url"   : "mni2tal",
 	    "description" : "The MNI 2 Talairach Converter program.",
 	    "picture" : "images/mni2tal.png",
-            "width" : "450",
-            "height" : "500"
+            "width" : "800",
+            "height" : "700"
 
 	},
 	"editor" : {
