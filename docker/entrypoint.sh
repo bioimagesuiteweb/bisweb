@@ -5,8 +5,19 @@
 # Either use the LOCAL_USER_ID if passed in at runtime or
 # fallback to 9001
 
-echo "------------------------------------------------"
-echo "+++ Starting docker container."
+echo "----------------------------------------------------------"
+
+cat<<TF
+
+ #####      #     ####   #    #  ######  #####
+ #    #     #    #       #    #  #       #    #
+ #####      #     ####   #    #  #####   #####
+ #    #     #         #  # ## #  #       #    #
+ #    #     #    #    #  ##  ##  #       #    #
+ #####      #     ####   #    #  ######  #####
+
+TF
+echo "----------------------------------------------------------"
 
 USERHOME=/home/user
 
@@ -18,24 +29,13 @@ else
 fi
 
 USER_ID=${LOCAL_USER_ID:-9001}
-echo "Starting with UID : $USER_ID"
-useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d ${USERHOME}
-echo "++++ Added user bisweb"
-sleep 2
-
-if [ -d  /hostfiles ]; then
-    chown -R bisweb ${USERHOME}
-fi
-
-echo "------------------------------------------------"
+echo "+++ Starting with UID : $USER_ID"
+useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d ${USERHOME} > /var/log/add.txt 2>1 
+echo "+++ Added user bisweb"
+sleep 1
 
 cd ${USERHOME}
-cp /usr/local/share/dotbashrc ${USERHOME}/.bashrc
-chown bisweb ${USERHOME}/.bashrc
-dos2unix ${USERHOME}/.bashrc
 
-echo "++++ Configured home directory"
-echo "++++ ------------------------------------------------"
 
 exec gosu bisweb /bin/bash -i
 

@@ -23,7 +23,8 @@ RUN npm install -g gulp mocha rimraf electron-packager
 EXPOSE 8080
 
 # dotbashrc and entrypoint file
-COPY dotbashrc /usr/local/share/dotbashrc
+COPY bash.bashrc /etc/bash.bashrc
+RUN dos2unix /etc/bash.bashrc
 
 #Entry point
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
