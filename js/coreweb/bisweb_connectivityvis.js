@@ -1021,6 +1021,7 @@ let drawScatterandHisto = function(){
             //Scatterplot Data Construction
             let scatterData = [];
 
+            //TODO: find out the format Kol used to use the scatter plots
             for(let i = 0; i < dataToParse.scatterplotData[0].values.length; i++){
                 scatterData.push([
                     dataToParse.scatterplotData[0].values[i],

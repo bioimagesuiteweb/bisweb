@@ -263,17 +263,11 @@ class CPMElement extends HTMLElement {
                                         //TODO: bypassing bisweb_matrix save method because of some strangeness with how it handles files (method signature requiring an object causes it to bypass the server client save function)
                                         results.filename = name;
                                         let serializedMat = results.serializeToText({'name' : name });
-                                        console.log('mat', serializedMat);
-
-                                        let deserializedMat = new BiswebMatrix();
-                                        deserializedMat.parseFromText(serializedMat, name);
-                                        console.log('deserialized mat', deserializedMat);
                                         bis_genericio.write(name, serializedMat);
                                     }
                                 }, {
                                     'title' : 'Save CPM results file',
-                                    'filters' : [ { 'name' : 'JSON', 'extensions' : ['.json', '.JSON'] },
-                                                  { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
+                                    'filters' : [{ 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
                                     'save' : true,
                                     'initialCallback' : () => { return 'cpmresults.matr'; }
                                 });
