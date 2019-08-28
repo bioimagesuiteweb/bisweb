@@ -328,18 +328,6 @@ class bisImage(bisBaseObject):
             else:
                 print('---- '+name1+' and '+name2+' have different orientations '+o1+' vs '+o2);
         return same;
-
-    def rotate(self,angle):
-        rotatedArray = np.empty(Image.fromarray(self.data[:,:,0]).rotate(angle,Image.NEAREST,True).size)
-        for i in self.data.shape[-1]:
-            rotatedArray[:,:,i] = Image.fromarray(self.data[:,:,i]).rotate(angle,Image.NEAREST,True)
-        return rotatedArray
-
-    def resize(self,newSize):
-        resizedArray = np.empty(newSize)
-        for i in self.data.shape[-1]:
-            resizedArray[:,:,i] = Image.fromarray(self.data[:,:,i]).resize(newSize,Image.BILINEAR)
-        return resizedArray
 # --------------------------------------
 # bisLinearTransformation
 # --------------------------------------

@@ -138,6 +138,7 @@ if outputEveryStep:
 #### dF/F
 
 #blue
+pdb.set_trace()
 blueF = blueMovie[mask,topHat:].mean(axis=1)
 blueDFF = np.zeros(blueMovie.shape)
 blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,rotatedSize3D[2])))

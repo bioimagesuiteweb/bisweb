@@ -29,6 +29,9 @@ import bis_objects
 import modules_desc;
 import biswrapper as libbis;
 
+import calcium_image
+import calcium_analysis
+
 # from PIL import Image
 
 import pdb
@@ -58,7 +61,7 @@ class sampleModule(bis_basemodule.baseModule):
                     "name": "Input Image",
                     "description": "The input image (uv) to preprocess",
                     "varname": "uv",
-                    "required": True
+                    "required": False
                 },
                 {
                     "type": "image",
@@ -123,66 +126,25 @@ class sampleModule(bis_basemodule.baseModule):
                 }
             ],
         }
-
-    # def rotate(self,angle):
         
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
 
         debug=self.parseBoolean(vals['debug']);
-        blueMovie = self.inputs['blue'].get_data()
-        uvMovie = self.inputs['uv'].get_data()
+        # blueMovie = self.inputs['blue'].get_data()
+        # uvMovie = self.inputs['uv'].get_data()
+        inputMovie = self.inputs['blue'].get_data()
+        blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
         mask = self.inputs['mask'].get_data()
 
-
-        # Jackson to add
-        #data=
-        
-        # Input of of type bis_image
-        # .data
-        # .spacing [ spx, spy, spz, spt, 1 ]
-        # .dimensions [ 256 256 1 1000 1 ]
-        # .affine [ [ sx 0 0 0 ] [ 0 sy 0 0 ] [ 0 0 sz 0 ] [ 0 0 0 1 ] ]
 
         # other place is to look at is bisImage.load
         outputEveryStep = False
         rotatedSize3D = blueMovie.shape
-        # Your code here
-        topHat = 300
-        # Mask (spatial), resize, and rotate
-        # mask = np.array(Image.open('mask.tif').resize(downsampledSize, Image.BILINEAR).rotate(rotationAngle,Image.NEAREST,True))
 
-        # Reshape 
-        blueMovie = blueMovie.reshape((blueMovie.shape[0]*blueMovie.shape[1], blueMovie.shape[2]))
-        uvMovie = uvMovie.reshape((uvMovie.shape[0]*uvMovie.shape[1], uvMovie.shape[2]))
-        mask = mask.reshape((mask.shape[0]*mask.shape[1]))
-        mask = mask>0
-
-        # Creating time padding (invert time)
-        bluePadding = np.concatenate([-blueMovie[mask,topHat:0:-1]+2*blueMovie[mask,0][:,np.newaxis], blueMovie[mask,:]],axis=1)
-        uvPadding = np.concatenate([-uvMovie[mask,topHat:0:-1]+2*uvMovie[mask,0][:,np.newaxis], uvMovie[mask,:]],axis=1)
-
-        # from skimage.morphology import white_tophat
-        import skimage.morphology
-
-        se = skimage.morphology.rectangle(1,topHat) #(1, x) shape important!
-        blueFiltered = np.empty((mask.sum(), rotatedSize3D[2]+topHat))
-        uvFiltered = np.empty((mask.sum(), rotatedSize3D[2]+topHat))
-        for i in range(mask.sum()):
-            blueFiltered[i,np.newaxis] = skimage.morphology.white_tophat(bluePadding[i,np.newaxis],se)
-            uvFiltered[i,np.newaxis] = skimage.morphology.white_tophat(uvPadding[i,np.newaxis],se)
-
-        blueMovieFiltered = np.zeros(blueMovie.shape)
-        uvMovieFiltered = np.zeros(uvMovie.shape)
-
-        mask_indices = np.squeeze(np.argwhere(mask))
-        blueMovieFiltered[mask_indices,:] = blueFiltered[:,topHat:]
-        uvMovieFiltered[mask_indices,:] = uvFiltered[:,topHat:]
-        
-
-        blueMovieFiltered = blueMovieFiltered.reshape(rotatedSize3D)
-        uvMovieFiltered = uvMovieFiltered.reshape(rotatedSize3D)
+        # Top Hat filter
+        blueMovieFiltered,uvMovieFiltered = calcium_analysis.topHatFilter(blueMovie,uvMovie,mask)
 
         if outputEveryStep:
             out = bis.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
@@ -191,24 +153,8 @@ class sampleModule(bis_basemodule.baseModule):
             out.save('calcium_down_uv_movie_mc_rot_filt.nii.gz')
 
         #### Two-wavelength Regression
-        from scipy import linalg
-
-        blueMovieFiltered = blueMovieFiltered.reshape((blueMovieFiltered.shape[0]*blueMovieFiltered.shape[1], blueMovieFiltered.shape[2]))
-        uvMovieFiltered = uvMovieFiltered.reshape((uvMovieFiltered.shape[0]*uvMovieFiltered.shape[1], uvMovieFiltered.shape[2]))
-
-        blueBase = blueMovie - blueMovieFiltered
-        uvBase = uvMovie - uvMovieFiltered
-
-        blueRec = blueMovieFiltered + np.tile(blueBase.mean(axis=1)[:,np.newaxis],(1,rotatedSize3D[2]))
-        uvRec = uvMovieFiltered + np.tile(uvBase.mean(axis=1)[:,np.newaxis],(1,rotatedSize3D[2]))
-
-        beta = np.zeros((len(mask_indices)))
-        blueReg = np.zeros(blueBase.shape)
-
-        for i in range(mask.sum()):
-            beta[i] = linalg.lstsq(uvRec[mask_indices[i],:][:,np.newaxis], blueRec[mask_indices[i],:][:,np.newaxis])[0][0][0]
-            blueReg[mask_indices[i],:] = blueMovieFiltered[mask_indices[i],:] - beta[i]*uvMovieFiltered[mask_indices[i],:]
-
+        blueReg = calcium_analysis.twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,mask)
+        
         if outputEveryStep:
             out = bis.bisImage().create(blueReg.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
             out.save('calcium_down_blue_movie_mc_rot_filt_regress.nii.gz')
@@ -217,14 +163,7 @@ class sampleModule(bis_basemodule.baseModule):
 
         # pdb.set_trace()
         #blue
-        blueF = blueMovie[mask,topHat:].mean(axis=1)
-        blueDFF = np.zeros(blueMovie.shape)
-        blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,rotatedSize3D[2])))
-
-        #uv
-        uvF = uvMovieFiltered[mask,topHat:].mean(axis=1)
-        uvDFF = np.zeros(uvMovieFiltered.shape)
-        uvDFF[mask,:] = np.divide(uvMovieFiltered[mask,:],np.tile(uvF[:,np.newaxis],(1,rotatedSize3D[2])))
+        blueDFF,uvDFF = calcium_analysis.dFF(blueMovie,uvMovieFiltered,blueReg,mask)
 
         if outputEveryStep:
             out = bis.bisImage().create(blueDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
