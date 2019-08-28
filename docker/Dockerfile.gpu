@@ -12,7 +12,6 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs
 RUN apt-get install -yqq doxygen graphviz gosu
 RUN apt-get install -yqq libgtk-3-dev libxss1
-RUN apt-get install -yqq xrdp
 
 # python packages
 RUN pip3 install --upgrade pip
@@ -22,6 +21,9 @@ RUN pip3 install numpy nibabel
 RUN npm install -g gulp mocha rimraf
 RUN npm install -g electron --unsafe-perm=true --allow-root
 RUN npm install -g electron-packager
+
+RUN chown root /usr/lib/node_modules/electron/dist/chrome-sandbox
+RUN chmod 4755 /usr/lib/node_modules/electron/dist/chrome-sandbox
 
 # Expose server
 EXPOSE 8080
