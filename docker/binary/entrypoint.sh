@@ -33,7 +33,6 @@ export BISWEBCMD="*${@}*"
 if [ "${BISWEBCMD}" == "**" ] || [ "${BISWEBCMD}" == "*bash*" ]; then
     echo "+++ Starting apache server on port 80"
     /usr/sbin/apachectl -DFOREGROUND > /var/log/apache.log  2>1 &
-    cp /usr/local/share/dotbashrc ${HDIR}/.bashrc
     chown -R ${USER} ${HDIR}
     cd ${HDIR}
     exec gosu ${USER} bash -i
