@@ -38,7 +38,6 @@ RUN unzip -o /usr/local/installers/bisweb_*zip
 RUN chmod 755 /var/www/html
 
 # Copy bashrc file
-# dotbashrc and entrypoint file
 COPY bash.bashrc /etc/bash.bashrc
 RUN dos2unix /etc/bash.bashrc
 
