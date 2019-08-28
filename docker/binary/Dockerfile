@@ -37,9 +37,10 @@ WORKDIR /var/www/html
 RUN unzip -o /usr/local/installers/bisweb_*zip
 RUN chmod 755 /var/www/html
 
-# Copy bashrc file to home directory
-COPY dotbashrc /usr/local/share/dotbashrc
-RUN dos2unix /usr/local/share/dotbashrc
+# Copy bashrc file
+# dotbashrc and entrypoint file
+COPY bash.bashrc /etc/bash.bashrc
+RUN dos2unix /etc/bash.bashrc
 
 # bisweb server config to expose /data directory
 COPY server.conf /usr/local/installers/server.conf

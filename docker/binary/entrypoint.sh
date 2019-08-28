@@ -5,6 +5,20 @@
 # Either use the LOCAL_USER_ID if passed in at runtime or
 # fallback to 9001
 
+echo "----------------------------------------------------------"
+
+cat<<TF
+
+ #####      #     ####   #    #  ######  #####
+ #    #     #    #       #    #  #       #    #
+ #####      #     ####   #    #  #####   #####
+ #    #     #         #  # ## #  #       #    #
+ #    #     #    #    #  ##  ##  #       #    #
+ #####      #     ####   #    #  ######  #####
+
+TF
+echo "----------------------------------------------------------"
+
 USER_ID=${LOCAL_USER_ID:-9001}
 USER=${LOCAL_USER:bisweb}
 HDIR="/dockerhome/${USER}"
@@ -17,7 +31,7 @@ export CMD="${@}"
 export BISWEBCMD="*${@}*"
 
 if [ "${BISWEBCMD}" == "**" ] || [ "${BISWEBCMD}" == "*bash*" ]; then
-    echo "+++++ Starting apache server on port 80"
+    echo "+++ Starting apache server on port 80"
     /usr/sbin/apachectl -DFOREGROUND > /var/log/apache.log  2>1 &
     cp /usr/local/share/dotbashrc ${HDIR}/.bashrc
     chown -R ${USER} ${HDIR}
@@ -25,8 +39,8 @@ if [ "${BISWEBCMD}" == "**" ] || [ "${BISWEBCMD}" == "*bash*" ]; then
     exec gosu ${USER} bash -i
 else
     chown -R ${USER} ${HDIR}
-    echo "_____ Executing specified command ${CMD}"
-    echo "_____     host directory ${ORIG_DIR} is mapped to /data"
+    echo "___ Executing specified command ${CMD}"
+    echo "___     host directory ${ORIG_DIR} is mapped to /data"
     exec gosu ${USER} ${CMD}
 fi
 
