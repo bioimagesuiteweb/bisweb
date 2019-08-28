@@ -23,7 +23,10 @@ MESSAGE("----------------------------------------------------")
 MESSAGE("-- Building BISWEB")
 MESSAGE("----------------------------------------------------")
 
-SET (BISWEB_VERSION "1.1.1a")
+SET (BISWEB_VERSION_MAJOR 1)
+SET (BISWEB_VERSION_MINOR 1)
+SET (BISWEB_VERSION_PATCH 0b2)
+SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -385,13 +388,15 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
-  add_custom_command(OUTPUT ${NPMPACKAGEFILE}
+  set (NPMPACKAGEFILE2 ${LIBRARY_OUTPUT_PATH}/package.json.tf)
+  add_custom_command(OUTPUT ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} 
     DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE} ${LIBNAME}
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
     )
-  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
+  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} )
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
+  install (FILES ${NPMPACKAGEFILE2} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
   # Path Files
   install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)

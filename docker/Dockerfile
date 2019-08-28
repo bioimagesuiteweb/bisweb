@@ -7,10 +7,10 @@ MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 RUN apt-get -yqq update
 RUN apt-get install -yqq python-pip python-dev python3 python3-pip
 RUN apt-get install -yqq unzip g++ gcc cmake cmake-curses-gui
-RUN apt-get install -yqq doxygen graphviz
 RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs
+RUN apt-get install -yqq doxygen graphviz
 
 # python packages
 RUN pip3 install numpy nibabel
@@ -20,7 +20,8 @@ RUN npm install -g gulp mocha rimraf
 RUN npm install -g electron --unsafe-perm=true --allow-root
 RUN npm install -g electron-packager
 
-# Checkout bisweb source
+# Checkout main bisweb source code
+RUN echo "Checking out bisweb source"
 RUN mkdir /root/bisweb
 WORKDIR /root/bisweb
 RUN git clone https://github.com/bioimagesuiteweb/bisweb src
@@ -47,18 +48,26 @@ COPY wasmbuild.sh   /root/bisweb/src/build/wasmbuild.sh
 COPY webbuild.sh    /root/bisweb/src/build/webbuild.sh
 COPY nativebuild.sh /root/bisweb/src/build/nativebuild.sh
 COPY testbuild.sh   /root/bisweb/src/build/testbuild.sh
+COPY biswebinstall.sh   /root/bisweb/src/build/biswebinstall.sh
 RUN dos2unix /root/bisweb/src/build/*.sh
 RUN chmod +x /root/bisweb/src/build/*.sh
 RUN /root/bisweb/src/build/fullbuild.sh
+RUN /root/bisweb/src/build/biswebinstall.sh
 
 # Expose server
 EXPOSE 8080
 
 # Build NATIVE
 WORKDIR /root/bisweb/src/
-RUN echo "done setting up docker machine"
+RUN echo "done setting up docker machine -- now copying final scripts"
 
+# Final configurations
+WORKDIR /root/bisweb/
 COPY dotbashrc /root/.bashrc
+COPY dockerupdate.sh /root/bisweb/update.sh
+RUN dos2unix /root/bisweb/update.sh
+RUN chmod +x /root/bisweb/update.sh
+
 
 
 

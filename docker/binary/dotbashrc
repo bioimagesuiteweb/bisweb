@@ -1,4 +1,4 @@
-# Copy this to .bashrc on Linux or .bash_profile on MacOS
+# Bisweb .bash profile
 
 alias rm='rm -i'
 alias cp='cp -i'
@@ -6,15 +6,16 @@ alias mv='mv -i'
 alias ll='ls -l'                              
 alias la='ls -A'                              
 
-PS1="\h:\w>"
+PS1="[BISWEBTOOLS]\h:\w>"
 export PS1
+
+source /usr/local/bisweb/setpaths.sh
 
 echo ""
 echo "------------------------ In Bisweb docker image ----------------------------------------"
-echo "To update the bisweb source type: update.sh"
 echo "To execute the bisweb JS command line tools type: biswebnode"
-echo "To rebuild the software type: ./src/build/fullbuild.sh"
-echo "To run the web server for local hosting of bisweb command line tools type: cd src; gulp"
 echo "The python command line tools and library can be found in /usr/local/bisweb"
 echo "------------------------ ---------------------------------------------------------------"
 echo ""
+
+cd /root
