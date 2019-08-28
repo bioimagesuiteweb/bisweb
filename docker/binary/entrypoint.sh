@@ -24,8 +24,8 @@ USER=${LOCAL_USER:bisweb}
 HDIR="/dockerhome/${USER}"
 
 mkdir -p /dockerhome
-echo "+++++ Creating user ${USER}:${USER_ID} and home directory=${HDIR}"
-useradd --shell /bin/bash -u $USER_ID -o -c ${USER} -m ${USER} -d ${HDIR}
+echo "+++ Creating user ${USER}:${USER_ID} and home directory=${HDIR}"
+useradd --shell /bin/bash -u $USER_ID -o -c ${USER} -m ${USER} -d ${HDIR}  > /var/log/add.txt 2>1 
 
 export CMD="${@}"
 export BISWEBCMD="*${@}*"
@@ -33,11 +33,8 @@ export BISWEBCMD="*${@}*"
 if [ "${BISWEBCMD}" == "**" ] || [ "${BISWEBCMD}" == "*bash*" ]; then
     echo "+++ Starting apache server on port 80"
     /usr/sbin/apachectl -DFOREGROUND > /var/log/apache.log  2>1 &
-    chown -R ${USER} ${HDIR}
-    cd ${HDIR}
     exec gosu ${USER} bash -i
 else
-    chown -R ${USER} ${HDIR}
     echo "___ Executing specified command ${CMD}"
     echo "___     host directory ${ORIG_DIR} is mapped to /data"
     exec gosu ${USER} ${CMD}

@@ -32,17 +32,6 @@ else
 fi
 
 
-# Bisweb .bash profile
-
-alias rm='rm -i'
-alias cp='cp -i'
-alias mv='mv -i'
-alias ll='ls -l'                              
-alias la='ls -A'                              
-
-PS1="[BISWEBTOOLS][bisweb]:\w>"
-export PS1
-
 source /usr/local/bisweb/setpaths.sh
 echo "+++++ Starting bisweb fileserver"
 biswebnode bisserver --config /usr/local/installers/server.conf --ipaddr 0.0.0.0 &
@@ -56,4 +45,15 @@ echo "     with a local biweb file server on port 24000"
 echo "------------------------ ------------------------------------------------------------------------"
 echo "Your host directory ${ORIG_DIR} is mapped to the container directory /data"
 echo "------------------------ ------------------------------------------------------------------------"
+
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias ll='ls -l'                              
+alias la='ls -A'                              
+
+PS1="[BISWEBTOOLS]:\w>"
+export PS1
+
 cd /data

@@ -51,10 +51,10 @@ cd ${HOME}
 
 if [ -d  ${HOME}/bisweb ]; then
     cd ${HOME}/bisweb
-    echo "All set you have a  directory ${HOME}/bisweb"
+    echo "All set. You have a  directory ${HOME}/bisweb."
 else
     echo "You do not have a bisweb directory. "
-    echo "     Auto configuring bisweb for you in ${HOME}/bisweb"
+    echo "     Auto configuring bisweb for you in ${HOME}/bisweb."
     echo "----------------------------------------------------------"
     mkdir -p bisweb
     cd bisweb
