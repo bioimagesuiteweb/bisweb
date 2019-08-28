@@ -25,7 +25,13 @@ import json
 import nibabel as nib
 import bis_wasmutils as biswasm
 
+my_path=os.path.dirname(os.path.realpath(__file__));
+sys.path.append(os.path.abspath(my_path+'/../build/native'));
+sys.path.append(os.path.abspath(my_path+'/../python'));
+
 import biswrapper as libbis;
+
+from PIL import Image, ImageSequence #for TIFF support
 
 # --------------------------------------
 # bisBaseObject
@@ -251,11 +257,17 @@ class bisImage(bisBaseObject):
             # check if extension is tif
             # call a different load function
             # call self.create
-            tiff=False;
-            if tiff==True:
-                # dosomething
-                # self.create(data,spacing,affinematrix); # spacing 5-array affine=4x4
-                print('Nothing');
+            fileExtension = fname.split('.')[-1] #kind of hacky? Wouldn't work for .gz
+            if fileExtension == 'tif' or fileExtension == 'tiff':
+                img = Image.open(fname)
+                imgl = []
+                for page in ImageSequence.Iterator(img):
+                    imgl.append(page.convert(mode='F'))
+
+                movie = np.empty((imgl[0].size[1], imgl[0].size[0], len(imgl))) #np arrays have 1st index as rows
+                for i in range(len(imgl)):
+                    movie[:,:,i] = np.array(imgl[i])
+                self.create(movie,[1,1,1,1,1],np.eye(4)); # spacing 5-array affine=4x4
             else :
                tmp = nib.load(fname);
                self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
@@ -317,7 +329,17 @@ class bisImage(bisBaseObject):
                 print('---- '+name1+' and '+name2+' have different orientations '+o1+' vs '+o2);
         return same;
 
-        
+    def rotate(self,angle):
+        rotatedArray = np.empty(Image.fromarray(self.data[:,:,0]).rotate(angle,Image.NEAREST,True).size)
+        for i in self.data.shape[-1]:
+            rotatedArray[:,:,i] = Image.fromarray(self.data[:,:,i]).rotate(angle,Image.NEAREST,True)
+        return rotatedArray
+
+    def resize(self,newSize):
+        resizedArray = np.empty(newSize)
+        for i in self.data.shape[-1]:
+            resizedArray[:,:,i] = Image.fromarray(self.data[:,:,i]).resize(newSize,Image.BILINEAR)
+        return resizedArray
 # --------------------------------------
 # bisLinearTransformation
 # --------------------------------------
