@@ -26,6 +26,7 @@ const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
+const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 
 const bis_dbase = require('bisweb_dbase');
@@ -41,6 +42,8 @@ class CPMElement extends HTMLElement {
         this.cpmComputationPanel = null;
         this.fileInputForm = null;
         this.settingsModal = null;
+
+        bisweb_connectivityvis.initialize();
 
         bisweb_userprefs.initialize(bis_dbase).then( () => {
             bis_dbase.getItem('showCPMExportWarning').then( (obj) => {
@@ -240,9 +243,10 @@ class CPMElement extends HTMLElement {
 
         runButton.on('click', () => {
             this.runCPMFlow().then( (results) => {
-                console.log('results', results);
                 let message = '', data = results.data;
                 for (let item of data) { message = message.concat(`${item}<br>`); }
+                //console.log('conn vis', bisweb_connectivityvis);
+                //bisweb_connectivityvis.drawScatterandHisto();
 
                 bootbox.dialog({
                     'title' : 'CPM Results',
@@ -257,14 +261,20 @@ class CPMElement extends HTMLElement {
                                 let fileBtn = bis_webfileutil.createFileButton({
                                     'callback' : (name) => { 
                                         //TODO: bypassing bisweb_matrix save method because of some strangeness with how it handles files (method signature requiring an object causes it to bypass the server client save function)
-                                        let serializedMat = results.serializeToText({'name' : name});
+                                        results.filename = name;
+                                        let serializedMat = results.serializeToText({'name' : name });
+                                        console.log('mat', serializedMat);
+
+                                        let deserializedMat = new BiswebMatrix();
+                                        deserializedMat.parseFromText(serializedMat, name);
+                                        console.log('deserialized mat', deserializedMat);
                                         bis_genericio.write(name, serializedMat);
                                     }
                                 }, {
                                     'title' : 'Save CPM results file',
-                                    'filters' : [ { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
+                                    'filters' : [ { 'name' : 'JSON', 'extensions' : ['.json', '.JSON'] },
+                                                  { 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
                                     'save' : true,
-                                    'suffix' : '.matr',
                                     'initialCallback' : () => { return 'cpmresults.matr'; }
                                 });
 

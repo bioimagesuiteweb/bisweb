@@ -1,11 +1,13 @@
 const $=require('jquery');
 const bootbox=require('bootbox');
-const genericio=require('bis_genericio');
 const d3=require('d3');
-const webutil=require('bis_webutil');
 const saveSvgAsPng=require('save-svg-as-png');
 const filesaver = require('FileSaver');
 const regression = require('regression');
+
+const webutil=require('bis_webutil');
+const genericio=require('bis_genericio');
+const bisweb_matrix=require('bisweb_matrix');
 
 // -------------------------------
 // Todo ---
@@ -997,7 +999,8 @@ let drawScatterandHisto = function(){
          */
         let event = data.originalEvent;
         event.preventDefault();
-        console.log('DROPPED DATA', event);
+        event.stopPropagation();
+        console.log('DROPPED DATA', event, data);
         reader.readAsText(event.dataTransfer.files[0]);
 
         reader.onloadend = (ev)=>{
@@ -1007,11 +1010,13 @@ let drawScatterandHisto = function(){
                 return;
             }
     
-            let jsonData = ev.target.result;
+            let data = ev.target.result;
             console.log('----- LOADED FILE -----');
+            console.log('data', data);
 
-
-            let dataToParse = JSON.parse(jsonData); 
+            let matr = new bisweb_matrix();
+            matr.parseFromText(data, '.matr');
+            console.log('matr', matr);
 
             //Scatterplot Data Construction
             let scatterData = [];
