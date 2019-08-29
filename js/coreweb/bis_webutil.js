@@ -778,7 +778,7 @@ const webutil = {
             body.parent().addClass('in');
 
         if (helpbutton) {
-            let helpButtonItem = $(`<span class='bisweb-help-button glyphicon glyphicon-question-sign' style='float: right'></span>`);
+            let helpButtonItem = $(`<span class='bisweb-span-button glyphicon glyphicon-question-sign' style='float: right'></span>`);
             let panelHeading = div.find('.panel-title');
             panelHeading.append(helpButtonItem);
         }

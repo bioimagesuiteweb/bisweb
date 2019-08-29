@@ -483,6 +483,6 @@ input[type="radio"] .styled:checked + label::after {
   font-size: 15px;
 }
 
-.bisweb-help-button:hover{
+.bisweb-span-button:hover{
     color : rgb(12, 227, 172);
 }
