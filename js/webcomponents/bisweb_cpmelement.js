@@ -25,6 +25,8 @@ const dat = require('bisweb_datgui');
 const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
+const moduleIndex = require('moduleindex.js');
+const Scatter = require('bisweb_scatterplot.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
@@ -33,6 +35,25 @@ const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
+
+const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
+
+/**
+ * 
+ * @param {ViewerLayoutElement} layoutwidget 
+ */
+let cpmGuiManager = function(layoutwidget){
+    let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+    let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
+
+    let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
+
+    $(window).on('resize',()=>{
+        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+        let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
+        plot.resize(dims, pos);
+    });
+};
 
 class CPMElement extends HTMLElement {
 
@@ -72,6 +93,9 @@ class CPMElement extends HTMLElement {
             let menubar = document.querySelector(this.menubarid).getMenuBar();
             let layoutElement = document.querySelector(this.layoutelementid);
             let dockbar = layoutElement.elements.dockbarcontent;
+
+            this.guiManager = cpmGuiManager(layoutElement);
+
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
         });
@@ -372,6 +396,8 @@ class CPMElement extends HTMLElement {
                     } catch (e) { 
                         reject(e);
                     }
+
+                    //TODO: Send to scatter plot
                 });
             }
         });
