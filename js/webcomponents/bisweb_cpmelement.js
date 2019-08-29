@@ -37,25 +37,7 @@ const bisweb_userprefs = require('bisweb_userpreferences.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
-const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
-
-//TODO: Move this to a card that slides out from the bottom
-/**
- * 
- * @param {ViewerLayoutElement} layoutwidget 
- */
-let cpmGuiManager = function(layoutwidget){
-    let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
-    let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
-
-    let plot = new bisweb_scatterplot.scatterplot(layoutwidget, dims, pos);
-
-    $(window).on('resize',()=>{
-        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
-        let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
-        plot.resize(dims, pos);
-    });
-};
+//const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
 
 class CPMElement extends HTMLElement {
 
@@ -96,13 +78,31 @@ class CPMElement extends HTMLElement {
             let layoutElement = document.querySelector(this.layoutelementid);
             let dockbar = layoutElement.elements.dockbarcontent;
 
-            this.guiManager = cpmGuiManager(layoutElement);
+            this.guiManager = this.createCPMGUIManager(layoutElement);
 
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
+    }
+
+    /**
+     * 
+     * @param {ViewerLayoutElement} layoutwidget 
+     */
+    createCPMGUIManager(layoutwidget) {
+        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+        let pos = [layoutwidget.viewerwidth * 0.33333333 , layoutwidget.viewerheight - 10];
+
+        console.log('pos', pos);
+        let plot = new bisweb_scatterplot.scatterplot(layoutwidget, dims, pos);
+
+        $(window).on('resize', () => {
+            let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
+            let pos = [layoutwidget.viewerwidth * 0.33333333 , layoutwidget.viewerheight - 10];
+            plot.resize(dims, pos);
+        });
     }
 
     /**
