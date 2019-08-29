@@ -26,10 +26,11 @@ const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const moduleIndex = require('moduleindex.js');
-const Scatter = require('bisweb_scatterplot.js');
+
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
+const bisweb_scatterplot = require('bisweb_scatterplot.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
@@ -38,6 +39,7 @@ const BiswebMatrix = require('bisweb_matrix.js');
 
 const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
 
+//TODO: Move this to a card that slides out from the bottom
 /**
  * 
  * @param {ViewerLayoutElement} layoutwidget 
@@ -46,7 +48,7 @@ let cpmGuiManager = function(layoutwidget){
     let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
     let pos = [layoutwidget.viewerwidth * 0.33333333 , 10];
 
-    let plot = new Scatter.scatterplot(layoutwidget, dims, pos);
+    let plot = new bisweb_scatterplot.scatterplot(layoutwidget, dims, pos);
 
     $(window).on('resize',()=>{
         let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
@@ -126,7 +128,6 @@ class CPMElement extends HTMLElement {
             this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true, true);
 
             let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-help-button');
-            console.log('help button', helpButton, this.cpmDisplayPanel);
             this.setHelpText(helpButton);
 
             this.fileListFormId = bis_webutil.getuniqueid();
@@ -153,7 +154,6 @@ class CPMElement extends HTMLElement {
                 'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
                     const self = this;
-                    console.log('show export warning', this.showExportWarning);
                     if (this.showExportWarning) {
                         bootbox.dialog({
                             'title' : 'Ensure files are exportable',
@@ -392,6 +392,13 @@ class CPMElement extends HTMLElement {
 
                     try {
                         let cpmResults = libbiswasm.computeCPMWASM(cpmFile, behaviorFile, self.settings, 0);
+                        let data = [];
+                        let d = cpmResults.getDimensions();
+                        for (let i = 0; i < d[0]; i++) {
+                            data.push([behaviorFile.data[i], cpmResults.data[i]]);
+                        }
+
+                        $('.bis-scatterplotchart').trigger('changeData', {scatterData: data});
                         resolve(cpmResults);
                     } catch (e) { 
                         reject(e);
