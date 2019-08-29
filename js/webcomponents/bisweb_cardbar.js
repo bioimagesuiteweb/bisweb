@@ -18,24 +18,27 @@ class BiswebCardBar extends HTMLElement {
     }
 
     createBottomNavbar(navbarTitle) {
+        let bottomNavElement = $(this.bottomNavbar).find('.navbar.navbar-fixed-bottom');
+        let bottomNavElementHeight = bottomNavElement.css('height');
 
+        console.log('nav element height', bottomNavElementHeight);
         const cardLayout = $(`
-            <nav class='navbar navbar-expand-lg navbar-dark bg-dark' style='min-height: 50px; max-height: 50px;'>
-                <div class='pos-f-t'>
-                    <div class='collapse' id='bisweb-plot-navbar'>
-                        <div class='bg-dark p-4'>
-                            <ul class='navbar-nav mr-auto'>
-                                <li class='nav-item active'>
-                                    <a class='nav-link' href='#'>Example</a>
-                                </li>
-                                <li class='nav-item'> 
-                                    <a class='nav-link' href='#'>Another example</a>
-                                </li>
-                            </ul>
-                        </div>
+        <nav class='navbar navbar-expand-lg navbar-fixed-bottom navbar-dark' style='min-height: 50px; max-height: 50px;'>
+            <div class='pos-f-b'>
+                <div class='collapse' id='bisweb-plot-navbar' style='position: absolute; bottom: ${bottomNavElementHeight}'>
+                    <div class='bg-dark p-4'>
+                        <ul class='navbar-nav mr-auto'>
+                            <li class='nav-item active'>
+                                <a class='nav-link' href='#'>Example</a>
+                            </li>
+                            <li class='nav-item'> 
+                                <a class='nav-link' href='#'>Another example</a>
+                            </li>
+                        </ul>
                     </div>
-                </div> 
-            </nav>
+                </div>
+            </div> 
+        </nav>
         `);
 
         const expandButton = $(`
@@ -46,7 +49,7 @@ class BiswebCardBar extends HTMLElement {
         const navbarExpandButton = $(`<span class='glyphicon glyphicon-menu-hamburger' style='position: relative; top: 3px; left: 5px;'></span>`);
         navbarExpandButton.on('click', () => { expandButton.click(); console.log('clicked expand'); });
 
-        let bottomNavElement = $(this.bottomNavbar).find('.navbar.navbar-fixed-bottom');
+
 
         //append card layout to the bottom and the expand button to the existing navbar
         bottomNavElement.append(navbarExpandButton);
