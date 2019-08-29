@@ -27,8 +27,8 @@ class BiswebCardBar extends HTMLElement {
             <div class='pos-f-b'>
                 <div class='collapse' id='bisweb-plot-navbar' style='position: absolute; bottom: ${bottomNavElementHeight}'>
                     <div class='bg-dark p-4'>
-                        <ul class='navbar-nav mr-auto'>
-                            <li class='nav-item active'>
+                        <ul class='nav nav-tabs bisweb-bottom-nav-tabs'>
+                            <li class='nav-item'>
                                 <a class='nav-link' href='#'>Example</a>
                             </li>
                             <li class='nav-item'> 
@@ -41,15 +41,15 @@ class BiswebCardBar extends HTMLElement {
         </nav>
         `);
 
+
+        //Expand button is too large for the bottom bar, so just add the span to the bottom nav and have it trigger the button on click
         const expandButton = $(`
             <button class='btn navbar-toggler' type='button' data-toggle='collapse' data-target='#bisweb-plot-navbar' style='background-color: #375a7f; visibility: hidden;'>
             </button>
         `);
 
-        const navbarExpandButton = $(`<span class='glyphicon glyphicon-menu-hamburger' style='position: relative; top: 3px; left: 5px;'></span>`);
+        const navbarExpandButton = $(`<span><span class='glyphicon glyphicon-menu-hamburger bisweb-span-button' style='position: relative; top: 3px; left: 5px; margin-right: 10px'></span>${navbarTitle}</span>`);
         navbarExpandButton.on('click', () => { expandButton.click(); console.log('clicked expand'); });
-
-
 
         //append card layout to the bottom and the expand button to the existing navbar
         bottomNavElement.append(navbarExpandButton);

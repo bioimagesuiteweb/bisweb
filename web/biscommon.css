@@ -486,3 +486,7 @@ input[type="radio"] .styled:checked + label::after {
 .bisweb-span-button:hover{
     color : rgb(12, 227, 172);
 }
+
+.bisweb-bottom-nav-tabs li > :first-child {
+    border: 1px solid #464545;
+}
