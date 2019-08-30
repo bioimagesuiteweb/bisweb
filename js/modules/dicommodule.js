@@ -280,11 +280,11 @@ class DicomModule extends BaseModule {
                     console.log('.... all done (no bids), returning output path = ' + outdir);
                 }).catch((e) => {
                     console.log('An error occured during the dicom conversion process', e);
-                }).finally( () => {
-                    console.log('....\n.... removing temporary directory = '+tmpdir);
-                    bis_genericio.deleteDirectory(tmpdir).then( () => {
-                        resolve();
-                    });
+                });
+                
+                console.log('....\n.... removing temporary directory = ' + tmpdir);
+                bis_genericio.deleteDirectory(tmpdir).then(() => {
+                    resolve();
                 });
             }
         });
