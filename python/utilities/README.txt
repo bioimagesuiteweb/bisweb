@@ -27,6 +27,6 @@ Toolkits Required:
     Both scikit and Pillow seem to use the New BSD license, which is compatible with BIS's Apache 2.0 license. Scikit explicitly states their license. Pillow only states their license, which -- to the best of my Legalese reading ability -- seems compatible.
 
 How to Run:
-    sampleMovie.tif and mask.tif are required. Both can be found in /mridata2/mri_group/xilin_data/xinxin/pre_process/ in the Shred server
+    sampleMovie.tif and mask.tif are required. sampleMovie can be found in /mridata2/mri_group/xilin_data/xinxin/pre_process/ in the Shred server, and mask can be found on my MAC /Volumes/Jackson.
     python3 calciumPreprocess.py --blue sampleMovie.tiff --mask mask.tif --blueout blue_out.nii.gz --uvout uv_out.nii.gz --tophat 300 --rotation -43 --downsample 0.5
-
+    

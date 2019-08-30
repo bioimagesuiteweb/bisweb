@@ -44,9 +44,9 @@ class calciumPreprocess(bis_basemodule.baseModule):
    
     def createDescription(self):
         return {
-            "name": "Computes something",
-            "description": "Calculates the something",
-            "author": "Somebody",
+            "name": "Calcium Preprocess",
+            "description": "Preprocesses calcium images. Top-hat filter, two-wavelength regression, then dF/F",
+            "author": "Jackson Zhaoxiong Ding",
             "version": "1.0",
             "inputs": [
                 {
@@ -128,7 +128,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 },
                 {
                     "name": "Debug",
-                    "description": "Toggles debug logging",
+                    "description": "Toggles debug logging. Will also output intermediate steps (similar name to Xilin's MATLAB code)",
                     "varname": "debug",
                     "type": "boolean",
                     "default": False
