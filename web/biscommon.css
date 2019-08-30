@@ -490,3 +490,20 @@ input[type="radio"] .styled:checked + label::after {
 .bisweb-bottom-nav-tabs li > :first-child {
     border: 1px solid #464545;
 }
+
+/*
+.bisweb-sliding-tab-content {
+    overflow : hidden;
+    transition: transform 0.5s ease-out;
+    height: auto;
+    transform: scaleY(1);
+    transform-origin: bottom;
+    
+}
+*/
+
+/*
+.bisweb-sliding-tab-content.bisweb-collapse {
+    transform: scaleY(0);
+}
+*/
