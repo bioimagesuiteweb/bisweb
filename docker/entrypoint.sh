@@ -32,8 +32,10 @@ USER_ID=${LOCAL_USER_ID:-9001}
 echo "+++ Starting with UID : $USER_ID"
 useradd --shell /bin/bash -u $USER_ID -o -c "" -m bisweb -d ${USERHOME} > /var/log/add.txt 2>1 
 echo "+++ Added user bisweb"
-rm ${USERHOME}/.profile
-rm ${USERHOME}/.bashrc
+touch ${USERHOME}/.profile
+rm    ${USERHOME}/.profile
+touch ${USERHOME}/.bashrc
+rm    ${USERHOME}/.bashrc
 
 sleep 1
 
