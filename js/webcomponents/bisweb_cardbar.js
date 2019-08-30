@@ -21,35 +21,40 @@ class BiswebCardBar extends HTMLElement {
         let bottomNavElement = $(this.bottomNavbar).find('.navbar.navbar-fixed-bottom');
         let bottomNavElementHeight = bottomNavElement.css('height');
 
-        console.log('nav element height', bottomNavElementHeight);
         const cardLayout = $(`
         <nav class='navbar navbar-expand-lg navbar-fixed-bottom navbar-dark' style='min-height: 50px; max-height: 50px;'>
             <div class='pos-f-b'>
-                <div class='collapse' id='bisweb-plot-navbar' style='position: absolute; bottom: ${bottomNavElementHeight}'>
+                <div id='bisweb-plot-navbar' class='collapse' style='position: absolute; bottom: ${bottomNavElementHeight}'>
                     <div class='bg-dark p-4'>
-                        <ul class='nav nav-tabs bisweb-bottom-nav-tabs'>
+                        <ul class='nav nav-tabs bisweb-bottom-nav-tabs' role='tablist'>
                             <li class='nav-item'>
-                                <a class='nav-link' href='#'>Example</a>
+                                <a class='nav-link' href='#firstTab' role='tab' data-toggle='tab'>Example</a>
                             </li>
                             <li class='nav-item'> 
-                                <a class='nav-link' href='#'>Another example</a>
+                                <a class='nav-link' href='#secondTab' role='tab' data-toggle='tab'>Another example</a>
                             </li>
                         </ul>
+                        <div class='tab-content'>
+                                <div id='firstTab' class='tab-pane fade' role='tabpanel'>
+                                    <a>Hello!</a>
+                                </div>
+                                <div id='secondTab' class='tab-pane fade' role='tabpanel'>
+                                    <a>How's it going?</a>
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div> 
         </nav>
         `);
 
-
-        //Expand button is too large for the bottom bar, so just add the span to the bottom nav and have it trigger the button on click
         const expandButton = $(`
-            <button class='btn navbar-toggler' type='button' data-toggle='collapse' data-target='#bisweb-plot-navbar' style='background-color: #375a7f; visibility: hidden;'>
+            <button class='btn navbar-toggler' type='button' data-toggle='collapse' data-target='#bisweb-plot-navbar' style='visibility: hidden;'>
             </button>
         `);
 
         const navbarExpandButton = $(`<span><span class='glyphicon glyphicon-menu-hamburger bisweb-span-button' style='position: relative; top: 3px; left: 5px; margin-right: 10px'></span>${navbarTitle}</span>`);
-        navbarExpandButton.on('click', () => { expandButton.click(); console.log('clicked expand'); });
+        navbarExpandButton.on('click', () => { expandButton.click(); });
 
         //append card layout to the bottom and the expand button to the existing navbar
         bottomNavElement.append(navbarExpandButton);
