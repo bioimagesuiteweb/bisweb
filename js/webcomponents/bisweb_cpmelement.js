@@ -127,7 +127,7 @@ class CPMElement extends HTMLElement {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
             this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true, true);
 
-            let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-help-button');
+            let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-span-button');
             this.setHelpText(helpButton);
 
             this.fileListFormId = bis_webutil.getuniqueid();

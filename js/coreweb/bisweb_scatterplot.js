@@ -10,9 +10,9 @@ const globalParams = {
 /**
  * 
  * @param {Element} parentDiv 
- * @param {number[]} dim 
+ * @param {Array[Number]} dim 
  * @param {CanvasRenderingContext2D} ctx if you would like it to be rendered to a canvas input the ctx.
- * @param {number[]} pos position for the scatterplot to be drawn to
+ * @param {Array[Number]} pos position for the scatterplot to be drawn to
  */
 let scatterplot = function(parentDiv, dim, pos, ctx = null){
     globalParams.Id=webutil.getuniqueid();
