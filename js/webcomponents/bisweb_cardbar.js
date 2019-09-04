@@ -27,22 +27,8 @@ class BiswebCardBar extends HTMLElement {
             <div class='pos-f-b'>
                 <div id='bisweb-plot-navbar' class='collapse' style='position: absolute; bottom: ${bottomNavElementHeight}'>
                     <div class='bg-dark p-4'>
-                        <ul class='nav nav-tabs bisweb-bottom-nav-tabs' role='tablist'>
-                            <li class='nav-item'>
-                                <a class='nav-link' href='#firstTab' role='tab' data-toggle='tab'>Example</a>
-                            </li>
-                            <li class='nav-item'> 
-                                <a class='nav-link' href='#secondTab' role='tab' data-toggle='tab'>Another example</a>
-                            </li>
-                        </ul>
-                        <div class='tab-content bisweb-sliding-tab bisweb-collapse'>
-                                <div id='firstTab' class='tab-pane fade' role='tabpanel'>
-                                    <a>Hello!</a>
-                                </div>
-                                <div id='secondTab' class='tab-pane fade' role='tabpanel'>
-                                    <a>How's it going?<br><br><br><br></a>
-                                </div>
-                        </div>
+                        <ul class='nav nav-tabs bisweb-bottom-nav-tabs' role='tablist'></ul>
+                        <div class='tab-content bisweb-sliding-tab bisweb-collapse'></div>
                     </div>
                 </div>
             </div> 
@@ -91,11 +77,11 @@ class BiswebCardBar extends HTMLElement {
     }
 
     /**
-     * Creates the tab and associated tab content pane in the bottom card bar. Note that this does not actually put anything in the tab content pane, but simply creates it.
+     * Creates the tab and associated tab content pane in the bottom card bar.
      * If the tab hasn't been created yet then it will wait for the 'bis.cardbar.done' event to be emitted by the cardbar creator method.
      * @param {String} title - The name of the tab 
      */
-    createTab(title) {
+    createTab(title, content = $(`<div></div>`)) {
         return new Promise( (resolve, reject) => {
             if (!this.createdBottomNavbar) {
                 document.addEventListener('bis.cardbar.done', () => {
@@ -111,7 +97,9 @@ class BiswebCardBar extends HTMLElement {
                     let tabId = bis_webutil.getuniqueid();
                     let tab = $(`<li class='nav-item'><a class='nav-link' href='#${tabId}' role='tab' data-toggle='tab'>${title}</a></li>`);
                     let tabContent = $(`<div id='${tabId}' class='tab-pane fade' role='tabpanel'></div>`);
-            
+                    
+                    tabContent.append(content);
+                    self.addTabHideButton(content);
                     self.cardLayout.find('.bisweb-bottom-nav-tabs').append(tab);
                     self.cardLayout.find('.tab-content').append(tabContent);
             

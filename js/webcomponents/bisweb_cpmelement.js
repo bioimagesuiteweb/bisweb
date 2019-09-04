@@ -80,8 +80,11 @@ class CPMElement extends HTMLElement {
             let cardbar = document.querySelector(this.cardbarid);
             let dockbar = layoutElement.elements.dockbarcontent;
 
-            let scatterplotTab = cardbar.createTab('Scatter plot');
-            this.guiManager = this.createCPMGUIManager(layoutElement, scatterplotTab.content);
+            cardbar.createTab('Scatter plot', $()).then( (obj) => {
+                let dim = this.createCPMGUIManager(layoutElement, obj.content[0]);
+                obj.content.width(dim[0]);
+                obj.content.height(dim[1]);
+            });
 
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);
@@ -91,20 +94,24 @@ class CPMElement extends HTMLElement {
     }
 
     /**
+     * Creates the scatter plot and relevant event listeners to display it.
      * 
-     * @param {ViewerLayoutElement} layoutwidget 
+     * @param {ViewerLayoutElement} layoutwidget - The canvas associated with displaying graphics and charts. 
+     * @param {HTMLElement} parentElement - The DOM element to append the scatter plot to.
      */
     createCPMGUIManager(layoutwidget, parentElement) {
         let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
-        let pos = [layoutwidget.viewerwidth * 0.33333333 , layoutwidget.viewerheight - 10];
+        let pos = [0 , layoutwidget.viewerheight - 10];
 
         let plot = new bisweb_scatterplot.scatterplot(parentElement, dims, pos);
 
         $(window).on('resize', () => {
-            let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
-            let pos = [layoutwidget.viewerwidth * 0.33333333 , layoutwidget.viewerheight - 10];
+            dims = [layoutwidget.viewerwidth / 3 , layoutwidget.viewerheight / 2];
+            pos = [0 , layoutwidget.viewerheight - 10];
             plot.resize(dims, pos);
         });
+
+        return dims;
     }
 
     /**
