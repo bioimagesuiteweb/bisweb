@@ -81,7 +81,7 @@ class BiswebCardBar extends HTMLElement {
      * If the tab hasn't been created yet then it will wait for the 'bis.cardbar.done' event to be emitted by the cardbar creator method.
      * @param {String} title - The name of the tab 
      */
-    createTab(title, content = $(`<div></div>`)) {
+    createTab(title, content = $()) {
         return new Promise( (resolve, reject) => {
             if (!this.createdBottomNavbar) {
                 document.addEventListener('bis.cardbar.done', () => {
@@ -99,7 +99,7 @@ class BiswebCardBar extends HTMLElement {
                     let tabContent = $(`<div id='${tabId}' class='tab-pane fade' role='tabpanel'></div>`);
                     
                     tabContent.append(content);
-                    self.addTabHideButton(content);
+                    self.addTabHideButton(tabContent);
                     self.cardLayout.find('.bisweb-bottom-nav-tabs').append(tab);
                     self.cardLayout.find('.tab-content').append(tabContent);
             

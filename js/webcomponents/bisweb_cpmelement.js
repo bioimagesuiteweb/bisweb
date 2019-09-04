@@ -111,7 +111,7 @@ class CPMElement extends HTMLElement {
             plot.resize(dims, pos);
         });
 
-        return dims;
+        return [ dims[0] + 20, dims[1] ]; //add a little bit to the width to accomodate buttons on the right
     }
 
     /**
