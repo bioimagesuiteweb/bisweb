@@ -80,7 +80,8 @@ class CPMElement extends HTMLElement {
             let cardbar = document.querySelector(this.cardbarid);
             let dockbar = layoutElement.elements.dockbarcontent;
 
-            this.guiManager = this.createCPMGUIManager(layoutElement);
+            let scatterplotTab = cardbar.createTab('Scatter plot');
+            this.guiManager = this.createCPMGUIManager(layoutElement, scatterplotTab.content);
 
             this.createMenubarItems(menubar, dockbar);
             this.openCPMSidebar(dockbar);

@@ -6,6 +6,7 @@ class BiswebCardBar extends HTMLElement {
     constructor() {
         super();
         this.cards = [];
+        this.createdBottomNavbar = false;
     }
 
     connectedCallback() {
@@ -64,7 +65,12 @@ class BiswebCardBar extends HTMLElement {
         bottomNavElement.append(expandButton);
         $(this.bottomNavbar).prepend(this.cardLayout);
 
-        this.createTab('Example').content.append('<a>Hello!</a>');
+        this.createTab('Example').then( (obj) => {
+            obj.content.append('<a>Hello!</a>');
+        });
+
+        this.createdBottomNavbar = true;
+        document.dispatchEvent(new CustomEvent('bis.cardbar.done'));
     }
 
     /**
@@ -86,18 +92,37 @@ class BiswebCardBar extends HTMLElement {
 
     /**
      * Creates the tab and associated tab content pane in the bottom card bar. Note that this does not actually put anything in the tab content pane, but simply creates it.
-     * 
+     * If the tab hasn't been created yet then it will wait for the 'bis.cardbar.done' event to be emitted by the cardbar creator method.
      * @param {String} title - The name of the tab 
      */
     createTab(title) {
-        let tabId = bis_webutil.getuniqueid();
-        let tab = $(`<li class='nav-item'><a class='nav-link' href='#${tabId}' role='tab' data-toggle='tab'>${title}</a></li>`);
-        let tabContent = $(`<div id='${tabId}' class='tab-pane fade' role='tabpanel'></div>`);
-
-        this.cardLayout.find('.bisweb-bottom-nav-tabs').append(tab);
-        this.cardLayout.find('.tab-content').append(tabContent);
-
-        return { 'tab' : tab, 'content' : tabContent };
+        return new Promise( (resolve, reject) => {
+            if (!this.createdBottomNavbar) {
+                document.addEventListener('bis.cardbar.done', () => {
+                    makeTab();
+                }, { 'once' : true });
+            } else {
+                makeTab();
+            }
+    
+            const self = this;
+            function makeTab() {
+                try {
+                    let tabId = bis_webutil.getuniqueid();
+                    let tab = $(`<li class='nav-item'><a class='nav-link' href='#${tabId}' role='tab' data-toggle='tab'>${title}</a></li>`);
+                    let tabContent = $(`<div id='${tabId}' class='tab-pane fade' role='tabpanel'></div>`);
+            
+                    self.cardLayout.find('.bisweb-bottom-nav-tabs').append(tab);
+                    self.cardLayout.find('.tab-content').append(tabContent);
+            
+                    resolve({ 'tab' : tab, 'content' : tabContent });
+                } catch(e) {
+                    reject(e);
+                }
+            }
+        });
+        
+       
     }
 }
 
