@@ -81,9 +81,11 @@ class CPMElement extends HTMLElement {
             let dockbar = layoutElement.elements.dockbarcontent;
 
             cardbar.createTab('Scatter plot', $()).then( (obj) => {
-                let dim = this.createCPMGUIManager(layoutElement, obj.content[0]);
-                obj.content.width(dim[0]);
-                obj.content.height(dim[1]);
+                this.createCPMGUIManager(layoutElement, obj.content[0]);
+                cardbar.setResizingFunction( () => {
+                    obj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
+                    obj.content.height(layoutElement.viewerheight / 2);
+                });
             });
 
             this.createMenubarItems(menubar, dockbar);
@@ -96,22 +98,20 @@ class CPMElement extends HTMLElement {
     /**
      * Creates the scatter plot and relevant event listeners to display it.
      * 
-     * @param {ViewerLayoutElement} layoutwidget - The canvas associated with displaying graphics and charts. 
+     * @param {ViewerLayoutElement} layoutElement - The canvas associated with displaying graphics and charts. 
      * @param {HTMLElement} parentElement - The DOM element to append the scatter plot to.
      */
-    createCPMGUIManager(layoutwidget, parentElement) {
-        let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
-        let pos = [0 , layoutwidget.viewerheight - 10];
+    createCPMGUIManager(layoutElement, parentElement) {
+        let dims = [layoutElement.viewerwidth / 3, layoutElement.viewerheight / 2];
+        let pos = [0 , layoutElement.viewerheight - 10];
 
         let plot = new bisweb_scatterplot.scatterplot(parentElement, dims, pos);
 
         $(window).on('resize', () => {
-            dims = [layoutwidget.viewerwidth / 3 , layoutwidget.viewerheight / 2];
-            pos = [0 , layoutwidget.viewerheight - 10];
+            dims = [layoutElement.viewerwidth / 3 , layoutElement.viewerheight / 2];
+            pos = [0 , layoutElement.viewerheight - 10];
             plot.resize(dims, pos);
         });
-
-        return [ dims[0] + 20, dims[1] ]; //add a little bit to the width to accomodate buttons on the right
     }
 
     /**

@@ -109,8 +109,16 @@ class BiswebCardBar extends HTMLElement {
                 }
             }
         });
-        
-       
+    }
+
+    /**
+     * Sets the size of the tab content to change on a window 'resize' event. Also calls the function when this function is called to ensure that resizes are consistent. 
+     * 
+     * @param {Function} fn - The function to call on resize. 
+     */
+    setResizingFunction(fn) {
+        $(window).on('resize', fn);
+        fn();
     }
 }
 
