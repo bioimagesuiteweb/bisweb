@@ -25,7 +25,7 @@ const dat = require('bisweb_datgui');
 const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
-const moduleIndex = require('moduleindex.js');
+// const moduleIndex = require('moduleindex.js');
 
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
@@ -71,11 +71,13 @@ class CPMElement extends HTMLElement {
     connectedCallback() {
         this.menubarid = this.getAttribute('bis-menubarid');
         this.layoutelementid = this.getAttribute('bis-layoutelementid');
+        this.cardbarid = this.getAttribute('bis-cardbarid');
         this.initializeWasm = libbiswasm.initialize();
 
         bis_webutil.runAfterAllLoaded( () => {
             let menubar = document.querySelector(this.menubarid).getMenuBar();
             let layoutElement = document.querySelector(this.layoutelementid);
+            let cardbar = document.querySelector(this.cardbarid);
             let dockbar = layoutElement.elements.dockbarcontent;
 
             this.guiManager = this.createCPMGUIManager(layoutElement);
@@ -91,12 +93,11 @@ class CPMElement extends HTMLElement {
      * 
      * @param {ViewerLayoutElement} layoutwidget 
      */
-    createCPMGUIManager(layoutwidget) {
+    createCPMGUIManager(layoutwidget, parentElement) {
         let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
         let pos = [layoutwidget.viewerwidth * 0.33333333 , layoutwidget.viewerheight - 10];
 
-        console.log('pos', pos);
-        let plot = new bisweb_scatterplot.scatterplot(layoutwidget, dims, pos);
+        let plot = new bisweb_scatterplot.scatterplot(parentElement, dims, pos);
 
         $(window).on('resize', () => {
             let dims = [layoutwidget.viewerwidth / 3, layoutwidget.viewerheight / 2];
