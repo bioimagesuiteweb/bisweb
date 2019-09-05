@@ -36,17 +36,17 @@ import calcium_analysis
 
 import pdb
 
-class sampleModule(bis_basemodule.baseModule):
+class calciumPreprocess(bis_basemodule.baseModule):
 
     def __init__(self):
         super().__init__();
-        self.name='sampleModule';
+        self.name='calciumPreprocess';
    
     def createDescription(self):
         return {
-            "name": "Computes something",
-            "description": "Calculates the something",
-            "author": "Somebody",
+            "name": "Calcium Preprocess",
+            "description": "Preprocesses calcium images. Top-hat filter, two-wavelength regression, then dF/F",
+            "author": "Jackson Zhaoxiong Ding",
             "version": "1.0",
             "inputs": [
                 {
@@ -93,33 +93,42 @@ class sampleModule(bis_basemodule.baseModule):
             ],
             "params": [
                 {
-                    "name": "Num Regions",
-                    "description": "The number of regions in the original (group) parcellation",
+                    "name": "Top Hat Window",
+                    "description": "The number of frames for the top hat filter",
                     "type": "int",
-                    "varname": "numregions",
-                    "default": 268,
+                    "varname": "tophat",
+                    "default": 300,
                     "low": 1,
-                    "high": 5000
+                    "high": 1000
                 },
                 {
-                    "name": "Smoothing",
-                    "description": "Kernel size [mm] of FWHM filter size",
-                    "type": "float",
-                    "varname": "smooth",
-                    "default": 4,
-                    "low": 0,
-                    "high": 20
-                },
-                {
-                    "name": "Save Exemplars?",
-                    "description": "Saves exemplars in second frame",
-                    "varname": "saveexemplars",
+                    "name": "Dual Channel?",
+                    "description": "Is the input dual channel?",
+                    "varname": "dual",
                     "type": "boolean",
-                    "default": False
+                    "default": True
+                },
+                {
+                    "name": "Rotation Angle",
+                    "description": "Angle of rotation (deg), counter-clockwise",
+                    "varname": "rotation",
+                    "type": "float",
+                    "default": 0,
+                    "low": -180,
+                    "high": 180
+                },
+                {
+                    "name": "Downsample Ratio",
+                    "description": "Downsample ratio. 1=same size, 0.1=smaller, 10=larger",
+                    "varname": "downsample",
+                    "type": "float",
+                    "default": 1,
+                    "low": 0,
+                    "high": 10
                 },
                 {
                     "name": "Debug",
-                    "description": "Toggles debug logging",
+                    "description": "Toggles debug logging. Will also output intermediate steps (similar name to Xilin's MATLAB code)",
                     "varname": "debug",
                     "type": "boolean",
                     "default": False
@@ -131,16 +140,37 @@ class sampleModule(bis_basemodule.baseModule):
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
 
-        debug=self.parseBoolean(vals['debug']);
+        debug=self.parseBoolean(vals['debug'])
         # blueMovie = self.inputs['blue'].get_data()
         # uvMovie = self.inputs['uv'].get_data()
         inputMovie = self.inputs['blue'].get_data()
         blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
         mask = self.inputs['mask'].get_data()
 
+        # Parameters
+        dualChannel = self.parseBoolean(vals['dual'])
+        # topHatWindow = self.params['tophat']
+        # rotationAngle = self.params['rotation']
+        # downsampleRatio = self.params['downsample']
+        topHatWindow = vals['tophat']
+        rotationAngle = vals['rotation']
+        downsampleRatio = vals['downsample']
+
+
+        # Downsample, rotation
+
+        blueMovie = calcium_image.resize(blueMovie,(int(blueMovie.shape[0]*downsampleRatio),
+                                                    int(blueMovie.shape[1]*downsampleRatio)))
+        uvMovie = calcium_image.resize(uvMovie,(int(uvMovie.shape[0]*downsampleRatio),
+                                                int(uvMovie.shape[1]*downsampleRatio)))
+        mask = calcium_image.resize(mask,(int(mask.shape[0]*downsampleRatio),
+                                        int(mask.shape[1]*downsampleRatio)))
+        blueMovie = calcium_image.rotate(blueMovie,rotationAngle)
+        uvMovie = calcium_image.rotate(uvMovie,rotationAngle)
+        mask = calcium_image.rotate(mask,rotationAngle)
 
         # other place is to look at is bisImage.load
-        outputEveryStep = False
+        outputEveryStep = debug
         rotatedSize3D = blueMovie.shape
 
         # Top Hat filter
@@ -193,7 +223,7 @@ class sampleModule(bis_basemodule.baseModule):
 
 if __name__ == '__main__':
     import bis_commandline;
-    import bis_commandline; sys.exit(bis_commandline.loadParse(sampleModule(),sys.argv,False));
+    import bis_commandline; sys.exit(bis_commandline.loadParse(calciumPreprocess(),sys.argv,False));
 
 
 
