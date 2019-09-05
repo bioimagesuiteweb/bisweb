@@ -24,6 +24,7 @@ import unittest
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../build/native'));
 sys.path.append(os.path.abspath(my_path+'/../python'));
+sys.path.append(os.path.abspath(my_path+'/../python/utilities'));
 import biswrapper as libbiswasm;
 import bis_objects as bis
 

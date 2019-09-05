@@ -24,6 +24,8 @@ import struct
 import json
 import nibabel as nib
 import bis_wasmutils as biswasm
+import surface_utils as surutil
+
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../build/native'));
@@ -664,6 +666,48 @@ class bisComboTransformation(bisBaseObject):
 
         return False;
 
+
+# --------------------------------------
+# bisSurface
+# --------------------------------------
+
+class bisSurface(bisBaseObject):
+
+    def __init__(self):
+        super().__init__();
+        self.vertices=None;
+        self.faces=None;
+
+    def create(self,vertices,faces):
+        self.vertices=vertices;
+        self.faces=faces;
+
+
+    def getRawSize():
+        raise Exception('----- Not Implemented');
+    
+    def serializeWasm(self):
+        raise Exception('----- Not Implemented');
+
+
+    def deserializeWasm(self,wasm_pointer,offset=0):
+        raise Exception('----- Not Implemented');
+
+    def getString(self):
+        raise Exception('----- Not Implemented');
+
+    def load(self,filename):
+        # PLY Reader
+        # surutil.loadPly();
+        # self.create()
+        raise Exception('----- Not Implemented');
+
+    def save(self,filename):
+        #PLY Writer
+        raise Exception('----- Not Implemented');
+
+    
+    
 # --------------------------------------
 # bisCollection
 # --------------------------------------

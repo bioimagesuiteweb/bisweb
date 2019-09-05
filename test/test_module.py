@@ -31,6 +31,7 @@ sys.path.append(os.path.abspath(my_path+'/../lib'));
 sys.path.append(os.path.abspath(my_path+'/../build/native'));
 sys.path.append(os.path.abspath(my_path+'/../python'));
 sys.path.append(os.path.abspath(my_path+'/../python/modules'));
+sys.path.append(os.path.abspath(my_path+'/../python/utilities'));
 import biswrapper as libbis;
 import bis_objects as bis
 import bis_commandline

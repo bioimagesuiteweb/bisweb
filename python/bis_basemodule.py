@@ -166,6 +166,8 @@ class baseModule:
 
         if (objecttype=='image'):
             self.inputs[key]=bis_objects.bisImage();
+        elif (objecttype=='surface'):
+            self.inputs[key]=bis_objects.bisSurface();
         elif (objecttype=='matrix' or objecttype=='vector'):
             self.inputs[key]=bis_objects.bisMatrix();
         elif (objecttype == 'transformation' or objecttype == 'transform'):
