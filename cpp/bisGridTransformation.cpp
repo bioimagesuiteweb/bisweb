@@ -422,14 +422,14 @@ float bisGridTransformation::getTotalBendingEnergy()
 // ----------------------------------------------------
 
     
-int bisGridTransformation::getRawSize()
+long bisGridTransformation::getRawSize()
 {
   // Header
   // 8 bytes raw
   // actual header
   // 3x4 -- interp mode (int[1] 4), dimensions, int[3]x4 spacing float[3]x4 origin float[3]x4  = 40
   // raw bytes = num control points *3 * 4
-  int databytes=4*3*this->grid_dimensions[0]*this->grid_dimensions[1]*this->grid_dimensions[2];
+  long databytes=4*3*this->grid_dimensions[0]*this->grid_dimensions[1]*this->grid_dimensions[2];
   int headerbytes=16+40;
   return  databytes+headerbytes;
 }

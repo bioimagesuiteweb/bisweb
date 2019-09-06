@@ -95,7 +95,7 @@ public:
 
 
   /** Gets the raw size in bytes for this structure */
-  virtual int getRawSize()=0;
+  virtual long getRawSize()=0;
 
   /** Get Magic Type for this transformation -> used in serialization */
   virtual int getMagicType() { return this->magic_type; }

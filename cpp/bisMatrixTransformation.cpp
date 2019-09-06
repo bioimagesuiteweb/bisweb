@@ -148,7 +148,7 @@ void bisMatrixTransformation::serializeInPlace(unsigned char* output)
   //  std::cout.flush();
 }
 		
-int bisMatrixTransformation::getRawSize()
+long bisMatrixTransformation::getRawSize()
 {
   return 16+// Raw header 
     8+ // rows cols
