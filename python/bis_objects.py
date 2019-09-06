@@ -311,9 +311,10 @@ class bisImage(bisBaseObject):
         a=nib.aff2axcodes(self.affine);
         b=a[0]+a[1]+a[2];
         return b;
-
+    
     def getDescription(self):
-        return self.filename+'dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName();
+        tp=str(self.data_array.dtype);
+        return self.filename+'dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
 
     def hasSameOrientation(self,otherimage,name1='',name2='',debug=False):
 

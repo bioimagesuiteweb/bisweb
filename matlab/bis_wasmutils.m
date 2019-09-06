@@ -334,12 +334,14 @@ function moduleOutput = bis_wasmutils()
     
     top_header=zeros(1,4,'int32');
     mode=1;
+    totallength=1;
 
     if l1==1 
       top_header(1)=get_vector_magic_code();
       top_header(2)=get_nifti_code(mat);
       top_header(3)=0;
       top_header(4)=itemsize*dimensions(1);
+      totallength=dimensions(1)*itemsize;
       mode=1;
     elseif l1==2
       top_header(1)=get_matrix_magic_code();
@@ -347,15 +349,25 @@ function moduleOutput = bis_wasmutils()
       top_header(3)=8;
       top_header(4)=itemsize*dimensions(1)*dimensions(2);
       dimensions=[dimensions(1),dimensions(2) ];
+      totallength=dimensions(1)*dimensions(2)*itemsize;
+      if totallength > 2147483648
+         top_header(4)=-itemsize;
+      end    
       mode=2;
     else
       top_header(1)=get_image_magic_code();
       size(mat);
       top_header(2)=get_nifti_code(mat);
       top_header(3)=40;
+      totallength=prod(dimensions)*itemsize
       top_header(4)=prod(dimensions)*itemsize;
+      if totallength > 2147483648
+         top_header(4)=-itemsize
+      end    
       mode=3;
     end
+
+    
 
 %    disp('---------------------------------------\nheader');
 %    disp(top_header)
@@ -417,7 +429,9 @@ function moduleOutput = bis_wasmutils()
     typename=get_matlab_type(top_header(2));
     headersize=top_header(3);
     data_bytelength=top_header(4);
-
+    if (data_bytelength<0)
+      % Xenios to add
+    end
     typesize=get_matlab_type_size(typename);
     data_length=data_bytelength/typesize;
 

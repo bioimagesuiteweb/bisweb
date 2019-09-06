@@ -215,22 +215,24 @@ def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=Fal
         top_header[2]=40;
         top_dimensions=np.zeros(5,dtype=np.int32)
         top_header[3]=1
+        tl=1;
         for i in range(0,5):
             top_dimensions[i]=shp[i];
             top_header[3]*=shp[i];
-            tl*=shp[1];
+            tl*=shp[i];
+            #print('____ Checking Large Image Serialization ', tl,top_header[3],i);
         mode=3;
 
     # Add more
     itemsize=np.dtype(mat.dtype).itemsize
-    top_header[3]=top_header[3]*itemsize;
-    
-    print('top_header[3]=',top_header[3],tl)
+    if (debug>0):
+        print('____ Checking Large Image Serialization ', tl,top_header[3]);
     if (tl>top_header[3]):
-        print('---- Failed to serialize image as dimensions',shp,' are too big');
-        raise Exception('Data is too big')
+        print('____ Large Image Serialization ', tl,top_header[3]);
+        top_header[3]=-itemsize;
+    else:
+        top_header[3]*=itemsize;
         
-
     
     total=top_header.tobytes();
     if mode>1:
@@ -246,7 +248,7 @@ def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=Fal
 
 # wasmarr is ctypes.POINTER(ctypes.c_ubyte)
 def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
-    
+
     header=struct.unpack('iiii',bytes(wasm_pointer[offset:offset+16]));
     if (debug>0):
         print('__ deserializing header=',header);
@@ -254,7 +256,8 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
     dims=[];
     spa=[];
     mode=1;
-
+    numbytes=header[3];
+    
     if (debug>0):
         print('header=',header);
 
@@ -263,6 +266,8 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
     elif (header[0]==Module().getMatrixMagicCode()):
         dims=struct.unpack('ii',bytes(wasm_pointer[offset+16:offset+24]));
         mode=2;
+        if (header[3]<0):
+            numbytes=dims[0]*dims[1]*(-header[3]);
     elif (header[0]==Module().getImageMagicCode()):
         in_dims=struct.unpack('iiiii',bytes(wasm_pointer[offset+16:offset+36]));
         in_spa=struct.unpack('fffff',bytes(wasm_pointer[offset+36:offset+56]));
@@ -279,13 +284,25 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
                 spa.append(in_spa[index]);
             index=index+1;
 
-    #    total=len(wasm_pointer)
+        if (header[3]<0):
+            numbytes=-header[3];
+            index=0;
+            while (index<len(dims)):
+                numbytes*=dims[index];
+                index=index+1;
+            
+
+            
     datatype=get_dtype(header[1]);
     beginoffset=header[2]+16+offset;
-    total=beginoffset+header[3];
+    total=beginoffset+numbytes;
 
-    if (dims[0]<1):
-        raise Exception('----- Zero Data Length');
+    if (debug>0):
+        print('datatype=',datatype,'begin offset=',beginoffset,'total=',total,'bytes=',numbytes,'dimensions=',dims);
+    
+    if (dims[0]<1 or numbytes<0):
+        print('Bad dims=',dims,numbytes);
+        raise Exception('----- Zero or Bad Data Length');
     
     if (debug>0):
         itemsize=np.dtype(datatype).itemsize
