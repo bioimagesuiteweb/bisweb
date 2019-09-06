@@ -42,7 +42,7 @@ namespace bisMemoryManagement {
   }
   
 
-  unsigned char* allocate_memory(int sz,std::string name,std::string operation,bisObject* owner) {
+  unsigned char* allocate_memory(long sz,std::string name,std::string operation,bisObject* owner) {
 
     unsigned char* out_pointer=new unsigned char[sz];
 
@@ -66,7 +66,7 @@ namespace bisMemoryManagement {
 
   void release_memory(unsigned char* pointer,std::string operation) {
 
-    int sz2=-1;
+    long sz2=-1;
     long pt=(long)pointer;
     std::string name="unknown";
     bisObject* owner=0;
@@ -97,7 +97,7 @@ namespace bisMemoryManagement {
 
   void not_releasing_memory(unsigned char* pointer,std::string operation,int used_to_own) {
 
-    int sz2=-1;
+    long sz2=-1;
     long pt=(long)pointer;
     std::string name="unknown";
     bisObject* owner=0;
@@ -202,7 +202,7 @@ namespace bisMemoryManagement {
   }
 
 
-  void copy_memory(unsigned char* output,unsigned char* input,int length) {
+  void copy_memory(unsigned char* output,unsigned char* input,long length) {
 
     memcpy(output,input,length);
   }
