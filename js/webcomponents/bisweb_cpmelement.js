@@ -80,7 +80,7 @@ class CPMElement extends HTMLElement {
             let cardbar = document.querySelector(this.cardbarid);
             let dockbar = layoutElement.elements.dockbarcontent;
 
-            cardbar.createTab('Scatter plot', $()).then( (obj) => {
+            cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (obj) => {
                 this.createCPMGUIManager(layoutElement, obj.content[0]);
                 cardbar.setResizingFunction( () => {
                     obj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right

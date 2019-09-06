@@ -1,5 +1,7 @@
 const $ = require('jquery');
+const savesvg = require('save-svg-as-png');
 const bis_webutil = require('bis_webutil.js');
+const bis_webfileutil = require('bis_webfileutil.js');
 
 class BiswebCardBar extends HTMLElement {
 
@@ -51,10 +53,6 @@ class BiswebCardBar extends HTMLElement {
         bottomNavElement.append(expandButton);
         $(this.bottomNavbar).prepend(this.cardLayout);
 
-        this.createTab('Example').then( (obj) => {
-            obj.content.append('<a>Hello!</a>');
-        });
-
         this.createdBottomNavbar = true;
         document.dispatchEvent(new CustomEvent('bis.cardbar.done'));
     }
@@ -77,11 +75,37 @@ class BiswebCardBar extends HTMLElement {
     }
 
     /**
+     * Adds a save button to the content of a given tab, which will export the content in the tab as a .png.
+     *  
+     * @param {JQuery} body - The content associated with the tab
+     */
+    addSaveButton(body) {
+        let saveButton = $(`<span style='position: relative; float: right; top: 0;'><span class='glyphicon glyphicon-save bisweb-span-button'></span></span>`);
+        $(saveButton).on('click', () => {
+            let saveButton = bis_webfileutil.createFileButton({
+                'callback' : (f) => {
+                    let activeContent = $(this.cardLayout).find('.tab-pane.active.in');
+                    let png = $(activeContent).find('svg');
+                    savesvg.saveSvgAsPng(png[0], f);
+                }}, {
+                    'title' : 'Choose a filename for graph content',
+                    'filters'  : [{ 'name': 'png', extensions: ['png'] }],
+                    'save' : true,
+                    suffix : '.png'
+                });
+            
+            $(saveButton).click();
+        }); 
+
+        body.append(saveButton);
+    }
+
+    /**
      * Creates the tab and associated tab content pane in the bottom card bar.
      * If the tab hasn't been created yet then it will wait for the 'bis.cardbar.done' event to be emitted by the cardbar creator method.
      * @param {String} title - The name of the tab 
      */
-    createTab(title, content = $()) {
+    createTab(title, content = $(), opts = {}) {
         return new Promise( (resolve, reject) => {
             if (!this.createdBottomNavbar) {
                 document.addEventListener('bis.cardbar.done', () => {
@@ -100,6 +124,8 @@ class BiswebCardBar extends HTMLElement {
                     
                     tabContent.append(content);
                     self.addTabHideButton(tabContent);
+                    if (opts.save) { self.addSaveButton(tabContent); }
+
                     self.cardLayout.find('.bisweb-bottom-nav-tabs').append(tab);
                     self.cardLayout.find('.tab-content').append(tabContent);
             
