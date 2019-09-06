@@ -2,6 +2,7 @@ const $ = require('jquery');
 const savesvg = require('save-svg-as-png');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
+const bis_genericio = require('bis_genericio.js');
 
 class BiswebCardBar extends HTMLElement {
 
@@ -80,13 +81,31 @@ class BiswebCardBar extends HTMLElement {
      * @param {JQuery} body - The content associated with the tab
      */
     addSaveButton(body) {
-        let saveButton = $(`<span style='position: relative; float: right; top: 0;'><span class='glyphicon glyphicon-save bisweb-span-button'></span></span>`);
+        let saveButton = $(`<span style='position: relative; float: right;'><span class='glyphicon glyphicon-save bisweb-span-button'></span></span>`);
         $(saveButton).on('click', () => {
             let saveButton = bis_webfileutil.createFileButton({
                 'callback' : (f) => {
                     let activeContent = $(this.cardLayout).find('.tab-pane.active.in');
                     let png = $(activeContent).find('svg');
-                    savesvg.saveSvgAsPng(png[0], f);
+                    savesvg.svgAsPngUri(png[0]).then( (uri) => {
+                        
+                        //https://stackoverflow.com/questions/12168909/blob-from-dataurl
+                        fetch(uri)
+                        .then( res =>  res.blob() )
+                        .then( (blob) => {
+                            let reader = new FileReader();
+                            reader.addEventListener('loadend', () => {
+                                let savedata = new Uint8Array(reader.result);
+                                bis_genericio.write(f, savedata, true).then( () => {
+                                    bis_webutil.createAlert('Saved ' + f + ' successfully');
+                                }).catch( (e) => { 
+                                    console.log('An error occured during save', e);
+                                    bis_webutil.createAlert('An error occured while saving ' + f, true, 0, 5000);
+                                });
+                            });
+                            reader.readAsArrayBuffer(blob);
+                        });
+                    });
                 }}, {
                     'title' : 'Choose a filename for graph content',
                     'filters'  : [{ 'name': 'png', extensions: ['png'] }],
