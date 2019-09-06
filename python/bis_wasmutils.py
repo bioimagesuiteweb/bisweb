@@ -189,11 +189,13 @@ def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=Fal
         l1=5;
 
     mode=1;
+    tl=1;
     if l1==1:
         top_header[0]=Module().getVectorMagicCode();
         top_header[1]=get_nifti_code(mat.dtype);
         top_header[2]=0;
-        top_header[3]=shp[0];   
+        top_header[3]=shp[0];
+        tl=shp[0];
         top_dimensions=[];
         top_spacing=[];
     elif l1==2:
@@ -204,7 +206,8 @@ def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=Fal
         top_dimensions[0]=shp[0]
         top_dimensions[1]=shp[1]
         top_spacing=[];
-        top_header[3]=shp[0]*shp[1]; 
+        top_header[3]=shp[0]*shp[1];
+        tl=shp[0]*shp[1];
         mode=2;
     else:
         top_header[0]=Module().getImageMagicCode();
@@ -215,12 +218,20 @@ def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=Fal
         for i in range(0,5):
             top_dimensions[i]=shp[i];
             top_header[3]*=shp[i];
+            tl*=shp[1];
         mode=3;
 
     # Add more
     itemsize=np.dtype(mat.dtype).itemsize
     top_header[3]=top_header[3]*itemsize;
+    
+    print('top_header[3]=',top_header[3],tl)
+    if (tl>top_header[3]):
+        print('---- Failed to serialize image as dimensions',shp,' are too big');
+        raise Exception('Data is too big')
         
+
+    
     total=top_header.tobytes();
     if mode>1:
         total+=top_dimensions.tobytes();
