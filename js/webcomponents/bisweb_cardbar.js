@@ -64,7 +64,7 @@ class BiswebCardBar extends HTMLElement {
      * @param {JQuery} body - The content associated with the tab. 
      */
     addTabHideButton(body) {
-        let hideButton = $(`<span style='position: relative; float: right; top: 0;'><span class='glyphicon glyphicon-chevron-down bisweb-span-button'></span></span>`);
+        let hideButton = $(`<div style='position: relative; float: right; top: 0; data-toggle='tooltip' data-placement='right' title='Close tab'><span class='glyphicon glyphicon-chevron-down bisweb-span-button'></span></div>`);
         $(hideButton).on('click', () => {
             let activeTab = $(this.cardLayout).find('.bisweb-bottom-nav-tabs .active');
             let activeContent = $(this.cardLayout).find('.tab-pane.active.in');
@@ -81,7 +81,7 @@ class BiswebCardBar extends HTMLElement {
      * @param {JQuery} body - The content associated with the tab
      */
     addSaveButton(body) {
-        let saveButton = $(`<span style='position: relative; float: right;'><span class='glyphicon glyphicon-save bisweb-span-button'></span></span>`);
+        let saveButton = $(`<div style='position: relative; float: right; clear: right; data-toggle='tooltip' data-placement='right' title='Save contents of tab to disk'><span class='glyphicon glyphicon-save bisweb-span-button'></span></div>`);
         $(saveButton).on('click', () => {
             let saveButton = bis_webfileutil.createFileButton({
                 'callback' : (f) => {
