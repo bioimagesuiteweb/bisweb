@@ -87,7 +87,7 @@ class DicomModule extends BaseModule {
                     "type": "boolean",
                     "varname": "convertbids",
                     "shortname" : "b",
-                    "default": false,
+                    "default": true,
                 },
                 {
                     "name": "Fix Paths",
