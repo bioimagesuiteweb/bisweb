@@ -99,7 +99,7 @@ unsigned char*  gaussianSmoothImageWASM(unsigned char* input,const char* jsonstr
     }
   else
     {
-      float s=params->getFloatValue("sigmas",1.0);
+      float s=params->getFloatValue("sigma",1.0);
       sigmas[0]=s;
       sigmas[1]=s;
       sigmas[2]=s;
@@ -108,6 +108,8 @@ unsigned char*  gaussianSmoothImageWASM(unsigned char* input,const char* jsonstr
   int vtkboundary=params->getBooleanValue("vtkboundary",0);
   float radiusfactor=params->getFloatValue("radiusfactor",1.5);
 
+  if (debug)
+    std::cout << "Using sigmas=" << sigmas[0] << "," << sigmas[1] << "," << sigmas[2] << std::endl;
   
   std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("smooth_input_float"));
   if (!in_image->linkIntoPointer(input))

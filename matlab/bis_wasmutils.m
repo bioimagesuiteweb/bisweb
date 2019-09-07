@@ -149,7 +149,7 @@ function moduleOutput = bis_wasmutils()
     end
 
     out=sprintf('%s}',out);
-
+    out
   end
 		     
 
@@ -359,7 +359,7 @@ function moduleOutput = bis_wasmutils()
       size(mat);
       top_header(2)=get_nifti_code(mat);
       top_header(3)=40;
-      totallength=prod(dimensions)*itemsize
+      totallength=prod(dimensions)*itemsize;
       top_header(4)=prod(dimensions)*itemsize;
       if totallength > 2147483648
          top_header(4)=-itemsize
