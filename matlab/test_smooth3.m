@@ -32,6 +32,7 @@ format long;
 param.sigmas=0.4247*[4.0,4.0,4.0 ];
 param.radiusfactor=2.0;
 param.inmm='true'
+param.vtkboundary='true'
 debug=1;
 
 % Load Images
