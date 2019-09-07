@@ -432,7 +432,17 @@ function moduleOutput = bis_wasmutils()
     headersize=top_header(3);
     data_bytelength=top_header(4);
     if (data_bytelength<0)
+      disp('____ LARGE Image deserialize Matlab');
       % Xenios to add
+      reshape(ptr,36+offset,1);
+      dim=typecast(ptr.Value(17+offset:36+offset),'int32');
+      switch(top_header(1))
+        case get_matrix_magic_code()
+            data_bytelength=-data.bytelength*dim(2)*dim(1);
+        case get_image_magic_code()
+            data_bytelength=-data_bytelength*dim(1)*dim(2)*dim(3)*dim(4)*dim(5);
+      end
+      disp(['____ LARGE fixed bytelength=',mat2str(data_bytelength),' th=',mat2str(top_header(4)),' dm=',mat2str(dim)]);
     end
     typesize=get_matlab_type_size(typename);
     data_length=data_bytelength/typesize;
