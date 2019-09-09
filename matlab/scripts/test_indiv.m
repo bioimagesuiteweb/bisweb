@@ -15,6 +15,10 @@
 % 
 % ENDLICENSE
 
+m=mfilename('fullpath');
+[filepath,name,ext] = fileparts(m);
+addpath([ filepath filesep '..' ]);
+
 bispath();
 lib=biswrapper();
 
@@ -27,8 +31,8 @@ sigma=4.0;
 numexemplars=268;
 
 % Load Images
-group = bis_image(fname2);
-fmri =  bis_image(fname1);
+group = bis_loadimage(fname2);
+fmri =  bis_loadimage(fname1);
 
 if (group.orcode ~= fmri.orcode)
    disp(['Orientation mismatch, ERROR ',group.orcode,' ',fmri.orcode]);

@@ -15,7 +15,7 @@
 % 
 % ENDLICENSE
 
-
+bispath();
 lib=biswrapper();
 
 disp('--------------------------- Done loading ------------------');
@@ -36,7 +36,12 @@ numfailed=lib.test_eigenUtils(m,v,1);
 
 disp('------------------------- Done test_eigenutils --------------------------');
 
-lines=fileread('..\test\testdata\glm\Test_bis_glm.matr');
+m=mfilename('fullpath');
+[filepath,name,ext] = fileparts(m);
+[filepath,name,ext] = fileparts(filepath);
+fname1=[ filepath filesep 'test' filesep 'testdata' filesep 'glm' filesep 'Test_bis_glm.matr' ]
+
+lines=fileread(fname1);
 out=lib.parseMatrixTextFileWASM(lines,1);
 
 size(out)

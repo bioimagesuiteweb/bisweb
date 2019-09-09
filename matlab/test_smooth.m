@@ -31,23 +31,20 @@ format long;
 
 param.sigmas=[2.0,2.0,2.0 ];
 param.radiusfactor=2.0;
-param.inmm='true';
+param.inmm='true'
 debug=1;
 
 % Load Images
-img = bis_image(fname1)
-
-
-gold = bis_image(fname2)
-
+input = bis_loadimage(fname1);
+gold  = bis_loadimage(fname2);
 
 disp('----------------------------------');
 disp('Smoothing image');
-output = lib.gaussianSmoothImageWASM(img, param, debug);
+output = lib.gaussianSmoothImageWASM(input, param, debug);
 
 
 disp(['Testing fake difference=']);
-max(max(max(abs(gold.img-single(img.img)))))
+max(max(max(abs(gold.img-single(input.img)))))
 
 
 disp(['Testing real difference']);
@@ -56,7 +53,7 @@ max(max(max(abs(gold.img-single(output.img)))))
 
 disp('----------------------------------');
 disp('Smoothing image 2');
-output2 = lib.gaussianSmoothImageWASM(img, param, debug);
+output2 = lib.gaussianSmoothImageWASM(input, param, debug);
 
 
 disp(['Testing real difference v2']);
@@ -67,13 +64,10 @@ disp('----------------------------------');
 disp('Smoothing image 2');
 param.sigmas=[0.1,0.1,0.1];
 
-output3 = lib.gaussianSmoothImageWASM(img, param, debug);
+output3 = lib.gaussianSmoothImageWASM(input, param, debug);
 
 disp(['Testing real difference 3']);
 max(max(max(abs(gold.img-single(output3.img)))))
-
-
-
 return;
 
 

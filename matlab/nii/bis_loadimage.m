@@ -21,7 +21,7 @@
 % 
 % -----------------------------------------------------
 
-function bisimage = bis_image(f)
+function bisimage = bis_loadimage(f)
 
 
   bisimage.desc='Bisweb matlab image';

@@ -18,14 +18,11 @@
 
 lib=biswrapper();
 
-lib.redirect_stdout('matlog2.txt',1);
-
-lines=fileread('..\test\testdata\complex.grd');
-
+%lib.redirect_stdout('matlog2.txt',1);
+lines=fileread([ '..' filesep 'test' filesep 'testdata' filesep 'complex.grd']);
 
 
 txt=lib.test_mirrorComboTransformTextFileWASM(lines,1);
-
 
 
 wasm=lib.getbiswasm();

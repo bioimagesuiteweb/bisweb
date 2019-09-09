@@ -19,8 +19,7 @@ clear
 
 bispath();
 lib=biswrapper();
-bw=lib.getbiswasm()
-%Mod=bw.Module
+bw=lib.getbiswasm();
 
 % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
 bw.force_large_memory()
@@ -42,14 +41,8 @@ param.vtkboundary='true'
 debug=1;
 
 % Load Images
-input = load_untouch_nii(fname1,[],[],[],[],[],[]);
-disp(input)
-
-
-
-
-gold = load_untouch_nii(fname2,[],[],[],[],[],[]);
-disp(gold)
+input = bis_loadimage(fname1);
+gold = bis_loadimage(fname2);
 
 
 disp('----------------------------------');
