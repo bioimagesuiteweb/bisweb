@@ -25,15 +25,15 @@ function bisimage = bis_image(f)
 
 
   bisimage.desc='Bisweb matlab image';
-  disp(['Here loading ',f]);
-  
   if (nargin > 0)
       d=load(f);
       internal=d.header;
     end
   bisimage=d;
   bisimage.orcode=getorient(internal);
-  
+  h=internal;
+  disp([ '___ Loaded image from ',h.Filename])
+  disp(['      dimensions=',mat2str(h.ImageSize),' spacing=',mat2str(h.PixelDimensions),' orientation=',bisimage.orcode,' type=',class(bisimage.img)]);
 % -----------------------------------------------------
 % Load
   function status = load(pathname)

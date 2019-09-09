@@ -27,10 +27,16 @@ sigma=4.0;
 numexemplars=268;
 
 % Load Images
-group = load_untouch_nii(fname2,[],[],[],[],[],[]);
-disp(group)
-fmri = load_untouch_nii(fname1,[],[],[],[],[],[]);
-disp(fmri)
+group = bis_image(fname2);
+fmri =  bis_image(fname1);
+
+if (group.orcode ~= fmri.orcode)
+   disp(['Orientation mismatch, ERROR ',group.orcode,' ',fmri.orcode]);
+   return
+else
+   disp(['Orientation match, GOOD ',group.orcode,' ',fmri.orcode]);
+end
+  
 
 % Reslice Part
 disp('Reslicing group parcellation');
