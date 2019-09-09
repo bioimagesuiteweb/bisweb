@@ -19,6 +19,12 @@ clear
 
 bispath();
 lib=biswrapper();
+bw=lib.getbiswasm()
+%Mod=bw.Module
+
+% Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
+bw.force_large_memory()
+
 
 m=mfilename('fullpath');
 [filepath,name,ext] = fileparts(m);
@@ -40,14 +46,18 @@ input = load_untouch_nii(fname1,[],[],[],[],[],[]);
 disp(input)
 
 
+
+
 gold = load_untouch_nii(fname2,[],[],[],[],[],[]);
 disp(gold)
 
+
 disp('----------------------------------');
 disp('Smoothing image');
+disp('----------------------------------');
 output = lib.gaussianSmoothImageWASM(input, param, debug);
 
-
+disp('----------------------------------');
 disp(['Testing fake difference=']);
 max(max(max(max(abs(gold.img-single(input.img))))))
 

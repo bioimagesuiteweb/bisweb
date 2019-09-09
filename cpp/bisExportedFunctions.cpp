@@ -41,6 +41,10 @@ void set_debug_memory_mode(int m) {
   bisMemoryManagement::setDebugMemoryMode(m);
 }
 
+void set_large_memory_mode(int m) {
+  bisMemoryManagement::setLargeMemoryMode(m);
+}
+
 void print_memory()
 {
   bisMemoryManagement::print_map();

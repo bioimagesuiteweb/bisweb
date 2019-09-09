@@ -29,6 +29,7 @@ function moduleOutput = bis_wasmutils()
     Module='biswasm';
   end
   internal.name='xenios';
+  internal.force_large_memory=0;
 
   moduleOutput.Module=Module;
   moduleOutput.loadlib=@initialize;
@@ -46,6 +47,7 @@ function moduleOutput = bis_wasmutils()
   moduleOutput.get_type_size=@get_type_size;
   moduleOutput.get_matlab_type_size=@get_matlab_type_size;
   moduleOutput.get_matlab_type=@get_matlab_type;
+  moduleOutput.force_large_memory=@force_large_memory;
 
   % Data Object serialization
   moduleOutput.serialize_dataobject_bytearray=@serialize_dataobject_bytearray;
@@ -101,11 +103,35 @@ function moduleOutput = bis_wasmutils()
   function c=redirect_stdout(fname)
     c=calllib(Module,'redirect_stdout',fname);
   end
-				% Unload Library
+
+% Unload Library
   function res = unload()
     unloadlibrary(Module);
     res=1;
   end
+
+% -----------------------------------------------------  
+% force_large_memory
+  function res = force_large_memory(val)
+    if nargin < 1
+        val=3;
+    end
+    if (val == 1 || val ==3)
+        internal.force_large_memory=1;
+    else
+         internal.force_large_memory=0;
+    end
+    
+    if (val >=2)
+       calllib(Module,'set_large_memory_mode',1);
+    else
+       calllib(Module,'set_large_memory_mode',0);
+    end
+    
+    res=val;
+  end
+
+
 % -----------------------------------------------------  
 
   function out=json_stringify(obj)
@@ -350,7 +376,8 @@ function moduleOutput = bis_wasmutils()
       top_header(4)=itemsize*dimensions(1)*dimensions(2);
       dimensions=[dimensions(1),dimensions(2) ];
       totallength=dimensions(1)*dimensions(2)*itemsize;
-      if totallength > 2147483648
+      if totallength > 2147483648 || internal.force_large_memory>0
+         disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
          top_header(4)=-itemsize;
       end    
       mode=2;
@@ -359,11 +386,11 @@ function moduleOutput = bis_wasmutils()
       size(mat);
       top_header(2)=get_nifti_code(mat);
       top_header(3)=40;
-      disp(['dimensions=',dimensions]);
       totallength=prod(dimensions)*itemsize;
       top_header(4)=prod(dimensions)*itemsize;
-      if totallength > 2147483648
-         top_header(4)=-itemsize
+      if totallength > 2147483648 || internal.force_large_memory>0
+         disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
+         top_header(4)=-itemsize;
       end    
       mode=3;
     end
@@ -432,7 +459,7 @@ function moduleOutput = bis_wasmutils()
     headersize=top_header(3);
     data_bytelength=top_header(4);
     if (data_bytelength<0)
-      disp('____ LARGE Image deserialize Matlab');
+      disp('==== MATLAB large image deserialize');
       % Xenios to add
       reshape(ptr,36+offset,1);
       dim=typecast(ptr.Value(17+offset:36+offset),'int32');
@@ -442,7 +469,7 @@ function moduleOutput = bis_wasmutils()
         case get_image_magic_code()
             data_bytelength=-data_bytelength*dim(1)*dim(2)*dim(3)*dim(4)*dim(5);
       end
-      disp(['____ LARGE fixed bytelength=',mat2str(data_bytelength),' th=',mat2str(top_header(4)),' dm=',mat2str(dim)]);
+      disp(['====        fixed bytelength=',mat2str(data_bytelength),' th=',mat2str(top_header(4)),' dm=',mat2str(dim)]);
     end
     typesize=get_matlab_type_size(typename);
     data_length=data_bytelength/typesize;

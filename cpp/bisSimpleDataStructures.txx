@@ -56,7 +56,7 @@ namespace bisSimpleDataUtil {
     begin_int[1]=ot_type;
     begin_int[3]=output_data_size;
 #ifndef BISWASM
-    if (output_data_size>=MAX_SIZE)
+    if (output_data_size>=MAX_SIZE || bisMemoryManagement::largeMemory())
       begin_int[3]=(int)(-1*sizeof(OT));
 #endif
     
@@ -172,7 +172,7 @@ template< class T> void bisSimpleData<T>::allocate_data() {
   begin_int[2]=this->header_size;
   begin_int[3]=this->data_size;
 #ifndef BISWASM
-  if (this->data_size>=bisSimpleDataUtil::MAX_SIZE)
+  if (this->data_size>=bisSimpleDataUtil::MAX_SIZE || bisMemoryManagement::largeMemory())
     begin_int[3]=(int)(-1*sizeof(T));
 #endif
 }
@@ -189,7 +189,7 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
   long dt_size=begin_int[3];
 
   if (dt_size<0) {
-    std::cout << "____ LARGE IMAGE: Original length=" << dt_size << ", B=" << begin_int[3] << std::endl;
+    std::cout << "____ C++ large image: original length=" << dt_size << ", B=" << begin_int[3] << std::endl;
     if (this->magic_type==bisDataTypes::s_image ||
         this->magic_type==bisDataTypes::s_matrix) {
       long len=1;
@@ -200,9 +200,9 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
         // std::cout << "Dim " << i << "=" << begin_int[4+i] << std::endl;
         len*=begin_int[4+i];
       }
-      std::cout << "Len " << len << std::endl;
+      std::cout << "____      Len " << len << std::endl;
       dt_size=len*abs(begin_int[3]);
-      std::cout << "____ LARGE IMAGE: Final Byte length=" << dt_size << " vs " << dt_size/len << " bytes=" << abs(begin_int[3]) << std::endl;
+      std::cout << "____                 final byte length=" << dt_size << " vs " << dt_size/len << " bytes=" << abs(begin_int[3]) << std::endl;
     }
     
     if (dt_size<0) {
@@ -287,7 +287,7 @@ template<class T> void bisSimpleData<T>::serializeInPlace(unsigned char* output)
   begin_int[2]=this->header_size;
   begin_int[3]=this->data_size;
 #ifndef BISWASM
-  if (this->data_size >= bisSimpleDataUtil::MAX_SIZE)
+  if (this->data_size >= bisSimpleDataUtil::MAX_SIZE || bisMemoryManagement::largeMemory())
     begin_int[3]=(int)(-1*sizeof(T));
 #endif
   

@@ -26,6 +26,7 @@
 namespace bisMemoryManagement {
 
   int debug_memory=0;
+  int large_memory=0;
   std::map <long, long> memory_map;
   std::map <long, std::string> memory_map_name;
   std::map <long, bisObject*> memory_map_owner;
@@ -36,11 +37,25 @@ namespace bisMemoryManagement {
       return 1;
     return 0;
   }
+  
+  int largeMemory() {
+#ifdef BISWASM
+    return 0;
+#else
+    if (large_memory>0)
+      return 1;
+    return 0;
+#endif
+  }
 
   void setDebugMemoryMode(int m) {
     debug_memory=m;
   }
-  
+
+  void setLargeMemoryMode(int m) {
+    large_memory=m;
+  }
+
 
   unsigned char* allocate_memory(long sz,std::string name,std::string operation,bisObject* owner) {
 

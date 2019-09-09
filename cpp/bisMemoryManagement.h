@@ -43,14 +43,21 @@
 
 namespace bisMemoryManagement {
 
-  /** Return 1 if internal_flag =1 (see bisMemoryManagement.cpp)
-   */
+  /** Return 1 if internal_flag =1 (see bisMemoryManagement.cpp)  */
   int debugMemory();
+
+  /** Return 1 if large_flag =1 (see bisMemoryManagement.cpp)  */
+  int largeMemory();
 
   /**
      Set the value of the internal flag
   */
   void setDebugMemoryMode(int m);
+
+  /**
+     Set the value of the internal flag
+  */
+  void setLargeMemoryMode(int m);
 
 
   /** Called bis bisObject::~bisObject to eliminate links

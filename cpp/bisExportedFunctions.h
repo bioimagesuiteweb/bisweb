@@ -45,7 +45,13 @@ extern "C" {
    * @param m if > 0 set to debug to on
    */
   BISEXPORT void set_debug_memory_mode(int m);
-  
+
+  /** 
+   *  Set Large memory mode for python/matlab
+   * @param m if > 0 set to debug to on
+   */
+  BISEXPORT void set_large_memory_mode(int m);
+
   /** print current state of allocated objects */
   BISEXPORT void print_memory();
 
