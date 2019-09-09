@@ -34,6 +34,8 @@ elif (sys.version_info[1]<4):
     sys.exit(0)
 
 __Module=None;
+__force_large_memory=False;
+
     
 def load_library(name=''):
 
@@ -57,6 +59,26 @@ def load_library(name=''):
 def Module():
     global __Module;
     return __Module;
+
+
+# -----------------------------------------------------
+# set_force_large_memory
+def set_force_large_memory(val=3):
+
+
+    global __force_large_memory;
+
+    if (val == 1 or val ==3):
+        __force_large_memory=True;
+    else:
+        __force_large_memory=False;
+
+    Module().set_large_memory_mode.argtypes=[ ctypes.c_int];
+
+    if (val >=2):
+       Module().set_large_memory_mode(1);
+    else:
+       Module().set_large_memory_mode(0);
 
 # --------------------------------------------
 # Magic Codes
@@ -163,6 +185,8 @@ def release_pointer(ptr):
 # --------------------------------------------
 def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=False):
 
+    global __force_large_memory;
+
     shp=mat.shape;
     l1=len(shp);
 
@@ -225,10 +249,11 @@ def serialize_simpledataobject(mat,spa=[1.0,1.0,1.0,1.0,1.0],debug=0,isimage=Fal
 
     # Add more
     itemsize=np.dtype(mat.dtype).itemsize
+
     if (debug>0):
         print('____ Checking Large Image Serialization ', tl,top_header[3]);
-    if (tl>top_header[3]):
-        print('____ Large Image Serialization ', tl,top_header[3]);
+    if (tl>top_header[3] or __force_large_memory == True):
+        print('____ Python large image serialization ', tl,top_header[3]);
         top_header[3]=-itemsize;
     else:
         top_header[3]*=itemsize;
@@ -290,7 +315,7 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
             while (index<len(dims)):
                 numbytes*=dims[index];
                 index=index+1;
-            
+            print('____ Python large image deserialization',dims,numbytes);
 
             
     datatype=get_dtype(header[1]);
@@ -410,3 +435,4 @@ def wrapper_deserialize_and_delete(ptr,datatype,first_input=0):
     release_pointer(ptr);    
     return out;
     
+
