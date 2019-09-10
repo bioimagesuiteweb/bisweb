@@ -46,6 +46,8 @@ for { set j 0 } { $j <= 1 } { incr j } {
 
     
     set n2 "index_${name}.json"
+    set n3 "index_${name}.ply"
+    
     set fout [ open $n2 w ]
     puts -nonewline $fout "\{\n\t \"points\" : \[ "
     for { set i 0 } { $i < $np } { incr i } {
@@ -85,6 +87,13 @@ for { set j 0 } { $j <= 1 } { incr j } {
     
     puts $fout "\}"
     close $fout
+
+    set w [ vtkPLYWriter New ]
+    $w SetInput $sur
+    $w SetFileName $n3
+    $w Write
+    $w Delete
+    puts stdout "Also saved ply in $n3"
 }
 
 
