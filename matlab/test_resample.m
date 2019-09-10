@@ -15,32 +15,56 @@
 % 
 % ENDLICENSE
 
-bispath();
-lib=biswrapper();
+function result=test_resample(debug)
 
-m=mfilename('fullpath');
-[filepath,name,ext] = fileparts(m);
-[filepath,name,ext] = fileparts(filepath);
-fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'MNI_2mm_resliced.nii.gz'];
 
-% Load Images
-input = bis_loadimage(fname1,3);
+    if nargin<1
+        debug=1
+    end
 
-disp('Reslicing image');
-resliceobj.interpolation=0;
-resliceobj.dimensions=[ 45,45,45 ];
-resliceobj.spacing=[ 4.0,4.4,4.8];
-resliceobj.datatype='short';
-resliceobj.backgroundValue=0.0
+    bispath();
+    lib=biswrapper();
+    
 
-output=lib.resliceImageWASM(input,eye(4),resliceobj,1);
+    m=mfilename('fullpath');
+    [filepath,name,ext] = fileparts(m);
+    [filepath,name,ext] = fileparts(filepath);
+    fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'MNI_2mm_resliced.nii.gz'];
 
-testaff=eye(4);
-testaff(1,1)=-4.0;
-testaff(2,2)=-4.4;
-testaff(3,3)=4.8;
+    % Load Images
+    input = bis_loadimage(fname1,debug+1);
 
-testaff
-output.affine
+    if (debug>0)
+        disp('Reslicing image');
+    end
 
-diff=max(max(testaff-output.affine))
+    resliceobj.interpolation=0;
+    resliceobj.dimensions=[ 45,45,45 ];
+    resliceobj.spacing=[ 4.0,4.4,4.8];
+    resliceobj.datatype='short';
+    resliceobj.backgroundValue=0.0;
+
+    output=lib.resliceImageWASM(input,eye(4),resliceobj,debug);
+
+    testaff=eye(4);
+    testaff(1,1)=-4.0;
+    testaff(2,2)=-4.4;
+    testaff(3,3)=4.8;
+
+    if (debug>0)
+        testaff 
+        output.affine
+    end
+
+    diff=max(max(testaff-output.affine));
+
+    if (diff<0.1)
+        result=1;
+        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
+        disp('=== Test Resample PASS')
+    else 
+        result=0;
+        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
+        disp('=== Test Resample FAILED')
+    end
+

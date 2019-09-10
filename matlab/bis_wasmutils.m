@@ -85,10 +85,12 @@ function moduleOutput = bis_wasmutils()
 
     headerfile=strcat(pathname,strcat(filesep,'bis_matlab.h'));
 
-    disp(['__biswasm loading library']);
-    disp(['__libname=',libname]);
-    disp(['__headerfile=',headerfile]);
-    
+    disp(['__']);
+    disp(['__ biswasm loading library']);
+    disp(['__ libname=',libname]);
+    disp(['__ headerfile=',headerfile]);
+    disp(['__']);
+
     if ~libisloaded(Module)
       bislib=loadlibrary(libname,headerfile);
       a=calllib(Module,'test_wasm');
@@ -97,6 +99,9 @@ function moduleOutput = bis_wasmutils()
     end
     disp('__')
     
+    % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
+    force_large_memory(0);
+
 
     
   end
@@ -473,7 +478,7 @@ function moduleOutput = bis_wasmutils()
       dim=typecast(ptr.Value(17+offset:36+offset),'int32');
       switch(top_header(1))
         case get_matrix_magic_code()
-            data_bytelength=-data.bytelength*dim(2)*dim(1);
+            data_bytelength=-data_bytelength*dim(2)*dim(1);
         case get_image_magic_code()
             data_bytelength=-data_bytelength*dim(1)*dim(2)*dim(3)*dim(4)*dim(5);
       end
@@ -522,11 +527,11 @@ function moduleOutput = bis_wasmutils()
 	  case get_grid_magic_code()
 	    out={ };
 	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),'int32');
-	    dimensions=typecast(rawdata(21+offset:32+offset,:),'int32')
+	    dimensions=typecast(rawdata(21+offset:32+offset,:),'int32');
 	    out.spacing=typecast(rawdata(33+offset:44+offset,:),'single');
 	    out.origin=typecast(rawdata(45+offset:56+offset,:),'single');
 	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.data=(reshape(tmp,3,dimensions(1)*dimensions(2)*dimensions(3)))';
+	    out.data=(reshape(tmp,dimensions(1)*dimensions(2)*dimensions(3),3));
 	    out.dimensions=dimensions;
     end
       
@@ -567,7 +572,7 @@ function moduleOutput = bis_wasmutils()
     head_b=typecast(i_head,'uint8');
     fhead_b=typecast(f_head,'uint8');
 
-    m2=reshape((grid.data'),1,prod(grid.dimensions)*3);
+    m2=reshape((grid.data),1,prod(grid.dimensions)*3);
     data_b=typecast(single(m2),'uint8');
     
     out=cat(2,head_b,fhead_b,data_b);
@@ -591,13 +596,19 @@ function moduleOutput = bis_wasmutils()
 
     data=serialize_dataobject_bytearray(single(combo.linear));
 
-    disp([' length of data=',mat2str(size(data)) ]);
+    if (debug>0)
+        disp([' length of data=',mat2str(size(data)) ]);
+    end
     
     for i=1:combo.numgrids
       g=serialize_gridtransformation(combo.grids{i},1);
-      disp([' length of g=',mat2str(size(g)) ]);
+      if (debug>0)
+        disp([' length of g=',mat2str(size(g)) ]);
+      end
       data=cat(2,data,g);
-      disp([' length of data=',mat2str(size(data)) ]);
+      if (debug>0)
+        disp([' length of data=',mat2str(size(data)) ]);
+      end
     end
 
     i_head=zeros(1,5,'int32');
@@ -609,10 +620,14 @@ function moduleOutput = bis_wasmutils()
 
     head_b=typecast(i_head,'uint8');
 
-
-    disp([' length of head_b=',mat2str(size(head_b)) ]);
+    if (debug>0)
+        disp([' length of head_b=',mat2str(size(head_b)) ]);
+    end
     data=cat(2,head_b,data);
-    disp([' length of data=',mat2str(size(data)) ]);
+
+    if (debug>0)
+        disp([' length of data=',mat2str(size(data)) ]);
+    end
     
     out=libpointer('voidPtr',data);
   end
@@ -742,7 +757,7 @@ function moduleOutput = bis_wasmutils()
   function out =wrapper_deserialize_and_delete(ptr,datatype,other)    
 
     if nargin<3
-        other=0
+        other=0;
     end
 
     switch(datatype)

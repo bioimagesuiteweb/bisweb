@@ -15,50 +15,86 @@
 % 
 % ENDLICENSE
 
-bispath()
+function result=test_combo(debug)
 
-lib=biswrapper();
+    if nargin<1
+        debug=1;
+    end
 
-%lib.redirect_stdout('matlog2.txt',1);
+    bispath();
+    lib=biswrapper();
 
-lines=fileread([ '..' filesep 'test' filesep 'testdata' filesep 'complex.grd']);
-combo=lib.parseComboTransformTextFileWASM(lines,1);
+    lines=fileread([ '..' filesep 'test' filesep 'testdata' filesep 'complex.grd']);
+    if (debug>0)
+        lines(1:400)
+    end
+    combo=lib.parseComboTransformTextFileWASM(lines,debug);
+    result1=compare_combo(combo,debug);
+    lines2=lib.createComboTransformationTextFileWASM(combo,debug);
+    if (debug>0)
+        lines2(1:400)
+    end
+    combo2=lib.parseComboTransformTextFileWASM(lines2,debug);
+    result2=compare_combo(combo2,debug);
 
+    result=min(result1,result2);
 
-grd=combo.grids{1};
+    % Internal
+    function result=compare_combo(combo,debug)
+        grd=combo.grids{1};
 
-disp([' grid=',mat2str(grd.dimensions),' spa=',mat2str(grd.spacing),' ori=', mat2str(grd.origin)]);
-
-
-data = [  20, 0.5250, 1.5128, 0.2732 ;
-          47, -0.6805, 1.3356, 0.6628 ;
-          9850, -0.3057, -1.4673, -0.1346 ];
-
-linear = [ 0.999, -0.044, -0.021,  2.691;
-           0.045,  0.998,  0.035, -0.860;
-           0.020, -0.036,  0.999,  0.552;
-           0.000,  0.000,  0.000,  1.000 ];
-
-
-dl=combo.linear-linear
-error=max(max(dl))
-
-disp([' linear error=',mat2str(error) ]);
-
-g=grd.data;
-
-disp(['size of grid data=',mat2str(size(g))]);
-
-for i = 1: 3        
-  cp=int32(data(i,1));
-  i_data = [ data(i,2),data(i,3),data(i,4) ];
-  o_data = [ g(cp+1,1),g(cp++1,2),g(cp+1,3) ];
-  error=error+max(abs(i_data-o_data));
-  disp([' i_data=',mat2str(i_data), ' o_data=',mat2str(o_data), '        error=',mat2str(error) ]);
-end
+        if (debug>0)
+            disp([' grid=',mat2str(grd.dimensions),' spa=',mat2str(grd.spacing),' ori=', mat2str(grd.origin)]);
+        end
 
 
-s=lib.createComboTransformationTextFileWASM(combo,1);
+        data = [  20, 0.5250, 1.5128, 0.2732 ;
+                47, -0.6805, 1.3356, 0.6628 ;
+                9850, -0.3057, -1.4673, -0.1346 ];
+
+        linear = [ 0.999, -0.044, -0.021,  2.691;
+            0.045,  0.998,  0.035, -0.860;
+            0.020, -0.036,  0.999,  0.552;
+            0.000,  0.000,  0.000,  1.000 ];
 
 
+        dl=combo.linear-linear;
+        error0=max(max(dl));
+
+        if (debug>0)
+            disp(['=== Test 1: linear error=',mat2str(error0) ]);
+        end
+
+        g=grd.data;
+        if (debug>0)
+            disp(['size of grid data=',mat2str(size(g))]);
+            disp('');
+        end
+
+        error1=0;
+        for i = 1: 3        
+            cp=int32(data(i,1));
+            i_data = [ data(i,2),data(i,3),data(i,4) ];
+            o_data = [ g(cp+1,1),g(cp+1,2),g(cp+1,3) ];
+            error1=error1+max(abs(i_data-o_data));
+            if (debug>0)
+                disp([' i_data=',mat2str(i_data), ' o_data=',mat2str(o_data), '        error=',mat2str(error1) ]);
+            end
+        end
+
+
+
+        disp(['=== Errors=',mat2str(error0),' ',mat2str(error1)]);
+
+        diff=max(abs(error0),abs(error1));
+            
+        if (diff<0.1)
+            result=1;
+            disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
+            disp('=== TestCombo PASS')
+        else 
+            result=0;
+            disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
+            disp('=== Test Combo FAILED')
+        end
 

@@ -15,45 +15,61 @@
 % 
 % ENDLICENSE
 
-clear
+function result=test_largemem_smooth(debug)
 
-bispath();
-lib=biswrapper();
-bw=lib.getbiswasm();
-
-% Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
-bw.force_large_memory()
+    
+    if nargin<1
+        debug=1
+    end
 
 
-m=mfilename('fullpath');
-[filepath,name,ext] = fileparts(m);
-[filepath,name,ext] = fileparts(filepath);
-fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'indiv' filesep 'prep.nii.gz' ];
-fname2=[ filepath filesep  'test' filesep 'testdata' filesep 'indiv' filesep 'prep_sm.nii.gz'];
-disp(fname1);
-disp(fname2);
-format long;
+    bispath();
+    lib=biswrapper();
+    bw=lib.getbiswasm();
 
-param.sigmas=0.4247*[4.0,4.0,4.0 ];
-param.radiusfactor=2.0;
-param.inmm='true'
-param.vtkboundary='true'
-debug=1;
-
-% Load Images
-input = bis_loadimage(fname1);
-gold = bis_loadimage(fname2);
+    % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
+    bw.force_large_memory();
 
 
-disp('----------------------------------');
-disp('Smoothing image');
-disp('----------------------------------');
-output = lib.gaussianSmoothImageWASM(input, param, debug);
+    m=mfilename('fullpath');
+    [filepath,name,ext] = fileparts(m);
+    [filepath,name,ext] = fileparts(filepath);
+    fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'indiv' filesep 'prep.nii.gz' ];
+    fname2=[ filepath filesep  'test' filesep 'testdata' filesep 'indiv' filesep 'prep_sm.nii.gz'];
+    format long;
 
-disp('----------------------------------');
-disp(['Testing fake difference=']);
-max(max(max(max(abs(gold.img-single(input.img))))))
+    param.sigmas=0.4247*[4.0,4.0,4.0 ];
+    param.radiusfactor=2.0;
+    param.inmm='true';
+    param.vtkboundary='true';
+
+    % Load Images
+    input = bis_loadimage(fname1);
+    gold = bis_loadimage(fname2);
+
+    if (debug>0)
+        disp('----------------------------------');
+        disp('Smoothing image');
+        disp('----------------------------------');
+    end
+    
+    output = lib.gaussianSmoothImageWASM(input, param, debug);
+
+    if (debug)
+        disp(['Testing real difference']);
+    end 
+
+    diff=max(max(max(max(abs(gold.img-single(output.img))))));
+
+    
+    if (diff<0.1)
+        result=1;
+        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
+        disp('=== Test Large Memory PASS')
+    else 
+        result=0;
+        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
+        disp('=== Test Large Memory FAILED')
+    end
 
 
-disp(['Testing real difference']);
-max(max(max(max(abs(gold.img-single(output.img))))))
