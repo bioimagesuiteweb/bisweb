@@ -110,7 +110,8 @@ var scan_header_file = function(onames) {
 
                 let line=txt;
                 let begin=line.indexOf("{");
-                let end=line.indexOf("}");
+                let end=line.lastIndexOf("}");
+
                 let str=line.substr(begin+1,end-begin-2).trim();
                 outorig.push(str);
                 let out=str.trim().replace(/ /g,'').replace(/\[/g,'').replace(/]/g,'').replace(/'/g,'');
@@ -139,6 +140,7 @@ var scan_header_file = function(onames) {
         }
     }
     console.log('+++++');
+
     return {
         orig :  outorig,
         outdefs : outdefs ,
@@ -356,54 +358,61 @@ ${begintext} - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 var parse_function_argument_list=function(lst,var_types,wrapper_mode) {
 
+    
     wrapper_mode = wrapper_mode || 'js';
     let names=[ ];
     let hasdebug=false,hasparam=false;
+    let extrachecking=0;
     for (let j=2;j<lst.length;j++) {
         //let k=j-1;
         let shortname=lst[j];
-        let ind=lst[j].indexOf("_opt");
-        let opt=false;
-        if (ind>0) {
-            shortname=lst[j].substr(0,ind);
-            opt=true;
+        if (shortname.indexOf('{') < 0) {
+            let ind=lst[j].indexOf("_opt");
+            let opt=false;
+            if (ind>0) {
+                shortname=lst[j].substr(0,ind);
+                opt=true;
+            }
+            
+            let varname=var_types[shortname][0] || false;
+            if (varname===false) {
+                console.log('Unknown '+shortname);
+                process.exit(1);
+            }
+            
+            //        let isobj = false;
+            
+            if (varname==='paramobj')
+                hasparam=true;
+            
+            if (varname==='debug')
+                hasdebug=true;
+            
+            let oname = varname;
+            if (varname!=='paramobj' && varname!=='debug')
+                oname+=`${j-1}`;
+            
+            let argname=oname;
+            if (var_types[shortname][2])
+                argname+='_ptr';
+            else if (varname=='paramobj')
+                argname='jsonstring';
+            else if (var_types[shortname][3]===true && wrapper_mode==="python")
+                argname+="_binstr";
+            
+            names.push({
+                variablename : oname,
+                bistype : shortname,
+                argname : argname,
+                optional  : opt,
+                argtype : var_types[shortname][1],
+                isptr : var_types[shortname][2],
+                isstring : var_types[shortname][3],
+            });
+        } else {
+            extrachecking=JSON.parse(shortname);
         }
-
-        let varname=var_types[shortname][0] || false;
-        if (varname===false) {
-            console.log('Unknown '+shortname);
-            process.exit(1);
-        }
-        
-        //        let isobj = false;
-        
-        if (varname==='paramobj')
-            hasparam=true;
-        
-        if (varname==='debug')
-            hasdebug=true;
-        
-        let oname = varname;
-        if (varname!=='paramobj' && varname!=='debug')
-            oname+=`${j-1}`;
-
-        let argname=oname;
-        if (var_types[shortname][2])
-            argname+='_ptr';
-        else if (varname=='paramobj')
-            argname='jsonstring';
-        else if (var_types[shortname][3]===true && wrapper_mode==="python")
-            argname+="_binstr";
-        
-        names.push({
-            variablename : oname,
-            bistype : shortname,
-            argname : argname,
-            optional  : opt,
-            argtype : var_types[shortname][1],
-            isptr : var_types[shortname][2],
-            isstring : var_types[shortname][3],
-        });
+            
     }
 
     let isreturnpointer=var_types[lst[1]][2];
@@ -415,6 +424,7 @@ var parse_function_argument_list=function(lst,var_types,wrapper_mode) {
              isreturnpointer : isreturnpointer,
              isreturnstring  : isreturnstring,
              returntype : returntype,
+             extra : extrachecking,
              hasparam : hasparam };
     
 };
@@ -466,6 +476,51 @@ var create_function_definition=function(fn_name,names,hasdebug,wrapper_mode) {
     return outtext;
 };
 
+// --------------------------------------------------------------------------
+// Orientation checking etc.
+// --------------------------------------------------------------------------
+
+var create_parameter_checking_code=function(extrachecks,names,wrapper_mode) {
+
+    let outstr='';
+
+    if (wrapper_mode=='js') {
+        let flag=extrachecks.checkorientation || '';
+        if (flag === 'all' || flag.indexOf('js')>=0) {
+            outstr=`    if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',true)===false)
+       return false;
+
+`;
+        }
+    }  else if (wrapper_mode==='python') {
+
+        let flag=extrachecks.checkorientation || '';
+        if (flag === 'all' || flag.indexOf('python')>=0) {
+            outstr=`    if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',True)==False):
+       return False;
+
+`;
+        }
+    } else {
+
+        let flag=extrachecks.checkorientation || '';
+        if (flag === 'all' || flag.indexOf('matlab')>=0) {
+            let name1=names[0].variablename;
+            let name2=names[1].variablename;
+            
+            outstr=`
+    if (${name1}.orcode ~= ${name2}.orcode)
+       disp(['ERROR Image Orientation mismatch',${name1}.orcode,' ',${name2}.orcode]);
+       return
+    end
+
+`;
+        }
+    }
+
+    return outstr;
+
+};
 // --------------------------------------------------------------------------
 // JavaScript stuff
 // --------------------------------------------------------------------------
@@ -759,6 +814,10 @@ var create_function=function(descline,outcmt,orig,funlist,wrapper_mode) {
     outtext+=create_function_definition(fn_name,names,params.hasdebug,wrapper_mode);
     
 
+    if (params.extra!==0) {
+        outtext+=create_parameter_checking_code(params.extra,names,wrapper_mode);
+    }
+    
     if (wrapper_mode=='js') {
         outtext+='    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;\n';
         if (params.hasparam==true)

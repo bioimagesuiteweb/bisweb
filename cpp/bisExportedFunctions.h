@@ -358,7 +358,7 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to the roi matrix (rows=frames,cols=rois)
    */
-  // BIS: { 'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ] } 
+  // BIS: { 'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
   BISEXPORT unsigned char* computeROIWASM(unsigned char* input,unsigned char* roi,const char* jsonstring,int debug);
 
   /** Compute butterworthFilter Output 
