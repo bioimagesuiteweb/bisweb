@@ -1,3 +1,8 @@
+This is the license of the original Matlab nii package
+
+(load*, make_nii, save*, basically any file in this directory that does not start with bis_)
+
+
 Copyright (c) 2014, Jimmy Shen
 All rights reserved.
 
