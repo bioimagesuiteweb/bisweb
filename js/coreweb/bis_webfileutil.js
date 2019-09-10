@@ -214,6 +214,7 @@ const webfileutils = {
      * @param {String} fileopts.defaultpath - if in file mode and file use this as original filename
      * @param {String} fileopts.filter - if in file mode and file use this to filter file style
      * @param {String} fileopts.suffix - used to create filter if present (simplified version)
+     * @param {String} fileopts.altkeys - if enabled, allows a user to select multiple files in the dialog
      * @param {Function} callback - callback to call when done
      */
     electronFileCallback: function (fileopts, callback) {
@@ -253,6 +254,8 @@ const webfileutils = {
                 { name: 'All Files', extensions: ['*'] },
             ];
 
+        let multiple = fileopts.altkeys ? 'multiSelections' : '';
+        console.log('multiple', multiple);
         var cmd = window.BISELECTRON.dialog.showSaveDialog;
         if (!fileopts.save)
             cmd = window.BISELECTRON.dialog.showOpenDialog;
@@ -261,7 +264,7 @@ const webfileutils = {
             cmd(null, {
                 title: fileopts.title,
                 defaultPath: fileopts.defaultpath,
-                properties: ["openDirectory"],
+                properties: ["openDirectory", multiple]
             }, function (filename) {
                 if (filename) {
                     return callback(filename + '');
@@ -272,6 +275,7 @@ const webfileutils = {
                 title: fileopts.title,
                 defaultPath: fileopts.defaultpath,
                 filters: fileopts.filters,
+                properties: [multiple]
             }, function (filename) {
                 if (filename) {
                     return callback(filename + '');
@@ -451,8 +455,9 @@ const webfileutils = {
 
         
         
+        let multiple = fileopts.altkeys ? 'multiple' : ''; //enables shift and ctrl in native file select
         if (!genericio.inIOS()) {
-            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}" ${multiple}/>`);
             fileInputElements.push(loadelement);
 
             loadelement[0].addEventListener('change', function (f) {
@@ -468,7 +473,7 @@ const webfileutils = {
             if (fileopts.title.length<1)
                 fileopts.title='Select File';
             iosFileDialog.titlediv.append(`<H4>${fileopts.title}</H4>`);
-            let loadelement = $(`<input type="file" id="${nid}" accept="${suffix}"/>`);
+            let loadelement = $(`<input type="file" id="${nid}" accept="${suffix}" ${multiple}/>`);
             fileInputElements.push(loadelement);
             loadelement[0].addEventListener('change', function (f) {
                 iosFileDialog.dialog.modal('hide');
