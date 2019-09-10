@@ -517,7 +517,7 @@ function moduleOutput = bis_wasmutils()
                     out.affine(row,col)=out.affine(row,col)*sp(col)/oldsp(col);
                end
             end
-            out.spacing=sp;
+            out.spacing=sp';
         end
 	  case get_grid_magic_code()
 	    out={ };

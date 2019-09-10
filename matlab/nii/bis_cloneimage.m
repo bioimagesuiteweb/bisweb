@@ -21,37 +21,54 @@
 % 
 % -----------------------------------------------------
 
-function bisimage = bis_loadimage(f,debug)
+function output = bis_cloneimage(input,dims,spacing,tp,debug)
 
-  if ~exist('niftiinfo')
-     disp('BISWEB ERROR -- You need a newer version of Matlab -- 2017b or later to use this function');
-     bisimage=0;
-     return;
-  end
   
   if (nargin<1)
-    bisimage=0;
+    output=0;
     return;
   end
 
+  
   if (nargin<2)
-    debug=2;
+    dims=size(input);
   end
 
-  h=niftiinfo(f);
-  bisimage=load_untouch_nii(f,[],[],[],[],[],[]);
-  bisimage.desc='Bisweb matlab image';
-  bisimage.header=h;
-  bisimage.affine=h.Transform.T;
-  bisimage.spacing=h.PixelDimensions';
-  bisimage.orcode=bis_getorientationcode(bisimage.affine,bisimage.spacing);
+  if (nargin<5)
+    spacing=input.spacing;
+  end
 
-  if (debug>0)
-    disp([ '___ Loaded image from ',h.Filename])
-    if (debug>1)
-        disp(['      dimensions=',mat2str(h.ImageSize),' spacing=',mat2str(h.PixelDimensions),' orientation=',bisimage.orcode,' type=',class(bisimage.img)]);
-        if (debug>2)
-            disp(['      matrix=',mat2str(bisimage.affine)]);
+  if (nargin<4)
+    tp=class(input.img)
+  end
+
+  if (nargin<5)
+    debug=0
+  end
+
+  
+
+  output.desc='Bisweb matlab image';
+
+  % Fix affine matrix to agree with spacing
+  output.affine=input.affine;
+  oldsp=[ norm(input.affine(1:3,1:1)),norm(input.affine(1:3,2:2)),norm(input.affine(1:3,3:3))]';
+    for col=1:3
+        for row=1:3,
+            output.affine(row,col)=output.affine(row,col)/oldsp(col)*spacing(col);
         end
     end
+
+  output.spacing=spacing;
+  output.img=zeros(dims,tp);
+  output.orcode=bis_getorientationcode(output.affine,output.spacing);
+
+  output.orcode=input.orcode;
+
+  if (debug>0)
+    disp('__ Cloned image');
+        disp(['      dimensions=',mat2str(dims),' spacing=',mat2str(output.spacing),' orientation=',output.orcode,' type=',class(output.img)]);
+        if (debug>1)
+            disp(['      matrix=',mat2str(output.affine)]);
+        end
   end
