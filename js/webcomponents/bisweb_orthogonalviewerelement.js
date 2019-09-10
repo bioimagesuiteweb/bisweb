@@ -389,12 +389,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
             context.fillStyle = "#dddddd";
         else
             context.fillStyle = "#222222";
-
-        let x = this.internal.layoutcontroller.getviewerwidth() * 0.5;
-        context.clearRect(0, y0,1.0*dw-4 + 0,dh-y0);
+        context.clearRect(this.cleararea[0]*fullwidth+2,y0,0.5*dw-4,dh-y0);
         context.textAlign="left";
         context.textBaseline="bottom";
-        context.fillText(s,(this.cleararea[0]+0.75)*fullwidth,dh-1);
+        context.fillText(s,(this.cleararea[0]+0.01)*fullwidth,dh-1);
+        
     }
 
     getViewerCrossHairs() { return this.internal.slicecoord; }
@@ -1652,6 +1651,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     updatemousecoordinates(mm,plane,mousestate) {
 
+        if (!this.enable_renderloop_flag) {
+            console.log('Ignoring mouse');
+            return;
+        }
+        
         if (this.internal.ignoremouseobservers === true)
             return;
 
