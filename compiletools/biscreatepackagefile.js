@@ -105,7 +105,7 @@ let obj = {
 };
 
 // TF Version first
-obj.name="biswebnodetf"
+obj.name="biswebnodetf";
 let txt=JSON.stringify(obj,null,4)+"\n";
 let origout=output;
 output=path.resolve(path.join(origout,"package.json.tf"));
