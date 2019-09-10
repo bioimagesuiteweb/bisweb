@@ -664,6 +664,12 @@ ELSE(BIS_A_EMSCRIPTEN)
     GET_FILENAME_COMPONENT(MATLAB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../matlab ABSOLUTE)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/bis*.m)
     install (FILES ${MLIST} DESTINATION bisweb/matlab)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/test*.m)
+    install (FILES ${MLIST} DESTINATION bisweb/matlab)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.m)
+    install (FILES ${MLIST} DESTINATION bisweb/matlab/nii)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.txt)
+    install (FILES ${MLIST} DESTINATION bisweb/matlab/nii)
   ENDIF(BIS_A_MATLAB)
   
   # ---------------

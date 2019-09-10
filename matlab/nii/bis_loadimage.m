@@ -23,6 +23,11 @@
 
 function bisimage = bis_loadimage(f)
 
+  if ~exist niftiinfo
+     disp('You need a newer version of Matlab -- 2017b or later to use this function');
+     return 0
+  end
+  
 
   bisimage.desc='Bisweb matlab image';
   if (nargin > 0)
