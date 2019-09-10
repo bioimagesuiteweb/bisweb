@@ -43,7 +43,7 @@ function bisimage = bis_loadimage(f,debug)
   bisimage.desc='Bisweb matlab image';
   bisimage.header=h;
   bisimage.affine=h.Transform.T;
-  bisimage.spacing=h.PixelDimensions;
+  bisimage.spacing=h.PixelDimensions';
   bisimage.orcode=getorient(bisimage.spacing,bisimage.affine);
 
   if (debug>0)
