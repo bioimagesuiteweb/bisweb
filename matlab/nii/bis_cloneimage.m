@@ -15,60 +15,70 @@
 % 
 % ENDLICENSE
 
-% -----------------------------------------------------
-%
-% Main Function
-% 
-% -----------------------------------------------------
-
 function output = bis_cloneimage(input,dims,spacing,tp,debug)
 
-  
-  if (nargin<1)
-    output=0;
-    return;
-  end
+    if (nargin<1)
+        output=0;
+        return;
+    end
 
   
-  if (nargin<2)
-    dims=size(input);
-  end
+    if (nargin<2)
+        dims=size(input);
+    end
 
-  if (nargin<5)
-    spacing=input.spacing;
-  end
+    if (nargin<3)
+        spacing=input.spacing;
+    end
 
-  if (nargin<4)
-    tp=class(input.img)
-  end
+    if (max(size(spacing))<1)
+        spacing=input.spacing;
+    end
 
-  if (nargin<5)
-    debug=0
-  end
+    if (nargin<4)
+        tp=class(input.img)
+    end
 
-  
+    if (nargin<5)
+        debug=0
+    end
 
-  output.desc='Bisweb matlab image';
+    % Make sure spacing is a 5-vector
+    temp=spacing
+    v=max(size(temp));
+    spacing=[1.0,1.0,1.0,1.0,1.0];
+    spacing(1:v)=temp;
+	
+	% Fix affine to agree with spacing in spacing
+	affine=eye(4,4);
+	affine(1:4,4:4)=bisimage.affine(1:4,4:4);
+    oldsp=[ norm(bisimage.affine(1:3,1:1)),norm(bisimage.affine(1:3,2:2)),norm(bisimage.affine(1:3,3:3))]';
+    for col=1:3
+        for row=1:3,
+            affine(row,col)=bisimage.affine(row,col)/oldsp(col)*spacing(col);
+        end
+    end
 
-  % Fix affine matrix to agree with spacing
-  output.affine=input.affine;
-  oldsp=[ norm(input.affine(1:3,1:1)),norm(input.affine(1:3,2:2)),norm(input.affine(1:3,3:3))]';
+    output.desc='Bisweb matlab image';
+
+    % Fix affine matrix to agree with spacing
+    output.affine=input.affine;
+    oldsp=[ norm(input.affine(1:3,1:1)),norm(input.affine(1:3,2:2)),norm(input.affine(1:3,3:3))]';
+    
     for col=1:3
         for row=1:3,
             output.affine(row,col)=output.affine(row,col)/oldsp(col)*spacing(col);
         end
     end
 
-  output.spacing=spacing;
-  output.img=zeros(dims,tp);
-  output.orcode=bis_getorientationcode(output.affine,output.spacing);
+    output.spacing=spacing;
+    output.img=zeros(dims,tp);
+    output.orcode=bis_getorientationcode(output.affine,output.spacing);
 
-  output.orcode=input.orcode;
-
-  if (debug>0)
-    disp('__ Cloned image');
+    if (debug>0)
+        disp('__ Cloned image');
         disp(['      dimensions=',mat2str(dims),' spacing=',mat2str(output.spacing),' orientation=',output.orcode,' type=',class(output.img)]);
         if (debug>1)
             disp(['      matrix=',mat2str(output.affine)]);
         end
-  end
+    end
