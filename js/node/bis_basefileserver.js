@@ -956,8 +956,10 @@ class BaseFileServer {
         }
         
         //flag needed in order to get module.execute to hit the save trigger for outputs
-        module.execute({}, moduleparams, true).then((m) => {
-            done(true, m);
+        module.execute({}, moduleparams).then((m) => {
+            module.saveOutputs({ 'output' : moduleparams.output}).then( () => {
+                done(true, m);
+            });
         }).catch((e) => {
             done(false, e);
         });

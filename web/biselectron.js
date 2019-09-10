@@ -113,7 +113,7 @@ var getHeightWidth= function(name) {
     let tools=toolfile.tools;
     
     const obj = {
-        height : 900,
+        height : 1070,
         width : 1024
     };
 
@@ -123,10 +123,10 @@ var getHeightWidth= function(name) {
     
     let found=false,i=0;
     let keys=Object.keys(tools);
-    
+
     while (i<keys.length && found===false) {
         let url=tools[keys[i]].url;
-        if (url===name) {
+        if (name.indexOf(url)===0) {
             obj.height= tools[keys[i]].height || 900;
             obj.width= tools[keys[i]].width || 700;
             obj.height=Math.round(obj.height*scale);
@@ -140,9 +140,6 @@ var getHeightWidth= function(name) {
     if (!found && name.indexOf("test")>0) {
         obj.width=maxw;
         obj.height=maxh;
-    } else if (!found && name.indexOf("index")>=0) {
-        obj.width=Math.round(650*scale);
-        obj.height=Math.round(600*scale);
     }
 
     
@@ -183,8 +180,6 @@ var createWindow=function(index,fullURL) {
     }
         
     state.dimensions=getHeightWidth(name);
-
-
     
     let i_width= state.dimensions.width;
     let i_height= state.dimensions.height;

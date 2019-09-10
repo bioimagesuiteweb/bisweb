@@ -640,19 +640,19 @@
             "dopython": true
         },
         {
-            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --debug true",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : true,
             "dopython": true
         },
         {
-            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary false",
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary false --debug true",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : false,
             "dopython": true
         },
         {
-            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true",
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true --debug true",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : true,
             "dopython": false
@@ -869,4 +869,3 @@
         }
     ]
 }
-

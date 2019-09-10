@@ -26,7 +26,7 @@ const assert = require("assert");
 const numeric=require('numeric');
 const libbiswasm=require('libbiswasm_wrapper');
 const BisWebMatrix=require('bisweb_matrix');
-const util=require('bis_util');
+
 
 numeric.precision = 2;
 
@@ -48,7 +48,7 @@ let printmatrix=function(mat) {
         out+=' ]\n';
     }
     return out;
-}
+};
 
 describe('Testing CPM Code', function() {
 

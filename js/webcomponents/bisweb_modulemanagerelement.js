@@ -179,7 +179,6 @@ class ModuleManagerElement extends HTMLElement {
         let usesgpl=window.bioimagesuitewasmpack.usesgpl;
 
         this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
-        this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
         
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
@@ -188,6 +187,7 @@ class ModuleManagerElement extends HTMLElement {
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
+                this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);
@@ -216,6 +216,8 @@ class ModuleManagerElement extends HTMLElement {
             this.createModule('Segment Image',2, true, modules.getModule('segmentImage'), moduleoptions);
             this.createModule('Deface Head Image',2, true, modules.getModule('defaceImage'), moduleoptions);
         }
+        this.createModule('Skull Strip Image (DL)',2, true, modules.getModule('skullStrip'), moduleoptions);                    
+
         this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);
         this.createModule('Mask Image', 2, false, modules.getModule('maskImage'), moduleoptions);
 

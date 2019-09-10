@@ -1,22 +1,22 @@
 # LICENSE
-# 
+#
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-# 
+#
 # BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # - you may not use this software except in compliance with the License.
 # - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-# 
+#
 # __Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.__
-# 
+#
 # ENDLICENSE
 
 
-	
+
 import math
 import os
 import sys
@@ -44,7 +44,7 @@ class baseModule:
             param=desc['outputs'][i];
             vname = param['varname'];
             self.outputs[vname]=None;
-            
+
     def getDescription(self):
         if (self.description == None):
             self.description=self.createDescription();
@@ -61,7 +61,7 @@ class baseModule:
         print(self.inputs);
 
         return self.directInvokeAlgorithm(params);
-    
+
     def directInvokeAlgorithm(self,vals):
         return False;
 
@@ -70,7 +70,7 @@ class baseModule:
 
     def getOutputObject(self,name='output'):
         return self.outputs[name];
-    
+
     def parseValues(self,args):
         des = self.getDescription();
         out = {};
@@ -95,7 +95,7 @@ class baseModule:
                 out[vname] = args[name];
 
         return out;
-    
+
     def typeCheckParam(self,param, val):
 
         try:
@@ -109,7 +109,7 @@ class baseModule:
             print('Parameter', param['name'], 'does not have a default value');
             return False;
 
-        
+
         if (tp=="bool" or tp=="boolean") :
             return (val in ['0', '1', True, False, 'true', 'false', 'True','False','on', 'off' ]);
 
@@ -118,7 +118,7 @@ class baseModule:
             restrict=param['restrict']
         elif ('restrictAnswer' in param):
             restrict=param['restrictAnswer']
-        
+
         lowval=None;
         if ('lowwval' in param):
             lowval=param['lowval']
@@ -132,11 +132,11 @@ class baseModule:
             highval=param['high']
 
         if (restrict!=None):
-            if (not val in restrict): 
+            if (not val in restrict):
                 print('----\n---- Parameter', param['name'] , ' val=',val, 'is not in ', restrict);
                 return False;
-	    
-	
+
+
         if (lowval!=None):
             if (val < lowval):
                 print('----\n---- Parameter', param['name'] , ' val=',val, 'is < bound=',lowval);
@@ -151,7 +151,7 @@ class baseModule:
 
     def typeCheckParams(self,vals):
         desc = self.getDescription();
-        
+
         for i in range (0,len(desc['params'])):
             param = desc['params'][i];
             if (self.typeCheckParam(param, vals[param['varname']])==False):
@@ -166,6 +166,8 @@ class baseModule:
 
         if (objecttype=='image'):
             self.inputs[key]=bis_objects.bisImage();
+        elif (objecttype=='surface'):
+            self.inputs[key]=bis_objects.bisSurface();
         elif (objecttype=='matrix' or objecttype=='vector'):
             self.inputs[key]=bis_objects.bisMatrix();
         elif (objecttype == 'transformation' or objecttype == 'transform'):
@@ -173,17 +175,18 @@ class baseModule:
             if (self.inputs[key]==None):
                 return False;
             return True
-        
-        try: 
+
+        try:
             ok=self.inputs[key].load(filename);
-            if (ok!=False):
+            if (ok!=False and objecttype != 'surface'):
                 sz=self.inputs[key].data_array.shape;
                 if (sz[1]==1 and objecttype=='vector'):
                     tmp=self.inputs[key];
                     self.inputs[key]=bis_objects.bisVector();
                     self.inputs[key].create(tmp.data_array.flatten());
                     ok=self.inputs[key];
-                    
+            elif (ok==False):
+                return False;
         except:
             return False;
 
@@ -191,7 +194,7 @@ class baseModule:
         if (ok!=False):
             return True;
         return ok;
-    
+
 
     def loadInputs(self,inputparameters={}):
 
@@ -205,7 +208,7 @@ class baseModule:
                 inpname=inputparameters[name]
             else:
                 print('No',name,' in inputparameters',inputparameters);
-                
+
             required=False;
             if ('required' in param):
                 required =param['required'];
@@ -215,15 +218,14 @@ class baseModule:
             if (required and inpname==None):
                 print('.... Can not load '+name+' '+objtype+', no filename specified');
                 return False;
-            
+
             if (required or inpname != None):
-                print('.... Initializing reading of ',name,inpname,objtype);
                 ok=self.loadSingleInput(name,inpname,objtype);
                 if (ok==False):
                     return False;
-                
+
         return True;
-    
+
     def saveOutputs(self,inputparameters={}):
 
         desc = self.getDescription();
@@ -237,7 +239,7 @@ class baseModule:
             except:
                 outname=None;
                 print('No',name,' in inputparameters',inputparameters);
-                
+
             try:
                 required =param['required'];
             except:
@@ -245,7 +247,7 @@ class baseModule:
 
             objtype=param['type'];
 
-            
+
             if (required and outname==None):
                 print('.... Can not save '+name+' '+objtype+', no filename specified');
                 return False;
@@ -262,6 +264,6 @@ class baseModule:
 
     def parseBoolean(self,val):
 
-        if (val in [ '1', 'true' , True,'True','on']): 
+        if (val in [ '1', 'true' , True,'True','on']):
             return True;
         return False;

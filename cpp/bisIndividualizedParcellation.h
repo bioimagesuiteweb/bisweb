@@ -55,7 +55,7 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
-  // BIS: { 'individualizedParcellationWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ] }
+  // BIS: { 'individualizedParcellationWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ], {"checkorientation" : "all"} }
   BISEXPORT unsigned char* individualizedParcellationWASM(unsigned char* input, unsigned char* groupparcellation,const char* jsonstring,int debug);
 
 }

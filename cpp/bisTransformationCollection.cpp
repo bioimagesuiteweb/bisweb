@@ -49,13 +49,13 @@ std::shared_ptr<bisAbstractTransformation> bisTransformationCollection::getTrans
 }
 
 // -------------------------------------------------------------------
-int bisTransformationCollection::getRawSize()
+long bisTransformationCollection::getRawSize()
 {
   // Header
   // 16 bytes big header
   // 4 bytes my header = num_transformations
 
-  int rawsize=20;
+  long rawsize=20;
   int sz=this->transformations.size();
   for (int i=0;i<sz;i++)
     rawsize+=this->transformations[i]->getRawSize();

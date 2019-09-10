@@ -26,6 +26,7 @@
 namespace bisMemoryManagement {
 
   int debug_memory=0;
+  int large_memory=0;
   std::map <long, long> memory_map;
   std::map <long, std::string> memory_map_name;
   std::map <long, bisObject*> memory_map_owner;
@@ -36,13 +37,27 @@ namespace bisMemoryManagement {
       return 1;
     return 0;
   }
+  
+  int largeMemory() {
+#ifdef BISWASM
+    return 0;
+#else
+    if (large_memory>0)
+      return 1;
+    return 0;
+#endif
+  }
 
   void setDebugMemoryMode(int m) {
     debug_memory=m;
   }
-  
 
-  unsigned char* allocate_memory(int sz,std::string name,std::string operation,bisObject* owner) {
+  void setLargeMemoryMode(int m) {
+    large_memory=m;
+  }
+
+
+  unsigned char* allocate_memory(long sz,std::string name,std::string operation,bisObject* owner) {
 
     unsigned char* out_pointer=new unsigned char[sz];
 
@@ -66,7 +81,7 @@ namespace bisMemoryManagement {
 
   void release_memory(unsigned char* pointer,std::string operation) {
 
-    int sz2=-1;
+    long sz2=-1;
     long pt=(long)pointer;
     std::string name="unknown";
     bisObject* owner=0;
@@ -97,7 +112,7 @@ namespace bisMemoryManagement {
 
   void not_releasing_memory(unsigned char* pointer,std::string operation,int used_to_own) {
 
-    int sz2=-1;
+    long sz2=-1;
     long pt=(long)pointer;
     std::string name="unknown";
     bisObject* owner=0;
@@ -202,7 +217,7 @@ namespace bisMemoryManagement {
   }
 
 
-  void copy_memory(unsigned char* output,unsigned char* input,int length) {
+  void copy_memory(unsigned char* output,unsigned char* input,long length) {
 
     memcpy(output,input,length);
   }

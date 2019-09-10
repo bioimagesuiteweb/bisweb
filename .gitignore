@@ -21,8 +21,4 @@ package-lock.json
 **/screenshots
 **/*.o
 **/libbiswasm_wasm.js
-**/docker/wasm
 web/LICENSE
-**/bioimagesuiteweb-*
-**/docker/native
-**/docker/web

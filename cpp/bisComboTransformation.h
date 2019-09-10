@@ -92,7 +92,7 @@ class bisComboTransformation : public bisAbstractTransformation {
   virtual void serializeInPlace(unsigned char* output);
 
   /** returns size needed to serialize this object in bytes */
-  virtual int getRawSize();
+  virtual long getRawSize();
 
 
   /** serialize to Text 

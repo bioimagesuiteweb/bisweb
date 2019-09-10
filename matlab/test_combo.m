@@ -19,7 +19,7 @@ bispath()
 
 lib=biswrapper();
 
-lib.redirect_stdout('matlog2.txt',1);
+%lib.redirect_stdout('matlog2.txt',1);
 
 lines=fileread([ '..' filesep 'test' filesep 'testdata' filesep 'complex.grd']);
 combo=lib.parseComboTransformTextFileWASM(lines,1);

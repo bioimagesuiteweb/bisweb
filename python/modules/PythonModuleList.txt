@@ -2,6 +2,7 @@ approximateField
 blankImage
 butterworthFilter
 butterworthFilterImage
+calciumPreprocess
 changeImageSpacing
 clusterThreshold
 computeCorrelation
@@ -32,3 +33,4 @@ shiftScaleImage
 sliceBiasCorrect
 smoothImage
 thresholdImage
+

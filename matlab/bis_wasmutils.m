@@ -29,6 +29,7 @@ function moduleOutput = bis_wasmutils()
     Module='biswasm';
   end
   internal.name='xenios';
+  internal.force_large_memory=0;
 
   moduleOutput.Module=Module;
   moduleOutput.loadlib=@initialize;
@@ -46,6 +47,7 @@ function moduleOutput = bis_wasmutils()
   moduleOutput.get_type_size=@get_type_size;
   moduleOutput.get_matlab_type_size=@get_matlab_type_size;
   moduleOutput.get_matlab_type=@get_matlab_type;
+  moduleOutput.force_large_memory=@force_large_memory;
 
   % Data Object serialization
   moduleOutput.serialize_dataobject_bytearray=@serialize_dataobject_bytearray;
@@ -93,6 +95,8 @@ function moduleOutput = bis_wasmutils()
       str=['__check library -- this should be 1700. return=',mat2str(a)];
       disp(str);
     end
+    disp('__')
+    
 
     
   end
@@ -101,11 +105,35 @@ function moduleOutput = bis_wasmutils()
   function c=redirect_stdout(fname)
     c=calllib(Module,'redirect_stdout',fname);
   end
-				% Unload Library
+
+% Unload Library
   function res = unload()
     unloadlibrary(Module);
     res=1;
   end
+
+% -----------------------------------------------------  
+% force_large_memory
+  function res = force_large_memory(val)
+    if nargin < 1
+        val=3;
+    end
+    if (val == 1 || val ==3)
+        internal.force_large_memory=1;
+    else
+         internal.force_large_memory=0;
+    end
+    
+    if (val >=2)
+       calllib(Module,'set_large_memory_mode',1);
+    else
+       calllib(Module,'set_large_memory_mode',0);
+    end
+    
+    res=val;
+  end
+
+
 % -----------------------------------------------------  
 
   function out=json_stringify(obj)
@@ -334,12 +362,14 @@ function moduleOutput = bis_wasmutils()
     
     top_header=zeros(1,4,'int32');
     mode=1;
+    totallength=1;
 
     if l1==1 
       top_header(1)=get_vector_magic_code();
       top_header(2)=get_nifti_code(mat);
       top_header(3)=0;
       top_header(4)=itemsize*dimensions(1);
+      totallength=dimensions(1)*itemsize;
       mode=1;
     elseif l1==2
       top_header(1)=get_matrix_magic_code();
@@ -347,17 +377,30 @@ function moduleOutput = bis_wasmutils()
       top_header(3)=8;
       top_header(4)=itemsize*dimensions(1)*dimensions(2);
       dimensions=[dimensions(1),dimensions(2) ];
+      totallength=dimensions(1)*dimensions(2)*itemsize;
+      if totallength > 2147483648 || internal.force_large_memory>0
+         disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
+         top_header(4)=-itemsize;
+      end    
       mode=2;
     else
       top_header(1)=get_image_magic_code();
       size(mat);
       top_header(2)=get_nifti_code(mat);
       top_header(3)=40;
+      totallength=prod(dimensions)*itemsize;
       top_header(4)=prod(dimensions)*itemsize;
+      if totallength > 2147483648 || internal.force_large_memory>0
+         disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
+         top_header(4)=-itemsize;
+      end    
       mode=3;
     end
 
+    
+
 %    disp('---------------------------------------\nheader');
+%    disp(dimensions);
 %    disp(top_header)
 %    disp('mode');
 %    disp(mode);
@@ -405,10 +448,16 @@ function moduleOutput = bis_wasmutils()
     
 
   % -----------------------------------------------------
-  function out=deserialize_pointer(ptr,offset)
+  function out=deserialize_pointer(ptr,offset,other)
+
+    hasother=1;
 
     if nargin < 2
       offset=0;
+    end
+
+    if nargin < 3
+      hasother=0;
     end
 
     
@@ -417,7 +466,19 @@ function moduleOutput = bis_wasmutils()
     typename=get_matlab_type(top_header(2));
     headersize=top_header(3);
     data_bytelength=top_header(4);
-
+    if (data_bytelength<0)
+      disp('==== MATLAB large image deserialize');
+      % Xenios to add
+      reshape(ptr,36+offset,1);
+      dim=typecast(ptr.Value(17+offset:36+offset),'int32');
+      switch(top_header(1))
+        case get_matrix_magic_code()
+            data_bytelength=-data.bytelength*dim(2)*dim(1);
+        case get_image_magic_code()
+            data_bytelength=-data_bytelength*dim(1)*dim(2)*dim(3)*dim(4)*dim(5);
+      end
+      disp(['====        fixed bytelength=',mat2str(data_bytelength),' th=',mat2str(top_header(4)),' dm=',mat2str(dim)]);
+    end
     typesize=get_matlab_type_size(typename);
     data_length=data_bytelength/typesize;
 
@@ -442,8 +503,22 @@ function moduleOutput = bis_wasmutils()
 	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
 	    out.img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
 	    out.hdr.dime.dim=[ 5, dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5) ];
-            sp=typecast(rawdata(37+offset:56+offset,:),'single');
-            out.hdr.dime.pixdim=[ 1.0, sp(1), sp(2), sp(3), sp(4), sp(5) ];
+        sp=typecast(rawdata(37+offset:56+offset,:),'single');
+        out.hdr.dime.pixdim=[ 1.0, sp(1), sp(2), sp(3), sp(4), sp(5) ]';
+        
+        if hasother > 0
+            out.affine=other.affine;
+            out.orcode=other.orcode;
+            oldsp=[ norm(out.affine(1:3,1:1)),
+                  norm(out.affine(1:3,2:2)),
+                  norm(out.affine(1:3,3:3))]';
+            for col=1:3
+               for row=1:3,
+                    out.affine(row,col)=out.affine(row,col)*sp(col)/oldsp(col);
+               end
+            end
+            out.spacing=sp';
+        end
 	  case get_grid_magic_code()
 	    out={ };
 	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),'int32');
@@ -568,8 +643,8 @@ function moduleOutput = bis_wasmutils()
   end
   % ----------------------------------------------------------------------------------------------------------------
 
-  function out=deserialize_and_delete_pointer(ptr)
-    out=deserialize_pointer(ptr);
+  function out=deserialize_and_delete_pointer(ptr,other)
+    out=deserialize_pointer(ptr,0,other);
     calllib(Module,'jsdel_array',ptr);
   end
 
@@ -664,15 +739,19 @@ function moduleOutput = bis_wasmutils()
 
   end
 
-  function out =wrapper_deserialize_and_delete(ptr,datatype)    
+  function out =wrapper_deserialize_and_delete(ptr,datatype,other)    
+
+    if nargin<3
+        other=0
+    end
 
     switch(datatype)
       case 'bisComboTransformation'
-	out=deserialize_combotransformation_and_delete(ptr);
+	    out=deserialize_combotransformation_and_delete(ptr);
       case 'String'
-	out=deserialize_and_delete_string(ptr);
+	    out=deserialize_and_delete_string(ptr);
       otherwise
-	out=deserialize_and_delete_pointer(ptr);
+	    out=deserialize_and_delete_pointer(ptr,other);
     end
     
   end
