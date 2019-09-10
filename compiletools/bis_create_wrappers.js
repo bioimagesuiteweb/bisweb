@@ -750,7 +750,13 @@ var create_pointers_matlab = function(names) {
 };
 
 // --------------------------------------------------------------------------
-var handle_output_pointer_matlab=function(outputtype) {
+var handle_output_pointer_matlab=function(outputtype,firstelement) {
+
+    if (outputtype==='bisImage' && firstelement.bistype==="bisImage")
+    return `
+    % Deserialize Output
+    output=biswasm.wrapper_deserialize_and_delete(wasm_output,'${outputtype}',${firstelement.variablename});
+`;
 
     return `
     % Deserialize Output

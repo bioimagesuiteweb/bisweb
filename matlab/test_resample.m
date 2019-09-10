@@ -15,8 +15,6 @@
 % 
 % ENDLICENSE
 
-clear
-
 bispath();
 lib=biswrapper();
 
@@ -24,49 +22,25 @@ m=mfilename('fullpath');
 [filepath,name,ext] = fileparts(m);
 [filepath,name,ext] = fileparts(filepath);
 fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'MNI_2mm_resliced.nii.gz'];
-fname2=[ filepath filesep  'test' filesep 'testdata' filesep 'newtests' filesep 'goldsmooth2sigma.nii.gz'];
-format long;
-
-param.sigmas=[2.0,2.0,2.0 ];
-param.radiusfactor=2.0;
-param.inmm='true';
-debug=1;
 
 % Load Images
-input = bis_loadimage(fname1,1);
-gold  = bis_loadimage(fname2,2);
+input = bis_loadimage(fname1,3);
 
-disp('----------------------------------');
-disp('Smoothing image');
-output = lib.gaussianSmoothImageWASM(input, param, debug);
+disp('Reslicing image');
+resliceobj.interpolation=0;
+resliceobj.dimensions=[ 45,45,45 ];
+resliceobj.spacing=[ 4.0,4.4,4.8];
+resliceobj.datatype='short';
+resliceobj.backgroundValue=0.0
 
+output=lib.resliceImageWASM(input,eye(4),resliceobj,1);
 
-disp(['Testing fake difference=']);
-max(max(max(abs(gold.img-single(input.img)))))
+testaff=eye(4);
+testaff(1,1)=-4.0;
+testaff(2,2)=-4.4;
+testaff(3,3)=4.8;
 
+testaff
+output.affine
 
-disp(['Testing real difference']);
-max(max(max(abs(gold.img-single(output.img)))))
-
-
-disp('----------------------------------');
-disp('Smoothing image 2');
-output2 = lib.gaussianSmoothImageWASM(input, param, debug);
-
-
-disp(['Testing real difference v2']);
-max(max(max(abs(gold.img-single(output2.img)))))
-
-
-disp('----------------------------------');
-disp('Smoothing image 2');
-param.sigmas=[0.1,0.1,0.1];
-
-output3 = lib.gaussianSmoothImageWASM(input, param, debug);
-
-disp(['Testing real difference 3']);
-max(max(max(abs(gold.img-single(output3.img)))))
-return;
-
-
-
+diff=max(max(testaff-output.affine))

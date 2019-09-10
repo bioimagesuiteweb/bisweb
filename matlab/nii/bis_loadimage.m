@@ -21,7 +21,7 @@
 % 
 % -----------------------------------------------------
 
-function bisimage = bis_loadimage(f)
+function bisimage = bis_loadimage(f,debug)
 
   if ~exist('niftiinfo')
      disp('BISWEB ERROR -- You need a newer version of Matlab -- 2017b or later to use this function');
@@ -29,47 +29,38 @@ function bisimage = bis_loadimage(f)
      return;
   end
   
+  if (nargin<1)
+    bisimage=0;
+    return;
+  end
 
+  if (nargin<2)
+    debug=2;
+  end
+
+  h=niftiinfo(f);
+  bisimage=load_untouch_nii(f,[],[],[],[],[],[]);
   bisimage.desc='Bisweb matlab image';
-  if (nargin > 0)
-      d=load(f);
-      internal=d.header;
+  bisimage.header=h;
+  bisimage.affine=h.Transform.T;
+  bisimage.spacing=h.PixelDimensions;
+  bisimage.orcode=getorient(bisimage.spacing,bisimage.affine);
+
+  if (debug>0)
+    disp([ '___ Loaded image from ',h.Filename])
+    if (debug>1)
+        disp(['      dimensions=',mat2str(h.ImageSize),' spacing=',mat2str(h.PixelDimensions),' orientation=',bisimage.orcode,' type=',class(bisimage.img)]);
+        if (debug>2)
+            disp(['      matrix=',mat2str(bisimage.affine)]);
+        end
     end
-  bisimage=d;
-  bisimage.orcode=getorient(internal);
-  h=internal;
-  disp([ '___ Loaded image from ',h.Filename])
-  disp(['      dimensions=',mat2str(h.ImageSize),' spacing=',mat2str(h.PixelDimensions),' orientation=',bisimage.orcode,' type=',class(bisimage.img)]);
-% -----------------------------------------------------
-% Load
-  function status = load(pathname)
-
-
-    if ~exist('pathname')
-        disp(['Filename ',pathname,' does not exist' ]);
-        status=0;
-        return;
-    end;
-
-    H=niftiinfo(pathname);
-    V=load_untouch_nii(pathname,[],[],[],[],[],[]);
-    status=V;
-    status.header=H;
-    
-% -----------------------------------------------------
-% Save
-
-%  function status = save(pathname)
-
-%      status=niftiwrite(bisimage.img,pathname,bisimage.info);
+  end
 
 % ----------------------------------------------------
 % Orientation
 
-   function orcode = getorient(internal)
+   function orcode = getorient(spacing,T)
 
-        spacing=internal.PixelDimensions;
-        T=internal.Transform.T;
         A=T(1:3,1:3);
         S=eye(3);
         for ia=1:3
