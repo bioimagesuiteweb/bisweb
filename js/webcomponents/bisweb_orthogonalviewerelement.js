@@ -391,12 +391,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             context.fillStyle = "#222222";
 
         let x = this.internal.layoutcontroller.getviewerwidth() * 0.5;
-        console.log('clear area', this.cleararea);
-        console.log('x', x);
-        context.clearRect(0, y0,0.5*dw-4 + 0,dh-y0);
+        context.clearRect(0, y0,1.0*dw-4 + 0,dh-y0);
         context.textAlign="left";
         context.textBaseline="bottom";
-        context.fillText(s,(0+0.01)*fullwidth,dh-1);
+        context.fillText(s,(this.cleararea[0]+0.75)*fullwidth,dh-1);
     }
 
     getViewerCrossHairs() { return this.internal.slicecoord; }
