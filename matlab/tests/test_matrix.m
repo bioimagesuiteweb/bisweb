@@ -23,8 +23,7 @@ function result=test_matrix(debug)
         debug=1
     end
 
-    bispath();
-    lib=biswrapper();
+    [testutil,filepath,lib]=bis_testutils();
 
 
     m=zeros(4,'single');
@@ -53,10 +52,7 @@ function result=test_matrix(debug)
     end
     disp('--------------------------------------------------------------------------')
     
-    m=mfilename('fullpath');
-    [filepath,name,ext] = fileparts(m);
-    [filepath,name,ext] = fileparts(filepath);
-    fname1=[ filepath filesep 'test' filesep 'testdata' filesep 'glm' filesep 'Test_bis_glm.matr' ];
+    fname1=[ filepath filesep 'glm' filesep 'Test_bis_glm.matr' ];
 
     lines=fileread(fname1);
     out=lib.parseMatrixTextFileWASM(lines,1);
@@ -78,20 +74,8 @@ function result=test_matrix(debug)
             1.000000 -0.879397 3.876820 ;
             1.000000 -0.869347 3.211632 ];
             
-    size(out)
     out2=out(1:14,:);
-    diff=max(max(abs(out2-ORIG)));
-    disp(['=== Errors=',mat2str(diff)]);
 
-    if (diff<0.1)
-        result=1;
-        disp('=== Test Matrix Read PASS')
-    else 
-        result=0;
-        disp('=== Test Matrix Read FAILED')
-    end
-    disp('--------------------------------------------------------------------------')
-    if (numfailed>0)
-        result=0;
-    end
+    result=testutil.compare(out2,ORIG,'Matrix load (.matr)',0,0.1);
 
+end

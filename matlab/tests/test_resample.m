@@ -22,14 +22,8 @@ function result=test_resample(debug)
         debug=1
     end
 
-    bispath();
-    lib=biswrapper();
-    
-
-    m=mfilename('fullpath');
-    [filepath,name,ext] = fileparts(m);
-    [filepath,name,ext] = fileparts(filepath);
-    fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'MNI_2mm_resliced.nii.gz'];
+    [testutil,filepath,lib]=bis_testutils();
+    fname1=[ filepath  filesep 'MNI_2mm_resliced.nii.gz'];
 
     % Load Images
     input = bis_loadimage(fname1,debug+1);
@@ -56,15 +50,5 @@ function result=test_resample(debug)
         output.affine
     end
 
-    diff=max(max(testaff-output.affine));
-
-    if (diff<0.1)
-        result=1;
-        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-        disp('=== Test Resample PASS')
-    else 
-        result=0;
-        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-        disp('=== Test Resample FAILED')
-    end
-
+    result=testutil.compare(testaff,output.affine,'Image Resample (affine matrix)',0,0.1);
+end

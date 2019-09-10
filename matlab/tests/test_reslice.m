@@ -23,8 +23,7 @@ function result=test_resample(debug)
         debug=1
     end
 
-    testutil=bis_testutils()
-    filepath=testutil.initialize();
+    [testutil,filepath,lib]=bis_testutils();
 
 
     imagenames= {};
@@ -56,8 +55,7 @@ function result=test_resample(debug)
         paramobj
     end
 
-    lib=testutil.getlib();
     out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,debug);
     result=testutil.compare(images{3}.img,out_img.img,'Image Reslice',1,0.99);
 
-
+end

@@ -23,19 +23,16 @@ function result=test_largemem_smooth(debug)
     end
 
 
-    bispath();
-    lib=biswrapper();
+    [testutil,filepath,lib]=bis_testutils();
+
     bw=lib.getbiswasm();
 
     % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
     bw.force_large_memory();
 
 
-    m=mfilename('fullpath');
-    [filepath,name,ext] = fileparts(m);
-    [filepath,name,ext] = fileparts(filepath);
-    fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'indiv' filesep 'prep.nii.gz' ];
-    fname2=[ filepath filesep  'test' filesep 'testdata' filesep 'indiv' filesep 'prep_sm.nii.gz'];
+    fname1=[ filepath filesep 'indiv' filesep 'prep.nii.gz' ];
+    fname2=[ filepath filesep 'indiv' filesep 'prep_sm.nii.gz'];
     format long;
 
     param.sigmas=0.4247*[4.0,4.0,4.0 ];
@@ -59,17 +56,8 @@ function result=test_largemem_smooth(debug)
         disp(['Testing real difference']);
     end 
 
-    diff=max(max(max(max(abs(gold.img-single(output.img))))));
+    result=testutil.compare(gold.img,output.img,'Image Smooth -- Large Memory',0,0.1);
 
-    
-    if (diff<0.1)
-        result=1;
-        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-        disp('=== Test Large Memory PASS')
-    else 
-        result=0;
-        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-        disp('=== Test Large Memory FAILED')
-    end
+end
 
 

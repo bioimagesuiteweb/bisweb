@@ -15,45 +15,41 @@
 % 
 % ENDLICENSE
 
-function moduleOutput = bis_testutils()
+function [ moduleOutput,filepath,lib] = bis_testutils()
 
     internal={};
     internal.initialized=0;
     internal.filepath='';
     internal.lib=0;
 
-    moduleOutput.initialize=@initialize;
     moduleOutput.gettestdatapath=@gettestdatapath;
     moduleOutput.printresult=@printresult;
     moduleOutput.compare=@compare;
     moduleOutput.getlib=@getlib;
     
-  % -----------------------------------------------------
-  % Initialize Library
-    function result = initialize()
-
-
-        if (internal.initialized>0)
-          result=1;
-          return;
-        end
-
-        m=mfilename('fullpath');
-        [filepath,name,ext] = fileparts(m);
-        [filepath,name,ext] = fileparts(filepath);
-        filepath
-        addpath(filepath);
-        bispath();
-
-        [filepath,name,ext] = fileparts(filepath);
-      
-        result=[ filepath filesep 'test' filesep 'testdata' ];
-        disp(['Testdata path=',result]);
-        internal.filepath=result;
-
-        internal.lib=biswrapper();      
-
+    if (internal.initialized>0)
+      result=1;
+      return;
     end
+
+    m=mfilename('fullpath');
+    [filepath,name,ext] = fileparts(m);
+    [filepath,name,ext] = fileparts(filepath);
+    addpath(filepath);
+    bispath();
+
+    [filepath,name,ext] = fileparts(filepath);
+  
+    result=[ filepath filesep 'test' filesep 'testdata' ];
+    disp(['Testdata path=',result]);
+    internal.filepath=result;
+
+    internal.lib=biswrapper();   
+    
+    lib=internal.lib;
+    filepath=result;
+
+
 
     function result=gettestdatapath()
        result=internal.filepath;

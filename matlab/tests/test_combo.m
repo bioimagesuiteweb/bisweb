@@ -21,10 +21,9 @@ function result=test_combo(debug)
         debug=1;
     end
 
-    bispath();
-    lib=biswrapper();
-
-    lines=fileread([ '..' filesep 'test' filesep 'testdata' filesep 'complex.grd']);
+    [testutil,filepath,lib]=bis_testutils();
+    
+    lines=fileread([ filepath filesep 'complex.grd']);
     if (debug>0)
         lines(1:400)
     end
@@ -61,6 +60,13 @@ function result=test_combo(debug)
         dl=combo.linear-linear;
         error0=max(max(dl));
 
+        result=0;
+        if (error0<0.01)
+            result=1;
+        end
+
+        result=testutil.printresult('Test Combo (Linear)',result,error0,'maxabs');
+
         if (debug>0)
             disp(['=== Test 1: linear error=',mat2str(error0) ]);
         end
@@ -82,19 +88,15 @@ function result=test_combo(debug)
             end
         end
 
-
-
         disp(['=== Errors=',mat2str(error0),' ',mat2str(error1)]);
 
         diff=max(abs(error0),abs(error1));
-            
+
         if (diff<0.1)
             result=1;
-            disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-            disp('=== TestCombo PASS')
         else 
             result=0;
-            disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-            disp('=== Test Combo FAILED')
         end
-
+        result=testutil.printresult('Test Combo (Both)',result,diff,'maxabs');
+    end
+end

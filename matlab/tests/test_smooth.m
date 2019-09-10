@@ -21,15 +21,10 @@ function result = test_smooth(debug)
         debug=1
     end
 
-    bispath();
-    lib=biswrapper();
-   
+    [testutil,filepath,lib]=bis_testutils();
 
-    m=mfilename('fullpath');
-    [filepath,name,ext] = fileparts(m);
-    [filepath,name,ext] = fileparts(filepath);
-    fname1=[ filepath filesep  'test' filesep 'testdata' filesep 'MNI_2mm_resliced.nii.gz'];
-    fname2=[ filepath filesep  'test' filesep 'testdata' filesep 'newtests' filesep 'goldsmooth2sigma.nii.gz'];
+    fname1=[ filepath filesep 'MNI_2mm_resliced.nii.gz'];
+    fname2=[ filepath filesep 'newtests' filesep 'goldsmooth2sigma.nii.gz'];
     format long;
 
     param.sigmas=[2.0,2.0,2.0 ];
@@ -89,20 +84,10 @@ function result = test_smooth(debug)
     gold=[ 57.14,0,0,57.14];
     mat=[v1,v2,v3,v4];
 
-    disp('=== Smooth test completed')
-    diff=max(abs(gold-mat));
-    if (diff<0.1)
-        result=1;
-        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-        disp('=== Test Smooth PASS')
-    else 
-        result=0;
-        disp(['=== Max error=',mat2str(diff),' result=',mat2str(result),'']);
-        disp('=== Test Smooth FAILED')
-    end
+    disp(['=== Smooth test completed',mat2str(mat)])
+    result=testutil.compare(gold,mat,'Image Smooth (multiple tests)',0,0.1);
 
-
-    return;
+ return;
 
 
 
