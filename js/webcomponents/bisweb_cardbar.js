@@ -31,7 +31,7 @@ class BiswebCardBar extends HTMLElement {
                 <div id='bisweb-plot-navbar' class='collapse' style='position: absolute; bottom: ${bottomNavElementHeight}'>
                     <div class='bg-dark p-4'>
                         <ul class='nav nav-tabs bisweb-bottom-nav-tabs' role='tablist'></ul>
-                        <div class='tab-content bisweb-sliding-tab bisweb-collapse'></div>
+                        <div class='tab-content bisweb-collapse'></div>
                     </div>
                 </div>
             </div> 
@@ -139,15 +139,34 @@ class BiswebCardBar extends HTMLElement {
                 try {
                     let tabId = bis_webutil.getuniqueid();
                     let tab = $(`<li class='nav-item'><a class='nav-link' href='#${tabId}' role='tab' data-toggle='tab'>${title}</a></li>`);
-                    let tabContent = $(`<div id='${tabId}' class='tab-pane fade' role='tabpanel'></div>`);
-                    
+                    let tabPane = $(`<div id='${tabId}' class='tab-pane fade' role='tabpanel'>
+                                        <div class='bisweb-card-pane-background'></div>
+                                        <div class='bisweb-card-pane'></div>
+                                    </div>`);
+
+
+                    let tabContent = tabPane.find('.bisweb-card-pane');
                     tabContent.append(content);
                     self.addTabHideButton(tabContent);
                     if (opts.save) { self.addSaveButton(tabContent); }
 
                     self.cardLayout.find('.bisweb-bottom-nav-tabs').append(tab);
-                    self.cardLayout.find('.tab-content').append(tabContent);
+                    self.cardLayout.find('.tab-content').append(tabPane);
             
+                    //activate blur area over canvas (otherwise only blurs the background of the card pane)
+                    let blurArea = $('.baseviewerwidget');
+                    tabPane.on('shown.bs.tab resize', () => {
+                        //set height and width of blur effect in baseviewer
+                        let height = $(tabContent).height(), width = $(tabContent).width();
+                        blurArea.height(height);
+                        blurArea.width(width);
+                        blurArea.prop('visibility', 'visible');
+                    });
+
+                    tabPane.on('hide.bs.tab', () => {
+                        blurArea.prop('visibility', 'hidden');
+                    });
+
                     resolve({ 'tab' : tab, 'content' : tabContent });
                 } catch(e) {
                     reject(e);
