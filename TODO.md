@@ -1,0 +1,1 @@
+-- Add testing for multiple file selection (Electron and Browser)
