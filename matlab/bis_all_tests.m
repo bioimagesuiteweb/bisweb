@@ -2,6 +2,9 @@
 
 function result=all_tests(debug)
 
+    m=mfilename('fullpath');
+    [filepath,name,ext] = fileparts(m);
+    addpath([ filepath filesep 'tests' ]);
 
     if nargin<1
         debug=1

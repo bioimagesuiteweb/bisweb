@@ -23,23 +23,18 @@ function result=test_resample(debug)
         debug=1
     end
 
-    bispath();
-    lib=biswrapper();
+    testutil=bis_testutils()
+    filepath=testutil.initialize();
+
 
     imagenames= {};
     imagenames{1}='avg152T1_LR_nifti_resampled.nii.gz';
     imagenames{2}='avg152T1_LR_nifti.nii.gz';
     imagenames{3}='avg152T1_LR_nifti_resampled_resliced.nii.gz';
-
-
     images = { };
 
-    m=mfilename('fullpath');
-    [filepath,name,ext] = fileparts(m);
-    [filepath,name,ext] = fileparts(filepath);
-
     for i = 1:3
-        filename=[ filepath filesep 'test' filesep 'testdata' filesep imagenames{i} ];
+        filename=[ filepath filesep imagenames{i} ];
         images{i} = bis_loadimage(filename,debug+1);
     end
 
@@ -61,31 +56,8 @@ function result=test_resample(debug)
         paramobj
     end
 
+    lib=testutil.getlib();
     out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,debug);
-
-    s1=size(images{3}.img);
-    data1=single(reshape(images{3}.img,[prod(s1),1]));
-    
-    s1=size(out_img.img);
-    data2=single(reshape(out_img.img,[prod(s1),1]));
-    
-    v=corrcoef(data1,data2);
-    v2=v(1,2);
-    
-
-    if (debug>0)
-        v
-    end
-
-    
-    if (v2>0.99)
-        result=1;
-        disp(['=== CCr=',mat2str(v2) ]);
-        disp('=== Test Reslice Image PASS')
-    else 
-        result=0;
-        disp(['=== CCr=',mat2str(v2) ]);
-        disp('=== Test Reslice Image FAILED')
-    end
+    result=testutil.compare(images{3}.img,out_img.img,'Image Reslice',1,0.99);
 
 
