@@ -405,7 +405,8 @@ function moduleOutput = bis_wasmutils()
       top_header(3)=40;
       totallength=prod(dimensions)*itemsize;
       top_header(4)=prod(dimensions)*itemsize;
-      if totallength > 2147483648 || internal.force_large_memory>0
+
+      if totallength > 2147483647 || internal.force_large_memory>0
          disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
          top_header(4)=-itemsize;
       end    

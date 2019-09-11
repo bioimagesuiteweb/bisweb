@@ -24,7 +24,7 @@
 namespace bisSimpleDataUtil {
 
 #ifndef BISWASM  
-  const long MAX_SIZE=2147483648;
+  const long MAX_SIZE=2147483647;
 #endif
   
   template<class OT,class IT> unsigned char* internal_cast_raw_data(unsigned char* in_pointer,long& data_size,
