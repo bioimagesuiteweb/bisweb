@@ -24,9 +24,13 @@
 function moduleOutput = bis_wasmutils()
 
   Module='libbiswasm';
-
+  MExtension1='.dylib';
+  MExtension2='.so';
+  
   if filesep =='\'
     Module='biswasm';
+    MExtension1='.dll';
+    MExtension2='';
   end
   internal.name='xenios';
   internal.force_large_memory=0;
@@ -76,7 +80,6 @@ function moduleOutput = bis_wasmutils()
 				% Initialize Library
   function libname = initialize(pathname)
 
-
     if ~exist('pathname')
       m=mfilename('fullpath');
       [filepath,name,ext] = fileparts(m);
@@ -85,9 +88,10 @@ function moduleOutput = bis_wasmutils()
       pathname=[ filepath filesep 'build' filesep 'native']
     end
       
-    
     libname= strcat(pathname,strcat(filesep,Module));
-    if ~exist(libname)
+    l1=strcat(libname,MExtension1);
+    l2=strcat(libname,MExtension2);
+    if ~exist(l1) && ~exist(l2)
       m=mfilename('fullpath');
       [filepath,name,ext] = fileparts(m);
       [filepath,name,ext] = fileparts(filepath);
