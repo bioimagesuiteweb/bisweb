@@ -32,11 +32,8 @@ function moduleOutput = bis_image(fname,debug)
 
     moduleOutput.load=@load;
     moduleOutput.save=@save;
-    moduleOutput.clone=@clone;
     moduleOutput.create=@create;
     moduleOutput.print=@print;
-    moduleOutput.getOrientationCode=@getorientationcode;
-    moduleOutput.getImage=@getImage;
     moduleOutput.getImageData=@getImageData;
     moduleOutput.getSpacing=@getSpacing;
     moduleOutput.getDimensions=@getDimensions;
@@ -50,11 +47,13 @@ function moduleOutput = bis_image(fname,debug)
         load(fname,debug);
     end
 
-    % Retuns the image data structure
-    function result = getImage()
-        result=internal;
-    end
-
+    
+    % ------------------------------------------
+    %
+    %  Get Internal Properties / Data
+    %
+    % ------------------------------------------
+    
     function result = getImageData()
         result=internal.img;
     end
@@ -75,29 +74,31 @@ function moduleOutput = bis_image(fname,debug)
         result=size(internal.img);
     end
 
+    % -----------------------------------------------
+    % Create
+    %     img -- matlab matrix
+    %     spacing -- vector of pixel sizes
+    %     affine -- is 4x4 matrix or 'LPS' or 'RAS'
+    %
+    % ----------------------------------------------
     function result=create(img,spacing,affine)
-
-        if nargin==1
-            internal=img;
-            result=internal;
-            fixaffine();
-            internal.orcode=getorientationcode(internal.affine,internal.spacing);
-            return;
-        end 
 
         if (nargin<3)
             affine=eye(4);
         end 
 
-        sz=size(size(img));
-        a=zeros(sz);
-        for i=3:sz
-            a(i)=i;
+        sz=prod(size(affine));
+        if (sz==3)
+            if (affine=='LPS')
+                affine=eye(4);
+                affine(1,1)=-1;
+                affine(2,2)=-1;
+            elseif (affine=='RAS')
+                affine=eye(4);
+            end
         end
-        a(1)=2;
-        a(2)=1;
         
-        internal.img=permute(img,a);
+        internal.img=img;
         internal.spacing=spacing;
         fixspacing();
 
@@ -108,6 +109,90 @@ function moduleOutput = bis_image(fname,debug)
         return;
     end
 
+    
+    % ----------------------------------------------------------
+    % Print Image, name is description, debug controls printing
+    % ----------------------------------------------------------
+    function print(name,debug)
+
+        if (nargin<1)
+            name='';
+        end 
+        if (nargin<2)
+            debug=3;
+        end
+
+        disp([ '___ ',name])
+        if (debug>0)
+            disp(['      dimensions=',mat2str(size(internal.img)),' spacing=',mat2str(internal.spacing),' orientation=',internal.orcode,' type=',class(internal.img)]);
+            if (debug>1)
+                disp(['      matrix=',mat2str(internal.affine)]);
+            end
+        end
+
+    end
+  
+    % ----------------------------------------------------------
+    % Load Image from f, debug controls amount of printouts
+    % ----------------------------------------------------------
+    function result = load(f,debug)
+
+        if (nargin<1)
+            bisimage=0;
+            return;
+        end
+
+        if (nargin<2)
+            debug=2;
+        end
+
+        h=niftiinfo(f);
+        internal=load_untouch_nii(f,[],[],[],[],[],[]);
+        internal.desc='Bisweb matlab image';
+        internal.header=h;
+        internal.affine=transpose(h.Transform.T);
+        internal.spacing=h.PixelDimensions';
+
+        fixspacing();
+        internal.orcode=getorientationcode(internal.affine,internal.spacing);
+
+
+        print(['Loaded image from', h.Filename ],debug);
+        result=internal;
+    end
+
+    % --------------------------------------------------------------
+    % Save Image to filename f
+    % --------------------------------------------------------------
+    function result = save(f)
+
+        fixspacing();
+        fixaffine();
+        spacing=internal.spacing;
+
+        % Create header structure
+        nii=make_nii(internal.img,spacing(1:3));
+      
+        % Replace stuff in header structure to make this behave
+        nii.hdr.dime.pixdim=[ 0 , spacing(1), spacing(2), spacing(3), spacing(4), spacing(5), 1,1];
+        nii.hdr.hist.qform_code=0;
+        nii.hdr.hist.sform_code=1;
+        nii.hdr.hist.srow_x = internal.affine(1:1,1:4);
+        nii.hdr.hist.srow_y = internal.affine(2:2,1:4);
+        nii.hdr.hist.srow_z = internal.affine(3:3,1:4);
+        nii.hdr.hist.descrip='bisweb matlab';
+   
+        % Save
+        save_nii(nii,f);
+
+        result=1;
+    end
+    
+
+    % ----------------------------------------------------------
+    % Fix Spacing
+    % ----------------------------------------------------------
+    
     function result=fixspacing()
 
         s=max(size(internal.spacing));
@@ -122,6 +207,9 @@ function moduleOutput = bis_image(fname,debug)
         result=s;
     end
 
+    % ----------------------------------------------------------
+    % Fix Affine Matrix
+    % ----------------------------------------------------------
     function result=fixaffine()
         
         temp=internal.spacing;
@@ -144,58 +232,9 @@ function moduleOutput = bis_image(fname,debug)
         result=1;
     end
 
-    
-    function result=print(name,debug)
-
-        if (nargin<2)
-            debug=1
-        end
-
-        if (debug>0)
-            disp([ '___ ',name])
-            if (debug>1)
-                disp(['      dimensions=',mat2str(size(internal.img)),' spacing=',mat2str(internal.spacing),' orientation=',internal.orcode,' type=',class(internal.img)]);
-                if (debug>2)
-                    disp(['      matrix=',mat2str(internal.affine)]);
-                end
-            end
-        end
-
-        result=0;
-    end
-  
-    % ----------------------------------------------------------
-    % Load Image
-    % ----------------------------------------------------------
-
-
-    function result = load(f,debug)
-
-        if (nargin<1)
-            bisimage=0;
-            return;
-        end
-
-        if (nargin<2)
-            debug=2;
-        end
-
-        h=niftiinfo(f);
-        internal=load_untouch_nii(f,[],[],[],[],[],[]);
-        internal.desc='Bisweb matlab image';
-        internal.header=h;
-        internal.affine=h.Transform.T;
-        internal.spacing=h.PixelDimensions';
-
-        fixspacing();
-        internal.orcode=getorientationcode(internal.affine,internal.spacing);
-
-
-        print(['Loaded image from', h.Filename ],debug);
-        result=internal;
-    end
-
+    % -------------------------------------------------------------
     % Compute Orientation code given an affine matrix and spacing
+    % -------------------------------------------------------------
     function orcode = getorientationcode(affine,spacing)
 
         if (nargin<2)
