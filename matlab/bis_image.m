@@ -44,6 +44,7 @@ function moduleOutput = bis_image(fname,debug)
     moduleOutput.getImage=@getImage;
     moduleOutput.getImageData=@getImageData;
     moduleOutput.getSpacing=@getSpacing;
+    moduleOutput.getDimensions=@getDimensions;
     moduleOutput.getAffine=@getAffine;
     moduleOutput.getOrientation=@getOrientation;
     
@@ -73,11 +74,16 @@ function moduleOutput = bis_image(fname,debug)
     function result = getSpacing()
         result=internal.spacing;
     end
-    
+
+    function result = getDimensions()
+        result=size(internal.img);
+    end
+
     function result=create(a)
         internal=a;
         result=internal;
         fixaffine();
+        internal.orcode=getorientationcode(internal.affine,internal.spacing);
     end 
 
     function result=fixaffine()

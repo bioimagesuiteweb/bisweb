@@ -19,7 +19,8 @@ function result=all_tests(debug)
         test_matrix(debug),
         test_resample(debug),
         test_reslice(debug),
-        test_smooth(debug)
+        test_smooth(debug),
+        test_indiv(debug+1),
     ];
 
     s1=sum(result);

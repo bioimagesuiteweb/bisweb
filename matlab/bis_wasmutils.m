@@ -332,13 +332,12 @@ function moduleOutput = bis_wasmutils()
 
     if l1==2 && ( shp(1)==1 || shp(2)==1)
       if debug>0
-	disp('it is really a vector')
-	disp(shp);
+          disp('it is really a vector')
+          disp(shp);
       end
       mat=reshape(mat,1,prod(shp));
       shp= [ shp(1)*shp(2),1,1,1,1 ];
       l1=1;
-      
     end
       
     if debug > 0
@@ -507,26 +506,24 @@ function moduleOutput = bis_wasmutils()
 
 	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
 	    out.img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
-	    out.hdr.dime.dim=[ 5, dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5) ];
-        sp=typecast(rawdata(37+offset:56+offset,:),'single');
-        out.hdr.dime.pixdim=[ 1.0, sp(1), sp(2), sp(3), sp(4), sp(5) ]';
+	    sp=typecast(rawdata(37+offset:56+offset,:),'single');
         
-        if hasother > 0
-            out.affine=other.affine;
-            out.orcode=other.orcode;
-            oldsp=[ norm(out.affine(1:3,1:1)),
-                  norm(out.affine(1:3,2:2)),
-                  norm(out.affine(1:3,3:3))]';
-            for col=1:3
-               for row=1:3,
-                    out.affine(row,col)=out.affine(row,col)*sp(col)/oldsp(col);
-               end
-            end
-            out.spacing=sp';
-            t=bis_image();
-            t.create(out);
-            out=t;
-        end
+      if hasother > 0
+          out.affine=other.affine;
+          out.orcode=other.orcode;
+          oldsp=[ norm(out.affine(1:3,1:1)),
+                norm(out.affine(1:3,2:2)),
+                norm(out.affine(1:3,3:3))]';
+          for col=1:3
+              for row=1:3,
+                  out.affine(row,col)=out.affine(row,col)*sp(col)/oldsp(col);
+              end
+          end
+          out.spacing=sp';
+          t=bis_image();
+          t.create(out);
+          out=t;
+      end
 	  case get_grid_magic_code()
 	    out={ };
 	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),'int32');
@@ -642,8 +639,8 @@ function moduleOutput = bis_wasmutils()
     try
       a=size(xform);
       if a(1)==4 && a(2)==4
-	out=serialize_dataobject(xform);
-	return;
+	      out=serialize_dataobject(xform);
+	      return;
       end
     catch ME
     end
@@ -651,8 +648,8 @@ function moduleOutput = bis_wasmutils()
     try
       a=xform.usebspline;
       if a==0 || a==1
-	out=serialize_combotransformation(xform);
-	return;
+	        out=serialize_combotransformation(xform);
+	        return;
       end
     catch ME
     end
@@ -743,16 +740,16 @@ function moduleOutput = bis_wasmutils()
   function out =wrapper_serialize(obj,datatype)
 
     switch(datatype)
-      case 'bisImage'
-	out=serialize_dataobject(obj.img,obj.hdr.dime.pixdim(2:4),0);
+      case 'bisImage'         
+          out=serialize_dataobject(obj.img,obj.spacing',0);
       case 'bisTransformation'
-	out=serialize_transformation(obj);
+	        out=serialize_transformation(obj);
       case 'bisComboTransformation'
-	out=serialize_combotransformation(obj);
+	        out=serialize_combotransformation(obj);
       case 'bisGridTransformation'
-	out=serialize_gridtransformation(obj);
+	        out=serialize_gridtransformation(obj);
       otherwise
-	out=serialize_dataobject(obj);
+	        out=serialize_dataobject(obj);
     end
 
   end
