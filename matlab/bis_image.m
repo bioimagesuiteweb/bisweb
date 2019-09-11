@@ -99,6 +99,8 @@ function moduleOutput = bis_image(fname,debug)
         
         internal.img=permute(img,a);
         internal.spacing=spacing;
+        fixspacing();
+
         internal.affine=affine;
         fixaffine();
         internal.orcode=getorientationcode(internal.affine,internal.spacing);
@@ -106,6 +108,19 @@ function moduleOutput = bis_image(fname,debug)
         return;
     end
 
+    function result=fixspacing()
+
+        s=max(size(internal.spacing));
+        if (s<3)
+            t=internal.spacing;
+            if (s==1)
+                internal.spacing=transpose([ t(1),1.0,1.0]);
+            else
+                internal.spacing=transpose([ t(1),t(2),1.0]);
+            end 
+        end
+        result=s;
+    end
 
     function result=fixaffine()
         
@@ -171,7 +186,10 @@ function moduleOutput = bis_image(fname,debug)
         internal.header=h;
         internal.affine=h.Transform.T;
         internal.spacing=h.PixelDimensions';
+
+        fixspacing();
         internal.orcode=getorientationcode(internal.affine,internal.spacing);
+
 
         print(['Loaded image from', h.Filename ],debug);
         result=internal;

@@ -9,12 +9,15 @@ function result=all_tests(debug)
 
     result=[ 
         test_combo(debug),
-        test_largemem_smooth(debug),
+        test_computeglm(debug),
+        test_computeroi(debug),
+        test_createimage(debug),
+        test_largemem_smooth(debug),      
         test_matrix(debug),
+        test_regressout(debug),
         test_resample(debug),
         test_reslice(debug),
         test_smooth(debug),
-        test_createimage(debug+1),
         test_indiv(debug+1),
     ];
 
