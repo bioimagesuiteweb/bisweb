@@ -84,8 +84,18 @@ function moduleOutput = bis_wasmutils()
       disp('Auto setting pathname');
       pathname=[ filepath filesep 'build' filesep 'native']
     end
+      
     
     libname= strcat(pathname,strcat(filesep,Module));
+    if ~exist(libname)
+      m=mfilename('fullpath');
+      [filepath,name,ext] = fileparts(m);
+      [filepath,name,ext] = fileparts(filepath);
+      pathname=[ filepath filesep 'build' filesep 'win32' filesep 'Release' ];
+      libname= strcat(pathname,strcat(filesep,Module));
+      pathname= [ pathname filesep '..' ];
+    end
+
     headerfile=strcat(pathname,strcat(filesep,'bis_matlab.h'));
   
 

@@ -65,7 +65,7 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
         disp(['    Runnning ',name]);
         disp('   ')
         disp('   ')
-        pause(2);
+        pause(1);
         result=0;
     end
 
@@ -117,3 +117,4 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
         result=printresult(testname,success,metric,metricname);
     end
 end
+
