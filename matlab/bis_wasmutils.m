@@ -507,24 +507,20 @@ function moduleOutput = bis_wasmutils()
 	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
 	    out.img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
 	    sp=typecast(rawdata(37+offset:56+offset,:),'single');
-        
+      
+      out.spacing=sp;
       if hasother > 0
           out.affine=other.affine;
-          out.orcode=other.orcode;
-          oldsp=[ norm(out.affine(1:3,1:1)),
-                norm(out.affine(1:3,2:2)),
-                norm(out.affine(1:3,3:3))]';
-          for col=1:3
-              for row=1:3,
-                  out.affine(row,col)=out.affine(row,col)*sp(col)/oldsp(col);
-              end
-          end
-          out.spacing=sp';
-          t=bis_image();
-          t.create(out);
-          out=t;
+      else
+          out.affine=eye(4);
+          out(1,1)=sp(1);
+          out(2,2)=sp(2);
+          out(3,3)=sp(3);
       end
-	  case get_grid_magic_code()
+      t=bis_image();
+      t.create(out);
+      out=t;
+    case get_grid_magic_code()
 	    out={ };
 	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),'int32');
 	    dimensions=typecast(rawdata(21+offset:32+offset,:),'int32');
