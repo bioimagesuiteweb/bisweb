@@ -64,7 +64,7 @@ function result = test_indiv(debug)
    resliceobj.spacing=spa(1:3);
    resliceobj.datatype='short';
    resliceobj.backgroundValue=0.0;
-   resliced_group=lib.resliceImageWASM(group.getImage(),eye(4),resliceobj,debug);
+   resliced_group=lib.resliceImageWASM(group,eye(4),resliceobj,debug);
    
    resliced_group.print('Resliced Group Parcellation',3);
 
@@ -75,7 +75,7 @@ function result = test_indiv(debug)
    smparamobj.inmm='true';
    smparamobj.radiusfactor=1.5;
    smparamobj.vtkboundary='true';
-   fmri_smoothed = lib.gaussianSmoothImageWASM(fmri.getImage(), smparamobj, debug);
+   fmri_smoothed = lib.gaussianSmoothImageWASM(fmri, smparamobj, debug);
    fmri_smoothed.print('Smooth fMRI',3);
 
    % Indiv Parcellation part
@@ -83,7 +83,7 @@ function result = test_indiv(debug)
    paramobj.numexemplars=numexemplars;
    paramobj.usefloat='true';
    paramobj.saveexemplars='false';
-   indiv_ptr=lib.individualizedParcellationWASM(fmri_smoothed.getImage(),resliced_group.getImage(), paramobj,debug);
+   indiv_ptr=lib.individualizedParcellationWASM(fmri_smoothed,resliced_group, paramobj,debug);
 
     result=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation',0,0.1);
 

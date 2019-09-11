@@ -509,8 +509,8 @@ var create_parameter_checking_code=function(extrachecks,names,wrapper_mode) {
             let name2=names[1].variablename;
             
             outstr=`
-    if (${name1}.orcode ~= ${name2}.orcode)
-       disp(['ERROR Image Orientation mismatch',${name1}.orcode,' ',${name2}.orcode]);
+    if (${name1}.getOrientation() ~= ${name2}.getOrientation())
+       disp(['ERROR Image Orientation mismatch',${name1}.getOrientation(),'  vs ',${name2}.getOrientation()]);
        return
     end
 

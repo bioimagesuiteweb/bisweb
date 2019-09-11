@@ -2,16 +2,10 @@
 
 function result=all_tests(debug)
 
-    m=mfilename('fullpath');
-    [filepath,name,ext] = fileparts(m);
-    addpath([ filepath filesep 'tests' ]);
-
+    [testutil,filepath,lib]=bis_testutils();
     if nargin<1
         debug=1
     end
-
-    bispath();
-    lib=biswrapper();
 
     result=[ 
         test_combo(debug),

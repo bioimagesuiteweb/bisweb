@@ -55,7 +55,7 @@ function result=test_resample(debug)
         paramobj
     end
 
-    out_img=lib.resliceImageWASM(images{2}.getImage(),reslice_matr,paramobj,debug);
+    out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,debug);
     result=testutil.compare(images{3}.getImageData(),out_img.getImageData(),'Image Reslice',1,0.99);
 
 end

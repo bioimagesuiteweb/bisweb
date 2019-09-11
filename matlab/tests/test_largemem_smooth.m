@@ -50,7 +50,7 @@ function result=test_largemem_smooth(debug)
         disp('----------------------------------');
     end
     
-    output = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
+    output = lib.gaussianSmoothImageWASM(input, param, debug);
 
     if (debug)
         disp(['Testing real difference']);

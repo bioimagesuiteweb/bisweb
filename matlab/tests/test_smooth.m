@@ -40,7 +40,7 @@ function result = test_smooth(debug)
         disp('----------------------------------');
         disp('Smoothing image');
     end
-    output = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
+    output = lib.gaussianSmoothImageWASM(input, param, debug);
 
     if (debug>0)
         disp(['Testing fake difference=']);
@@ -58,7 +58,7 @@ function result = test_smooth(debug)
         disp('----------------------------------');
         disp('Smoothing image 2');
     end
-    output2 = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
+    output2 = lib.gaussianSmoothImageWASM(input, param, debug);
 
     if (debug>0)
         disp(['Testing real difference v2']);
@@ -72,7 +72,7 @@ function result = test_smooth(debug)
     end
 
     param.sigmas=[0.1,0.1,0.1];
-    output3 = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
+    output3 = lib.gaussianSmoothImageWASM(input, param, debug);
 
     if (debug>0)
         disp(['Testing real difference 3']);

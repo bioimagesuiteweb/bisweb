@@ -510,7 +510,7 @@ function moduleOutput = bis_wasmutils()
       
       out.spacing=sp;
       if hasother > 0
-          out.affine=other.affine;
+          out.affine=other.getAffine();
       else
           out.affine=eye(4);
           out(1,1)=sp(1);
@@ -737,7 +737,8 @@ function moduleOutput = bis_wasmutils()
 
     switch(datatype)
       case 'bisImage'         
-          out=serialize_dataobject(obj.img,obj.spacing',0);
+            spa=obj.getSpacing();
+            out=serialize_dataobject(obj.getImageData(),spa',0);
       case 'bisTransformation'
 	        out=serialize_transformation(obj);
       case 'bisComboTransformation'

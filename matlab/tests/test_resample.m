@@ -38,7 +38,7 @@ function result=test_resample(debug)
     resliceobj.datatype='short';
     resliceobj.backgroundValue=0.0;
 
-    output=lib.resliceImageWASM(input.getImage(),eye(4),resliceobj,debug);
+    output=lib.resliceImageWASM(input,eye(4),resliceobj,debug);
 
     testaff=eye(4);
     testaff(1,1)=-4.0;
