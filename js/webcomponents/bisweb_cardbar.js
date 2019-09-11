@@ -69,7 +69,10 @@ class BiswebCardBar extends HTMLElement {
             let activeTab = $(this.cardLayout).find('.bisweb-bottom-nav-tabs .active');
             let activeContent = $(this.cardLayout).find('.tab-pane.active.in');
             activeTab.removeClass('active');
-            activeContent.removeClass('active in');        
+            activeContent.removeClass('active in'); 
+            
+            //manually trigger hide event on the tab (since just removing the class doesn't do it)
+            $(activeTab).find("a[data-toggle='tab']").trigger('hidden.bs.tab');
         });
 
         body.append(hideButton);
@@ -154,17 +157,15 @@ class BiswebCardBar extends HTMLElement {
                     self.cardLayout.find('.tab-content').append(tabPane);
             
                     //activate blur area over canvas (otherwise only blurs the background of the card pane)
-                    let blurArea = $('.baseviewerwidget');
-                    tabPane.on('shown.bs.tab resize', () => {
-                        //set height and width of blur effect in baseviewer
-                        let height = $(tabContent).height(), width = $(tabContent).width();
-                        blurArea.height(height);
-                        blurArea.width(width);
-                        blurArea.prop('visibility', 'visible');
+                    let widget = $('.bisviewerwidget');
+                    console.log('widget', widget);
+                    tab.on('shown.bs.tab', () => {
+                        $(widget).addClass('bis-unfocus');
                     });
 
-                    tabPane.on('hide.bs.tab', () => {
-                        blurArea.prop('visibility', 'hidden');
+                    tab.on('hidden.bs.tab', () => {
+                        console.log('hidden');
+                        $(widget).removeClass('bis-unfocus');
                     });
 
                     resolve({ 'tab' : tab, 'content' : tabContent });

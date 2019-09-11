@@ -502,12 +502,20 @@ input[type="radio"] .styled:checked + label::after {
     overflow : hidden;
 }
 
-/* Hook to add blur effect over area for scatter plot*/
-.bisviewerwidget::before {
+
+.bisviewerwidget.bis-unfocus {
+    filter : blur(8px) brightness(50%);
+}
+
+/* TODO: Figure out how to add a blur effect over just an area of content? This would work with a background but not with actual HTML elements... */ 
+/*body::before {
     content: '';
     display : inline-block;
+    position: absolute;
+    width : 50%;
+    height : 100%;
     filter : blur(10px);
-}
+}*/
 
 
 /*
