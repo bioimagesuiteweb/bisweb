@@ -503,7 +503,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   # ---------------------------------------------------------------------------------------------
   
   OPTION(BIS_A_PYTHON "Build Python Wrappers" ON)
-  OPTION(BIS_A_MATLAB "Build Matlab Wrappers" OFF)
+  OPTION(BIS_A_MATLAB "Build Matlab Wrappers" ON)
   OPTION(BIS_A_DEVEL "Install Developer Environment (on make install)" OFF)
   
   IF (WIN32)
@@ -586,23 +586,27 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYLIST2} DESTINATION bisweb/python/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
-    IF (WIN32)
-      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION bisweb
-        PERMISSIONS OWNER_READ  WORLD_READ)
-    ELSE (WIN32)
-      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb
-        PERMISSIONS OWNER_READ  WORLD_READ)
-      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION bisweb
-        PERMISSIONS OWNER_READ  WORLD_READ)
-    ENDIF (WIN32)
-
+    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION bisweb
+      PERMISSIONS OWNER_READ  WORLD_READ)
+    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb
+      PERMISSIONS OWNER_READ  WORLD_READ)
+    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION bisweb
+      PERMISSIONS OWNER_READ  WORLD_READ)
+    
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
     install (FILES ${README_FILE} DESTINATION bisweb/)
 
     # This overwrites bis_path.py with one suitable for install purposes
     MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
     install (FILES ${BISWEB_PYTHON_PATH} DESTINATION bisweb/python/modules)
-	  
+
+    if(UNIX AND NOT APPLE)
+      FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
+      FILE(GLOB WINEXTRA ${PROJECT_BINARY_DIR}/biswasm.dll)
+      MESSAGE("--- Intalling Extra libraries ${MACEXTRA},${WINEXTRA}")
+      install (FILES ${MACEXTRA} DESTINATION bisweb/lib)
+      install (FILES ${WINEXTRA} DESTINATION bisweb/lib)
+    endif()
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
       SET (COUNT 0)

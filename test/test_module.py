@@ -147,9 +147,7 @@ for i in range(begin_test,end_test+1):
                 testtype="image";
 
             print('====\n-------------------- test',i,'---------------------------------------');
-            
-            
-            cmd="python3 "+testscript_base+'/'+command[0]+".py"+" "+command[1];
+            cmd=sys.executable+" "+testscript_base+os.path.sep+command[0]+".py"+" "+command[1];
             print('====\n==== executing:',cmd,'\n====');
             exitcode=os.system(cmd);
             testpass=False;
