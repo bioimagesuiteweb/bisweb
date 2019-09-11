@@ -115,6 +115,9 @@ class individualizedParcellation(bis_basemodule.baseModule):
         };
         try: 
             self.outputs['output']=libbis.individualizedParcellationWASM(fmri,group,paramobj,debug);
+        except OSError as f:
+            print(f)
+            return False
         except:
             e = sys.exc_info()[0]
             print('---- Failed to invoke algorithm',e);

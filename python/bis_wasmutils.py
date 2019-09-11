@@ -40,12 +40,18 @@ __force_large_memory=False;
 def load_library(name=''):
 
     global __Module;
-    
+
     if name=='':
         my_path=(os.path.dirname(os.path.abspath(inspect.stack()[0][1])))
         name=os.path.abspath(name+'../build/native/libbiswasm.so');
     else:
         name=os.path.abspath(name);
+
+    if not os.path.isfile(name):
+        my_path=(os.path.dirname(os.path.dirname(name)));
+        name=my_path+'/win32/Release/biswasm.dll';
+        print('____ Recomputing name:',name);
+        
     m=ctypes.CDLL(name);
     if (m.uses_gpl()):
         print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)');
