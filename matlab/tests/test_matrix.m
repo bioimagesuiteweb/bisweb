@@ -24,7 +24,7 @@ function result=test_matrix(debug)
     end
 
     [testutil,filepath,lib]=bis_testutils();
-
+    testutil.printheader('Test Matrix');
 
     m=zeros(4,'single');
     for c = 1:4

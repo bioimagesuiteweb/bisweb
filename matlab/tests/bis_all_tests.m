@@ -14,11 +14,16 @@ function result=all_tests(debug)
         test_resample(debug),
         test_reslice(debug),
         test_smooth(debug),
+        test_createimage(debug+1),
         test_indiv(debug+1),
     ];
 
     s1=sum(result);
     s2=max(size(result));
+
+    for i=1:4
+        disp('   ');
+    end
 
     disp('============================================================')
     disp(['=== Test Results (1=pass)=',mat2str(result')]);

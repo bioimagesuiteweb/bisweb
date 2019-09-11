@@ -89,14 +89,14 @@ function moduleOutput = bis_image(fname,debug)
             affine=eye(4);
         end 
 
-        sz=size(size(img))
+        sz=size(size(img));
         a=zeros(sz);
         for i=3:sz
             a(i)=i;
         end
         a(1)=2;
-        a(2)=1
-        a
+        a(2)=1;
+        
         internal.img=permute(img,a);
         internal.spacing=spacing;
         internal.affine=affine;
@@ -177,87 +177,7 @@ function moduleOutput = bis_image(fname,debug)
         result=internal;
     end
 
-    % Clone Image
-
-    function result = clone(input,dims,spacing,tp,debug)
-
-        if (nargin<1)
-            result=0;
-            return;
-        end
-
-    
-        if (nargin<2)
-            dims=size(input);
-        end
-
-        if (nargin<3)
-            spacing=input.spacing;
-        end
-
-        if (max(size(spacing))<1)
-            spacing=input.spacing;
-        end
-
-        if (nargin<4)
-            tp=class(input.img)
-        end
-
-        if (nargin<5)
-            debug=0
-        end
-
-        % Make sure spacing is a 5-vector
-        internal.spacing=spacing;
-        internal.affine=input.affine;
-        fixaffine();
-        internal.desc='Bisweb matlab image';
-        internal.img=zeros(dims,tp);
-        internal.orcode=getorientationcode(internal.affine,internal.spacing);
-
-        print('__ Cloned image',debug);
-        result=internal
-    end
-
-    function result = save(f,bisimage)
-
-        if (nargin<2)
-            bisimage=internal;
-            return;
-        end
-
-        % Make sure spacing is a 5-vector
-        v=max(size(bisimage.spacing));
-        spacing=[1.0,1.0,1.0,1.0,1.0];
-        spacing(1:v)=bisimage.spacing;
-        
-        % Fix affine to agree with spacing in spacing
-        affine=eye(4,4);
-        affine(1:4,4:4)=bisimage.affine(1:4,4:4);
-        oldsp=[ norm(bisimage.affine(1:3,1:1)),norm(bisimage.affine(1:3,2:2)),norm(bisimage.affine(1:3,3:3))]';
-        for col=1:3
-            for row=1:3,
-                affine(row,col)=bisimage.affine(row,col)/oldsp(col)*spacing(col);
-            end
-        end
-
-        % Create header structure
-        nii=make_nii(bisimage.img,spacing(1:3));
-    
-        % Replace stuff in header structure to make this behave
-        nii.hdr.dime.pixdim=[ 0 , spacing(1), spacing(2), spacing(3), spacing(4), spacing(5), 1,1];
-        nii.hdr.hist.qform_code=0;
-        nii.hdr.hist.sform_code=1;
-        nii.hdr.hist.srow_x = affine(1:1,1:4);
-        nii.hdr.hist.srow_y = affine(2:2,1:4);
-        nii.hdr.hist.srow_z = affine(3:3,1:4);
-        nii.hdr.hist.descrip='bisweb matlab';
-    
-        % Save
-        save_nii(nii,f);
-        result=f;
-    end
-
+    % Compute Orientation code given an affine matrix and spacing
     function orcode = getorientationcode(affine,spacing)
 
         if (nargin<2)

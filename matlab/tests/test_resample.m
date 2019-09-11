@@ -23,6 +23,8 @@ function result=test_resample(debug)
     end
 
     [testutil,filepath,lib]=bis_testutils();
+    testutil.printheader('Test Resample');
+
     fname1=[ filepath  filesep 'MNI_2mm_resliced.nii.gz'];
 
     % Load Images

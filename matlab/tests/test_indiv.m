@@ -22,6 +22,9 @@ function result = test_indiv(debug)
     end
 
     [testutil,filepath,lib]=bis_testutils();
+    
+    testutil.printheader('Test Indiv');
+
 
 
             %"command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",

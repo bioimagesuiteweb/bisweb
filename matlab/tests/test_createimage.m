@@ -4,7 +4,10 @@ function result=test_createimage(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
+   [testutil,filepath,lib]=bis_testutils();
+
+    testutil.printheader('Test Create Image');
+
    img=bis_image();
 
     dat=zeros(5,5,'single');

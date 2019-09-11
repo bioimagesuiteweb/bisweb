@@ -24,6 +24,7 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
 
     moduleOutput.gettestdatapath=@gettestdatapath;
     moduleOutput.printresult=@printresult;
+    moduleOutput.printheader=@printheader;
     moduleOutput.compare=@compare;
     moduleOutput.getlib=@getlib;
     
@@ -55,6 +56,17 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
 
     function result=getlib()
         result=internal.lib;
+    end
+
+    function result=printheader(name)
+        
+        disp('   ')
+        disp('============================================================')
+        disp(['    Runnning ',name]);
+        disp('   ')
+        disp('   ')
+        pause(2);
+        result=0;
     end
 
     function result=printresult(testname,pass,value,metricname)

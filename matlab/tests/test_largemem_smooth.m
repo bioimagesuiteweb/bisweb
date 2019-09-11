@@ -24,6 +24,7 @@ function result=test_largemem_smooth(debug)
 
 
     [testutil,filepath,lib]=bis_testutils();
+    testutil.printheader('Test LargeMemory Smooth');
 
     bw=lib.getbiswasm();
 

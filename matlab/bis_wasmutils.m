@@ -86,22 +86,22 @@ function moduleOutput = bis_wasmutils()
     end
     
     libname= strcat(pathname,strcat(filesep,Module));
-
     headerfile=strcat(pathname,strcat(filesep,'bis_matlab.h'));
-
-    disp(['__']);
-    disp(['__ biswasm loading library']);
-    disp(['__ libname=',libname]);
-    disp(['__ headerfile=',headerfile]);
-    disp(['__']);
+  
 
     if ~libisloaded(Module)
       bislib=loadlibrary(libname,headerfile);
       a=calllib(Module,'test_wasm');
+      disp(['__']);
+      disp(['__ biswasm loading library']);
+      disp(['__ libname=',libname]);
+      disp(['__ headerfile=',headerfile]);
+      disp(['__']);
       str=['__check library -- this should be 1700. return=',mat2str(a)];
       disp(str);
+      disp('__')
     end
-    disp('__')
+    
     
     % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
     force_large_memory(0);
@@ -510,7 +510,7 @@ function moduleOutput = bis_wasmutils()
 	  case get_matrix_magic_code()
 	    dimensions=typecast(rawdata(17+offset:24+offset,:),code_int32);
 	    data=typecast(rawdata(25+offset:total_length+offset,1:1),typename);
-	    out=reshape(data,dimensions(2),dimensions(1))';
+	    out=transpose(reshape(data,dimensions(2),dimensions(1)));
 	  case get_vector_magic_code()
 	    out=typecast(rawdata(17+offset:total_length+offset,1:1),typename);
 	  case get_image_magic_code()

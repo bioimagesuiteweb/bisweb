@@ -24,6 +24,7 @@ function result=test_resample(debug)
     end
 
     [testutil,filepath,lib]=bis_testutils();
+    testutil.printheader('Test Reslice');
 
 
     imagenames= {};
