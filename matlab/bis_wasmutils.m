@@ -93,15 +93,17 @@ function moduleOutput = bis_wasmutils()
       bislib=loadlibrary(libname,headerfile);
       a=calllib(Module,'test_wasm');
       disp(['__']);
-      disp(['__ biswasm loading library']);
+      disp(['__ biswasm loading bisweb C++ library']);
       disp(['__ libname=',libname]);
       disp(['__ headerfile=',headerfile]);
+      disp(['__ library test -- this should be 1700. return=',mat2str(a)]);
+    else
+      a=calllib(Module,'test_wasm');
       disp(['__']);
-      str=['__check library -- this should be 1700. return=',mat2str(a)];
-      disp(str);
-      disp('__')
+      disp(['__ bisweb C++ library already loaded -- this should be 1700. return=',mat2str(a)]);
     end
     
+    disp(['__']);
     
     % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
     force_large_memory(0);
@@ -507,41 +509,39 @@ function moduleOutput = bis_wasmutils()
     rawdata=ptr.Value;
 
     switch(top_header(1))
-	  case get_matrix_magic_code()
-	    dimensions=typecast(rawdata(17+offset:24+offset,:),code_int32);
-	    data=typecast(rawdata(25+offset:total_length+offset,1:1),typename);
-	    out=transpose(reshape(data,dimensions(2),dimensions(1)));
-	  case get_vector_magic_code()
-	    out=typecast(rawdata(17+offset:total_length+offset,1:1),typename);
-	  case get_image_magic_code()
-	    out={ };
-	    dimensions=typecast(rawdata(17+offset:36+offset,:),code_int32);
-
-	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
-	    sp=typecast(rawdata(37+offset:56+offset,:),code_float);
+	    case get_matrix_magic_code()
+	        dimensions=typecast(rawdata(17+offset:24+offset,:),code_int32);
+	        data=typecast(rawdata(25+offset:total_length+offset,1:1),typename);
+	        out=transpose(reshape(data,dimensions(2),dimensions(1)));
+        case get_vector_magic_code()
+	        out=typecast(rawdata(17+offset:total_length+offset,1:1),typename);
+	    case get_image_magic_code()
+	    
+	        dimensions=typecast(rawdata(17+offset:36+offset,:),code_int32);
+    	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
+	        img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
+	        sp=typecast(rawdata(37+offset:56+offset,:),code_float);
       
-      out.spacing=sp;
-      if hasother > 0
-          out.affine=other.getAffine();
-      else
-          out.affine=eye(4);
-          out(1,1)=sp(1);
-          out(2,2)=sp(2);
-          out(3,3)=sp(3);
-      end
-      t=bis_image();
-      t.create(out.img,out.spacing,out.affine);
-      out=t;
-    case get_grid_magic_code()
-	    out={ };
-	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),code_int32);
-	    dimensions=typecast(rawdata(21+offset:32+offset,:),code_int32);
-	    out.spacing=typecast(rawdata(33+offset:44+offset,:),code_float);
-	    out.origin=typecast(rawdata(45+offset:56+offset,:),code_float);
-	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.data=(reshape(tmp,dimensions(1)*dimensions(2)*dimensions(3),3));
-	    out.dimensions=dimensions;
+            if hasother > 0
+                affine=other.getAffine();
+            else
+                affine=eye(4);
+                affine(1,1)=sp(1);
+                affine(2,2)=sp(2);
+                affine(3,3)=sp(3);
+            end
+            out=bis_image();
+            out.create(img,sp,affine);
+    
+        case get_grid_magic_code()
+            out={ };
+            out.usebspline=typecast(rawdata(17+offset:20+offset,:),code_int32);
+            dimensions=typecast(rawdata(21+offset:32+offset,:),code_int32);
+            out.spacing=typecast(rawdata(33+offset:44+offset,:),code_float);
+            out.origin=typecast(rawdata(45+offset:56+offset,:),code_float);
+            tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
+            out.data=(reshape(tmp,dimensions(1)*dimensions(2)*dimensions(3),3));
+            out.dimensions=dimensions;
     end
       
   end

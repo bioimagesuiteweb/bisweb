@@ -1,10 +1,10 @@
 
 
-function result=all_tests(debug)
+function all_tests(debug)
 
     [testutil,filepath,lib]=bis_testutils();
     if nargin<1
-        debug=1
+        debug=1;
     end
 
     result=[ 
@@ -39,4 +39,4 @@ function result=all_tests(debug)
         disp(['=== Some ',mat2str(s2-s1),' Tests Failed']);
     end
 
-
+end

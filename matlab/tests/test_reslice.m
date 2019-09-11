@@ -41,11 +41,22 @@ function result=test_resample(debug)
     reslice_matr = [   0.866,  -0.525  , 0.000,  68.758 ;
 		   0.500,   0.909 ,  0.000 ,  9.793 ;
 		   0.000,   0.000 ,  1.000 ,  2.250 ;
-		   0.000,   0.000,   0.000 ,  1.000 ];
+           0.000,   0.000,   0.000 ,  1.000 ];
+           
+    if (debug>0)
+        disp('----------------');
+        disp(['reslice_matr=',mat2str(reslice_matr)]);
+        d=reslice_matr*[ 90 48 26 1 ]';
+        disp(['Mapping =',       mat2str(d)]);
+        idata=images{1}.getImageData();
+        disp(['Value at :',mat2str([44,33,11]),' = ', mat2str(idata(45,34,12)), ' and 46,44,27 ',mat2str(idata(47,45,28)) ]);
+    end
 
 
     paramobj = { };
     paramobj.interpolation=1;
+
+
     spa=images{1}.getSpacing();
     paramobj.dimensions=size(images{1}.getImageData());
     paramobj.spacing= spa(1:3)';
@@ -58,5 +69,6 @@ function result=test_resample(debug)
 
     out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,debug);
     result=testutil.compare(images{3}.getImageData(),out_img.getImageData(),'Image Reslice',1,0.99);
+    out_img.save('test.nii.gz');
 
 end

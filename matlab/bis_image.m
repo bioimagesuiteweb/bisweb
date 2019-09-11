@@ -19,16 +19,11 @@
 
 function moduleOutput = bis_image(fname,debug)
 
-    if ~exist('niftiinfo')
-        disp('BISWEB ERROR -- You need a newer version of Matlab -- 2017b or later to use this function');
-        bisimage=0;
-        return;
-    end
-
-    internal.img=[0];
+    internal.img=(1);
     internal.spacing=[1,1,1,1,1];
     internal.affine=eye(4);
     internal.orcode= 'RAS';
+    internal.filename='';
 
     moduleOutput.load=@load;
     moduleOutput.save=@save;
@@ -58,6 +53,10 @@ function moduleOutput = bis_image(fname,debug)
         result=internal.img;
     end
     
+    function result = Filename()
+        result=internal.filename;
+    end
+
     function result = getAffine()
         result=internal.affine;
     end
@@ -97,14 +96,15 @@ function moduleOutput = bis_image(fname,debug)
                 affine=eye(4);
             end
         end
-        
+    
+        internal.filename='';
         internal.img=img;
         internal.spacing=spacing;
-        fixspacing();
+        makeSureSpacingIsLongEnough();
 
         internal.affine=affine;
-        fixaffine();
-        internal.orcode=getorientationcode(internal.affine,internal.spacing);
+        makeSpacingAndAffineConsistent();
+        internal.orcode=computeOrientationCodeFromAffineAndSpacing();
         result=internal;
         return;
     end
@@ -124,9 +124,9 @@ function moduleOutput = bis_image(fname,debug)
 
         disp([ '___ ',name])
         if (debug>0)
-            disp(['      dimensions=',mat2str(size(internal.img)),' spacing=',mat2str(internal.spacing),' orientation=',internal.orcode,' type=',class(internal.img)]);
+            disp(['      dimensions=',mat2str(size(internal.img)),' spacing=',mat2str(internal.spacing,4),' orientation=',internal.orcode,' type=',class(internal.img)]);
             if (debug>1)
-                disp(['      matrix=',mat2str(internal.affine)]);
+                disp(['      matrix=',mat2str(internal.affine,4)]);
             end
         end
 
@@ -146,18 +146,14 @@ function moduleOutput = bis_image(fname,debug)
             debug=2;
         end
 
-        h=niftiinfo(f);
+        
         internal=load_untouch_nii(f,[],[],[],[],[],[]);
         internal.desc='Bisweb matlab image';
-        internal.header=h;
-        internal.affine=transpose(h.Transform.T);
-        internal.spacing=h.PixelDimensions';
+        computeAffineAndSpacingFromHeader(internal.hdr);
+        internal.orcode=computeOrientationCodeFromAffineAndSpacing();
+        internal.filename=f;
 
-        fixspacing();
-        internal.orcode=getorientationcode(internal.affine,internal.spacing);
-
-
-        print(['Loaded image from', h.Filename ],debug);
+        print(['Loaded image from', internal.filename],debug);
         result=internal;
     end
 
@@ -166,8 +162,8 @@ function moduleOutput = bis_image(fname,debug)
     % --------------------------------------------------------------
     function result = save(f)
 
-        fixspacing();
-        fixaffine();
+        makeSureSpacingIsLongEnough();
+        makeSpacingAndAffineConsistent();
         spacing=internal.spacing;
 
         % Create header structure
@@ -184,62 +180,19 @@ function moduleOutput = bis_image(fname,debug)
    
         % Save
         save_nii(nii,f);
-
+        internal.filename=f;
         result=1;
     end
     
 
-    % ----------------------------------------------------------
-    % Fix Spacing
-    % ----------------------------------------------------------
-    
-    function result=fixspacing()
-
-        s=max(size(internal.spacing));
-        if (s<3)
-            t=internal.spacing;
-            if (s==1)
-                internal.spacing=transpose([ t(1),1.0,1.0]);
-            else
-                internal.spacing=transpose([ t(1),t(2),1.0]);
-            end 
-        end
-        result=s;
-    end
-
-    % ----------------------------------------------------------
-    % Fix Affine Matrix
-    % ----------------------------------------------------------
-    function result=fixaffine()
-        
-        temp=internal.spacing;
-        v=max(size(temp));
-        spacing=[1.0,1.0,1.0,1.0,1.0];
-        spacing(1:v)=temp;
-    
-        % Fix affine to agree with spacing in spacing
-        affine=eye(4,4);
-        affine(1:4,4:4)=internal.affine(1:4,4:4);
-        oldsp=[ norm(internal.affine(1:3,1:1)),norm(internal.affine(1:3,2:2)),norm(internal.affine(1:3,3:3))]';
-        for col=1:3
-            for row=1:3,
-                affine(row,col)=internal.affine(row,col)/oldsp(col)*spacing(col);
-            end
-        end
-
-        internal.affine=affine;
-        internal.spacing=spacing;
-        result=1;
-    end
 
     % -------------------------------------------------------------
     % Compute Orientation code given an affine matrix and spacing
     % -------------------------------------------------------------
-    function orcode = getorientationcode(affine,spacing)
-
-        if (nargin<2)
-            spacing=[1.0,1.0,1.0]';
-        end
+    function orcode = computeOrientationCodeFromAffineAndSpacing()
+        
+        affine=internal.affine;
+        spacing=internal.spacing;
 
         A=affine(1:3,1:3);
         S=eye(3);
@@ -330,4 +283,124 @@ function moduleOutput = bis_image(fname,debug)
 
         orcode=name;
     end
+
+    % -------------------------------------------------------------
+    % Compute Orientation Matrix and Spacing from NIFTI Header
+    % -------------------------------------------------------------
+    function computeAffineAndSpacingFromHeader(hdr)
+
+        pixdim=hdr.dime.pixdim;
+        
+        if(hdr.hist.qform_code > 0) 
+            %      console.log('using q_form');
+            % https://github.com/Kitware/ITK/blob/master/Modules/IO/NIFTI/src/itkNiftiImageIO.cxx
+            a = 0.0; b = hdr.hist.quatern_b; c = hdr.hist.quatern_c; d = hdr.hist.quatern_d;
+            xd = 1.0; yd = 1.0; zd = 1.0;
+            qx = hdr.hist.qoffset_x; qy = hdr.hist.qoffset_y; qz = hdr.hist.qoffset_z;
+
+            % compute a
+            a = 1.0 - (b*b + c*c + d*d) ;
+            if( a < 0.0000001 )
+                a = 1.0 / sqrt(b*b+c*c+d*d) ;
+                b = b*a ; c = c*a ; d = d*a ;        % normalize (b,c,d) vector 
+                a = 0.0;                       % a = 0 ==> 180 degree rotation 
+            else
+                a = sqrt(a) ;                     % angle = 2*arccos(a) 
+            end
+
+            % scaling factors
+            if(pixdim(2) > 0.0) 
+                xd = pixdim(2);
+            end
+
+            if(pixdim(3) > 0.0) 
+                yd = pixdim(3);
+            end
+
+            if(pixdim(4) > 0.0) 
+                zd = pixdim(4);
+            end
+
+            % qfac left handed
+            if(pixdim(1) < 0.0) 
+                zd = -zd;
+            end
+
+            % fill IJKToRAS
+            IJKToRAS=[  (a*a+b*b-c*c-d*d)*xd,  2*(b*c-a*d)*yd,  2*(b*d+a*c)*zd,  qx ;
+                        2*(b*c+a*d)*xd,  (a*a+c*c-b*b-d*d)*yd,  2*(c*d-a*b)*zd,  qy ;
+                        2*(b*d-a*c )*xd,  2*(c*d+a*b)*yd,  (a*a+d*d-c*c-b*b)*zd, qz ];
+        elseif (hdr.hist.sform_code>0)
+
+            sx = hdr.hist.srow_x; sy = hdr.hist.srow_y; sz = hdr.hist.srow_z;
+            % fill IJKToRAS
+            IJKToRAS= [  sx(1), sx(2), sx(3), sx(4); 
+                         sy(1), sy(2), sy(3), sy(4);
+                         sz(1), sz(2), sz(3), sz(4) ];
+            pixdim(2) = sqrt(sx(1)*sx(1)+sy(1)*sy(1)+sz(1)*sz(1));
+            pixdim(3) = sqrt(sx(2)*sx(2)+sy(2)*sy(2)+sz(2)*sz(2));
+            pixdim(4) = sqrt(sx(3)*sx(3)+sy(3)*sy(3)+sz(3)*sz(3));
+        elseif hdr.hist.qform_code == 0
+            % fill IJKToRAS 
+            IJKToRAS=[  pixdim(2), 0, 0, 0;
+                        0, pixdim(3), 0, 0;
+                        0, 0, pixdim(4), 0 ];
+
+        else
+            disp('UNKNOWN METHOD IN PARSER NIIX');
+        end
+
+        internal.spacing=   transpose([ pixdim(2), pixdim(3),pixdim(4),pixdim(5),pixdim(6) ]);
+        for i=3:5
+            if (internal.spacing(i)<0)
+                internal.spacing(i)=1;
+            end
+        end
+        internal.affine = [ IJKToRAS; 0 0 0 1 ];
+
+    end
+
+        % ----------------------------------------------------------
+    % Fix Spacing
+    % ----------------------------------------------------------
+    
+    function makeSureSpacingIsLongEnough()
+
+        s=max(size(internal.spacing));
+        if (s<3)
+            t=internal.spacing;
+            if (s==1)
+                internal.spacing=transpose([ t(1),1.0,1.0]);
+            else
+                internal.spacing=transpose([ t(1),t(2),1.0]);
+            end 
+        end
+    end
+
+    % ----------------------------------------------------------
+    % Fix Affine Matrix
+    % ----------------------------------------------------------
+    function makeSpacingAndAffineConsistent()
+        
+        temp=internal.spacing;
+        v=max(size(temp));
+        spacing=transpose([1.0,1.0,1.0,1.0,1.0]);
+        spacing(1:v)=temp;
+    
+        % Fix affine to agree with spacing in spacing
+        % Actual Spacing in i is shift for 1-i
+        % Magn affine*[1,0,0,1]' - affine*[0 0 0 1]'
+        affine=eye(4,4);
+        affine(1:4,4:4)=internal.affine(1:4,4:4);
+        oldsp=[ norm(internal.affine(1:3,1:1)),norm(internal.affine(1:3,2:2)),norm(internal.affine(1:3,3:3))]';
+        for col=1:3
+            for row=1:3,
+                affine(row,col)=internal.affine(row,col)/oldsp(col)*spacing(col);
+            end
+        end
+
+        internal.affine=affine;
+        internal.spacing=spacing;
+    end
+
 end
