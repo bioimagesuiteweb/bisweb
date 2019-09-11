@@ -1,26 +1,21 @@
-% LICENSE
-% 
-% _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-% 
-% BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-% 
-% - you may not use this software except in compliance with the License.
-% - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-% 
-% __Unless required by applicable law or agreed to in writing, software
-% distributed under the License is distributed on an "AS IS" BASIS,
-% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-% See the License for the specific language governing permissions and
-% limitations under the License.__
-% 
-% ENDLICENSE
-
-% -----------------------------------------------------
+% Creates a bis_image data structure
+%     if fname is specifed then this is loaded from this
+%     debug is a flag (0 to 3) which controls how much printing is done
 %
-% Main Function
-% 
-% -----------------------------------------------------
-
+%  Key Functions:
+%       load -- loads from a filename (.nii.gz)
+%       save -- saves to a filename (.nii.gz)
+%       getImage -- returns Image Structure
+%           This consists of
+%              .img -- the image data matrix
+%              .spacing -- the voxel dimensions
+%              .affine - the orientation matrix (4x4)
+%              .orcode - the orientation code (e.g. RAS) 
+%       getImageData -- returns raw Image Matrix
+%       getSpacing -- returns the voxel size
+%       getDimensions -- returns the image dimensions
+%       getOrientation -- returns the image orientation code (e.g. RAS)
+%       getAffine -- returns the 4x4 affine matrix mapping ijk to xyz
 
 function moduleOutput = bis_image(fname,debug)
 
@@ -55,6 +50,7 @@ function moduleOutput = bis_image(fname,debug)
         load(fname,debug);
     end
 
+    % Retuns the image data structure
     function result = getImage()
         result=internal;
     end
