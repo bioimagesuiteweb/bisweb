@@ -41,9 +41,7 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
     [filepath,name,ext] = fileparts(filepath);
   
     result=[ filepath filesep 'test' filesep 'testdata' ];
-    disp(['Testdata path=',result]);
     internal.filepath=result;
-
     internal.lib=biswrapper();   
     
     lib=internal.lib;

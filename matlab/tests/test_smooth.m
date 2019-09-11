@@ -32,37 +32,38 @@ function result = test_smooth(debug)
     param.inmm='true';
 
     % Load Images
-    input = bis_loadimage(fname1,debug+1);
-    gold  = bis_loadimage(fname2,debug+1);
+    input = bis_image(fname1,debug+1);
+    gold  = bis_image(fname2,debug+1);
+
 
     if (debug>0)
         disp('----------------------------------');
         disp('Smoothing image');
     end
-    output = lib.gaussianSmoothImageWASM(input, param, debug);
+    output = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
 
     if (debug>0)
         disp(['Testing fake difference=']);
     end
-    v1=max(max(max(abs(gold.img-single(input.img)))));
+    v1=max(max(max(abs(gold.getImageData()-single(input.getImageData())))));
 
     if (debug>0)
         v1
         disp(['Testing real difference']);
     end
-    v2=max(max(max(abs(gold.img-single(output.img)))));
+    v2=max(max(max(abs(gold.getImageData()-single(output.getImageData())))));
 
     if (debug>0)
         v2
         disp('----------------------------------');
         disp('Smoothing image 2');
     end
-    output2 = lib.gaussianSmoothImageWASM(input, param, debug);
+    output2 = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
 
     if (debug>0)
         disp(['Testing real difference v2']);
     end
-    v3=max(max(max(abs(gold.img-single(output2.img)))));
+    v3=max(max(max(abs(gold.getImageData()-single(output2.getImageData())))));
 
     if (debug>0)
         v3
@@ -71,12 +72,12 @@ function result = test_smooth(debug)
     end
 
     param.sigmas=[0.1,0.1,0.1];
-    output3 = lib.gaussianSmoothImageWASM(input, param, debug);
+    output3 = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
 
     if (debug>0)
         disp(['Testing real difference 3']);
     end
-    v4=max(max(max(abs(gold.img-single(output3.img)))));
+    v4=max(max(max(abs(gold.getImageData()-single(output3.getImageData())))));
 
     if (debug>0)
         v4
@@ -86,7 +87,7 @@ function result = test_smooth(debug)
 
     disp(['=== Smooth test completed',mat2str(mat)])
     result=testutil.compare(gold,mat,'Image Smooth (multiple tests)',0,0.1);
-
+    output3.print('hello',3);
  return;
 
 

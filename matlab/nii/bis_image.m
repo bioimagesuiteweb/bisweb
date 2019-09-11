@@ -40,7 +40,7 @@ function moduleOutput = bis_image(fname,debug)
     moduleOutput.clone=@clone;
     moduleOutput.create=@create;
     moduleOutput.print=@print;
-    moduleOutput.getOrientationCode=@getOrientationCode;
+    moduleOutput.getOrientationCode=@getorientationcode;
     moduleOutput.getImage=@getImage;
     moduleOutput.getImageData=@getImageData;
     moduleOutput.getSpacing=@getSpacing;
@@ -105,15 +105,14 @@ function moduleOutput = bis_image(fname,debug)
     
     function result=print(name,debug)
 
-        if (nargin<1)
+        if (nargin<2)
             debug=1
         end
 
-        h=internal.header;
         if (debug>0)
             disp([ '___ ',name])
             if (debug>1)
-                disp(['      dimensions=',mat2str(h.ImageSize),' spacing=',mat2str(h.PixelDimensions),' orientation=',internal.orcode,' type=',class(internal.img)]);
+                disp(['      dimensions=',mat2str(size(internal.img)),' spacing=',mat2str(internal.spacing),' orientation=',internal.orcode,' type=',class(internal.img)]);
                 if (debug>2)
                     disp(['      matrix=',mat2str(internal.affine)]);
                 end
@@ -145,7 +144,7 @@ function moduleOutput = bis_image(fname,debug)
         internal.header=h;
         internal.affine=h.Transform.T;
         internal.spacing=h.PixelDimensions';
-        internal.orcode=bis_getorientationcode(internal.affine,internal.spacing);
+        internal.orcode=getorientationcode(internal.affine,internal.spacing);
 
         print(['Loaded image from', h.Filename ],debug);
         result=internal;
@@ -187,7 +186,7 @@ function moduleOutput = bis_image(fname,debug)
         fixaffine();
         internal.desc='Bisweb matlab image';
         internal.img=zeros(dims,tp);
-        internal.orcode=bis_getorientationcode(internal.affine,internal.spacing);
+        internal.orcode=getorientationcode(internal.affine,internal.spacing);
 
         print('__ Cloned image',debug);
         result=internal
@@ -232,7 +231,7 @@ function moduleOutput = bis_image(fname,debug)
         result=f;
     end
 
-    function orcode = bis_getorientationcode(affine,spacing)
+    function orcode = getorientationcode(affine,spacing)
 
         if (nargin<2)
             spacing=[1.0,1.0,1.0]';

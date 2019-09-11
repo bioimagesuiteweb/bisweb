@@ -26,7 +26,7 @@ function result=test_resample(debug)
     fname1=[ filepath  filesep 'MNI_2mm_resliced.nii.gz'];
 
     % Load Images
-    input = bis_loadimage(fname1,debug+1);
+    input = bis_image(fname1,debug+1);
 
     if (debug>0)
         disp('Reslicing image');
@@ -38,7 +38,7 @@ function result=test_resample(debug)
     resliceobj.datatype='short';
     resliceobj.backgroundValue=0.0;
 
-    output=lib.resliceImageWASM(input,eye(4),resliceobj,debug);
+    output=lib.resliceImageWASM(input.getImage(),eye(4),resliceobj,debug);
 
     testaff=eye(4);
     testaff(1,1)=-4.0;
@@ -47,8 +47,8 @@ function result=test_resample(debug)
 
     if (debug>0)
         testaff 
-        output.affine
+        output.getAffine()
     end
 
-    result=testutil.compare(testaff,output.affine,'Image Resample (affine matrix)',0,0.1);
+    result=testutil.compare(testaff,output.getAffine(),'Image Resample (affine matrix)',0,0.1);
 end
