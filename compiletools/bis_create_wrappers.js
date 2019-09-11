@@ -730,7 +730,7 @@ var create_pointers_matlab = function(names) {
 
             found=true;
             if (elem.optional===true) {
-                outtext+=`    ${ptrname}=0\n`;
+                outtext+=`    ${ptrname}=0;\n`;
                 outtext+=`    if ${elem.variablename}~=0\n      `;
             } else {
                 outtext+='    ';

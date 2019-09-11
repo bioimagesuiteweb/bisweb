@@ -20,7 +20,7 @@ function result=test_resample(debug)
 
 
     if nargin<1
-        debug=1
+        debug=1;
     end
 
     [testutil,filepath,lib]=bis_testutils();

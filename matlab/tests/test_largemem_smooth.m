@@ -19,9 +19,8 @@ function result=test_largemem_smooth(debug)
 
     
     if nargin<1
-        debug=1
+        debug=1;
     end
-
 
     [testutil,filepath,lib]=bis_testutils();
     testutil.printheader('Test LargeMemory Smooth');
@@ -42,8 +41,8 @@ function result=test_largemem_smooth(debug)
     param.vtkboundary='true';
 
     % Load Images
-    input = bis_image(fname1);
-    gold =  bis_image(fname2);
+    input = bis_image(fname1,debug+1);
+    gold =  bis_image(fname2,debug+1);
 
     if (debug>0)
         disp('----------------------------------');

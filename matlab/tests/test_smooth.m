@@ -18,7 +18,7 @@
 function result = test_smooth(debug)
 
     if nargin<1
-        debug=1
+        debug=1;
     end
 
     [testutil,filepath,lib]=bis_testutils();
@@ -34,7 +34,7 @@ function result = test_smooth(debug)
 
     % Load Images
     input = bis_image(fname1,debug+1);
-    gold  = bis_image(fname2,debug+1);
+    gold  = bis_image(fname2,debug+2);
 
 
     if (debug>0)
