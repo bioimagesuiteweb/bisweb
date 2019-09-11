@@ -34,7 +34,7 @@ function result=test_resample(debug)
 
     for i = 1:3
         filename=[ filepath filesep imagenames{i} ];
-        images{i} = bis_loadimage(filename,debug+1);
+        images{i} = bis_image(filename,debug+1);
     end
 
     reslice_matr = [   0.866,  -0.525  , 0.000,  68.758 ;
@@ -45,17 +45,17 @@ function result=test_resample(debug)
 
     paramobj = { };
     paramobj.interpolation=1;
-    paramobj.dimensions=size(images{1}.img);
-    paramobj.spacing= images{1}.spacing(1:3)';
+    spa=images{1}.getSpacing();
+    paramobj.dimensions=size(images{1}.getImageData());
+    paramobj.spacing= spa(1:3)';
     paramobj.datatype='float';
     paramobj.backgroundValue=0.0;
 
     if (debug>0)
-        imagenames
         paramobj
     end
 
-    out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,debug);
-    result=testutil.compare(images{3}.img,out_img.img,'Image Reslice',1,0.99);
+    out_img=lib.resliceImageWASM(images{2}.getImage(),reslice_matr,paramobj,debug);
+    result=testutil.compare(images{3}.getImageData(),out_img.getImageData(),'Image Reslice',1,0.99);
 
 end

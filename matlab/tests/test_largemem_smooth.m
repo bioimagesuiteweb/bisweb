@@ -41,8 +41,8 @@ function result=test_largemem_smooth(debug)
     param.vtkboundary='true';
 
     % Load Images
-    input = bis_loadimage(fname1);
-    gold = bis_loadimage(fname2);
+    input = bis_image(fname1);
+    gold =  bis_image(fname2);
 
     if (debug>0)
         disp('----------------------------------');
@@ -50,13 +50,13 @@ function result=test_largemem_smooth(debug)
         disp('----------------------------------');
     end
     
-    output = lib.gaussianSmoothImageWASM(input, param, debug);
+    output = lib.gaussianSmoothImageWASM(input.getImage(), param, debug);
 
     if (debug)
         disp(['Testing real difference']);
     end 
 
-    result=testutil.compare(gold.img,output.img,'Image Smooth -- Large Memory',0,0.1);
+    result=testutil.compare(gold.getImageData(),output.getImageData(),'Image Smooth -- Large Memory',0,0.1);
 
 end
 

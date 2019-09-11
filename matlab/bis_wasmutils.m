@@ -523,6 +523,9 @@ function moduleOutput = bis_wasmutils()
                end
             end
             out.spacing=sp';
+            t=bis_image();
+            t.create(out);
+            out=t;
         end
 	  case get_grid_magic_code()
 	    out={ };
