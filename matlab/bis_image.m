@@ -75,12 +75,37 @@ function moduleOutput = bis_image(fname,debug)
         result=size(internal.img);
     end
 
-    function result=create(a)
-        internal=a;
-        result=internal;
+    function result=create(img,spacing,affine)
+
+        if nargin==1
+            internal=img;
+            result=internal;
+            fixaffine();
+            internal.orcode=getorientationcode(internal.affine,internal.spacing);
+            return;
+        end 
+
+        if (nargin<3)
+            affine=eye(4);
+        end 
+
+        sz=size(size(img))
+        a=zeros(sz);
+        for i=3:sz
+            a(i)=i;
+        end
+        a(1)=2;
+        a(2)=1
+        a
+        internal.img=permute(img,a);
+        internal.spacing=spacing;
+        internal.affine=affine;
         fixaffine();
         internal.orcode=getorientationcode(internal.affine,internal.spacing);
-    end 
+        result=internal;
+        return;
+    end
+
 
     function result=fixaffine()
         
