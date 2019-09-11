@@ -88,7 +88,14 @@ function result = test_indiv(debug)
    paramobj.saveexemplars='false';
    indiv_ptr=lib.individualizedParcellationWASM(fmri_smoothed,resliced_group, paramobj,debug);
 
-   result=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation',0,0.1);
+   result=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation Float',0,0.1);
 
+   paramobj.usefloat='false';
+   paramobj.saveexemplars='false';
+   indiv_ptr=lib.individualizedParcellationWASM(fmri_smoothed,resliced_group, paramobj,debug);
 
+   result2=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation Double',0,0.1);
+
+   result=min(result,result2);
+   
 end

@@ -310,7 +310,7 @@ namespace bisIndividualizedParcellation {
     //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
-    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS !!" << std::endl;
+    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS (double)" << std::endl;
     
     
     std::vector<double> label(n,-1);
@@ -407,17 +407,26 @@ namespace bisIndividualizedParcellation {
                     for (int ia=0;ia<neighbors;ia++)
                       {
                         int currVoxN = chosenVoxelN + incr[ia];
-                        if (group[currVoxN]>0)
-                          {
-                            std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
-                            if (voxeln != Ntonvoxel.end())
-                              {
-                                int currVox = voxeln->second;
-                                if (VISITED[currVox] == 0){
-                                  exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
+                        int v_k=int(currVoxN/slicesize);
+                        int v_j=currVoxN-v_k*slicesize;
+                        int v_i=v_j % dim[0];
+                        v_j=int(v_j/dim[0]);
+                        
+                        if (v_i>=0 && v_i<dim[0] &&
+                            v_j>=0 && v_j<dim[1] &&
+                            v_k>=0 && v_k<dim[2]) {
+                          if (group[currVoxN]>0)
+                            {
+                              std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
+                              if (voxeln != Ntonvoxel.end())
+                                {
+                                  int currVox = voxeln->second;
+                                  if (VISITED[currVox] == 0){
+                                    exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
+                                  }
                                 }
-                              }
-                          }
+                            }
+                        }
                       }
                   }
               }
@@ -712,7 +721,7 @@ namespace bisIndividualizedParcellation {
     //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
-    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS!" << std::endl;
+    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS (float)" << std::endl;
     
     
     std::vector<float> label(n,-1);
@@ -756,27 +765,17 @@ namespace bisIndividualizedParcellation {
         for (int ia=0;ia<neighbors;ia++)
           {	
             int currVoxN = exemplarN+incr[ia];
-            int v_k=int(currVoxN/slicesize);
-            int v_j=currVoxN-v_k*slicesize;
-            int v_i=v_j % dim[0];
-            v_j=int(v_j/dim[0]);
-            
-            if (v_i>=0 && v_i<dim[0] &&
-                v_j>=0 && v_j<dim[1] &&
-                v_k>=0 && v_k<dim[2]) {
-              
-              if (group[currVoxN]>0)
-                {
-                  std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
-                  if (voxeln != Ntonvoxel.end())
-                    {
-                      int currVox = voxeln->second; 
-                      //                    exemplar_min_heaps[p].push(std::make_pair(distvSopt(currVox,p),currVox));
-                      exemplar_min_heaps[p].push(std::make_pair(Xf(currVox,p),currVox));
-                      
-                    }
-                }
-            }
+            if (group[currVoxN]>0)
+              {
+                std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
+                if (voxeln != Ntonvoxel.end())
+                  {
+                    int currVox = voxeln->second; 
+                    //                    exemplar_min_heaps[p].push(std::make_pair(distvSopt(currVox,p),currVox));
+                    exemplar_min_heaps[p].push(std::make_pair(Xf(currVox,p),currVox));
+                    
+                  }
+              }
           }  
       }
 
