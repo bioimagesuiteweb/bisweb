@@ -27,7 +27,8 @@ cp ${ORIG}/lib/*.dll ${WHEEL}
 cp ${ORIG}/lib/*.py ${WHEEL}
 cp ${ORIG}/LICENSE ${WHEEL}
 cp ${ORIG}/README_py.txt ${WHEEL}
-
+rm ${WHEEL}/bis_path.py
+echo "# Empty file on purpose" >  ${WHEEL}/bis_path.py
 #
 # More needed here
 # 
