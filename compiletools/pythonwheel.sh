@@ -44,16 +44,16 @@ rm -rf ${WHEEL}/biswebpython/config
 # More needed here
 # 
 #
-#cd ${WHEEL}/..
-#python3 setup.py sdist bdist_wheel
+cd ${WHEEL}
+python3 setup.py sdist bdist_wheel
 
-#echo "-----------------------------------------------------------------------"
-#cd ${BDIR}/install
-#rm bisweb*any.whl
-#rm bisweb*.tar.gz
-#cp ${BDIR}/install/wheel/dist/* .
-#pwd
-#ls -lrt *tar.gz *sh *whl
+echo "-----------------------------------------------------------------------"
+cd ${BDIR}/install
+rm bisweb*any.whl
+rm bisweb*.tar.gz
+cp ${BDIR}/install/wheel/dist/* .
+pwd
+ls -lrt *tar.gz *sh *whl
 
 
 echo "-----------------------------------------------------------------------"
