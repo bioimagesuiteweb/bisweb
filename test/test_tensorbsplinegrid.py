@@ -15,19 +15,17 @@
 # 
 # ENDLICENSE
 
-import math
 import os
 import sys
 import numpy as np
 import unittest
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../build/native'));
-sys.path.append(os.path.abspath(my_path+'/../python/core'));
-sys.path.append(os.path.abspath(my_path+'/../python/utilities'));
+sys.path.append(os.path.abspath(my_path+'/../'));
+import biswebpython.modules.bis_path;
 
 import biswrapper as libbiswasm;
-import bis_objects as bis
+import biswebpython.core.bis_objects as bis
 
 
 class TestTensorGrid(unittest.TestCase):

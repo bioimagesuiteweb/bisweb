@@ -15,22 +15,19 @@
 # 
 # ENDLICENSE
 
-import math
 import os
 import sys
 import numpy as np
 import unittest
-
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../python/modules'));
-sys.path.append(os.path.abspath(my_path+'/../python/utilities'));
+sys.path.append(os.path.abspath(my_path+'/../'));
+sys.path.append(os.path.abspath(my_path+'/../biswebpython/modules'));
+import biswebpython.modules.bis_path;
 
-import resliceImage;
-
-
-
+import biswrapper as libbiswasm;
+import biswebpython.modules.resliceImage as resliceImage;
 import biswrapper as libbis;
-import bis_objects as bis
+import biswebpython.core.bis_objects as bis
 
 
 class TestResample(unittest.TestCase):
