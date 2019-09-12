@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 
 class regressOutImage(bis_basemodule.baseModule):
@@ -36,7 +36,7 @@ class regressOutImage(bis_basemodule.baseModule):
         self.name='regressOutImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['regressOutImage'];
+        return bismodules_desc.descriptions['regressOutImage'];
 
     
     def polynomial(self,t,power):

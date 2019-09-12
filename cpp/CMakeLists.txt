@@ -589,7 +589,7 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
     
-    SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/modules_desc.py)
+    SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
     FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
     
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
@@ -604,6 +604,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../biswebpython ABSOLUTE)
     FILE(GLOB PYLIST ${PYTHON_SOURCE_DIR}/core/*.py)
     FILE(GLOB PYLIST2 ${PYTHON_SOURCE_DIR}/modules/*.py)
+    list(REMOVE_ITEM PYLIST2 ${PYTHON_SOURCE_DIR}/modules/bis_path.py)
     FILE(GLOB PYLIST3 ${PYTHON_SOURCE_DIR}/utilities/*.py)
     
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
@@ -622,7 +623,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
     install (FILES ${README_FILE} DESTINATION biswebpython)
     INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${BISWEB_PYTHON_INIT2} DESTINATION initial RENAME __init__.py   PERMISSIONS OWNER_READ  WORLD_READ)
+    install (FILES ${BISWEB_PYTHON_INIT2} DESTINATION biswebpython/config RENAME __init__.py   PERMISSIONS OWNER_READ  WORLD_READ)
     INSTALL (FILES ${PYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
@@ -631,7 +632,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     
     # This overwrites bis_path.py with one suitable for install purposes
     #MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
-    #install (FILES ${BISWEB_PYTHON_PATH}  DESTINATION bisweb/biswebpython/modules)
+    install (FILES ${BISWEB_PYTHON_PATH}  DESTINATION biswebpython/modules)
 
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)

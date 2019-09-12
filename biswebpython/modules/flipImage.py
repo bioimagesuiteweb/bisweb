@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc;
+import bismodules_desc;
 import biswrapper as libbis;
 
 class flipImage(bis_basemodule.baseModule):
@@ -36,7 +36,7 @@ class flipImage(bis_basemodule.baseModule):
         self.name='flipImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['flipImage'];
+        return bismodules_desc.descriptions['flipImage'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: flipImage with vals', vals);

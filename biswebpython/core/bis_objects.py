@@ -33,7 +33,7 @@ sys.path.append(os.path.abspath(my_path+'/../python'));
 
 import biswrapper as libbis;
 
-from PIL import Image, ImageSequence #for TIFF support
+
 
 # --------------------------------------
 # bisBaseObject
@@ -253,6 +253,7 @@ class bisImage(bisBaseObject):
         return 1;
 
     def load(self,fname):
+        
         try:
             # Jackson to add
             # to add tif or anything
@@ -261,6 +262,8 @@ class bisImage(bisBaseObject):
             # call self.create
             fileExtension = fname.split('.')[-1] #kind of hacky? Wouldn't work for .gz
             if fileExtension == 'tif' or fileExtension == 'tiff':
+
+                from PIL import Image, ImageSequence #for TIFF support
                 img = Image.open(fname)
                 imgl = []
                 for page in ImageSequence.Iterator(img):

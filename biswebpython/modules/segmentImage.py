@@ -24,7 +24,7 @@ import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects;
 import biswrapper as libbis;
-import modules_desc;
+import bismodules_desc;
     
 class segmentImage(bis_basemodule.baseModule):
 
@@ -33,7 +33,7 @@ class segmentImage(bis_basemodule.baseModule):
         self.name='segmentImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['segmentImage'];
+        return bismodules_desc.descriptions['segmentImage'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: segmentImage with vals', (vals));

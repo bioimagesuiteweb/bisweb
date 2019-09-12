@@ -27,7 +27,7 @@ import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 
 class extractSlice(bis_basemodule.baseModule):
@@ -37,7 +37,7 @@ class extractSlice(bis_basemodule.baseModule):
         self.name='extractSlice';
    
     def createDescription(self):
-        return modules_desc.descriptions['extractSlice'];
+        return bismodules_desc.descriptions['extractSlice'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: extractSlice with vals', (vals));

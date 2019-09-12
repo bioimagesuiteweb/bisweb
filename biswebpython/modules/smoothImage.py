@@ -26,7 +26,7 @@ import argparse
 
 import bis_path;
 import biswebpython.core.bis_basemodule as bis_basemodule;
-import modules_desc;
+import bismodules_desc;
 import biswrapper as libbis;
 
 class smoothImage(bis_basemodule.baseModule):
@@ -36,7 +36,7 @@ class smoothImage(bis_basemodule.baseModule):
         self.name='smoothImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['smoothImage'];
+        return bismodules_desc.descriptions['smoothImage'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: smoothImage with vals', vals);

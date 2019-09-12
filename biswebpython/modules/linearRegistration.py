@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 import biswebpython.core.bis_baseutils as bis_baseutils
 
@@ -37,7 +37,7 @@ class linearRegistration(bis_basemodule.baseModule):
         self.name='linearRegistration';
    
     def createDescription(self):
-        return modules_desc.descriptions['linearRegistration'];
+        return bismodules_desc.descriptions['linearRegistration'];
 
     def directInvokeAlgorithm(self,vals):
         

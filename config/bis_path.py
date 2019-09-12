@@ -18,13 +18,16 @@
 import os;
 import sys;
 
-my_path=os.path.dirname(os.path.realpath(__file__));
+my_path=os.path.dirname(os.path.realpath(__file__))
+n=os.path.abspath(my_path+'/../..')
+l=sys.path;
+
+if (n not in l):
+    sys.path.append(n);
 
 if os.name == 'nt':
-    sys.path.append(os.path.abspath(my_path+'\\..'))
-    sys.path.append(os.path.abspath(my_path+'\\..\\..\\lib'))
+    sys.path.append(os.path.abspath(my_path+'\\..\\lib'))
 else:
-    sys.path.append(os.path.abspath(my_path+'/..'))
-    sys.path.append(os.path.abspath(my_path+'/../../lib'))
+    sys.path.append(os.path.abspath(my_path+'/../lib'))
 
     

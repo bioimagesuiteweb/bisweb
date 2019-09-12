@@ -25,7 +25,7 @@ import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_baseutils as bis_baseutils
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 
 class nonlinearRegistration(bis_basemodule.baseModule):
@@ -35,7 +35,7 @@ class nonlinearRegistration(bis_basemodule.baseModule):
         self.name='nonlinearRegistration';
    
     def createDescription(self):
-        return modules_desc.descriptions['nonlinearRegistration'];
+        return bismodules_desc.descriptions['nonlinearRegistration'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: nonLinearRegistration', (vals));	

@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 
     
@@ -37,7 +37,7 @@ class resampleImage(bis_basemodule.baseModule):
         self.name='resampleImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['resampleImage'];
+        return bismodules_desc.descriptions['resampleImage'];
 
     def directInvokeAlgorithm(self,vals):
         input = self.inputs['input'];

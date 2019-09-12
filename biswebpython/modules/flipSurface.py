@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc;
+import bismodules_desc;
 import biswrapper as libbis;
 
 class flipSurface(bis_basemodule.baseModule):

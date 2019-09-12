@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 
 class clusterThreshold(bis_basemodule.baseModule):
@@ -36,7 +36,7 @@ class clusterThreshold(bis_basemodule.baseModule):
         self.name='clusterThreshold';
    
     def createDescription(self):
-        return modules_desc.descriptions['clusterThreshold'];
+        return bismodules_desc.descriptions['clusterThreshold'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: clusterThresholdImage with vals', (vals));

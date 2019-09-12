@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc;
+import bismodules_desc;
 import biswrapper as libbis;
 
 class gradientImage(bis_basemodule.baseModule):
@@ -36,7 +36,7 @@ class gradientImage(bis_basemodule.baseModule):
         self.name='gradientImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['gradientImage'];
+        return bismodules_desc.descriptions['gradientImage'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: gradientImage with vals', vals);

@@ -26,7 +26,7 @@ import numpy as np
 import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import modules_desc
+import bismodules_desc
 import biswrapper as libbis;
 
 class normalizeImage(bis_basemodule.baseModule):
@@ -36,7 +36,7 @@ class normalizeImage(bis_basemodule.baseModule):
         self.name='normalizeImage';
    
     def createDescription(self):
-        return modules_desc.descriptions['normalizeImage'];
+        return bismodules_desc.descriptions['normalizeImage'];
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: normalizeImage with vals', (vals));
