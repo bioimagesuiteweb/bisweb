@@ -14,7 +14,7 @@ rm -rf ${BDIR}/doc
 
 #Install directories
 mkdir -p ${BDIR}/install
-mkdir -p ${BDIR}/installpython
+mkdir -p ${BDIR}/install/wheel
 
 # Doc directory
 mkdir -p ${BDIR}/doc/doxgen

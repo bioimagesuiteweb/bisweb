@@ -34,6 +34,21 @@ const copyFileSync=function(d1,fname,d2,fname2) {
     }
 };
 
+const linkFileSync=function(d1,fname,d2,fname2) {
+    
+    let f1=path.join(d1,fname);
+    let f2=path.join(d2,fname2);
+    
+    console.log('++++ symlink file  '+f1+'\n\t\t--> '+f2);
+    try {
+        fs.symlinkSync(f1,f2);
+    } catch(e) {
+        console.log('---- error',e);
+        process.exit(0);
+    }
+};
+
+
 let executeCommand=function(command,dir,force=false,dummy=false) {
 
     let done=false;
@@ -159,6 +174,7 @@ let unzipf=function(zipfile,outdir) {
 module.exports = {
     makeDir : makeDir,
     copyFileSync : copyFileSync,
+    linkFileSync : linkFileSync,
     executeCommand : executeCommand,
     unzip : unzipf,
     initialize : initialize,

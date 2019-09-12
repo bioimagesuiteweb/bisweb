@@ -18,6 +18,8 @@
 import os;
 import sys;
 
+name='biswebpython';
+
 my_path=os.path.dirname(os.path.realpath(__file__));
 if os.name == 'nt':
     sys.path.append(os.path.abspath(my_path+'\\python'))

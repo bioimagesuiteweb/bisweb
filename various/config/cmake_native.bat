@@ -1,1 +1,0 @@
-c:\unix\cmake-3.9.1-win64-x64\bin\cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=C:/unix/python35/python.exe -DEigen3_DIR=C:/Users/Xenios/bisweb/src/build/eigen3/share/eigen3/cmake -DIGL_DIR=C:/Users/Xenios/bisweb/src/build/igl -DBIS_USEGPL=ON -DBIS_GPL_DIR=C:/Users/Xenios/bisweb/gpl -DBIS_USEINDIV=ON  c:/Users/Xenios/bisweb/src/cpp
