@@ -19,7 +19,7 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
       -DBIS_A_MATLAB=ON \
-      -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
+      -DCMAKE_INSTALL_PREFIX=${BDIR}/installpython \
       -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
       ${SRCDIR}/cpp

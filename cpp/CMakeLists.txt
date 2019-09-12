@@ -40,6 +40,8 @@ SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
+SET (BISWEB_PYTHON_SETUP ${PROJECT_SOURCE_DIR}/../config/setup.py)
+SET (BISWEB_PYTHON_MANIFEST ${PROJECT_SOURCE_DIR}/../config/MANIFEST.in)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
 SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../python/modules/PythonModuleList.txt)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
@@ -252,6 +254,7 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+install (FILES ${LICENSE_FILE} DESTINATION "." RENAME LICENSE)
 
 
 IF (BIS_A_EMSCRIPTEN)
@@ -605,10 +608,15 @@ ELSE(BIS_A_EMSCRIPTEN)
     
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
     install (FILES ${README_FILE} DESTINATION bisweb/)
+    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION "." RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
 
+    configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
+    install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION ".")
+    install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION ".")
+    
     # This overwrites bis_path.py with one suitable for install purposes
     MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
-    install (FILES ${BISWEB_PYTHON_PATH} DESTINATION bisweb/python/modules)
+    install (FILES ${BISWEB_PYTHON_PATH}  DESTINATION bisweb/python/modules)
 
     if(UNIX AND NOT APPLE)
       FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
