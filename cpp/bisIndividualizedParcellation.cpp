@@ -100,7 +100,7 @@ namespace bisIndividualizedParcellation {
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
-    std::cout << "++++ Beginning Indiv Parc internal " << std::endl;
+    std::cout << "++++ Beginning Indiv Parc (Salehi et al 2019) " << std::endl;
     std::cout << "++++ \t fMRI Image dim = " << dim[0] << "," << dim[1] << "," << dim[2] << "  " << dim[3] << std::endl;
     std::cout << "++++ \t Group Parcellation Image dim2 = " << dim2[0] << "," << dim2[1] << "," << dim2[2] << "  " << dim2[3] << std::endl;
 
@@ -514,7 +514,7 @@ namespace bisIndividualizedParcellation {
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
-    std::cout << "++++ Beginning (FLOAT) Indiv Parc internal " << std::endl;
+      std::cout << "++++ Beginning (FLOAT) Indiv Parc (Salehi et al 2019) " << std::endl;
     std::cout << "++++ \t fMRI Image dim = " << dim[0] << "," << dim[1] << "," << dim[2] << "  " << dim[3] << std::endl;
     std::cout << "++++ \t Group Parcellation Image dim2 = " << dim2[0] << "," << dim2[1] << "," << dim2[2] << "  " << dim2[3] << std::endl;
 
