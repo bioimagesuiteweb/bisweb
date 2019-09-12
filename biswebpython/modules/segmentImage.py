@@ -17,8 +17,6 @@
 # 
 # ENDLICENSE
 
-
-
 import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule

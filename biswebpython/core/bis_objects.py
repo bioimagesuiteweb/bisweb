@@ -15,7 +15,6 @@
 #
 # ENDLICENSE
 
-import math
 import os
 import sys
 import numpy as np
@@ -25,15 +24,6 @@ import json
 import nibabel as nib
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.utilities.surface_utils as surutil
-
-
-my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../build/native'));
-sys.path.append(os.path.abspath(my_path+'/../python'));
-
-import biswrapper as libbis;
-
-
 
 # --------------------------------------
 # bisBaseObject
@@ -157,6 +147,7 @@ class bisMatrix(bisBaseObject):
         if (ext==".csv"):
             self.data_array = np.genfromtxt(fname, delimiter= ",")
         elif (ext==".matr"):
+            import biswrapper as libbis;
             self.data_array=libbis.parseMatrixTextFileWASM(text,0);
         self.filename=fname;
         return True;
@@ -659,6 +650,7 @@ class bisComboTransformation(bisBaseObject):
     def save(self,filename):
 
         try:
+            import biswrapper as libbis;
             out=libbis.createComboTransformationTextFileWASM(self,0);
             with open(filename, 'w') as fp:
                 fp.write(out);

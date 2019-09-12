@@ -15,7 +15,6 @@
 # 
 # ENDLICENSE
 
-import math
 import os
 import inspect
 import sys
@@ -23,7 +22,7 @@ import numpy as np
 import ctypes 
 import struct 
 import platform
-import inspect
+
 
 if (sys.version_info[0]<3):
     print('\n .... this tool is incompatible with Python v2. You are using '+str(platform.python_version())+'. Use Python v3.\n')

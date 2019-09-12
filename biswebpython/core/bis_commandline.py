@@ -15,15 +15,10 @@
 # 
 # ENDLICENSE
 
-import math
-import os
 import sys
 import numpy as np
 import argparse
-from types import SimpleNamespace;
-
 import biswebpython.core.bis_objects as bis_objects;
-
 
 def initialError(extra=''):
 

@@ -20,10 +20,6 @@
 
 
 import sys
-import math
-import numpy as np
-import argparse
-
 import bis_path;
 import biswebpython.core.bis_basemodule as bis_basemodule;
 import bismodules_desc;

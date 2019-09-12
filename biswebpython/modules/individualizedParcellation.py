@@ -17,13 +17,9 @@
 # 
 # ENDLICENSE
 
-
-
 import sys
 import bis_path;
-import math
 import numpy as np
-import argparse
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
 import bismodules_desc;

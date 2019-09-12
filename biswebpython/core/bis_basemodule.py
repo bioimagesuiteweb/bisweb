@@ -15,13 +15,8 @@
 #
 # ENDLICENSE
 
-
-
-import math
 import os
 import sys
-import numpy as np
-import argparse
 import biswebpython.core.bis_objects as bis_objects;
 
 class baseModule:
