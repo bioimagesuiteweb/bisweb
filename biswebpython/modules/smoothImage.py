@@ -55,16 +55,13 @@ class smoothImage(bis_basemodule.baseModule):
                                                                         "radiusfactor": vals['radiusfactor'],
                                                                         "vtkboundary" : self.parseBoolean(vals['vtkboundary']),
                                                                     }, debug=self.parseBoolean(vals['debug']))
-        except TypeError as  f:
+        except NameError as  f:
             print(f)
-            e = sys.exc_info()[0]
-            print('---- Failed to invoke algorithm',e);
             return False
         except:
             e = sys.exc_info()[0]
             print('---- Failed to invoke algorithm',e);
             return False
-
         return True
 
 if __name__ == '__main__':

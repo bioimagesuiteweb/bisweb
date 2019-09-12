@@ -228,8 +228,6 @@ import ctypes
 import struct
 import json
 import biswebpython.core.bis_wasmutils as wasmutil
-from biswebpython.core.bis_objects import *
-
 
 def initialize_module():
 

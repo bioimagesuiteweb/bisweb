@@ -25,6 +25,7 @@ import struct
 import platform
 import biswebpython.core.bis_objects as bis
 
+
 if (sys.version_info[0]<3):
     print('\n .... this tool is incompatible with Python v2. You are using '+str(platform.python_version())+'. Use Python v3.\n')
     sys.exit(0)
@@ -64,7 +65,6 @@ def load_library(name=''):
 def Module():
     global __Module;
     return __Module;
-
 
 # -----------------------------------------------------
 # set_force_large_memory
@@ -362,6 +362,7 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
 
 def wrapper_serialize(obj):
 
+    print('2');
     if type(obj) is np.ndarray:
         shp=obj.shape;
         l1=len(shp);
@@ -372,9 +373,12 @@ def wrapper_serialize(obj):
         return serialize_simpledataobject(obj);
 
     out=0;
+    print('2');
     try:
+        print('2');
         out=obj.serializeWasm();
-    except Error:
+    except e:
+        print('2',e);
         raise ValueError('we can only serialize numpy arrays or bis.bisBaseObject derived classes');
 
     
@@ -439,5 +443,29 @@ def wrapper_deserialize_and_delete(ptr,datatype,first_input=0):
     out=deserialize_object(ptr,datatype,offset=0,first_input=first_input);
     Module().jsdel_array(ptr);
     return out;
+
+def release_pointer(ptr):
+    Module().jsdel_array(ptr);
     
+
+funcdict = {
+    'Module' : Module,
+    'deserialize_object' : deserialize_object,
+    'deserialize_simpledataobject' : deserialize_simpledataobject,
+    'getCollectionMagicCode' : getCollectionMagicCode,
+    'getComboTransformMagicCode' : getComboTransformMagicCode,
+    'getGridTransformMagicCode' : getGridTransformMagicCode,
+    'getImageMagicCode' : getImageMagicCode,
+    'getMatrixMagicCode' : getMatrixMagicCode,
+    'getNameFromMagicCode' : getNameFromMagicCode,
+    'getVectorMagicCode' : getVectorMagicCode,
+    'get_dtype' : get_dtype,
+    'get_nifti_code' : get_nifti_code,
+    'release_pointer' : release_pointer,
+    'serialize_simpledataobject' : serialize_simpledataobject,
+    'wrapper_deserialize_and_delete' : wrapper_deserialize_and_delete,
+    'wrapper_serialize' : wrapper_serialize,
+};
+
+bis.setbiswasm(funcdict);
 

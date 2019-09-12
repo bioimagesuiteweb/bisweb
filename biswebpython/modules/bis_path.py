@@ -19,19 +19,17 @@ import os;
 import sys;
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-print('--------------------------');
 n=os.path.abspath(my_path+'/../..')
 l=sys.path;
-print('\n\t'.join(sys.path));
-print('--------------------------');
+
 if (n in l):
     print('Not adding ',n,' to path');
 else:
     print('Adding ',n,' to path');
     sys.path.append(n);
 
-print('\n\t'.join(sys.path));
-print('--------------------------');
+
+
 sys.path.append(os.path.abspath(my_path+'/../../build/native'))
 
 
