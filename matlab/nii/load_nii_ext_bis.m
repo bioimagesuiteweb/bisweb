@@ -1,6 +1,6 @@
 %  Load NIFTI header extension after its header is loaded using load_nii_hdr.
 %
-%  Usage: ext = load_nii_ext(filename)
+%  Usage: ext = load_nii_ext_bis(filename)
 %
 %  filename - NIFTI file name.
 %
@@ -16,10 +16,10 @@
 %
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %
-function ext = load_nii_ext(filename)
+function ext = load_nii_ext_bis(filename)
 
    if ~exist('filename','var'),
-      error('Usage: ext = load_nii_ext(filename)');
+      error('Usage: ext = load_nii_ext_bis(filename)');
    end
 
 
@@ -167,7 +167,7 @@ function ext = load_nii_ext(filename)
    end
 
 
-   return                                       % load_nii_ext
+   return                                       % load_nii_ext_bis
 
 
 %---------------------------------------------------------------------

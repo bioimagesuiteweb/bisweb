@@ -1,7 +1,7 @@
 %  Save NIFTI dataset. Support both *.nii and *.hdr/*.img file extension.
 %  If file extension is not provided, *.hdr/*.img will be used as default.
 %  
-%  Usage: save_nii(nii, filename, [old_RGB])
+%  Usage: save_nii_bis(nii, filename, [old_RGB])
 %  
 %  nii.hdr - struct with NIFTI header fields (from load_nii.m or make_nii.m)
 %
@@ -46,14 +46,14 @@
 %  NIFTI data format can be found on: http://nifti.nimh.nih.gov
 %
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
-%  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
+%  - "old_RGB" related codes in "save_nii_bis.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii(nii, fileprefix, old_RGB)
+function save_nii_bis(nii, fileprefix, old_RGB)
    
    if ~exist('nii','var') | isempty(nii) | ~isfield(nii,'hdr') | ...
 	~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
 
-      error('Usage: save_nii(nii, filename, [old_RGB])');
+      error('Usage: save_nii_bis(nii, filename, [old_RGB])');
    end
 
    if isfield(nii,'untouch') & nii.untouch == 1
@@ -65,9 +65,10 @@ function save_nii(nii, fileprefix, old_RGB)
    end
 
    v = version;
-
+   gzFile=0;
    %  Check file extension. If .gz, unpack it into temp folder
    %
+
    if length(fileprefix) > 2 & strcmp(fileprefix(end-2:end), '.gz')
 
       if ~strcmp(fileprefix(end-6:end), '.img.gz') & ...
@@ -102,20 +103,25 @@ function save_nii(nii, fileprefix, old_RGB)
       fileprefix(end-3:end)='';
    end
 
+
+   disp([' ------------ ']);
+   disp([' filetype=',mat2str(filetype),' filename=',mat2str(fileprefix),' gzFile=',mat2str(gzFile) ]);
    write_nii(nii, filetype, fileprefix, old_RGB);
 
-   %  gzip output file if requested
-   %
-   if exist('gzFile', 'var')
-      if filetype == 1
-         gzip([fileprefix, '.img']);
-         delete([fileprefix, '.img']);
-         gzip([fileprefix, '.hdr']);
-         delete([fileprefix, '.hdr']);
-      elseif filetype == 2
-         gzip([fileprefix, '.nii']);
-         delete([fileprefix, '.nii']);
-      end;
+   if (gzFile <1 )
+     return
+   end
+   
+
+   disp([' compressing',fileprefix ]);
+   if filetype == 1
+     gzip([fileprefix, '.img']);
+     delete([fileprefix, '.img']);
+     gzip([fileprefix, '.hdr']);
+     delete([fileprefix, '.hdr']);
+   elseif filetype == 2
+     gzip([fileprefix, '.nii']);
+     delete([fileprefix, '.nii']);
    end;
 
    if filetype == 1
@@ -126,7 +132,7 @@ function save_nii(nii, fileprefix, old_RGB)
       save([fileprefix '.mat'], 'M');
    end
    
-   return					% save_nii
+   return					% save_nii_bis
 
 
 %-----------------------------------------------------------------------------------
@@ -194,10 +200,10 @@ function write_nii(nii, filetype, fileprefix, old_RGB)
       end
 
       hdr.hist.magic = 'n+1';
-      save_nii_hdr(hdr, fid);
+      save_nii_hdr_bis(hdr, fid);
 
       if ~isempty(ext)
-         save_nii_ext(ext, fid);
+         save_nii_ext_bis(ext, fid);
       end
    else
       fid = fopen(sprintf('%s.hdr',fileprefix),'w');
@@ -209,10 +215,10 @@ function write_nii(nii, filetype, fileprefix, old_RGB)
       
       hdr.dime.vox_offset = 0;
       hdr.hist.magic = 'ni1';
-      save_nii_hdr(hdr, fid);
+      save_nii_hdr_bis(hdr, fid);
 
       if ~isempty(ext)
-         save_nii_ext(ext, fid);
+         save_nii_ext_bis(ext, fid);
       end
       
       fclose(fid);

@@ -2,10 +2,10 @@
 
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 
-function [img,hdr] = load_untouch_nii_img(hdr,filetype,fileprefix,machine,img_idx,dim5_idx,dim6_idx,dim7_idx,old_RGB,slice_idx)
+function [img,hdr] = load_untouch_nii_img_bis(hdr,filetype,fileprefix,machine,img_idx,dim5_idx,dim6_idx,dim7_idx,old_RGB,slice_idx)
 
    if ~exist('hdr','var') | ~exist('filetype','var') | ~exist('fileprefix','var') | ~exist('machine','var')
-      error('Usage: [img,hdr] = load_nii_img(hdr,filetype,fileprefix,machine,[img_idx],[dim5_idx],[dim6_idx],[dim7_idx],[old_RGB],[slice_idx]);');
+      error('Usage: [img,hdr] = load_nii_img_bis(hdr,filetype,fileprefix,machine,[img_idx],[dim5_idx],[dim6_idx],[dim7_idx],[old_RGB],[slice_idx]);');
    end
 
    if ~exist('img_idx','var') | isempty(img_idx) | hdr.dime.dim(5)<1
@@ -139,7 +139,7 @@ function [img,hdr] = load_untouch_nii_img(hdr,filetype,fileprefix,machine,img_id
 
    [img,hdr] = read_image(hdr,filetype,fileprefix,machine,img_idx,dim5_idx,dim6_idx,dim7_idx,old_RGB,slice_idx);
 
-   return					% load_nii_img
+   return					% load_nii_img_bis
 
 
 %---------------------------------------------------------------------

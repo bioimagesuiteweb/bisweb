@@ -9,11 +9,11 @@
 %  the same NIfTI header.
 %
 %  Since this program is only served for those situations, please use it
-%  together with "save_untouch_nii.m", and do not use "save_nii.m" or
-%  "view_nii.m" for the data that is loaded by "load_untouch_nii.m". For
+%  together with "save_untouch_nii_bis.m", and do not use "save_nii_bis.m" or
+%  "view_nii_bis.m" for the data that is loaded by "load_untouch_nii.m". For
 %  normal situation, you should use "load_nii.m" instead.
 %  
-%  Usage: nii = load_untouch_nii(filename, [img_idx], [dim5_idx], [dim6_idx], ...
+%  Usage: nii = load_untouch_nii_bis(filename, [img_idx], [dim5_idx], [dim6_idx], ...
 %			[dim7_idx], [old_RGB], [slice_idx])
 %  
 %  filename  - 	NIFTI or ANALYZE file name.
@@ -67,11 +67,11 @@
 %
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %
-function nii = load_untouch_nii(filename, img_idx, dim5_idx, dim6_idx, dim7_idx, ...
+function nii = load_untouch_nii_bis(filename, img_idx, dim5_idx, dim6_idx, dim7_idx, ...
 			old_RGB, slice_idx)
 
    if ~exist('filename','var')
-      error('Usage: nii = load_untouch_nii(filename, [img_idx], [dim5_idx], [dim6_idx], [dim7_idx], [old_RGB], [slice_idx])');
+      error('Usage: nii = load_untouch_nii_bis(filename, [img_idx], [dim5_idx], [dim6_idx], [dim7_idx], [old_RGB], [slice_idx])');
    end
 
    if ~exist('img_idx','var') | isempty(img_idx)
@@ -151,22 +151,22 @@ function nii = load_untouch_nii(filename, img_idx, dim5_idx, dim6_idx, dim7_idx,
 
    %  Read the dataset header
    %
-   [nii.hdr,nii.filetype,nii.fileprefix,nii.machine] = load_nii_hdr(filename);
+   [nii.hdr,nii.filetype,nii.fileprefix,nii.machine] = load_nii_hdr_bis(filename);
 
    if nii.filetype == 0
-      nii.hdr = load_untouch0_nii_hdr(nii.fileprefix,nii.machine);
+      nii.hdr = load_untouch0_nii_hdr_bis(nii.fileprefix,nii.machine);
       nii.ext = [];
    else
-      nii.hdr = load_untouch_nii_hdr(nii.fileprefix,nii.machine,nii.filetype);
+      nii.hdr = load_untouch_nii_hdr_bis(nii.fileprefix,nii.machine,nii.filetype);
 
       %  Read the header extension
       %
-      nii.ext = load_nii_ext(filename);
+      nii.ext = load_nii_ext_bis(filename);
    end
 
    %  Read the dataset body
    %
-   [nii.img,nii.hdr] = load_untouch_nii_img(nii.hdr,nii.filetype,nii.fileprefix, ...
+   [nii.img,nii.hdr] = load_untouch_nii_img_bis(nii.hdr,nii.filetype,nii.fileprefix, ...
 		nii.machine,img_idx,dim5_idx,dim6_idx,dim7_idx,old_RGB,slice_idx);
 
    %  Perform some of sform/qform transform

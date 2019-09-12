@@ -2,10 +2,10 @@
 
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 
-function [hdr, filetype, fileprefix, machine] = load_nii_hdr(fileprefix)
+function [hdr, filetype, fileprefix, machine] = load_nii_hdr_bis(fileprefix)
 
    if ~exist('fileprefix','var'),
-      error('Usage: [hdr, filetype, fileprefix, machine] = load_nii_hdr(filename)');
+      error('Usage: [hdr, filetype, fileprefix, machine] = load_nii_hdr_bis(filename)');
    end
 
    machine = 'ieee-le';
@@ -91,7 +91,7 @@ function [hdr, filetype, fileprefix, machine] = load_nii_hdr(fileprefix)
       filetype = 0;
    end
 
-   return					% load_nii_hdr
+   return					% load_nii_hdr_bis
 
 
 %---------------------------------------------------------------------

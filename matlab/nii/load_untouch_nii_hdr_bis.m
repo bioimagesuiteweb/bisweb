@@ -2,7 +2,7 @@
 
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 
-function hdr = load_nii_hdr(fileprefix, machine, filetype)
+function hdr = load_nii_hdr_bis(fileprefix, machine, filetype)
 
    if filetype == 2
       fn = sprintf('%s.nii',fileprefix);
@@ -31,7 +31,7 @@ function hdr = load_nii_hdr(fileprefix, machine, filetype)
       fclose(fid);
    end
 
-   return					% load_nii_hdr
+   return					% load_nii_hdr_bis
 
 
 %---------------------------------------------------------------------

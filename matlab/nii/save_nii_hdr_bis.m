@@ -2,10 +2,10 @@
   
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 
-function save_nii_hdr(hdr, fid)
+function save_nii_hdr_bis(hdr, fid)
    
    if ~exist('hdr','var') | ~exist('fid','var')
-      error('Usage: save_nii_hdr(hdr, fid)');
+      error('Usage: save_nii_hdr_bis(hdr, fid)');
    end
    
    if ~isequal(hdr.hk.sizeof_hdr,348),
@@ -30,7 +30,7 @@ function save_nii_hdr(hdr, fid)
    
    write_header(hdr, fid);
 
-   return;					% save_nii_hdr
+   return;					% save_nii_hdr_bis
 
 
 %---------------------------------------------------------------------

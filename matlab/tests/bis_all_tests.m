@@ -1,13 +1,14 @@
 
 
-function all_tests(debug)
+function bis_all_tests(debug)
 
     [testutil,filepath,lib]=bis_testutils();
     if nargin<1
         debug=1;
     end
 
-    result=[ 
+    result=[
+        test_loadsave(debug),
         test_combo(debug),
         test_computeglm(debug),
         test_computeroi(debug),

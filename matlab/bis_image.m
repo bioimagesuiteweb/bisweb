@@ -147,13 +147,13 @@ function moduleOutput = bis_image(fname,debug)
         end
 
         
-        internal=load_untouch_nii(f,[],[],[],[],[],[]);
+        internal=load_untouch_nii_bis(f,[],[],[],[],[],[]);
         internal.desc='Bisweb matlab image';
         computeAffineAndSpacingFromHeader(internal.hdr);
         internal.orcode=computeOrientationCodeFromAffineAndSpacing();
         internal.filename=f;
 
-        print(['Loaded image from', internal.filename],debug);
+        print(['Loaded image from ', internal.filename],debug);
         result=internal;
     end
 
@@ -167,7 +167,7 @@ function moduleOutput = bis_image(fname,debug)
         spacing=internal.spacing;
 
         % Create header structure
-        nii=make_nii(internal.img,spacing(1:3));
+        nii=make_nii_bis(internal.img,spacing(1:3));
       
         % Replace stuff in header structure to make this behave
         nii.hdr.dime.pixdim=[ 0 , spacing(1), spacing(2), spacing(3), spacing(4), spacing(5), 1,1];
@@ -179,9 +179,10 @@ function moduleOutput = bis_image(fname,debug)
         nii.hdr.hist.descrip='bisweb matlab';
    
         % Save
-        save_nii(nii,f);
+        save_nii_bis(nii,f);
         internal.filename=f;
         result=1;
+        disp(['saving image in ',f]);
     end
     
 

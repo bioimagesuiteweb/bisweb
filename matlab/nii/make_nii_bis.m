@@ -6,7 +6,7 @@
 %  Once the NIfTI structure is made, it can be saved into NIfTI file 
 %  using "save_nii" command (for more detail, type: help save_nii). 
 %  
-%  Usage: nii = make_nii(img, [voxel_size], [origin], [datatype], [description])
+%  Usage: nii = make_nii_bis(img, [voxel_size], [origin], [datatype], [description])
 %
 %  Where:
 %
@@ -36,13 +36,13 @@
 %
 %  e.g.:
 %     origin = [33 44 13]; datatype = 64;
-%     nii = make_nii(img, [], origin, datatype);    % default voxel_size
+%     nii = make_nii_bis(img, [], origin, datatype);    % default voxel_size
 %
 %  NIFTI data format can be found on: http://nifti.nimh.nih.gov
 %
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %
-function nii = make_nii(varargin)
+function nii = make_nii_bis(varargin)
 
    nii.img = varargin{1};
    dims = size(nii.img);
@@ -79,7 +79,7 @@ function nii = make_nii(varargin)
       case 'uint32'
          datatype = 768;
       otherwise
-         error('Datatype is not supported by make_nii.');
+         error('Datatype is not supported by make_nii_bis.');
    end
 
    if nargin > 1 & ~isempty(varargin{2})
@@ -144,10 +144,10 @@ function nii = make_nii(varargin)
    case 1792
       nii.img = double(nii.img);
    otherwise
-      error('Datatype is not supported by make_nii.');
+      error('Datatype is not supported by make_nii_bis.');
    end
 
-   return;					% make_nii
+   return;					% make_nii_bis
 
 
 %---------------------------------------------------------------------
@@ -211,7 +211,7 @@ function dime = image_dimension(dims, voxel_size, datatype, maxval, minval)
    case 1792,
       dime.bitpix = 128; precision = 'float64';
    otherwise
-      error('Datatype is not supported by make_nii.');
+      error('Datatype is not supported by make_nii_bis.');
    end
    
    dime.slice_start = 0;

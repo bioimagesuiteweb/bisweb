@@ -1,6 +1,6 @@
 %  Save NIFTI header extension.
 %
-%  Usage: save_nii_ext(ext, fid)
+%  Usage: save_nii_ext_bis(ext, fid)
 %
 %  ext - struct with NIFTI header extension fields.
 %
@@ -8,10 +8,10 @@
 %
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %
-function save_nii_ext(ext, fid)
+function save_nii_ext_bis(ext, fid)
 
    if ~exist('ext','var') | ~exist('fid','var')
-      error('Usage: save_nii_ext(ext, fid)');
+      error('Usage: save_nii_ext_bis(ext, fid)');
    end
 
    if ~isfield(ext,'extension') | ~isfield(ext,'section') | ~isfield(ext,'num_ext')
@@ -20,7 +20,7 @@ function save_nii_ext(ext, fid)
 
    write_ext(ext, fid);
 
-   return;                                      % save_nii_ext
+   return;                                      % save_nii_ext_bis
 
 
 %---------------------------------------------------------------------
