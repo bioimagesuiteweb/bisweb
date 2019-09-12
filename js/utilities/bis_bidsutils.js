@@ -1,6 +1,7 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const colors=bis_genericio.getcolorsmodule();
 const fs = bis_genericio.getfsmodule();
 
@@ -130,7 +131,7 @@ let calculateChecksums = (inputFiles) => {
         console.log('++++ BIDSUTIL: calculating checksums');
         let promises = [];
         for (let filename of inputFiles) {
-            promises.push(bis_genericio.makeFileChecksum(filename));
+            promises.push(bisweb_serverutils.makeFileChecksum(filename));
         }
 
         Promise.all(promises)

@@ -7,6 +7,7 @@ const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
 const bisweb_panel = require('bisweb_panel.js');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 
 const DicomModule = require('dicommodule.js');
@@ -1493,7 +1494,7 @@ class StudyPanel extends HTMLElement {
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
 
-            promise = bis_genericio.runDICOMConversion({
+            promise = bisweb_serverutils.runDICOMConversion({
                 'fixpaths': true,
                 'inputDirectory': inputDirectory,
                 'outputDirectory': outputDirectory,

@@ -6,6 +6,7 @@ const moduleIndex = require('moduleindex.js');
 const bisweb_custommodule = require('bisweb_custommodule.js');
 
 const bis_genericio = require('bis_genericio.js');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const bootbox = require('bootbox');
 const $ = require('jquery');
 
@@ -625,7 +626,7 @@ class FileTreePipeline extends HTMLElement {
 
             //savemanually flag needed in order to save the output Makefile (modules run directly through the server don't hit the saving hooks from the command line)
             if (bis_genericio.getenvironment() === 'browser') {
-                bis_genericio.runPipelineModule({ 'input' : filename, 'output' :  outputFilename, 'odir' : odirFilename }, true).then( () => {
+                bisweb_serverutils.runPipelineModule({ 'input' : filename, 'output' :  outputFilename, 'odir' : odirFilename }, true).then( () => {
                     bis_webutil.createAlert('Pipeline Makefile created.');
                 });
             } else if (bis_genericio.getenvironment !== 'browser') { //TODO: test this!
