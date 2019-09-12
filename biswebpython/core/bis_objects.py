@@ -23,15 +23,17 @@ import ctypes
 import struct
 import json
 import nibabel as nib
+import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.utilities.surface_utils as surutil
+
+
+my_path=os.path.dirname(os.path.realpath(__file__));
+sys.path.append(os.path.abspath(my_path+'/../build/native'));
+sys.path.append(os.path.abspath(my_path+'/../python'));
+
+import biswrapper as libbis;
+
 from PIL import Image, ImageSequence #for TIFF support
-
-biswasm={};
-
-def setbiswasm(m):
-    global biswasm;
-    biswasm=m;
-    print(biswasm);
 
 # --------------------------------------
 # bisBaseObject
@@ -54,9 +56,8 @@ class bisBaseObject:
 
 
     def deserializeWasmAndDelete(self,wasm_pointer):
-        global biswasm;
         ok=self.deserializeWasm(wasm_pointer,0);
-        biswasm['release_pointer'](wasm_pointer);
+        biswasm.release_pointer(wasm_pointer);
         return ok;
 
     def is_bis_object(self):
@@ -93,21 +94,19 @@ class bisVector(bisBaseObject):
 
 
     def serializeWasm(self):
-        global biswasm;
         if (self.isbinary==False):
-            return biswasm['serialize_simpledataobject'](self.data_array);
+            return biswasm.serialize_simpledataobject(self.data_array);
 
         top_header=np.zeros([4],dtype=np.int32);
-        top_header[0]=biswasm['getVectorMagicCode']();
-        top_header[1]=biswasm['get_nifti_code'](np.uint8);
+        top_header[0]=biswasm.getVectorMagicCode();
+        top_header[1]=biswasm.get_nifti_code(np.uint8);
         top_header[2]=0;
         top_header[3]=len(self.data_array)
         return top_header.tobytes()+self.data_array;
 
 
     def deserializeWasm(self,wasm_pointer,offset=0):
-        global biswasm;
-        out=biswasm['deserialize_simpledataobject'](wasm_pointer,offset=0,debug=0)
+        out=biswasm.deserialize_simpledataobject(wasm_pointer,offset=0,debug=0)
         self.data_array=out['data'];
         return 1;
 
@@ -137,33 +136,28 @@ class bisMatrix(bisBaseObject):
         return self;
 
     def serializeWasm(self):
-        global biswasm;
-        return biswasm['serialize_simpledataobject'](self.data_array);
+        return biswasm.serialize_simpledataobject(self.data_array);
 
 
     def deserializeWasm(self,wasm_pointer,offset=0):
-        global biswasm;
-        out=biswasm['deserialize_simpledataobject'](wasm_pointer,offset=offset,debug=0)
+        out=biswasm.deserialize_simpledataobject(wasm_pointer,offset=offset,debug=0)
         self.data_array=out['data'];
         return 1;
 
     def load(self,fname):
-        global biswasm;
-        
+
         try:
             file = open(fname)
         except IOError as e:
             raise ValueError('---- Bad input file '+fname+'\n\t ('+str(e)+')')
             return False
 
-        module=biswasm['Module']();
-        print(module);
         text=file.read()
         ext=os.path.splitext(fname)[1]
         if (ext==".csv"):
             self.data_array = np.genfromtxt(fname, delimiter= ",")
         elif (ext==".matr"):
-            self.data_array=module.parseMatrixTextFileWASM(text,0);
+            self.data_array=libbis.parseMatrixTextFileWASM(text,0);
         self.filename=fname;
         return True;
 
@@ -242,23 +236,20 @@ class bisImage(bisBaseObject):
 
 
     def serializeWasm(self):
-        global biswasm;
-        return biswasm['serialize_simpledataobject'](mat=self.data_array,spa=self.spacing,debug=0,isimage=True);
+        return biswasm.serialize_simpledataobject(mat=self.data_array,spa=self.spacing,debug=0,isimage=True);
 
     def deserializeWasm(self,wasm_pointer,offset=0):
-        global biswasm;
-        out=biswasm['deserialize_simpledataobject'](wasm_pointer,offset=offset);
+        out=biswasm.deserialize_simpledataobject(wasm_pointer,offset=offset);
         self.data_array=out['data'];
         self.dimensions=out['dimensions'];
         self.spacing=out['spacing'];
         return 1;
 
     def deserializeWasmAndDelete(self,wasm_pointer,parent=0):
-        global biswasm;
         out=self.deserializeWasm(wasm_pointer,offset=0);
         if parent!=0:
             self.affine=parent.affine
-        biswasm['release_pointer'](wasm_pointer);
+        biswasm.release_pointer(wasm_pointer);
         return 1;
 
     def load(self,fname):
@@ -451,11 +442,10 @@ class bisGridTransformation(bisBaseObject):
         return self;
 
     def serializeWasm(self):
-        global biswasm;
         s=self.data_array.shape;
         top_header=np.zeros([4],dtype=np.int32);
-        top_header[0]=biswasm['getGridTransformMagicCode']();
-        top_header[1]=biswasm['get_nifti_code'](np.float32);
+        top_header[0]=biswasm.getGridTransformMagicCode();
+        top_header[1]=biswasm.get_nifti_code(np.float32);
         top_header[2]=40;
         top_header[3]=s[0]*4; # float!!!
 
@@ -475,9 +465,9 @@ class bisGridTransformation(bisBaseObject):
 
 
     def deserializeWasm(self,wasm_pointer,offset=0):
-        global biswasm;
+
         header=struct.unpack('iiii',bytes(wasm_pointer[offset:offset+16]));
-        if (header[0]!=biswasm['getGridTransformMagicCode']()):
+        if (header[0]!=biswasm.getGridTransformMagicCode()):
             return 0
 
 
@@ -495,7 +485,7 @@ class bisGridTransformation(bisBaseObject):
         beginoffset=header[2]+16+offset;
         total=beginoffset+header[3];
 
-        datatype=biswasm['get_dtype'](header[1]);
+        datatype=biswasm.get_dtype(header[1]);
         sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2];
 
         self.data_array=np.reshape(np.fromstring(bytes(wasm_pointer[beginoffset:total]),dtype=datatype),newshape=[sz*3],order='F');
@@ -567,14 +557,14 @@ class bisComboTransformation(bisBaseObject):
         return 20+rawsize;
 
     def serializeWasm(self):
-        global biswasm;
+
         if self.linear==0 or len(self.grids)==0:
             raise ValueError('Either no bisLinearTransformation or no Grids in bisComboTransform');
 
         rawsize=self.getRawSize();
         top_header=np.zeros([4],dtype=np.int32);
-        top_header[0]=biswasm['getComboTransformMagicCode']();
-        top_header[1]=biswasm['get_nifti_code'](np.float32);
+        top_header[0]=biswasm.getComboTransformMagicCode();
+        top_header[1]=biswasm.get_nifti_code(np.float32);
         top_header[2]=4;
         top_header[3]=rawsize-20; # this is the header
 
@@ -588,10 +578,10 @@ class bisComboTransformation(bisBaseObject):
         return combo_raw;
 
     def deserializeWasm(self,wasm_pointer,offset=0):
-        global biswasm;
+
         header=struct.unpack('iiii',bytes(wasm_pointer[offset:offset+16]));
 
-        if (header[0]!=biswasm['getComboTransformMagicCode']()):
+        if (header[0]!=biswasm.getComboTransformMagicCode()):
             return 0;
 
         i_head=struct.unpack('i',bytes(wasm_pointer[offset+16:offset+20]));
@@ -664,10 +654,9 @@ class bisComboTransformation(bisBaseObject):
         return True;
 
     def save(self,filename):
-        global biswasm;
-        
+
         try:
-            out=biswasm['Module']().createComboTransformationTextFileWASM(self,0);
+            out=libbis.createComboTransformationTextFileWASM(self,0);
             with open(filename, 'w') as fp:
                 fp.write(out);
             print('++++\t Saved ComboTransformation in ',filename);
@@ -754,11 +743,11 @@ class bisCollection(bisBaseObject):
 
 
     def serializeWasm(self):
-        global biswasm;
+
         rawsize=self.getRawSize();
         top_header=np.zeros([4],dtype=np.int32);
-        top_header[0]=biswasm['getCollectionMagicCode']();
-        top_header[1]=biswasm['get_nifti_code'](np.float32);
+        top_header[0]=biswasm.getCollectionMagicCode();
+        top_header[1]=biswasm.get_nifti_code(np.float32);
         top_header[2]=4;
         top_header[3]=rawsize-20;
 
@@ -772,10 +761,10 @@ class bisCollection(bisBaseObject):
         return combo_raw;
 
     def deserializeWasm(self,wasm_pointer,offset=0):
-        global biswasm;
+
         header=struct.unpack('iiii',bytes(wasm_pointer[offset:offset+16]));
 
-        if (header[0]!=biswasm['getComboTransformMagicCode']()):
+        if (header[0]!=biswasm.getComboTransformMagicCode()):
             return 0;
 
         i_head=struct.unpack('i',bytes(wasm_pointer[offset+16:offset+20]));
@@ -789,7 +778,7 @@ class bisCollection(bisBaseObject):
         for ia in range(0,numitems):
             header=struct.unpack('iiii',bytes(wasm_pointer[offset:offset+16]));
             magic_code=header[0];
-            newitem=biswasm['deserialize_object'](wasm_pointer,offset);
+            newitem=biswasm.deserialize_object(wasm_pointer,offset);
             self.items.append(newitem);
             offset=offset+newitem.getRawSize();
 
