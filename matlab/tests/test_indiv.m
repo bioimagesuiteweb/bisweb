@@ -27,8 +27,8 @@ function result = test_indiv(debug)
 
 
 
-            %"command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
-            %"test"    : "--test_target testdata/indiv/indivp.nii.gz",
+%"command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
+%"test"    : "--test_target testdata/indiv/indivp.nii.gz",
 
    fname1= [ filepath filesep 'indiv' filesep 'prep.nii.gz' ];
    fname2= [ filepath filesep 'indiv' filesep 'group.nii.gz' ];
@@ -46,54 +46,10 @@ function result = test_indiv(debug)
    gold =  bis_image(fname3,debug+1);
    disp('-----')
    
-   or=[mat2str(group.getOrientation()),' vs ',mat2str(fmri.getOrientation()) ];
-   if (group.getOrientation() ~= fmri.getOrientation())
-      disp(['Orientation mismatch, ERROR ',or]);
-     return
-   else
-      disp(['Orientation match, GOOD ',or ]);
-   end
-  
-
-   % Reslice Part
-
-   dim=fmri.getDimensions();
-   spa=fmri.getSpacing();
-
-
-   disp('Reslicing group parcellation');
-   resliceobj.interpolation=0;
-   resliceobj.dimensions=dim(1:3);
-   resliceobj.spacing=spa(1:3);
-   resliceobj.datatype='short';
-   resliceobj.backgroundValue=0.0;
-   resliced_group=lib.resliceImageWASM(group,eye(4),resliceobj,debug);
-   
-   resliced_group.print('Resliced Group Parcellation',3);
-
-   % Smoothing Part
-   disp('Smoothing fmri data');
-   sigma= sigma * 0.4247;
-   smparamobj.sigmas=[sigma,sigma,sigma];
-   smparamobj.inmm='true';
-   smparamobj.radiusfactor=1.5;
-   smparamobj.vtkboundary='true';
-   fmri_smoothed = lib.gaussianSmoothImageWASM(fmri, smparamobj, debug);
-   fmri_smoothed.print('Smooth fMRI',3);
-
-   % Indiv Parcellation part
-   disp('Running Individual Parcellation Code');
-   paramobj.numexemplars=numexemplars;
-   paramobj.usefloat='true';
-   paramobj.saveexemplars='false';
-   indiv_ptr=lib.individualizedParcellationWASM(fmri_smoothed,resliced_group, paramobj,debug);
-
+   indiv_ptr=bis_individualizedparcellation(fmri,group,sigma,numexemplars,debug,'true');
    result=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation Float',0,0.1);
 
-   paramobj.usefloat='false';
-   paramobj.saveexemplars='false';
-   indiv_ptr=lib.individualizedParcellationWASM(fmri_smoothed,resliced_group, paramobj,debug);
-
+   indiv_ptr=bis_individualizedparcellation(fmri,group,sigma,numexemplars,debug,'false');
    result2=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation Double',0,0.1);
 
    result=min(result,result2);
