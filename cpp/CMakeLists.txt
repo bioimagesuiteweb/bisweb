@@ -682,7 +682,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${MLIST} DESTINATION bisweb/matlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.m)
     install (FILES ${MLIST} DESTINATION bisweb/matlab/nii)
-    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.txt)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
     install (FILES ${MLIST} DESTINATION bisweb/matlab/nii)
   ENDIF(BIS_A_MATLAB)
   
