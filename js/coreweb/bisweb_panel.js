@@ -212,7 +212,7 @@ class BisWebPanel {
         if (this.options.initialstate === "docked" && this.options.dual===false) {
 
             if (this.options.helpButton) {
-                this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+                this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
                 this.dockHelpButton.click( (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -292,7 +292,7 @@ class BisWebPanel {
         buttonbar.append(this.sidebarCloseButton);
 
         if (this.options.helpButton) {
-            this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+            this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
             
             this.helpButton.click( (e) => {
                 e.preventDefault();
@@ -308,7 +308,7 @@ class BisWebPanel {
 
         
         if (this.options.helpButton) {
-            this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+            this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
             this.dockHelpButton.click( (e) => {
                 e.preventDefault();
                 e.stopPropagation();

@@ -27,7 +27,6 @@ const layoutTemplate = `
     </div>`;
 
 
-//TODO: When Xenios gets back have him update biswebnode
 class FileTreePipeline extends HTMLElement {
     
     constructor() {

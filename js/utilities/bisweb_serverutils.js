@@ -77,8 +77,24 @@ let makeFileChecksum = (url,external=false ) => {
     });
 };
 
+let runCPMMatrixFileModule = (params) => {
+    return new Promise( (resolve, reject) => {
+        let fileServerClient = bis_genericio.getFileServerObject();
+        if (fileServerClient) {
+            fileServerClient.runModule('makeconnmatrixfile', params, false, console.log, true)
+                .then( (obj) => {
+                    console.log('Conn matrix module done', obj);
+                    resolve(obj);
+                }).catch( (e) => { reject(e); });
+        } else {
+            reject('No fileserver defined, cannot run pipeline');
+        }
+    });
+};
+
 module.exports = {
     runDICOMConversion : runDICOMConversion,
     runPipelineModule : runPipelineModule,
     makeFileChecksum : makeFileChecksum,
+    runCPMMatrixFileModule : runCPMMatrixFileModule
 };
