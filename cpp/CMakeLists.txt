@@ -40,6 +40,7 @@ SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
+SET (BISWEB_PYTHON_INIT2 ${PROJECT_SOURCE_DIR}/../config/__init2__.py)
 SET (BISWEB_PYTHON_SETUP ${PROJECT_SOURCE_DIR}/../config/setup.py)
 SET (BISWEB_PYTHON_MANIFEST ${PROJECT_SOURCE_DIR}/../config/MANIFEST.in)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
@@ -608,11 +609,12 @@ ELSE(BIS_A_EMSCRIPTEN)
     
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
     install (FILES ${README_FILE} DESTINATION bisweb/)
-    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION "." RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
+    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
+    install (FILES ${BISWEB_PYTHON_INIT2} DESTINATION initial RENAME __init__.py   PERMISSIONS OWNER_READ  WORLD_READ)
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
-    install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION ".")
-    install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION ".")
+    install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
+    install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
     
     # This overwrites bis_path.py with one suitable for install purposes
     MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")

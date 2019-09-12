@@ -15,17 +15,5 @@
 # 
 # ENDLICENSE
 
-import os;
-import sys;
+name='bisweb';
 
-my_path=os.path.dirname(os.path.realpath(__file__));
-if os.name == 'nt':
-    sys.path.append(os.path.abspath(my_path+'\\python'))
-    sys.path.append(os.path.abspath(my_path+'\\python\\modules'))
-    sys.path.append(os.path.abspath(my_path+'\\lib'))
-else:
-    sys.path.append(os.path.abspath(my_path+'/python'))
-    sys.path.append(os.path.abspath(my_path+'/python/modules'))
-    sys.path.append(os.path.abspath(my_path+'/lib'))
-
-print('Loaded bisweb',os.name,':',sys.path)
