@@ -21,8 +21,8 @@ import os;
 import sys;
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path))
-print('biswebpython in your path at: ',my_path);
+#sys.path.append(os.path.abspath(my_path))
+print('biswebpython is at: ',my_path);
 
 
 

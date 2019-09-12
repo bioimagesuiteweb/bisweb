@@ -1,7 +1,11 @@
 {
     "private": true,
     "name": "bioimagesuiteweb",
+<<<<<<< Updated upstream
     "version": "1.1.0b2",
+=======
+    "version": "1.1.0b1",
+>>>>>>> Stashed changes
     "description": "An Implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
     "scripts": {

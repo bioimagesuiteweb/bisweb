@@ -19,7 +19,8 @@ setuptools.setup(
         'nibabel',
         'scikit-image',
         'pillow',
-        'scipy'
+        'scipy',
+        'scikit-learn'
     ],
     classifiers=[
         "Programming Language :: Python :: 3.5",

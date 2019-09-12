@@ -44,7 +44,7 @@ SET (BISWEB_PYTHON_INIT2 ${PROJECT_SOURCE_DIR}/../config/__init2__.py)
 SET (BISWEB_PYTHON_SETUP ${PROJECT_SOURCE_DIR}/../config/setup.py)
 SET (BISWEB_PYTHON_MANIFEST ${PROJECT_SOURCE_DIR}/../config/MANIFEST.in)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
-SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../python/modules/PythonModuleList.txt)
+SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../biswebpython/modules/PythonModuleList.txt)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
 FIND_PROGRAM(NodeInterp node)
@@ -254,12 +254,14 @@ ELSE (BIS_USEGPL)
   SET (LICENSE_FILE "${PROJECT_SOURCE_DIR}/../various/txt/apache_license.txt")
 ENDIF (BIS_USEGPL)
 
-install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+
 install (FILES ${LICENSE_FILE} DESTINATION "." RENAME LICENSE)
 
 
 IF (BIS_A_EMSCRIPTEN)
 
+  install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE.md)
+  
   # ---------------------------------------------------------------------------------------------
   # Web Assembly Mode
   # ---------------------------------------------------------------------------------------------
@@ -545,12 +547,22 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}")
     SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BINARY_DIR}")
   ENDIF(MSVC)
-  
-  install (TARGETS ${CLIBNAME} DESTINATION bisweb/lib)
-  IF (BIS_A_DEVEL)
-    install (FILES ${HEADERS} DESTINATION bisweb/include)
-    install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION bisweb/lib)
-  ENDIF (BIS_A_DEVEL)
+
+  IF (BIS_A_PYTHON)
+    install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
+    install (FILES ${LICENSE_FILE} DESTINATION biswebpython RENAME LICENSE.md)
+    IF (BIS_A_DEVEL)
+      install (FILES ${HEADERS} DESTINATION biswebpython/include)
+      install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION biswebpython/lib)
+    ENDIF (BIS_A_DEVEL)
+  ENDIF (BIS_A_PYTHON)
+
+  IF (BIS_A_MATLAB)
+    install (TARGETS ${CLIBNAME} DESTINATION biswebmatlab)
+    install (FILES ${LICENSE_FILE} DESTINATION biswebmatlab RENAME LICENSE.md)
+  ENDIF (BIS_A_MATLAB)
+
+
   # ---------------
   # Python
   # ---------------
@@ -571,7 +583,7 @@ ELSE(BIS_A_EMSCRIPTEN)
       COMMAND ${NodeInterp} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
       )
     add_custom_target(wrappers_py ALL DEPENDS ${PYTHON_WRAP_OUTPUT})
-    install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION bisweb/lib)
+    install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION biswebpython/lib)
 
     # ------------------ create module descriptions -------------
 
@@ -587,46 +599,40 @@ ELSE(BIS_A_EMSCRIPTEN)
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
-    install (FILES ${PYTHON_MODULE_DESC} DESTINATION bisweb/lib)
+    install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
 
-    GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../python ABSOLUTE)
-    FILE(GLOB PYLIST ${PYTHON_SOURCE_DIR}/bis*.py)
+    GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../biswebpython ABSOLUTE)
+    FILE(GLOB PYLIST ${PYTHON_SOURCE_DIR}/core/*.py)
     FILE(GLOB PYLIST2 ${PYTHON_SOURCE_DIR}/modules/*.py)
     FILE(GLOB PYLIST3 ${PYTHON_SOURCE_DIR}/utilities/*.py)
-    list(REMOVE_ITEM PYLIST2 ${PYTHON_SOURCE_DIR}/modules/bis_path.py)
-    install (FILES ${BISWEB_PYTHON_INIT} DESTINATION bisweb)
-    install (FILES ${PYLIST} DESTINATION bisweb/python)
-    install (FILES ${PYLIST3} DESTINATION bisweb/python/utilities)
-    install (FILES ${PYLIST2} DESTINATION bisweb/python/modules
+    
+    install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
+    install (FILES ${PYLIST} DESTINATION  biswebpython/core)
+    install (FILES ${PYLIST3} DESTINATION biswebpython/utilities)
+    install (FILES ${PYLIST2} DESTINATION biswebpython/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION bisweb
+    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION biswebpython
       PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb
+    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION biswebpython
       PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION bisweb
+    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION biswebpython
       PERMISSIONS OWNER_READ  WORLD_READ)
     
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
-    install (FILES ${README_FILE} DESTINATION bisweb/)
+    install (FILES ${README_FILE} DESTINATION biswebpython)
     INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
     install (FILES ${BISWEB_PYTHON_INIT2} DESTINATION initial RENAME __init__.py   PERMISSIONS OWNER_READ  WORLD_READ)
+    INSTALL (FILES ${PYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
     install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
     
     # This overwrites bis_path.py with one suitable for install purposes
-    MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
-    install (FILES ${BISWEB_PYTHON_PATH}  DESTINATION bisweb/python/modules)
+    #MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
+    #install (FILES ${BISWEB_PYTHON_PATH}  DESTINATION bisweb/biswebpython/modules)
 
-    if(UNIX AND NOT APPLE)
-      FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
-      FILE(GLOB WINEXTRA ${PROJECT_BINARY_DIR}/biswasm.dll)
-      MESSAGE("--- Intalling Extra libraries ${MACEXTRA},${WINEXTRA}")
-      install (FILES ${MACEXTRA} DESTINATION bisweb/lib)
-      install (FILES ${WINEXTRA} DESTINATION bisweb/lib)
-    endif()
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
       SET (COUNT 0)
@@ -667,7 +673,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     MESSAGE("++ Building Matlab Prerequisites")
 
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_matlab.txt")
-    install (FILES ${README_FILE} DESTINATION bisweb/)
+    install (FILES ${README_FILE} DESTINATION biswebmatlab)
 
     SET (MATLAB_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.m)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
@@ -675,7 +681,7 @@ ELSE(BIS_A_EMSCRIPTEN)
       PRE_BUILD COMMENT "Creating Matlab Header"
       COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
     add_custom_target(wrappers_mat ALL DEPENDS ${MATLAB_WRAP_OUTPUT})
-    install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION bisweb/lib)
+    install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION biswebmatlab)
     
     SET (MATLAB_OUT_HEADER ${LIBRARY_OUTPUT_PATH}/bis_matlab.h)
     add_custom_command(OUTPUT ${MATLAB_OUT_HEADER}
@@ -683,19 +689,36 @@ ELSE(BIS_A_EMSCRIPTEN)
       PRE_BUILD COMMENT "Creating Matlab Header"
       COMMAND ${NodeInterp} ${HEADER_SCRIPT} -i ${PARSE_LIST} -o ${MATLAB_OUT_HEADER})
     add_custom_target(header_mat ALL DEPENDS ${MATLAB_OUT_HEADER})
-    install (FILES ${MATLAB_OUT_HEADER} DESTINATION bisweb/lib)
+    install (FILES ${MATLAB_OUT_HEADER} DESTINATION biswebmatlab)
 
     GET_FILENAME_COMPONENT(MATLAB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../matlab ABSOLUTE)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/bis*.m)
-    install (FILES ${MLIST} DESTINATION bisweb/matlab)
+    install (FILES ${MLIST} DESTINATION biswebmatlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/example.m)
-    install (FILES ${MLIST} DESTINATION bisweb/matlab)
+    install (FILES ${MLIST} DESTINATION biswebmatlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.m)
-    install (FILES ${MLIST} DESTINATION bisweb/matlab/nii)
+    install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
-    install (FILES ${MLIST} DESTINATION bisweb/matlab/nii)
+    install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
   ENDIF(BIS_A_MATLAB)
-  
+
+
+  if(UNIX AND NOT APPLE)
+    FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
+    FILE(GLOB WINEXTRA ${PROJECT_BINARY_DIR}/biswasm.dll)
+    MESSAGE("--- Intalling Extra libraries ${MACEXTRA},${WINEXTRA}")
+
+    IF (BIS_A_PYTHON)
+      install (FILES ${MACEXTRA} DESTINATION biswebpython/lib)
+      install (FILES ${WINEXTRA} DESTINATION biswebpython/lib)
+    ENDIF (BIS_A_PYTHON)
+    
+    IF (BIS_A_MATLAB)
+        install (FILES ${MACEXTRA} DESTINATION biswebmatlab)
+        install (FILES ${WINEXTRA} DESTINATION biswebmatlab)
+      ENDIF (BIS_A_MATLAB)
+    endif()
+
   # ---------------
   # Common
   # ---------------
@@ -712,10 +735,6 @@ MARK_AS_ADVANCED(BIS_WEB_WASM)
 MARK_AS_ADVANCED(BIS_EXTRAPATH)
 MARK_AS_ADVANCED(BIS_WEB_OPT)
 MARK_AS_ADVANCED(BIS_A_DEVEL)
-
-
-# ----------------------------------------------------------
-# If installing tests
 
 
 

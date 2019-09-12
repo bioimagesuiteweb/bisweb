@@ -15,36 +15,24 @@
 # 
 # ENDLICENSE
 
-import math
-import os
-import sys
-import numpy as np
-import unittest
+import os;
+import sys;
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../build/native'));
-sys.path.append(os.path.abspath(my_path+'/../python/core'));
-sys.path.append(os.path.abspath(my_path+'/../python/utilities'));
+print('--------------------------');
+n=os.path.abspath(my_path+'/../..')
+l=sys.path;
+print('\n\t'.join(sys.path));
+print('--------------------------');
+if (n in l):
+    print('Not adding ',n,' to path');
+else:
+    print('Adding ',n,' to path');
+    sys.path.append(n);
 
-import biswrapper as libbiswasm;
-import bis_objects as bis
+print('\n\t'.join(sys.path));
+print('--------------------------');
+sys.path.append(os.path.abspath(my_path+'/../../build/native'))
 
-class TestEigen(unittest.TestCase):
-
-
-    def test_optimizer(self):
-        print('optimizer test');
-
-        error1=libbiswasm.test_optimizer(1);
-        error2=libbiswasm.test_optimizer(2);
-
-        print('error1=',error1,' error2=',error2);
-        print(' --------------------------------------------------')
-        self.assertEqual(error1+error2,0);
-
-
-
-if __name__ == '__main__':
-    TestEigen().main()        
 
 
