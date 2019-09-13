@@ -196,7 +196,7 @@ def meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertic
 
 
 
-def relaxationOperator(vertices, faces, debug, lamda = 0.5):
+def relaxationOperator(vertices, faces, debug, lamda = 0.5, itr_min = 51, itr_max = 301):
 
     '''
     This function can be used for implementing suface smooth inflation.
@@ -212,6 +212,12 @@ def relaxationOperator(vertices, faces, debug, lamda = 0.5):
                 will be saved in the same directory.
         @lamda: int
                 smooth speed parameter lamda, default value is from 0 to 1
+        @itr_min: int
+                  the minimum iterations for finishing the smooth iteration
+                  this parameter should be tuned with the value of lamda
+        @itr_min: int
+                  the maximum iterations for finishing the smooth iteration
+                  this parameter should be tuned with the value of lamda
 
     Returns:
         @vertices: numpy.ndarray
@@ -220,37 +226,36 @@ def relaxationOperator(vertices, faces, debug, lamda = 0.5):
     '''
 
     stop = 1000
+    fileN = 1
 
     [vertexInFaces, facesShareEdge, boundaryVertices] = triangleMeshAttributes(vertices, faces, [0,0,0,0,0,1,0,1,0,1])
 
-    # beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
+    beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
 
     if debug:
-        fileN = 1
         outputInflationFilesPath = sys.argv[sys.argv.index('-o')+1].split('.ply')[0] + '/'
         if not os.path.exists(outputInflationFilesPath):
             pathlib.Path(outputInflationFilesPath).mkdir(parents = True)
         print ("start surface inflation using relaxation operator")
 
-    while fileN < 300:
-    # while beta < stop:
+    while fileN < itr_min or (fileN < itr_max and beta < stop):
 
         if debug:
             if fileN > 1:
                 print ('*******************************', fileN - 1, '*******************************')
-                # print ("The mean curvature of the smooth inflated cortical surface is: ", beta)
+                print ("The mean curvature of the smooth inflated cortical surface is: ", beta)
                 outputFileName = outputInflationFilesPath + 'inflated_' + str(fileN-1) + '.ply'
                 writePlyFile(vertices, faces, outputFileName)
 
-            fileN += 1
+        fileN += 1
 
-        # stop = beta
+        stop = beta
 
         # smooth inflation
         vertices = updateVertices(vertices, faces, vertexInFaces, lamda)
 
         # evaluate the mean curvature of the inflated surface
-        # beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
+        beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
 
 
     return vertices

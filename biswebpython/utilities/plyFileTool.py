@@ -28,7 +28,6 @@
 
 from biswebpython.utilities.plyfile import PlyData, PlyElement
 import numpy as np
-import IPython
 
 
 def readPlyFile(fileName):

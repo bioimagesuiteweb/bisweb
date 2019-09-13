@@ -24,7 +24,7 @@ import json
 import nibabel as nib
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.core.bis_baseutils as bis_baseutils;
-import biswebpython.utilities.surface_utils as surutil
+import biswebpython.utilities.plyFileTool as surutil
 
 
 
@@ -247,7 +247,7 @@ class bisImage(bisBaseObject):
         return 1;
 
     def load(self,fname):
-        
+
         try:
             # Jackson to add
             # to add tif or anything
@@ -308,7 +308,7 @@ class bisImage(bisBaseObject):
         a=nib.aff2axcodes(self.affine);
         b=a[0]+a[1]+a[2];
         return b;
-    
+
     def getDescription(self):
         tp=str(self.data_array.dtype);
         return self.filename+'dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
