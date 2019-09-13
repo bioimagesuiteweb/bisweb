@@ -218,10 +218,39 @@ let addDriftTerms = (matrix, runs, order = 1) => {
     return out;
 };
 
+/**
+ * Compresses a symmetrical matrix by taking the upper-right 'triangle' out of it. 
+ * 
+ * @param {Numeric.js} mat - Numeric.js matrix taken from BiswebMatrix
+ * @returns The compressed matrix.
+ */
+let compressSymmetricMatrix = (mat) => {
+    console.log('mat', mat);
+    let sym = [];
+    for (let i = 0; i < mat.length; i++) {
+        sym.push(mat[i].slice(0, i + 1));
+    }
+
+    console.log('sym', sym);
+    return sym;
+};
+
+let compareRawAndSymmetricMatrices = (mat, sym) => {
+    for (let i = 0; i < sym.length; i++) {
+        for (let j = 0; j < sym[i].length; j++) {
+            if (mat[i][j] !== sym[i][j]) { return false; }
+        }
+    }
+
+    return true;
+};
+
 module.exports = {
     parseTaskMatrix : parseTaskMatrix,
     createStackedWaveform : createStackedWaveform,
     createWaveform : createWaveform,
     generateHDRF : generateHDRF,
-    addDriftTerms : addDriftTerms
+    addDriftTerms : addDriftTerms,
+    compressSymmetricMatrix : compressSymmetricMatrix,
+    compareRawAndSymmetricMatrices : compareRawAndSymmetricMatrices
 };

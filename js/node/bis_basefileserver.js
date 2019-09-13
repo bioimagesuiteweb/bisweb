@@ -8,6 +8,7 @@ const util = require('bis_util');
 const bisgenericio = require('bis_genericio');
 const glob = bisgenericio.getglobmodule();
 const bidsutils = require('bis_bidsutils.js');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const moduleindex = require('nodemoduleindex_base');
 const sysutils = require('bis_filesystemutils.js');
 const bis_commandlineutils = require('bis_commandlineutils.js');
@@ -781,7 +782,7 @@ class BaseFileServer {
             }
             case 'makeChecksum' : {
                 if (!this.opts.readonly) 
-                    prom = bisgenericio.makeFileChecksum(url);
+                    prom = bisweb_serverutils.makeFileChecksum(url);
                 else 
                     prom = Promise.reject('In Read Only Mode');
                 break;

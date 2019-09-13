@@ -80,12 +80,18 @@ class MakeConnMatrixFileModule extends BaseModule {
     directInvokeAlgorithm(vals) {
 
         console.log('oooo invoking: Make Connectivity Matrix File', JSON.stringify(vals),'\noooo'); 
-        let indir = vals.indir, sep = bis_genericio.getPathSeparator(), outdir;
+        let indir = vals.indir, sep = path.sep, outdir;
         let combinedFile = {};
+
+        //Remove leading slash if on Windows (otherwise it will resolve two root directories)
+        if (path.sep === '\\') {
+            if (indir.substring(0,1) === '/' || indir.substring(0,1) === '\\') {
+                indir = indir.substring(1, indir.length);
+            }
+        }
 
         //make default output filename if none is specified
         if (!vals.outdir) {
-
             let splitindir = path.resolve(indir).split(sep);
             splitindir.push('connmatrixfile.json');
             outdir = splitindir.join(sep);
@@ -93,15 +99,20 @@ class MakeConnMatrixFileModule extends BaseModule {
             outdir = vals.outdir;
         }
 
+       
+
         return new Promise( (resolve, reject) => {
+            indir = path.resolve(indir);
             let behaviorMatchString = indir + sep + '*+(_behavior)*';
             let connMatchString = indir + sep + '*+(conn)+([0-9])*';
             
+            console.log('indir', indir, 'match strings', behaviorMatchString, connMatchString);
             let behaviorPromise = bis_genericio.getMatchingFiles(behaviorMatchString);
             let connPromise = bis_genericio.getMatchingFiles(connMatchString);
 
             Promise.all( [behaviorPromise, connPromise]).then( async (obj) => {
 
+                console.log('obj', obj);
                 try {
                     let behaviorFiles = obj[0], connFiles = obj[1];
 
@@ -113,11 +124,10 @@ class MakeConnMatrixFileModule extends BaseModule {
                         addEntry(bis_genericio.getBaseName(file), contents.data);
                     }
 
-                    console.log('combined file', combinedFile, outdir);
                     if (vals.writeout) {
                         await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
                     }
-                    resolve(combinedFile);
+                    resolve({ 'file' : combinedFile, 'filenames' : behaviorFiles.concat(connFiles) });
                 } catch(e) {
                     reject(e);
                 }
