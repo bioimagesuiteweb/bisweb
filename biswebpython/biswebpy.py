@@ -46,6 +46,7 @@ if (argc<2):
     initialError('Specify the tool to load ...');
     sys.exit(0);
 
+#print('\n\t'.join(sys.argv))
 
 toolname=sys.argv[1];
 tname=toolname.lower();
@@ -66,7 +67,7 @@ f=importlib.import_module(packagename);
 mymodule=getattr(f,modulelist[index]);
 
 # Rehash sys.argv
-newargv=['biswebpy.py '+modulelist[index]];
+newargv=[sys.argv[0]+' '+modulelist[index]];
 for i in range(0,argc):
     if i>1:
         newargv.append(sys.argv[i]);
