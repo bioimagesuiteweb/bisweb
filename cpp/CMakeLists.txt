@@ -52,7 +52,7 @@ SET (BISWEB_PYTHON_INIT ${BISWEBPYTHON_SOURCE_DIR}/config/__init__.py)
 SET (BISWEB_PYTHON_SETUP ${BISWEBPYTHON_SOURCE_DIR}/config/setup.py)
 SET (BISWEB_PYTHON_REQUIREMENTS ${BISWEBPYTHON_SOURCE_DIR}/config/requirements.txt)
 SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
-SET (PYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
+SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
 
 # Needed for everything
 FIND_PROGRAM(NodeInterp node)
@@ -605,15 +605,15 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     # ------------------ create module descriptions -------------
 
-    FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
+    FILE (STRINGS ${BISWEBPYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
     FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
     
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
-      DEPENDS ${PYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
+      DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${PYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
@@ -647,6 +647,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION biswebpython)
+    install (FILES ${BISWEBPYTHON_MODULE_LIST_FILENAME} DESTINATION biswebpython)
     
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)

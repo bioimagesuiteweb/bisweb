@@ -2,23 +2,11 @@
 
 const path=require('path');
 const util=require('./bis_createutil');
-const rimraf=require('rimraf');
-
-let pythonexec='python';
 
 if (path.sep==='\\') {
-    console.log('++++ BioImageSuite Web create developer environment \n++++');
+    console.log('++++ BioImageSuite Web update developer environment \n++++');
     console.log('---- This file will only run on a UNIX OS (Mac or Linux)');
     process.exit(1);
-}
-
-let extra=process.argv[2] || 'build';
-
-let advanced=false;
-
-if (extra === 'advanced') {
-    advanced=true;
-    extra='build';
 }
 
 const main=async function() {
