@@ -33,4 +33,5 @@ shiftScaleImage
 sliceBiasCorrect
 smoothImage
 thresholdImage
+inflateSurface
 
