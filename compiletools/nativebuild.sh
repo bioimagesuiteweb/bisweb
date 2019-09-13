@@ -48,6 +48,7 @@ cp bisweb*python*.sh ${BDIR}/install/zips
 echo "-----------------------------------------------------------------------"
 
 cd ${BDIR}/install
+rm ${BDIR}/install/zips/biswebmatlab.zip
 zip -ry ${BDIR}/install/zips/biswebmatlab.zip biswebmatlab
 echo "-----------------------------------------------------------------------"
 

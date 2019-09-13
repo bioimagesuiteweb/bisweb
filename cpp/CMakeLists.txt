@@ -35,18 +35,26 @@ SET (CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 GET_FILENAME_COMPONENT(TOOLS_DIR ${PROJECT_SOURCE_DIR}/../compiletools ABSOLUTE)
 GET_FILENAME_COMPONENT(TEST_DIR ${PROJECT_SOURCE_DIR}/../test ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
+
+# Common scripts
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
-SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
-SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
-SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
-SET (BISWEB_PYTHON_SETUP ${PROJECT_SOURCE_DIR}/../config/setup.py)
-SET (BISWEB_PYTHON_MANIFEST ${PROJECT_SOURCE_DIR}/../config/MANIFEST.in)
-SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../biswebpython/modules/PythonModuleList.txt)
+
+# JS
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
-FIND_PROGRAM(NodeInterp node)
+SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
+SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 
+#Python
+GET_FILENAME_COMPONENT(BISWEBPYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../biswebpython ABSOLUTE)
+SET (BISWEB_PYTHON_INIT ${BISWEBPYTHON_SOURCE_DIR}/config/__init__.py)
+SET (BISWEB_PYTHON_SETUP ${BISWEBPYTHON_SOURCE_DIR}/config/setup.py)
+SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
+SET (PYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
+
+# Needed for everything
+FIND_PROGRAM(NodeInterp node)
 
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
@@ -86,11 +94,6 @@ SET (PRE_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_pre.js")
 SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
 
 
-# ---------------------------------------------------------------------------------------------
-# Native/Python/Matlab Stuff
-# ---------------------------------------------------------------------------------------------
-SET(CLIBNAME biswasm)
-SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -154,8 +157,6 @@ ENDIF (BIS_USEEXTERNAL)
 FILE(GLOB H1 ${CPP_SOURCE_DIR}/b*.h)
 FILE(GLOB H2 ${CPP_SOURCE_DIR}/b*.txx)
 SET(HEADERS ${H1} ${H2})
-
-
 
 # ---------------------------------------------------------------------------------------------
 # PARSE HEADERS
@@ -253,6 +254,16 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 
+# ----------------------------------------------------------
+# Run Doxygen
+# ----------------------------------------------------------
+ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
+
+INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
+
+
+
+
 IF (BIS_A_EMSCRIPTEN)
 
   install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE.md)
@@ -262,12 +273,16 @@ IF (BIS_A_EMSCRIPTEN)
   # ---------------------------------------------------------------------------------------------
   
   OPTION(BIS_WEB_WASM "Build webassembly instead of asm.js" ON)
+  MARK_AS_ADVANCED(BIS_WEB_WASM)
+  
   SET (BIS_WEB_OPT "-O2" CACHE STRING "BIS Compiler Optimization")
-  #  SET (BIS_WEB_MEMORY "1024" CACHE STRING "BIS Initial Memory in MB")
-
+  MARK_AS_ADVANCED(BIS_WEB_OPT)
 
   OPTION(BIS_BUILDSCRIPTS "Create individual scripts for node.js modules" OFF)
   MARK_AS_ADVANCED(BIS_BUILDSCRIPTS)
+
+  # Left over
+  MARK_AS_ADVANCED(BIS_EXTRAPATH)
   
   # SET VARIABLES
  
@@ -499,13 +514,21 @@ IF (BIS_A_EMSCRIPTEN)
   
 ELSE(BIS_A_EMSCRIPTEN)
 
- # ---------------------------------------------------------------------------------------------
+
+  
+  # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
   # ---------------------------------------------------------------------------------------------
   
   OPTION(BIS_A_PYTHON "Build Python Wrappers" ON)
   OPTION(BIS_A_MATLAB "Build Matlab Wrappers" ON)
   OPTION(BIS_A_DEVEL "Install Developer Environment (on make install)" OFF)
+  MARK_AS_ADVANCED(BIS_A_DEVEL)
+  
+  SET(CLIBNAME biswasm)
+  SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
+  
+  # ---------------------------
   
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1" CACHE STRING "" FORCE)
@@ -515,9 +538,9 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
   
-  
-  include_directories ( ${EIGEN3_INCLUDE_DIRS} )
+  # ---------------------------
 
+  include_directories ( ${EIGEN3_INCLUDE_DIRS} )
   IF (BIS_USEINDIV)
     include_directories ( ${IGL_INCLUDE_DIRS} )
   ENDIF (BIS_USEINDIV)
@@ -525,14 +548,11 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (BIS_USECPM)
     include_directories( "${PROJECT_SOURCE_DIR}/cpmcode")
   ENDIF (BIS_USECPM)
-
-
-  
   include_directories (${PROJECT_SOURCE_DIR})
-
-      
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})
+
+  # ---------------------------
 
   if(MSVC)
     SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}")
@@ -543,6 +563,8 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BINARY_DIR}")
   ENDIF(MSVC)
 
+  # ---------------------------
+  
   IF (BIS_A_PYTHON)
     install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
     install (FILES ${LICENSE_FILE} DESTINATION biswebpython RENAME LICENSE.md)
@@ -596,11 +618,11 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
 
-    GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../biswebpython ABSOLUTE)
-    FILE(GLOB PYLIST ${PYTHON_SOURCE_DIR}/core/*.py)
-    FILE(GLOB PYLIST2 ${PYTHON_SOURCE_DIR}/modules/*.py)
-    list(REMOVE_ITEM PYLIST2 ${PYTHON_SOURCE_DIR}/modules/bisweb_path.py)
-    FILE(GLOB PYLIST3 ${PYTHON_SOURCE_DIR}/utilities/*.py)
+
+    FILE(GLOB PYLIST ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
+    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
+    list(REMOVE_ITEM PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/bisweb_path.py)
+    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
     
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
     install (FILES ${PYLIST} DESTINATION  biswebpython/core)
@@ -618,7 +640,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
     install (FILES ${README_FILE} DESTINATION biswebpython)
     INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
-    INSTALL (FILES ${PYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
+    INSTALL (FILES ${BISWEBPYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
     install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
@@ -715,25 +737,6 @@ ELSE(BIS_A_EMSCRIPTEN)
   # ---------------
   add_custom_target(wrappers ALL DEPENDS ${MATLAB_OUT_HEADER} ${MATLAB_WRAP_OUTPUT} ${PYTHON_WRAP_OUTPUT} ${WRAP_SCRIPT} ${HEADER_SCRIPT} ${PYTHON_MODULE_DESC})
   
-  # ----------------------------------------------------------
 ENDIF(BIS_A_EMSCRIPTEN)
 
-
-# Make some flags advanced
-MARK_AS_ADVANCED(BIS_WEB_MEMORY)
-MARK_AS_ADVANCED(BIS_WEB_WASM)
-
-MARK_AS_ADVANCED(BIS_EXTRAPATH)
-MARK_AS_ADVANCED(BIS_WEB_OPT)
-MARK_AS_ADVANCED(BIS_A_DEVEL)
-
-
-
-
-# ----------------------------------------------------------
-# Run Doxygen
-# ----------------------------------------------------------
-ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
-
-INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
 
