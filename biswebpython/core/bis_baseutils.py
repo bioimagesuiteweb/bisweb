@@ -71,8 +71,6 @@ def resliceRegistrationOutput(libbis, reference, target, transform):
 
 def getModuleDescriptionFromFile(classname):
 
-    print('classname=',classname);
-    
     try:
         import biswebpython.lib.bismodules_desc as bismodules_desc;
     except ImportError:
