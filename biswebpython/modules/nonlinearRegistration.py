@@ -17,7 +17,12 @@
 # 
 # ENDLICENSE
 
-import bisweb_path
+try:
+    import bisweb_path;
+except ModuleNotFoundError:
+    bisweb_path=0;
+    
+
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_baseutils as bis_baseutils

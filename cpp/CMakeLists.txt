@@ -42,7 +42,6 @@ SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_SETUP ${PROJECT_SOURCE_DIR}/../config/setup.py)
 SET (BISWEB_PYTHON_MANIFEST ${PROJECT_SOURCE_DIR}/../config/MANIFEST.in)
-SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bisweb_path.py)
 SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../biswebpython/modules/PythonModuleList.txt)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
@@ -628,10 +627,6 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
     
-    # This overwrites bis_path.py with one suitable for install purposes
-    #MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
-    install (FILES ${BISWEB_PYTHON_PATH}  DESTINATION biswebpython/modules)
-
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
       SET (COUNT 0)
