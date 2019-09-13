@@ -1,13 +1,11 @@
 const $=require('jquery');
 const bootbox=require('bootbox');
+const genericio=require('bis_genericio');
 const d3=require('d3');
+const webutil=require('bis_webutil');
 const saveSvgAsPng=require('save-svg-as-png');
 const filesaver = require('FileSaver');
 const regression = require('regression');
-
-const webutil=require('bis_webutil');
-const genericio=require('bis_genericio');
-const bisweb_matrix=require('bisweb_matrix');
 
 // -------------------------------
 // Todo ---
@@ -27,8 +25,7 @@ const globalParams = {
     displayDialog : null,
     Id : null,
     Id2: null,
-    mode : 'chord',
-    addedStyles : false
+    mode : 'chord'
 };
 
 const network_colors=[
@@ -930,7 +927,61 @@ let drawScatterandHisto = function(){
     dim[0] = displayArea.innerWidth()-displayArea.css("padding").replace(/[a-zA-Z]/g,"")*2;
 
     globalParams.mode='chord'; //what does this do
-    addHistoScatterStyles();
+
+    //Some CSS for the charts
+    $(`<style type='text/css'>
+            .bis-chartContainer{
+                justify-content: space-evenly;
+                margin: 0;
+                padding: 0;
+                vertical-align: bottom;
+            }
+            .bis-axis{
+                font-size: 1rem;
+            }
+            .bis-chartInfoBox{
+                display: none;
+                position: absolute;
+                border-radius: 6px;
+                z-index: 10000;
+                background-color: #375a7f;
+                padding: 3px;
+                font-size: 1.2rem;
+                pointer-events: none;
+                transform-origin: left bottom;
+            }
+            .bis-bestFitLine{
+                stroke: black;
+                stroke-width: 3;
+                stroke-dasharray: 4;
+                pointer-events: none;
+            }
+        
+            .bis-histobar{
+                stroke: black;
+                stroke-width: 1;
+            }
+        
+            .bis-histobar:hover{
+                opacity: 0.5;
+            }
+        
+            .bis-histoMeanLine{
+                stroke: black;
+                stroke-width: 3.5;
+                stroke-dasharray: 4;
+                pointer-events: none;
+            }
+            .bis-scatterplotChart:drag-over {
+                opacity: 0.5;
+            }
+            .bis-histogramChart:drag-over {
+                opacity: 0.5;
+            }
+            .bis-label {
+                font-size: 15px;
+            }
+    </style>`).appendTo("head");
 
     //Draw the Scatterplot to the svgModal Div
     createScatter(svgModal, dim);
@@ -946,8 +997,7 @@ let drawScatterandHisto = function(){
          */
         let event = data.originalEvent;
         event.preventDefault();
-        event.stopPropagation();
-        console.log('DROPPED DATA', event, data);
+        console.log('DROPPED DATA', event);
         reader.readAsText(event.dataTransfer.files[0]);
 
         reader.onloadend = (ev)=>{
@@ -957,18 +1007,15 @@ let drawScatterandHisto = function(){
                 return;
             }
     
-            let data = ev.target.result;
+            let jsonData = ev.target.result;
             console.log('----- LOADED FILE -----');
-            console.log('data', data);
 
-            let matr = new bisweb_matrix();
-            matr.parseFromText(data, '.matr');
-            console.log('matr', matr);
+
+            let dataToParse = JSON.parse(jsonData); 
 
             //Scatterplot Data Construction
             let scatterData = [];
 
-            //TODO: find out the format Kol used to use the scatter plots
             for(let i = 0; i < dataToParse.scatterplotData[0].values.length; i++){
                 scatterData.push([
                     dataToParse.scatterplotData[0].values[i],
@@ -1402,67 +1449,6 @@ function createHistogram(parentDiv, dim, binCnt = 30){
     });
 }
 
-let addHistoScatterStyles = () => {
-
-    if (!globalParams.addedStyles) {
-        //Some CSS for the charts
-        $(`<style type='text/css'>
-            .bis-chartContainer{
-                justify-content: space-evenly;
-                margin: 0;
-                padding: 0;
-                vertical-align: bottom;
-            }
-            .bis-axis{
-                font-size: 1rem;
-            }
-            .bis-chartInfoBox{
-                display: none;
-                position: absolute;
-                border-radius: 6px;
-                z-index: 10000;
-                background-color: #375a7f;
-                padding: 3px;
-                font-size: 1.2rem;
-                pointer-events: none;
-                transform-origin: left bottom;
-            }
-            .bis-bestFitLine{
-                stroke: black;
-                stroke-width: 3;
-                stroke-dasharray: 4;
-                pointer-events: none;
-            }
-        
-            .bis-histobar{
-                stroke: black;
-                stroke-width: 1;
-            }
-        
-            .bis-histobar:hover{
-                opacity: 0.5;
-            }
-        
-            .bis-histoMeanLine{
-                stroke: black;
-                stroke-width: 3.5;
-                stroke-dasharray: 4;
-                pointer-events: none;
-            }
-            .bis-scatterplotChart:drag-over {
-                opacity: 0.5;
-            }
-            .bis-histogramChart:drag-over {
-                opacity: 0.5;
-            }
-            .bis-label {
-                font-size: 15px;
-            }
-            </style>`).appendTo("head");
-
-        globalParams.addedStyles = true;
-    }
-}
 
 
 // ----------------------------------

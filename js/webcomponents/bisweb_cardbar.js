@@ -147,6 +147,7 @@ class BiswebCardBar extends HTMLElement {
      * @param {String} title - The name of the tab 
      */
     createTab(title, content = $(), opts = {}) {
+        const self = this;
         return new Promise( (resolve, reject) => {
             if (!this.createdBottomNavbar) {
                 document.addEventListener('bis.cardbar.done', () => {
@@ -156,7 +157,6 @@ class BiswebCardBar extends HTMLElement {
                 makeTab();
             }
     
-            const self = this;
             function makeTab() {
                 try {
                     let tabId = bis_webutil.getuniqueid();

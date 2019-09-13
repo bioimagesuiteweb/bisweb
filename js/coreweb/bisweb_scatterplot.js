@@ -191,7 +191,7 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
 
     //Code for downloading the scatterplot as an SVG
     //The only way to activate this currently is through the console
-    $(`.bis-scatterplotchart`).bind('download',()=>{
+    /*$(`.bis-scatterplotchart`).bind('download',()=>{
         //Found download code from https://stackoverflow.com/questions/23218174/how-do-i-save-export-an-svg-file-after-creating-an-svg-with-d3-js-ie-safari-an
         var serializer = new XMLSerializer();
         var source = serializer.serializeToString($(`#${globalParams.Id}`)[0]);
@@ -202,7 +202,7 @@ let scatterplot = function(parentDiv, dim, pos, ctx = null){
         downloadLink.href = svgUrl;
         downloadLink.download = "Correlation_Scatterplot.svg";
         downloadLink.click();
-    });
+    });*/
 };
 
 module.exports = {
