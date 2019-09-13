@@ -8,8 +8,9 @@ SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 BDIST=${BDIR}/dist
 
-mkdir -p ${BDIR}/web
 mkdir -p ${BDIST}
+mkdir -p ${BDIR}/install/zips
+mkdir -p ${BDIR}/web
 
 touch ${BDIR}/web/LICENSE
 
@@ -20,20 +21,20 @@ rm ${BDIST}/*zip
 
 gulp build ${EXTRA} 
 gulp zip
-mv ${BDIST}/*zip ${BDIR}/install
+mv ${BDIST}/*zip ${BDIR}/install/zips
 
 # Create npm package biswebbrowser
 cd ${SRCDIR}
 gulp npmpack
 cd ${BDIST}/biswebbrowser
 npm pack
-cp *tgz ${BDIR}/install
-cd ${BDIR}/install
+cp *tgz ${BDIR}/install/zips
+cd ${BDIR}/install/zips
 
 
 echo "-----------------------------------------------------------------------"
 pwd
-ls -lrt *tgz  *zip
+ls -lrt 
 
 echo "-----------------------------------------------------------------------"
 echo " Done with Web Based Tools"
