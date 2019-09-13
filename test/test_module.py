@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 # LICENSE
-# 
+#
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-# 
+#
 # BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # - you may not use this software except in compliance with the License.
 # - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-# 
+#
 # __Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.__
-# 
+#
 # ENDLICENSE
 
 
@@ -93,8 +93,8 @@ for i in range(begin_test,end_test+1):
     command= [ rawcommand[0:index] , rawcommand[index+1:] ]
     expected_result=testlist[i]['result'];
     dopython=testlist[i]['dopython'];
-    
-    runtest= dopython;        
+
+    runtest= dopython;
     if (test_name != None) :
         doskip=False;
         if ((tname.lower() in test_namelist)==False):
@@ -102,7 +102,7 @@ for i in range(begin_test,end_test+1):
 
 
 
-            
+
     if (runtest==True):
         newargs=testlist[i]['test'].split(" ");
         testopts= {
@@ -123,6 +123,8 @@ for i in range(begin_test,end_test+1):
             testtype=testopts['test_type'];
             if (testtype=="image"):
                 tempName= dname+ '/out.nii.gz';
+            elif (testtype=="surface"):
+                tempName= dname+ '/out.ply';
             elif (testtype=="matrix" or testtype=="matrixtransform"):
                 tempName= dname+ '/out.matr';
             elif (testtype=="gridtransform"):
@@ -130,7 +132,7 @@ for i in range(begin_test,end_test+1):
             elif (testtype=="registration"):
                 tempName=dname+'/out.json';
             command[1]=command[1]+" --output "+tempName;
-                
+
             if (testtype=="registration"):
                 tempName=dname+"/out_resl.nii.gz";
                 command[1]=command[1]+" --doreslice true";
@@ -183,7 +185,7 @@ if (doskip):
     if (numskip>0):
         print(skiptests,'\n');
 
-    
+
 if (numbad==0):
     print('++++');
     sys.exit(0);
