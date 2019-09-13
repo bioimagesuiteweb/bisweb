@@ -2,6 +2,7 @@ const fs=require('fs');
 const path=require('path');
 const child_process=require('child_process');
 const unzip=require('unzip');
+const rimraf=require('rimraf');
 
 const makeDir=function(f1,exit=true) {
     console.log('++++ creating directory',f1);
@@ -38,6 +39,12 @@ const linkFileSync=function(d1,fname,d2,fname2) {
     
     let f1=path.join(d1,fname);
     let f2=path.join(d2,fname2);
+
+    try  {
+        rimraf.sync(f2);
+    } catch(e) {
+        console.log(e);
+    }
     
     console.log('++++ symlink file  '+f1+'\n\t\t--> '+f2);
     try {

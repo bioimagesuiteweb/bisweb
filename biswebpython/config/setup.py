@@ -3,6 +3,11 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("requirements.txt", "r") as fh:
+    install_requires = list(fh.read().splitlines())
+    
+[line for line in f.read().splitlines() if len(line) > 0]
+    
 setuptools.setup(
     name="biswebpython",
     version="@BISWEB_VERSION@",
@@ -14,14 +19,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/bioimagesuiteweb/bisweb",
     packages=setuptools.find_packages(),
-    install_requires=[
-        'numpy',
-        'nibabel',
-        'scikit-image',
-        'pillow',
-        'scipy',
-        'scikit-learn'
-    ],
+    install_requires=install_requires,
     classifiers=[
         "Programming Language :: Python :: 3.5",
         "Operating System :: OS Independent",
