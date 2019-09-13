@@ -646,7 +646,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
     install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
-    install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION wheel)
+    install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION biswebpython)
     
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)

@@ -3,10 +3,8 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r") as fh:
+with open("biswebpython/requirements.txt", "r") as fh:
     install_requires = list(fh.read().splitlines())
-    
-[line for line in f.read().splitlines() if len(line) > 0]
     
 setuptools.setup(
     name="biswebpython",
@@ -25,5 +23,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.5',
-    package_data={ '' : [ 'libbiswasm.so','libbiswasm.dylib','biswasm.dll' ] }
+    package_data={ '' : [ 'libbiswasm.so','libbiswasm.dylib','biswasm.dll','requirements.txt' ] }
 )

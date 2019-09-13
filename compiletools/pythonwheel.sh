@@ -29,12 +29,12 @@ cd ${WHEEL}
 python3 setup.py sdist bdist_wheel
 
 echo "-----------------------------------------------------------------------"
-cd ${BDIR}/install
+cd ${BDIR}/install/zips
 rm bisweb*any.whl
 rm bisweb*.tar.gz
 cp ${BDIR}/install/wheel/dist/* .
 pwd
-ls -lrt *tar.gz *sh *whl
+ls -lrt 
 
 
 echo "-----------------------------------------------------------------------"
