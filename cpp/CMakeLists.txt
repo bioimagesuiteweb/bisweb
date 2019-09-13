@@ -25,7 +25,7 @@ MESSAGE("----------------------------------------------------")
 
 SET (BISWEB_VERSION_MAJOR 1)
 SET (BISWEB_VERSION_MINOR 1)
-SET (BISWEB_VERSION_PATCH 0b2)
+SET (BISWEB_VERSION_PATCH 0b3)
 SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
