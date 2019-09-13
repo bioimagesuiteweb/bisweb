@@ -3,7 +3,8 @@
 
 ---
 
-[NPM](https://www.npmjs.com/settings/bioimagesuiteweb/packages) [Docker](https://hub.docker.com/r/bisweb/devel)
+[ [NPM] ](https://www.npmjs.com/settings/bioimagesuiteweb/packages) [ [Docker]
+](https://hub.docker.com/r/bisweb/devel)
 
 ---
 ## Welcome to BioImage Suite Web
