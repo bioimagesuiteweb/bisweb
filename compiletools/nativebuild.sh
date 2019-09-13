@@ -9,6 +9,11 @@ SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 
 echo "-----------------------------------------------------------------------"
+
+# Fake JS build
+mkdir -p ${BDIR}/wasm
+touch ${BDIR}/wasm/libbiswasm_wrapper.js
+
 # Build NATIVE
 mkdir -p ${BDIR}/native
 cd ${BDIR}/native
