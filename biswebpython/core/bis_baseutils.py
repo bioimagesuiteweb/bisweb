@@ -74,7 +74,6 @@ def getModuleDescriptionFromFile(classname):
     try:
         import biswebpython.lib.bismodules_desc as bismodules_desc;
     except ImportError:
-        print('Failed to import');
         my_path=os.path.dirname(os.path.realpath(__file__));
         n=my_path+'/../../build/native';
         l=sys.path;

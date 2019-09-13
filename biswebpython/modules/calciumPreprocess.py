@@ -20,7 +20,7 @@
 import sys
 try:
     import bisweb_path;
-except ModuleNotFoundError:
+except ImportError:
     bisweb_path=0;
     
 import numpy as np

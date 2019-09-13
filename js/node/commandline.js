@@ -30,8 +30,8 @@ const boldoff = "";
 
 //Image processing functions are expected to be templated as Promises.
 let initialError = function (extra) {
-    console.log(`${extra}\nUsage: bisweb modulename [ options ].\n`);
-    console.log(` Type 'node bisweb [function name] --help' for more information`);
+    console.log(`${extra}\nUsage: bisweb modulename [ options ]\n`);
+    console.log(` Type 'node bisweb [modulename] --help' for more information`);
     let outstring = modules.getModuleNames().join("\n");
 
     console.log('\tThe list of available modules is :\n\n'+outstring);
