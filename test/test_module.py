@@ -18,23 +18,14 @@
 # ENDLICENSE
 
 
-
-import math
 import os
 import sys
 
-
 my_path=os.path.dirname(os.path.realpath(__file__));
-# Needed for installed version
-sys.path.append(os.path.abspath(my_path+'/../lib'));
-# Needed for source version
-sys.path.append(os.path.abspath(my_path+'/../build/native'));
-sys.path.append(os.path.abspath(my_path+'/../python'));
-sys.path.append(os.path.abspath(my_path+'/../python/modules'));
-sys.path.append(os.path.abspath(my_path+'/../python/utilities'));
-import biswrapper as libbis;
-import bis_objects as bis
-import bis_commandline
+sys.path.append(os.path.abspath(my_path+'/../'));
+
+import biswebpython.core.bis_objects as bis
+import biswebpython.core.bis_commandline as bis_commandline;
 import argparse
 import json
 import tempfile
@@ -47,7 +38,7 @@ parser.add_argument('--last',help='last test to run',default=-1,type=int)
 parser.add_argument('--testname',help='comma separated list of names of tests to run. If not specified all are run (subject to first:last)',default=None)
 args = vars(parser.parse_args());
 
-testscript_base=os.path.abspath(my_path+"/../python/modules/");
+testscript_base=os.path.abspath(my_path+"/../biswebpython/modules/");
 
 testlistfilename= args['input'];
 if (args['input'] == None):

@@ -227,9 +227,7 @@ import numpy as np
 import ctypes 
 import struct
 import json
-import bis_wasmutils as wasmutil
-from bis_objects import *
-
+import biswebpython.core.bis_wasmutils as wasmutil
 
 def initialize_module():
 
