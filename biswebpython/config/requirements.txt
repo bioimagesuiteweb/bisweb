@@ -1,0 +1,6 @@
+numpy
+nibabel
+pillow
+scikit-image
+scipy
+scikit-learn
