@@ -21,8 +21,7 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
+
 
 class regressGlobal(bis_basemodule.baseModule):
 
@@ -31,14 +30,15 @@ class regressGlobal(bis_basemodule.baseModule):
         self.name='regressGlobal';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['regressGlobal'];
+        return self.getModuleDescriptionFromFile('regressGlobal');
 
     def directInvokeAlgorithm(self,vals):
 
         print('oooo invoking: regressGlobal with vals', (vals));
         input = self.inputs['input'];
         weight=self.inputs['weight'];
-
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             out = libbis.weightedRegressGlobalSignalWASM(input,
                                                          weight, 

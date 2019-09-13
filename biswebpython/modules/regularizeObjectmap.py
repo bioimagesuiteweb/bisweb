@@ -21,8 +21,6 @@ import sys
 import bis_path;
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc;
-import biswrapper as libbis;
 
 class regularizeObjectmap(bis_basemodule.baseModule):
 
@@ -31,13 +29,14 @@ class regularizeObjectmap(bis_basemodule.baseModule):
         self.name='regularizeObjectmap';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['regularizeObjectmap'];
+        return self.getModuleDescriptionFromFile('regularizeObjectmap');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: regularizeObjectmap with vals', vals);
 
         input = self.inputs['input'];
-
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.regularizeObjectmapWASM(input,
                                                                     paramobj={

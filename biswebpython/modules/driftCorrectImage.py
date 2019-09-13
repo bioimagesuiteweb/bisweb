@@ -22,8 +22,7 @@ import sys
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
+
 
 class driftCorrectImage(bis_basemodule.baseModule):
 
@@ -32,7 +31,7 @@ class driftCorrectImage(bis_basemodule.baseModule):
         self.name='driftCorrectImage';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['driftCorrectImage'];
+        return self.getModuleDescriptionFromFile('driftCorrectImage');
 
     
     def polynomial(self,t,power):
@@ -85,7 +84,8 @@ class driftCorrectImage(bis_basemodule.baseModule):
         
         order = vals['order'];
         regressor = self.createRegressor(input,order);
-
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.weightedRegressOutImageWASM(input, regressor,weight, 
                                                                         self.parseBoolean(vals['debug']));

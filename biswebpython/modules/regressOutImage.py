@@ -22,8 +22,6 @@ import sys
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class regressOutImage(bis_basemodule.baseModule):
 
@@ -32,7 +30,7 @@ class regressOutImage(bis_basemodule.baseModule):
         self.name='regressOutImage';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['regressOutImage'];
+        return self.getModuleDescriptionFromFile('regressOutImage');
 
     
     def polynomial(self,t,power):
@@ -83,7 +81,8 @@ class regressOutImage(bis_basemodule.baseModule):
         input = self.inputs['input'];
         weight=self.inputs['weight'];
         regressor = self.inputs['regressor'];
-
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.weightedRegressOutImageWASM(input, regressor,weight, 
                                                                         self.parseBoolean(vals['debug']));

@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 import biswebpython.core.bis_baseutils as bis_baseutils
 
 class linearRegistration(bis_basemodule.baseModule):
@@ -32,7 +30,7 @@ class linearRegistration(bis_basemodule.baseModule):
         self.name='linearRegistration';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['linearRegistration'];
+        return self.getModuleDescriptionFromFile('linearRegistration');
 
     def directInvokeAlgorithm(self,vals):
         
@@ -43,7 +41,8 @@ class linearRegistration(bis_basemodule.baseModule):
 
         if (reference.hasSameOrientation(target,'Reference Image','Target Image',True)==False):
             return False;
-
+        
+        libbis=self.getDynamicLibraryWrapper();
         try:
             out=libbis.runLinearRegistrationWASM(reference, target, transform, {
                 'intscale' : vals['intscale'],

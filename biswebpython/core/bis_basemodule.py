@@ -18,6 +18,7 @@
 import os
 import sys
 import biswebpython.core.bis_objects as bis_objects;
+import biswebpython.core.bis_baseutils as bis_baseutils;
 
 class baseModule:
 
@@ -262,3 +263,9 @@ class baseModule:
         if (val in [ '1', 'true' , True,'True','on']):
             return True;
         return False;
+
+    def getModuleDescriptionFromFile(self,classname):
+        return bis_baseutils.getModuleDescriptionFromFile(classname)
+
+    def getDynamicLibraryWrapper(self):
+        return bis_baseutils.getDynamicLibraryWrapper();

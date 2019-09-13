@@ -17,13 +17,9 @@
 # 
 # ENDLICENSE
 
-
-
 import sys
 import bis_path;
 import biswebpython.core.bis_basemodule as bis_basemodule;
-import bismodules_desc;
-import biswrapper as libbis;
 
 class smoothImage(bis_basemodule.baseModule):
 
@@ -32,17 +28,17 @@ class smoothImage(bis_basemodule.baseModule):
         self.name='smoothImage';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['smoothImage'];
+        return self.getModuleDescriptionFromFile('smoothImage');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: smoothImage with vals', vals);
-
+        
         input = self.inputs['input'];
         s = (vals['sigma']);
         if (self.parseBoolean(vals['fwhmax'])):
             s=s*0.4247;
 
-
+        libbis=self.getDynamicLibraryWrapper();
         try:
             self.outputs['output'] = libbis.gaussianSmoothImageWASM(input,
                                                                     paramobj={

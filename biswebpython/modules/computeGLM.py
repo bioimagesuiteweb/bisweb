@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class computeGLM(bis_basemodule.baseModule):
 
@@ -31,7 +29,7 @@ class computeGLM(bis_basemodule.baseModule):
         self.name='computeGLM';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['computeGLM'];
+        return self.getModuleDescriptionFromFile('computeGLM');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: computeGLM with vals', vals);
@@ -49,6 +47,7 @@ class computeGLM(bis_basemodule.baseModule):
         if (numtasks<=0 or numtasks>=sz[1]):
             numtasks=sz[1];
 
+        libbis=self.getDynamicLibraryWrapper();
         try:
             self.outputs['output'] = libbis.computeGLMWASM(input, mask, regressor, {
                 'numtasks' : numtasks,

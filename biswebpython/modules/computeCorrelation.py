@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class computeCorrelation(bis_basemodule.baseModule):
 
@@ -31,13 +29,14 @@ class computeCorrelation(bis_basemodule.baseModule):
         self.name='computeCorrelation';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['computeCorrelation'];
+        return self.getModuleDescriptionFromFile('computeCorrelation');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: computeCorrelation with vals', (vals));
         input = self.inputs['input'];
         weight=self.inputs['weight'];
-            
+        
+        libbis=self.getDynamicLibraryWrapper();
         try:
             out = libbis.computeCorrelationMatrixWASM(input, weight, {
                 "toz" : self.parseBoolean(vals['zscore'])

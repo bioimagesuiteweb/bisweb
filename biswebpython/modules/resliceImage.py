@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 import biswebpython.core.bis_baseutils as bis_baseutils
 
 class resliceImage(bis_basemodule.baseModule):
@@ -32,7 +30,7 @@ class resliceImage(bis_basemodule.baseModule):
         self.name='resliceImage';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['resliceImage'];
+        return self.getModuleDescriptionFromFile('resliceImage');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: resliceImage with vals', (vals));
@@ -47,7 +45,8 @@ class resliceImage(bis_basemodule.baseModule):
         dt="-1";
         if (vals['forcefloat']):
             dt="float";
-
+            
+        libbis=self.getDynamicLibraryWrapper();
         try:
             self.outputs['output'] = libbis.resliceImageWASM(input, xform, {
                 "spacing" : [ spa[0],spa[1],spa[2] ],

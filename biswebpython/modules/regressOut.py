@@ -22,8 +22,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class regressOut(bis_basemodule.baseModule):
 
@@ -32,7 +30,7 @@ class regressOut(bis_basemodule.baseModule):
         self.name='regressOut';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['regressOut'];
+        return self.getModuleDescriptionFromFile('regressOut');
 
     def directInvokeAlgorithm(self,vals):
 
@@ -40,7 +38,8 @@ class regressOut(bis_basemodule.baseModule):
         input = self.inputs['input'];
         regressor = self.inputs['regressor'];
         weight=self.inputs['weight'];
-            
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             out = libbis.weightedRegressOutWASM(input,
                                                 regressor,

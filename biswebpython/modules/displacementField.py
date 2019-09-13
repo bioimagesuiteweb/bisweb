@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class displacementField(bis_basemodule.baseModule):
 
@@ -31,7 +29,7 @@ class displacementField(bis_basemodule.baseModule):
         self.name='displacementField';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['displacementField'];
+        return self.getModuleDescriptionFromFile('displacementField');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: displacementField', (vals));
@@ -39,7 +37,7 @@ class displacementField(bis_basemodule.baseModule):
         image = self.inputs['input'];
         dimension = image.dimensions;
         spacing = image.spacing;
-
+        libbis=self.getDynamicLibraryWrapper();
 
         self.outputs['output'] = libbis.computeDisplacementFieldWASM(
             self.inputs['xform'], {

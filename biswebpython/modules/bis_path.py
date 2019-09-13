@@ -21,16 +21,9 @@ import sys;
 my_path=os.path.dirname(os.path.realpath(__file__));
 n=os.path.abspath(my_path+'/../..')
 l=sys.path;
-
-if (n in l):
-    print('Not adding ',n,' to path');
-else:
-    print('Adding ',n,' to path');
+if (n not in l):
     sys.path.append(n);
 
-
-
-sys.path.append(os.path.abspath(my_path+'/../../build/native'))
 
 
 

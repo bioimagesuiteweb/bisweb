@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc;
-import biswrapper as libbis;
 
 class flipImage(bis_basemodule.baseModule):
 
@@ -31,13 +29,14 @@ class flipImage(bis_basemodule.baseModule):
         self.name='flipImage';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['flipImage'];
+        return self.getModuleDescriptionFromFile('flipImage');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: flipImage with vals', vals);
 
         input = self.inputs['input'];
-
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.flipImageWASM(input,
                                                           paramobj={

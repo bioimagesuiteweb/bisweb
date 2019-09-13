@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class seedCorrelation(bis_basemodule.baseModule):
 
@@ -31,7 +29,7 @@ class seedCorrelation(bis_basemodule.baseModule):
         self.name='seedCorrelation';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['seedCorrelationImage'];
+        return self.getModuleDescriptionFromFile('seedCorrelationImage');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: seedCorrelation with vals', (vals));
@@ -39,6 +37,7 @@ class seedCorrelation(bis_basemodule.baseModule):
         weight=self.inputs['weight'];
         regressor = self.inputs['regressor'];
         
+        libbis=self.getDynamicLibraryWrapper();
         try:
             out = libbis.computeSeedCorrelationImageWASM(input, regressor, weight, {
                 "toz" : self.parseBoolean(vals['zscore'])

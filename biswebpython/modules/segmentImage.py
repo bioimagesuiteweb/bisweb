@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects;
-import biswrapper as libbis;
-import bismodules_desc;
     
 class segmentImage(bis_basemodule.baseModule):
 
@@ -31,11 +29,12 @@ class segmentImage(bis_basemodule.baseModule):
         self.name='segmentImage';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['segmentImage'];
+        return self.getModuleDescriptionFromFile('segmentImage');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: segmentImage with vals', (vals));
         input = self.inputs['input'];
+        libbis=self.getDynamicLibraryWrapper();
         try:
             self.outputs['output'] = libbis.segmentImageWASM(input, {
                 "frame" : 0,

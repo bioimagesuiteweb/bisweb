@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
     
 class computeROI(bis_basemodule.baseModule):
 
@@ -31,7 +29,7 @@ class computeROI(bis_basemodule.baseModule):
         self.name='computeROI';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['computeROI'];
+        return self.getModuleDescriptionFromFile('computeROI');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: computeROI with vals', vals);
@@ -45,6 +43,7 @@ class computeROI(bis_basemodule.baseModule):
         print('oooo');
         print('oooo Input=',input.getDescription());
         print('oooo ROI=',roi.getDescription());
+        libbis=self.getDynamicLibraryWrapper();
         
         try:
             out = libbis.computeROIWASM(input, roi, {

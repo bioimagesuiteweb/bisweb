@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc;
-import biswrapper as libbis;
 
 class approximateField(bis_basemodule.baseModule):
 
@@ -31,13 +29,13 @@ class approximateField(bis_basemodule.baseModule):
         self.name='approximateField';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['approximateField'];
+        return self.getModuleDescriptionFromFile('approximateField');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: approximateField with vals', vals);
         input = self.inputs['input'];
 
-        print('This far',libbis);
+        libbis=self.getDynamicLibraryWrapper();
         try:
             self.outputs['output'] = libbis.approximateDisplacementFieldWASM2(input, {
                 "spacing": vals['spacing'],

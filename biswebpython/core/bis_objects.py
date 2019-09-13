@@ -23,7 +23,10 @@ import struct
 import json
 import nibabel as nib
 import biswebpython.core.bis_wasmutils as biswasm
+import biswebpython.core.bis_baseutils as bis_baseutils;
 import biswebpython.utilities.surface_utils as surutil
+
+
 
 # --------------------------------------
 # bisBaseObject
@@ -147,7 +150,7 @@ class bisMatrix(bisBaseObject):
         if (ext==".csv"):
             self.data_array = np.genfromtxt(fname, delimiter= ",")
         elif (ext==".matr"):
-            import biswrapper as libbis;
+            libbis=bis_baseutils.getDynamicLibraryWrapper();
             self.data_array=libbis.parseMatrixTextFileWASM(text,0);
         self.filename=fname;
         return True;
@@ -650,7 +653,7 @@ class bisComboTransformation(bisBaseObject):
     def save(self,filename):
 
         try:
-            import biswrapper as libbis;
+            libbis=bis_baseutils.getDynamicLibraryWrapper();
             out=libbis.createComboTransformationTextFileWASM(self,0);
             with open(filename, 'w') as fp:
                 fp.write(out);

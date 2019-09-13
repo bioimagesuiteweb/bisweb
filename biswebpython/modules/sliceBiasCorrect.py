@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects;
-import bismodules_desc;
-import biswrapper as libbis;
 
 class sliceBiasCorrect(bis_basemodule.baseModule):
 
@@ -31,7 +29,7 @@ class sliceBiasCorrect(bis_basemodule.baseModule):
         self.name='sliceBiasCorrect';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['sliceBiasCorrect'];
+        return self.getModuleDescriptionFromFile('sliceBiasCorrect');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: sliceBiasCorrect with vals', (vals));
@@ -46,6 +44,8 @@ class sliceBiasCorrect(bis_basemodule.baseModule):
             axis=2;
 	
         input = self.inputs['input'];
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.sliceBiasFieldCorrectImageWASM(input, {
 		"axis" : axis,

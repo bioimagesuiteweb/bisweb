@@ -22,8 +22,6 @@ import bis_path;
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc;
-import biswrapper as libbis;
 
 class individualizedParcellation(bis_basemodule.baseModule):
 
@@ -32,7 +30,7 @@ class individualizedParcellation(bis_basemodule.baseModule):
         self.name='individualizedParcellation';
    
     def createDescription(self):
-        obj=bismodules_desc.descriptions['individualizedParcellation'];
+        obj=self.getModuleDescriptionFromFile('individualizedParcellation');
         obj['params'].append(
             {
                 "name": "usefloat",
@@ -57,6 +55,7 @@ class individualizedParcellation(bis_basemodule.baseModule):
         if (fmri.hasSameOrientation(group,'fMRI Image','Group Parcellation',True)==False):
             return False;
 
+        libbis=self.getDynamicLibraryWrapper();
 
         fmriDim = fmri.dimensions;
         groupDim = group.dimensions;

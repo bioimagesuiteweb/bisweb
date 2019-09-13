@@ -15,6 +15,8 @@
 # 
 # ENDLICENSE
 
+import os
+import sys
 
 
 def getOptimizationCode(name="ConjugateGradient"):
@@ -66,3 +68,34 @@ def resliceRegistrationOutput(libbis, reference, target, transform):
 	    "dimensions": [dim[0], dim[1], dim[2]],
 	    "interpolation": 1
 	},0);
+
+def getModuleDescriptionFromFile(classname):
+    
+    try:
+        import biswebpython.lib.bismodules_desc as bismodules_desc;
+    except ImportError:
+        my_path=os.path.dirname(os.path.realpath(__file__));
+        n=my_path+'/../../build/native';
+        l=sys.path;
+        if (n not in l):
+            sys.path.append(n);
+            import bismodules_desc;
+            
+    return bismodules_desc.descriptions[classname];
+
+def getDynamicLibraryWrapper():
+    
+    try:
+        import biswebpython.lib.biswrapper as libbis;
+    except ImportError:
+        my_path=os.path.dirname(os.path.realpath(__file__));
+        n=my_path+'/../../build/native';
+        l=sys.path;
+        if (n not in l):
+            sys.path.append(n);
+        import biswrapper as libbis;
+            
+            
+    return libbis;
+
+        

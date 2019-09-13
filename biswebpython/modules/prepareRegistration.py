@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
     
 class prepareRegistration(bis_basemodule.baseModule):
 
@@ -31,12 +29,14 @@ class prepareRegistration(bis_basemodule.baseModule):
         self.name='prepareRegistration';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['prepareRegistration'];
+        return self.getModuleDescriptionFromFile('prepareRegistration')
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: prepareRegistration with vals', (vals));
 
         input = self.inputs['input'];
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.prepareImageForRegistrationWASM(input, {
                 "numbins" : vals['numbins'],

@@ -22,8 +22,6 @@ import bis_path;
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc;
-import biswrapper as libbis;
 import biswebpython.utilities.calcium_image as calcium_image;
 import biswebpython.utilities.calcium_analysis as calcium_analysis;
 

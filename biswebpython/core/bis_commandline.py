@@ -201,7 +201,7 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
     print('====\n==================================================================\n====');
     print('==== comparing ('+test_type+') using ('+comparison+') and threshold='+str(threshold)+'.\n====');
 
-    print('==== files=',resultFile,test_target);
+    print('==== comparing files=',resultFile,' and ',test_target);
     
     if (test_type=="image"):
         out = bis_objects.bisImage();
@@ -209,7 +209,6 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
             gold = bis_objects.bisImage();
             if (gold.load(test_target)!=False) :
                 diff = 0;
-                print(gold);
                 try:
                     if (comparison=='cc'):
                         diff=-computeCC(out.get_data(),gold.get_data());

@@ -21,8 +21,6 @@ import bis_path
 import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import bismodules_desc
-import biswrapper as libbis;
 
 class extractFrame(bis_basemodule.baseModule):
 
@@ -31,11 +29,13 @@ class extractFrame(bis_basemodule.baseModule):
         self.name='extractFrame';
    
     def createDescription(self):
-        return bismodules_desc.descriptions['extractFrame'];
+        return self.getModuleDescriptionFromFile('extractFrame');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: extractFrame with vals', (vals));
         input = self.inputs['input'];
+        libbis=self.getDynamicLibraryWrapper();
+        
         try:
             self.outputs['output'] = libbis.extractImageFrameWASM(input, {
                 "frame" : vals['frame'],
