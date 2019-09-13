@@ -16,7 +16,22 @@ The modules are also available for inclusion in your own code under the
 namespace `biswebpython`. The same smoothing filter, for example, can be
 imported as:
 
-    import biswebpython.modules.smoothImage.smoothImage
+    from biswebpython.core.bis_objects import *
+    from biswebpython.modules.smoothImage import *
+
+    # Create and load an image
+    input=bisImage();
+    input.load(_SOME_INPUT_FILENAME_);
+    print('Input=',input.getDescription());
+
+    # Create and execute the smoothing module
+    smooth=smoothImage();
+    smooth.execute( { 'input' : input }, { 'sigma' : 4.0, 'debug' : True });
+
+    # Get and save the output
+    output=smooth.getOutputObject('output');
+    print('Output=',output.getDescription());
+    out.save(_SOME_OUTPUT_FILENAME_);
     
 ---
 
