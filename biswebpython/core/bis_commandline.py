@@ -200,7 +200,6 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
     
     print('====\n==================================================================\n====');
     print('==== comparing ('+test_type+') using ('+comparison+') and threshold='+str(threshold)+'.\n====');
-
     print('==== comparing files=',resultFile,' and ',test_target);
     
     if (test_type=="image"):

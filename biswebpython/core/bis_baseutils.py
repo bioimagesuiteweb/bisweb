@@ -70,16 +70,25 @@ def resliceRegistrationOutput(libbis, reference, target, transform):
 	},0);
 
 def getModuleDescriptionFromFile(classname):
+
+    print('classname=',classname);
     
     try:
         import biswebpython.lib.bismodules_desc as bismodules_desc;
     except ImportError:
+        print('Failed to import');
         my_path=os.path.dirname(os.path.realpath(__file__));
         n=my_path+'/../../build/native';
         l=sys.path;
         if (n not in l):
             sys.path.append(n);
-            import bismodules_desc;
+
+        n=my_path+'/../build/native';
+        l=sys.path;
+        if (n not in l):
+            sys.path.append(n);
+
+        import bismodules_desc;
             
     return bismodules_desc.descriptions[classname];
 

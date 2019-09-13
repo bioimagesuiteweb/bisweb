@@ -23,7 +23,7 @@ import sys
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../'));
-import biswebpython.modules.bis_path;
+
 import biswebpython.core.bis_objects as bis
 import biswebpython.core.bis_commandline as bis_commandline;
 import argparse
