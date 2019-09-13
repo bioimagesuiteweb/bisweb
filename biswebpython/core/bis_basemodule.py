@@ -52,9 +52,9 @@ class baseModule:
 
         params=self.parseValues(values);
         for p in inputs:
-            print('Setting input p=',p,inputs[p]);
+            #print('Setting input p=',p,inputs[p]);
             self.setInputObject(inputs[p],p);
-        print(self.inputs);
+        #print(self.inputs);
 
         return self.directInvokeAlgorithm(params);
 
