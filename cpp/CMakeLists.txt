@@ -25,7 +25,7 @@ MESSAGE("----------------------------------------------------")
 
 SET (BISWEB_VERSION_MAJOR 1)
 SET (BISWEB_VERSION_MINOR 1)
-SET (BISWEB_VERSION_PATCH 0b2)
+SET (BISWEB_VERSION_PATCH 0b5)
 SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -711,6 +711,7 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     GET_FILENAME_COMPONENT(MATLAB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../matlab ABSOLUTE)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/bis*.m)
+    list(REMOVE_ITEM MLIST ${MATLAB_SOURCE_DIR}/bispath.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/example.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
@@ -718,6 +719,9 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
+
+    # Install replacement bispath
+    install (FILES ${MATLAB_SOURCE_DIR}/config/bispath.m DESTINATION biswebmatlab)
   ENDIF(BIS_A_MATLAB)
 
 

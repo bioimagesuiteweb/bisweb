@@ -16,8 +16,14 @@ To do this
 
 4. If this works you will get some helpful print messages
 
-
+   
 See the Bisweb source (and especially the matlab subdirectory) for examples as
 to how to use this code.
 
-You will need to install the 'nii' matlab package as to read nifti (.nii.gz) images.
+----
+
+_Note_: The nii directory contains a cut-down version of the
+[Tools for NIfTI and Analyze Image
+](https://www.mathworks.com/matlabcentral/fileexchange/8797-tools-for-nifti-and-analyze-image)
+provided by Jimmy Shen. We simply renamed the files to prevent name conflicts
+with people that have the original toolbox installed.
