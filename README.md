@@ -4,7 +4,7 @@
 ---
 
 [ [NPM] ](https://www.npmjs.com/settings/bioimagesuiteweb/packages) [ [Docker]
-](https://hub.docker.com/r/bisweb/devel)
+](https://hub.docker.com/r/bisweb/devel) [ [Python-TestPypI] (https://test.pypi.org/project/biswebpython/) ]
 
 ---
 ## Welcome to BioImage Suite Web

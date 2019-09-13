@@ -6,6 +6,22 @@
 This is package exports much of functionality in BioImage Suite Web as a
 python package. This requires Python v3.5 or later.
 
+You can invoke all modules from the commandline using the globally installed
+executable `biswebpy`. For example to run the image smoothing algorithm type
+
+    biswebpy smoothImage -h
+    
+
+The modules are also available for inclusion in your own code under the
+namespace `biswebpython`. The same smoothing filter, for example, can be
+imported as:
+
+    import biswebpython.modules.smoothImage.smoothImage
+    
+---
+
+For more information on bisweb see:
+
 * The source repository --
   [https://github.com/bioimagesuiteweb/bisweb](https://github.com/bioimagesuiteweb/bisweb)
 * The actual web application --
