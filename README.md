@@ -1,5 +1,10 @@
 [![Logo](web/images/bisweb_newlogo_white_small.png)](https://bioimagesuiteweb.github.io/bisweb-manual/)
 
+
+---
+
+[NPM](https://www.npmjs.com/settings/bioimagesuiteweb/packages) [Docker](https://hub.docker.com/r/bisweb/devel)
+
 ---
 ## Welcome to BioImage Suite Web
 

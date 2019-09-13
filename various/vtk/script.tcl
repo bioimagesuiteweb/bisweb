@@ -1,5 +1,5 @@
 
-set lst { "right_2.vtk"  "left_2.vtk" }
+set lst { "right_3.vtk"  "left_3.vtk" }
 set atln { "parcels_right.vtk" "parcels_left.vtk" }
 set offsets { 1  133 }
 
@@ -46,7 +46,6 @@ for { set j 0 } { $j <= 1 } { incr j } {
 
     
     set n2 "index_${name}.json"
-    set n3 "index_${name}.ply"
     
     set fout [ open $n2 w ]
     puts -nonewline $fout "\{\n\t \"points\" : \[ "
@@ -88,12 +87,8 @@ for { set j 0 } { $j <= 1 } { incr j } {
     puts $fout "\}"
     close $fout
 
-    set w [ vtkPLYWriter New ]
-    $w SetInput $sur
-    $w SetFileName $n3
-    $w Write
-    $w Delete
-    puts stdout "Also saved ply in $n3"
+
+
 }
 
 
