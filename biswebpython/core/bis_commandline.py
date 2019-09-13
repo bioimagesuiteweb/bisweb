@@ -85,13 +85,15 @@ def loadParse(mod,args,addModuleFlag=True):
     toolname=mod.name;
     
     if (len(args)<2):
-        print("---- Not enough arguments passed to run this tool. Type "+toolname+".py -h for more information");
+        print("---- Not enough arguments passed to run this tool. Type "+args[0]+" -h for more information");
         return False;
 
 
     parser = argparse.ArgumentParser(description='\nThis python module ('+toolname+')  is part of the BioImage Suite Web image analysis package. See https://github.com/bioimagesuiteweb/bisweb for more information.');
     attachFlags(mod,parser);
+
     args = vars(parser.parse_args());
+
 
 
     

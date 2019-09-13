@@ -38,7 +38,7 @@ parser.add_argument('--last',help='last test to run',default=-1,type=int)
 parser.add_argument('--testname',help='comma separated list of names of tests to run. If not specified all are run (subject to first:last)',default=None)
 args = vars(parser.parse_args());
 
-testscript_base=os.path.abspath(my_path+"/../biswebpython/modules/");
+testscript_base=os.path.abspath(my_path+"/../biswebpython/biswebpy.py");
 
 testlistfilename= args['input'];
 if (args['input'] == None):
@@ -138,7 +138,7 @@ for i in range(begin_test,end_test+1):
                 testtype="image";
 
             print('====\n-------------------- test',i,'---------------------------------------');
-            cmd=sys.executable+" "+testscript_base+os.path.sep+command[0]+".py"+" "+command[1];
+            cmd=sys.executable+" "+testscript_base+' '+command[0]+" "+command[1];
             print('====\n==== executing:',cmd,'\n====');
             exitcode=os.system(cmd);
             testpass=False;
