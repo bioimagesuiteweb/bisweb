@@ -23,7 +23,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     entry_points = {
-        'console_scripts': ['biswebpython=biswebpython.biswebpy:main'],
+        'console_scripts': ['biswebpy=biswebpython.biswebpy:main'],
     },
     python_requires='>=3.5',
     package_data={ '' : [ 'libbiswasm.so','libbiswasm.dylib','biswasm.dll','requirements.txt', 'PythonModuleList.txt' ] }
