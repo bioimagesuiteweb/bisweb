@@ -1,7 +1,7 @@
 ![Logo](https://bioimagesuiteweb.github.io/bisweb-manual/bisweb_newlogo_small.png)
 
 ---
-## BioImage Suite Web -- Python & MatlabPackage
+## BioImage Suite Web -- Python Package
 
 This is package exports much of functionality in BioImage Suite Web as a
 python package. This requires Python v3.5 or later.
