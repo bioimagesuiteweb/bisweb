@@ -44,10 +44,13 @@ class BiswebCardBar extends HTMLElement {
         `);
 
         const navbarExpandButton = $(`<span><span class='glyphicon glyphicon-menu-hamburger bisweb-span-button' style='position: relative; top: 3px; left: 5px; margin-right: 10px'></span>${navbarTitle}</span>`);
-        navbarExpandButton.on('click', () => { expandButton.click(); });
+        navbarExpandButton.on('click', () => { 
+            handleBackgroundBlur();
+            expandButton.click(); 
+        });
         
         let tabs = $(this.cardLayout).find('.tab-content>div');
-        this.addTabHideButton(tabs);
+        let hideButton = this.addTabHideButton(tabs);
 
         //append card layout to the bottom and the expand button to the existing navbar
         bottomNavElement.append(navbarExpandButton);
@@ -56,6 +59,21 @@ class BiswebCardBar extends HTMLElement {
 
         this.createdBottomNavbar = true;
         document.dispatchEvent(new CustomEvent('bis.cardbar.done'));
+
+        const self = this;
+        //Clicking the plot select menu should remove the blur on the background if it's there, and re-add it if a tab is expanded
+        function handleBackgroundBlur() {
+            let tabs = self.cardLayout.find('.nav.nav-tabs');
+            let viewer = $('.bisviewerwidget');
+            console.log('children', tabs.children());
+            for (let child of $(tabs).children()) {
+                if ($(child).hasClass('active')) {
+                    $(hideButton).click();
+                } 
+            }
+
+            viewer.removeClass('bis-unfocus');
+        }
     }
 
     /**
@@ -76,6 +94,7 @@ class BiswebCardBar extends HTMLElement {
         });
 
         body.append(hideButton);
+        return hideButton;
     }
 
     /**
@@ -164,7 +183,6 @@ class BiswebCardBar extends HTMLElement {
                     });
 
                     tab.on('hidden.bs.tab', () => {
-                        console.log('hidden');
                         $(widget).removeClass('bis-unfocus');
                     });
 
