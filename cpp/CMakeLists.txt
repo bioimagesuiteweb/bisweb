@@ -568,7 +568,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   
   IF (BIS_A_PYTHON)
     install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
-    install (FILES ${LICENSE_FILE} DESTINATION biswebpython RENAME LICENSE.md)
+#    install (FILES ${LICENSE_FILE} DESTINATION biswebpython RENAME LICENSE.md)
     IF (BIS_A_DEVEL)
       install (FILES ${HEADERS} DESTINATION biswebpython/include)
       install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION biswebpython/lib)
@@ -622,7 +622,6 @@ ELSE(BIS_A_EMSCRIPTEN)
     FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/*.py)
     FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
     FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
-    list(REMOVE_ITEM PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/bisweb_path.py)
     FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
     
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
@@ -633,15 +632,13 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYLIST2} DESTINATION biswebpython/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION biswebpython
-      PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION biswebpython
-      PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION biswebpython
-      PERMISSIONS OWNER_READ  WORLD_READ)
+    #install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION biswebpython
+    #  PERMISSIONS OWNER_READ  WORLD_READ)
+    #install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION biswebpython
+    #  PERMISSIONS OWNER_READ  WORLD_READ)
+    #install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION biswebpython
+    #  PERMISSIONS OWNER_READ  WORLD_READ)
     
-    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
-    install (FILES ${README_FILE} DESTINATION biswebpython)
     INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
     INSTALL (FILES ${BISWEBPYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
