@@ -12,7 +12,7 @@ my_path=os.path.dirname(os.path.realpath(__file__));
 
 # Make sure biswebpython is in your path
 n=os.path.abspath(my_path+'/..')
-sys.path.append(n);
+sys.path.insert(0,n);
 
 # ----------------------------------------------------------------------------------------
 # Function to print error message

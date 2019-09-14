@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # LICENSE
 # 
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -18,11 +16,6 @@
 # ENDLICENSE
 
 import sys
-try:
-    import bisweb_path;
-except ImportError:
-    bisweb_path=0;
-    
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
@@ -124,10 +117,6 @@ class individualizedParcellation(bis_basemodule.baseModule):
 
         return True
 
-if __name__ == '__main__':
-    import biswebpython.core.bis_commandline as bis_commandline;
-    sys.exit(bis_commandline.loadParse(individualizedParcellation(),sys.argv,False));
 
 
 
-    
