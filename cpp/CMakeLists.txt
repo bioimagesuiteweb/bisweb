@@ -19,6 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
+# Extract version number from package.json parent file
 include(JSONParser.cmake)
 FILE (READ ${PROJECT_SOURCE_DIR}/../package.json jsonpackage)
 sbeParseJson(jsonmod jsonpackage)
@@ -421,11 +422,6 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
   install (FILES ${NPMPACKAGEFILE2} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
-  # Path Files
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat DESTINATION bisweb)
-
   # ---- create scripts for command line  -----------
   # Read the modules
   IF(BIS_BUILDSCRIPTS)
@@ -574,7 +570,6 @@ ELSE(BIS_A_EMSCRIPTEN)
   
   IF (BIS_A_PYTHON)
     install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
-#    install (FILES ${LICENSE_FILE} DESTINATION biswebpython RENAME LICENSE.md)
     IF (BIS_A_DEVEL)
       install (FILES ${HEADERS} DESTINATION biswebpython/include)
       install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION biswebpython/lib)
@@ -637,15 +632,8 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYLIST3} DESTINATION biswebpython/utilities)
     install (FILES ${PYLIST2} DESTINATION biswebpython/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-    #install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION biswebpython
-    #  PERMISSIONS OWNER_READ  WORLD_READ)
-    #install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION biswebpython
-    #  PERMISSIONS OWNER_READ  WORLD_READ)
-    #install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION biswebpython
-    #  PERMISSIONS OWNER_READ  WORLD_READ)
     
-    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
+    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../biswebpython/config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
     INSTALL (FILES ${BISWEBPYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
@@ -693,9 +681,12 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (BIS_A_MATLAB)
     MESSAGE("++ Building Matlab Prerequisites")
 
-    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_matlab.txt")
+    SET (README_FILE "${PROJECT_SOURCE_DIR}/../matlab/config/README.md")
     install (FILES ${README_FILE} DESTINATION biswebmatlab)
 
+    configure_file( ${PROJECT_SOURCE_DIR}/../matlab/config/bis_package.m.in "${PROJECT_BINARY_DIR}/creatematlab.sh" @ONLY )
+    install (FILES ${PROJECT_BINARY_DIR}/creatematlab.sh DESTINATION ".")
+    
     SET (MATLAB_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.m)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT}

@@ -18,5 +18,6 @@
 function pathname = bispath()
   m=mfilename('fullpath');
   [filepath,name,ext] = fileparts(m);
+  addpath(filepath);
   addpath([ filepath filesep 'nii' ]);
 end
