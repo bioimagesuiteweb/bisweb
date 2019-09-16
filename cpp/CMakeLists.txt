@@ -19,14 +19,20 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
+include(JSONParser.cmake)
+FILE (READ ${PROJECT_SOURCE_DIR}/../package.json jsonpackage)
+sbeParseJson(jsonmod jsonpackage)
+STRING(REGEX REPLACE "\\\." ";" BISWEBV "${jsonmod.version}")
+LIST(GET BISWEBV 0 BISWEB_VERSION_MAJOR)
+LIST(GET BISWEBV 1 BISWEB_VERSION_MINOR)
+LIST(GET BISWEBV 2 BISWEB_VERSION_PATCH)
+SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
+
 MESSAGE("----------------------------------------------------")
-MESSAGE("-- Building BISWEB")
+MESSAGE("-- Building BISWEB ${BISWEB_VERSION} major=${BISWEB_VERSION_MAJOR} minor=${BISWEB_VERSION_MINOR} patch=${BISWEB_VERSION_PATCH}")
 MESSAGE("----------------------------------------------------")
 
-SET (BISWEB_VERSION_MAJOR 1)
-SET (BISWEB_VERSION_MINOR 1)
-SET (BISWEB_VERSION_PATCH 0b5)
-SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
+
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
