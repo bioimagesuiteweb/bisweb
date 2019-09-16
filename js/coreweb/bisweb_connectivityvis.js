@@ -914,7 +914,7 @@ var removelines = function() {
  */
 
 let drawScatterandHisto = function(){
-
+    /*
     if (globalParams.internal.laststate === null) {
         bootbox.alert('you need to create the lines before you do anything (Need to fix)');
         return;
@@ -941,9 +941,6 @@ let drawScatterandHisto = function(){
     svgModal.bind('drop',(data) =>{
         const reader = new FileReader();
 
-        /**
-         * @type {DragEvent}
-         */
         let event = data.originalEvent;
         event.preventDefault();
         event.stopPropagation();
@@ -1001,7 +998,7 @@ let drawScatterandHisto = function(){
 
         };
     });
-
+    */
     globalParams.displayDialog.show();
 };
 
