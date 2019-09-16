@@ -1462,7 +1462,7 @@ let addHistoScatterStyles = () => {
 
         globalParams.addedStyles = true;
     }
-}
+};
 
 
 // ----------------------------------
