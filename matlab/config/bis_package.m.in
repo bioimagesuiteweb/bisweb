@@ -1,0 +1,13 @@
+#!/bin/bash
+
+ZDIR=@CMAKE_INSTALL_PREFIX@/zips
+MZIP=${ZDIR}/biswebmatlab_@BISWEB_VERSION@.zip
+
+mkdir -p ${ZDIR}
+rm ${MZIP}
+
+cd @CMAKE_INSTALL_PREFIX@
+echo "++++ Creating  ${MZIP} from @CMAKE_INSTALL_PREFIX@/biswebmatlab"
+zip -ry ${MZIP} biswebmatlab
+
+ls -l ${ZDIR}
