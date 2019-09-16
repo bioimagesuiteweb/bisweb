@@ -110,7 +110,7 @@ class CPMElement extends HTMLElement {
         let pos = [0 , layoutElement.viewerheight - 10];
 
         console.log('dim', dims);
-        let plot = bisweb_scatterplot.scatterplot(scatterElement, dims, pos);
+        let plot = new bisweb_scatterplot(scatterElement, dims, pos);
         //let histoplot = bisweb_histoplot.histogram(histoElement, dims);
 
         $(window).on('resize', () => {
