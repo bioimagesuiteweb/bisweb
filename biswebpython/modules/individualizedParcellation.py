@@ -62,7 +62,7 @@ class individualizedParcellation(bis_basemodule.baseModule):
             print('++++ \t Group parcellation being resliced to match the fMRI image dimension...');
             resl_paramobj = {
                 "interpolation": 0,
-                "dimensions": fmri.dimensions,
+                "dimensions": [ fmri.dimensions[0],fmri.dimensions[1],fmri.dimensions[2] ],
                 "spacing": fmri.spacing,
                 "datatype": "short",
                 "backgroundValue": 0.0,
