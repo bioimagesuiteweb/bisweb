@@ -25,3 +25,4 @@ web/LICENSE
 docker/binary/bisweb*sh
 docker/binary/bisweb*zip
 docker/binary/bisweb*tgz
+various/vtk/*

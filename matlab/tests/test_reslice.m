@@ -16,7 +16,7 @@
 % ENDLICENSE
 
 
-function result=test_resample(debug)
+function result=test_reslice(debug)
 
 
     if nargin<1
@@ -69,6 +69,5 @@ function result=test_resample(debug)
 
     out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,debug);
     result=testutil.compare(images{3}.getImageData(),out_img.getImageData(),'Image Reslice',1,0.99);
-    out_img.save('test.nii.gz');
 
 end
