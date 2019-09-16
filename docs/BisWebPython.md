@@ -14,11 +14,11 @@ The Python code base consists of code in the `python` subdirectory. The most imp
 * `bis_objects.py`
 * `bis_wasmutils.py`
 
-The first defines classes to match the JavaScript data-objects. The second contains code to serialize and deserialize Python objects to C-style arrays. The modules themselves are in `python/modules`.
+The first defines classes to match the JavaScript data-objects. The second contains code to serialize and deserialize Python objects to C-style arrays. The modules themselves are in `biswebpython/modules`.
 
 ## BisWeb Python Classes
 
-These can be found in `python/bis_objects.py`. They are written to mirror the `BisWeb` classes from the JS side. They derive from a common parent class `bisBaseObject` and consist of:
+These can be found in `biswebpython/core/bis_objects.py`. They are written to mirror the `BisWeb` classes from the JS side. They derive from a common parent class `bisBaseObject` and consist of:
 
 * `bisVector`
 * `bisMatrix` — this mimics `BisWebMatrix`.
@@ -193,7 +193,7 @@ Then deserialize the output and clean up the memory on the C++ side. While Pytho
 
 ## Serialization and Deserialization to C++
 
-The Python code uses the same serialization format as the JS code (see[JStoWASM.ms](JStoWASM.md)). The detailed code is in `python/bis_wasmutils.py`. Consider the parity between the JS and Python code for matrices:
+The Python code uses the same serialization format as the JS code (see[JStoWASM.ms](JStoWASM.md)). The detailed code is in `biswebpython/core/bis_wasmutils.py`. Consider the parity between the JS and Python code for matrices:
 
 * `bisMatrix.serializeWasm`
 * `bis_wasmutils.serialize_simpledataobject`
@@ -308,7 +308,7 @@ Then import the BioImage Suite web modules
 
 
     my_path = os.path.dirname(os.path.realpath(__file__));
-    sys.path.append(os.path.abspath(my_path + '/../python/modules'));
+    sys.path.append(os.path.abspath(my_path + '/../biswebpython/modules'));
     import resliceImage;
 
     import biswrapper as libbis;

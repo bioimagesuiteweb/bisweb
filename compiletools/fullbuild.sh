@@ -8,14 +8,9 @@ SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 echo "SRC=${SRCDIR}, BDIR=${BDIR}"
 
+# Cleanup some old stuff
 rm -rf ${BDIR}/install
 rm -rf ${BDIR}/doc
-
-#Install directories
-mkdir -p ${BDIR}/install
-
-# Doc directory
-mkdir -p ${BDIR}/doc/doxgen
 
 bash ${CDIR}/wasmbuild.sh
 bash ${CDIR}/webbuild.sh

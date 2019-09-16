@@ -19,14 +19,21 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
+# Extract version number from package.json parent file
+include(JSONParser.cmake)
+FILE (READ ${PROJECT_SOURCE_DIR}/../package.json jsonpackage)
+sbeParseJson(jsonmod jsonpackage)
+STRING(REGEX REPLACE "\\\." ";" BISWEBV "${jsonmod.version}")
+LIST(GET BISWEBV 0 BISWEB_VERSION_MAJOR)
+LIST(GET BISWEBV 1 BISWEB_VERSION_MINOR)
+LIST(GET BISWEBV 2 BISWEB_VERSION_PATCH)
+SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
+
 MESSAGE("----------------------------------------------------")
-MESSAGE("-- Building BISWEB")
+MESSAGE("-- Building BISWEB ${BISWEB_VERSION} major=${BISWEB_VERSION_MAJOR} minor=${BISWEB_VERSION_MINOR} patch=${BISWEB_VERSION_PATCH}")
 MESSAGE("----------------------------------------------------")
 
-SET (BISWEB_VERSION_MAJOR 1)
-SET (BISWEB_VERSION_MINOR 1)
-SET (BISWEB_VERSION_PATCH 0b2)
-SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
+
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -35,17 +42,27 @@ SET (CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 GET_FILENAME_COMPONENT(TOOLS_DIR ${PROJECT_SOURCE_DIR}/../compiletools ABSOLUTE)
 GET_FILENAME_COMPONENT(TEST_DIR ${PROJECT_SOURCE_DIR}/../test ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
+
+# Common scripts
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
-SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
-SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
-SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
-SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
-SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../python/modules/PythonModuleList.txt)
+
+# JS
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
-FIND_PROGRAM(NodeInterp node)
+SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
+SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 
+#Python
+GET_FILENAME_COMPONENT(BISWEBPYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../biswebpython ABSOLUTE)
+SET (BISWEB_PYTHON_INIT ${BISWEBPYTHON_SOURCE_DIR}/config/__init__.py)
+SET (BISWEB_PYTHON_SETUP ${BISWEBPYTHON_SOURCE_DIR}/config/setup.py)
+SET (BISWEB_PYTHON_REQUIREMENTS ${BISWEBPYTHON_SOURCE_DIR}/config/requirements.txt)
+SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
+SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
+
+# Needed for everything
+FIND_PROGRAM(NodeInterp node)
 
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
@@ -85,11 +102,6 @@ SET (PRE_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_pre.js")
 SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
 
 
-# ---------------------------------------------------------------------------------------------
-# Native/Python/Matlab Stuff
-# ---------------------------------------------------------------------------------------------
-SET(CLIBNAME biswasm)
-SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -153,8 +165,6 @@ ENDIF (BIS_USEEXTERNAL)
 FILE(GLOB H1 ${CPP_SOURCE_DIR}/b*.h)
 FILE(GLOB H2 ${CPP_SOURCE_DIR}/b*.txx)
 SET(HEADERS ${H1} ${H2})
-
-
 
 # ---------------------------------------------------------------------------------------------
 # PARSE HEADERS
@@ -251,22 +261,36 @@ ELSE (BIS_USEGPL)
   SET (LICENSE_FILE "${PROJECT_SOURCE_DIR}/../various/txt/apache_license.txt")
 ENDIF (BIS_USEGPL)
 
-install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+
+# ----------------------------------------------------------
+# Run Doxygen
+# ----------------------------------------------------------
+ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
+
+INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
+
+
 
 
 IF (BIS_A_EMSCRIPTEN)
 
+  install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE.md)
+  
   # ---------------------------------------------------------------------------------------------
   # Web Assembly Mode
   # ---------------------------------------------------------------------------------------------
   
   OPTION(BIS_WEB_WASM "Build webassembly instead of asm.js" ON)
+  MARK_AS_ADVANCED(BIS_WEB_WASM)
+  
   SET (BIS_WEB_OPT "-O2" CACHE STRING "BIS Compiler Optimization")
-  #  SET (BIS_WEB_MEMORY "1024" CACHE STRING "BIS Initial Memory in MB")
-
+  MARK_AS_ADVANCED(BIS_WEB_OPT)
 
   OPTION(BIS_BUILDSCRIPTS "Create individual scripts for node.js modules" OFF)
   MARK_AS_ADVANCED(BIS_BUILDSCRIPTS)
+
+  # Left over
+  MARK_AS_ADVANCED(BIS_EXTRAPATH)
   
   # SET VARIABLES
  
@@ -398,11 +422,6 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
   install (FILES ${NPMPACKAGEFILE2} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
-  # Path Files
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat DESTINATION bisweb)
-
   # ---- create scripts for command line  -----------
   # Read the modules
   IF(BIS_BUILDSCRIPTS)
@@ -498,25 +517,33 @@ IF (BIS_A_EMSCRIPTEN)
   
 ELSE(BIS_A_EMSCRIPTEN)
 
- # ---------------------------------------------------------------------------------------------
+
+  
+  # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
   # ---------------------------------------------------------------------------------------------
   
   OPTION(BIS_A_PYTHON "Build Python Wrappers" ON)
-  OPTION(BIS_A_MATLAB "Build Matlab Wrappers" OFF)
+  OPTION(BIS_A_MATLAB "Build Matlab Wrappers" ON)
   OPTION(BIS_A_DEVEL "Install Developer Environment (on make install)" OFF)
+  MARK_AS_ADVANCED(BIS_A_DEVEL)
+  
+  SET(CLIBNAME biswasm)
+  SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
+  
+  # ---------------------------
   
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1" CACHE STRING "" FORCE)
   ELSE (WIN32)
     SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat")
-    SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11" CACHE STRING "" FORCE)
+    SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 -Wno-int-in-bool-context" CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
   
-  
-  include_directories ( ${EIGEN3_INCLUDE_DIRS} )
+  # ---------------------------
 
+  include_directories ( ${EIGEN3_INCLUDE_DIRS} )
   IF (BIS_USEINDIV)
     include_directories ( ${IGL_INCLUDE_DIRS} )
   ENDIF (BIS_USEINDIV)
@@ -524,19 +551,37 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (BIS_USECPM)
     include_directories( "${PROJECT_SOURCE_DIR}/cpmcode")
   ENDIF (BIS_USECPM)
-
-
-  
   include_directories (${PROJECT_SOURCE_DIR})
-
-      
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})
-  install (TARGETS ${CLIBNAME} DESTINATION bisweb/lib)
-  IF (BIS_A_DEVEL)
-    install (FILES ${HEADERS} DESTINATION bisweb/include)
-    install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION bisweb/lib)
-  ENDIF (BIS_A_DEVEL)
+
+  # ---------------------------
+
+  if(MSVC)
+    SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}")
+    SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BINARY_DIR}")
+    SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}")
+    SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BINARY_DIR}")
+    SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}")
+    SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BINARY_DIR}")
+  ENDIF(MSVC)
+
+  # ---------------------------
+  
+  IF (BIS_A_PYTHON)
+    install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
+    IF (BIS_A_DEVEL)
+      install (FILES ${HEADERS} DESTINATION biswebpython/include)
+      install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION biswebpython/lib)
+    ENDIF (BIS_A_DEVEL)
+  ENDIF (BIS_A_PYTHON)
+
+  IF (BIS_A_MATLAB)
+    install (TARGETS ${CLIBNAME} DESTINATION biswebmatlab)
+    install (FILES ${LICENSE_FILE} DESTINATION biswebmatlab RENAME LICENSE.md)
+  ENDIF (BIS_A_MATLAB)
+
+
   # ---------------
   # Python
   # ---------------
@@ -557,50 +602,46 @@ ELSE(BIS_A_EMSCRIPTEN)
       COMMAND ${NodeInterp} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
       )
     add_custom_target(wrappers_py ALL DEPENDS ${PYTHON_WRAP_OUTPUT})
-    install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION bisweb/lib)
+    install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION biswebpython/lib)
 
     # ------------------ create module descriptions -------------
 
-    FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
+    FILE (STRINGS ${BISWEBPYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
     
-    SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/modules_desc.py)
+    SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
     FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
     
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
-      DEPENDS ${PYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
+      DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${PYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
-    install (FILES ${PYTHON_MODULE_DESC} DESTINATION bisweb/lib)
+    install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
 
-    GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../python ABSOLUTE)
-    FILE(GLOB PYLIST ${PYTHON_SOURCE_DIR}/bis*.py)
-    FILE(GLOB PYLIST2 ${PYTHON_SOURCE_DIR}/modules/*.py)
-    list(REMOVE_ITEM PYLIST2 ${PYTHON_SOURCE_DIR}/modules/bis_path.py)
-    install (FILES ${BISWEB_PYTHON_INIT} DESTINATION bisweb)
-    install (FILES ${PYLIST} DESTINATION bisweb/python)
-    install (FILES ${PYLIST2} DESTINATION bisweb/python/modules
+    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/*.py)
+    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
+    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
+    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
+    
+    install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
+    install (FILES ${PYLIST0} DESTINATION  biswebpython
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    install (FILES ${PYLIST1} DESTINATION  biswebpython/core)
+    install (FILES ${PYLIST3} DESTINATION biswebpython/utilities)
+    install (FILES ${PYLIST2} DESTINATION biswebpython/modules
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    
+    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../biswebpython/config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
+    INSTALL (FILES ${BISWEBPYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
-    IF (WIN32)
-      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION bisweb
-        PERMISSIONS OWNER_READ  WORLD_READ)
-    ELSE (WIN32)
-      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb
-        PERMISSIONS OWNER_READ  WORLD_READ)
-      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION bisweb
-        PERMISSIONS OWNER_READ  WORLD_READ)
-    ENDIF (WIN32)
-
-    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
-    install (FILES ${README_FILE} DESTINATION bisweb/)
-
-    # This overwrites bis_path.py with one suitable for install purposes
-    MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
-    install (FILES ${BISWEB_PYTHON_PATH} DESTINATION bisweb/python/modules)
-	  
+    configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
+    install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
+    install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
+    install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION biswebpython)
+    install (FILES ${BISWEBPYTHON_MODULE_LIST_FILENAME} DESTINATION biswebpython/modules)
+    
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
       SET (COUNT 0)
@@ -640,16 +681,19 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (BIS_A_MATLAB)
     MESSAGE("++ Building Matlab Prerequisites")
 
-    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_matlab.txt")
-    install (FILES ${README_FILE} DESTINATION bisweb/)
+    SET (README_FILE "${PROJECT_SOURCE_DIR}/../matlab/config/README.md")
+    install (FILES ${README_FILE} DESTINATION biswebmatlab)
 
+    configure_file( ${PROJECT_SOURCE_DIR}/../matlab/config/bis_package.m.in "${PROJECT_BINARY_DIR}/creatematlab.sh" @ONLY )
+    install (FILES ${PROJECT_BINARY_DIR}/creatematlab.sh DESTINATION ".")
+    
     SET (MATLAB_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.m)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT}
       PRE_BUILD COMMENT "Creating Matlab Header"
       COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
     add_custom_target(wrappers_mat ALL DEPENDS ${MATLAB_WRAP_OUTPUT})
-    install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION bisweb/lib)
+    install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION biswebmatlab)
     
     SET (MATLAB_OUT_HEADER ${LIBRARY_OUTPUT_PATH}/bis_matlab.h)
     add_custom_command(OUTPUT ${MATLAB_OUT_HEADER}
@@ -657,41 +701,45 @@ ELSE(BIS_A_EMSCRIPTEN)
       PRE_BUILD COMMENT "Creating Matlab Header"
       COMMAND ${NodeInterp} ${HEADER_SCRIPT} -i ${PARSE_LIST} -o ${MATLAB_OUT_HEADER})
     add_custom_target(header_mat ALL DEPENDS ${MATLAB_OUT_HEADER})
-    install (FILES ${MATLAB_OUT_HEADER} DESTINATION bisweb/lib)
+    install (FILES ${MATLAB_OUT_HEADER} DESTINATION biswebmatlab)
 
     GET_FILENAME_COMPONENT(MATLAB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../matlab ABSOLUTE)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/bis*.m)
-    install (FILES ${MLIST} DESTINATION bisweb/matlab)
+    list(REMOVE_ITEM MLIST ${MATLAB_SOURCE_DIR}/bispath.m)
+    install (FILES ${MLIST} DESTINATION biswebmatlab)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/example.m)
+    install (FILES ${MLIST} DESTINATION biswebmatlab)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.m)
+    install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
+    install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
+
+    # Install replacement bispath
+    install (FILES ${MATLAB_SOURCE_DIR}/config/bispath.m DESTINATION biswebmatlab)
   ENDIF(BIS_A_MATLAB)
-  
+
+
+  if(UNIX AND NOT APPLE)
+    FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
+    FILE(GLOB WINEXTRA ${PROJECT_BINARY_DIR}/biswasm.dll)
+    MESSAGE("--- Intalling Extra libraries ${MACEXTRA},${WINEXTRA}")
+
+    IF (BIS_A_PYTHON)
+      install (FILES ${MACEXTRA} DESTINATION biswebpython/lib)
+      install (FILES ${WINEXTRA} DESTINATION biswebpython/lib)
+    ENDIF (BIS_A_PYTHON)
+    
+    IF (BIS_A_MATLAB)
+        install (FILES ${MACEXTRA} DESTINATION biswebmatlab)
+        install (FILES ${WINEXTRA} DESTINATION biswebmatlab)
+      ENDIF (BIS_A_MATLAB)
+    endif()
+
   # ---------------
   # Common
   # ---------------
   add_custom_target(wrappers ALL DEPENDS ${MATLAB_OUT_HEADER} ${MATLAB_WRAP_OUTPUT} ${PYTHON_WRAP_OUTPUT} ${WRAP_SCRIPT} ${HEADER_SCRIPT} ${PYTHON_MODULE_DESC})
   
-  # ----------------------------------------------------------
 ENDIF(BIS_A_EMSCRIPTEN)
 
-
-# Make some flags advanced
-MARK_AS_ADVANCED(BIS_WEB_MEMORY)
-MARK_AS_ADVANCED(BIS_WEB_WASM)
-
-MARK_AS_ADVANCED(BIS_EXTRAPATH)
-MARK_AS_ADVANCED(BIS_WEB_OPT)
-MARK_AS_ADVANCED(BIS_A_DEVEL)
-
-
-# ----------------------------------------------------------
-# If installing tests
-
-
-
-
-# ----------------------------------------------------------
-# Run Doxygen
-# ----------------------------------------------------------
-ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
-
-INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
 

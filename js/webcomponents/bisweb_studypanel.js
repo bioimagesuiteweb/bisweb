@@ -7,6 +7,7 @@ const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 const bisweb_taskutils = require('bisweb_taskutils.js');
 const bisweb_panel = require('bisweb_panel.js');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 
 const DicomModule = require('dicommodule.js');
@@ -606,9 +607,10 @@ class StudyPanel extends HTMLElement {
                 </div>
             `);
 
-            $(inputGroups).find(`#${inputSearchButtonId}`).on('click', () => { searchButtonCallback(inputDirectoryTextboxId, 'Select a directory containing raw DICOM images'); });
-            $(inputGroups).find(`#${outputSearchButtonId}`).on('click', () => { searchButtonCallback(outputDirectoryTextboxId, 'Select the destination directory for the converted DICOM files'); });
-            
+            let inputSearchButton = $(inputGroups).find(`#${inputSearchButtonId}`); 
+            let outputSearchButton = $(inputGroups).find(`#${outputSearchButtonId}`);  
+            this.setDICOMConversionListeners(inputSearchButton, outputSearchButton, inputDirectoryTextboxId, outputDirectoryTextboxId);
+
             let bidsCheck=$(inputGroups).find('#'+doBidsId);
             dicomModal.body.append(inputGroups);
             dicomModal.footer.empty();
@@ -622,6 +624,15 @@ class StudyPanel extends HTMLElement {
                     let inputDirectoryName = $('#' + inputDirectoryTextboxId).val();
                     let outputDirectoryName = $('#' + outputDirectoryTextboxId).val();
                     let toggleState = bidsCheck.prop('checked') || false;
+
+                    console.log('input directory name', inputDirectoryName, outputDirectoryName);
+                    if (!inputDirectoryName || inputDirectoryName === '') {
+                        webutil.createAlert('No input directory defined. Please define an input directory before converting'); return;
+                    } else if (!outputDirectoryName || outputDirectoryName === '') {
+                        webutil.createAlert('No output directory defined. Please define an output directory before converting'); return;
+                    }
+
+                    dicomModal.dialog.modal('hide');
                     this.importDICOMImages(inputDirectoryName, outputDirectoryName, toggleState);
                 }
             });
@@ -632,19 +643,72 @@ class StudyPanel extends HTMLElement {
         }
 
         this.dicomModal.dialog.modal('show');
+    }
 
-        function searchButtonCallback(textInputId, titleText) {
-            bis_webfileutil.genericFileCallback({
-                'title': titleText,
+    /**
+     * Sets the listeners onto the DICOM import search buttons, i.e. the '...' buttons next to input directory and output directory. 
+     * 
+     * @param {JQuery} inputSearchButton - The search button next to the input directory field. 
+     * @param {JQuery} outputSearchButton - The search button next to the output directory field.
+     * @param {String} inputDirectoryTextboxId - The id of the input directory textbox.
+     * @param {String} outputDirectoryTextboxId - The id of the output directory textbox.
+     */
+    setDICOMConversionListeners(inputSearchButton, outputSearchButton, inputDirectoryTextboxId, outputDirectoryTextboxId) {
+        bis_webfileutil.attachFileCallback(inputSearchButton, 
+            (dirname) => {
+                console.log('dirname', dirname);
+                let inputTextbox = $('#' + inputDirectoryTextboxId);
+                let currentIndirVal = $(inputTextbox).val();
+
+                if (currentIndirVal && currentIndirVal !== '') {
+                    bootbox.dialog({
+                        'title' : 'Replace or add?',
+                        'message' : 'Replace the current value with the new value, or add it to the original?',
+                        'size' : 'small',
+                        'onEscape' : true,
+                        'buttons' : {
+                            'replace' : {
+                                'label' : 'Replace', 
+                                'className' : 'btn-warning',
+                                'callback' : () => {
+                                    $(inputTextbox).val(dirname);
+                                }
+                            },
+                            'add' : {
+                                'label' : 'Add',
+                                'className' : 'btn-success',
+                                'callback' : () => {
+                                    $(inputTextbox).val(currentIndirVal + ',' + dirname);
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    $('#' + inputDirectoryTextboxId).val(dirname);
+                } 
+            },
+            {
+                'title': 'Select a directory containing raw DICOM images',
                 'filters': 'DIRECTORY',
                 'suffix': 'DIRECTORY',
                 'save': false,
+                'mode' : 'load',
+                'altkeys' : true,
                 'serveronly': true,
-            }, (directory) => {
-                console.log('directory', directory);
-                $(`#${textInputId}`).val(directory);
             });
-        }
+        
+        bis_webfileutil.attachFileCallback(outputSearchButton,
+            (dirname) => {
+                $('#' + outputDirectoryTextboxId).val(dirname);
+            },
+            {
+                'title': 'Select a directory to output the converted images to',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+                'mode' : 'load',
+                'serveronly': true,
+            });
     }
 
     /**
@@ -1430,7 +1494,7 @@ class StudyPanel extends HTMLElement {
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
 
-            promise = bis_genericio.runDICOMConversion({
+            promise = bisweb_serverutils.runDICOMConversion({
                 'fixpaths': true,
                 'inputDirectory': inputDirectory,
                 'outputDirectory': outputDirectory,
@@ -1451,6 +1515,7 @@ class StudyPanel extends HTMLElement {
             this.importBIDSDirectory(output);
         }).catch((e) => {
             console.log('An error occured during file conversion', e);
+            webutil.createAlert('An error occured during file conversion.', true);
         });
     }
 

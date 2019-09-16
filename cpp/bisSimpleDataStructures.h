@@ -53,10 +53,12 @@ namespace bisSimpleDataUtil {
 
   /** Cast Serialized pointers to various data types 
    * @param in_pointer input serialized pointer 
+   * @param data size  size of the data to cast
    * @param name name of output array (for memory logging)
    * @returns a serialized pointer with the data cast to output_data_type (OT)
    */
-  template<class OT> unsigned char* cast_raw_data(unsigned char* in_pointer,std::string name="");
+  template<class OT> unsigned char* cast_raw_data(unsigned char* in_pointer,long& data_size,
+                                                  std::string name="");
 }
 
 
@@ -104,7 +106,7 @@ public:
   /** Get the length of the data array in elements (not bytes) 
    * @returns length of data array in elements
    */
-  int getLength() { return this->data_length; }
+  long getLength() { return this->data_length; }
 
   /** Get the data array
    * @returns a pointer to the data array
@@ -128,7 +130,7 @@ public:
   /** Returns the raw size in bytes
    * @returns the size of the raw_array in bytes 
    */
-  int getRawSize() { return this->header_size+this->data_size+16; }
+  long getRawSize() { return this->header_size+this->data_size+16; }
 
   /** Get Range
    * @param range the function stores in this the minimum and the maximum value in the data array 
@@ -140,7 +142,8 @@ protected:
 #ifndef DOXYGEN_SKIP  
   // Global Flags
   // size -> in bytes, length in type<T>
-  int owns_pointer,  data_type, header_size, data_length,data_size;
+  int owns_pointer,  data_type, header_size;
+  long data_length,data_size;
   int used_to_own_pointer;
   std::string raw_array_name;
 #endif

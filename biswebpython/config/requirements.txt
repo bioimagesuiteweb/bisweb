@@ -1,0 +1,9 @@
+nibabel
+numpy
+pillow
+scikit-image
+scikit-learn
+scipy
+setuptools
+wheel>=0.31
+

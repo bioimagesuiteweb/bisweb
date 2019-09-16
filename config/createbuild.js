@@ -4,6 +4,8 @@ const path=require('path');
 const util=require('./bis_createutil');
 const rimraf=require('rimraf');
 
+let pythonexec='python';
+
 if (path.sep==='\\') {
     console.log('++++ BioImageSuite Web create developer environment \n++++');
     console.log('---- This file will only run on a UNIX OS (Mac or Linux)');
@@ -48,46 +50,50 @@ const main=async function() {
     util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
     util.copyFileSync(DIR,'../compiletools/cmake_native.sh',DIR,'cmake_native.sh');
     util.copyFileSync(DIR,'../compiletools/ccmake_native.sh',DIR,'ccmake_native.sh');
-    util.copyFileSync(DIR,'../compiletools/fullbuild.sh',DIR,'fullbuild.sh');
-    util.copyFileSync(DIR,'../compiletools/wasmbuild.sh',DIR,'wasmbuild.sh');
-    util.copyFileSync(DIR,'../compiletools/webbuild.sh',DIR,'webbuild.sh');
-    util.copyFileSync(DIR,'../compiletools/nativebuild.sh',DIR,'nativebuild.sh');
-    util.copyFileSync(DIR,'../compiletools/testbuild.sh',DIR,'testbuild.sh');
-    util.copyFileSync(DIR,'../compiletools/biswebinstall.sh',DIR,'biswebinstall.sh');
+    util.linkFileSync(DIR,'../compiletools/fullbuild.sh',DIR,'fullbuild.sh');
+    util.linkFileSync(DIR,'../compiletools/wasmbuild.sh',DIR,'wasmbuild.sh');
+    util.linkFileSync(DIR,'../compiletools/webbuild.sh',DIR,'webbuild.sh');
+    util.linkFileSync(DIR,'../compiletools/nativebuild.sh',DIR,'nativebuild.sh');
+    util.linkFileSync(DIR,'../compiletools/testbuild.sh',DIR,'testbuild.sh');
+
 
     console.log("++++");
     await util.executeCommand('chmod +x *make*.sh',DIR);
-
+    
     if (!advanced) {
-            console.log("++++");
-            console.log("++++ Installing Eigen3");
-            console.log("++++");
-            util.makeDir(path.join(DIR,'eigen3'));
-            let eig=path.normalize(`${DIR}/../various/download/Eigen.zip`);
-            await util.executeCommand(`unzip ${eig}`, `${DIR}/eigen3`);
-            
-            console.log("++++");
+        console.log("++++");
+        console.log("++++ Installing Eigen3");
+        console.log("++++");
+        util.makeDir(path.join(DIR,'eigen3'));
+        let eig=path.normalize(`${DIR}/../various/download/Eigen.zip`);
+        await util.unzip(eig, `${DIR}/eigen3`);
+        
+        console.log("++++");
         console.log("++++ Installing IGL");
         console.log("++++");
         util.makeDir(path.join(DIR,'igl'));
         let ig=path.normalize(`${DIR}/../various/download/igl.zip`);
-        await util.executeCommand(`unzip ${ig}`, DIR);
+        await util.unzip(ig, DIR);
         
         console.log("++++");
         console.log("++++ Installing Emscripten");
         console.log("++++");
-        let f=path.normalize(`${DIR}/../various/download/emsdk-portable.tar.gz`);
-        await util.executeCommand(`tar xvfz ${f}`, DIR);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk update`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install  emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk install sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk activate sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`python ${DIR}/emsdk_portable/emsdk list`);
+        let f=path.normalize(`${DIR}/../various/download/emsdk-portable.zip`);
+        await util.unzip(f, DIR);
+        
+        let cmd=pythonexec+' '+path.normalize(path.join(DIR,'emsdk_portable/emsdk.py'));
+        console.log('++++ python emsdk:',cmd);
+        
+        await util.executeCommand(`${cmd} update`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install  emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} list`);
     }
     console.log('++++');
 };

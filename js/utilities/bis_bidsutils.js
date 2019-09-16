@@ -1,6 +1,7 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const colors=bis_genericio.getcolorsmodule();
 const fs = bis_genericio.getfsmodule();
 
@@ -8,11 +9,6 @@ const biswrap = require('libbiswasm_wrapper.js');
 const baseutil = require('baseutils.js');
 
 const SEPARATOR=bis_genericio.getPathSeparator();
-
-//Need to keep track of labels to know if there are repeats, in which case they should be given a run number
-let labelsMap = {};
-
-
 
 const dicomParametersFilename = 'dicom_job_info.json';
 const sourceDirectoryName = 'sourcedata';
@@ -67,8 +63,19 @@ let dicom2BIDS = async function (opts) {
             return errorfn('No data to convert in ' + indir);
         }
 
+        //try to infer protocol name from the converted file (default format is 'folder-name_protocol-name_timestamp_series-number')
+        let imageFile = bis_genericio.getBaseName(imageFiles[0]), splitImageFile = imageFile.split(/__/), subjectName = '01';
+
+        //determine position of protocol name by position of timestamp (which should be a number)
+        if (!isNaN(splitImageFile[2])) {
+            //extract subject name (pa, pb, pc plus a number) 
+            let matchstring = /(p[A-z]\d*)/g;
+            subjectName = matchstring.exec(splitImageFile[0])[1]; 
+        } 
+
+
         let outputdirectory = bis_genericio.joinFilenames(outdir, sourceDirectoryName);
-        let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, 'sub-01');
+        let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, `sub-${subjectName}`);
 
         //Create BIDS folders and filenames
         if (DEBUG)
@@ -103,12 +110,9 @@ let dicom2BIDS = async function (opts) {
         }
 
         await writeDicomMetadataFiles(outputdirectory, dicomobj, changedFilenames);
-
-        labelsMap = {};
         return outputdirectory;
     } catch (e) {
         console.log('An error occured during BIDS conversion', e);
-        labelsMap = {};
     }
 
 };
@@ -127,7 +131,7 @@ let calculateChecksums = (inputFiles) => {
         console.log('++++ BIDSUTIL: calculating checksums');
         let promises = [];
         for (let filename of inputFiles) {
-            promises.push(bis_genericio.makeFileChecksum(filename));
+            promises.push(bisweb_serverutils.makeFileChecksum(filename));
         }
 
         Promise.all(promises)
@@ -409,16 +413,18 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         }
 
         //BIDS uses underscores as separator characters to show hierarchy in filenames, so change underscores to hyphens to avoid ambiguity
-        filename = filename.split('_').join('-');
+        let splitFilename = filename.split(/__/);
+        filename = splitFilename.join('-');
 
         let bidsLabel = parseBIDSLabel(filename, directory), namesArray;
-        let runNumber = getRunNumber(bidsLabel, fileExtension);
+        let runNumber = getRunNumber(splitFilename);
 
         //may change in the future, though currently looks a bit more specific than needed
         if (directory === 'anat') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'func') {
-            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], 'task-unnamed', runNumber, bidsLabel];
+            let taskName = formatTaskname(splitFilename);
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], `task-${taskName}`, runNumber, bidsLabel];
         } else if (directory === 'localizer') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'dwi') {
@@ -432,27 +438,32 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
     }
 
 
-    //Returns the number of runs with the same name name component for a directory type and updates the count in labelsMap (global map of keys seen so far)
-    function getRunNumber(bidsLabel, fileExtension) {
-        let runNum;
-        
-        if (labelsMap[bidsLabel]) {
-            if (fileExtension.includes('nii')) {
-                //supporting files are moved before the image file in the code above
-                //so once we find the image we can safely increment the label in labelsMap
-                runNum = labelsMap[bidsLabel];
-                labelsMap[bidsLabel] = labelsMap[bidsLabel] + 1;
-            } else {
-                runNum = labelsMap[bidsLabel];
-            }
-        } else {
-            labelsMap[bidsLabel] = 1;
-            runNum = 1;
+    //Attempts to infer task name from protocol portion of 
+    function formatTaskname(splitFilename) {
+        let taskName = 'unnamed';
+        if (!isNaN(splitFilename[2])) {
+            taskName = splitFilename[1];
+        } else if (!isNaN(splitFilename[1])) {
+            taskName = splitFilename[0];
         }
 
-        if (runNum < 10) { runNum = '0' + runNum; }
-        return 'run-' + runNum; 
+        //remove common phrases and characters from the taskname, then turn it into a single word
+        taskName = taskName.replace(/(bold[^A-Za-z\d]|MB[^A-Za-z\d]|\dmm[^A-Za-z\d])/g, '');
+        taskName = taskName.replace(/[\s_,'-]/, '');
+        return taskName.toLowerCase();
     }
+
+    //Gets the series number for the image off the number portion of the raw DICOM file
+    function getRunNumber(splitFilename) {
+        let num = splitFilename[splitFilename.length - 1];
+
+        //remove file extension (or anything else that may be attached to the run)
+        num = num.split('-')[0].split('.')[0];
+        if (parseInt(num) < 10) { num = '0' + num; }
+
+        return 'run-' + num;
+    }
+
 };
 
 /**
@@ -518,7 +529,7 @@ let parseDate = (dcm2niiImage) => {
     let dateRegex = /\d{14}/g;
     let fileString = dcm2niiImage;
     let dateMatch = dateRegex.exec(fileString);
-    return dateMatch[0];
+    return dateMatch[0] || 'no-date';
 };
 
 /**

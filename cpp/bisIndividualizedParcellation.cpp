@@ -1,4 +1,5 @@
 #include <memory>
+#include <cmath>
 #include <algorithm>
 #include <vector>
 #include <queue>
@@ -37,10 +38,24 @@ namespace bisIndividualizedParcellation {
         return true;
     return false;
   }
-  
+
+
+  int computeXYZ (float index, int dim[5], int xyz[3])
+  {
+	double ia, ib, ic;
+	int slicesize=dim[0]*dim[1];
+	ic = floor(index / slicesize);
+	ib = floor((index - (ic*slicesize)) / dim[0]);
+	ia = index - ib * dim[0] - ic*slicesize;
+	xyz[0] = ia;
+	xyz[1] = ib;
+	xyz[2] = ic;
+	return 1;
+	
+  }  
 
   // Remember to pass dim not image
-  int  ComputeMRFIncrements(int dim[5],int incr[6])
+  int  computeMRFIncrements(int dim[5],int incr[6])
   {
     int slicesize=dim[0]*dim[1];
     int index=0;
@@ -85,10 +100,13 @@ namespace bisIndividualizedParcellation {
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
-    std::cout << "++++ Beginning Indiv Parc internal " << std::endl;
+    std::cout << "++++ Beginning Indiv Parc (Salehi et al 2019) " << std::endl;
     std::cout << "++++ \t fMRI Image dim = " << dim[0] << "," << dim[1] << "," << dim[2] << "  " << dim[3] << std::endl;
     std::cout << "++++ \t Group Parcellation Image dim2 = " << dim2[0] << "," << dim2[1] << "," << dim2[2] << "  " << dim2[3] << std::endl;
 
+    int slicesize=dim[0]*dim[1];
+
+    
     int sum=0;
     for (int ia=0;ia<=2;ia++)
       sum+=abs(dim[ia]-dim2[ia]);
@@ -307,7 +325,7 @@ namespace bisIndividualizedParcellation {
     //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
-    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
+    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS (double)" << std::endl;
     
     
     std::vector<double> label(n,-1);
@@ -323,7 +341,7 @@ namespace bisIndividualizedParcellation {
     
     
     const int neighbors = 6;
-    int incr[neighbors]; ComputeMRFIncrements(dim,incr);
+    int incr[neighbors]; computeMRFIncrements(dim,incr);
     
     int sumVisited = 0;
     std::vector<int> VISITED(n,0);
@@ -356,7 +374,7 @@ namespace bisIndividualizedParcellation {
           }  
       }
     
-    
+
     while (sumVisited < n)
       {
         int min_idx = -1;
@@ -375,7 +393,10 @@ namespace bisIndividualizedParcellation {
             
           }
         // selected exemplar queue (min_idx) is correct [VERIFIED]
-        // fprintf(stdout,"\n(selected queue,min_val)=(%d,%f)\n",min_idx,min_val);
+        //if (sumVisited==7886)
+        //          std::cout << "\n(selected queue,min_val)=" << min_idx << "," << min_val << std::endl;
+
+        
         
         if (min_idx >=0)
           {
@@ -387,26 +408,40 @@ namespace bisIndividualizedParcellation {
                 label[chosenVoxel] = min_idx;
                 VISITED[chosenVoxel] = 1;
                 sumVisited ++;
-                //      fprintf(stdout,"number of visited = %d\n", sumVisited);
+                //    if (sumVisited==7886)
+                //    std::cout << "number of visited = " << sumVisited << std::endl;
                 std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (chosenVoxel);
+                //       if (sumVisited==7886)
+                //std::cout << "Here " << chosenVoxel << std::endl;
                 if (voxelN != ntoNvoxel.end())
                   {
-                    int chosenVoxelN = voxelN->second; 
+                    int chosenVoxelN = voxelN->second;
+                    //  if (sumVisited==7886)
+                    //std::cout << "Here " << chosenVoxelN << " " << neighbors << std::endl;
                     //      if(NONBOUNDARY[chosenVoxelN] == 1)
                     for (int ia=0;ia<neighbors;ia++)
                       {
                         int currVoxN = chosenVoxelN + incr[ia];
-                        if (group[currVoxN]>0)
-                          {
-                            std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
-                            if (voxeln != Ntonvoxel.end())
-                              {
-				int currVox = voxeln->second;
-				if (VISITED[currVox] == 0){
-                                  exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
-				}
-                              }
-                          }
+                        int v_k=int(currVoxN/slicesize);
+                        int v_j=currVoxN-v_k*slicesize;
+                        int v_i=v_j % dim[0];
+                        v_j=int(v_j/dim[0]);
+                        
+                        if (v_i>=0 && v_i<dim[0] &&
+                            v_j>=0 && v_j<dim[1] &&
+                            v_k>=0 && v_k<dim[2]) {
+                          if (group[currVoxN]>0)
+                            {
+                              std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
+                              if (voxeln != Ntonvoxel.end())
+                                {
+                                  int currVox = voxeln->second;
+                                  if (VISITED[currVox] == 0){
+                                    exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
+                                  }
+                                }
+                            }
+                        }
                       }
                   }
               }
@@ -443,6 +478,25 @@ namespace bisIndividualizedParcellation {
           }
         }
       }
+
+    // Second frame
+    int i_dim[5]; indiv->getDimensions(i_dim);
+    if (i_dim[3]>1) 
+      {   
+	for (int p=0; p<Pmax; p++)
+	 {
+	   int index = int(SoptN(p));
+	   indivdata[index + N] = p+1;
+
+	   int xyz[3];
+	   computeXYZ(index, dim, xyz);
+//    	   std::cout << "x = " << xyz[0] << ", y = " << xyz[1] << ", z = " << xyz[2] << std::endl;
+	   indivdata[index + (2 * N)] = xyz[0];
+	   indivdata[index + (3 * N)] = xyz[1];
+	   indivdata[index + (4 * N)] = xyz[2];		
+	 }
+       }     
+
     return 1;
   }
 
@@ -460,10 +514,12 @@ namespace bisIndividualizedParcellation {
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
-    std::cout << "++++ Beginning (FLOAT) Indiv Parc internal " << std::endl;
+      std::cout << "++++ Beginning (FLOAT) Indiv Parc (Salehi et al 2019) " << std::endl;
     std::cout << "++++ \t fMRI Image dim = " << dim[0] << "," << dim[1] << "," << dim[2] << "  " << dim[3] << std::endl;
     std::cout << "++++ \t Group Parcellation Image dim2 = " << dim2[0] << "," << dim2[1] << "," << dim2[2] << "  " << dim2[3] << std::endl;
 
+    int slicesize=dim[0]*dim[1];
+    
     int sum=0;
     for (int ia=0;ia<=2;ia++)
       sum+=abs(dim[ia]-dim2[ia]);
@@ -625,8 +681,8 @@ namespace bisIndividualizedParcellation {
     
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      if (p%20 == 0) 
-        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
+//      if (p%20 == 0) 
+//        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
       MatrixXd sqrMatrix(psize,psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
@@ -699,7 +755,7 @@ namespace bisIndividualizedParcellation {
     //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
-    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
+    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS (float)" << std::endl;
     
     
     std::vector<float> label(n,-1);
@@ -717,9 +773,10 @@ namespace bisIndividualizedParcellation {
     Xf = ((Xf.transpose()*vSopt*-2).colwise() + Xf.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();
 //    X = ((X.transpose()*vSopt*-2).colwise() + X.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();	
 
+
     
     const int neighbors = 6;
-    int incr[neighbors]; ComputeMRFIncrements(dim,incr);
+    int incr[neighbors]; computeMRFIncrements(dim,incr);
     
     int sumVisited = 0;
     std::vector<int> VISITED(n,0);
@@ -731,6 +788,8 @@ namespace bisIndividualizedParcellation {
       VISITED[Sopt(p)] = 1;
       sumVisited ++;		
     }
+
+
     
     std::vector<std::priority_queue<std::pair<float, int> , std::vector<std::pair<float,int> >, std::greater<std::pair<float, int> > > > exemplar_min_heaps (Pmax);
     for (int p=0; p<Pmax; p++)
@@ -739,24 +798,26 @@ namespace bisIndividualizedParcellation {
         //	if (NONBOUNDARY[exemplarN] == 1)
         for (int ia=0;ia<neighbors;ia++)
           {	
-            int currVoxN = exemplarN+incr[ia]; 
+            int currVoxN = exemplarN+incr[ia];
             if (group[currVoxN]>0)
               {
                 std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
                 if (voxeln != Ntonvoxel.end())
                   {
                     int currVox = voxeln->second; 
-//                    exemplar_min_heaps[p].push(std::make_pair(distvSopt(currVox,p),currVox));
+                    //                    exemplar_min_heaps[p].push(std::make_pair(distvSopt(currVox,p),currVox));
                     exemplar_min_heaps[p].push(std::make_pair(Xf(currVox,p),currVox));
-
+                    
                   }
               }
           }  
       }
+
     
     
     while (sumVisited < n)
       {
+
         int min_idx = -1;
         float min_val = 10000000;
         for (int p=0; p<Pmax; p++)
@@ -785,7 +846,6 @@ namespace bisIndividualizedParcellation {
                 label[chosenVoxel] = min_idx;
                 VISITED[chosenVoxel] = 1;
                 sumVisited ++;
-                //      fprintf(stdout,"number of visited = %d\n", sumVisited);
                 std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (chosenVoxel);
                 if (voxelN != ntoNvoxel.end())
                   {
@@ -794,19 +854,29 @@ namespace bisIndividualizedParcellation {
                     for (int ia=0;ia<neighbors;ia++)
                       {
                         int currVoxN = chosenVoxelN + incr[ia];
-                        if (group[currVoxN]>0)
-                          {
-                            std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
-                            if (voxeln != Ntonvoxel.end())
-                              {
-				int currVox = voxeln->second;
-				if (VISITED[currVox] == 0){
-//                                  exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
-                                  exemplar_min_heaps[min_idx].push(std::make_pair(Xf(currVox,min_idx),currVox));
-
-				}
-                              }
-                          }
+                        int v_k=int(currVoxN/slicesize);
+                        int v_j=currVoxN-v_k*slicesize;
+                        int v_i=v_j % dim[0];
+                        v_j=int(v_j/dim[0]);
+                        
+                        if (v_i>=0 && v_i<dim[0] &&
+                            v_j>=0 && v_j<dim[1] &&
+                            v_k>=0 && v_k<dim[2]) {
+                          
+                          if (group[currVoxN]>0)
+                            {
+                              std::unordered_map<int,int>::const_iterator voxeln = Ntonvoxel.find (currVoxN);
+                              if (voxeln != Ntonvoxel.end())
+                                {
+                                  int currVox = voxeln->second;
+                                  if (VISITED[currVox] == 0){
+                                    //                                  exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
+                                    exemplar_min_heaps[min_idx].push(std::make_pair(Xf(currVox,min_idx),currVox));
+                                    
+                                  }
+                                }
+                            }
+                        }
                       }
                   }
               }
@@ -831,7 +901,6 @@ namespace bisIndividualizedParcellation {
     //int Voxel_indices[N];
     count = 0;
 
-
     short* indivdata=indiv->getImageData();
     
     for (int voxel=0;voxel<N;voxel++)
@@ -847,13 +916,21 @@ namespace bisIndividualizedParcellation {
 
     // Second frame
     int i_dim[5]; indiv->getDimensions(i_dim);
-    if (i_dim[3]>1) {   
+    if (i_dim[3]>1) 
+      {   
 	for (int p=0; p<Pmax; p++)
 	 {
 	   int index = int(SoptN(p));
 	   indivdata[index + N] = p+1;
+
+	   int xyz[3];
+	   computeXYZ(index, dim, xyz);
+//    	   std::cout << "x = " << xyz[0] << ", y = " << xyz[1] << ", z = " << xyz[2] << std::endl;
+	   indivdata[index + (2 * N)] = xyz[0];
+	   indivdata[index + (3 * N)] = xyz[1];
+	   indivdata[index + (4 * N)] = xyz[2];		
 	 }
-    }     
+       }     
     
     return 1;
   }
@@ -902,7 +979,7 @@ unsigned char* individualizedParcellationWASM(unsigned char* input, unsigned cha
   int out_dim[5]; parc_image->getDimensions(out_dim);
   float out_spa[5]; parc_image->getSpacing(out_spa);
   if (saveexemplars)
-    out_dim[3]=2;
+    out_dim[3]=5;
   else
     out_dim[3]=1;
   out_image->allocate(out_dim,out_spa);

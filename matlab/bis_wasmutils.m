@@ -24,11 +24,16 @@
 function moduleOutput = bis_wasmutils()
 
   Module='libbiswasm';
-
+  MExtension1='.dylib';
+  MExtension2='.so';
+  
   if filesep =='\'
     Module='biswasm';
+    MExtension1='.dll';
+    MExtension2='';
   end
   internal.name='xenios';
+  internal.force_large_memory=0;
 
   moduleOutput.Module=Module;
   moduleOutput.loadlib=@initialize;
@@ -46,6 +51,7 @@ function moduleOutput = bis_wasmutils()
   moduleOutput.get_type_size=@get_type_size;
   moduleOutput.get_matlab_type_size=@get_matlab_type_size;
   moduleOutput.get_matlab_type=@get_matlab_type;
+  moduleOutput.force_large_memory=@force_large_memory;
 
   % Data Object serialization
   moduleOutput.serialize_dataobject_bytearray=@serialize_dataobject_bytearray;
@@ -65,11 +71,14 @@ function moduleOutput = bis_wasmutils()
   moduleOutput.wrapper_serialize=@wrapper_serialize;
   moduleOutput.wrapper_deserialize_and_delete=@wrapper_deserialize_and_delete;
   
+  code_uint8='uint8';
+  code_int32='int32';
+  code_float='single';
+
 
 % -----------------------------------------------------
 				% Initialize Library
   function libname = initialize(pathname)
-
 
     if ~exist('pathname')
       m=mfilename('fullpath');
@@ -78,21 +87,41 @@ function moduleOutput = bis_wasmutils()
       disp('Auto setting pathname');
       pathname=[ filepath filesep 'build' filesep 'native']
     end
-    
+      
     libname= strcat(pathname,strcat(filesep,Module));
+    l1=strcat(libname,MExtension1);
+    l2=strcat(libname,MExtension2);
+    if ~exist(l1) && ~exist(l2)
+      m=mfilename('fullpath');
+      [filepath,name,ext] = fileparts(m);
+      [filepath,name,ext] = fileparts(filepath);
+      pathname=[ filepath filesep 'build' filesep 'win32' filesep 'Release' ];
+      libname= strcat(pathname,strcat(filesep,Module));
+      pathname= [ pathname filesep '..' ];
+    end
 
     headerfile=strcat(pathname,strcat(filesep,'bis_matlab.h'));
+  
 
-    disp(['__biswasm loading library']);
-    disp(['__libname=',libname]);
-    disp(['__headerfile=',headerfile]);
-    
     if ~libisloaded(Module)
       bislib=loadlibrary(libname,headerfile);
       a=calllib(Module,'test_wasm');
-      str=['__check library -- this should be 1700. return=',mat2str(a)];
-      disp(str);
+      disp(['__']);
+      disp(['__ biswasm loading bisweb C++ library']);
+      disp(['__ libname=',libname]);
+      disp(['__ headerfile=',headerfile]);
+      disp(['__ library test -- this should be 1700. return=',mat2str(a)]);
+    else
+      a=calllib(Module,'test_wasm');
+      disp(['__']);
+      disp(['__ bisweb C++ library already loaded -- this should be 1700. return=',mat2str(a)]);
     end
+    
+    disp(['__']);
+    
+    % Memory mode, 0 = None,1=Matlab only,2=C++ only,3 =both
+    force_large_memory(0);
+
 
     
   end
@@ -101,11 +130,35 @@ function moduleOutput = bis_wasmutils()
   function c=redirect_stdout(fname)
     c=calllib(Module,'redirect_stdout',fname);
   end
-				% Unload Library
+
+% Unload Library
   function res = unload()
     unloadlibrary(Module);
     res=1;
   end
+
+% -----------------------------------------------------  
+% force_large_memory
+  function res = force_large_memory(val)
+    if nargin < 1
+        val=3;
+    end
+    if (val == 1 || val ==3)
+        internal.force_large_memory=1;
+    else
+         internal.force_large_memory=0;
+    end
+    
+    if (val >=2)
+       calllib(Module,'set_large_memory_mode',1);
+    else
+       calllib(Module,'set_large_memory_mode',0);
+    end
+    
+    res=val;
+  end
+
+
 % -----------------------------------------------------  
 
   function out=json_stringify(obj)
@@ -278,7 +331,7 @@ function moduleOutput = bis_wasmutils()
 
 % -----------------------------------------------------
   
-  function out=serialize_dataobject_bytearray(mat,spa,debug)
+  function out=serialize_dataobject_bytearray(mat,spa,debug,forceimage)
 
     if nargin < 2
       spa=[1.0,1.0,1.0,1.0,1.0 ];
@@ -286,6 +339,10 @@ function moduleOutput = bis_wasmutils()
 
     if nargin < 3
       debug=0;
+    end
+
+    if nargin < 4
+        forceimage=0;
     end
 
     shp=size(mat);
@@ -297,15 +354,15 @@ function moduleOutput = bis_wasmutils()
       return;
     end
 
+    
     if l1==2 && ( shp(1)==1 || shp(2)==1)
       if debug>0
-	disp('it is really a vector')
-	disp(shp);
+          disp('it is really a vector')
+          disp(shp);
       end
       mat=reshape(mat,1,prod(shp));
       shp= [ shp(1)*shp(2),1,1,1,1 ];
       l1=1;
-      
     end
       
     if debug > 0
@@ -324,63 +381,79 @@ function moduleOutput = bis_wasmutils()
       spa=cat(2,spa,d(1:(5-l2)));
     end
 
-    dimensions=zeros(1,5,'int32');
+    dimensions=zeros(1,5,code_int32);
     dimensions(1:5)=shp(1:5);
 
-    spacing=zeros(1,5,'single');
+    spacing=zeros(1,5,code_float);
     spacing(1:5)=spa(1:5);
 
     itemsize=get_type_size(mat);
     
-    top_header=zeros(1,4,'int32');
+    top_header=zeros(1,4,code_int32);
     mode=1;
+    totallength=1;
 
-    if l1==1 
+    if l1==1 && forceimage == 0
       top_header(1)=get_vector_magic_code();
       top_header(2)=get_nifti_code(mat);
       top_header(3)=0;
       top_header(4)=itemsize*dimensions(1);
+      totallength=dimensions(1)*itemsize;
       mode=1;
-    elseif l1==2
+    elseif l1==2 && forceimage == 0
       top_header(1)=get_matrix_magic_code();
       top_header(2)=get_nifti_code(mat);
       top_header(3)=8;
       top_header(4)=itemsize*dimensions(1)*dimensions(2);
       dimensions=[dimensions(1),dimensions(2) ];
+      totallength=dimensions(1)*dimensions(2)*itemsize;
+      if totallength > 2147483648 || internal.force_large_memory>0
+         disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
+         top_header(4)=-itemsize;
+      end    
       mode=2;
     else
       top_header(1)=get_image_magic_code();
       size(mat);
       top_header(2)=get_nifti_code(mat);
       top_header(3)=40;
+      totallength=prod(dimensions)*itemsize;
       top_header(4)=prod(dimensions)*itemsize;
+
+      if totallength > 2147483647 || internal.force_large_memory>0
+         disp(['==== MATLAB serializing large memory: ',mat2str(dimensions)]);
+         top_header(4)=-itemsize;
+      end    
       mode=3;
     end
 
+    
+
 %    disp('---------------------------------------\nheader');
+%    disp(dimensions);
 %    disp(top_header)
 %    disp('mode');
 %    disp(mode);
     
-    head_b=typecast(top_header,'uint8');
+    head_b=typecast(top_header,code_uint8);
 
     % Transpose if matrix
     if mode==2
-      m2=reshape((mat'),1,prod(dimensions));
+      m2=reshape(transpose(mat),1,prod(dimensions));
     else
       m2=reshape(mat,1,prod(dimensions));
     end
     
-    data_b=typecast(m2,'uint8');
+    data_b=typecast(m2,code_uint8);
 
     if mode==1
       out=cat(2,head_b,data_b);
     elseif mode==2
-      dim_b=typecast(dimensions,'uint8');
+      dim_b=typecast(dimensions,code_uint8);
       out=cat(2,head_b,dim_b,data_b);
     else
-      dim_b=typecast(dimensions,'uint8');
-      spa_b=typecast(spacing,'uint8');
+      dim_b=typecast(dimensions,code_uint8);
+      spa_b=typecast(spacing,code_uint8);
       out=cat(2,head_b,dim_b,spa_b,data_b);
     end
 
@@ -388,36 +461,58 @@ function moduleOutput = bis_wasmutils()
 
   % -----------------------------------------------------
   
-  function out=serialize_dataobject(mat,spa,debug)
+  function out=serialize_dataobject(mat,spa,debug,forceimage)
 
     if nargin < 2
       spa=[1.0,1.0,1.0,1.0,1.0 ];
     end
 
     if nargin < 3
+        forceimage=0;
+    end
+
+    if nargin < 3
       debug=0;
     end
 
-    ptr=serialize_dataobject_bytearray(mat,spa,debug);
+    ptr=serialize_dataobject_bytearray(mat,spa,debug,forceimage);
     out=libpointer('voidPtr',ptr);
   end
   
     
 
   % -----------------------------------------------------
-  function out=deserialize_pointer(ptr,offset)
+  function out=deserialize_pointer(ptr,offset,other)
+
+    hasother=1;
 
     if nargin < 2
       offset=0;
     end
 
+    if nargin < 3
+      hasother=0;
+    end
+
     
     reshape(ptr,16+offset,1);
-    top_header=typecast(ptr.Value(1+offset:16+offset),'int32');
+    top_header=typecast(ptr.Value(1+offset:16+offset),code_int32);
     typename=get_matlab_type(top_header(2));
     headersize=top_header(3);
     data_bytelength=top_header(4);
-
+    if (data_bytelength<0)
+      disp('==== MATLAB large image deserialize');
+      % Xenios to add
+      reshape(ptr,36+offset,1);
+      dim=typecast(ptr.Value(17+offset:36+offset),code_int32);
+      switch(top_header(1))
+        case get_matrix_magic_code()
+            data_bytelength=-data_bytelength*dim(2)*dim(1);
+        case get_image_magic_code()
+            data_bytelength=-data_bytelength*dim(1)*dim(2)*dim(3)*dim(4)*dim(5);
+      end
+      disp(['====        fixed bytelength=',mat2str(data_bytelength),' th=',mat2str(top_header(4)),' dm=',mat2str(dim)]);
+    end
     typesize=get_matlab_type_size(typename);
     data_length=data_bytelength/typesize;
 
@@ -429,30 +524,39 @@ function moduleOutput = bis_wasmutils()
     rawdata=ptr.Value;
 
     switch(top_header(1))
-	  case get_matrix_magic_code()
-	    dimensions=typecast(rawdata(17+offset:24+offset,:),'int32');
-	    data=typecast(rawdata(25+offset:total_length+offset,1:1),typename);
-	    out=reshape(data,dimensions(2),dimensions(1))';
-	  case get_vector_magic_code()
-	    out=typecast(rawdata(17+offset:total_length+offset,1:1),typename);
-	  case get_image_magic_code()
-	    out={ };
-	    dimensions=typecast(rawdata(17+offset:36+offset,:),'int32');
-
-	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
-	    out.hdr.dime.dim=[ 5, dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5) ];
-            sp=typecast(rawdata(37+offset:56+offset,:),'single');
-            out.hdr.dime.pixdim=[ 1.0, sp(1), sp(2), sp(3), sp(4), sp(5) ];
-	  case get_grid_magic_code()
-	    out={ };
-	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),'int32');
-	    dimensions=typecast(rawdata(21+offset:32+offset,:),'int32')
-	    out.spacing=typecast(rawdata(33+offset:44+offset,:),'single');
-	    out.origin=typecast(rawdata(45+offset:56+offset,:),'single');
-	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.data=(reshape(tmp,3,dimensions(1)*dimensions(2)*dimensions(3)))';
-	    out.dimensions=dimensions;
+      case get_matrix_magic_code()
+	dimensions=typecast(rawdata(17+offset:24+offset,:),code_int32);
+	data=typecast(rawdata(25+offset:total_length+offset,1:1),typename);
+	out=transpose(reshape(data,dimensions(2),dimensions(1)));
+      case get_vector_magic_code()
+	out=typecast(rawdata(17+offset:total_length+offset,1:1),typename);
+      case get_image_magic_code()
+	      
+	dimensions=typecast(rawdata(17+offset:36+offset,:),code_int32);
+    	tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
+	img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
+	sp=typecast(rawdata(37+offset:56+offset,:),code_float);
+        
+        if hasother > 0
+          affine=other.getAffine();
+        else
+          affine=eye(4);
+          affine(1,1)=sp(1);
+          affine(2,2)=sp(2);
+          affine(3,3)=sp(3);
+        end
+        out=bis_image();
+        out.create(img,sp,affine);
+        
+      case get_grid_magic_code()
+        out={ };
+        out.usebspline=typecast(rawdata(17+offset:20+offset,:),code_int32);
+        dimensions=typecast(rawdata(21+offset:32+offset,:),code_int32);
+        out.spacing=typecast(rawdata(33+offset:44+offset,:),code_float);
+        out.origin=typecast(rawdata(45+offset:56+offset,:),code_float);
+        tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
+        out.data=(reshape(tmp,dimensions(1)*dimensions(2)*dimensions(3),3));
+        out.dimensions=dimensions;
     end
       
   end
@@ -472,8 +576,8 @@ function moduleOutput = bis_wasmutils()
       debug=0;
     end
 
-    i_head=zeros(1,8,'int32');
-    f_head=zeros(1,6,'single');
+    i_head=zeros(1,8,code_int32);
+    f_head=zeros(1,6,code_float);
 
     itemsize=get_type_size(grid.data);
     
@@ -489,11 +593,11 @@ function moduleOutput = bis_wasmutils()
       f_head(i+3)=grid.origin(i);
     end
 
-    head_b=typecast(i_head,'uint8');
-    fhead_b=typecast(f_head,'uint8');
+    head_b=typecast(i_head,code_uint8);
+    fhead_b=typecast(f_head,code_uint8);
 
-    m2=reshape((grid.data'),1,prod(grid.dimensions)*3);
-    data_b=typecast(single(m2),'uint8');
+    m2=reshape((grid.data),1,prod(grid.dimensions)*3);
+    data_b=typecast(single(m2),code_uint8);
     
     out=cat(2,head_b,fhead_b,data_b);
 
@@ -516,28 +620,38 @@ function moduleOutput = bis_wasmutils()
 
     data=serialize_dataobject_bytearray(single(combo.linear));
 
-    disp([' length of data=',mat2str(size(data)) ]);
+    if (debug>0)
+        disp([' length of data=',mat2str(size(data)) ]);
+    end
     
     for i=1:combo.numgrids
       g=serialize_gridtransformation(combo.grids{i},1);
-      disp([' length of g=',mat2str(size(g)) ]);
+      if (debug>0)
+        disp([' length of g=',mat2str(size(g)) ]);
+      end
       data=cat(2,data,g);
-      disp([' length of data=',mat2str(size(data)) ]);
+      if (debug>0)
+        disp([' length of data=',mat2str(size(data)) ]);
+      end
     end
 
-    i_head=zeros(1,5,'int32');
+    i_head=zeros(1,5,code_int32);
     i_head(1)=get_combo_magic_code();
     i_head(2)=16;
     i_head(3)=4;
     i_head(4)=length(data);
     i_head(5)=combo.numgrids;
 
-    head_b=typecast(i_head,'uint8');
+    head_b=typecast(i_head,code_uint8);
 
-
-    disp([' length of head_b=',mat2str(size(head_b)) ]);
+    if (debug>0)
+        disp([' length of head_b=',mat2str(size(head_b)) ]);
+    end
     data=cat(2,head_b,data);
-    disp([' length of data=',mat2str(size(data)) ]);
+
+    if (debug>0)
+        disp([' length of data=',mat2str(size(data)) ]);
+    end
     
     out=libpointer('voidPtr',data);
   end
@@ -549,8 +663,8 @@ function moduleOutput = bis_wasmutils()
     try
       a=size(xform);
       if a(1)==4 && a(2)==4
-	out=serialize_dataobject(xform);
-	return;
+	      out=serialize_dataobject(xform);
+	      return;
       end
     catch ME
     end
@@ -558,8 +672,8 @@ function moduleOutput = bis_wasmutils()
     try
       a=xform.usebspline;
       if a==0 || a==1
-	out=serialize_combotransformation(xform);
-	return;
+	        out=serialize_combotransformation(xform);
+	        return;
       end
     catch ME
     end
@@ -568,8 +682,8 @@ function moduleOutput = bis_wasmutils()
   end
   % ----------------------------------------------------------------------------------------------------------------
 
-  function out=deserialize_and_delete_pointer(ptr)
-    out=deserialize_pointer(ptr);
+  function out=deserialize_and_delete_pointer(ptr,other)
+    out=deserialize_pointer(ptr,0,other);
     calllib(Module,'jsdel_array',ptr);
   end
 
@@ -581,7 +695,7 @@ function moduleOutput = bis_wasmutils()
     end
 
     reshape(ptr,20,1);
-    top_header=typecast(ptr.Value(1+offset:20+offset),'int32');
+    top_header=typecast(ptr.Value(1+offset:20+offset),code_int32);
     typename=get_matlab_type(top_header(2));
     headersize=top_header(3);
     data_bytelength=top_header(4);
@@ -620,7 +734,7 @@ function moduleOutput = bis_wasmutils()
   function out=deserialize_and_delete_string(ptr)
 
     reshape(ptr,16,1);
-    top_header=typecast(ptr.Value(1:16),'int32');
+    top_header=typecast(ptr.Value(1:16),code_int32);
 
     if top_header(1) ~= get_vector_magic_code()
       error('Bad String to deserialize');
@@ -639,7 +753,7 @@ function moduleOutput = bis_wasmutils()
     reshape(ptr,total_length,1);
     rawdata=ptr.Value;
     out_bin=typecast(rawdata(17:total_length,1:1),typename);
-    out=char(out_bin');
+    out=char(transpose(out_bin));
     calllib(Module,'jsdel_array',ptr);
   end
 
@@ -650,29 +764,34 @@ function moduleOutput = bis_wasmutils()
   function out =wrapper_serialize(obj,datatype)
 
     switch(datatype)
-      case 'bisImage'
-	out=serialize_dataobject(obj.img,obj.hdr.dime.pixdim(2:4),0);
+      case 'bisImage'         
+            spa=obj.getSpacing();
+            out=serialize_dataobject(obj.getImageData(),transpose(spa),0,1);
       case 'bisTransformation'
-	out=serialize_transformation(obj);
+	        out=serialize_transformation(obj);
       case 'bisComboTransformation'
-	out=serialize_combotransformation(obj);
+	        out=serialize_combotransformation(obj);
       case 'bisGridTransformation'
-	out=serialize_gridtransformation(obj);
+	        out=serialize_gridtransformation(obj);
       otherwise
-	out=serialize_dataobject(obj);
+	        out=serialize_dataobject(obj);
     end
 
   end
 
-  function out =wrapper_deserialize_and_delete(ptr,datatype)    
+  function out =wrapper_deserialize_and_delete(ptr,datatype,other)    
+
+    if nargin<3
+        other=0;
+    end
 
     switch(datatype)
       case 'bisComboTransformation'
-	out=deserialize_combotransformation_and_delete(ptr);
+	    out=deserialize_combotransformation_and_delete(ptr);
       case 'String'
-	out=deserialize_and_delete_string(ptr);
+	    out=deserialize_and_delete_string(ptr);
       otherwise
-	out=deserialize_and_delete_pointer(ptr);
+	    out=deserialize_and_delete_pointer(ptr,other);
     end
     
   end

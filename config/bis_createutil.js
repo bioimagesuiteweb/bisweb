@@ -1,7 +1,8 @@
 const fs=require('fs');
 const path=require('path');
 const child_process=require('child_process');
-
+const unzip=require('unzip');
+const rimraf=require('rimraf');
 
 const makeDir=function(f1,exit=true) {
     console.log('++++ creating directory',f1);
@@ -34,14 +35,41 @@ const copyFileSync=function(d1,fname,d2,fname2) {
     }
 };
 
-let executeCommand=function(command,dir,force=false) {
+const linkFileSync=function(d1,fname,d2,fname2) {
+    
+    let f1=path.join(d1,fname);
+    let f2=path.join(d2,fname2);
+
+    try  {
+        rimraf.sync(f2);
+    } catch(e) {
+        console.log(e);
+    }
+    
+    console.log('++++ symlink file  '+f1+'\n\t\t--> '+f2);
+    try {
+        fs.symlinkSync(f1,f2);
+    } catch(e) {
+        console.log('---- error',e);
+        process.exit(0);
+    }
+};
+
+
+let executeCommand=function(command,dir,force=false,dummy=false) {
 
     let done=false;
     
     if (force)
         console.log('++++ The next step will take a while ...');
 
+    if (dummy) {
+        console.log(command);
+        return;
+    }
+    
     console.log('++++ ['+dir+"] "+command);
+
     
     return new Promise( (resolve,reject) => {
 
@@ -129,9 +157,32 @@ let initialize=function(DIR,exit=true) {
     copyFileSync2(WASMDIR,`biswasmdate.js`,DIR,`wasm`);
 };
 
+let unzipf=function(zipfile,outdir) {
+
+    console.log('++++ unzipping',zipfile,'in',outdir);
+    
+    return new Promise( (resolve,reject) => {
+        fs.createReadStream(zipfile).
+            pipe(unzip.Extract({ path: outdir })).
+            on('close' , () => {
+                console.log('++++ done unzip ',zipfile);
+                resolve();
+            }).
+            on('error', (e) => {
+                console.log('++++ error unzip ',zipfile);
+                reject(e);
+            });
+    });
+};
+              
+
+
+
 module.exports = {
     makeDir : makeDir,
     copyFileSync : copyFileSync,
+    linkFileSync : linkFileSync,
     executeCommand : executeCommand,
+    unzip : unzipf,
     initialize : initialize,
 };

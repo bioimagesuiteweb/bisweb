@@ -1651,8 +1651,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     updatemousecoordinates(mm,plane,mousestate) {
 
-        if (!this.enable_renderloop_flag) {
-            console.log('Ignoring mouse');
+        if (!this.internal.enable_renderloop_flag) {
             return;
         }
         

@@ -183,7 +183,7 @@ const webfileutils = {
      */
     candoComplexIO: function(serveronly=false) {
 
-        console.log('In cando complex');
+        //console.log('In cando complex');
         
         if (genericio.getmode()!=='browser')
             return true;
@@ -255,7 +255,7 @@ const webfileutils = {
             ];
 
         let multiple = fileopts.altkeys ? 'multiSelections' : '';
-        console.log('multiple', multiple);
+        //    console.log('multiple', multiple);
         var cmd = window.BISELECTRON.dialog.showSaveDialog;
         if (!fileopts.save)
             cmd = window.BISELECTRON.dialog.showOpenDialog;

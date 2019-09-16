@@ -120,13 +120,13 @@ void bisComboTransformation::transformPoint(float x[3],float y[3])
 
 
 // -------------------------------------------------------------------
-int bisComboTransformation::getRawSize()
+long bisComboTransformation::getRawSize()
 {
   // Header
   // 16 bytes big header
   // 4 bytes my header = num_transformations
 
-  int rawsize=20;
+  long rawsize=20;
   rawsize+=this->initialLinearTransformation->getRawSize();
   int sz=this->gridTransformationList.size();
   for (int i=0;i<sz;i++)
@@ -136,7 +136,7 @@ int bisComboTransformation::getRawSize()
 
 void bisComboTransformation::serializeInPlace(unsigned char* pointer)
 {
-  int rawsize=this->getRawSize();
+  long rawsize=this->getRawSize();
 
   //  std::cout << std::endl << "serializing combo size=" << rawsize << std::endl;
   

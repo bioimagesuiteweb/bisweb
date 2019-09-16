@@ -67,7 +67,9 @@ let lst=[];
 for (let i=0;i<modulelist.length;i++) {
 
     let modulename=modulelist[i];
-    let module=modules.getModule(modulename);
+    let module=modules.getModule(modulename) || { JSOnly : true };
+
+
     if (! module.JSOnly) {
         let desc = module.getDescription();
         delete desc['buttonName'];

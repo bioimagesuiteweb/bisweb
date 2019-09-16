@@ -86,20 +86,36 @@ class SimpleFileDialog {
             }
         }
 
-        if (this.mode.indexOf('dir')>=0) {
-            // Directory Mode
-            if (name.length>0) {
-                // Make a directory
-                return this.createDirectoryCallback(name);
-            }
 
-            // We are done
-            this.modal.dialog.modal('hide');
-            setTimeout( () => {
-                this.fileRequestFn(this.currentDirectory);
-            },10);
-        }
-        
+        // Directory Mode
+        if (this.mode.indexOf('dir')>=0) {
+            if (this.selectedItems && this.selectedItems.length > 1) {
+                this.modal.dialog.modal('hide');
+                setTimeout( () => {
+                    let formattedItemList = [], currentEntry;
+                    let separator = this.currentDirectory.includes('/') ? '/' : '\\';
+                    for (let item of this.selectedItems) {
+                        console.log('item', item);
+                        currentEntry = this.currentDirectory + separator + item;
+                        formattedItemList.push(currentEntry);
+                    }
+
+                    this.fileRequestFn(formattedItemList.join(','));
+                    return;
+                },10);
+            } else {
+                if (name.length>0) {
+                    // Make a directory
+                    return this.createDirectoryCallback(name);
+                }
+    
+                // We are done
+                this.modal.dialog.modal('hide');
+                setTimeout( () => {
+                    this.fileRequestFn(this.currentDirectory);
+                },10);
+            }
+        } 
         
         if (name.length<1) {
             return;
@@ -481,6 +497,17 @@ class SimpleFileDialog {
 
             let elem=elementlist[id];
             let fname=elem.path;
+
+            if (this.mode === 'load' || this.mode === 'directory') {
+                if (bisweb_keylistener.shiftPressed() && this.altkeys) {
+                    doShiftClick(w, fileList);
+                    return; 
+                } else if (bisweb_keylistener.ctrlPressed() && this.altkeys) { 
+                    doCtrlClick(w);
+                    return;
+                }
+            } 
+
             if (elem.type === 'file' || elem.type ==='picture') {
 
                 //remove selected attribute from other elements 
@@ -488,16 +515,7 @@ class SimpleFileDialog {
                 //listen for key events if it's a load modal
                 if (doubleclick) {
                     this.filenameCallback();
-                } else if (this.mode === 'load') {
-
-                    if (bisweb_keylistener.shiftPressed() && this.altkeys) {
-                        doShiftClick(w, fileList);
-                        return; 
-                    } else if (bisweb_keylistener.ctrlPressed() && this.altkeys) { 
-                        doCtrlClick(w);
-                        return;
-                    }
-                } 
+                }
 
                 this.clearFileHighlighting(fileList);
                 w.addClass('bisweb-filedialog-selected');
@@ -589,6 +607,8 @@ class SimpleFileDialog {
                 }
 
                 return;
+            } else {
+                selectRegion(body, selectedIndex, selectedIndex);
             }
         }
 

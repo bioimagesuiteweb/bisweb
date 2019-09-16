@@ -19,14 +19,15 @@
 #ifndef _bis_Simple_DataStruct_txx
 #define _bis_Simple_DataStruct_txx
 
-
-
 // Casting functions
 // -----------------
 namespace bisSimpleDataUtil {
 
+#ifndef BISWASM  
+  const long MAX_SIZE=2147483647;
+#endif
   
-  template<class OT,class IT> unsigned char* internal_cast_raw_data(unsigned char* in_pointer,
+  template<class OT,class IT> unsigned char* internal_cast_raw_data(unsigned char* in_pointer,long& data_size,
 								    std::string name,bisObject* owner,OT* ,IT* ) {
 
 
@@ -35,11 +36,14 @@ namespace bisSimpleDataUtil {
     
     int* begin_int=(int*)in_pointer;
     int header_size=begin_int[2];
-    int data_size=begin_int[3];
+    if (data_size<1)
+      data_size=begin_int[3];
 
-    int numelements=data_size/sizeof(IT);
-    int output_data_size= numelements*sizeof(OT);
+    long numelements=data_size/sizeof(IT);
+    long output_data_size= numelements*sizeof(OT);
 
+    //std::cout << "Casting data_size=" << data_size << " numelements=" << numelements << "new data_size=" << output_data_size << std::endl;
+    
     unsigned char* out_pointer=bisMemoryManagement::allocate_memory(16+header_size+output_data_size,name,"casting",owner);
 
     OT* odata=(OT*)(out_pointer+16+header_size);
@@ -51,13 +55,20 @@ namespace bisSimpleDataUtil {
     begin_int=(int*)out_pointer;
     begin_int[1]=ot_type;
     begin_int[3]=output_data_size;
-
+#ifndef BISWASM
+    if (output_data_size>=MAX_SIZE || bisMemoryManagement::largeMemory())
+      begin_int[3]=(int)(-1*sizeof(OT));
+#endif
+    
     for (int i=0;i<numelements;i++)
       odata[i]=(OT)idata[i];
+
+    data_size=output_data_size;
+    
     return out_pointer;
   }
 
-  template<class OT> unsigned char* cast_raw_data(unsigned char* in_pointer,std::string name,bisObject* owner=0) {
+  template<class OT> unsigned char* cast_raw_data(unsigned char* in_pointer,long& data_size,std::string name,bisObject* owner=0) {
     
     int* begin_int=(int*)in_pointer;
     int data_type=begin_int[1];
@@ -69,7 +80,7 @@ namespace bisSimpleDataUtil {
     
     switch (data_type)
       {
-	bisvtkTemplateMacro( return internal_cast_raw_data(in_pointer,name,owner,
+	bisvtkTemplateMacro( return internal_cast_raw_data(in_pointer,data_size,name,owner,
 							   static_cast<OT*>(0), static_cast<BIS_TT*>(0)))
 	  }
     return NULL;
@@ -160,7 +171,10 @@ template< class T> void bisSimpleData<T>::allocate_data() {
   begin_int[1]=this->data_type;
   begin_int[2]=this->header_size;
   begin_int[3]=this->data_size;
-
+#ifndef BISWASM
+  if (this->data_size>=bisSimpleDataUtil::MAX_SIZE || bisMemoryManagement::largeMemory())
+    begin_int[3]=(int)(-1*sizeof(T));
+#endif
 }
 
 template<class T> int bisSimpleData<T>::deSerialize(unsigned char* pointer)
@@ -172,10 +186,37 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
 
   int* begin_int=(int*)pointer;
   int incoming_magic_type=begin_int[0];
+  long dt_size=begin_int[3];
+
+  if (dt_size<0) {
+    std::cout << "____ C++ large image: original length=" << dt_size << ", B=" << begin_int[3] << std::endl;
+    if (this->magic_type==bisDataTypes::s_image ||
+        this->magic_type==bisDataTypes::s_matrix) {
+      long len=1;
+      int maxdim=4;
+      if (this->magic_type==bisDataTypes::s_matrix)
+        maxdim=1;
+      for (int i=0;i<=maxdim;i++) {
+        // std::cout << "Dim " << i << "=" << begin_int[4+i] << std::endl;
+        len*=begin_int[4+i];
+      }
+      std::cout << "____      Len " << len << std::endl;
+      dt_size=len*abs(begin_int[3]);
+      std::cout << "____                 final byte length=" << dt_size << " vs " << dt_size/len << " bytes=" << abs(begin_int[3]) << std::endl;
+    }
+    
+    if (dt_size<0) {
+      std::cerr << "Bad data set " << dt_size  << std::endl;
+      return 0;
+    }
+  }
+
+  if (bisMemoryManagement::debugMemory() )
+    std::cout << "Linking " << begin_int[0] << "," << begin_int[1] << " ," << begin_int[2] << "," << begin_int[3] << "-->" << dt_size << std::endl;
   
   if (this->magic_type!=incoming_magic_type)
     {
-      //      std::cerr << "Invalid magic code " << this->magic_type << "vs " << incoming_magic_type  << std::endl;
+      std::cerr << "Invalid magic code " << this->magic_type << "vs " << incoming_magic_type  << std::endl;
       return 0;
     }
   
@@ -196,19 +237,21 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
       if (bisMemoryManagement::debugMemory() )  
 	std::cout << "***** linkIntoPointer " << this->name << ". Needs to cast as type code " <<  begin_int[1] << " != " << bisDataTypes::getTypeCode(tmp)  << std::endl;
       
-      output_pointer=bisSimpleDataUtil::cast_raw_data<T>(pointer,this->raw_array_name,this);
+      output_pointer=bisSimpleDataUtil::cast_raw_data<T>(pointer,dt_size,this->raw_array_name,this);
       this->owns_pointer=1;
       this->used_to_own_pointer=1;
       begin_int=(int*)output_pointer;
-      //    std::cout << "my Type=" << bisDataTypes::getTypeCode(tmp)  << std::endl;
       begin_int[1]=bisDataTypes::getTypeCode(tmp);
+      // Copy memory here somewhere
     }
   else if (copy_pointer)
     {
       if (bisMemoryManagement::debugMemory() )  
 	std::cout << "***** linkIntoPointer " << this->name << ". Copying pointer as requested" << std::endl;
 
-      int sz=begin_int[2]+begin_int[3];
+      long sz=begin_int[2]+dt_size;//begin_int[3];
+
+      
       output_pointer=bisMemoryManagement::allocate_memory(16+sz,this->raw_array_name,"copying",this);
       bisMemoryManagement::copy_memory(output_pointer,pointer,sz);
       this->owns_pointer=1;
@@ -216,16 +259,17 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
     }
   else if (bisMemoryManagement::debugMemory() )
     {
-      std::cout << "***** linkIntoPointer " << this->name << " from location " << (long)pointer << ". Not taking ownership." << std::endl;
+      std::cout << "***** linkIntoPointer " << this->name << " from location " << (long)pointer << ". Not taking ownership. dt_size=" << dt_size  << std::endl;
     }
   
   begin_int=(int*)output_pointer;
   this->data_type=begin_int[1];
   this->header_size=begin_int[2];
-  this->data_size=begin_int[3];
+  this->data_size=dt_size;
   this->data_length=this->data_size/sizeof(T);
-  
-  //  std::cout << "data size=" << this->data_size << ", datalength=" << this->data_length << std::endl;
+
+  if (bisMemoryManagement::debugMemory() )
+    std::cout << "Final data size=" << this->data_size << ", datalength=" << this->data_length << std::endl;
   
 
   this->header=(output_pointer+16);
@@ -242,7 +286,11 @@ template<class T> void bisSimpleData<T>::serializeInPlace(unsigned char* output)
   begin_int[1]=this->data_type;
   begin_int[2]=this->header_size;
   begin_int[3]=this->data_size;
-
+#ifndef BISWASM
+  if (this->data_size >= bisSimpleDataUtil::MAX_SIZE || bisMemoryManagement::largeMemory())
+    begin_int[3]=(int)(-1*sizeof(T));
+#endif
+  
   unsigned char* begin_ptr=(unsigned char*)(&begin_int[0]);
   
   

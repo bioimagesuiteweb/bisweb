@@ -1182,9 +1182,10 @@ class ViewerApplicationElement extends HTMLElement {
                 dicommodule.show();
             });
 
-            //webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-            //                dicommodule.showDICOMImportModal();
-            //});
+            /*
+            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+                            dicommodule.showDICOMImportModal();
+            });*/
         }
         
         webutil.createMenuItem(bmenu,'');

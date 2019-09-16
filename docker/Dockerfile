@@ -13,18 +13,18 @@ RUN apt-get install -yq nodejs
 RUN apt-get install -yqq doxygen graphviz gosu
 
 # python packages
+RUN pip3 install --upgrade pip
 RUN pip3 install numpy nibabel
 
 # Node.js globals
-RUN npm install -g gulp mocha rimraf
-RUN npm install -g electron --unsafe-perm=true --allow-root
-RUN npm install -g electron-packager
+RUN npm install -g gulp mocha rimraf electron-packager
 
 # Expose server
 EXPOSE 8080
 
 # dotbashrc and entrypoint file
-COPY dotbashrc /usr/local/share/dotbashrc
+COPY bash.bashrc /etc/bash.bashrc
+RUN dos2unix /etc/bash.bashrc
 
 #Entry point
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

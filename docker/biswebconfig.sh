@@ -28,6 +28,7 @@ sleep 2
 cd ${BDIR}/src
 npm install -d
 node config/createbuild.js
+pip3 install -r biswebpython/config/requirements.txt
 
 #Now C++ Build for WASM
 cd ${BDIR}/src/build

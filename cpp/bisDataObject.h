@@ -49,7 +49,7 @@ public:
   virtual int deSerialize(unsigned char* pointer)=0;
 
   /** returns size needed to serialize this object in bytes */
-  virtual int getRawSize()=0;
+  virtual long getRawSize()=0;
 
   
   

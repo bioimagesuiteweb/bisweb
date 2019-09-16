@@ -13,13 +13,15 @@ echo "-----------------------------------------------------------------------"
 cd ${BDIR}
 source ${BDIR}/emsdk_portable/emsdk_env.sh
 
-
-
+mkdir -p ${BDIR}/doc/doxgen
+mkdir -p ${BDIR}/install
+mkdir -p ${BDIR}/install/zips
 mkdir -p ${BDIR}/wasm
 mkdir -p ${BDIR}/wasm/lib
 mkdir -p ${BDIR}/wasm/lib/bin
 mkdir -p ${BDIR}/install
 
+rm -rf ${BDIR}/install/bisweb
 
 
 # Now C++ Build for WASM
@@ -42,15 +44,15 @@ make ${BISMAKEJ}
 rm -rf ${BDIR}/install/bisweb
 make install
 
-cd ${BDIR}/install/bisweb
+cd ${BDIR}/install/bisweb/
 npm pack
-mv *tgz ${BDIR}/install
+mv *tgz ${BDIR}/install/zips
 echo "-----------------------------------------------------------------------"
 
 
-cd ${BDIR}/install
+cd ${BDIR}/install/zips
 pwd
-ls -lrt *tgz *.tar.gz *zip
+ls -lrt
 
 echo "-----------------------------------------------------------------------"
 echo " Done with WASM and Command Line JS"

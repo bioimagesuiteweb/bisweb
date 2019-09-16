@@ -24,7 +24,6 @@ if (bis_genericio.getmode() === 'node' ||
         for (let i=0;i<in_baseDirectories.length;i++)
             baseDirectoriesList.push(in_baseDirectories[i]);
         
-        console.log(indent,' Using filesystemutils mode= ',bis_genericio.getmode(),baseDirectoriesList);                                       
     };
 
 
@@ -112,8 +111,6 @@ if (bis_genericio.getmode() === 'node' ||
      */
     let validateDirectories = (lst, name = "", verbose = true) => {
 
-        console.log('Validating directories'+lst+' '+name);
-        
         let newlist = [];
         for (let i = 0; i < lst.length; i++) {
 
@@ -159,7 +156,7 @@ if (bis_genericio.getmode() === 'node' ||
                         let l = p.split('/');
                         if (l.length < 3) {
                             ignore = true;
-                            console.log('---- ignoring '+p+' as l.length <3'+l.join(','));
+                            //console.log('---- ignoring '+p+' as l.length <3'+l.join(','));
                         }
                     }
                     if (!ignore)
