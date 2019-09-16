@@ -92,6 +92,37 @@ class baseModule:
 
         return out;
 
+
+    def parseValuesAndAddDefaults(self,args,extra):
+        des = self.getDescription();
+        out = {};
+        for j in range(0,len(des['params'])):
+            param=des['params'][j];
+            vname = param['varname'];
+            name = vname.lower();
+
+            found=False
+            if (name in args):
+                found=True;
+
+            if (found==True and args[name] is not None):
+                found=True;
+            else:
+                found=False;
+
+            if (found==False):
+                
+                if (name in extra):
+                    out[vname]=extra[name];
+                else:
+                    defaultv = param['default'];
+                    out[vname] = defaultv;
+            else:
+                out[vname] = args[name];
+
+        return out;
+
+    
     def typeCheckParam(self,param, val):
 
         try:

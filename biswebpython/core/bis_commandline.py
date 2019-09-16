@@ -65,7 +65,10 @@ def attachFlags(module,parser):
                     parser.add_argument('-'+shortname,'--'+param['varname'].lower(), help=optdesc+param['description'],type=int,default=None);
                 else:
                     parser.add_argument('-'+shortname,'--'+param['varname'].lower(), help=optdesc+param['description'],default=None);
-	
+
+    parser.add_argument('--paramfile',help= 'Specifies that parameters should be read from a file as opposed to parsed from the command line.',default='');
+    
+                    
 def runModule(mod, vars,args):
 	    
     print('oooo --------------------------------------------------------------');
@@ -93,12 +96,38 @@ def loadParse(mod,args,addModuleFlag=True):
     attachFlags(mod,parser);
 
     args = vars(parser.parse_args());
+    loadedArgs={};
+
+    
+    if (len(args['paramfile'])>0):
+        print('___ reading paramfile',args['paramfile']);
+        try:
+            file = open(args['paramfile'])
+            text=file.read()
+            import json
+            d = json.loads(text)
+            toolname=d['module'].lower();
+            print(toolname);
+            current=mod.name.lower();
+            if (toolname!=current):
+                print('---- param file was for module '+d['module']+' not '+mod.name);
+                return 0;
+
+            loadedArgs=d['params'];
+            print('+++ loadedArgs=',loadedArgs);
+        except:
+            e = sys.exc_info()[0]
+            print(e)
+            print('---- Bad param file ('+args['paramfile']+')')
+            return 0
 
 
 
     
     # Parse From Command Line
-    modArguments=mod.parseValues(args);
+    #    modArguments=mod.parseValues(args);
+    modArguments = mod.parseValuesAndAddDefaults(args, loadedArgs);
+    
 
     #check provided parameters against input restrictions (input of 'type' for the parameter, parameter one of the values specified in 'restrict')
     if (mod.typeCheckParams(modArguments)):

@@ -17,7 +17,7 @@
 	    "command" : "smoothImage --sigma 2.0 --paramfile testdata/smoothParam.json --input testdata/MNI_2mm_resliced.nii.gz",
 	    "test"    : "--test_target testdata/newtests/goldsmooth2sigma.nii.gz",
 	    "result"  : true,
-	    "dopython": false
+	    "dopython": true
 	},
 	{
 	    "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false",
