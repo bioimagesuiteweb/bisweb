@@ -434,13 +434,13 @@ var appdmg=function(tools, version, indir , distdir ) {
 
 
     let i_odir    = path.resolve(indir, distdir);
-    let i_icon    = path.resolve(indir, 'web/images/bioimagesuite.icns');
+    let i_icon    = path.resolve(indir, 'various/config/installer.icns');
     let i_logo    = path.resolve(indir, 'various/config/bisgradlogo.png');
     let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-darwin-x64/BioImageSuiteWeb.app');
     let i_date    = getDate();
 
     let out={
-        'title' : 'BioImageSuiteWeb',
+        'title' : 'BioImageSuiteWebInstaller',
         'icon' :  i_icon,
         'background' : i_logo,
         'window' : {
@@ -464,7 +464,7 @@ var appdmg=function(tools, version, indir , distdir ) {
     let outfile2=path.join(i_odir,'appdmg.json');
 
     fs.writeFileSync(outfile2,JSON.stringify(out,null,4));
-    let dmgfile=        path.join(i_odir,'BioImageSuiteWeb_'+version+'.dmg');
+    let dmgfile=        path.join(i_odir,'BioImageSuiteWebInstaller_'+version+'.dmg');
 
     let cmdlist=[ 
         'rimraf',
