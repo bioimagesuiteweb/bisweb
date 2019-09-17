@@ -9,21 +9,33 @@ class Bisweb_Histogramplot {
 
         //Size Settings
         let sizeOffset = 29;
-        let svgWidth = dim[0]/2;
-        let svgHeight = dim[1] - 150;
+        let svgWidth = dim[0];
+        let svgHeight = dim[1];
         let innerWidth = svgWidth - sizeOffset;
         let innerHeight = svgHeight - sizeOffset;
     
         //create the svg Parent and the graphic div that everything will be drawn to
-        let histoChart = d3.select(parentDiv).append("svg").attr("class",'bis-histogramChart')
-                            .attr("width", svgWidth)
-                            .attr("height", svgHeight)
-                            .attr('style', 'z-index: 1000; position: relative;')
-                            .append("g")
-                            .attr("id", chartId)
-                            .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
-    
-    
+        let histoChart = d3.select(parentDiv).append('div')
+            .attr('class', 'bis-histogramContainer')
+            .attr('style', `width: ${dim[0]}px; left: '0px'; top: '0px'; position: absolute;`)
+            .append('svg').attr("class", 'bis-histogramChart')
+            .attr("width", svgWidth)
+            .attr("height", svgHeight)
+            .attr('style', 'z-index: 1000; position: relative;')
+            .attr('preserveAspectRatio', 'xMinYMin meet')
+            .attr('viewbox', `0 0 ${svgWidth} ${svgHeight}`)
+            .append("g")
+            .attr("id", chartId)
+            .attr("transform", `translate(${sizeOffset},${sizeOffset / 2})`);
+        
+        histoChart.append('rect')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', svgWidth)
+            .attr('height', svgHeight)
+            .attr('fill', '#FFFFFF')
+            .attr("transform", `translate(${-sizeOffset},${-sizeOffset / 2})`);
+
         //Create X Scale
         let xScale = d3.scale.linear()
                 .range([0,innerWidth-sizeOffset*1.25])
@@ -50,12 +62,12 @@ class Bisweb_Histogramplot {
     
         //Add the Axes to the chart
         histoChart.append("g")
-                .attr("class", "x bis-axis")
+                .attr("class", "bis-axisX")
                 .attr("transform", `translate(${sizeOffset},${innerHeight-sizeOffset})`)
                 .call(xAxis);
     
         histoChart.append("g")
-                .attr("class", "y bis-axis")
+                .attr("class", "bis-axisY")
                 .attr("transform",`translate(${sizeOffset},0)`)
                 .call(yAxis);
         
@@ -223,7 +235,7 @@ class Bisweb_Histogramplot {
             xScale.domain([Math.min(0, d3.min(data.data_array, d => d3.min(d))),d3.max(data.data_array, d=> d3.max(d))*1.025]);
         
             xAxis.scale(xScale);
-            histoChart.selectAll('.x.bis-axis').call(xAxis);
+            histoChart.selectAll('.bis-axisX').call(xAxis);
     
             //Create Histogram Generator
             let hist = d3.layout.histogram()
@@ -244,7 +256,7 @@ class Bisweb_Histogramplot {
             yScale.domain([0, yMax * 1.025]);
     
             yAxis.scale(yScale);
-            histoChart.selectAll('.y.bis-axis').call(yAxis);
+            histoChart.selectAll('bis-axisY').call(yAxis);
     
     
         
@@ -268,6 +280,20 @@ class Bisweb_Histogramplot {
         
             genGraph(bins, groupColor, means);
         });
+
+         //On resize
+         this.resize = (dim, pos) => {
+            console.log('dim', dim, 'pos', pos);
+            let svgDim = Math.min(dim[0], dim[1]);
+            $('.bis-histogramChart').css('width', `${svgDim}px`);
+            $('.bis-histogramChart').css('left', `${pos[0]}px`);
+
+            xAxis.ticks(svgDim / 25);
+            histoChart.selectAll('.bis-axisX').call(xAxis);
+            yAxis.ticks(svgDim / 25);
+            histoChart.selectAll('.bis-axisY').call(yAxis);
+        };
+
     }
 }
 

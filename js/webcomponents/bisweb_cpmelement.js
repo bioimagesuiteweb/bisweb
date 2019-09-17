@@ -85,6 +85,8 @@ class CPMElement extends HTMLElement {
             cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
                 cardbar.createTab('Histogram plot', $(), { 'save' : true }).then( (histoobj) => {
                     this.createCPMGUIManager(layoutElement, scatterobj.content[0], histoobj.content[0]);
+
+                    //resizing function for card bar pane
                     cardbar.setResizingFunction( () => {
                         scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
                         scatterobj.content.height(layoutElement.viewerheight / 2);
@@ -112,14 +114,15 @@ class CPMElement extends HTMLElement {
         let dims = [layoutElement.viewerwidth / 3, layoutElement.viewerheight / 2];
         let pos = [0 , layoutElement.viewerheight - 10];
 
-        console.log('histo plot', histoElement);
-        let plot = new bisweb_scatterplot(scatterElement, dims, pos);
+        let scatterplot = new bisweb_scatterplot(scatterElement, dims, pos);
         let histoplot = new bisweb_histoplot(histoElement, dims);
 
+        //resizing function for charts
         $(window).on('resize', () => {
             dims = [layoutElement.viewerwidth / 3 , layoutElement.viewerheight / 2];
             pos = [0 , layoutElement.viewerheight - 10];
-            plot.resize(dims, pos);
+            scatterplot.resize(dims, pos);
+            histoplot.resize(dims, pos);
         });
     }
 

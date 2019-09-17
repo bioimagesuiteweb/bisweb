@@ -40,7 +40,7 @@ class Bisweb_Scatterplot {
             .attr('x', 0)
             .attr('y', 0)
             .attr('width', svgDim)
-            .attr('height', svgDim)
+            .attr('height', dim[1])
             .attr('fill', '#FFFFFF')
             .attr("transform", `translate(${-sizeOffset},${-sizeOffset / 2})`);
 
@@ -73,6 +73,7 @@ class Bisweb_Scatterplot {
             .attr("class", "bis-axisX")
             .attr('style', 'font-size: 10px;')
             .attr("transform", `translate(${sizeOffset},${innerDim - sizeOffset})`)
+            .attr("width", "inherit")
             .call(xAxis);
 
         scatterChart.append("g")
