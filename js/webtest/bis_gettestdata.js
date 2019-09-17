@@ -2,7 +2,6 @@
 const webutil=require('bis_webutil');
 const scope=webutil.getScope();
 const genericio = require('bis_genericio');
-
 const environment=genericio.getenvironment();
 
 module.exports={
@@ -10,7 +9,12 @@ module.exports={
 
     getelectronpath : function() {
         const path=genericio.getpathmodule();
-        return path.dirname(scope.substr(8,scope.length))+'/test';
+        const os=genericio.getosmodule();
+        console.log('++++ Electron\n\tscope=',scope,'\n\t',os.platform());
+        let index=8;
+        if (os.platform()==='darwin' || os.platform()==='linux')
+            index=7;
+        return path.dirname(scope.substr(index,scope.length))+'/test';
     },
     
     islocal : function() {
