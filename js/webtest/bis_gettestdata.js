@@ -21,7 +21,7 @@ module.exports={
             const fs=genericio.getfsmodule();
             if (fs.existsSync(p)){
                 return true;
-            } 
+            }
             return false;
         }
         
@@ -41,7 +41,9 @@ module.exports={
             return 'https://bioimagesuiteweb.github.io/test/1.1'+extra;
 
         if (environment==='electron') {
-            return this.getelectronpath()+extra;
+            if (this.islocal())
+                return this.getelectronpath()+extra;
+            return 'https://bioimagesuiteweb.github.io/test/1.1'+extra;
         }
         
         let testDataRootDirectory='';

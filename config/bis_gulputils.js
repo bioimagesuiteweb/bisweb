@@ -436,7 +436,7 @@ var appdmg=function(tools, version, indir , distdir ) {
     let i_odir    = path.resolve(indir, distdir);
     let i_icon    = path.resolve(indir, 'various/config/installer.icns');
     let i_logo    = path.resolve(indir, 'various/config/bisgradlogo.png');
-    let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-darwin-x64/BioImageSuiteWeb.app');
+//    let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-darwin-x64/BioImageSuiteWeb.app');
     let i_date    = getDate();
 
     let out={

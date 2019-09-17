@@ -7,7 +7,7 @@ const regression = require('regression');
 
 const webutil=require('bis_webutil');
 const genericio=require('bis_genericio');
-const bisweb_matrix=require('bisweb_matrix');
+//const bisweb_matrix=require('bisweb_matrix');
 
 // -------------------------------
 // Todo ---
@@ -1134,7 +1134,7 @@ scatterChart.append('text')
  * @param {number[]} dim dims of svg to be created
  * @param {number} binCnt number of bins
  */
-function createHistogram(parentDiv, dim, binCnt = 30){
+let createHistogram=function(parentDiv, dim, binCnt = 30){
     globalParams.Id=webutil.getuniqueid();
 
     //Size Settings
@@ -1397,7 +1397,7 @@ function createHistogram(parentDiv, dim, binCnt = 30){
     
         genGraph(bins, groupColor, means);
     });
-}
+};
 
 let addHistoScatterStyles = () => {
 
@@ -1474,4 +1474,7 @@ module.exports = {
     removelines : removelines,
     filter_modes : filter_modes,
     drawScatterandHisto : drawScatterandHisto,
+    createScatter : createScatter,
+    createHistogram : createHistogram,
+    addHistoScatterStyles : addHistoScatterStyles
 };
