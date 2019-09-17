@@ -430,6 +430,57 @@ var inno=function(tools, version, indir , distdir ) {
         .pipe(gulp.dest(distdir));
 };
 
+var appdmg=function(tools, version, indir , distdir ) {
+
+
+    let i_odir    = path.resolve(indir, distdir);
+    let i_icon    = path.resolve(indir, 'web/images/bioimagesuite.icns');
+    let i_logo    = path.resolve(indir, 'various/config/bisgradlogo.png');
+    let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-darwin-x64/BioImageSuiteWeb.app');
+    let i_date    = getDate();
+
+    let out={
+        'title' : 'BioImageSuiteWeb',
+        'icon' :  i_icon,
+        'background' : i_logo,
+        'window' : {
+            position : {
+                'x' : 400,
+                'y' : 100,
+            },
+            size : {
+                width : 900,
+                height : 450
+            }
+        },
+        'background-color' : '#1C2D40',
+        "contents": [
+            { "x": 600, "y": 350, "type": "link", "path": "/Applications" },
+            { "x": 300, "y": 350, "type": "file", "path": "BioImageSuiteWeb.app" }
+        ]
+    };
+
+    let outfile=path.join(i_odir,path.join('BioImageSuiteWeb-darwin-x64','appdmg.json'));
+    let outfile2=path.join(i_odir,'appdmg.json');
+
+    fs.writeFileSync(outfile2,JSON.stringify(out,null,4));
+    let dmgfile=        path.join(i_odir,'BioImageSuiteWeb_'+version+'.dmg');
+
+    let cmdlist=[ 
+        'rimraf',
+        dmgfile+';',
+        'cp',
+        outfile2,
+        outfile+';',
+        'appdmg',
+        outfile,
+        dmgfile,
+    ];
+
+    return cmdlist.join(' ');
+
+};
+
 // -----------------------------------------------------------------------------------------
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
@@ -540,11 +591,17 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                 cmdlist.push(cmdline+` --platform=darwin --icon ${path.resolve(indir,'web/images/bioimagesuite.icns')}`);
             if (dopackage===3)
                 cmdlist.push(cleancmd);
-            if (dopackage>0)  {
-                ziplist.push( {
-                    zipfile : zipfile,
-                    zipdir  : zipindir
-                });
+
+            if (dopackage>0) {
+
+                if (n==='linux') {
+                    ziplist.push( {
+                        zipfile : zipfile,
+                        zipdir  : zipindir
+                    });
+                }  else {
+                    cmdlist.push(appdmg(tools,version,indir,distdir));
+                }
             }
         }
     }
