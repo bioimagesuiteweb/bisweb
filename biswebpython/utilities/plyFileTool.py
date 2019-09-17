@@ -28,7 +28,8 @@
 
 from biswebpython.utilities.plyfile import PlyData, PlyElement
 import numpy as np
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 def readPlyFile(fileName):
 
@@ -63,7 +64,9 @@ def readPlyFile(fileName):
 
     triangles = np.vstack(tri_data)
 
-    return vertices, triangles
+    labels = np.zeros([1, vertices.shape[0]])
+
+    return vertices, triangles, labels
 
 
 
@@ -98,5 +101,51 @@ def writePlyFile(vertices, faces, fileName):
 
 
 
+
+
+def writePlyFileWithLabels(vertices, faces, labels, fileName, n = 280, map = 'gist_ncar'):
+
+    '''
+    This function can be used for writing a labeled mesh to a ply file.
+
+
+    Parameters:
+        @vertices: numpy.ndarray
+                   vertices of the input mesh
+        @faces: numpy.ndarray
+                faces of the input mesh
+        @labels: numpy.ndarray
+                 labels for each vertex
+        @fileName: string
+                   output file path and name
+        @n: int
+            total number of the functional regions
+
+    '''
+
+    # create the necessary PlyElement instances
+    v = [tuple(vertices[t]) for t in range(len(vertices))]
+    f = [tuple() for t in range(len(faces))]
+
+    norm  = mpl.colors.Normalize(vmin = 1, vmax = n)
+    cmap = plt.cm.get_cmap(map)
+
+    for idx in range(len(faces)):
+        face = faces[idx]
+        c = list(labels[face])
+        if c.count(c[0]) > 1:
+            rgba = cmap(norm(c[0]))
+        else:
+            rgba = cmap(norm(c[1]))
+        f[idx] = tuple([face, int(rgba[0]*255), int(rgba[1]*255), int(rgba[2]*255)])
+
+    v = np.asarray(v, dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+    f = np.asarray(f, dtype = [('vertex_indices', 'i4', (3,)), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')])
+
+    el1 = PlyElement.describe(v, 'vertex')
+    el2 = PlyElement.describe(f, 'face')
+
+    # instantiate PlyData and serialize
+    PlyData([el1, el2]).write(fileName)
 
 

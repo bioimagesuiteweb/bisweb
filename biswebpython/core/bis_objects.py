@@ -24,7 +24,8 @@ import json
 import nibabel as nib
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.core.bis_baseutils as bis_baseutils;
-import biswebpython.utilities.plyFileTool as surutil
+import biswebpython.utilities.plyFileTool as plyutil
+import biswebpython.utilities.jsonFileTool as jsonutil
 
 
 
@@ -676,10 +677,12 @@ class bisSurface(bisBaseObject):
         super().__init__();
         self.vertices=None;
         self.faces=None;
+        self.labels=None;
 
-    def create(self,vertices,faces):
+    def create(self,vertices,faces,labels):
         self.vertices=vertices;
         self.faces=faces;
+        self.labels=labels;
 
     def getRawSize():
         raise Exception('----- Not Implemented');
@@ -699,8 +702,17 @@ class bisSurface(bisBaseObject):
         # surutil.loadPly();
         # self.create()
         try:
-            vertices,triangles= surutil.readPlyFile(filename);
-            self.create(vertices,triangles);
+            vertices, triangles, labels = plyutil.readPlyFile(filename);
+            self.create(vertices,triangles, labels);
+            self.filename=filename;
+            print('+++ Surface loaded from',filename,' numverts=',vertices.shape[0])
+            return True;
+        except:
+            pass
+
+        try:
+            vertices, triangles, labels = jsonutil.readJsonFile(filename);
+            self.create(vertices,triangles,labels);
             self.filename=filename;
             print('+++ Surface loaded from',filename,' numverts=',vertices.shape[0])
             return True;
@@ -708,14 +720,26 @@ class bisSurface(bisBaseObject):
             print('---- Failed to load surface from',filename);
             return False;
 
+
+
     def save(self,filename):
-        try:
-            surutil.writePlyFile(self.vertices, self.faces, filename);
-            self.filename=filename;
-            print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
-        except:
-            print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
-            return False;
+        if bool(self.labels.any()):
+            try:
+                plyutil.writePlyFileWithLabels(self.vertices, self.faces, self.labels, filename);
+                self.filename=filename;
+                print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+            except:
+                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
+                return False;
+
+        else:
+            try:
+                plyutil.writePlyFile(self.vertices, self.faces, filename);
+                self.filename=filename;
+                print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+            except:
+                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
+                return False;
 
         return True;
 

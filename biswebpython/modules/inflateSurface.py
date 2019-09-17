@@ -24,7 +24,7 @@ try:
     import bisweb_path;
 except ImportError:
     bisweb_path=0;
-    
+
 import biswebpython.core.bis_basemodule as bis_basemodule;
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.utilities.smoothInflationOperator as infopr
@@ -91,7 +91,7 @@ class inflateSurface(bis_basemodule.baseModule):
         self.outputs['output']=bis_objects.bisSurface();
 
         try:
-            vertices = infopr.relaxationOperator(input.vertices, input.faces, debug)
+            vertices = infopr.relaxationOperator(input.vertices, input.faces, input.labels, debug)
 
         except:
             e = sys.exc_info()[0]
@@ -99,7 +99,7 @@ class inflateSurface(bis_basemodule.baseModule):
             return False
 
 
-        self.outputs['output'].create(vertices,input.faces);
+        self.outputs['output'].create(vertices,input.faces,input.labels);
 
         return True
 

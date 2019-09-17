@@ -196,7 +196,7 @@ def meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertic
 
 
 
-def relaxationOperator(vertices, faces, debug, lamda = 0.5, itr_min = 51, itr_max = 301):
+def relaxationOperator(vertices, faces, labels, debug, lamda = 0.5, itr_min = 51, itr_max = 301):
 
     '''
     This function can be used for implementing suface smooth inflation.
@@ -233,10 +233,12 @@ def relaxationOperator(vertices, faces, debug, lamda = 0.5, itr_min = 51, itr_ma
     beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
 
     if debug:
+
         outputInflationFilesPath = sys.argv[sys.argv.index('-o')+1].split('.ply')[0] + '/'
         if not os.path.exists(outputInflationFilesPath):
             pathlib.Path(outputInflationFilesPath).mkdir(parents = True)
         print ("start surface inflation using relaxation operator")
+
 
     while fileN < itr_min or (fileN < itr_max and beta < stop):
 
@@ -245,7 +247,10 @@ def relaxationOperator(vertices, faces, debug, lamda = 0.5, itr_min = 51, itr_ma
                 print ('*******************************', fileN - 1, '*******************************')
                 print ("The mean curvature of the smooth inflated cortical surface is: ", beta)
                 outputFileName = outputInflationFilesPath + 'inflated_' + str(fileN-1) + '.ply'
-                writePlyFile(vertices, faces, outputFileName)
+                if bool(labels.any()):
+                    writePlyFileWithLabels(vertices, faces, labels, outputFileName)
+                else:
+                    writePlyFile(vertices, faces, outputFileName)
 
         fileN += 1
 
