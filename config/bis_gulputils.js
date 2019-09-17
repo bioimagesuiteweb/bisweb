@@ -464,7 +464,7 @@ var appdmg=function(tools, version, indir , distdir ) {
     let outfile2=path.join(i_odir,'appdmg.json');
 
     fs.writeFileSync(outfile2,JSON.stringify(out,null,4));
-    let dmgfile=        path.join(i_odir,'BioImageSuiteWebInstaller_'+version+'.dmg');
+    let dmgfile=        path.join(i_odir,'BioImageSuiteWebInstaller_'+version+'_'+i_date+'.dmg');
 
     let cmdlist=[ 
         'rimraf',
