@@ -7,7 +7,6 @@ class Bisweb_Histogramplot {
     constructor(parentDiv, dim = [400, 400], binCnt = 30) {
         let chartId = bis_webutil.getuniqueid();
 
-        console.log('parent div', parentDiv);
         //Size Settings
         let sizeOffset = 29;
         let svgWidth = dim[0]/2;
@@ -19,6 +18,7 @@ class Bisweb_Histogramplot {
         let histoChart = d3.select(parentDiv).append("svg").attr("class",'bis-histogramChart')
                             .attr("width", svgWidth)
                             .attr("height", svgHeight)
+                            .attr('style', 'z-index: 1000; position: relative;')
                             .append("g")
                             .attr("id", chartId)
                             .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
