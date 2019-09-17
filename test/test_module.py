@@ -26,25 +26,74 @@ sys.path.append(os.path.abspath(my_path+'/../'));
 
 import biswebpython.core.bis_objects as bis
 import biswebpython.core.bis_commandline as bis_commandline;
+import biswebpython.core.bis_baseutils as bis_baseutils;
 import argparse
 import json
 import tempfile
+import wget
+
+githuburl='https://bioimagesuiteweb.github.io/test/1.1/';
+githuburlfile='https://bioimagesuiteweb.github.io/test/1.1/module_tests.json';
+
+
 
 
 parser = argparse.ArgumentParser(description='bisweb test python_module tool')
-parser.add_argument('--input',help='filename of the tests to run',default=None)
+parser.add_argument('--input',help='filename of the tests to run',default='')
 parser.add_argument('--first',help='first test to run',default=0,type=int)
 parser.add_argument('--last',help='last test to run',default=-1,type=int)
 parser.add_argument('--testname',help='comma separated list of names of tests to run. If not specified all are run (subject to first:last)',default=None)
 args = vars(parser.parse_args());
 
+
+# -----------------------------------
+
+def get_pathspec(inp):
+
+    global githuburl;
+    global githuburlfile;
+
+    print('Starting inp=',inp);
+    
+    dirname=os.path.dirname(os.path.realpath(__file__));
+    testfilename='';
+    basedir='';
+    if (inp == "local"):
+        print('dirname=',dirname);
+        testfilename=os.path.abspath(dirname+'/module_tests.json');
+        basedir=dirname+'/';
+    elif (len(inp) > 0):
+        testfilename=inp;
+        basedir=os.path.abspath(os.path.dirname(inp))+'/';
+    else:
+        testfilename=githuburlfile;
+        basedir=githuburl;
+    
+    return {
+        'testfilename' : testfilename,
+        'basedirectory' : basedir
+    };
+# --------------------------------------
+
 testscript_base=os.path.abspath(my_path+"/../biswebpython/biswebpy.py");
+if (not os.path.exists(testscript_base)):
+    testscript_base=os.path.abspath(my_path+"/../biswebpy.py");
 
-testlistfilename= args['input'];
-if (args['input'] == None):
-    testlistfilename = os.path.abspath(my_path+"/module_tests.json");
+print('Testscript=',testscript_base);
+pathspec=get_pathspec(args['input']);
+        
+testlistfilename = pathspec['testfilename'];
+print('testfilename=',testlistfilename);
 
 
+with tempfile.TemporaryDirectory() as tempdname:
+    try:
+        json_data=open(bis_baseutils.downloadIfNeeded(testlistfilename,'',tempdname)).read()
+        obj = json.loads(json_data)
+    except:
+        e = sys.exc_info()[0]
+        print('---- Failed to read ',e);
+        sys.exit(1);
 
 first_test=args['first'];
 last_test=args['last'];
@@ -52,14 +101,6 @@ test_name=args['testname'];
 test_namelist=None;
 if (test_name != None):
     test_namelist=test_name.lower().split(",")
-
-try:
-    json_data=open(testlistfilename).read()
-    obj = json.loads(json_data)
-except:
-    e = sys.exc_info()[0]
-    print('---- Failed to read ',testfilename,e);
-    sys.exit(1);
 
 testlist=obj['testlist'];
 
@@ -118,7 +159,7 @@ for i in range(begin_test,end_test+1):
             k=k+1;
 
         with tempfile.TemporaryDirectory() as dname:
-
+            
             tempName="";
             testtype=testopts['test_type'];
             if (testtype=="image"):
@@ -137,6 +178,8 @@ for i in range(begin_test,end_test+1):
                 command[1]=command[1]+" --resliced "+tempName;
                 testtype="image";
 
+            command[1]=command[1]+' --test_base_directory '+pathspec['basedirectory'];
+
             print('====\n-------------------- test',i,'---------------------------------------');
             cmd=sys.executable+" "+testscript_base+' '+command[0]+" "+command[1];
             print('====\n==== executing:',cmd,'\n====');
@@ -147,7 +190,8 @@ for i in range(begin_test,end_test+1):
                                                            testopts['test_target'].strip(),
                                                            testtype.strip(),
                                                            float(testopts['test_threshold']),
-                                                           testopts['test_comparison']);
+                                                           testopts['test_comparison'],
+                                                           pathspec['basedirectory'],dname);
             else:
                 print('____ test returned failed to execute code');
 

@@ -311,7 +311,7 @@ class bisImage(bisBaseObject):
     
     def getDescription(self):
         tp=str(self.data_array.dtype);
-        return self.filename+'dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
+        return self.filename+'. dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
 
     def hasSameOrientation(self,otherimage,name1='',name2='',debug=False):
 

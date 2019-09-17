@@ -28,16 +28,10 @@ class regressionTests(bis_basemodule.baseModule):
         desc=self.getModuleDescriptionFromFile('regressionTest');
         p=desc['params'];
         newp=[];
-        print('p=',len(p))
         for i in range(0,len(p)):
             vname=p[i]['varname'];
-            print('vname=',vname,i);
             if ( not (vname == 'run' or vname=='debug' or vname=='logoutput')):
                 newp.append(p[i]);
-                print('Adding',vname);
-            else:
-                print('Skipping',vname);
-            
 
         desc['params']=newp;
         return desc;
@@ -52,8 +46,6 @@ class regressionTests(bis_basemodule.baseModule):
 
         cmd=os.path.abspath(dirname+'/../test/test_module.py');
         script2=os.path.abspath(dirname+'/../../test/test_module.py');
-        print('cmd=',cmd);
-        print('script2=',script2);
 
         if (not os.path.exists(cmd)):
             cmd=script2;
@@ -61,16 +53,14 @@ class regressionTests(bis_basemodule.baseModule):
                 print('---- Can not find test_module.py');
                 return False;
 
-        os.chdir(os.path.dirname(cmd));
+            #        os.chdir(os.path.dirname(cmd));
         
         command=sys.executable+' '+cmd;
         command=command+' --first '+str(vals['first'])+' --last '+str(vals['last']);
         if (len(vals['testname'])>0):
             command=command+' --testname '+vals['testname'];
         if (len(vals['testlist'])>0):
-            command+=' --input '+vals.testlist;
-            #        if (not vals['run']):
-            # command+=' --list';
+            command+=' --input '+vals['testlist'];
 
         print('\n++++\n++++ executing: '+command+'\n');
         exitcode=os.system(command);

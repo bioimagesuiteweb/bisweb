@@ -104,4 +104,21 @@ def getDynamicLibraryWrapper():
             
     return libbis;
 
+def downloadIfNeeded(fname,basedir,tempdir):
+
+    inputname=basedir+fname;
+    sname=inputname;
+    import wget;
+    if (inputname.startswith('http')):
+
+        f=fname.replace('://','__');
+        f=f.replace('/','_');
+        sname=os.path.abspath(tempdir+'/'+f);
+        print('.... Downloading ',inputname,': ');
+        wget.download(inputname,sname);
+        print('\n');
+    elif (len(basedir)>0):
+        print('.... remapping ',fname,'to',sname);
+
+    return sname;
         

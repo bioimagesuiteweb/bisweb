@@ -223,7 +223,7 @@ class baseModule:
         return ok;
 
 
-    def loadInputs(self,inputparameters={}):
+    def loadInputs(self,inputparameters={},basedir='',tempdir=''):
 
         desc = self.getDescription();
         for i in range(0,len(desc['inputs'])):
@@ -247,6 +247,7 @@ class baseModule:
                 return False;
 
             if (required or inpname != None):
+                inpname=bis_baseutils.downloadIfNeeded(inpname,basedir,tempdir);
                 ok=self.loadSingleInput(name,inpname,objtype);
                 if (ok==False):
                     return False;
