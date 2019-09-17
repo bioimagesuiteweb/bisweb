@@ -936,12 +936,9 @@ let drawScatterandHisto = function(){
     // Draw the Histogram to the svgModal Div
     createHistogram(svgModal, dim);
     
+    /*
     svgModal.bind('drop',(data) =>{
         const reader = new FileReader();
-
-        /**
-         * @type {DragEvent}
-         */
         let event = data.originalEvent;
         event.preventDefault();
         console.log('DROPPED DATA', event);
@@ -995,7 +992,7 @@ let drawScatterandHisto = function(){
 
         };
     });
-
+    */
     globalParams.displayDialog.show();
 };
 

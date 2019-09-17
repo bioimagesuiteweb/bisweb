@@ -36,6 +36,7 @@ const bisweb_histoplot = require('bisweb_histogramplot.js');
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
+const bisweb_serverutils = require('bisweb_serverutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
 //const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
@@ -86,6 +87,8 @@ class CPMElement extends HTMLElement {
                     this.createCPMGUIManager(layoutElement, scatterobj.content[0], histoobj.content[0]);
                     cardbar.setResizingFunction( () => {
                         scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
+                        scatterobj.content.height(layoutElement.viewerheight / 2);
+                        histoobj.content.width(layoutElement.viewerwidth / 3 + 20);
                         histoobj.content.height(layoutElement.viewerheight / 2);
                     });
                 });
@@ -109,9 +112,9 @@ class CPMElement extends HTMLElement {
         let dims = [layoutElement.viewerwidth / 3, layoutElement.viewerheight / 2];
         let pos = [0 , layoutElement.viewerheight - 10];
 
-        console.log('dim', dims);
+        console.log('histo plot', histoElement);
         let plot = new bisweb_scatterplot(scatterElement, dims, pos);
-        //let histoplot = bisweb_histoplot.histogram(histoElement, dims);
+        let histoplot = new bisweb_histoplot(histoElement, dims);
 
         $(window).on('resize', () => {
             dims = [layoutElement.viewerwidth / 3 , layoutElement.viewerheight / 2];
@@ -557,7 +560,7 @@ class CPMElement extends HTMLElement {
         return new Promise( (resolve, reject) => {
             let extension = f.split('.')[1];
             if (!extension) { //flow for a directory of .csv or .tsv files
-                bis_genericio.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then( (obj) => {
+                bisweb_serverutils.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then( (obj) => {
                     this.formatLoadedConnData(obj.output.file);
                     this.populateFileElementList(obj.output.filenames);
                     resolve();
