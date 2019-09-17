@@ -143,7 +143,7 @@ class BiswebCardBar extends HTMLElement {
 
     /**
      * Creates the tab and associated tab content pane in the bottom card bar.
-     * If the tab hasn't been created yet then it will wait for the 'bis.cardbar.done' event to be emitted by the cardbar creator method.
+     * If the bottom navbar hasn't been created yet then it will wait for the 'bis.cardbar.done' event to be emitted by the cardbar creator method.
      * @param {String} title - The name of the tab 
      */
     createTab(title, content = $(), opts = {}) {
@@ -169,6 +169,7 @@ class BiswebCardBar extends HTMLElement {
 
                     let tabContent = tabPane.find('.bisweb-card-pane');
                     tabContent.append(content);
+
                     self.addTabHideButton(tabContent);
                     if (opts.save) { self.addSaveButton(tabContent); }
 
@@ -177,7 +178,6 @@ class BiswebCardBar extends HTMLElement {
             
                     //activate blur area over canvas (otherwise only blurs the background of the card pane)
                     let widget = $('.bisviewerwidget');
-                    console.log('widget', widget);
                     tab.on('shown.bs.tab', () => {
                         $(widget).addClass('bis-unfocus');
                     });
