@@ -3,10 +3,9 @@
 # ----------------------------------------------------------------------------------------
 # Imports and paths
 import os
-import setuptools
 import sys
 import importlib
-import inspect
+
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 

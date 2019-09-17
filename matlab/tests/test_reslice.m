@@ -34,7 +34,7 @@ function result=test_reslice(debug)
     images = { };
 
     for i = 1:3
-        filename=[ filepath filesep imagenames{i} ];
+        filename=testutil.getTestFilename( imagenames{i});
         images{i} = bis_image(filename,debug+1);
     end
 

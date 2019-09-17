@@ -23,6 +23,10 @@ import sys
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../'));
+sys.path.append(os.path.abspath(my_path+'/../..'));
+
+
+
 
 import biswebpython.core.bis_objects as bis
 import biswebpython.core.bis_commandline as bis_commandline;
@@ -53,13 +57,10 @@ def get_pathspec(inp):
     global githuburl;
     global githuburlfile;
 
-    print('Starting inp=',inp);
-    
     dirname=os.path.dirname(os.path.realpath(__file__));
     testfilename='';
     basedir='';
     if (inp == "local"):
-        print('dirname=',dirname);
         testfilename=os.path.abspath(dirname+'/module_tests.json');
         basedir=dirname+'/';
     elif (len(inp) > 0):
@@ -104,11 +105,17 @@ if (test_name != None):
 
 testlist=obj['testlist'];
 
+showSkip=True;
+if (first_test == 0 and last_test==-1):
+    showSkip=False;
+
 begin_test=0;
+
 if (first_test<0):
     begin_test=len(testlist)+first_test;
 elif (first_test>0):
     begin_test=first_test;
+    showskip=True;
 
 end_test=len(testlist)-1;
 if (last_test>=0):
@@ -211,10 +218,12 @@ for i in range(begin_test,end_test+1):
                 badtests=badtests+"\t"+str(i)+". "+command[0]+" "+command[1]+"\n";
                 testpass=False;
     elif (doskip):
-        print('-------------------- test',i,'----------------------------------------------');
-        print('====\n==== Test ',i,' ' ,rawcommand,'  s k i p p e d\n====');
         numskip=numskip+1;
         skiptests=skiptests+"\t"+str(i)+". "+command[0]+" "+command[1]+"\n";
+        if (showSkip):
+            print('-------------------- test',i,'----------------------------------------------');
+            print('====\n==== Test ',i,' ' ,rawcommand,'  s k i p p e d\n====');
+
 
 print('------------------------------------------------------------------');
 print('++++\n++++ Number of  p a s s e d   = '+str(numgood));
@@ -223,8 +232,8 @@ if (numbad>0):
     print(badtests,'\n');
 
 if (doskip):
-    print('==== Number of  s k i p p e d = '+str(numskip)+'\n');
-    if (numskip>0):
+    print('==== Number of  s k i p p e d = '+str(numskip)+' (some tests do not apply to the Python version of bisweb)\n');
+    if (showSkip and numskip>0):
         print(skiptests,'\n');
 
     

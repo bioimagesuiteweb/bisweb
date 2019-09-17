@@ -27,6 +27,7 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
     moduleOutput.printheader=@printheader;
     moduleOutput.compare=@compare;
     moduleOutput.getlib=@getlib;
+    moduleOutput.getTestFilename=@getTestFilename;
     
     if (internal.initialized>0)
       result=1;
@@ -116,5 +117,37 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
 
         result=printresult(testname,success,metric,metricname);
     end
+
+
+    function result=getTestFilename(fname,forceweb)
+
+      if nargin<2
+        forceweb=0;
+      end
+
+      result=[ internal.filepath filesep fname ];
+
+      if forceweb == 0 && isfile(result)
+        return;
+      end
+
+      [f,n,ext]=fileparts(fname);
+      if strcmp(ext, '.gz')
+        [f,n,e2]=fileparts([f,n]);
+        ext=[ e2,'.gz' ];
+      end
+
+      url=[ 'https://bioimagesuiteweb.github.io/test/1.1/testdata/', strrep(fname,'\','/') ];
+
+
+      
+      disp(['____ Downloading ',mat2str(url),' extension=',mat2str(ext) ]);
+      result=[ tempname(),ext];
+      websave(result,url);
+      
+      
+      
+    end
+      
 end
 

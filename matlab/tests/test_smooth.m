@@ -24,8 +24,8 @@ function result = test_smooth(debug)
     [testutil,filepath,lib]=bis_testutils();
     testutil.printheader('Test Smooth');
 
-    fname1=[ filepath filesep 'MNI_2mm_resliced.nii.gz'];
-    fname2=[ filepath filesep 'newtests' filesep 'goldsmooth2sigma.nii.gz'];
+    fname1=testutil.getTestFilename(['MNI_2mm_resliced.nii.gz']);
+    fname2=testutil.getTestFilename(['newtests' filesep 'goldsmooth2sigma.nii.gz']);
     format long;
 
     param.sigmas=[2.0,2.0,2.0 ];

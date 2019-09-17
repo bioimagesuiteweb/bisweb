@@ -7,8 +7,8 @@ function result=test_loadsave(debug)
     [testutil,filepath,lib]=bis_testutils();
 
 
-    fname1=[ filepath filesep 'glm' filesep 'Test_allruns2.nii' ];
-    fname2=[ filepath filesep 'glm' filesep 'Test_allruns2.nii.gz' ];
+    fname1=testutil.getTestFilename([ 'glm' filesep 'Test_allruns2.nii' ]);
+    fname2=testutil.getTestFilename([ 'glm' filesep 'Test_allruns2.nii.gz' ]);
 
     input1 = bis_image(fname1,debug+1);
     input2 =  bis_image(fname2,debug+1);

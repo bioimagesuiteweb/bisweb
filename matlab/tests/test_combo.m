@@ -24,7 +24,7 @@ function result=test_combo(debug)
     [testutil,filepath,lib]=bis_testutils();
     testutil.printheader('Test Combo');
     
-    lines=fileread([ filepath filesep 'complex.grd']);
+    lines=fileread(testutil.getTestFilename( 'complex.grd'));
     if (debug>0)
         lines(1:400)
     end

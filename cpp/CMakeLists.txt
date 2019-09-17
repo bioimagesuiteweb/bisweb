@@ -669,7 +669,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     ENDIF(BIS_UNITTEST)
 
     # Do not install this just yet
-    #install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
+    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython/test)
     
 
   ENDIF(BIS_A_PYTHON)
@@ -713,6 +713,8 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/tests/*.m)
+    install (FILES ${MLIST} DESTINATION biswebmatlab/tests)
 
     # Install replacement bispath
     install (FILES ${MATLAB_SOURCE_DIR}/config/bispath.m DESTINATION biswebmatlab)

@@ -30,9 +30,9 @@ function result = test_indiv(debug)
 %"command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
 %"test"    : "--test_target testdata/indiv/indivp.nii.gz",
 
-   fname1= [ filepath filesep 'indiv' filesep 'prep.nii.gz' ];
-   fname2= [ filepath filesep 'indiv' filesep 'group.nii.gz' ];
-   fname3= [ filepath filesep 'indiv' filesep 'indivp.nii.gz' ];
+   fname1= testutil.getTestFilename([ 'indiv' filesep 'prep.nii.gz' ]);
+   fname2= testutil.getTestFilename([ 'indiv' filesep 'group.nii.gz' ]);
+   fname3= testutil.getTestFilename([ 'indiv' filesep 'indivp.nii.gz' ]);
 
    sigma=4.0;
    numexemplars=268;

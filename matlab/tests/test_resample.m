@@ -25,7 +25,7 @@ function result=test_resample(debug)
     [testutil,filepath,lib]=bis_testutils();
     testutil.printheader('Test Resample');
 
-    fname1=[ filepath  filesep 'MNI_2mm_resliced.nii.gz'];
+    fname1=testutil.getTestFilename('MNI_2mm_resliced.nii.gz');
 
     % Load Images
     input = bis_image(fname1,debug+1);

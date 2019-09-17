@@ -52,7 +52,7 @@ function result=test_matrix(debug)
     end
     disp('--------------------------------------------------------------------------')
     
-    fname1=[ filepath filesep 'glm' filesep 'Test_bis_glm.matr' ];
+    fname1=testutil.getTestFilename([ 'glm' filesep 'Test_bis_glm.matr' ]);
 
     lines=fileread(fname1);
     out=lib.parseMatrixTextFileWASM(lines,1);

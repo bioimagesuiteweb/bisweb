@@ -26,15 +26,15 @@ function result=test_computeglm(debug)
     [testutil,filepath,lib]=bis_testutils();
     testutil.printheader('Test ComputeGLM');
 
-    fname1=[ filepath filesep 'glm' filesep 'Test_bis_glm.matr' ];
+    fname1=testutil.getTestFilename([ 'glm' filesep 'Test_bis_glm.matr' ]);
     lines=fileread(fname1);
     glmmatrix=lib.parseMatrixTextFileWASM(lines,1);
 
     %"command" : "computeGLM -i testdata/glm/Test_allruns.nii.gz --regressor testdata/glm/Test_bis_glm.matr --debug true --numtasks 3",
     %"test"    : "--test_target testdata/glm/test_beta.nii.gz",
 
-    fname1=[ filepath filesep 'glm' filesep 'Test_allruns.nii.gz' ];
-    fname2=[ filepath filesep 'glm' filesep 'test_beta.nii.gz'];
+    fname1=testutil.getTestFilename([ 'glm' filesep 'Test_allruns.nii.gz' ]);
+    fname2=testutil.getTestFilename([ 'glm' filesep 'test_beta.nii.gz']);
     format long;
 
     param.numtasks=3;

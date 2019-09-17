@@ -31,8 +31,8 @@ function result=test_largemem_smooth(debug)
     bw.force_large_memory();
 
 
-    fname1=[ filepath filesep 'indiv' filesep 'prep.nii.gz' ];
-    fname2=[ filepath filesep 'indiv' filesep 'prep_sm.nii.gz'];
+    fname1=testutil.getTestFilename(['indiv' filesep 'prep.nii.gz' ]);
+    fname2=testutil.getTestFilename(['indiv' filesep 'prep_sm.nii.gz']);
     format long;
 
     param.sigmas=0.4247*[4.0,4.0,4.0 ];
