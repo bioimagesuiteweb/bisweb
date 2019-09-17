@@ -20,6 +20,7 @@
 const BaseModule = require('basemodule.js');
 const bis_genericio = require('bis_genericio.js');
 const path = bis_genericio.getpathmodule();
+const sep = path.sep;
 
 /**
  * Combines a set of parameter files and connectivity matrices in a given directory into a single file
@@ -61,7 +62,7 @@ class MakeConnMatrixFileModule extends BaseModule {
                 "shortname": "o",
                 "required": false,
                 "default" : ""
-            },{
+            }, {
                 "name": "Make output file",
                 "description" : "Whether or not to write the output file to disk. True by default",
                 "priority": 3,
@@ -71,6 +72,16 @@ class MakeConnMatrixFileModule extends BaseModule {
                 "shortname": "w",
                 "required": false,
                 "default" : true
+            }, {
+                "name" : "Reformat input",
+                "description" : "Whether or not to rename files to the format that BioImage Suite uses",
+                "priority"  : 4,
+                "advanced" : false,
+                "gui" : "check",
+                "varname" : "reformat",
+                "shortname" : "r",
+                "required" : false,
+                "default" : false
             }],
         };
 
@@ -80,11 +91,11 @@ class MakeConnMatrixFileModule extends BaseModule {
     directInvokeAlgorithm(vals) {
 
         console.log('oooo invoking: Make Connectivity Matrix File', JSON.stringify(vals),'\noooo'); 
-        let indir = vals.indir, sep = path.sep, outdir;
+        let indir = vals.indir, outdir;
         let combinedFile = {};
 
         //Remove leading slash if on Windows (otherwise it will resolve two root directories)
-        if (path.sep === '\\') {
+        if (sep === '\\') {
             if (indir.substring(0,1) === '/' || indir.substring(0,1) === '\\') {
                 indir = indir.substring(1, indir.length);
             }
@@ -103,35 +114,35 @@ class MakeConnMatrixFileModule extends BaseModule {
 
         return new Promise( (resolve, reject) => {
             indir = path.resolve(indir);
-            let behaviorMatchString = indir + sep + '*+(_behavior)*';
-            let connMatchString = indir + sep + '*+(conn)+([0-9])*';
-            
-            console.log('indir', indir, 'match strings', behaviorMatchString, connMatchString);
-            let behaviorPromise = bis_genericio.getMatchingFiles(behaviorMatchString);
-            let connPromise = bis_genericio.getMatchingFiles(connMatchString);
+            searchForFormattedFiles.then( async (result) => {
 
-            Promise.all( [behaviorPromise, connPromise]).then( async (obj) => {
+                if (!result) {
 
-                console.log('obj', obj);
-                try {
-                    let behaviorFiles = obj[0], connFiles = obj[1];
-
-                    let arr = [];
-                    arr[1];
-
-                    for (let file of behaviorFiles.concat(connFiles)) {
-                        let contents = await bis_genericio.read(path.resolve(file));
-                        addEntry(bis_genericio.getBaseName(file), contents.data);
+                    //if there's no formatted files try looking for the unformatted files (.txt files with a single csv)
+                    searchForUnformattedFiles(indir).then( (obj) => {
+                        //TODO: do something with these files... 
+                    }).catch( (e) => { reject(e); });
+                } else {
+                    try {
+                        let behaviorFiles = result.behaviorFiles, connFiles = result.connFiles;
+    
+                        let arr = [];
+                        arr[1];
+    
+                        for (let file of behaviorFiles.concat(connFiles)) {
+                            let contents = await bis_genericio.read(path.resolve(file));
+                            addEntry(bis_genericio.getBaseName(file), contents.data);
+                        }
+    
+                        if (vals.writeout) {
+                            await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
+                        }
+                        resolve({ 'file' : combinedFile, 'filenames' : behaviorFiles.concat(connFiles) });
+                    } catch(e) {
+                        reject(e);
                     }
-
-                    if (vals.writeout) {
-                        await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
-                    }
-                    resolve({ 'file' : combinedFile, 'filenames' : behaviorFiles.concat(connFiles) });
-                } catch(e) {
-                    reject(e);
                 }
-
+               
             }).catch((e) => {
                 reject(e.stack);
             });
@@ -149,6 +160,45 @@ class MakeConnMatrixFileModule extends BaseModule {
             }
 
             combinedFile[escapedSubjectName][filename] = contents;
+        }
+
+        function searchForFormattedFiles(indir) {
+            return new Promise( (resolve, reject) => {
+                let behaviorMatchString = indir + sep + '*+(_behavior)*';
+                let connMatchString = indir + sep + '*+(conn)+([0-9])*';
+                
+                let behaviorPromise = bis_genericio.getMatchingFiles(behaviorMatchString);
+                let connPromise = bis_genericio.getMatchingFiles(connMatchString);
+
+                return Promise.all([ behaviorPromise, connPromise ]).then( (obj) => {
+                    let behaviorFiles = obj[0], connFiles = obj[1];
+                    if (behaviorFiles.length === 0 && connFiles.length === 0) {
+                        resolve(false);
+                    } else {
+                        resolve({ 'behaviorFiles' : behaviorFiles, 'connFiles' : connFiles });
+                    }
+                }).catch( (e) => { console.log('An error occured while searching for files', e); reject(e); });
+            });
+            
+        }
+
+        function searchForUnformattedFiles(indir) {
+            return new Promise( (resolve, reject) => {
+                let dataMatchstring = indir + sep + '(.*?)_.*.txt';
+                let csvMatchstring = indir + sep + '.*.csv';
+
+                let dataPromise = bis_genericio.getMatchingFiles(dataMatchstring);
+                let csvPromise = bis_genericio.getMatchingFiles(csvMatchstring);
+
+                return new Promise.all([ dataPromise, csvPromise ]).then( (obj) => {
+                    let dataFiles = obj[0], connFiles = obj[1];
+                    if (dataFiles.length === 0 || connFiles.length === 0) {
+                        reject('No unformatted files found in directory', indir);
+                    } else {
+                        resolve({ 'dataFiles' : dataFiles, 'connFiles' : connFiles });
+                    }
+                }).catch( (e) => { console.log('An error occured while searching for files', e); reject(e); });
+            });
         }
     }
 
