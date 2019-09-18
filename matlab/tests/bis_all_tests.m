@@ -1,6 +1,6 @@
 
 
-function bis_all_tests(debug)
+function result=bis_all_tests(debug)
 
     [testutil,filepath,lib]=bis_testutils();
     if nargin<1
@@ -39,5 +39,6 @@ function bis_all_tests(debug)
         result=0;
         disp(['=== Some ',mat2str(s2-s1),' Tests Failed']);
     end
+
 
 end
