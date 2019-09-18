@@ -21,8 +21,7 @@ function result = test_smooth(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test Smooth');
+    [testutil,filepath,lib]=bis_testutils('Test Smooth');
 
     fname1=testutil.getTestFilename(['MNI_2mm_resliced.nii.gz']);
     fname2=testutil.getTestFilename(['newtests' filesep 'goldsmooth2sigma.nii.gz']);
@@ -49,13 +48,13 @@ function result = test_smooth(debug)
     v1=max(max(max(abs(gold.getImageData()-single(input.getImageData())))));
 
     if (debug>0)
-        v1
+        disp(['v1=',mat2str(v1) ]);
         disp(['Testing real difference']);
     end
     v2=max(max(max(abs(gold.getImageData()-single(output.getImageData())))));
 
     if (debug>0)
-        v2
+        disp(['v2=',mat2str(v2) ]);
         disp('----------------------------------');
         disp('Smoothing image 2');
     end
@@ -67,7 +66,7 @@ function result = test_smooth(debug)
     v3=max(max(max(abs(gold.getImageData()-single(output2.getImageData())))));
 
     if (debug>0)
-        v3
+        disp(['v3=',mat2str(v3) ]);
         disp('----------------------------------');
         disp('Smoothing image 2');
     end
@@ -81,14 +80,16 @@ function result = test_smooth(debug)
     v4=max(max(max(abs(gold.getImageData()-single(output3.getImageData())))));
 
     if (debug>0)
-        v4
+        disp(['v4=',mat2str(v4) ]);
     end
     gold=[ 57.14,0,0,57.14];
     mat=[v1,v2,v3,v4];
 
     disp(['=== Smooth test completed',mat2str(mat)])
     result=testutil.compare(gold,mat,'Image Smooth (multiple tests)',0,0.1);
-    output3.print('hello',3);
+    %output3.print('Image Smooth',3);
+    testutil.cleanup();
+
  return;
 
 

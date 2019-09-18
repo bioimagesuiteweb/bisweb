@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXTRA=""
+EXTRA="$@"
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BDIR="$( cd ${IDIR}/../build && pwd )"

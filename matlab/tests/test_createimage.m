@@ -4,9 +4,7 @@ function result=test_createimage(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-
-    testutil.printheader('Test Create Image');
+    [testutil,filepath,lib]=bis_testutils('Test Create Image');
     
     img=bis_image();
 
@@ -16,7 +14,6 @@ function result=test_createimage(debug)
     img.create(dat,[1,1]);
     img.print('Just created',3);
 
-    result=1;
 
     param.sigmas=[0.0,0.0,0.0 ];
     param.radiusfactor=2.0;
@@ -29,7 +26,7 @@ function result=test_createimage(debug)
     output = lib.gaussianSmoothImageWASM(img, param, debug);
 
     result1=testutil.compare(img.getImageData(),output.getImageData(),'Manual Create',0,0.01);
-
+    disp('---')
 
     param.sigmas=[1.0,0.0,0.0 ];
     
@@ -47,7 +44,14 @@ function result=test_createimage(debug)
         disp(['       vs ',mat2str(b')]);
     end
 
-    result1=testutil.compare(b,c,'Manual Create + Smooth sigma=1',0,0.01);
+    result2=testutil.compare(b,c,'Manual Create + Smooth sigma=1',0,0.01);
+
+    a=result1{2};
+    b=result2{2};
+
+    result=min(a,b);
+    testutil.cleanup();
+    result= {'Create Image', result};
 
 
     

@@ -23,8 +23,7 @@ function result=test_computeroi(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test ComputeROI');
+    [testutil,filepath,lib]=bis_testutils('Test ComputeROI');
 
 
     fname0=testutil.getTestFilename([ 'newtests' filesep 'simpleroi_result.matr' ]);
@@ -50,5 +49,6 @@ function result=test_computeroi(debug)
 
     result=testutil.compare(gold,output,'Compute ROI',0,0.1);
 
+    testutil.cleanup();
 
 end

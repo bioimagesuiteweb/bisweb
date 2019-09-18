@@ -15,12 +15,20 @@
 % 
 % ENDLICENSE
 
-function [ moduleOutput,filepath,lib] = bis_testutils()
+function [ moduleOutput,filepath,lib] = bis_testutils(testname)
+
+    if nargin>0
+        printheader(testname);
+    else
+        testname='Matlab Test';
+    end
 
     internal={};
     internal.initialized=0;
     internal.filepath='';
     internal.lib=0;
+
+    internal.testname=testname;
 
     moduleOutput.gettestdatapath=@gettestdatapath;
     moduleOutput.printresult=@printresult;
@@ -28,7 +36,8 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
     moduleOutput.compare=@compare;
     moduleOutput.getlib=@getlib;
     moduleOutput.getTestFilename=@getTestFilename;
-    
+    moduleOutput.cleanup=@cleanup;
+
     if (internal.initialized>0)
       result=1;
       return;
@@ -49,6 +58,8 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
     lib=internal.lib;
     filepath=result;
 
+    testfilelist={};
+
 
 
     function result=gettestdatapath()
@@ -66,7 +77,6 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
         disp(['    Runnning ',name]);
         disp('   ')
         disp('   ')
-        pause(1);
         result=0;
     end
 
@@ -115,7 +125,7 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
             end
         end
 
-        result=printresult(testname,success,metric,metricname);
+        result={ internal.testname ; printresult(testname,success,metric,metricname) };
     end
 
 
@@ -146,8 +156,28 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
       websave(result,url);
       
       
+      testfilelist=[ testfilelist ; result];
       
     end
       
+
+    function cleanup(extrafiles)
+
+        if nargin>0
+            testfilelist=[testfilelist; extrafiles];
+        end
+        
+        disp(['____ Cleaning  temp downloads']);
+        a=size(testfilelist);
+        for i=1:a
+            f=testfilelist{i};
+            disp(['    deleting temp file ',mat2str(i),' = ',mat2str(f)])
+            delete(f);
+        end
+        testfilelist={};
+        %internal.lib.unload();
+        pause(1);
+
+    end
 end
 

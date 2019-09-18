@@ -669,7 +669,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     ENDIF(BIS_UNITTEST)
 
     # Do not install this just yet
-    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython/test)
+    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython)
     
 
   ENDIF(BIS_A_PYTHON)
@@ -680,6 +680,12 @@ ELSE(BIS_A_EMSCRIPTEN)
   
   IF (BIS_A_MATLAB)
     MESSAGE("++ Building Matlab Prerequisites")
+
+
+    OPTION(BIS_MATLABUNITTEST "Enable Matlab Unit Tests" OFF)
+    MARK_AS_ADVANCED(BIS_MATLABUNITTEST)
+
+
 
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../matlab/config/README.md")
     install (FILES ${README_FILE} DESTINATION biswebmatlab)
@@ -718,13 +724,20 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     # Install replacement bispath
     install (FILES ${MATLAB_SOURCE_DIR}/config/bispath.m DESTINATION biswebmatlab)
+
+    IF (BIS_MATLABUNITTEST)
+        FIND_PROGRAM(MATLAB matlab REQUIRED)
+        SET (CMDARGS "-nodesktop -nodisplay < bisweb_runalltests.m")
+        MESSAGE("${MATLAB} ${CMDARGS}")
+        add_test(NAME "MATLAB-unittests" COMMAND ${MATLAB} ${CMDARGS}  WORKING_DIRECTORY  ${CMAKE_INSTALL_PREFIX}/biswebmatlab/tests)
+    ENDIF (BIS_MATLABUNITTEST)
   ENDIF(BIS_A_MATLAB)
 
 
   if(UNIX AND NOT APPLE)
     FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
     FILE(GLOB WINEXTRA ${PROJECT_BINARY_DIR}/biswasm.dll)
-    MESSAGE("--- Intalling Extra libraries ${MACEXTRA},${WINEXTRA}")
+    MESSAGE("--- Intalling Extra libraries if they exist ${MACEXTRA},${WINEXTRA}")
 
     IF (BIS_A_PYTHON)
       install (FILES ${MACEXTRA} DESTINATION biswebpython/lib)

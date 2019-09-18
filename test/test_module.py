@@ -22,8 +22,8 @@ import os
 import sys
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../'));
-sys.path.append(os.path.abspath(my_path+'/../..'));
+sys.path.insert(0,os.path.abspath(my_path+'/../'));
+sys.path.insert(1,os.path.abspath(my_path+'/../..'));
 
 
 
@@ -78,18 +78,23 @@ def get_pathspec(inp):
 
 testscript_base=os.path.abspath(my_path+"/../biswebpython/biswebpy.py");
 if (not os.path.exists(testscript_base)):
-    testscript_base=os.path.abspath(my_path+"/../biswebpy.py");
+    testscript_base=os.path.abspath(my_path+"/biswebpy.py");
 
-print('Testscript=',testscript_base);
+print('---- Testscript=',testscript_base);
 pathspec=get_pathspec(args['input']);
         
 testlistfilename = pathspec['testfilename'];
-print('testfilename=',testlistfilename);
+print('---- Test List Filename=',testlistfilename);
 
 
 with tempfile.TemporaryDirectory() as tempdname:
     try:
-        json_data=open(bis_baseutils.downloadIfNeeded(testlistfilename,'',tempdname)).read()
+        print('Here reading',testlistfilename);
+        try:
+            f=bis_baseutils.downloadIfNeeded(testlistfilename,'',tempdname);
+        except AttributeError as e:
+            print(e);
+        json_data=open(f).read()
         obj = json.loads(json_data)
     except:
         e = sys.exc_info()[0]

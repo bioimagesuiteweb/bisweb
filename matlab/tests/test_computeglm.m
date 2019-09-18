@@ -23,8 +23,7 @@ function result=test_computeglm(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test ComputeGLM');
+    [testutil,filepath,lib]=bis_testutils('Test ComputeGLM');
 
     fname1=testutil.getTestFilename([ 'glm' filesep 'Test_bis_glm.matr' ]);
     lines=fileread(fname1);
@@ -48,6 +47,7 @@ function result=test_computeglm(debug)
 
     betas.print('Betas',3);
     result=testutil.compare(gold.getImageData(),betas.getImageData(),'Compute GLM',0,0.1);
+    testutil.cleanup();
 
 
 end

@@ -22,8 +22,8 @@ function result=test_largemem_smooth(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test LargeMemory Smooth');
+    [testutil,filepath,lib]=bis_testutils('Test LargeMemory Smooth');
+    
 
     bw=lib.getbiswasm();
 
@@ -57,6 +57,7 @@ function result=test_largemem_smooth(debug)
     end 
 
     result=testutil.compare(gold.getImageData(),output.getImageData(),'Image Smooth -- Large Memory',0,0.1);
+    testutil.cleanup();
 
 end
 

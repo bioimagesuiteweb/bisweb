@@ -93,8 +93,11 @@ def runModule(mod, vars,args):
 def loadParse(mod,args,addModuleFlag=True):
 
     toolname=mod.name;
-    
-    if (len(args)<2):
+    maxarg=2;
+    if (toolname=='regressionTests'):
+        maxarg=1;
+
+    if (len(args)<maxarg):
         print("---- Not enough arguments passed to run this tool. Type "+args[0]+" -h for more information");
         return False;
 
