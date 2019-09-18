@@ -22,9 +22,21 @@
  * method on multiple threads, or to specify a method per thread.
 */
 
-const int  VTK_MAX_THREADS=20;
+#include <iostream>
 
-#define VTK_USE_PTHREADS 1
+const int  VTK_MAX_THREADS=32;
+
+#ifndef BISWASM
+  #define BIS_USE_THREADS 1
+  #ifdef __WIN32
+    #define VTK_USE_WIN32_THREADS 1
+  #else
+    #define VTK_USE_PTHREADS 1
+  #endif
+#else
+#endif
+
+
 
 #ifndef vtkMultiThreader_h
 #define vtkMultiThreader_h
@@ -72,8 +84,6 @@ typedef void (*vtkThreadFunctionType)(void *);
 typedef int vtkThreadProcessIDType;
 typedef int vtkMultiThreaderIDType;
 #endif
-
-
 
 
 class vtkMultiThreader 
@@ -225,7 +235,8 @@ protected:
 
 };
 
-using ThreadInfoStruct=vtkMultiThreader::ThreadInfo;
+//using ThreadInfoStruct=vtkMultiThreader::ThreadInfo;
 
 #endif
+  
 

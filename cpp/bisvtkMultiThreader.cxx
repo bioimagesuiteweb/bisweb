@@ -14,6 +14,8 @@
 =========================================================================*/
 #include "bisvtkMultiThreader.h"
 
+
+
 // Need to define "vtkExternCThreadFunctionType" to avoid warning on some
 // platforms about passing function pointer to an argument expecting an
 // extern "C" function.  Placing the typedef of the function pointer type
@@ -193,14 +195,16 @@ void vtkMultiThreader::SetMultipleMethod( int index,
 // Execute the method set as the SingleMethod on NumberOfThreads threads.
 void vtkMultiThreader::SingleMethodExecute()
 {
-  int                thread_loop = 0;
+
 
 #ifdef VTK_USE_WIN32_THREADS
+  int                thread_loop = 0;
   DWORD              threadId;
   HANDLE             process_id[VTK_MAX_THREADS] = {};
 #endif
 
 #ifdef VTK_USE_PTHREADS
+  int                thread_loop = 0;
   pthread_t          process_id[VTK_MAX_THREADS] = {};
 #endif
 
@@ -511,7 +515,7 @@ int vtkMultiThreader::SpawnThread( vtkThreadFunctionType f, void *userdata )
 #ifndef VTK_USE_PTHREADS
   // There is no multi threading, so there is only one thread.
   // This won't work - so give an error message.
-  std::cerr << "Cannot spawn thread in a single threaded environment!" );
+  std::cerr << "Cannot spawn thread in a single threaded environment!" << std::endl;
   delete this->SpawnedThreadActiveFlagLock[id];
   id = -1;
 #endif
@@ -568,7 +572,7 @@ void vtkMultiThreader::TerminateThread( int threadID )
 #ifndef VTK_USE_PTHREADS
   // There is no multi threading, so there is only one thread.
   // This won't work - so give an error message.
-  std::cerr<< "Cannot terminate thread in single threaded environment!");
+  std::cerr<< "Cannot terminate thread in single threaded environment!" << std::endl;
 #endif
 #endif
 
@@ -631,3 +635,5 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
   return 1;
 #endif
 }
+
+

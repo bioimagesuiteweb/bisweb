@@ -26,7 +26,7 @@
 
 namespace bisImageDistanceMatrix {
 
-  class bisImageDistanceMatrixThreadStructure {
+  class bisMThreadStructure {
   public:
     short* wgt_dat;
     int*   index_dat;
@@ -46,14 +46,14 @@ namespace bisImageDistanceMatrix {
     std::vector<double> output_array[VTK_MAX_THREADS];
     int numcols;
 
-    bisImageDistanceMatrixThreadStructure() {
+    bisMThreadStructure() {
       this->wgt_dat=NULL;
       this->index_dat=NULL;
       this->img_dat=NULL;
-      this->numcols=3;
+      this->numcols=4;
     }
 
-    ~bisImageDistanceMatrixThreadStructure() {
+    ~bisMThreadStructure() {
       for (int i=0;i<VTK_MAX_THREADS;i++) {
         this->output_array[i].clear();
         this->output_array[i].shrink_to_fit();
@@ -64,19 +64,6 @@ namespace bisImageDistanceMatrix {
       this->numcols=0;
     }
   };
-
-  // Description:
-  // Parallel Implementations of 
-  std::unique_ptr<bisSimpleMatrix<double> > CreateSparseMatrixParallel(bisSimpleImage<float>* input,
-                                                                       bisSimpleImage<short>* objectmap,
-                                                                       bisSimpleImage<int>* indexmap,
-                                                                       float sparsity,int numthreads=4);
-  std::unique_ptr<bisSimpleMatrix<double> > CreateRadiusMatrixParallel(bisSimpleImage<float>* input,
-                                                                       bisSimpleImage<short>* objectmap,
-                                                                       bisSimpleImage<int>* indexmap,
-                                                                       float radius,int numthreads=4);
-  
-
 }
 
 extern "C" {
