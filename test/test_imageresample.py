@@ -20,8 +20,8 @@ import sys
 import numpy as np
 import unittest
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../'));
-sys.path.append(os.path.abspath(my_path+'/../biswebpython/modules'));
+sys.path.insert(0,os.path.abspath(my_path+'/../'));
+sys.path.insert(0,os.path.abspath(my_path+'/../biswebpython/modules'));
 
 import biswebpython.modules.resliceImage as resliceImage;
 import biswebpython.core.bis_objects as bis
