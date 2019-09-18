@@ -21,7 +21,7 @@
 #include "bisDefinitions.h"
 #include "bisUtil.h"
 #include "math.h"
-#include <vtkMultiThreader.h>
+#include <bisvtkMultiThreader.h>
 #include <vector>
 
 namespace bisImageDistanceMatrix {
@@ -89,7 +89,7 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to the sparse distance matrix serialized 
    */
-  // BIS: { 'computeImageDistanceMatrixWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ], {"checkorientation" : "all"} }
+  // BIS: { 'computeImageDistanceMatrixWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
   BISEXPORT unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned char* objectmap,const char* jsonstring,int debug);
 
   /** Creates an indexmap image
@@ -97,7 +97,7 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to the serialized index map image (int)
    */
-  // BIS: { 'computeImageIndexMapWASM', 'bisIamage', [ 'bisImage', 'debug' ]
+  // BIS: { 'computeImageIndexMapWASM', 'bisImage', [ 'bisImage', 'debug' ] }
   BISEXPORT unsigned char* computeImageIndexMapWASM(unsigned char* input,int debug);
 
 }

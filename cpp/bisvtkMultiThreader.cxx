@@ -12,7 +12,7 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-#include "vtkMultiThreader.h"
+#include "bisvtkMultiThreader.h"
 
 // Need to define "vtkExternCThreadFunctionType" to avoid warning on some
 // platforms about passing function pointer to an argument expecting an
@@ -631,4 +631,3 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
   return 1;
 #endif
 }
-

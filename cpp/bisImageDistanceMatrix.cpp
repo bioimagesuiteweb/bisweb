@@ -553,3 +553,4 @@ unsigned char* computeImageIndexMapWASM(unsigned char* input,int debug) {
   std::unique_ptr<bisSimpleImage<int> > result(bisImageDistanceMatrix::createIndexMap(inp_image.get()));
   return result->releaseAndReturnRawArray();
 }
+
