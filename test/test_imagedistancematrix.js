@@ -98,7 +98,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         Promise.all(p).then( () => { done(); });
     });
 
-    it ('test distmatrix1',async function() {
+   it ('test distmatrix1',async function() {
 
         let out=await libbiswasm.computeImageIndexMapWASM(obj,true);
         console.log(out.getDescription());
@@ -138,6 +138,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
 
     it ('test load and save',async function() {
 
+        gold[1].save('sample.binmatr');
         gold[1].save(tmpFname1);
         console.log('Saved binary in',tmpFname1);
         let newmatr=new BisWebMatrix();
