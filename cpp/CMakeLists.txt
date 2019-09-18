@@ -669,7 +669,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     ENDIF(BIS_UNITTEST)
 
     # Do not install this just yet
-    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython/test)
+    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython)
     
 
   ENDIF(BIS_A_PYTHON)

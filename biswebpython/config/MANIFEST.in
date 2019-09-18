@@ -1,2 +1,1 @@
 recursive-include biswebpython *.txt
-recursive-include biswebpython/test *.py

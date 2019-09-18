@@ -44,7 +44,7 @@ class regressionTests(bis_basemodule.baseModule):
         if (len(vals['testdir'])>0):
             dirname=vals.testdir;
 
-        cmd=os.path.abspath(dirname+'/../test/test_module.py');
+        cmd=os.path.abspath(dirname+'/../test_module.py');
         script2=os.path.abspath(dirname+'/../../test/test_module.py');
 
         if (not os.path.exists(cmd)):

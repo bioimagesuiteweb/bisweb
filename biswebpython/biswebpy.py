@@ -45,8 +45,6 @@ if (argc<2):
     initialError('Specify the tool to load ...');
     sys.exit(0);
 
-#print('\n\t'.join(sys.argv))
-
 toolname=sys.argv[1];
 tname=toolname.lower();
 
