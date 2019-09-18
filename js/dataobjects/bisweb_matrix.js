@@ -97,22 +97,51 @@ class BisWebMatrix extends BisWebDataObject{
     load(fobj) {
         const self=this;
         return new Promise( (resolve,reject) => {
+
+            let fname=fobj;
+            if (fname.name) 
+                fname=fname.name;
+            let ext=fname.split('.').pop().toLowerCase();
+            if (ext==='binmatr') {
+                genericio.read(fobj, true).then((contents) => {
+                    self.parseBinaryMatrix(contents.data,reject);
+                    self.setFilename(contents.filename);
+                    console.log('++++\t loaded binary matrix  '+this.filename,' ',this.getDescription());
+                    resolve('loaded binary  matrix from '+contents.filename);
+                    return;
+                });
+                return;
+            }
+            
             genericio.read(fobj, false).then((contents) => {
                 self.parseFromText(contents.data,contents.filename,reject);
                 self.setFilename(contents.filename);
                 console.log('++++\t loaded matrix  '+this.filename,' ',this.getDescription());
-                resolve('loaded matrix transformation from '+contents.filename);
+                resolve('loaded matrix from '+contents.filename);
                 
             }).catch( (e) => { reject(e); });
         });
     }
-
 
     /** saves an object to a filename. 
      * @param {string} filename - the filename to save to. If in broswer it will pop up a FileDialog
      * @return {Promise} a promise that is fuilfilled when the image is saved
      */
     save(filename) {
+
+        let fname=filename;
+        if (fname.name) 
+            fname=fname.name;
+        let ext=fname.split('.').pop().toLowerCase();
+        if (ext==='binmatr' ) {
+            let output=this.serializeToBinaryMatrix();
+            genericio.write(filename,output).then( (f) => {
+                console.log('++++\t saved binary matrix in '+filename);
+                resolve(f);
+            }).catch( (e) => { return 0;});
+            return;
+        }
+        
         let output = this.serializeToText(filename);
         return new Promise( function(resolve,reject) {
             genericio.write(filename,output).then( (f) => {
@@ -437,6 +466,89 @@ class BisWebMatrix extends BisWebDataObject{
 
         return this.serializeToJSON(false);
     }
+
+    /** parse binary matrix
+     * @param {Buffer} data
+     * @param {Function} reject
+     */
+    parseBinaryMatrix(data,reject) {
+        
+        let head=new Uint16Array(data.buffer,0,4);
+        if (head[0]!==1700) {
+            reject('Bad header in binary matrix')
+            return;
+        }
+
+        let tp=head[1];
+        let idat=null;
+
+        if (tp===2) {
+            idat=new Float32Array(head,head[2]*head[3],16);
+            this.data=new Float32Array(head[2]*head[3]);
+            this.datatype='float';
+        } else if (this.datatype==='double') {
+            idat=new Float64Array(head[2]*head[3],16);
+            this.data=new Float64Array(head[2]*head[3]);
+            this.datatype='double';
+        } else {
+            head[1]=1;
+            idat=new Int64Array(head[2]*head[3],16);
+            this.data=new Int64Array(head[2]*head[3]);
+            this.datatype='int64';
+        }
+
+        for (let i=0;i<head[2]*head[3];i++)
+            this.data[i]=idat[i];
+        this.dimensions=[ head[2],head[3] ];
+
+        console.log(this.getDescription());
+        console.log(this.data.length);
+        
+        idat=null;
+        head=null;
+        return 1;
+    }
+
+    /** store in binary matrix */
+    serializeToBinaryMatrix() {
+
+        let hd=new Uint16Array(4);
+        hd[0]=1700;
+        hd[1]=0;
+        hd[2]=this.dimensions[0];
+        hd[3]=this.dimensions[1];
+
+
+        
+        let dat=null;
+        
+        if (this.datatype=='float') {
+            hd[1]=2;
+            dat=new Float32Array(hd[2]*hd[3]);
+        } else if (this.datatype==='double') {
+            hd[1]=3;
+            dat=new Float64Array(hd[2]*hd[3]);
+        } else {
+            hd[1]=1;
+            dat=new Int64Array(hd[2]*hd[3]);
+        }
+
+        for (let i=0;i<hd[2]*hd[3];i++)
+            dat[i]=this.data[i];
+
+
+        let a=new Uint8Array(hd.buffer);
+        let b=new Uint8Array(dat.buffer);
+        
+        let c=new Uint8Array(b.length+a.length);
+        c.set(a,0);
+        c.set(b,a.length);
+        console.log(a.length,b.length,c.length);
+        dat=null;
+        hd=null;
+        return c;
+    }
+
 
     /** parse string from .matr file 
      * @param {string} filestring

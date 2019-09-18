@@ -62,8 +62,9 @@ namespace bisImageDistanceMatrix {
     int dim[5]; Input->getDimensions(dim);
     float spa[5]; Input->getSpacing(spa);
     
+    int dim1[5]; ObjectMap->getDimensions(dim1);    
     int dim2[5]; IndexMap->getDimensions(dim2);
-    int dim1[5]; ObjectMap->getDimensions(dim2);
+
   
     int sum=0;
     for (int i=0;i<=2;i++)
@@ -73,6 +74,10 @@ namespace bisImageDistanceMatrix {
       }
     if (sum>0)
       {
+        std::cerr << "Dim=" << dim[0] << "," << dim[1] << "," << dim[2] << std::endl;
+        std::cerr << "Dim1=" << dim1[0] << "," << dim1[1] << "," << dim1[2] << std::endl;
+        std::cerr << "Dim2=" << dim2[0] << "," << dim2[1] << "," << dim2[2] << std::endl;
+        
         std::cerr <<"Input, ObjectMap IndexMap must have the same dimensions. Cannot run sum=" << sum << std::endl;
         return 0;
       }
@@ -307,7 +312,7 @@ namespace bisImageDistanceMatrix {
           }
       }
 
-    std::cout << "+++++ Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size() << std::endl;
+    std::cout << "+++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
     
     delete [] d_dist;
     delete [] d_index;
@@ -395,7 +400,7 @@ namespace bisImageDistanceMatrix {
               }
           }
       }
-    std::cout << "+++++ Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size() << std::endl;
+    std::cout << "+++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
   
   }
 // ---------------------------------------------------------------------------
@@ -576,9 +581,9 @@ unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned cha
     std::cout << "........................" << std::endl;
     std::cout << ".... Beginning image distance matrix computation " << std::endl;
     int dim[5]; inp_image->getDimensions(dim);
-    std::cout << ".... \t Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "....      Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
     obj_image->getDimensions(dim);
-    std::cout << ".... \t Objectmap  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "....      Objectmap  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
     std::cout << "........................" << std::endl << std::endl;
   }
 
@@ -612,7 +617,7 @@ unsigned char* computeImageIndexMapWASM(unsigned char* input,int debug) {
     std::cout << "........................" << std::endl;
     std::cout << ".... Beginning image indexmap computation " << std::endl;
     int dim[5]; inp_image->getDimensions(dim);
-    std::cout << ".... \t Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "....      Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
   }
 
   std::unique_ptr<bisSimpleImage<int> > result(bisImageDistanceMatrix::createIndexMap(inp_image.get()));

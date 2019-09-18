@@ -26,6 +26,11 @@ const BisWebMatrix=require('bisweb_matrix');
 const path=require('path');
 const os=require('os');
 const libbiswasm=require('libbiswasm_wrapper');
+const tempfs = require('temp').track();
+
+const tmpDirPath=tempfs.mkdirSync('test_image');
+const tmpFname1=path.resolve(tmpDirPath,'matrix1.binmatr');
+const tmpFname2=path.resolve(tmpDirPath,'matrix2.binmatr');
 
 let gold = [ new BisWebMatrix(),
              new BisWebMatrix()];
@@ -100,6 +105,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         let result=out.compareWithOther(indexmap);
         console.log(result);
         assert.equal(true,result.testresult);
+        return Promise.resolve();
 
     });
 
@@ -114,6 +120,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         let result=out2.compareWithOther(gold[0]);
         console.log(result);
         assert.equal(true,result.testresult);
+        return Promise.resolve();
 
     });
 
@@ -126,5 +133,20 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         let result=out3.compareWithOther(gold[1]);
         console.log(result);
         assert.equal(true,result.testresult);
+        return Promise.resolve();
+    });
+
+    it ('test load and save',async function() {
+
+        gold[1].save(tmpFname1);
+        console.log('Saved binary in',tmpFname1);
+        let newmatr=new BisWebMatrix();
+        newmatr.load(tmpFname1).then( () => {
+            console.log('Newmatr=',newmatr.getDescription());
+            let result=newmatr.compareWithOther(gold[1]);
+            console.log(result);
+            assert.equal(true,result.testresult);
+            return Promise.resolve();
+        });
     });
 });
