@@ -517,6 +517,11 @@ IF (BIS_A_EMSCRIPTEN)
   
 ELSE(BIS_A_EMSCRIPTEN)
 
+  SET(KITSRCS
+    ${KITSRCS}
+    vtkMultiThreader.cxx
+    bisImageDistanceMatrix.cpp
+    )
 
   
   # ---------------------------------------------------------------------------------------------
