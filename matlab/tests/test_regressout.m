@@ -23,8 +23,7 @@ function result=test_regressout(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test Regress Out');
+    [testutil,filepath,lib]=bis_testutils('Test Regress Out');
 
         
     %"command" : "regressOut -i testdata/newtests/drift_input.csv -r testdata/newtests/drift.csv",
@@ -62,5 +61,6 @@ function result=test_regressout(debug)
 
     result=testutil.compare(gold,output,'Regress Out',0,0.1);
 
+    testutil.cleanup();
 
 end

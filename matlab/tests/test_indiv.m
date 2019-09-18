@@ -52,6 +52,10 @@ function result = test_indiv(debug)
    indiv_ptr=bis_individualizedparcellation(fmri,group,sigma,numexemplars,debug,'false');
    result2=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation Double',0,0.1);
 
-   result=min(result,result2);
-   
+    a=result2{2};
+    b=result{2};
+    d=min(a,b);
+    result={ 'Test_indiv'; d };
+    testutil.cleanup();
+
 end
