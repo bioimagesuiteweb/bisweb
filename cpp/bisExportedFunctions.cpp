@@ -1784,7 +1784,7 @@ unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug) {
   if (debug) {
     int dim[5];
     in_image->getDimensions(dim);
-    std::cout << "timeSeriesNOrmalizeImage dim=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "beginning timeSeriesNormalizeImage dim=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
   }
   
   int ok=bisfMRIAlgorithms::normalizeTimeSeriesImage(in_image.get(),out_image.get());
