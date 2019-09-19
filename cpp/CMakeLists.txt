@@ -61,9 +61,6 @@ SET (BISWEB_PYTHON_REQUIREMENTS ${BISWEBPYTHON_SOURCE_DIR}/config/requirements.t
 SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
 SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
 
-# Needed for everything
-FIND_PROGRAM(NodeInterp node)
-
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
 # ---------------------------------------------------------------------------------------------
@@ -352,7 +349,7 @@ IF (BIS_A_EMSCRIPTEN)
     ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
       DEPENDS ${lib} ${TOOLS_DIR}/bis_create_wasm_module.js
       COMMENT "\nCreating Webpack Wasm Module"
-      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE} --gpl ${GPL})
+      COMMAND ${NODE_JS_EXECUTABLE} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE} --gpl ${GPL})
     add_custom_target(wasm_${lib} ALL DEPENDS ${WEBPACK_WASM_MODULE})
   endforeach(lib ${LIBLIST})
 
@@ -366,7 +363,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2}
     DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt ${LIBNAME}
     PRE_BUILD COMMENT "Creating JS Wrappers"
-    COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
+    COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
   
   # ---- create library for command line  -----------
@@ -436,7 +433,7 @@ IF (BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MODULE_LIST_FILENAME}
       DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Unix)"
-      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
+      COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
 
     GET_FILENAME_COMPONENT(MODULE2_DIR ${LIBRARY_OUTPUT_PATH}/winbin ABSOLUTE)
     SET(MODULE_LIST_FILENAME2 "${MODULE2_DIR}/ModuleList.txt")
@@ -444,7 +441,7 @@ IF (BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MODULE_LIST_FILENAME2}
       DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
-      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
+      COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
     
     add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME})
 
@@ -602,7 +599,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${PYTHON_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
       PRE_BUILD COMMENT "Creating Python Header"
-      COMMAND ${NodeInterp} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
+      COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
       )
     add_custom_target(wrappers_py ALL DEPENDS ${PYTHON_WRAP_OUTPUT})
     install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION biswebpython/lib)
@@ -617,7 +614,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
       DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+      COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
@@ -698,7 +695,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT}
       PRE_BUILD COMMENT "Creating Matlab Header"
-      COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
+      COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
     add_custom_target(wrappers_mat ALL DEPENDS ${MATLAB_WRAP_OUTPUT})
     install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION biswebmatlab)
     
@@ -706,7 +703,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MATLAB_OUT_HEADER}
       DEPENDS ${PARSE_HEADERS} ${HEADER_SCRIPT} CMakeLists.txt
       PRE_BUILD COMMENT "Creating Matlab Header"
-      COMMAND ${NodeInterp} ${HEADER_SCRIPT} -i ${PARSE_LIST} -o ${MATLAB_OUT_HEADER})
+      COMMAND ${NODE_JS_EXECUTABLE} ${HEADER_SCRIPT} -i ${PARSE_LIST} -o ${MATLAB_OUT_HEADER})
     add_custom_target(header_mat ALL DEPENDS ${MATLAB_OUT_HEADER})
     install (FILES ${MATLAB_OUT_HEADER} DESTINATION biswebmatlab)
 
