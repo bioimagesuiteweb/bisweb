@@ -2,7 +2,7 @@
 
 
 ---
-[ [JS-npm](https://www.npmjs.com/search?q=bisweb)
+[ [JS-npm](https://www.npmjs.com/package/biswebnode)]
 [ [Python-pypi](https://pypi.org/project/biswebpython/) ]
 [ [Docker](https://hub.docker.com/r/bisweb/devel)]
 
