@@ -53,6 +53,13 @@ function [Eigenvectors,Eigenvalues, vbar] = my_ncut(W,nbEigenValues,dataNcut)
 %    Eigenvalues= Ncut eigenvalues, size = 1x nbEigenValues
 %
 % Timothee Cour, Stella Yu, Jianbo Shi, 2004.
+% Originally made available "This software is made publicly for research use only. It may be modified and redistributed under the terms of the GNU General Public License."
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     Normalized Cut Segmentation Code                              %
+%						                                            %	
+%  Timothee Cour (INRIA), Stella Yu (Berkeley), Jianbo Shi (UPENN)  %
+%     						                                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 2
     nbEigenValues = 8;
