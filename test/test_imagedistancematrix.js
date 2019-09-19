@@ -138,16 +138,24 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
 
     it ('test load and save',async function() {
 
-        gold[1].save('sample.binmatr');
-        gold[1].save(tmpFname1);
-        console.log('Saved binary in',tmpFname1);
-        let newmatr=new BisWebMatrix();
-        newmatr.load(tmpFname1).then( () => {
-            console.log('Newmatr=',newmatr.getDescription());
-            let result=newmatr.compareWithOther(gold[1]);
-            console.log(result);
-            assert.equal(true,result.testresult);
-            return Promise.resolve();
+        gold[1].save(tmpFname1).then( () => {
+            console.log('Saved binary in',tmpFname1);
+            let sample =  new BisWebMatrix();
+            //            gold[1].save('sample.binmatr').then( () => {
+            sample.load(path.resolve(__dirname, 'testdata/distancematrix/sample.binmatr')).then( () => {
+           
+                let newmatr=new BisWebMatrix();
+                newmatr.load(tmpFname1).then( () => {
+                    let result=newmatr.compareWithOther(gold[1]);
+                    let result2=sample.compareWithOther(gold[1]);
+                    console.log(result,result2);
+                    let ok=false;
+                    if (result.testresult && result2.testresult)
+                        ok=true;
+                    assert.equal(true,ok);
+                    return Promise.resolve();
+                });
+            });
         });
     });
 });

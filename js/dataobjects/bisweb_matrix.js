@@ -135,11 +135,12 @@ class BisWebMatrix extends BisWebDataObject{
         let ext=fname.split('.').pop().toLowerCase();
         if (ext==='binmatr' ) {
             let output=this.serializeToBinaryMatrix();
-            genericio.write(filename,output).then( (f) => {
-                console.log('++++\t saved binary matrix in '+filename);
-                resolve(f);
-            }).catch( (e) => { return 0;});
-            return;
+            return new Promise( function(resolve,reject) {
+                genericio.write(filename,output).then( (f) => {
+                    console.log('++++\t saved binary matrix in '+filename);
+                    resolve(f);
+                }).catch( (e) => { return 0;});
+            });
         }
         
         let output = this.serializeToText(filename);
@@ -473,7 +474,7 @@ class BisWebMatrix extends BisWebDataObject{
      */
     parseBinaryMatrix(data,reject) {
         
-        let head=new Uint16Array(data.buffer,0,4);
+        let head=new Uint32Array(data.buffer,0,4);
         if (head[0]!==1700) {
             reject('Bad header in binary matrix')
             return;
@@ -498,8 +499,9 @@ class BisWebMatrix extends BisWebDataObject{
             this.data=new Int64Array(matsize);
             this.datatype='int64';
         }
-        for (let i=0;i<matsize;i++)
+        for (let i=0;i<matsize;i++) {
             this.data[i]=idat[i];
+        }
         this.dimensions=[ head[2],head[3] ];
 
         idat=null;
@@ -517,7 +519,7 @@ class BisWebMatrix extends BisWebDataObject{
         let matsize=this.dimensions[0]*this.dimensions[1];
         let output=new Uint8Array(sz*matsize+16);
         
-        let hd=new Uint16Array(output.buffer,0,4);
+        let hd=new Uint32Array(output.buffer,0,4);
         hd[0]=1700;
         hd[1]=0;
         hd[2]=this.dimensions[0];
@@ -534,7 +536,7 @@ class BisWebMatrix extends BisWebDataObject{
             sz=8;
         } else {
             hd[1]=1;
-            dat=new Int64Array(output.buffer,16,matsize,16);
+            dat=new Int64Array(output.buffer,16,matsize);
         }
 
         for (let i=0;i<matsize;i++) {

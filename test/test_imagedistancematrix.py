@@ -19,6 +19,8 @@ import os
 import sys
 import numpy as np
 import unittest
+import tempfile
+
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.insert(0,os.path.abspath(my_path+'/../'));
 sys.path.insert(0,os.path.abspath(my_path+'/../biswebpython/modules'));
@@ -151,6 +153,38 @@ class TestImageDistanceMatrix(unittest.TestCase):
         
         self.assertEqual(testpass,True);
 
+    def test_loadsparse(self):
+
+        fname=(my_path+'/../test/testdata/distancematrix/sample.binmatr');
+        print(' ... loading',fname);
+        binM = bisMatrix();
+        binM.load(fname);
+
+        with tempfile.TemporaryDirectory() as tempdname:
+            out=tempdname+'/test.binmatr';
+            binM.save(out);
+
+            binM2 = bisMatrix();
+            binM2.load(out);
+            print('Loaded back from ',out);
+
+        
+            result=computeNorm2(gold[1].data_array,binM.data_array);
+            result2=computeNorm2(gold[1].data_array,binM2.data_array);
+
+            
+            if result<1 and result2<1:
+                testpass=True
+            else:
+                testpass=False;
+        
+        print('----------------------------------------------------------')
+        print('__ bin load sparse matrix=',result, 'pass=',testpass);
+        print('----------------------------------------------------------')
+        
+        self.assertEqual(testpass,True);
+
+        self.assertEqual(True,True);
         
 
 if __name__ == '__main__':
