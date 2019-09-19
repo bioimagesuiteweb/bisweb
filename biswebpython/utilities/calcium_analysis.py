@@ -1,4 +1,5 @@
 import numpy as np
+import pdb
 def topHatFilter(blueMovie,uvMovie,mask,topHat=300):
     # Mask (spatial), resize, and rotate
     # mask = np.array(Image.open('mask.tif').resize(downsampledSize, Image.BILINEAR).rotate(rotationAngle,Image.NEAREST,True))
@@ -35,6 +36,64 @@ def topHatFilter(blueMovie,uvMovie,mask,topHat=300):
     blueMovieFiltered = blueMovieFiltered.reshape(rotatedSize3D)
     uvMovieFiltered = uvMovieFiltered.reshape(rotatedSize3D)
     return blueMovieFiltered,uvMovieFiltered
+
+def expRegression(blueMovie,uvMovie,mask,debug):
+
+    # Import bis_objects and drift correction script
+    from biswebpython.modules.driftCorrectImage import driftCorrectImage
+    import biswebpython.core.bis_objects as bis_objects
+    
+    driftcorr = driftCorrectImage()
+    
+    # Make sure we have a time dimension in the input data
+    blueShape = blueMovie.shape
+    uvShape = uvMovie.shape
+
+    if (len(blueShape) == 3) and (len(uvShape) == 3):
+        print('Both input images are 3D, assuming third dimension is time and reshaping')
+        blueMovie=np.reshape(blueMovie,[blueShape[0],blueShape[1],1,blueShape[2]])
+        uvMovie=np.reshape(uvMovie,[uvShape[0],uvShape[1],1,uvShape[2]])
+    elif (len(blueShape) == 4) and (len(uvShape) == 4):
+        pass
+    else:
+        raise Exception('Blue and UV images are not the same dimension and/or are not 3/4 dimensions')
+
+
+    # Log transform input images
+    blueMovieLog=np.log(1+blueMovie)
+    uvMovieLog=np.log(1+uvMovie)
+
+
+    # Create image objects for input to drift correction
+    blueMovieDriftip = bis_objects.bisImage().create(blueMovieLog,[1,1,1,1,1],np.eye(4))
+    uvMovieDriftip = bis_objects.bisImage().create(uvMovieLog,[1,1,1,1,1],np.eye(4))
+
+    if debug:
+        blueMovieDriftip.save('calcium_down_blue_movie_mc_rot_log.nii.gz')
+        uvMovieDriftip.save('calcium_down_uv_movie_mc_rot_log.nii.gz')
+
+    #pdb.set_trace()
+
+
+    # Run first order drift correction on log transformed data
+    driftcorr.execute({'input' : blueMovieDriftip},{'weight':0,'order':1,'demean_regressor':True})
+    blueOutput=driftcorr.getOutputObject()
+    driftcorr.execute({'input' : uvMovieDriftip},{'weight':0,'order':1,'demean_regressor':True})
+    uvOutput=driftcorr.getOutputObject()
+
+    if debug:
+        blueOutput.save('calcium_down_blue_movie_mc_rot_log_reg.nii.gz')
+        uvOutput.save('calcium_down_uv_movie_mc_rot_log_reg.nii.gz')
+        
+
+    # Exponential transform data back to normal, and remove inserted time dimension
+    blueMovieRegress = np.squeeze(np.exp(blueOutput.get_data())-1)
+    uvMovieRegress = np.squeeze(np.exp(uvOutput.get_data())-1)
+
+    return blueMovieRegress, uvMovieRegress
+
+
+
 
 def twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,mask):
     from scipy import linalg

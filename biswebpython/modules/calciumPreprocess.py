@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # LICENSE
 # 
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -16,6 +18,11 @@
 # ENDLICENSE
 
 import sys
+try:
+    import bisweb_path;
+except ImportError:
+    bisweb_path=0;
+    
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
@@ -26,6 +33,7 @@ import biswebpython.utilities.calcium_analysis as calcium_analysis;
 # from PIL import Image
 
 import pdb
+import sys
 
 class calciumPreprocess(bis_basemodule.baseModule):
 
@@ -93,6 +101,13 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     "high": 1000
                 },
                 {
+                    "name": "Bleach Correction",
+                    "description": "Do exponential regression ('expReg') or top hat ('topHat')",
+                    "type": "str",
+                    "varname": "bleachType",
+                    "default": 'expReg'
+                },
+                {
                     "name": "Dual Channel?",
                     "description": "Is the input dual channel?",
                     "varname": "dual",
@@ -146,6 +161,21 @@ class calciumPreprocess(bis_basemodule.baseModule):
         topHatWindow = vals['tophat']
         rotationAngle = vals['rotation']
         downsampleRatio = vals['downsample']
+        bleachType = vals['bleachType']
+        outputEveryStep = debug
+
+        if bleachType not in ['expReg','topHat']:
+            raise Exception(ValueError, 'bleachType must be "expReg" or "topHat" (case sensitive)')
+
+
+
+        if outputEveryStep:
+            out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_down_blue_movie_mc.nii.gz')
+            out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_down_uv_movie_mc.nii.gz')
+            #out = bis_objects.bisImage().create(mask,[1,1,1,1,1],np.eye(4))
+            #out.save('mask.nii.gz')
 
 
         # Downsample, rotation
@@ -161,23 +191,36 @@ class calciumPreprocess(bis_basemodule.baseModule):
         mask = calcium_image.rotate(mask,rotationAngle)
 
         # other place is to look at is bisImage.load
-        outputEveryStep = debug
+        
         rotatedSize3D = blueMovie.shape
 
-        # Top Hat filter
-        blueMovieFiltered,uvMovieFiltered = calcium_analysis.topHatFilter(blueMovie,uvMovie,mask)
 
         if outputEveryStep:
-            out = bis.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_down_blue_movie_mc_rot.nii.gz')
+            out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_down_uv_movie_mc_rot.nii.gz')
+
+        #sys.exit()
+        
+
+        # Top Hat filter
+        if bleachType == 'topHat':
+            blueMovieFiltered,uvMovieFiltered = calcium_analysis.topHatFilter(blueMovie,uvMovie,mask)
+        elif bleachType == 'expReg':
+            blueMovieFiltered,uvMovieFiltered = calcium_analysis.expRegression(blueMovie,uvMovie,mask,outputEveryStep)
+
+        if outputEveryStep:
+            out = bis_objects.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
             out.save('calcium_down_blue_movie_mc_rot_filt.nii.gz')
-            out = bis.bisImage().create(uvMovieFiltered,[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(uvMovieFiltered,[1,1,1,1,1],np.eye(4))
             out.save('calcium_down_uv_movie_mc_rot_filt.nii.gz')
 
         #### Two-wavelength Regression
         blueReg = calcium_analysis.twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,mask)
         
         if outputEveryStep:
-            out = bis.bisImage().create(blueReg.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(blueReg.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
             out.save('calcium_down_blue_movie_mc_rot_filt_regress.nii.gz')
 
         #### dF/F
@@ -187,9 +230,9 @@ class calciumPreprocess(bis_basemodule.baseModule):
         blueDFF,uvDFF = calcium_analysis.dFF(blueMovie,uvMovieFiltered,blueReg,mask)
 
         if outputEveryStep:
-            out = bis.bisImage().create(blueDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(blueDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
             out.save('calcium_down_blue_movie_mc_rot_filt_regress_dff.nii.gz')
-            out = bis.bisImage().create(uvDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(uvDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
             out.save('calcium_down_uv_movie_mc_rot_filt_regress_dff.nii.gz')
         
         # for memory
@@ -212,6 +255,10 @@ class calciumPreprocess(bis_basemodule.baseModule):
         
         return True
 
+if __name__ == '__main__':
+    import biswebpython.core.bis_commandline as bis_commandline;
+    sys.exit(bis_commandline.loadParse(calciumPreprocess(),sys.argv,False));
 
 
 
+    
