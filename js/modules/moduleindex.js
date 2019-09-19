@@ -58,8 +58,7 @@ const moduleImports = {
     seedcorrelation : require('seedCorrelation.js'),
     computeroi : require('computeROI.js'),
     bilateralfilter : require('bilateralfilter.js'),
-//    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
-
+    timeseriesnormalizeimage: require('timeseriesNormalizeImage'),
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
     displacementfield : require('displacementField.js'),

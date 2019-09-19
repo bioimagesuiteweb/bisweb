@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global window */
-
 "use strict";
 
 /** 

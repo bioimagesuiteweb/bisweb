@@ -1,4 +1,3 @@
-/*global HTMLElement, Worker */
 
 "use strict";
 

@@ -17,9 +17,6 @@
 
 "use strict";
 
-/*global document,HTMLElement */
-
-
 const BisWebImage = require('bisweb_image');
 const webutil=require('bis_webutil');
 const $=require('jquery'); 	

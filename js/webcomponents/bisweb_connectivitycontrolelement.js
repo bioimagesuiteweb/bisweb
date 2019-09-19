@@ -15,9 +15,6 @@
     
     ENDLICENSE */
 
-/* global window,document,setTimeout,HTMLElement,Event,Image*/
-
-
 "use strict";
 
 const numeric=require('numeric');

@@ -24,7 +24,6 @@ const assert = require("assert");
 const BisWebImage=require('bisweb_image');
 const BisWebMatrix=require('bisweb_matrix');
 const path=require('path');
-const os=require('os');
 const libbiswasm=require('libbiswasm_wrapper');
 const tempfs = require('temp').track();
 
@@ -102,10 +101,10 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         });
     });
 
-   it ('test distmatrix1',async function() {
+   it ('test distmatrix1',function() {
 
-       return new Promise( async (resolve) => {
-           let out=await libbiswasm.computeImageIndexMapWASM(obj,true);
+       return new Promise( (resolve) => {
+           let out=libbiswasm.computeImageIndexMapWASM(obj,true);
            let result=out.compareWithOther(indexmap);
            console.log('....',result);
            assert.equal(true,result.testresult);
@@ -113,28 +112,29 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
        });
     });
 
-    it ('test distmatrix2',async function() {
+    it ('test distmatrix2',function() {
 
-        return new Promise( async (resolve) => {
+        return new Promise( (resolve) => {
 
-            let out2=await libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : true,
-                                                                               "radius" : 3.0,
-                                                                               "numthreads" : 1
-                                                                             },0);            
+            let out2=libbiswasm.computeImageDistanceMatrixWASM(img,obj,
+                                                      { "useradius" : true,
+                                                        "radius" : 3.0,
+                                                        "numthreads" : 1
+                                                      },0);
             let result=out2.compareWithOther(gold[0]);
             console.log('....',result);
             assert.equal(true,result.testresult);
             resolve();
         });
-
+        
     });
 
-    it ('test distmatrix3',async function() {
-        return new Promise( async (resolve) => {
-            let out3=await libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : false,
-                                                                               "sparsity" : 0.1,
-                                                                               "numthreads" : 1
-                                                                             },0);
+    it ('test distmatrix3',function() {
+        return new Promise( (resolve) => {
+            let out3=libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : false,
+                                                                         "sparsity" : 0.1,
+                                                                         "numthreads" : 1
+                                                                       },0);
             let result=out3.compareWithOther(gold[1]);
             console.log('....',result,' type=',out3.data.constructor.name,out3.datatype);
             assert.equal(true,result.testresult);
@@ -142,8 +142,8 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         });
     });
 
-    it ('test load and save',async function() {
-        return new Promise( async (resolve) => {
+    it ('test load and save',function() {
+        return new Promise( (resolve) => {
             gold[1].save(tmpFname1).then( () => {
                 let sample =  new BisWebMatrix();
                 //            gold[1].save('sample.binmatr').then( () => {
@@ -165,8 +165,8 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         });
     });
 
-    it ('test load and save double',async function() {
-        return new Promise( async (resolve) => {
+    it ('test load and save double', function() {
+        return new Promise( (resolve) => {
             let sample =  new BisWebMatrix();
             sample.load(path.resolve(__dirname, 'testdata/distancematrix/double.binmatr')).then( () => {
                 sample.save(tmpFname2).then( () => {

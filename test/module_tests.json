@@ -871,8 +871,7 @@
             "command" : "timeseriesNormalizeImage --input testdata/indiv/prep.nii.gz --debug true",
             "test"    : "--test_target testdata/indiv/normalized.nii.gz",
             "result"  : true,
-            "dopython": true,
-            "skipjs"  : true
+            "dopython": true
         }
 
     ]

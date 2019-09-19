@@ -304,15 +304,20 @@ gulp.task('eslint',  () => {
             },
             "rules": {
                 'no-console': 'off',
+                'no-prototype-builtins': 'off',
                 'indent' : 'off',
                 "semi": [
                     "error",
                     "always"
                 ]
-            }
+            },
+            'globals' : [
+                'BigInt64Array' ,
+                'BigUint64Array' 
+            ]
+                
         })).pipe(eslint.format());
 });
-
 
 gulp.task('watch', () => { 
     return gulp.watch(internal.lintscripts, gulp.series('eslint'));

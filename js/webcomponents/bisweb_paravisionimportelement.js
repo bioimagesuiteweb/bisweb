@@ -15,8 +15,6 @@
     
     ENDLICENSE */
 
-/* global window */
-
 //const util=require('bis_util');
 const BisWebImage = require('bisweb_image');
 const bisbruker=require('bis_asyncreadbruker');

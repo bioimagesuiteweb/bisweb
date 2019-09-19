@@ -138,119 +138,130 @@ class PreprocessOpticalModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('PreprocessOptical invoking with vals', JSON.stringify(vals));
-        return new Promise( (resolve, reject) => {
-            let input = this.inputs['input'];
-            let debug=vals['debug'];
-            let output=input;
-            
-            let d=input.getDimensions();
-            if (d[0]>512 || d[1]>512 || d[2]>512) {
 
-                let spa=input.getSpacing();
-                for (let i=0;i<=2;i++) {
-                    if (d[i]>512)
-                        spa[i]=spa[i]*d[i]/512;
-                }
+        let input = this.inputs['input'];
+        let debug=vals['debug'];
+        let l_output=input;
+        
+        let d=input.getDimensions();
+        if (d[0]>512 || d[1]>512 || d[2]>512) {
+            
+            let spa=input.getSpacing();
+            for (let i=0;i<=2;i++) {
+                if (d[i]>512)
+                    spa[i]=spa[i]*d[i]/512;
+            }
+            console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+            console.log('JS Resampling to go below 512 x 512 from',d.join(','));
+            l_output=smreslice.resampleImage(input,spa,1);
+            console.log(' \t\t output =',l_output.getDimensions().join(','));
+        }
+        
+        let internal_fn= ( async () => {
+
+            let current_output=l_output;
+            
+            if (vals['ras']) {
                 console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                console.log('JS Resampling to go below 512 x 512 from',d.join(','));
-                output=smreslice.resampleImage(input,spa,1);
-                console.log(' \t\t output =',output.getDimensions().join(','));
+                console.log('Image reorient first ');
+                
+                let mod0=new reorientModule();
+                mod0.makeInternal();
+                await mod0.execute( {'input' : current_output },
+                                    { 'orient' : 'RAS', 'debug' : debug });
+                current_output=mod0.getOutputObject('output');
             }
             
-            biswrap.initialize().then( async () => {
-
-                if (vals['ras']) {
-                    console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                    console.log('Image reorient first ');
-                    
-                    let mod0=new reorientModule();
-                    mod0.makeInternal();
-                    await mod0.execute( {'input' : output },
-                                        { 'orient' : 'RAS', 'debug' : debug });
-                    output=mod0.getOutputObject('output');
-                }
-    
-                if (vals['biascorrect']>0) {
-                    console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                    let mod1=new biasCorrectModule();
-                    mod1.makeInternal();
-                    await mod1.execute( { 'input' : output },
-                                        { 'axis' : 'z', 'debug' : debug });
-                    output=mod1.getOutputObject('output');
-                }
-
-                if (vals['sigma']>0.1) {
-                    console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                    let mod2=new smoothModule();
-                    mod2.makeInternal();
-                    let spa=output.getSpacing();
-                    await mod2.execute( {'input' : output },
-                                        { 'sigma' : spa[0] , 'inmm' : true ,'debug' :debug});
-                    output=mod2.getOutputObject('output');
-                }
-
-                
-                if (vals['resample']) {
-                    console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                    let spa=output.getSpacing();
-                    let mod25=new resampleModule();
-                    mod25.makeInternal();
-                    let s=vals['factor']*spa[2];
-                    await mod25.execute( {'input' : output },
-                                         { 'xsp' : s,
-                                           'ysp' : s,
-                                           'zsp' : s,
-                                           'debug' :debug });
-                    output=mod25.getOutputObject('output');
-                } 
-                
-
-                if (vals['normalize']) {
-                    console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                    let mod3=new normalizeModule();
-                    mod3.makeInternal();
-                    await mod3.execute( {'input' : output },
-                                        {'perhigh' : 0.995,'debug' :debug });
-                    output=mod3.getOutputObject('output');
-                }
-
-                if (vals['mask']) {
-                    let mod4=new segmentModule();
-                    mod4.makeInternal();
-                    await mod4.execute({ 'input': output },
-                                       { 'numclasses' : 3 ,
-                                         'smoothness' : 0.0 ,
-                                         'debug' : debug
-                                       });
-                    let tmp=mod4.getOutputObject('output');
-
-                    let mod5=new maskModule();
-                    mod5.makeInternal();
-                    await mod5.execute({
-                        'input': output,
-                        'mask' : tmp
-                    }, {
-                        'threshold' : 1.0 ,
-                        'debug' : debug
-                    });
-                    output=mod5.getOutputObject('output');
-                }
-                
+            if (vals['biascorrect']>0) {
                 console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                let mod4=new shiftScaleModule();
+                let mod1=new biasCorrectModule();
+                mod1.makeInternal();
+                await mod1.execute( { 'input' : current_output },
+                                    { 'axis' : 'z', 'debug' : debug });
+                current_output=mod1.getOutputObject('output');
+            }
+            
+            if (vals['sigma']>0.1) {
+                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+                let mod2=new smoothModule();
+                mod2.makeInternal();
+                let spa=current_output.getSpacing();
+                await mod2.execute( {'input' : current_output },
+                                    { 'sigma' : spa[0] , 'inmm' : true ,'debug' :debug});
+                current_output=mod2.getOutputObject('output');
+            }
+            
+            
+            if (vals['resample']) {
+                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+                let spa=current_output.getSpacing();
+                let mod25=new resampleModule();
+                mod25.makeInternal();
+                let s=vals['factor']*spa[2];
+                await mod25.execute( {'input' : current_output },
+                                     { 'xsp' : s,
+                                       'ysp' : s,
+                                       'zsp' : s,
+                                       'debug' :debug });
+                current_output=mod25.getOutputObject('output');
+            } 
+            
+            
+            if (vals['normalize']) {
+                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+                let mod3=new normalizeModule();
+                mod3.makeInternal();
+                await mod3.execute( {'input' : current_output },
+                                    {'perhigh' : 0.995,'debug' :debug });
+                current_output=mod3.getOutputObject('output');
+            }
+            
+            if (vals['mask']) {
+                let mod4=new segmentModule();
                 mod4.makeInternal();
-                await mod4.execute( {'input' : output },
-                                    { 'shift' : 0,
-                                      'scale' : 1.0,
-                                      'outtype' : 'UChar'
-                                    });
-                output=mod4.getOutputObject('output');
-                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                console.log('Output = ',output.getDescription());
+                await mod4.execute({ 'input': current_output },
+                                   { 'numclasses' : 3 ,
+                                     'smoothness' : 0.0 ,
+                                     'debug' : debug
+                                   });
+                let tmp=mod4.getOutputObject('output');
                 
-                this.outputs['output'] = output;
-                resolve();
-                
+                let mod5=new maskModule();
+                mod5.makeInternal();
+                await mod5.execute({
+                    'input': current_output,
+                    'mask' : tmp
+                }, {
+                    'threshold' : 1.0 ,
+                    'debug' : debug
+                });
+                current_output=mod5.getOutputObject('output');
+            }
+            
+            console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+            let mod4=new shiftScaleModule();
+            mod4.makeInternal();
+            await mod4.execute( {'input' : current_output },
+                                { 'shift' : 0,
+                                  'scale' : 1.0,
+                                  'outtype' : 'UChar'
+                                });
+            current_output=mod4.getOutputObject('output');
+            console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+            console.log('Output = ',current_output.getDescription());
+            
+            this.outputs['output'] = current_output;
+            return Promise.resolve();
+        });
+        
+
+        return new Promise( (resolve,reject) => {
+            biswrap.initialize().then(() => {
+                internal_fn().then( () => {
+                    resolve();
+                }).catch( (e) => {
+                    reject(e);
+                });
             }).catch( (e) => {
                 reject(e.stack);
             });

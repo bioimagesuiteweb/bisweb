@@ -99,10 +99,11 @@ var getNameFromType=function(arr) {
  */
 var getTypeFromName=function(name) {
 
-    tp=float;
+    let tp=Float32Array;
     let i=0,found=false;
     while (i< niftitypes.length && found===false) {
         let elem=niftitypes[i];
+        console.log('name=',name,elem[0]);
         if (name===elem[0]) {
             tp=elem[1];
             found=true;

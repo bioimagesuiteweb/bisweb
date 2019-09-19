@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global window,setTimeout,document,HTMLElement */
-
 "use strict";
 
 const dat = require('bisweb_datgui');

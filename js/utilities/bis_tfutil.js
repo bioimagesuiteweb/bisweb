@@ -459,7 +459,7 @@ class BisWebTensorFlowRecon {
      */
     reconstruct(tfwrapper,batchsize=2,cleanup=true) {
 
-        return new Promise( async (resolve) => { 
+        let internal_fn = ( async () => { 
             if (batchsize<1)
                 batchsize=1;
             let patchindexlist=this.getPatchIndices();
@@ -550,8 +550,18 @@ class BisWebTensorFlowRecon {
             if (cleanup)
                 this.cleanup();
             
-            resolve(this.getOutput());
+            return Promise.resolve(this.getOutput());
         });
+
+        return new Promise( (resolve,reject) => {
+            internal_fn().then( (m) => {
+                resolve(m);
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+                                         
+            
     }
 
 }

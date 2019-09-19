@@ -140,7 +140,7 @@ class BisWebMatrix extends BisWebDataObject{
                 genericio.write(filename,output).then( (f) => {
                     console.log('++++\t Saved Binary Matrix in '+filename);
                     resolve(f);
-                }).catch( (e) => { return 0;});
+                }).catch( (e) => { reject(e);});
             });
         }
         
@@ -178,7 +178,7 @@ class BisWebMatrix extends BisWebDataObject{
 
         let fn=wasmutil.getTypeFromName(this.datatype);
         this.data=new fn(bytesarr.buffer);
-        this.datatype=wasmutil.getNameFromType(this.data);
+        //this.datatype=wasmutil.getNameFromType(this.data);
         super.parseFromDictionary(b);
         return true;
     }
@@ -472,7 +472,7 @@ class BisWebMatrix extends BisWebDataObject{
         
         let head=new Uint32Array(data.buffer,0,4);
         if (head[0]!==1700) {
-            reject('Bad header in binary matrix')
+            reject('Bad header in binary matrix');
             return;
         }
 
@@ -485,17 +485,13 @@ class BisWebMatrix extends BisWebDataObject{
             idat=new Float32Array(data.buffer,16,matsize);
             this.data=new Float32Array(matsize);
         } else if (tp===1) {
-            idat=new BigInt64(data.buffer,16,matsize);
-            this.data=new BigInt64(matsize);
+            idat=new BigInt64Array(data.buffer,16,matsize);
+            this.data=new BigInt64Array(matsize);
         } else {
             idat=new Float64Array(data.buffer,16,matsize);
             this.data=new Float64Array(matsize);
         }
-
         this.data.set(idat);
-        //        for (let i=0;i<matsize;i++)
-        //                  this.data[i]=idat[i];
-
         this.datatype=wasmutil.getNameFromType(this.data);
         this.dimensions=[ head[2],head[3] ];
         return 1;

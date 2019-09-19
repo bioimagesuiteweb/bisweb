@@ -1,5 +1,3 @@
-/*global HTMLElement, Worker */
-
 "use strict";
 
 const bisutil = require('bis_util');

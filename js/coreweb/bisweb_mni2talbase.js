@@ -15,7 +15,6 @@
     
     ENDLICENSE */
 
-/* global document,Image */
 "use strict";
 
 const genericio=require('bis_genericio');

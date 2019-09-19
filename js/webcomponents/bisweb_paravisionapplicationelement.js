@@ -21,13 +21,7 @@
  * @version 1.0
  */
 
-
-
-/*global window, document,HTMLElement */
-
 "use strict";
-
-
 
 const webutil=require('bis_webutil');
 const FastClick=require('fastclick');

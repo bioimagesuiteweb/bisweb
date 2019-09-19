@@ -1,5 +1,3 @@
-/* global document */
-
 "use strict";
 
 const $=require('jquery');

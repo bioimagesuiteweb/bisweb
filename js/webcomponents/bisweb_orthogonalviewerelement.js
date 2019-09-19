@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global document */
-
 "use strict";
 
 
