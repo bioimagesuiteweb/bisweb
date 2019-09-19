@@ -34,4 +34,4 @@ sliceBiasCorrect
 smoothImage
 thresholdImage
 regressionTests
-
+computeImageMatrixCorrelation
