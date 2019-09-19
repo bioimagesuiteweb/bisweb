@@ -16,7 +16,7 @@
 #include "bisJSONParameterList.h"
 #include "bisUtil.h"
 #include <algorithm>
-
+#include <sstream>
 
 namespace bisImageDistanceMatrix {
 
@@ -422,36 +422,15 @@ namespace bisImageDistanceMatrix {
     if (nv<NumberOfThreads)
       NumberOfThreads=nv;
 
-#ifndef BIS_USE_THREADS
-    NumberOfThreads=1;
-#endif
-
-    
     std::cout << "++++ CreateSparseMatrixParallel sparsity=" << Sparsity << " Number Of Threads= "
               << NumberOfThreads << " (max=" << VTK_MAX_THREADS  << ")" << std::endl;
     bisMThreadStructure* ds=  createThreadStructure(Input,ObjectMap,IndexMap,NumberOfThreads,Sparsity);
     Input->getImageDimensions(ds->dim);
     Input->getImageSpacing(ds->spa);
 
-    
-    if (NumberOfThreads>1) {
-      std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. Numgoodvox=" << ds->numgoodvox <<
-        ", expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
-      vtkMultiThreader* threader=new vtkMultiThreader();
-      threader->SetSingleMethod((vtkThreadFunctionType)&sparseThreadFunction,ds);
-      threader->SetNumberOfThreads(NumberOfThreads);
-      threader->SingleMethodExecute();
-    } else {
-      std::cout << "++++ \n++++ Running in Single Threaded Mode. Numgoodvox=" << ds->numgoodvox <<
-        ", expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
-      vtkMultiThreader::ThreadInfo data;
-      data.UserData=(void*)ds;
-      data.ThreadID=0;
-      data.NumberOfThreads=1;
-      sparseThreadFunction(&data);
-    }
 
-
+    std::stringstream strss;  strss <<  "Numgoodvox=" << ds->numgoodvox << ", expected total size=" << ds->numgoodvox*ds->numbest;
+    bisvtkMultiThreader::runMultiThreader((vtkThreadFunctionType)&sparseThreadFunction,ds,strss.str(),NumberOfThreads);
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
     std::cout << "++++ Sparse matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
@@ -480,11 +459,6 @@ namespace bisImageDistanceMatrix {
     if (d[2]<NumberOfThreads)
       NumberOfThreads=d[2];
 
-#ifndef BIS_USE_THREADS
-    NumberOfThreads=1;
-#endif
-
-  
     std::cout << "++++ Beginning CreateRadiusMatrixParallel. Radius=" << DistanceRadius << ", numthreads=" << NumberOfThreads << std::endl;
   
     float spa[3]; Input->getImageSpacing(spa);
@@ -517,23 +491,9 @@ namespace bisImageDistanceMatrix {
     std::cout << "++++ Parameters: maxintensity" << ds->maxintensity << ", numframes=" << ds->numframes << " distradius=" << 
       ds->DistanceRadius << std::endl;
     std::cout << "++++ Normalization=" << ds->normalization << " Mean spacing=" << meanspa << std::endl;
-    
-    if (NumberOfThreads>1) {
-       std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. Numgoodvox=" << ds->numgoodvox <<
-      "expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
-      vtkMultiThreader* threader=new vtkMultiThreader();
-      threader->SetSingleMethod((vtkThreadFunctionType)&radiusThreadFunction,ds);
-      threader->SetNumberOfThreads(NumberOfThreads);
-      threader->SingleMethodExecute();
-    } else {
-      std::cout << "++++ \n++++ About to launch in single threaded mode. Numgoodvox=" << ds->numgoodvox <<
-        "expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
-      vtkMultiThreader::ThreadInfo data;
-      data.UserData=(void*)ds;
-      data.ThreadID=0;
-      data.NumberOfThreads=1;
-      radiusThreadFunction(&data);
-    }
+
+    std::stringstream strss;  strss <<  "Numgoodvox=" << ds->numgoodvox << ", expected total size=" << ds->numgoodvox*ds->numbest;
+    bisvtkMultiThreader::runMultiThreader((vtkThreadFunctionType)&radiusThreadFunction,ds,strss.str(),NumberOfThreads);
 
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));

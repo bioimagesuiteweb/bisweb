@@ -22,6 +22,8 @@
  * method on multiple threads, or to specify a method per thread.
 */
 
+
+
 #include <iostream>
 
 const int  VTK_MAX_THREADS=32;
@@ -235,7 +237,11 @@ protected:
 
 };
 
-//using ThreadInfoStruct=vtkMultiThreader::ThreadInfo;
+
+namespace bisvtkMultiThreader {
+  void runMultiThreader(vtkThreadFunctionType func, void *data,std::string msg,int numberofthreads=1);
+}
+
 
 #endif
   

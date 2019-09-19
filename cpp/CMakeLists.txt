@@ -92,6 +92,8 @@ SET(KITSRCS
   bisExportedFunctions.cpp
   bisExportedFunctions2.cpp
   bisTesting.cpp
+  bisvtkMultiThreader.cxx
+  bisImageDistanceMatrix.cpp
   )
 
 # ---------------------------------------------------------------------------------------------
@@ -110,7 +112,7 @@ SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
 
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
-OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" OFF)
+OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" ON)
 OPTION(BIS_USECPM "Include additional files for the CPM Code" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 MARK_AS_ADVANCED(BIS_USEEXTERNAL)
@@ -174,6 +176,7 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisExportedFunctions.h
   ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
   ${CPP_SOURCE_DIR}/bisTesting.h
+  ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
   )
 
 
@@ -182,13 +185,10 @@ IF (BIS_USEINDIV)
   SET (PARSE_HEADERS
     ${PARSE_HEADERS}
     ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
-    ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
     )
   SET (KITSRCS
     ${KITSRCS}
     bisIndividualizedParcellation.cpp
-    bisvtkMultiThreader.cxx
-    bisImageDistanceMatrix.cpp
     )
   FIND_PACKAGE(IGL REQUIRED)
 ENDIF (BIS_USEINDIV)

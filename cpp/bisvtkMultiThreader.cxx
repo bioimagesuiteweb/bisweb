@@ -637,3 +637,40 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
 }
 
 
+// ------------------------------------------------
+// Additions for BisWeb
+// ------------------------------------------------
+namespace bisvtkMultiThreader {
+  void runMultiThreader(vtkThreadFunctionType func, void *ds,std::string msg,int NumberOfThreads) {
+
+#ifdef BISWASM
+    NumberOfThreads=1;
+#endif
+                        
+    if (NumberOfThreads>1)
+      {
+        std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. " << msg << std::endl << "++++" << std::endl;
+        
+        vtkMultiThreader* threader=new vtkMultiThreader();
+        threader->SetSingleMethod(func,ds);
+        threader->SetNumberOfThreads(NumberOfThreads);
+        threader->SingleMethodExecute();
+        //delete threader;
+      }
+    else
+      {
+        std::cout << "++++ \n++++ Running in Single Threaded Mode." << msg << std::endl << "++++" << std::endl;
+        vtkMultiThreader::ThreadInfo data;
+        data.UserData=(void*)ds;
+        data.ThreadID=0;
+        data.NumberOfThreads=1;
+        func(&data);
+      }
+  }
+}
+
+
+
+
+  
+
