@@ -289,7 +289,7 @@ function moduleOutput = bis_wasmutils()
 	  case 'int8'
 	    out=1;
 	  case 'uint16'
-	    out=2
+	    out=2;
 	  case 'uint32'
 	    out=4;
     end

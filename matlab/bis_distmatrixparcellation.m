@@ -6,10 +6,7 @@
 % Fourth argument is Euclidean distance weight
 function output=bis_distmatrixparcellation(distancematrix,indexmap,no_cluster,sm_weight)
 
-    sparseI=distancematrix(:,1:2);
-    sparseM=distancematrix(:,3:4);
-
-    disp(['Sparse Matrix=',mat2str(sparseI(1:3,:)),' ', mat2str(sparseM(1:3,:))]);
+    disp(['____ Sparse Matrix=',mat2str(distancematrix(1:3,:))]);
     indexmap.print('indexmap');
 
     % Compute Key parameters
@@ -18,25 +15,28 @@ function output=bis_distmatrixparcellation(distancematrix,indexmap,no_cluster,sm
     len = double(max(max(max(ind_img))));
     disp(['____ max row number from index image=', num2str(len)]);
 
-    %  Create Sparse Matrix
-    % 2 is SSD, 3=Euclidean 1=sum
-    size(sparseM)
-    
-    a=sparseM(:,1:1)+sm_weight*sparseM(:,2:2);
-    sigma=median(a);
+    sz=size(distancematrix);
+    if ( sz(2)==4 ) 
+        % We have a sparse matrix
+        %  Create Sparse Matrix
+        % 1 is SSD, 2=Euclidean 
+        dst=distancematrix(:,3:3)+sm_weight*distancematrix(:,4:4);
+        sigma=median(dst);
+        disp(['____ sigma (sparse)=',num2str(sigma)]);
+        w = sparse(distancematrix(:,1), distancematrix(:,2), exp(- (dst/sigma).^2), len, len);
+        clear dst;
+    else
+        sigma=median(distancematrix);
+        disp(['____ sigma (dense)=',num2str(sigma)]);
+        w = exp(- (distancematrix/sigma).^2);
+    end
+       
+    w=0.5*(w+transpose(w));
+    disp(['____ density=', num2str(nnz(w)/prod(size(w)))]);
 
-    disp(['____ sigma=',num2str(sigma)]);
-    w = sparse(sparseI(:,1), sparseI(:,2), exp(- (a/sigma).^2), len, len);
-    w=w+w';
-    disp(['density=', num2str(nnz(w)/prod(size(w)))]);
-
-    disp('top 5x5');
+    disp('____ top 5x5 of W');
     full(w(1:5,1:5))
-
-    clear sparseM;
-    clear sparseI;
-
-
+      
     % Do Clustering
     disp(['num clusters=', num2str(no_cluster)]);
     disp('Computing clustering');

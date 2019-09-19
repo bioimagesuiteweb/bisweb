@@ -137,9 +137,9 @@ options.tol = dataNcut.eigsErrorTolerance;
 options.p = max(35,2*nbEigenValues); %voir
 options.p = min(options.p,n);
 
-%warning off
+warning off
 [vbar,s] = eigs(PP,nbEigenValues,'LA',options); 
-%warning on
+warning on
 
 s = real(diag(s));
 [x,y] = sort(-s); 

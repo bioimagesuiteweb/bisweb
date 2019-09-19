@@ -22,36 +22,40 @@ function result = test_xcluster(debug)
     end
 
     [testutil,filepath,lib]=bis_testutils();
+    
     testutil.printheader('Test Indiv');
     fname1= testutil.getTestFilename([ 'indiv' filesep 'prep.nii.gz' ]);
     fname2= testutil.getTestFilename([ 'indiv' filesep 'group.nii.gz' ]);
+    
 
     % Load Images
     disp('-----')
     parc = bis_image(fname2,debug+1);
-    disp('-----')
     fmri =  bis_image(fname1,debug+1);
-    disp('-----')
-
-    disp('-------------------------------------------------')
-
+    
+    
+    % Create binary mask from group parcellation
     imgdata=uint16(parc.getImageData()>0);
     newmask=bis_image();
-    newmask.create(imgdata,parc.getSpacing(),parc.getAffine())
-    newmask.print('newmask');
+    newmask.create(imgdata,parc.getSpacing(),parc.getAffine());
+    newmask.print('created binary mask');
 
+    disp('-------------------------------------------------')
+    % Compute distance matrix
     param.useradius='true';
     param.radius=8.0;
+    param.sparsity=0.1;
     param.numthreads=2;
-    disp('-------------------------------------------------')
     distmatrix=bis_imagedistancematrix(fmri,newmask,param,1);
-    disp([' Sparse Matrix Computed',mat2str(size(distmatrix))]);
+    
 
     disp('-------------------------------------------------')
-
+    
     indexmap=lib.computeImageIndexMapWASM(newmask,0);
     indexmap.print('Indexmap');
 
+    disp('-------------------------------------------------')
+    
     parcellation=bis_distmatrixparcellation(distmatrix,indexmap,20,1.0);
     parcellation.print('Parcellation');
     result=parcellation;

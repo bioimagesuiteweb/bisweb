@@ -7,11 +7,13 @@
 %    param.radius=3.0;     used if radius=true
 %    param.sparsity=0.1;   used if radius=false
 %    param.numthreads=2;   number of threads to run
+%
 % Fourth argument is debug flag
 function output=bis_imagedistancematrix(input,objectmap,param,debug)
 
     bispath();
     lib=biswrapper();
+    
 
     if nargin<4
         debug=0;
@@ -21,7 +23,12 @@ function output=bis_imagedistancematrix(input,objectmap,param,debug)
         param={};
     end
 
+    output=0;
+    
+
     output=lib.computeImageDistanceMatrixWASM(input,objectmap,param,debug);
+
+    disp(' ');
 
     if (debug>0)
         disp(['____ Sparse Distance Matrix computed ',mat2str(size(output)) ]);
