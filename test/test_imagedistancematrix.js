@@ -60,7 +60,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
             dimensions : [ 5,5,1],
             spacing : [ 2.0,2.0,2.0 ]
         });
-        console.log(img.getDescription());
+        console.log('....',img.getDescription());
 
         let dat=img.getImageData();
         for (let i=0;i<25;i++)
@@ -76,7 +76,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
         indexmap=new BisWebImage();
         indexmap.cloneImage(obj);
 
-        console.log(obj.getDescription());
+        console.log('....',obj.getDescription());
         let odat=obj.getImageData();
         let idat=indexmap.getImageData();
         let index=1;
@@ -91,71 +91,99 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
                 }
             }
         }
-        console.log(idat);
-        console.log(odat);
+        console.log('____',idat);
+        console.log('____',odat);
 
         
-        Promise.all(p).then( () => { done(); });
+        Promise.all(p).then( () => {
+
+            console.log('\n\n---------------------------------------------------\n\n');
+            done();
+        });
     });
 
    it ('test distmatrix1',async function() {
 
-        let out=await libbiswasm.computeImageIndexMapWASM(obj,true);
-        console.log(out.getDescription());
-        let result=out.compareWithOther(indexmap);
-        console.log(result);
-        assert.equal(true,result.testresult);
-        return Promise.resolve();
-
+       return new Promise( async (resolve) => {
+           let out=await libbiswasm.computeImageIndexMapWASM(obj,true);
+           let result=out.compareWithOther(indexmap);
+           console.log('....',result);
+           assert.equal(true,result.testresult);
+           resolve();
+       });
     });
 
     it ('test distmatrix2',async function() {
 
+        return new Promise( async (resolve) => {
 
-        let out2=await libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : true,
-                                                                           "radius" : 3.0,
-                                                                           "numthreads" : 1
-                                                                         },0);
-        console.log(out2.getDescription());
-        let result=out2.compareWithOther(gold[0]);
-        console.log(result);
-        assert.equal(true,result.testresult);
-        return Promise.resolve();
+            let out2=await libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : true,
+                                                                               "radius" : 3.0,
+                                                                               "numthreads" : 1
+                                                                             },0);            
+            let result=out2.compareWithOther(gold[0]);
+            console.log('....',result);
+            assert.equal(true,result.testresult);
+            resolve();
+        });
 
     });
 
     it ('test distmatrix3',async function() {
-        let out3=await libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : false,
-                                                                           "sparsity" : 0.1,
-                                                                           "numthreads" : 1
-                                                                         },0);
-        console.log(out3.getDescription());
-        let result=out3.compareWithOther(gold[1]);
-        console.log(result,' type=',out3.data.constructor.name,out3.datatype);
-        assert.equal(true,result.testresult);
-        return Promise.resolve();
+        return new Promise( async (resolve) => {
+            let out3=await libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : false,
+                                                                               "sparsity" : 0.1,
+                                                                               "numthreads" : 1
+                                                                             },0);
+            let result=out3.compareWithOther(gold[1]);
+            console.log('....',result,' type=',out3.data.constructor.name,out3.datatype);
+            assert.equal(true,result.testresult);
+            resolve();
+        });
     });
 
     it ('test load and save',async function() {
-
-        gold[1].save(tmpFname1).then( () => {
-            console.log('Saved binary in',tmpFname1);
-            let sample =  new BisWebMatrix();
-            //            gold[1].save('sample.binmatr').then( () => {
-            sample.load(path.resolve(__dirname, 'testdata/distancematrix/sample.binmatr')).then( () => {
-           
-                let newmatr=new BisWebMatrix();
-                newmatr.load(tmpFname1).then( () => {
-                    let result=newmatr.compareWithOther(gold[1]);
-                    let result2=sample.compareWithOther(gold[1]);
-                    console.log(result,result2);
-                    let ok=false;
-                    if (result.testresult && result2.testresult)
-                        ok=true;
-                    assert.equal(true,ok);
-                    return Promise.resolve();
+        return new Promise( async (resolve) => {
+            gold[1].save(tmpFname1).then( () => {
+                let sample =  new BisWebMatrix();
+                //            gold[1].save('sample.binmatr').then( () => {
+                sample.load(path.resolve(__dirname, 'testdata/distancematrix/sample.binmatr')).then( () => {
+                    
+                    let newmatr=new BisWebMatrix();
+                    newmatr.load(tmpFname1).then( () => {
+                        let result=newmatr.compareWithOther(gold[1]);
+                        let result2=sample.compareWithOther(gold[1]);
+                        console.log('....',result,result2);
+                        let ok=false;
+                        if (result.testresult && result2.testresult)
+                            ok=true;
+                        assert.equal(true,ok);
+                        resolve();
+                    });
                 });
             });
         });
     });
+
+    it ('test load and save double',async function() {
+        return new Promise( async (resolve) => {
+            let sample =  new BisWebMatrix();
+            sample.load(path.resolve(__dirname, 'testdata/distancematrix/double.binmatr')).then( () => {
+                sample.save(tmpFname2).then( () => {
+                    let newmatr=new BisWebMatrix();
+                    newmatr.load(tmpFname2).then( () => {
+                        let result=newmatr.compareWithOther(sample);
+                        let result2=sample.compareWithOther(gold[1]);
+                        console.log('....',result,result2);
+                        let ok=false;
+                        if (result.testresult && result2.testresult)
+                            ok=true;
+                        assert.equal(true,ok);
+                        resolve();
+                    });
+                });
+            });
+        });
+    });
+
 });

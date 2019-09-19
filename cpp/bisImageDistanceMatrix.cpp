@@ -52,7 +52,7 @@ namespace bisImageDistanceMatrix {
 
     double r1[2];
     temp->getRange(r1);
-    //std::cout << "+++++ ImageDistanceMatrix: Index Map range=(" << r1[0] << ":" << r1[1] << ")" << std::endl;
+    //std::cout << "++++ ImageDistanceMatrix: Index Map range=(" << r1[0] << ":" << r1[1] << ")" << std::endl;
     return std::move(temp);
   }
 
@@ -130,7 +130,7 @@ namespace bisImageDistanceMatrix {
   {
     int nt=0;
 
-    fprintf(stdout,"+++++\n+++++ Threads completed, combining %d arrays (comp=%d): ",NumberOfThreads,nc);
+    fprintf(stdout,"++++ \n++++ Threads completed, combining %d arrays (comp=%d): ",NumberOfThreads,nc);
     for (int i=0;i<NumberOfThreads;i++)
       {
         int n=output_array[i].size()/nc;
@@ -224,8 +224,8 @@ namespace bisImageDistanceMatrix {
 
     int voxelrange[2];
     bisImageDistanceMatrix_ComputeFraction(thread,numthreads,ds->numvoxels,voxelrange);
-    std::cout << "+++++ Sparse Matrix Thread (" << thread << ") output_array numvoxels= " << ds->numgoodvox << " * " << ds->numbest << "numframes=" << ds->numframes <<
-      " computing " << voxelrange[0] << ":" << voxelrange[1] << std::endl;
+    std::cout << "++++ Sparse Matrix Thread (" << thread << ") output_array numvoxels= " << ds->numgoodvox << " * " << ds->numbest << ", numframes=" << ds->numframes <<
+      ". Computing " << voxelrange[0] << ":" << voxelrange[1] << std::endl;
 
     float* d_dist=new float[ds->numgoodvox+10];
     float* d_tmp =new float[ds->numgoodvox+10];
@@ -312,7 +312,7 @@ namespace bisImageDistanceMatrix {
           }
       }
 
-    std::cout << "+++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
+    std::cout << "++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
     
     delete [] d_dist;
     delete [] d_index;
@@ -330,7 +330,7 @@ namespace bisImageDistanceMatrix {
     if (slicerange[1]==0)
       slicerange[1]=1;
 
-    std::cout << "+++++ Radius Matrix Thread(" << thread << ") radius=" << ds->DistanceRadius << " computing slices " << slicerange[0] << "->" << slicerange[1] << std::endl;
+    std::cout << "++++ Radius Matrix Thread(" << thread << ") radius=" << ds->DistanceRadius << " computing slices " << slicerange[0] << "->" << slicerange[1] << std::endl;
   
     float DistanceRadius2=ds->DistanceRadius*ds->DistanceRadius;
     int slicesize=ds->dim[0]*ds->dim[1];
@@ -400,7 +400,7 @@ namespace bisImageDistanceMatrix {
               }
           }
       }
-    std::cout << "+++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
+    std::cout << "++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
   
   }
 // ---------------------------------------------------------------------------
@@ -427,7 +427,7 @@ namespace bisImageDistanceMatrix {
 #endif
 
     
-    std::cout << "+++++ CreateSparseMatrixParallel sparsity=" << Sparsity << " Number Of Threads= "
+    std::cout << "++++ CreateSparseMatrixParallel sparsity=" << Sparsity << " Number Of Threads= "
               << NumberOfThreads << " (max=" << VTK_MAX_THREADS  << ")" << std::endl;
     bisMThreadStructure* ds=  createThreadStructure(Input,ObjectMap,IndexMap,NumberOfThreads,Sparsity);
     Input->getImageDimensions(ds->dim);
@@ -435,27 +435,26 @@ namespace bisImageDistanceMatrix {
 
     
     if (NumberOfThreads>1) {
-      std::cout << "+++++\n+++++ About to launch " << NumberOfThreads << " threads. Numgoodvox=" << ds->numgoodvox <<
-        ", expected total size=" << ds->numgoodvox*ds->numbest << "\n+++++\n";
+      std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. Numgoodvox=" << ds->numgoodvox <<
+        ", expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
       vtkMultiThreader* threader=new vtkMultiThreader();
       threader->SetSingleMethod((vtkThreadFunctionType)&sparseThreadFunction,ds);
       threader->SetNumberOfThreads(NumberOfThreads);
       threader->SingleMethodExecute();
     } else {
-      std::cout << "+++++\n+++++ Running in Single Threaded Mode. Numgoodvox=" << ds->numgoodvox <<
-        "expected total size=" << ds->numgoodvox*ds->numbest << "\n+++++\n";
+      std::cout << "++++ \n++++ Running in Single Threaded Mode. Numgoodvox=" << ds->numgoodvox <<
+        ", expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
       vtkMultiThreader::ThreadInfo data;
       data.UserData=(void*)ds;
       data.ThreadID=0;
       data.NumberOfThreads=1;
-      std::cout << "Launching sparse thread function " << std::endl;
       sparseThreadFunction(&data);
     }
 
 
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
-    std::cout << "+++++ Sparse matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
+    std::cout << "++++ Sparse matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
 
     
     delete ds;
@@ -486,7 +485,7 @@ namespace bisImageDistanceMatrix {
 #endif
 
   
-    std::cout << "+++++ Beginning CreateRadiusMatrixParallel. Radius=" << DistanceRadius << ", numthreads=" << NumberOfThreads << std::endl;
+    std::cout << "++++ Beginning CreateRadiusMatrixParallel. Radius=" << DistanceRadius << ", numthreads=" << NumberOfThreads << std::endl;
   
     float spa[3]; Input->getImageSpacing(spa);
 
@@ -515,20 +514,20 @@ namespace bisImageDistanceMatrix {
     ds->maxintensity=maxintensity;
     ds->normalization=1.0;
     
-    std::cout << "+++++ Parameters: maxintensity" << ds->maxintensity << ", numframes=" << ds->numframes << " distradius=" << 
+    std::cout << "++++ Parameters: maxintensity" << ds->maxintensity << ", numframes=" << ds->numframes << " distradius=" << 
       ds->DistanceRadius << std::endl;
-    std::cout << "+++++ Normalization=" << ds->normalization << " Mean spacing=" << meanspa << std::endl;
+    std::cout << "++++ Normalization=" << ds->normalization << " Mean spacing=" << meanspa << std::endl;
     
     if (NumberOfThreads>1) {
-       std::cout << "+++++\n+++++ About to launch " << NumberOfThreads << " threads. Numgoodvox=" << ds->numgoodvox <<
-      "expected total size=" << ds->numgoodvox*ds->numbest << "\n+++++\n";
+       std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. Numgoodvox=" << ds->numgoodvox <<
+      "expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
       vtkMultiThreader* threader=new vtkMultiThreader();
       threader->SetSingleMethod((vtkThreadFunctionType)&radiusThreadFunction,ds);
       threader->SetNumberOfThreads(NumberOfThreads);
       threader->SingleMethodExecute();
     } else {
-      std::cout << "+++++\n+++++ About to launch in single threaded mode. Numgoodvox=" << ds->numgoodvox <<
-        "expected total size=" << ds->numgoodvox*ds->numbest << "\n+++++\n";
+      std::cout << "++++ \n++++ About to launch in single threaded mode. Numgoodvox=" << ds->numgoodvox <<
+        "expected total size=" << ds->numgoodvox*ds->numbest << "\n++++ \n";
       vtkMultiThreader::ThreadInfo data;
       data.UserData=(void*)ds;
       data.ThreadID=0;
@@ -538,7 +537,7 @@ namespace bisImageDistanceMatrix {
 
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
-    std::cout << "+++++ Radius matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
+    std::cout << "++++ Radius matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
 
     delete ds;
     return 1;
