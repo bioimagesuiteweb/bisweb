@@ -11,7 +11,7 @@ disp('Computing Eigenvectors');
 disp('Discretizing Eigenvectors');
 [Discrete, oEigenvectors, ini_label, ncvalue] =discretisation(Eigenvectors(:, 1:no_cluster));
 dim = size(ind_img);
-label_img = zeros(dim);
+label_img = zeros(dim,'int16');
 
 nozero = find(ind_img);
 len = double(max(max(max(ind_img))));

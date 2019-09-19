@@ -67,7 +67,7 @@ function result=test_imagedistancematrix(debug)
     param.useradius='false';
     param.sparsity=0.1;
     param.numthreads=2;
-    out2=lib.computeImageDistanceMatrixWASM(img,objectmap,param,0);
+    out2=bis_imagedistancematrix(img,objectmap,param,0);
     result2=testutil.compare(out2,goldmat,'Compute Sparse Threaded Distance Matrix',0,0.1);
 
     if (debug>0)
