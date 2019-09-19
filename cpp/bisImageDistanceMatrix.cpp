@@ -12,11 +12,13 @@
 //BIOIMAGESUITE_LICENSE  -----------------------------------------------------------------------------------
 
 
+#include <bisvtkMultiThreader.h>
 #include "bisImageDistanceMatrix.h"
 #include "bisJSONParameterList.h"
 #include "bisUtil.h"
 #include <algorithm>
 #include <sstream>
+
 
 namespace bisImageDistanceMatrix {
 
@@ -215,7 +217,7 @@ namespace bisImageDistanceMatrix {
       range[1]=numvoxels;
   }
   // --------------------------------------------------------------------------------------------------------
-  static void sparseThreadFunction(vtkMultiThreader::ThreadInfo *data)
+  static void sparseThreadFunction(bisvtkMultiThreader::vtkMultiThreader::ThreadInfo *data)
   {
 
     bisMThreadStructure   *ds = (bisMThreadStructure *)(data->UserData);
@@ -319,7 +321,7 @@ namespace bisImageDistanceMatrix {
     delete [] d_tmp;
   }
   // ---------------------------------------------------------------------------
-  static void radiusThreadFunction(vtkMultiThreader::ThreadInfo *data)
+  static void radiusThreadFunction(bisvtkMultiThreader::vtkMultiThreader::ThreadInfo *data)
   {
     bisMThreadStructure   *ds = (bisMThreadStructure *)(data->UserData);
     int thread=data->ThreadID;
@@ -430,7 +432,7 @@ namespace bisImageDistanceMatrix {
 
 
     std::stringstream strss;  strss <<  "Numgoodvox=" << ds->numgoodvox << ", expected total size=" << ds->numgoodvox*ds->numbest;
-    bisvtkMultiThreader::runMultiThreader((vtkThreadFunctionType)&sparseThreadFunction,ds,strss.str(),NumberOfThreads);
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&sparseThreadFunction,ds,strss.str(),NumberOfThreads);
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
     std::cout << "++++ Sparse matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
@@ -493,7 +495,7 @@ namespace bisImageDistanceMatrix {
     std::cout << "++++ Normalization=" << ds->normalization << " Mean spacing=" << meanspa << std::endl;
 
     std::stringstream strss;  strss <<  "Numgoodvox=" << ds->numgoodvox << ", expected total size=" << ds->numgoodvox*ds->numbest;
-    bisvtkMultiThreader::runMultiThreader((vtkThreadFunctionType)&radiusThreadFunction,ds,strss.str(),NumberOfThreads);
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&radiusThreadFunction,ds,strss.str(),NumberOfThreads);
 
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));

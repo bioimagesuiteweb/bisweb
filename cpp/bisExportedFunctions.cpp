@@ -225,8 +225,11 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
     }
 
   int bounds[6] = { 0,dim[0]-1,0,dim[1]-1,0,dim[2]-1 };
+  int bounds2[6] = { 0,dim[0]-1,0,dim[1]-1,0,dim[2]-1 };
+  int sum=0;
   for (int ia=0;ia<=5;ia++) {
     bounds[ia]=params->getIntValue("bounds",bounds[ia],ia);
+    sum=abs(bounds[ia]-bounds2[ia]);
   }
 
   float backgroundValue=params->getFloatValue("backgroundValue",0.0);
@@ -236,27 +239,7 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
   out_image->allocate(dim,spa);
   out_image->fill((BIS_TT)backgroundValue);
 
-  if (debug>1)
-    {
-      std::cout << "Before Reslicing, length=" << out_image->getLength() << std::endl;
-
-      BIS_TT* indata=inp_image->getData();
-
-      int offset=17*input_dim[1]*input_dim[0]+10*input_dim[0];
-      for (int i=15;i<18;i++)
-	std::cout << " [ " << i << ", 10,17 ]=" << (double)indata[offset+i] << std::endl;
-
-      for (int i=0;i<=2;i++)
-	std::cout << " [ " << i << ", 0,0 ]=" << (double)indata[i] << std::endl;
-      for (int j=1;j<=2;j++)
-	std::cout << " [ 0, " << j << ",0 ]=" << (double)indata[j*input_dim[0]] << std::endl;
-      for (int k=1;k<=2;k++)
-	std::cout << " [ 0 ,0 , " << k << " ]=" << (double)indata[k*input_dim[0]*input_dim[1]] << std::endl;
-
-      resliceXform->printSelf();
-      
-    }
-
+  
   if (debug>1)
     {
       std::cout << "Beginning actual Image Reslice" << std::endl;
@@ -264,7 +247,7 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
       std::cout << "\tbounds = [";
       for (int ia=0;ia<=5;ia++)
 	std::cout << bounds[ia] << " ";
-      std::cout << "]" << std::endl;
+      std::cout << "]" << " diff=" << sum << std::endl;
       std::cout << "\tout dimensions=[";
       for (int ia=0;ia<=4;ia++)
 	std::cout << dim[ia] << " ";
@@ -275,35 +258,18 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
       std::cout << "-----------------------------------" << std::endl;
     }
 
-  bisImageAlgorithms::resliceImageWithBounds(inp_image.get(),
-					     out_image.get(),
-					     resliceXform.get(),
-					     bounds,interpolation,backgroundValue);
-  if (debug>1)
-    {
-      std::cout << "Reslicing Done" << std::endl;
-      int center[3];
-      for (int ia=0;ia<=2;ia++)
-	center[ia]=(bounds[2*ia+1]-bounds[2*ia])/2+bounds[2*ia];
-
-      BIS_TT* outdata=out_image->getImageData();
-      for (int ia=0;ia<=4;ia++)
-	{
-	  int center_index=center[0]+ia+center[1]*dim[0]+center[2]*dim[0]*dim[1];
-	  float X[3],TX[3];
-	  for (int ib=0;ib<=2;ib++)
-	    {
-	      X[ib]=center[ib];
-	      if (ib==0)
-		X[ib]+=ia;
-	      X[ib]*=spa[ib];
-	    }
-	  resliceXform->transformPoint(X,TX);
-	  std::cout << "At voxel = (" << center[0]+ia << "," << center[1] << "," << center[2] << ") index=" << center_index << ", val=" << (double)outdata[center_index] << ", ";
-	  std::cout << "X=" << X[0] << "," << X[1] << "," << X[2] << " --> TX = " << TX[0] << "," << TX[1] << "," << TX[2] << " " << std::endl;
-	}
-    }
-
+  if (sum>0)
+    bisImageAlgorithms::resliceImageWithBounds(inp_image.get(),
+                                               out_image.get(),
+                                               resliceXform.get(),
+                                               bounds,interpolation,backgroundValue);
+  else
+    bisImageAlgorithms::resliceImage(inp_image.get(),
+                                     out_image.get(),
+                                     resliceXform.get(),
+                                     interpolation,backgroundValue);
+  
+  
   return out_image->releaseAndReturnRawArray();
 }
 

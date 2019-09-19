@@ -21,7 +21,6 @@
 #include "bisDefinitions.h"
 #include "bisUtil.h"
 #include "math.h"
-#include <bisvtkMultiThreader.h>
 #include <vector>
 
 namespace bisImageDistanceMatrix {

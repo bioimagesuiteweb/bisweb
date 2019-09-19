@@ -14,7 +14,7 @@
 =========================================================================*/
 #include "bisvtkMultiThreader.h"
 
-
+namespace bisvtkMultiThreader {
 
 // Need to define "vtkExternCThreadFunctionType" to avoid warning on some
 // platforms about passing function pointer to an argument expecting an
@@ -640,7 +640,7 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
 // ------------------------------------------------
 // Additions for BisWeb
 // ------------------------------------------------
-namespace bisvtkMultiThreader {
+
   void runMultiThreader(vtkThreadFunctionType func, void *ds,std::string msg,int NumberOfThreads) {
 
 #ifdef BISWASM

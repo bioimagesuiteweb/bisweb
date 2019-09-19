@@ -38,8 +38,6 @@ const int  VTK_MAX_THREADS=32;
 #else
 #endif
 
-
-
 #ifndef vtkMultiThreader_h
 #define vtkMultiThreader_h
 
@@ -51,6 +49,8 @@ const int  VTK_MAX_THREADS=32;
 #include <unistd.h> // Needed for unix implementation of pthreads
 #endif
 
+namespace bisvtkMultiThreader {
+  
 // If VTK_USE_PTHREADS is defined, then pthread_create() will be
 // used to create multiple threads
 
@@ -86,6 +86,8 @@ typedef void (*vtkThreadFunctionType)(void *);
 typedef int vtkThreadProcessIDType;
 typedef int vtkMultiThreaderIDType;
 #endif
+
+
 
 
 class vtkMultiThreader 
@@ -238,7 +240,7 @@ protected:
 };
 
 
-namespace bisvtkMultiThreader {
+
   void runMultiThreader(vtkThreadFunctionType func, void *data,std::string msg,int numberofthreads=1);
 }
 
