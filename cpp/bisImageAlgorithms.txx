@@ -1235,7 +1235,7 @@ namespace bisImageAlgorithms {
       return 0;
   
     double r[2]; roi->getRange(r);
-    if (r[1]>999 || r[0]<-3)
+    if (r[1]>9999 || r[0]<-3)
       {
 	std::cerr << "Bad ROI Image. It has largest value > 999 (max=" << r[1] << ") or min value <-3 ( min="<< r[0] << ")" << std::endl;
 	return 0;
