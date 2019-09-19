@@ -13,6 +13,7 @@ function result=bis_all_tests(debug)
         test_computeglm(debug);
         test_computeroi(debug);
         test_createimage(debug);
+        test_imagedistancematrix(debug);
         test_largemem_smooth(debug);
         test_matrix(debug);
         test_regressout(debug);

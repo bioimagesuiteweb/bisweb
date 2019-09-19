@@ -37,6 +37,7 @@ function [ moduleOutput,filepath,lib] = bis_testutils(testname)
     moduleOutput.getlib=@getlib;
     moduleOutput.getTestFilename=@getTestFilename;
     moduleOutput.cleanup=@cleanup;
+    moduleOutput.combineResults=@combineResults;
 
     if (internal.initialized>0)
       result=1;
@@ -177,6 +178,28 @@ function [ moduleOutput,filepath,lib] = bis_testutils(testname)
         testfilelist={};
         %internal.lib.unload();
         pause(1);
+
+    end
+
+    function output=combineResults(resultlist,name)
+
+        output=resultlist{1};
+        
+        if nargin>1
+            output{1}=name;
+        end
+    
+        s=size(resultlist);
+
+        for i=2:s(2)
+            elem=resultlist{i};
+            r1=output{2};
+            r2=elem{2};
+            output{2}=min(r1,r2);
+        end
+        
+
+
 
     end
 end
