@@ -20,7 +20,6 @@
 const BaseModule = require('basemodule.js');
 const bis_genericio = require('bis_genericio.js');
 const path = bis_genericio.getpathmodule();
-const sep = path.sep;
 
 /**
  * Combines a set of parameter files and connectivity matrices in a given directory into a single file
@@ -82,14 +81,25 @@ class MakeConnMatrixFileModule extends BaseModule {
                 "shortname" : "r",
                 "required" : false,
                 "default" : false
-            }],
+            }, {
+                "name" : "Reformatted input directory",
+                "description" : "Where to put reformatted input files",
+                "priority"  : 4,
+                "advanced" : false,
+                "gui" : "text",
+                "varname" : "reformatindir",
+                "shortname" : "d",
+                "required" : false,
+                "default" : false
+            }
+        ],
         };
 
         return des;
     }
 
     directInvokeAlgorithm(vals) {
-
+        const sep = path.sep;
         console.log('oooo invoking: Make Connectivity Matrix File', JSON.stringify(vals),'\noooo'); 
         let indir = vals.indir, outdir;
         let combinedFile = {};
@@ -116,39 +126,94 @@ class MakeConnMatrixFileModule extends BaseModule {
             indir = path.resolve(indir);
             searchForFormattedFiles.then( async (result) => {
 
+                console.log('result', result);
                 if (!result) {
 
+                    //TODO: Write help document for this behavior
                     //if there's no formatted files try looking for the unformatted files (.txt files with a single csv)
-                    searchForUnformattedFiles(indir).then( (obj) => {
-                        //TODO: do something with these files... 
+                    searchForUnformattedFiles(indir).then( async (obj) => {
+                        if (!obj.behaviorFiles) { console.log('Error: could not find connectivity behavior files in', indir, '. Please ensure that there is a .csv file containing the list of behaviors by subject.'); }
+                        if (!obj.dataFiles) { console.log('Error: could not find connectivity data files in', indir, '. Please ensure that there are .txt files containing the data for each subject.'); }
+
+                        let reformattedIndir = vals.reformattedindir ? vals.reformattedindir : indir + sep + 'reformattedData';
+                        await bis_genericio.makeDirectory(reformattedIndir);
+
+                        let promiseArray = [];
+                        //parse the single behavior file into many files
+                        for (let file of obj.behaviorFiles) {
+                            let conndata = await bis_genericio.read(file);
+                            let parsedData = conndata.split('\n');
+
+                            console.log('parsed data', parsedData);
+                            //first row is descriptions so trim it out
+                            parsedData.shift();
+                            let subname; 
+                            for (let row of parsedData) {
+                                subname = row.shift();
+                                
+                                let formattedBehaviorFilename = reformattedIndir + sep + subname + '_behaviors.csv';
+                                let behaviorData = row; 
+                                let behaviorFilePromise = bis_genericio.write(formattedBehaviorFilename, behaviorData);
+                                promiseArray.push(behaviorFilePromise);
+                            }
+                        }
+
+                        for (let file of obj.dataFiles) {
+                            //TODO: handle cases where there's more than one subject? data i've got so far only contains one-per
+                            // -Zach
+                            let filedata = await bis_genericio.read(file); 
+                            if (filedata.contains('\t')) { file.replace('\t', ','); }
+                            let dataFilename = reformattedIndir + sep + file.split('_')[0] + '_conn01.csv';
+                            let dataFilePromise = bis_genericio.write(dataFilename, filedata);
+                            promiseArray.push(dataFilePromise);
+                        }
+
+                        Promise.all(promiseArray).then( () => {
+                            console.log('Done converting files, moving on to read'); 
+                            createConnectivityFile(result.behaviorFiles, result.connFiles, resolve, reject);
+                            
+                        });
+
                     }).catch( (e) => { reject(e); });
                 } else {
                     try {
-                        let behaviorFiles = result.behaviorFiles, connFiles = result.connFiles;
-    
-                        let arr = [];
-                        arr[1];
-    
-                        for (let file of behaviorFiles.concat(connFiles)) {
-                            let contents = await bis_genericio.read(path.resolve(file));
-                            addEntry(bis_genericio.getBaseName(file), contents.data);
-                        }
-    
-                        if (vals.writeout) {
-                            await bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2));
-                        }
-                        resolve({ 'file' : combinedFile, 'filenames' : behaviorFiles.concat(connFiles) });
+                        createConnectivityFile(result.behaviorFiles, result.connFiles, resolve, reject);
                     } catch(e) {
                         reject(e);
                     }
+
                 }
-               
             }).catch((e) => {
                 reject(e.stack);
             });
 
         });
 
+        function createConnectivityFile(behaviorFiles, connFiles, resolve, reject) {
+            let promiseArray = [];
+            for (let file of behaviorFiles.concat(connFiles)) {
+                let readPromise = bis_genericio.read(path.resolve(file)).then((contents) => {
+                    addEntry(bis_genericio.getBaseName(file), contents.data);
+                });
+
+                promiseArray.push(readPromise);
+            }
+
+            Promise.all(promiseArray).then(() => {
+                if (vals.writeout) {
+                    bis_genericio.write(outdir, JSON.stringify(combinedFile, null, 2)).then( () => {
+                        resolve({ 'file': combinedFile, 'filenames': behaviorFiles.concat(connFiles) });
+                        return;
+                    });
+                } else {
+                    resolve({ 'file': combinedFile, 'filenames': behaviorFiles.concat(connFiles) });
+                }
+            }).catch( (e) => {
+                reject(e);
+            });
+        }
+
+        /* Adds an entry to the combined connectivity file*/ 
         function addEntry(filename, contents) {
             let splitName = filename.split('_');
             let subjectNumberRegex = /sub\d*(\d)/;
@@ -162,6 +227,7 @@ class MakeConnMatrixFileModule extends BaseModule {
             combinedFile[escapedSubjectName][filename] = contents;
         }
 
+        /* Searches for files formatted to the connectivity file structure that BioImage Suite expects*/
         function searchForFormattedFiles(indir) {
             return new Promise( (resolve, reject) => {
                 let behaviorMatchString = indir + sep + '*+(_behavior)*';
@@ -170,7 +236,7 @@ class MakeConnMatrixFileModule extends BaseModule {
                 let behaviorPromise = bis_genericio.getMatchingFiles(behaviorMatchString);
                 let connPromise = bis_genericio.getMatchingFiles(connMatchString);
 
-                return Promise.all([ behaviorPromise, connPromise ]).then( (obj) => {
+                Promise.all([ behaviorPromise, connPromise ]).then( (obj) => {
                     let behaviorFiles = obj[0], connFiles = obj[1];
                     if (behaviorFiles.length === 0 && connFiles.length === 0) {
                         resolve(false);
@@ -182,6 +248,7 @@ class MakeConnMatrixFileModule extends BaseModule {
             
         }
 
+        /* Searches for files that haven't yet been formatted to the connectivity file structure that BioImage Suite expects. */
         function searchForUnformattedFiles(indir) {
             return new Promise( (resolve, reject) => {
                 let dataMatchstring = indir + sep + '(.*?)_.*.txt';
@@ -195,7 +262,7 @@ class MakeConnMatrixFileModule extends BaseModule {
                     if (dataFiles.length === 0 || connFiles.length === 0) {
                         reject('No unformatted files found in directory', indir);
                     } else {
-                        resolve({ 'dataFiles' : dataFiles, 'connFiles' : connFiles });
+                        resolve({ 'dataFiles' : dataFiles, 'behaviorFiles' : connFiles });
                     }
                 }).catch( (e) => { console.log('An error occured while searching for files', e); reject(e); });
             });
