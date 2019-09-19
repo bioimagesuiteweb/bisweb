@@ -146,7 +146,14 @@ namespace bisfMRIAlgorithms {
    * @returns {Matrix} seed map image
    */
   int computeSeedMapImage(bisSimpleImage<float>* input,Eigen::MatrixXf& roi,int toz,Eigen::VectorXf& weights,bisSimpleImage<float>* output);
-  
+
+  /** This function normalizes a time series image to have unit magnitude and zero mean for each voxel
+   * @alias BisfMRIMatrixConnectivity.normalizeTimeSeriesImage
+   * @param {Image} input - the input timeseries  image
+   * @param {Image} output - the normalized timeseries  image
+   */
+  int normalizeTimeSeriesImage(bisSimpleImage<float>* input,bisSimpleImage<float>* output);
+
 }
 
 

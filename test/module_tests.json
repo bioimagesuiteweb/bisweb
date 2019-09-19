@@ -866,6 +866,13 @@
             "test" : "--test_target testdata/nn/ex_S01_0001_quantile__rsp.nii.gz --test_type image --test_comparison cc --test_threshold 0.999",
             "result" : true,
             "dopython": false
+        },
+        {
+            "command" : "timeseriesNormalizeImage --input testdata/indiv/prep.nii.gz --debug true",
+            "test"    : "--test_target testdata/indiv/normalized.nii.gz",
+            "result"  : true,
+            "dopython": true
         }
+
     ]
 }
