@@ -726,7 +726,51 @@ namespace bisfMRIAlgorithms {
 
   }
 
-  // End of namespace
+  /** This function normalizes a time series image to have unit magnitude and zero mean
+   * @alias BisfMRIMatrixConnectivity.normalizeTimeSeriesImage
+   * @param {Image} input - the input timeseries  image
+   * @param {Image} output - the normalized timeseries  image
+   */
+  int normalizeTimeSeriesImage(bisSimpleImage<float>* input,bisSimpleImage<float>* output)
+  {
+    output->copyStructure(input);
+    int dim[5]; input->getDimensions(dim);
+    int volumesize=dim[0]*dim[1]*dim[2];
+    int numframes=dim[3]*dim[4];
+
+    float* idata=input->getImageData();
+    float* odata=output->getImageData();
+
+    double scale=1.0/double(numframes);
+    
+    for (int voxel=0;voxel<volumesize;voxel++) {
+      
+      double sum=0.0;
+      double sum2=0.0;
+	
+      for (int frame=0;frame<numframes;frame++)
+        {
+          int index=voxel+frame*volumesize;
+          float v=idata[index];
+          sum=sum+v;
+          sum2=sum2+v*v;
+        }
+      double mean=sum*scale;
+      double sigma=sqrt(sum2*scale-mean*mean);
+      if (sigma>0.0)
+        {
+          for (int frame=0;frame<numframes;frame++)
+            {
+              int index=voxel+frame*volumesize;
+              float v=idata[index];
+              odata[index]=(v-mean)/sigma;
+            }
+        }
+    }
+    return 1;
   }
+    
+  // End of namespace
+}
 
 

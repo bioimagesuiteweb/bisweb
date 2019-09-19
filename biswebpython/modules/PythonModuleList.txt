@@ -35,3 +35,4 @@ smoothImage
 thresholdImage
 regressionTests
 computeImageMatrixCorrelation
+timeseriesNormalizeImage

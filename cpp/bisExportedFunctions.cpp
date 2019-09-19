@@ -1764,3 +1764,32 @@ unsigned char* computeSeedCorrelationImageWASM(unsigned char* input_ptr,unsigned
   return out_image->releaseAndReturnRawArray();
   
 }
+
+
+/** Perform time series normalization 
+ * @param input 4d image
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to a (unsigned char) serialized timeseries normalized image
+ */
+// BIS: { 'timeSeriesNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ] } 
+unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug) {
+
+  std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input_float"));
+  if (!in_image->linkIntoPointer(input))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("smooth_output_float"));
+  out_image->copyStructure(in_image.get());
+
+  if (debug) {
+    int dim[5];
+    in_image->getDimensions(dim);
+    std::cout << "beginning timeSeriesNormalizeImage dim=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+  }
+  
+  int ok=bisfMRIAlgorithms::normalizeTimeSeriesImage(in_image.get(),out_image.get());
+  if (debug)
+    std::cout << "timeSeriesNormalizeImage done " << ok << std::endl;
+  
+  return out_image->releaseAndReturnRawArray();
+}
