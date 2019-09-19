@@ -20,7 +20,8 @@ function result=bis_all_tests(debug)
         test_resample(debug);
         test_reslice(debug);
         test_smooth(debug);
-        test_indiv(debug+1)
+        test_indiv(debug+1);
+        test_xcluster(debug+1);
     };
     
     for i=1:4

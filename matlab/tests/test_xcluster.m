@@ -21,13 +21,15 @@ function result = test_xcluster(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
+    [testutil,filepath,lib]=bis_testutils('Test Shen Parcellation');
     
-    testutil.printheader('Test Indiv');
     fname1= testutil.getTestFilename([ 'indiv' filesep 'prep.nii.gz' ]);
     fname2= testutil.getTestFilename([ 'indiv' filesep 'group.nii.gz' ]);
-    
+    fname3= testutil.getTestFilename([ 'indiv' filesep 'singleparcradius.nii.gz' ]);
 
+    % Gold standard result
+    gold =  bis_image(fname3,debug+1);
+    
     % Load Images
     disp('-----')
     parc = bis_image(fname2,debug+1);
@@ -43,7 +45,7 @@ function result = test_xcluster(debug)
     disp('-------------------------------------------------')
     % Compute distance matrix
     param.useradius='true';
-    param.radius=8.0;
+    param.radius=4.0;
     param.sparsity=0.1;
     param.numthreads=2;
     distmatrix=bis_imagedistancematrix(fmri,newmask,param,1);
@@ -58,6 +60,19 @@ function result = test_xcluster(debug)
     
     parcellation=bis_distmatrixparcellation(distmatrix,indexmap,20,1.0);
     parcellation.print('Parcellation');
-    result=parcellation;
+    
+    % Compare histograms of parcellation as there is a random element to this code
+    gdata=single(gold.getImageData());
+    nbins=max(max(max(gdata)));
+    gH=sort(hist(gdata(:),[0:nbins]));
+    gH=gH(1:end-1)
+
+    pdata=single(parcellation.getImageData());
+    pH=sort(hist(pdata(:),[0:nbins])); 
+    pH=pH(1:end-1)
+    
+    result=testutil.compare(gH,pH,'Single Subject Parcellation',1,0.95);
+    testutil.cleanup();
+   
 
 end
