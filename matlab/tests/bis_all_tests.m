@@ -13,13 +13,15 @@ function result=bis_all_tests(debug)
         test_computeglm(debug);
         test_computeroi(debug);
         test_createimage(debug);
+        test_imagedistancematrix(debug);
         test_largemem_smooth(debug);
         test_matrix(debug);
         test_regressout(debug);
         test_resample(debug);
         test_reslice(debug);
         test_smooth(debug);
-        test_indiv(debug+1)
+        test_indiv(debug+1);
+        test_xcluster(debug+1);
     };
     
     for i=1:4

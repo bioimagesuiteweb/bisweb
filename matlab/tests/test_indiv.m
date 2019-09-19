@@ -21,9 +21,7 @@ function result = test_indiv(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    
-    testutil.printheader('Test Indiv');
+    [testutil,filepath,lib]=bis_testutils('Test Indiv');
 
 
 

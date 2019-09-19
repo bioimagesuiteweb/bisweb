@@ -70,7 +70,7 @@ class BisWebMatrix extends BisWebDataObject{
      * @returns {string} description
      */
     getDescription() {
-        return "Matrix: ["+this.dimensions.join("*")+'], tp='+this.datatype;
+        return "Matrix: "+this.filename+" ["+this.dimensions.join("*")+'], tp='+this.datatype;
     }
 
     /** compute hash 
@@ -97,22 +97,53 @@ class BisWebMatrix extends BisWebDataObject{
     load(fobj) {
         const self=this;
         return new Promise( (resolve,reject) => {
+
+            let fname=fobj;
+            if (fname.name) 
+                fname=fname.name;
+            let ext=fname.split('.').pop().toLowerCase();
+            if (ext==='binmatr') {
+                genericio.read(fobj, true).then((contents) => {
+                    self.parseBinaryMatrix(contents.data,reject);
+                    self.setFilename(contents.filename);
+                    console.log('++++\t Loaded Binary '+this.getDescription());
+                    resolve('loaded binary  matrix from '+contents.filename);
+                    return;
+                });
+                return;
+            }
+            
             genericio.read(fobj, false).then((contents) => {
                 self.parseFromText(contents.data,contents.filename,reject);
                 self.setFilename(contents.filename);
                 console.log('++++\t loaded matrix  '+this.filename,' ',this.getDescription());
-                resolve('loaded matrix transformation from '+contents.filename);
+                resolve('loaded matrix from '+contents.filename);
                 
             }).catch( (e) => { reject(e); });
         });
     }
-
 
     /** saves an object to a filename. 
      * @param {string} filename - the filename to save to. If in broswer it will pop up a FileDialog
      * @return {Promise} a promise that is fuilfilled when the image is saved
      */
     save(filename) {
+
+        this.datatype=wasmutil.getNameFromType(this.data);
+        let fname=filename;
+        if (fname.name) 
+            fname=fname.name;
+        let ext=fname.split('.').pop().toLowerCase();
+        if (ext==='binmatr' ) {
+            let output=this.serializeToBinaryMatrix();
+            return new Promise( function(resolve,reject) {
+                genericio.write(filename,output).then( (f) => {
+                    console.log('++++\t Saved Binary Matrix in '+filename);
+                    resolve(f);
+                }).catch( (e) => { return 0;});
+            });
+        }
+        
         let output = this.serializeToText(filename);
         return new Promise( function(resolve,reject) {
             genericio.write(filename,output).then( (f) => {
@@ -126,6 +157,7 @@ class BisWebMatrix extends BisWebDataObject{
         @returns {Object} dictionary containing all key elements
     */
     serializeToDictionary() {
+        this.datatype=wasmutil.getNameFromType(this.data);
         let obj= super.serializeToDictionary();
         let bytesarr=new Uint8Array(this.data.buffer);
         let b=genericio.tozbase64(bytesarr);
@@ -144,14 +176,9 @@ class BisWebMatrix extends BisWebDataObject{
         this.dimensions=b.dimensions;
         this.datatype=b.datatype || 'float';
 
-        if (this.datatype === 'int') {
-            this.data=new Int32Array(bytesarr.buffer);
-        } else if (this.datatype==='uint') {
-            this.data=new Uint32Array(bytesarr.buffer);
-        } else {
-            this.data=new Float32Array(bytesarr.buffer);
-            this.datatype = 'float';
-        }
+        let fn=wasmutil.getTypeFromName(this.datatype);
+        this.data=new fn(bytesarr.buffer);
+        this.datatype=wasmutil.getNameFromType(this.data);
         super.parseFromDictionary(b);
         return true;
     }
@@ -190,8 +217,10 @@ class BisWebMatrix extends BisWebDataObject{
             this.wasmtype='matrix';
             this.dimensions= [ wasmobj.dimensions[0],wasmobj.dimensions[1] ];
         }
-        
+
         this.data=wasmobj.data_array;
+        this.datatype=wasmutil.getNameFromType(this.data);
+
         return 1;
     }
     
@@ -223,7 +252,7 @@ class BisWebMatrix extends BisWebDataObject{
             return out;
         }
 
-        console.log('....\t comparing matrices:',this.getDimensions(),other.getDimensions(),method);
+        console.log('....\t comparing matrices:',this.getDimensions(),other.getDimensions(),method,this.datatype,other.datatype);
         if (method==='ssd') {
             let sum=0.0;
             for (let i=0;i<idat.length;i++) {
@@ -254,17 +283,9 @@ class BisWebMatrix extends BisWebDataObject{
      */
     allocate(numrows,numcolumns,value=0,type='float') {
         this.dimensions=[numrows,numcolumns];
-        if (type==='int') {
-            this.datatype='int';
-            this.data=new Int32Array(numrows*numcolumns);
-        } else if (type==='uint') {
-            this.datatype='uint';
-            this.data=new Uint32Array(numrows*numcolumns);
-        } else {
-            this.datatype='float';
-            this.data=new Float32Array(numrows*numcolumns);
-        }
-        
+        let fn=wasmutil.getTypeFromName(type);
+        this.data=new fn(numrows*numcolumns);
+        this.datatype=wasmutil.getNameFromType(this.data);
         for (let i=0;i<numrows*numcolumns;i++)
             this.data[i]=value;
     }
@@ -334,12 +355,14 @@ class BisWebMatrix extends BisWebDataObject{
                 else
                     i=sz[0];
             }
-            console.log('++++\t\t setting from Numeric Matrix. Input rows=',sz[0],'output rows=',rows);
             sz[0]=rows;
 
             
             this.dimensions=[sz[0],sz[1]];
             this.data=new Float32Array(sz[0]*sz[1]);
+            this.datatype=wasmutil.getNameFromType(this.data);
+            console.log('++++\t\t setting from Numeric Matrix. Input rows=',sz[0],'output rows=',rows,' tp='+this.datatype);
+
             let index=0;
             for (let row=0;row<this.dimensions[0];row++) {
                 for (let col=0;col<this.dimensions[1];col++) {
@@ -350,6 +373,7 @@ class BisWebMatrix extends BisWebDataObject{
         } else {
             this.dimensions=[sz[0],1];
             this.data=new Float32Array(sz[0]);
+            this.datatype=wasmutil.getNameFromType(this.data);
             for (let row=0;row<this.dimensions[0];row++)
                 this.data[row]=mat[row];
         }
@@ -359,6 +383,7 @@ class BisWebMatrix extends BisWebDataObject{
      * @param{TypedArray} arr - a 2d numeric.js matrix */
     linkToTypedArray(arr) {
         this.data=arr;
+        this.datatype=wasmutil.getNameFromType(this.data);
         this.dimensions=[ arr.length,1];
         this.wasmtype='vector';
     }
@@ -411,6 +436,7 @@ class BisWebMatrix extends BisWebDataObject{
      */
     serializeToText(filename) {
 
+        this.datatype=wasmutil.getNameFromType(this.data);
         let ext = filename.name ? filename.name.split('.').pop() : filename.split('.').pop();
 
         if (ext==='csv') {
@@ -437,6 +463,81 @@ class BisWebMatrix extends BisWebDataObject{
 
         return this.serializeToJSON(false);
     }
+
+    /** parse binary matrix
+     * @param {Buffer} data
+     * @param {Function} reject
+     */
+    parseBinaryMatrix(data,reject) {
+        
+        let head=new Uint32Array(data.buffer,0,4);
+        if (head[0]!==1700) {
+            reject('Bad header in binary matrix')
+            return;
+        }
+
+        let tp=head[1];
+        let idat=null;
+
+        let matsize=head[2]*head[3];
+        
+        if (tp===2) {
+            idat=new Float32Array(data.buffer,16,matsize);
+            this.data=new Float32Array(matsize);
+        } else if (tp===1) {
+            idat=new BigInt64(data.buffer,16,matsize);
+            this.data=new BigInt64(matsize);
+        } else {
+            idat=new Float64Array(data.buffer,16,matsize);
+            this.data=new Float64Array(matsize);
+        }
+
+        this.data.set(idat);
+        //        for (let i=0;i<matsize;i++)
+        //                  this.data[i]=idat[i];
+
+        this.datatype=wasmutil.getNameFromType(this.data);
+        this.dimensions=[ head[2],head[3] ];
+        return 1;
+    }
+
+    /** store in binary matrix */
+    serializeToBinaryMatrix() {
+
+        let sz=4;
+        if (this.datatype!=="float")
+            sz=8;
+
+        let matsize=this.dimensions[0]*this.dimensions[1];
+        let output=new Uint8Array(sz*matsize+16);
+        
+        let hd=new Uint32Array(output.buffer,0,4);
+        hd[0]=1700;
+        hd[1]=0;
+        hd[2]=this.dimensions[0];
+        hd[3]=this.dimensions[1];
+
+        let dat=null;
+        
+        if (this.datatype=='float') {
+            hd[1]=2;
+            dat=new Float32Array(output.buffer,16,matsize);
+        } else if (this.datatype==='int64') {
+            hd[1]=1;
+            dat=new BigInt64Array(output.buffer,16,matsize);
+        } else {
+            hd[1]=3;
+            dat=new Float64Array(output.buffer,16,matsize);
+        }
+
+        for (let i=0;i<matsize;i++) {
+            dat[i]=this.data[i];
+        }
+        dat=null;
+        hd=null;
+        return output;
+    }
+
 
     /** parse string from .matr file 
      * @param {string} filestring

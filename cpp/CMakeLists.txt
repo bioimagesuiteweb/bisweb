@@ -178,17 +178,21 @@ SET(PARSE_HEADERS
 
 
 IF (BIS_USEINDIV)
-  MESSAGE("-- Also Building Individualized Parcellation Code")
+  MESSAGE("-- Also Building Individualized Parcellation Code and Sparse Image Distance Matrix Code")
   SET (PARSE_HEADERS
     ${PARSE_HEADERS}
     ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
+    ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
     )
   SET (KITSRCS
     ${KITSRCS}
     bisIndividualizedParcellation.cpp
+    bisvtkMultiThreader.cxx
+    bisImageDistanceMatrix.cpp
     )
   FIND_PACKAGE(IGL REQUIRED)
 ENDIF (BIS_USEINDIV)
+
 
 IF (BIS_USECPM)
   SET (KITSRCS
@@ -517,7 +521,6 @@ IF (BIS_A_EMSCRIPTEN)
   
 ELSE(BIS_A_EMSCRIPTEN)
 
-
   
   # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
@@ -684,8 +687,6 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     OPTION(BIS_MATLABUNITTEST "Enable Matlab Unit Tests" OFF)
     MARK_AS_ADVANCED(BIS_MATLABUNITTEST)
-
-
 
     SET (README_FILE "${PROJECT_SOURCE_DIR}/../matlab/config/README.md")
     install (FILES ${README_FILE} DESTINATION biswebmatlab)
