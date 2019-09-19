@@ -131,7 +131,7 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
                                                                          },0);
         console.log(out3.getDescription());
         let result=out3.compareWithOther(gold[1]);
-        console.log(result);
+        console.log(result,' type=',out3.data.constructor.name,out3.datatype);
         assert.equal(true,result.testresult);
         return Promise.resolve();
     });

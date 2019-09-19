@@ -148,7 +148,7 @@ class TestImageDistanceMatrix(unittest.TestCase):
             testpass=False;
         
         print('----------------------------------------------------------')
-        print('__ multi sparse distance matrix computation diff=',result, 'pass=',testpass);
+        print('__ multi sparse distance matrix computation diff=',result, 'pass=',testpass,' ',out2.dtype);
         print('----------------------------------------------------------')
         
         self.assertEqual(testpass,True);
