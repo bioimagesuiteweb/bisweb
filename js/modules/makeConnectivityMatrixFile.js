@@ -124,9 +124,7 @@ class MakeConnMatrixFileModule extends BaseModule {
 
         return new Promise( (resolve, reject) => {
             indir = path.resolve(indir);
-            searchForFormattedFiles.then( async (result) => {
-
-                console.log('result', result);
+            searchForFormattedFiles(indir).then( async (result) => {
                 if (!result) {
 
                     //TODO: Write help document for this behavior
@@ -142,36 +140,39 @@ class MakeConnMatrixFileModule extends BaseModule {
                         //parse the single behavior file into many files
                         for (let file of obj.behaviorFiles) {
                             let conndata = await bis_genericio.read(file);
-                            let parsedData = conndata.split('\n');
+                            let parsedData = conndata.data.split(/\n/);
+                            parsedData = parsedData.filter( (row) => { return row !== ''; }); //strip out empty entries
 
-                            console.log('parsed data', parsedData);
                             //first row is descriptions so trim it out
                             parsedData.shift();
-                            let subname; 
                             for (let row of parsedData) {
-                                subname = row.shift();
-                                
+                                let splitChar = row.includes(',') ? ',' : '\t';
+                                let splitRow = row.split(splitChar), subname = splitRow.shift();
+
                                 let formattedBehaviorFilename = reformattedIndir + sep + subname + '_behaviors.csv';
-                                let behaviorData = row; 
-                                let behaviorFilePromise = bis_genericio.write(formattedBehaviorFilename, behaviorData);
+                                let behaviorFilePromise = bis_genericio.write(formattedBehaviorFilename, splitRow.join(splitChar));
                                 promiseArray.push(behaviorFilePromise);
                             }
                         }
 
+                        //TODO: handle cases where there's more than one subject? data i've got so far only contains one-per
+                        // -Zach
                         for (let file of obj.dataFiles) {
-                            //TODO: handle cases where there's more than one subject? data i've got so far only contains one-per
-                            // -Zach
-                            let filedata = await bis_genericio.read(file); 
-                            if (filedata.contains('\t')) { file.replace('\t', ','); }
-                            let dataFilename = reformattedIndir + sep + file.split('_')[0] + '_conn01.csv';
-                            let dataFilePromise = bis_genericio.write(dataFilename, filedata);
+                            let filedata = await bis_genericio.read(file), readdata = filedata.data;
+                            if (readdata.includes('\t')) { readdata.replace('\t', ','); }
+
+                            //get subject name from filename (subject name should be the first thing in front of an underscore at the end of the path)
+                            let subname = bis_genericio.getBaseName(file).split('_')[0];
+                            let dataFilename = reformattedIndir + sep + subname + '_conn01.csv';
+                            let dataFilePromise = bis_genericio.write(dataFilename, readdata);
                             promiseArray.push(dataFilePromise);
                         }
 
                         Promise.all(promiseArray).then( () => {
                             console.log('Done converting files, moving on to read'); 
-                            createConnectivityFile(result.behaviorFiles, result.connFiles, resolve, reject);
-                            
+                            searchForFormattedFiles(reformattedIndir).then( (result) => {
+                                createConnectivityFile(result.behaviorFiles, result.connFiles, resolve, reject);
+                            });
                         });
 
                     }).catch( (e) => { reject(e); });
@@ -251,14 +252,16 @@ class MakeConnMatrixFileModule extends BaseModule {
         /* Searches for files that haven't yet been formatted to the connectivity file structure that BioImage Suite expects. */
         function searchForUnformattedFiles(indir) {
             return new Promise( (resolve, reject) => {
-                let dataMatchstring = indir + sep + '(.*?)_.*.txt';
-                let csvMatchstring = indir + sep + '.*.csv';
+                let dataMatchstring = indir + sep + '*.txt';
+                let csvMatchstring = indir + sep + '*+(.csv|.tsv)';
 
                 let dataPromise = bis_genericio.getMatchingFiles(dataMatchstring);
                 let csvPromise = bis_genericio.getMatchingFiles(csvMatchstring);
 
-                return new Promise.all([ dataPromise, csvPromise ]).then( (obj) => {
+                Promise.all([ dataPromise, csvPromise ]).then( (obj) => {
                     let dataFiles = obj[0], connFiles = obj[1];
+
+                    console.log('obj', obj);
                     if (dataFiles.length === 0 || connFiles.length === 0) {
                         reject('No unformatted files found in directory', indir);
                     } else {
