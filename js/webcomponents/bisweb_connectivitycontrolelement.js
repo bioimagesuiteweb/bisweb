@@ -1274,16 +1274,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
         let ldiv2=$("<H4> </H4>").css({ 'margin':'5px'});   basediv.append(ldiv2);
-//        let bbar2=webutil.createbuttonbar({ parent : basediv});
-//
-//        webutil.createbutton({ type : "info",
-//                               name : "Create Lines",
-//                               position : "bottom",
-//                               css : { "margin": "5px"},
-//                               tooltip : "Click this to create lines",
-//                               parent : bbar2,
-//                               callback : connectvis.createlines,
-//                             });
+        let bbar2=webutil.createbuttonbar({ parent : basediv});
+
+        webutil.createbutton({ type : "info",
+                               name : "Create Lines",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to create lines",
+                               parent : bbar2,
+                               callback : () => {
+                                    connectvis.removelines();
+                                    connectvis.createlines();
+                               },
+                             });
 //
 //        webutil.createbutton({ type : "default",
 //                               name : "Clear Lines",
