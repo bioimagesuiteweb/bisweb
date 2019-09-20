@@ -207,19 +207,22 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         webutil.createMenuItem(fmenu,''); // separator
         
-        webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices(); });
+        webutil.createMenuItem(fmenu,'Load Sample Matrices',function() {
+                const imagepath=webutil.getWebPageImagePath();
+                control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
+            });
 
-        this.createApplicationMenu(fmenu);
-
-
+        webutil.createMenuItem(fmenu,''); // separator
         
+        webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices(); });
+        
+        this.createApplicationMenu(fmenu);
+       
         
         // ------------------------------------ Edit Menu ----------------------------
         var editmenu=webutil.createTopMenuBarMenu("Edit",menubar);
         webutil.createMenuItem(editmenu,'Undo',function() {  control.undo(); });
         //        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
-        webutil.createMenuItem(editmenu,''); // separator
-        webutil.createMenuItem(editmenu,'Reset Display Parameters',function(){ control.resetdefault();});
         webutil.createMenuItem(editmenu,''); // separator
         webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
         webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
@@ -240,7 +243,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(viewmenu,''); // separator
         webutil.createMenuItem(viewmenu,'Set 3D View To Left',function() { viewer.set3dview(0,true); });
         webutil.createMenuItem(viewmenu,'Set 3D View To Right',function() { viewer.set3dview(0,false); });
-        
+        webutil.createMenuItem(editmenu,''); // separator
+        webutil.createMenuItem(editmenu,'Reset Display Parameters',function(){ control.resetdefault();});
 
         // ------------------------------------ Parcellations Menu ----------------------------
         
@@ -304,10 +308,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             webutil.createMenuItem(helpmenu,''); // separator
             helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
             webutil.createMenuItem(helpmenu,''); // separator
-            webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
-                const imagepath=webutil.getWebPageImagePath();
-                control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
-            });
+            
         }
         
         // ------------------------------------ Initialize ---------------------------

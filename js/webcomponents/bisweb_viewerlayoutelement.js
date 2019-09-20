@@ -329,6 +329,10 @@ class ViewerLayoutElement extends HTMLElement {
         if (this.defaulttext.length<5)
             this.defaulttext="";
         
+        this.coretext = this.getAttribute('bis-coretext') || ''; // smn
+        if (this.coretext=='')
+            this.coretext="Viewer Controls";
+
         let coreopen=this.getAttribute('bis-coreopen');
         if (coreopen!=="true" && coreopen!==true)
             coreopen=false;
@@ -421,7 +425,7 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
             this.elements.secondviewercontrols=webutil.createCollapseElement(newpanel,'Viewer 2 Controls',false);
         } else {
-            this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer Controls',coreopen);
+            this.elements.corecontrols=webutil.createCollapseElement(newpanel,this.coretext,coreopen);
 
         }
         

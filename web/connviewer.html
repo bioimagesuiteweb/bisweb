@@ -72,7 +72,8 @@
         bis-brightcanvas="1"
         bis-coreopen="false"
         bis-wholescreen="1"
-        bis-defaulttext=" Loading">
+        bis-defaulttext=" Loading"
+        bis-coretext="Parcellation Viewer">
       </bisweb-viewerlayoutelement>
 
       <bisweb-colormapcontrollerelement id="viewer_cmap">
@@ -85,14 +86,6 @@
         bis-colormapeditorid="#viewer_cmap">
       </bisweb-orthogonalviewer>
       
-      <bisweb-snapshotelement
-        bis-layoutwidgetid="#viewer_layout"
-        bis-enablepanorama="true"
-        bis-conncontrol="#conncontrol"
-        bis-dowhite="true"
-        bis-viewerid="#viewer">
-      </bisweb-snapshotelement>
-      
       <bisweb-connectivitycontrolelement
         id="conncontrol"
         bis-layoutwidgetid="#viewer_layout"
@@ -104,7 +97,15 @@
         bis-connectivitycontrolid="#conncontrol"
         bis-viewerid="#viewer">
       </bisweb-connectivityapplication>
-      
+     
+      <bisweb-snapshotelement
+        bis-layoutwidgetid="#viewer_layout"
+        bis-enablepanorama="true"
+        bis-conncontrol="#conncontrol"
+        bis-dowhite="true"
+        bis-viewerid="#viewer">
+      </bisweb-snapshotelement>
+ 
     </div>
 
     

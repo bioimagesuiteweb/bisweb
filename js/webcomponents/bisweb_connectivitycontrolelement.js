@@ -68,7 +68,6 @@ const gui_Networks_ArrayShort = [
 const gui_Lines = [ 'Positive', 'Negative', 'Both'];
 const gui_Modes = [ 'All', 'Single Node', 'Group' ];
 
-
 const createNetworkNames = function(mode='yale',internal=null) {
         
     let index=0;
@@ -309,7 +308,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     };
     
     // ----------------------------------------------------------------------------
-    // Draw Matrices As Images
+    // Draw Matrices As Images Separately
     // ----------------------------------------------------------------------------
     var drawMatricesInWindow = function() {
         
@@ -411,6 +410,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
     };
     
+    // ----------------------------------------------------------------------------
+    // Draw Matrices And Legends Around Circle Plot
+    // ----------------------------------------------------------------------------
     var drawMatricesAndLegendsAsImages = function() {
 
         if (internal.parcellation===null)
@@ -532,7 +534,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         let names=[ 'Positive','Negative' ];
 
-        
+        // Draw Matrices
         for (let im=0;im<=1;im++) {
 
             let image = internal.conndata.getImageData(1-im,0,
@@ -684,14 +686,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //if (internal.showlegend === true)
         drawMatricesAndLegendsAsImages();
 
-
         if (!skip3d) {
             internal.orthoviewer.renderSubViewer(3);
         }
 
     };
 
-    
+   
+    // Update current node
     var setnode = function(node) {
 
         if (internal.parcellation===null)
@@ -709,7 +711,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
         let coords = internal.mni2tal.getMMCoordinates(internal.mni);
         internal.orthoviewer.setcoordinates(coords);
-        drawMatricesAndLegendsAsImages();
+        //
+        //// Update current nodedrawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
             connectvis3d.draw3dcrosshairs();
         } else {
@@ -887,8 +890,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.datgui_degreethresholdcontroller.updateDisplay();
                     update();
                     setnode(internal.conndata.maxsumnode);
+                    connectvis.createlines();
 
-                    
                     if (updatemeshes) {
                         connectvis3d.update3DMeshes(internal.parameters.opacity,
                                                     internal.parameters.mode3d,
@@ -1156,29 +1159,29 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.datgui = new dat.GUI({autoPlace: false});
         
         let gui=internal.datgui;
-        basediv.append(gui.domElement);
+        basediv.prepend(gui.domElement);
         
-        let coords = gui.addFolder('Core');
+        let coords = gui.addFolder('Nodes');
         coords.open();
         coords.add(data,'autodrawenabled').name('Auto Draw');
 
-        
-        let disp = gui.addFolder('Display');
-        let disp2 = gui.addFolder('Display 3D');
+        let disp = gui.addFolder('Edges');
+        let disp2 = gui.addFolder('Surface');
+
         let adv = gui.addFolder('Advanced');
         
         
         let clist = [];
         
-        let modecnt=coords.add(data,'mode',gui_Modes).name("Mode");
+        let modecnt=coords.add(data,'mode',gui_Modes).name("Seed");
         modecnt.onChange( () => {
             autoDrawLines();
         });
     
         
         clist.push(modecnt);
+
         let a1=coords.add(data,'node',1,400).name("Node");
-        clist.push(a1);
         a1.onChange(function(val) {
             setnode(Math.round(val-1));
             autoDrawLines();
@@ -1193,30 +1196,24 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             dlist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
         
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
-        dlist.push(internal.datgui_degreethresholdcontroller);
         
         dlist.push(internal.datgui_degreethresholdcontroller);
-        dlist.push(disp.add(data,'length',10,100).name("Length"));
+        dlist.push(disp.add(data,'length',10,100).name("Curvature"));
         dlist.push(disp.add(data,'thickness',1,4).name("Thickness"));
         dlist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
         dlist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
+        
         for (let i=0;i<dlist.length;i++) {
             let e=dlist[i];
             clist.push(e);
             e.onFinishChange( () => { autoDrawLines();});
         }
 
-
-
-        clist.push(adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold'));
-        clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
-
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
         });
-
         
-        let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
+        let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Paint Surface by");
         da2.onChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
             if (data.mode3d!=='Uniform') {
@@ -1228,19 +1225,27 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             da1.updateDisplay();
             setTimeout( () => { drawColorScale(); },200);
         });
+        
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
         });
 
-        let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
-        da4.onFinishChange( () => {   autoDrawLines();      });
-
-        clist.push(da4);
         clist.push(da1);
         clist.push(da2);
         clist.push(da3);
 
+        let c1=adv.add(data,'radius',0.2,4.0).name("Radius (3D)");
+        c1.onFinishChange( () => {   autoDrawLines();      });
+        let c2=adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold');
+        c2.onFinishChange( () => {   autoDrawLines();      });
+        let c3=adv.add(data,'filter',connectvis.filter_modes).name('Threshold by');
+        c3.onFinishChange( () => {   autoDrawLines();      });
+
+        clist.push(c1);
+        clist.push(c2);
+        clist.push(c3);
+        
         internal.datgui_controllers=clist;
         
         webutil.removedatclose(gui);
@@ -1269,25 +1274,25 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
         let ldiv2=$("<H4> </H4>").css({ 'margin':'5px'});   basediv.append(ldiv2);
-        let bbar2=webutil.createbuttonbar({ parent : basediv});
-
-        webutil.createbutton({ type : "info",
-                               name : "Create Lines",
-                               position : "bottom",
-                               css : { "margin": "5px"},
-                               tooltip : "Click this to create lines",
-                               parent : bbar2,
-                               callback : connectvis.createlines,
-                             });
-
-        webutil.createbutton({ type : "default",
-                               name : "Clear Lines",
-                               position : "bottom",
-                               css : { "margin": "5px"},
-                               tooltip : "Click this to clear the lines",
-                               parent : bbar2,
-                               callback : connectvis.removelines,
-                             });
+//        let bbar2=webutil.createbuttonbar({ parent : basediv});
+//
+//        webutil.createbutton({ type : "info",
+//                               name : "Create Lines",
+//                               position : "bottom",
+//                               css : { "margin": "5px"},
+//                               tooltip : "Click this to create lines",
+//                               parent : bbar2,
+//                               callback : connectvis.createlines,
+//                             });
+//
+//        webutil.createbutton({ type : "default",
+//                               name : "Clear Lines",
+//                               position : "bottom",
+//                               css : { "margin": "5px"},
+//                               tooltip : "Click this to clear the lines",
+//                               parent : bbar2,
+//                               callback : connectvis.removelines,
+//                             });
 
         let bbar3 = webutil.createbuttonbar({ parent : basediv });
         webutil.createbutton({ type : "info",
@@ -1504,6 +1509,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             connectvis3d.draw3dcrosshairs();
             updatetext();
+            connectvis.createlines();
         },
         
         // receive window resize events and redraw 
@@ -1513,7 +1519,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             update(false);
             if (internal.showlegend)
                 setnode(Math.round(internal.parameters.node-1));
-
         },
 
         loadmatrix : function(index,fname) {
@@ -1536,7 +1541,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let s="Using node definitions from "+internal.parcellation.description+" with "+internal.parcellation.rois.length+" regions. <BR>";
             s+='Positive matrix info = ('+internal.posFileInfo+'). <BR>';
             s+='Negative matrix info = ('+internal.negFileInfo+'). <BR>';
-            s+='The Broadmann areas use the BioImage Suite internal definition.<BR>The Networks are as defined in Power et al. Neuron 2011.';
+            s+='The Brodmann areas use the BioImage Suite internal definition.<BR>The Networks are as defined in Power et al. Neuron 2011.';
             webutil.createAlert(s);
         },
 
@@ -1616,7 +1621,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         about : function() {
-
             webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
         },
 
@@ -1740,7 +1744,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         setRenderMode(md) {
             internal.rendermode=md-1;
-
             togglemode(true);
         },
 
@@ -1811,7 +1814,7 @@ class ConnectivityControlElement extends HTMLElement {
         let layoutcontroller=document.querySelector(layoutid);
 
         let panel=new BisWebPanel(layoutcontroller,
-                                  { name : "Connectivity Control",
+                                  { name : "Connectivity Viewer",
                                     permanent : "true",
                                   });
         panel.show();

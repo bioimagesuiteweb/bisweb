@@ -748,6 +748,10 @@ var corrmap = function() {
 
 var createlines = function() {
 
+    globalParams.internal.linestack = [];
+    globalParams.internal.updateFn();
+    //removelines();
+
     if (globalParams.internal.conndata.statMatrix===null) {
         bootbox.alert('No connectivity data loaded');
         return;
@@ -873,7 +877,7 @@ var drawlines=function(state) {
 
 var removelines = function() {
     if (globalParams.internal.conndata.statMatrix===null) {
-        bootbox.alert('No connectivity data loaded');
+        //bootbox.alert('No connectivity data loaded');
         return;
     }
 
