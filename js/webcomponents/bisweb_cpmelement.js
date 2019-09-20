@@ -31,7 +31,6 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 const bisweb_scatterplot = require('bisweb_scatterplot.js');
-const bisweb_histoplot = require('bisweb_histogramplot.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
@@ -83,16 +82,12 @@ class CPMElement extends HTMLElement {
             let dockbar = layoutElement.elements.dockbarcontent;
 
             cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
-                cardbar.createTab('Histogram plot', $(), { 'save' : true }).then( (histoobj) => {
-                    this.createCPMGUIManager(layoutElement, scatterobj.content[0], histoobj.content[0]);
+                this.createCPMGUIManager(layoutElement, scatterobj.content[0]);
 
-                    //resizing function for card bar pane
-                    cardbar.setResizingFunction( () => {
-                        scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
-                        scatterobj.content.height(layoutElement.viewerheight / 2);
-                        histoobj.content.width(layoutElement.viewerwidth / 3 + 20);
-                        histoobj.content.height(layoutElement.viewerheight / 2);
-                    });
+                //resizing function for card bar pane
+                cardbar.setResizingFunction( () => {
+                    scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
+                    scatterobj.content.height(layoutElement.viewerheight / 2);
                 });
             });
 
@@ -110,19 +105,17 @@ class CPMElement extends HTMLElement {
      * @param {HTMLElement} scatterElement - The DOM element to append the scatter plot to.
      * @param {HTMLElement} histoElement - The DOM element to append the histogram plot to.
      */
-    createCPMGUIManager(layoutElement, scatterElement, histoElement) {
+    createCPMGUIManager(layoutElement, scatterElement) {
         let dims = [layoutElement.viewerwidth / 3, layoutElement.viewerheight / 2];
         let pos = [0 , layoutElement.viewerheight - 10];
 
         let scatterplot = new bisweb_scatterplot(scatterElement, dims, pos);
-        let histoplot = new bisweb_histoplot(histoElement, dims);
 
         //resizing function for charts
         $(window).on('resize', () => {
             dims = [layoutElement.viewerwidth / 3 , layoutElement.viewerheight / 2];
             pos = [0 , layoutElement.viewerheight - 10];
             scatterplot.resize(dims, pos);
-            histoplot.resize(dims, pos);
         });
     }
 
@@ -135,7 +128,6 @@ class CPMElement extends HTMLElement {
     createMenubarItems(menubar, dockbar) {
         let topmenu = bis_webutil.createTopMenuBarMenu('CPM', menubar);
         bis_webutil.createMenuItem(topmenu, 'Open Connectivity File Loader', () => { this.openCPMSidebar(dockbar); });
-
     }
 
     /**
