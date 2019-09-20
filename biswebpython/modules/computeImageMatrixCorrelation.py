@@ -52,7 +52,7 @@ class computeImageMatrixCorrelation(bis_basemodule.baseModule):
                     "required": True
                 },
             ],
-            "outputs": bis_baseutils.getMatrixToMatrixOutputs('The output correlation matrix'),
+            "outputs": bis_baseutils.getMatrixToMatrixOutputs('The output correlation matrix','.binmatr'),
             "params": [
                 {
                     "name": "Zscore",
@@ -78,7 +78,7 @@ class computeImageMatrixCorrelation(bis_basemodule.baseModule):
 
         lib=bis_baseutils.getDynamicLibraryWrapper();
         timeseries=lib.computeROIWASM(input,roi,{},1);
-        print('Timeseries done',timeseries.shape);
+        print('Timeseries roi mean done',timeseries.shape);
 
         cc=lib.computeCorrelationMatrixWASM(timeseries,0, { 'zscore' : True },1);
         print('CC done',cc.shape);
