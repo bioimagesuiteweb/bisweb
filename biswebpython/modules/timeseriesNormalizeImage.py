@@ -15,12 +15,8 @@
 # 
 # ENDLICENSE
 
-import sys
-import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_baseutils as bis_baseutils
-import biswebpython.core.bis_objects as bis_objects
-
 
 class timeseriesNormalizeImage(bis_basemodule.baseModule):
 
@@ -29,53 +25,12 @@ class timeseriesNormalizeImage(bis_basemodule.baseModule):
         self.name='timeseriesNormalizeImage';
    
     def createDescription(self):
-        return {
-            "name": "Timeseries normalize image",
-            "description": "Given 4d image normalize it so that each voxel timeseries has mean 0 and sigma=1",
-            "author": "Xenios Papademetris and Xilin Shen",
-            "version": "1.0",
-            "inputs": [
-                {
-                    "type": "image",
-                    "name": "Input Image",
-                    "description": "The input timeseries image",
-                    "varname": "input",
-                    "shortname" : "i",
-                    "required": True
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "matrix",
-                    "name": "Output Matrix",
-                    "description": "The output correlation matrix",
-                    "varname": "output",
-                    "shortname": "o",
-                    "required": True,
-                    "extension": ".matr"
-                }
-
-            ],
-            "params": [
-                {
-                    "name": "Debug",
-                    "description": "Toggles debug logging",
-                    "varname": "debug",
-                    "type": "boolean",
-                    "default": False
-                }
-            ],
-        }
-        
+        return self.getModuleDescriptionFromFile('timeSeriesNormalizeImage');
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
-
-        debug=self.parseBoolean(vals['debug'])
-        input = self.inputs['input'];
-
-        lib=bis_baseutils.getDynamicLibraryWrapper();
-        self.outputs['output']=lib.timeSeriesNormalizeImageWASM(input,debug);
+        self.outputs['output']=bis_baseutils.getDynamicLibraryWrapper().timeSeriesNormalizeImageWASM(self.inputs['input'],
+                                                                                                     self.parseBoolean(vals['debug']));
         return True
 
 
