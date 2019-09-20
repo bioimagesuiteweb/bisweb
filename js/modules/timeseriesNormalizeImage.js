@@ -20,7 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-const BisWebImage = require('bisweb_image.js');
+
 
 /**
  * Process4D a 4D Images

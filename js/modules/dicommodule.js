@@ -289,7 +289,7 @@ class DicomModule extends BaseModule {
                     }).catch( (e) => {
                         console.log('An error occured during the dicom conversion process', e);
                         reject(e);
-                        retur;
+                        return;
                     });
                 }).catch((e) => {
                     console.log('An error occured during the dicom conversion process', e);

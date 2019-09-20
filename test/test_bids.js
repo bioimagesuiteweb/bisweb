@@ -34,7 +34,6 @@ const indir=path.join(inbase,'source');
 const odir=path.join(inbase,'bids');
 const tailname=path.join('sourcedata', path.join('sub-01', path.join('anat', 'sub-01_run-01_unknown.nii.gz')));
 const tailname2=path.join('sourcedata', path.join('sub-01', path.join('anat', 'sub-01_run-05_unknown.nii.gz')));
-const bis_util=require('bis_util');
 
 const tempfs = require('temp').track();
 const tmpDirPath=tempfs.mkdirSync('bids_output_');

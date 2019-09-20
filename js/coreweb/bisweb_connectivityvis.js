@@ -779,7 +779,7 @@ var createlines = function() {
         singlevalue=Math.round(globalParams.internal.parameters.node)-1;
         //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
     } else if (mode===2 ) {
-        if (globalParams.internal.parameters.mode===globalParams.internal.gui_Modes[2]) { // Lobe
+        if (globalParams.internal.networkAttributeIndex===0) {
             attribcomponent=0;
             singlevalue=getKeyByValue(globalParams.internal.gui_Lobes,globalParams.internal.parameters.lobe,1);
         } else {

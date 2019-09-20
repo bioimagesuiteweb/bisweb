@@ -261,11 +261,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                    });
                                });
         webutil.createMenuItem(imenu,''); // separator
-        webutil.createMenuItem(imenu,'Use the Yale Network Definitions', function() {
-            control.setNetworksToYale(true);
+        webutil.createMenuItem(imenu,'Group nodes using the Yale Network Definitions', function() {
+            control.setnodeGroupOption('yale');
         });
-        webutil.createMenuItem(imenu,'Use the WSHU Network Definitions', function() {
-            control.setNetworksToYale(false);
+        webutil.createMenuItem(imenu,'Group Nodes using the WSHU Network Definitions', function() {
+            control.setnodeGroupOption('wshu');
+        });
+        webutil.createMenuItem(imenu,'Group Nodes using Lobe Definitions', function() {
+            control.setnodeGroupOption('lobes');
         });
         
         // ------------------------------------ Advanced Menu ----------------------------
