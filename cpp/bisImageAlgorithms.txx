@@ -58,7 +58,7 @@ namespace bisImageAlgorithms {
     float spa2[5]; image2->getSpacing(spa2);
 
     double sumf=0.0;
-    for (int i=0;i<=max;i++) 
+    for (int i=0;i<max;i++) 
       sumf+=fabs(spa1[i]-spa2[i]);
     if (sumf>0.01) 
       {

@@ -776,8 +776,7 @@
 	    "command" : "computeROI -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz",
 	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
-	    "dopython": false,
-            "noweb"   : true
+	    "dopython": false
 	},
         {
 	    "command" : "computeROILarge -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz --loadall false",
@@ -872,7 +871,16 @@
             "test"    : "--test_target testdata/indiv/normalized.nii.gz",
             "result"  : true,
             "dopython": true
-        }
+        },
+        {
+	    "command" : "computeImageMatrixCorrelation -i testdata/indiv/prep.nii.gz -r testdata/indiv/group.nii.gz",
+	    "test"    : "--test_target testdata/indiv/imcorr.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true,
+            "noweb"   : true,
+            "skipjs"  : true
+	}
+
 
     ]
 }
