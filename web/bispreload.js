@@ -16,7 +16,7 @@
  ENDLICENSE */
 
 
-/* global  window,Buffer,__dirname */
+
 "use strict";
 
 const electron= require('electron');

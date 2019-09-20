@@ -13,26 +13,30 @@ RUN apt-get install -yqq gosu dos2unix apache2 unzip
 # python packages
 RUN pip3 install numpy nibabel
 
+# node.js packages
+RUN npm install -g mocha
+
 # Copy installer files
 RUN mkdir -p /usr/local/installers
-COPY bisweb*python*.sh   /usr/local/installers
+COPY biswebpython*.tar.gz   /usr/local/installers
 COPY biswebnode*tgz /usr/local/installers
 COPY bisweb_*zip /usr/local/installers
 
 WORKDIR /usr/local/installers
-RUN echo "Installing"
+RUN echo "Installing bisweb packages"
 RUN ls -l
 
 #Python
 RUN echo "install bisweb python3 package"
-RUN sh ./bisweb*python*sh --prefix=/usr/local --skip-license
+RUN pip3 install biswebpython*tar.gz 
 
 # Node.js
-RUN echo "install biswebnode"
+RUN echo "install bisweb node.js package"
 RUN /usr/bin/npm install -g biswebnode*tgz
 RUN chmod +x /usr/lib/node_modules/biswebnode/lib/dcm2nii_binaries/*/*
 
 # Web
+RUN echo "install bisweb web applications"
 WORKDIR /var/www/html
 RUN unzip -o /usr/local/installers/bisweb_*zip
 RUN chmod 755 /var/www/html

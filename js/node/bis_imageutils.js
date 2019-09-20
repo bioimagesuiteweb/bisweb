@@ -125,7 +125,7 @@ const imageutils = {
         });
 
         
-        return new Promise( async (resolve,reject) => {
+        return new Promise( (resolve,reject) => {
             
             if (gzip) {
 
@@ -144,14 +144,14 @@ const imageutils = {
                 });
             } else {
                 
-                readstream.on('end', async () => {
+                readstream.on('end', () => {
                     if (debug)
                         console.log('____ stream reading finished');
                     
                     resolve('Done');
                 });
                 
-                readstream.on('readable', async () => {
+                readstream.on('readable', () => {
                     let done=false;
                     while (!done) {
                         let chunk = readstream.read();

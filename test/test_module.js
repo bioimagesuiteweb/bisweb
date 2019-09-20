@@ -243,12 +243,13 @@ describe(getTime()+` Beginning module tests `,function() {
                 this.timeout(50000);
                 for (let i=bounds.begin;i<=bounds.end;i++) {
                     let tname=testlist[i].command.split(" ")[0].toLowerCase();
+                    let skipjs=testlist[i].skipjs || false;
                     let proceed= (testnamelist ===null);
                     if (proceed===false) {
                         proceed= (testnamelist.indexOf(tname)>=0);
                     }
                     
-                    if (proceed) {
+                    if (proceed && skipjs===false) {
                         it('Test '+i,function(done2) {
 
                             let command=testlist[i].command+" "+testlist[i].test;

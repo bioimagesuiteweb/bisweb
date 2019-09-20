@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global document */
-
 "use strict";
 
 
@@ -1576,7 +1574,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
 
-            let lock=this.internal.datgui.coords.add(data, 'lockcursor').name("Disable Mouse");
+            let lock=this.internal.datgui.coords.add(data, 'lockcursor').name("Lock CrossHairs");
             lock.onChange(function(val) {
                 self.internal.lockcursor=val;
             });

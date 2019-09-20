@@ -31,17 +31,25 @@ else
         echo ""
 fi
 
-
-source /usr/local/bisweb/setpaths.sh
 echo "+++++ Starting bisweb fileserver"
 biswebnode bisserver --config /usr/local/installers/server.conf --ipaddr 0.0.0.0 &
 sleep 2
 echo ""
 echo "------------------------ In Bisweb docker image w/server ----------------------------------------"
+echo ""
 echo "To execute the bisweb JS command line tools type: biswebnode"
-echo "The python command line tools and library can be found in /usr/local/bisweb"
+echo "    to use the node.js library simply require('biswebnode')"
+echo ""
+echo "To execute the bisweb Python command line tools type: biswebpy"
+echo "    to use the python3 library simply import biswebpython"
+echo ""
 echo "The web applications are available under localhost:8080"
 echo "     with a local biweb file server on port 24000"
+echo ""
+echo "To run the node.js regression tests simply type:"
+echo "     biswebnode regressiontests --run 1"
+echo "To run the python3 regression tests simply type:"
+echo "     biswebpy regressiontests"
 echo "------------------------ ------------------------------------------------------------------------"
 echo "Your host directory ${ORIG_DIR} is mapped to the container directory /data"
 echo "------------------------ ------------------------------------------------------------------------"

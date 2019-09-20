@@ -15,9 +15,6 @@
     
     ENDLICENSE */
 
-/* global setTimeout,HTMLElement */
-
-
 "use strict";
 
 const THREE = require('three');

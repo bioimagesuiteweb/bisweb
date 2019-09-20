@@ -19,6 +19,8 @@ import sys
 import numpy as np
 import argparse
 import biswebpython.core.bis_objects as bis_objects;
+import biswebpython.core.bis_baseutils as bis_baseutils;
+import tempfile
 
 def initialError(extra=''):
 
@@ -65,7 +67,15 @@ def attachFlags(module,parser):
                     parser.add_argument('-'+shortname,'--'+param['varname'].lower(), help=optdesc+param['description'],type=int,default=None);
                 else:
                     parser.add_argument('-'+shortname,'--'+param['varname'].lower(), help=optdesc+param['description'],default=None);
-	
+
+
+    # Magic test option
+    if ('--test_base_directory' in sys.argv):
+        parser.add_argument('--test_base_directory',help= 'Specifies the Base Directory for files',default='');
+                    
+    parser.add_argument('--paramfile',help= 'Specifies that parameters should be read from a file as opposed to parsed from the command line.',default='');
+    
+                    
 def runModule(mod, vars,args):
 	    
     print('oooo --------------------------------------------------------------');
@@ -83,8 +93,11 @@ def runModule(mod, vars,args):
 def loadParse(mod,args,addModuleFlag=True):
 
     toolname=mod.name;
-    
-    if (len(args)<2):
+    maxarg=2;
+    if (toolname=='regressionTests'):
+        maxarg=1;
+
+    if (len(args)<maxarg):
         print("---- Not enough arguments passed to run this tool. Type "+args[0]+" -h for more information");
         return False;
 
@@ -93,25 +106,57 @@ def loadParse(mod,args,addModuleFlag=True):
     attachFlags(mod,parser);
 
     args = vars(parser.parse_args());
+    loadedArgs={};
+
+    test_base_directory='';
+    if ('test_base_directory' in args):
+        test_base_directory=args['test_base_directory'];
+        #    print('Test_base=',test_base_directory,'args=',args);
+        
+    with tempfile.TemporaryDirectory() as tempdname:
+    
+        if (len(args['paramfile'])>0):
+            print('___ reading paramfile',args['paramfile']);
+            try:
+                file = open(bis_baseutils.downloadIfNeeded(args['paramfile'],test_base_directory,tempdname));
+                text=file.read()
+                import json
+                d = json.loads(text)
+                toolname=d['module'].lower();
+                current=mod.name.lower();
+                if (toolname!=current):
+                    print('---- param file was for module '+d['module']+' not '+mod.name);
+                    return 0;
+                
+                loadedArgs=d['params'];
+                print('+++ loadedArgs=',loadedArgs);
+            except:
+                e = sys.exc_info()[0]
+                print(e)
+                print('---- Bad param file ('+args['paramfile']+')')
+                return 0
 
 
 
     
-    # Parse From Command Line
-    modArguments=mod.parseValues(args);
+        # Parse From Command Line
+        #    modArguments=mod.parseValues(args);
+        modArguments = mod.parseValuesAndAddDefaults(args, loadedArgs);
+    
 
-    #check provided parameters against input restrictions (input of 'type' for the parameter, parameter one of the values specified in 'restrict')
-    if (mod.typeCheckParams(modArguments)):
-        if (mod.loadInputs(args)):
-            print('oooo');
-            if (runModule(mod, modArguments,args)):
-                return 0
+        #check provided parameters against input restrictions (input of 'type' for the parameter, parameter one of the values specified in 'restrict')
+        if (mod.typeCheckParams(modArguments)):
+            if (mod.loadInputs(args,test_base_directory,tempdname)):
+                print('oooo');
+                if (runModule(mod, modArguments,args)):
+                    return 0
+                else:
+                    print('---- Failed to run module');
             else:
-                print('---- Failed to run module');
+                print('---- Could not load inputs');
         else:
-            print('---- Could not load inputs');
-    else:
-        print('---- Could not parse module parameters');
+            print('---- Could not parse module parameters');
+    
     return 1
 
 # ------------------
@@ -179,7 +224,7 @@ def printResult(diff,threshold,toolname,dtype):
     print('----\t deviation from standard ',dtype,': ',diff,' > ',threshold);
     return False;
 
-def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,test_comparison):
+def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,test_comparison,basedir='',tempdir=''):
 
     test_type=test_type.strip();
     
@@ -203,6 +248,9 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
     print('====\n==================================================================\n====');
     print('==== comparing ('+test_type+') using ('+comparison+') and threshold='+str(threshold)+'.\n====');
     print('==== comparing files=',resultFile,' and ',test_target);
+
+    test_target=bis_baseutils.downloadIfNeeded(test_target,basedir,tempdir);
+
     
     if (test_type=="image"):
         out = bis_objects.bisImage();

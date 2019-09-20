@@ -1,4 +1,4 @@
-/* globals test, fixture, document */
+/* globals test, fixture */
 
 import { Selector, t } from 'testcafe';
 

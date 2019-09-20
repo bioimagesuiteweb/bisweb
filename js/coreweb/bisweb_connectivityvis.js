@@ -776,7 +776,7 @@ var createlines = function() {
         singlevalue=Math.round(globalParams.internal.parameters.node)-1;
         //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
     } else if (mode===2 ) {
-        if (globalParams.internal.parameters.mode===globalParams.internal.gui_Modes[2]) { // Lobe
+        if (globalParams.internal.networkAttributeIndex===0) {
             attribcomponent=0;
             singlevalue=getKeyByValue(globalParams.internal.gui_Lobes,globalParams.internal.parameters.lobe,1);
         } else {
@@ -792,7 +792,7 @@ var createlines = function() {
     let filter=filter_modes.indexOf(globalParams.internal.parameters.filter);
     if (filter<0)
         filter=2;
-    console.log('Filter',filter);
+    //console.log('Filter',filter);
     
     let state = { mode: mode,
                   guimode : globalParams.internal.parameters.mode,
@@ -911,7 +911,7 @@ var removelines = function() {
  */
 
 let drawScatterandHisto = function(){
-
+    /*
     if (globalParams.internal.laststate === null) {
         bootbox.alert('you need to create the lines before you do anything (Need to fix)');
         return;
@@ -939,6 +939,7 @@ let drawScatterandHisto = function(){
     /*
     svgModal.bind('drop',(data) =>{
         const reader = new FileReader();
+
         let event = data.originalEvent;
         event.preventDefault();
         console.log('DROPPED DATA', event);
@@ -1128,7 +1129,7 @@ scatterChart.append('text')
  * @param {number[]} dim dims of svg to be created
  * @param {number} binCnt number of bins
  */
-function createHistogram(parentDiv, dim, binCnt = 30){
+let createHistogram=function(parentDiv, dim, binCnt = 30){
     globalParams.Id=webutil.getuniqueid();
 
     //Size Settings
@@ -1391,7 +1392,7 @@ function createHistogram(parentDiv, dim, binCnt = 30){
     
         genGraph(bins, groupColor, means);
     });
-}
+};
 
 let addHistoScatterStyles = () => {
 
@@ -1468,4 +1469,7 @@ module.exports = {
     removelines : removelines,
     filter_modes : filter_modes,
     drawScatterandHisto : drawScatterandHisto,
+    createScatter : createScatter,
+    createHistogram : createHistogram,
+    addHistoScatterStyles : addHistoScatterStyles
 };

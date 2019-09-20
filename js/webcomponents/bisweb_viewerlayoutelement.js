@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global window,document,Blob,FileReader,setTimeout,HTMLElement,Event */
-
 
 "use strict";
 

@@ -104,4 +104,102 @@ def getDynamicLibraryWrapper():
             
     return libbis;
 
+def downloadIfNeeded(fname,basedir,tempdir):
+
+    inputname=basedir+fname;
+    sname=inputname;
+    import wget;
+    if (inputname.startswith('http')):
+
+        f=fname.replace('://','__');
+        f=f.replace('/','_');
+        sname=os.path.abspath(tempdir+'/'+f);
+        print('.... Downloading ',inputname,': ');
+        wget.download(inputname,sname);
+        print('\n');
+    elif (len(basedir)>0):
+        print('.... remapping ',fname,'to',sname);
+
+    return sname;
         
+def getDebugParam():
+    return {
+        "name": "Debug",
+        "description": "Toggles debug logging",
+        "priority": 1000,
+        "advanced": True,
+        "gui": "check",
+        "varname": "debug",
+        "type": 'boolean',
+        "default": False,
+    };
+
+def getRegressorInput():
+    return {
+        'type': 'matrix',
+        'name': ' Regressor',
+        'description': 'The regressor matrix',
+        'varname': 'regressor',
+        'shortname': 'r',
+    };
+
+
+def getImageToImageInputs(desc='The image to be processed'):
+    return [
+        {
+        'type': 'image',
+        'name': 'Input Image',
+        'description': desc,
+        'varname': 'input',
+        'shortname': 'i',
+        'required': True,
+        }];
+
+def getImageToImageOutputs(desc = 'Save the output image'):
+
+     return [{
+             'type': 'image',
+             'name': 'Output Image',
+             'description': desc,
+             'varname': 'output',
+             'shortname': 'o',
+             'required': True,
+             'extension': '.nii.gz',
+     }];
+
+
+def getMatrixToMatrixInputs(addweights = False, desc = 'The input data (matrix) to process. Rows=Frames, Columns=Series.'):
+    arr = [
+        {
+            'type': 'matrix',
+            'name': 'Matrix',
+            'description': desc, 
+            'varname': 'input',
+            'shortname': 'i',
+            'required': True,
+        }
+    ];
+    if (addweights):
+        arr.append({
+            'type': 'vector',
+            'name': 'Weights',
+            'description': '(Optional). The framewise weight vector',
+            'varname': 'weight',
+            'shortname': 'w',
+            'required': False,
+        });
+
+    return arr;
+
+def getMatrixToMatrixOutputs(desc = 'The output matrix',extension='.matr'):
+    return [
+        {
+            'type': 'matrix',
+            'name': 'Output Matrix',
+            'description': desc, 
+            'varname': 'output',
+            'shortname': 'o',
+            'required': True,
+            'extension' : extension
+        }
+    ];

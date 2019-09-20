@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/*global window,document,setTimeout,HTMLElement */
-
 "use strict";
 
 const webutil = require('bis_webutil');

@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-/* global document,HTMLElement */
 
 /**
  * @file A Broswer module. Contains an element which manages the interaction between algorithm modules and the main viewer/main application

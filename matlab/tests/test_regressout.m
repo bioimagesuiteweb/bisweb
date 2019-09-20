@@ -23,16 +23,15 @@ function result=test_regressout(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test Regress Out');
+    [testutil,filepath,lib]=bis_testutils('Test Regress Out');
 
         
     %"command" : "regressOut -i testdata/newtests/drift_input.csv -r testdata/newtests/drift.csv",
     %"test"    : "--test_target testdata/simpleregress.csv --test_type matrix --test_comparison ssd --test_threshold 0.1",
     
-    fname1=[ filepath filesep 'newtests' filesep 'drift_input.csv' ];
-    fname2=[ filepath filesep 'newtests' filesep 'drift.csv'];
-    fname3=[ filepath filesep 'simpleregress.csv'];
+    fname1=testutil.getTestFilename([ 'newtests' filesep 'drift_input.csv' ]);
+    fname2=testutil.getTestFilename([ 'newtests' filesep 'drift.csv']);
+    fname3=testutil.getTestFilename('simpleregress.csv');
     format long;
 
     inp=csvread(fname1);
@@ -62,5 +61,6 @@ function result=test_regressout(debug)
 
     result=testutil.compare(gold,output,'Regress Out',0,0.1);
 
+    testutil.cleanup();
 
 end

@@ -16,7 +16,6 @@
  
  ENDLICENSE */
 
-/* global  HTMLElement */
 "use strict";
 
 const $=require('jquery');
