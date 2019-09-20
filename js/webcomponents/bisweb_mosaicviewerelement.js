@@ -421,48 +421,8 @@ class MosaicViewerElement extends BaseViewerElement {
      * @param {BisF.ColorMapControllerPayload} input - definition of new transfer functions to use
      */
     updatetransferfunctions(input) {
-
-        var dooverlay=false;
-        if (this.internal.overlayslices!==null) {
-            if ( this.internal.overlayslices[0]!==null ) {
-                dooverlay=true;
-            }
-        }
-        
-        var pl=0;
-        var numviewers=this.internal.numrows*this.internal.numcols;
-        
-        if (input.image!==null) {
-            this.internal.imagetransferfunction=input.image;
-            for (pl=0;pl<numviewers;pl++) {
-                if (this.internal.slices[pl]!==null) {
-                    this.internal.slices[pl].setnexttimeforce();
-                }
-            }
-        }
-        
-        for (pl=0;pl<numviewers;pl++)
-            this.internal.slices[pl].interpolate(input.interpolate);
-        
-        if (dooverlay) {
-            if (input.objectmap!==null) {
-                this.internal.objectmaptransferfunction=input.objectmap;
-                this.internal.objectmaptransferinfo=input.functionalparams;
-                for (pl=0;pl<numviewers;pl++) {
-                    if (this.internal.overlayslices[pl]!==null)
-                        this.internal.overlayslices[pl].setnexttimeforce();
-                }
-            }
-            for (pl=0;pl<numviewers;pl++) {
-                if (this.internal.overlayslices[pl]!==null)
-                    this.internal.overlayslices[pl].interpolate(input.objinterpolate);
-            }
-        }
-
-        //      this.handleresize();
-        
-        this.updateColormapObservers(input);
-        this.drawcolorscale();
+        super.updatetransferfunctions(input);
+        this.updatescene();
     }
 
 

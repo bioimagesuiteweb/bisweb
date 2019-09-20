@@ -76,12 +76,15 @@ const createNetworkNames = function(mode='yale',internal=null) {
     if (mode==='yale') {
         index=1;
         internal.networkAttributeIndex=4;
+        gui_Modes[2]='Single Network';
     } else if ( mode === 'wshu') {
         index=0;
         internal.networkAttributeIndex=2;
+        gui_Modes[2]='Single Network';
     } else {
         internal.networkAttributeIndex=0;
         index=1;
+        gui_Modes[2]='Single Lobe';
     }
 
     
@@ -1196,7 +1199,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         dlist.push(internal.datgui_degreethresholdcontroller);
         
         dlist.push(internal.datgui_degreethresholdcontroller);
-        dlist.push(disp.add(data,'length',10,100).name("Length"));
+        dlist.push(disp.add(data,'length',10,200).name("Length"));
         dlist.push(disp.add(data,'thickness',1,4).name("Thickness"));
         dlist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
         dlist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));

@@ -795,7 +795,7 @@ var createlines = function() {
     let filter=filter_modes.indexOf(globalParams.internal.parameters.filter);
     if (filter<0)
         filter=2;
-    console.log('Filter',filter);
+    //console.log('Filter',filter);
     
     let state = { mode: mode,
                   guimode : globalParams.internal.parameters.mode,

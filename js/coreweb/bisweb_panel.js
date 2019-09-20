@@ -212,11 +212,6 @@ class BisWebPanel {
 
             if (this.options.helpButton) {
                 this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
-                this.dockHelpButton.click( (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    self.displayHelpModal();
-                });
             }
             return;
         }
@@ -292,12 +287,6 @@ class BisWebPanel {
 
         if (this.options.helpButton) {
             this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
-            
-            this.helpButton.click( (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                self.displayHelpModal();
-            });
             buttonbar.append(this.helpButton);
         }
         buttonbar.append(this.sidebarMinimizeButton);
@@ -373,7 +362,8 @@ class BisWebPanel {
             globalDockedPanels.push(this);
         else
             permanentPanels.push(this);
-        
+
+        this.addDisplayHelpCallback();
         webutil.activateCollapseElement(this.dockWidget);
         return true;
     }
@@ -457,10 +447,25 @@ class BisWebPanel {
         if (index>=0)
             globalDockedPanels.splice(index,1);
 
+        this.addDisplayHelpCallback();
+        
         this.state="empty";
         return true;
     }
 
+
+    /** add display help callback */
+    addDisplayHelpCallback() {
+        if (!this.dockHelpButton)
+            return;
+
+        this.dockHelpButton.off('click');
+        this.dockHelpButton.on('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.displayHelpModal();
+        });
+    }
     /** Display a modal containing information specific to whichever panel this is meant to represent. This should be assigned by whichever context creates the bisweb_panel. */
     displayHelpModal() {
         bootbox.alert(this.helpModalMessage);
