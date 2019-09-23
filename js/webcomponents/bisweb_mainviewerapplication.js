@@ -33,6 +33,8 @@ const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
+const biscustom = require('bisweb_custommodule.js');
+const moduleindex = require('moduleindex.js');
 
 
 const clipboard=localforage.createInstance({
@@ -801,6 +803,71 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------
     // Electron default callbacks (load image from arguments) 
     // ---------------------------------------------------------------------
+    async initializeElectronModule(args) {
+
+        if (this.applicationName !== 'biswebelectron')
+            return args;
+        
+        let modulename=args[0];
+        // Let's create a module
+        const algoid = this.getAttribute('bis-algocontroller') || null;
+        if (!algoid)
+            return args;
+        
+        const algomanager = document.querySelector(algoid) || null;
+        if (!algomanager)
+            return args;
+        
+        args.splice(0,1);
+        const md=moduleindex.getModule(modulename.toLowerCase());
+        if (!md)
+            return args;
+        
+        let numviewers=this.VIEWERS.length || 1;
+
+        let mod=biscustom.createCustom(this.VIEWERS[0].getLayoutController(),
+                                       algomanager,
+                                       md,
+                                       { 'numViewers': numviewers, 'dual' : false, 'permanent' : true });
+        mod.show();
+        this.VIEWERS[1].setDualViewerMode(1.0);
+        let vr=mod.getVars();
+        let keys=Object.keys(vr);
+        for (let i=0;i<keys.length;i++) {
+            let tst='--'+keys[i];
+            let ind=args.indexOf(tst);
+            if (ind>=0 && ind<keys.length-1) {
+                let v=args[ind+1];
+                if (v==='true')
+                    v=true;
+                else if (v==='false')
+                    v=false;
+                vr[keys[i]]=v;
+                args.splice(ind,2);
+            }
+        }
+        mod.updateParams(JSON.parse(JSON.stringify(vr)));
+        let inp=mod.getDescription().inputs;
+        
+        for (let i=0;i<inp.length;i++)  {
+            if (inp[i].type==='image') {
+                let guiviewer=inp[i].guiviewer || 'viewer1';
+                let itype=inp[i].guiviewertype || 'image';
+                let vno=0;
+                if (guiviewer ==='viewer2')
+                    vno=1;
+                if (vno>numviewers-1)
+                    vno=numviewers-1;
+                if (itype === 'image') 
+                    await this.loadImage(args[0], vno);
+                else
+                    await this.loadOverlay(args[0],vno);
+                args.splice(0,1);
+            }
+        }
+        return [];
+    }
+
     
     parseElectronArguments() {
 
@@ -810,7 +877,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             let n=genericio.getFixedLoadFileName(fname);
             let ext=n.split(".").pop();
-            if (ext===this.getApplicationStateFilenameExtension(true)) {
+            if (ext===self.getApplicationStateFilenameExtension(true)) {
                 self.loadApplicationState(fname);
                 return 1;
             } else {
@@ -818,7 +885,7 @@ class ViewerApplicationElement extends HTMLElement {
                 return 0;
             }
         };
-
+        
         if (webutil.inElectronApp()) {
             let title = $(document).find("title").text();
             setTimeout(function () {
@@ -827,16 +894,21 @@ class ViewerApplicationElement extends HTMLElement {
             
             window.BISELECTRON.ipc.on('arguments-reply', function (evt, args) {
                 window.BISELECTRON.ipc.send('ping', 'Arguments received: ' + args);
-                let a=-1;
-                if (args.length > 0) {
-                    a=load(args[0], 0, false);
-                }
-                if (args.length > 1 && this.num_independent_viewers > 1 && a===0) {
-                    load(args[1], 1, false);
-                }
+
+                self.initializeElectronModule(args).then( (args) => {
+                    let a=-1;
+                    if (args.length > 0) {
+                        a=load(args[0], 0, false);
+                    }
+                    
+                    if (args.length > 1 && this.num_independent_viewers > 1 && a===0) {
+                        load(args[1], 1, false);
+                    }
+                });
             });
         }
     }
+                                    
 
 
     // ---------------------------------------------

@@ -85,6 +85,7 @@ class CustomModule {
         let description = this.module.getDescription();
         this.name = opts.name || description.dialogname || description.name;
         this.dual = opts.dual || false;
+        this.permanent= opts.permanent || false;
 
         let width = opts.width || 250;
 
@@ -95,6 +96,7 @@ class CustomModule {
             hasfooter : false,
             dual : this.dual,
             helpButton : true,
+            permanet : this.permanent,
         });
 
         let paramsMargin = opts.paramsMargin || '10px';
