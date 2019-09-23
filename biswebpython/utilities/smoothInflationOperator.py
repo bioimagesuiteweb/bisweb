@@ -74,9 +74,13 @@ def updateVertices(vertices, faces, vertexInFaces, lamda):
             sumArea += area[face_idx]
             weightedCenter += area[face_idx] * faceCentroid[face_idx]
 
-        averageVertex = weightedCenter / sumArea
+        if not sumArea:
+            new_vertices[vertex_idx] = vertices[vertex_idx]
+            continue
 
-        new_vertices[vertex_idx] = (1 - lamda) * vertices[vertex_idx] + lamda * averageVertex
+        else:
+            averageVertex = weightedCenter / sumArea
+            new_vertices[vertex_idx] = (1 - lamda) * vertices[vertex_idx] + lamda * averageVertex
 
     return new_vertices
 
@@ -149,18 +153,24 @@ def meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertic
                     area_mixed += area[face_idx] / 4
 
             else:
+                if not area[face_idx]:
+                    continue
+
                 cot_Q = np.dot(edge3, edge1) / float(area[face_idx]) / 2
                 cot_R = np.dot(-edge3, edge2) / float(area[face_idx]) / 2
                 area_voronoi = (segment2 ** 2 * cot_Q + segment1 ** 2 * cot_R) / 8
                 area_mixed += area_voronoi
 
+        if not area_mixed:
+            continue
+
 
         edges = deepcopy(facesShareEdge[vertex_i])
 
         while bool(edges):
+
             vertex_jDict = edges.popitem()
             if len(vertex_jDict[1]) == 1:
-
                 continue
             vertex_j = vertex_jDict[0]
             face1_idx = vertex_jDict[1][0]
@@ -182,8 +192,15 @@ def meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertic
             a2 = vertices[vertex_j] - v_2
             b2 = vertices[vertex_i] - v_2
 
-            cot_alpha = np.dot(a1, b1) / float(area[face1_idx]) / 2
-            cot_beta = np.dot(a2, b2) / float(area[face2_idx]) / 2
+            if not area[face1_idx]:
+                cot_alpha = 0
+
+            elif not area[face2_idx]:
+                cot_beta = 0
+
+            else:
+                cot_alpha = np.dot(a1, b1) / float(area[face1_idx]) / 2
+                cot_beta = np.dot(a2, b2) / float(area[face2_idx]) / 2
 
             K_i_normal += (cot_alpha + cot_beta) * sharedEdge
 
@@ -191,6 +208,7 @@ def meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertic
         K_i += np.linalg.norm(K_i_normal) / area_mixed / 2
 
     K = math.sqrt( K_i / 4 / math.pi)
+
 
     return K
 
@@ -207,6 +225,8 @@ def relaxationOperator(vertices, faces, labels, debug, lamda = 0.5, itr_min = 51
                    vertices of the triangle mesh
         @faces: numpy.ndarray
                 faces of the triangle mesh
+        @labels: numpy.ndarray
+                 vertices labels that present the functional region for each vertex
         @debug: boolean
                 in the debug mode, all inflated surfaces during smooth inflation
                 will be saved in the same directory.
@@ -224,13 +244,12 @@ def relaxationOperator(vertices, faces, labels, debug, lamda = 0.5, itr_min = 51
                    vertices of the triangle mesh
 
     '''
+    # labels = np.zeros([1, labels.shape[0]])
 
-    stop = 1000
+    stop = 100000
     fileN = 1
 
     [vertexInFaces, facesShareEdge, boundaryVertices] = triangleMeshAttributes(vertices, faces, [0,0,0,0,0,1,0,1,0,1])
-
-    beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
 
     if debug:
 
@@ -240,17 +259,36 @@ def relaxationOperator(vertices, faces, labels, debug, lamda = 0.5, itr_min = 51
         print ("start surface inflation using relaxation operator")
 
 
-    while fileN < itr_min or (fileN < itr_max and beta < stop):
+    while fileN < itr_min:
 
         if debug:
             if fileN > 1:
                 print ('*******************************', fileN - 1, '*******************************')
-                print ("The mean curvature of the smooth inflated cortical surface is: ", beta)
                 outputFileName = outputInflationFilesPath + 'inflated_' + str(fileN-1) + '.ply'
                 if bool(labels.any()):
                     writePlyFileWithLabels(vertices, faces, labels, outputFileName)
                 else:
                     writePlyFile(vertices, faces, outputFileName)
+
+        fileN += 1
+
+        # smooth inflation
+        vertices = updateVertices(vertices, faces, vertexInFaces, lamda)
+
+
+
+    beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
+
+    while fileN < itr_max and beta < stop:
+
+        if debug:
+            print ('*******************************', fileN - 1, '*******************************')
+            print ("The mean curvature of the smooth inflated cortical surface is: ", beta)
+            outputFileName = outputInflationFilesPath + 'inflated_' + str(fileN-1) + '.ply'
+            if bool(labels.any()):
+                writePlyFileWithLabels(vertices, faces, labels, outputFileName)
+            else:
+                writePlyFile(vertices, faces, outputFileName)
 
         fileN += 1
 
@@ -261,7 +299,6 @@ def relaxationOperator(vertices, faces, labels, debug, lamda = 0.5, itr_min = 51
 
         # evaluate the mean curvature of the inflated surface
         beta = meanCurvature(vertices, faces, vertexInFaces, facesShareEdge, boundaryVertices)
-
 
     return vertices
 

@@ -22,7 +22,7 @@
         #
         #   Created on: August 5, 2019
         #   Authors:   An Qu
-        #             {anq} <at> kth.se
+        #             {an.qu} <at> yale.edu
         #
 
 
@@ -66,7 +66,7 @@ def readPlyFile(fileName):
 
     labels = np.zeros([1, vertices.shape[0]])
 
-    
+
     return vertices.astype('float64'), triangles, labels
 
 
