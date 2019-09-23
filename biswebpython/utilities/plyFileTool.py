@@ -66,7 +66,8 @@ def readPlyFile(fileName):
 
     labels = np.zeros([1, vertices.shape[0]])
 
-    return vertices, triangles, labels
+    
+    return vertices.astype('float64'), triangles, labels
 
 
 
@@ -91,7 +92,7 @@ def writePlyFile(vertices, faces, fileName):
 
     v = [tuple(vertices[t]) for t in range(len(vertices))]
     f = [tuple([faces[t], 127, 127, 127]) for t in range(len(faces))]
-    v = np.asarray(v, dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+    v = np.asarray(v, dtype = [('x', 'float64'), ('y', 'float64'), ('z', 'float64')])
     f = np.asarray(f, dtype = [('vertex_indices', 'i4', (3,)), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')])
 
     el1 = PlyElement.describe(v, 'vertex')
@@ -139,7 +140,7 @@ def writePlyFileWithLabels(vertices, faces, labels, fileName, n = 280, map = 'gi
             rgba = cmap(norm(c[1]))
         f[idx] = tuple([face, int(rgba[0]*255), int(rgba[1]*255), int(rgba[2]*255)])
 
-    v = np.asarray(v, dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+    v = np.asarray(v, dtype = [('x', 'float64'), ('y', 'float64'), ('z', 'float64')])
     f = np.asarray(f, dtype = [('vertex_indices', 'i4', (3,)), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')])
 
     el1 = PlyElement.describe(v, 'vertex')
