@@ -723,23 +723,18 @@ class bisSurface(bisBaseObject):
 
 
     def save(self,filename):
-        if bool(self.labels.any()):
-            try:
+        try:
+            if bool(self.labels.any()):
                 plyutil.writePlyFileWithLabels(self.vertices, self.faces, self.labels, filename);
                 self.filename=filename;
                 print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
-            except:
-                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
-                return False;
-
-        else:
-            try:
+            else:
                 plyutil.writePlyFile(self.vertices, self.faces, filename);
                 self.filename=filename;
                 print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
-            except:
-                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
-                return False;
+        except:
+            print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
+            return False;
 
         return True;
 
