@@ -89,6 +89,7 @@ class ModuleManagerElement extends HTMLElement {
     }
 
     attachTransformationController(index) {
+
         if (this.algorithmController.getTransformController()) {
             const self=this;
             webutil.createMenuItem(this.moduleMenu[index],'Transformation Manager',
@@ -220,20 +221,23 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Mask Image', 2, false, modules.getModule('maskImage'), moduleoptions);
 
         if (this.mode!=='single') {
-            this.attachTransformationController(3);
-            this.createModule('Reslice Image',3, true, modules.getModule('resliceImage'), moduleoptions);
-            
-            this.createModule('Manual Registration',3, true, modules.getModule('manualRegistration'), moduleoptions);
-            if (usesgpl) {
-                this.createModule('Linear Registration',3, false, modules.getModule('linearRegistration'), moduleoptions);
-                this.createModule('Non Linear Registration',3, true, modules.getModule('nonlinearRegistration'), moduleoptions);
-            }
-            this.createModule('Project Image',3, false, modules.getModule('projectImage'), moduleoptions);
-            this.createModule('Back-Project Image',3, usesgpl, modules.getModule('backProjectImage'), moduleoptions);
-            if (usesgpl) {
-                this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
-            }
-        } 
+            webutil.runAfterAllLoaded( () => {
+                this.attachTransformationController(3);
+                this.createModule('Reslice Image',3, true, modules.getModule('resliceImage'), moduleoptions);
+                
+                this.createModule('Manual Registration',3, true, modules.getModule('manualRegistration'), moduleoptions);
+                if (usesgpl) {
+                    this.createModule('Linear Registration',3, false, modules.getModule('linearRegistration'), moduleoptions);
+                    this.createModule('Non Linear Registration',3, true, modules.getModule('nonlinearRegistration'), moduleoptions);
+                }
+                this.createModule('Project Image',3, false, modules.getModule('projectImage'), moduleoptions);
+                this.createModule('Back-Project Image',3, usesgpl, modules.getModule('backProjectImage'), moduleoptions);
+                if (usesgpl) {
+                    this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
+                }
+            });
+        }
+                                     
         return this.moduleMenu[0];
             
     }
