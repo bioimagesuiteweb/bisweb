@@ -150,7 +150,7 @@ class MakeConnMatrixFileModule extends BaseModule {
                                 let splitChar = row.includes(',') ? ',' : '\t';
                                 let splitRow = row.split(splitChar), subname = splitRow.shift();
 
-                                let formattedBehaviorFilename = reformattedIndir + sep + subname + '_behaviors.csv';
+                                let formattedBehaviorFilename = reformattedIndir + sep + subname + '_behaviors' + (splitChar === ',' ? '.csv' : '.tsv');
                                 let behaviorFilePromise = bis_genericio.write(formattedBehaviorFilename, splitRow.join(splitChar));
                                 promiseArray.push(behaviorFilePromise);
                             }
@@ -159,12 +159,12 @@ class MakeConnMatrixFileModule extends BaseModule {
                         //TODO: handle cases where there's more than one subject? data i've got so far only contains one-per
                         // -Zach
                         for (let file of obj.dataFiles) {
-                            let filedata = await bis_genericio.read(file), readdata = filedata.data;
-                            if (readdata.includes('\t')) { readdata.replace('\t', ','); }
+                            let filedata = await bis_genericio.read(file), readdata = filedata.data, extension = '.csv';
+                            if (readdata.includes('\t')) { extension = '.tsv'; }
 
                             //get subject name from filename (subject name should be the first thing in front of an underscore at the end of the path)
                             let subname = bis_genericio.getBaseName(file).split('_')[0];
-                            let dataFilename = reformattedIndir + sep + subname + '_conn01.csv';
+                            let dataFilename = reformattedIndir + sep + subname + '_conn01' + extension;
                             let dataFilePromise = bis_genericio.write(dataFilename, readdata);
                             promiseArray.push(dataFilePromise);
                         }

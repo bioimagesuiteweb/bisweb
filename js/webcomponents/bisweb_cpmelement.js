@@ -36,7 +36,6 @@ const bisweb_histoplot = require('bisweb_histogramplot.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
-const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const bisweb_serverutils = require('bisweb_serverutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
@@ -255,7 +254,6 @@ class CPMElement extends HTMLElement {
             let subNumRegex = /^([^\d]*)(\d+)/g;
             let match = subNumRegex.exec(formName);
             let fullName = match[0], subjectName = match[1], subjectNum = match[2], strippedSubjectName;
-            console.log('match', match);
 
             if (subjectNum === '') { console.log('Error: No subject number associated with', formName, ', please ensure that your subjects are properly identified.'); return; }
             strippedSubjectName = subjectName + bis_bidsutils.stripLeadingZeroes(subjectNum);
@@ -707,7 +705,6 @@ let reformatMatrix = (filename, matrix) => {
             default: console.log('Error: unrecognized extension', extension);
         }
     }
-
     return reformattedEntry.join('\n');
 };
 
