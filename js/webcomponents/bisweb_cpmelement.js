@@ -25,6 +25,7 @@ const dat = require('bisweb_datgui');
 const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
+const bis_bidsutils = require('bis_bidsutils.js');
 // const moduleIndex = require('moduleindex.js');
 
 const bis_webfileutil = require('bis_webfileutil.js');
@@ -251,15 +252,15 @@ class CPMElement extends HTMLElement {
             let formName = $('#' + this.fileListFormId).val();
 
             //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
-            let subNumRegex = /(sub\d+)/g;
-            let subjectName = subNumRegex.exec(formName)[1], strippedSubjectName;
-            
-            //add two to account for the length of sub
-            if (subjectName.indexOf('0') === subjectName.indexOf('sub') + 2 + 1) {
-                strippedSubjectName = subjectName.replace(/sub0*/, 'sub');
-            }
+            let subNumRegex = /^([^\d]*)(\d+)/g;
+            let match = subNumRegex.exec(formName);
+            let fullName = match[0], subjectName = match[1], subjectNum = match[2], strippedSubjectName;
+            console.log('match', match);
 
-            let subVals = this.connFiles[subjectName] || this.connFiles[strippedSubjectName];
+            if (subjectNum === '') { console.log('Error: No subject number associated with', formName, ', please ensure that your subjects are properly identified.'); return; }
+            strippedSubjectName = subjectName + bis_bidsutils.stripLeadingZeroes(subjectNum);
+
+            let subVals = this.connFiles[fullName] || this.connFiles[strippedSubjectName];
             let connFileVal = subVals[formName];
 
             //if bigger than 10kB, ask whether user is sure they want to display it
@@ -697,7 +698,6 @@ class CPMElement extends HTMLElement {
  */
 let reformatMatrix = (filename, matrix) => {
     let numericMatr = matrix.getNumericMatrix(), extension = filename.split('.')[1];
-    numericMatr = bisweb_matrixutils.compressSymmetricMatrix(numericMatr);
 
     let reformattedEntry = [];
     for (let i = 0; i < numericMatr.length; i++) {

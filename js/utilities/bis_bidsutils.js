@@ -1038,6 +1038,22 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
     }
 };
 
+//Takes the leading zero off a number, if any, and returns the number.
+let stripLeadingZeroes = (input) => {
+    let strippedInput = input;
+    for (let i = 0; i < strippedInput.length; i++) {
+        if (strippedInput.charAt(i) === '0') {
+            strippedInput = strippedInput.slice(1);
+            i--;
+        } else {
+            return strippedInput;
+        }
+    }
+
+    return '';
+};
+
+
 module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
@@ -1045,5 +1061,6 @@ module.exports = {
     getSettingsEntry : getSettingsEntry,
     convertTASKFileToTSV : convertTASKFileToTSV,
     parseTaskFileFromTSV : parseTaskFileFromTSV,
-    dicomParametersFilename : dicomParametersFilename
+    dicomParametersFilename : dicomParametersFilename,
+    stripLeadingZeroes : stripLeadingZeroes
 };
