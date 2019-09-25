@@ -217,9 +217,10 @@ class MakeConnMatrixFileModule extends BaseModule {
         /* Adds an entry to the combined connectivity file*/ 
         function addEntry(filename, contents) {
             let splitName = filename.split('_');
-            let subjectNumberRegex = /sub\d*(\d)/;
+            let subjectNumberRegex = /^.*(\d+?)/;
             let regexMatch = subjectNumberRegex.exec(splitName[0]);
-            let escapedSubjectName = 'sub' + regexMatch[1];
+            let strippedNumber = stripLeadingZeroes(regexMatch[1]);
+            let escapedSubjectName = 'sub' + strippedNumber;
 
             if (!combinedFile[escapedSubjectName]) {
                 combinedFile[escapedSubjectName] = {};
@@ -273,5 +274,18 @@ class MakeConnMatrixFileModule extends BaseModule {
     }
 
 }
+
+//Takes the leading zero off a number, if any, and returns the number.
+let stripLeadingZeroes = (input) => {
+    for (let i = 0; i < input.length; i++) {
+        if (input[i] === '0') {
+            input = input.slice(1, -1);
+        } else {
+            return input;
+        }
+    }
+
+    return '';
+};
 
 module.exports = MakeConnMatrixFileModule;
