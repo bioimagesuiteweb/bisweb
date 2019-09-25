@@ -848,21 +848,23 @@ class ViewerApplicationElement extends HTMLElement {
         }
         mod.updateParams(JSON.parse(JSON.stringify(vr)));
         let inp=mod.getDescription().inputs;
-        
+
         for (let i=0;i<inp.length;i++)  {
-            if (inp[i].type==='image') {
-                let guiviewer=inp[i].guiviewer || 'viewer1';
-                let itype=inp[i].guiviewertype || 'image';
-                let vno=0;
-                if (guiviewer ==='viewer2')
-                    vno=1;
-                if (vno>numviewers-1)
-                    vno=numviewers-1;
-                if (itype === 'image') 
-                    await this.loadImage(args[0], vno);
-                else
-                    await this.loadOverlay(args[0],vno);
-                args.splice(0,1);
+            if (args.length>0) {
+                if (inp[i].type==='image') {
+                    let guiviewer=inp[i].guiviewer || 'viewer1';
+                    let itype=inp[i].guiviewertype || 'image';
+                    let vno=0;
+                    if (guiviewer ==='viewer2')
+                        vno=1;
+                    if (vno>numviewers-1)
+                        vno=numviewers-1;
+                    if (itype === 'image') 
+                        await this.loadImage(args[0], vno);
+                    else
+                        await this.loadOverlay(args[0],vno);
+                    args.splice(0,1);
+                }
             }
         }
         return [];

@@ -306,6 +306,7 @@ gulp.task('eslint',  () => {
                 'no-console': 'off',
                 'no-prototype-builtins': 'off',
                 'indent' : 'off',
+                'require-atomic-updates' : 'off',
                 "semi": [
                     "error",
                     "always"

@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/*global window,document,setTimeout,HTMLElement */
-
 "use strict";
 const $ = require('jquery');
 const bootbox = require('bootbox');

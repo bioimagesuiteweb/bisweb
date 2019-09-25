@@ -510,8 +510,8 @@ class MosaicViewerElement extends BaseViewerElement {
         var fn=function(i) { self.updatetransferfunctions(i); };
         
         if (this.internal.cmapcontroller===null) {
-            let colormapid=this.getAttribute('bis-colormapeditorid');
-            this.internal.cmapcontroller=document.querySelector(colormapid);
+            this.internal.cmapcontroller=document.createElement('bisweb-colormapcontrollerelement');
+            this.appendChild(this.internal.cmapcontroller);
         }
         this.internal.cmapcontroller.setimage(this.internal.volume,fn,1.0);
         
