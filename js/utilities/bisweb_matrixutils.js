@@ -225,13 +225,10 @@ let addDriftTerms = (matrix, runs, order = 1) => {
  * @returns The compressed matrix.
  */
 let compressSymmetricMatrix = (mat) => {
-    console.log('mat', mat);
     let sym = [];
     for (let i = 0; i < mat.length; i++) {
         sym.push(mat[i].slice(0, i + 1));
     }
-
-    console.log('sym', sym);
     return sym;
 };
 
