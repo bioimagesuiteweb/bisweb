@@ -506,6 +506,17 @@ input[type="radio"] .styled:checked + label::after {
     filter : blur(8px) brightness(50%);
 }
 
+.bisweb-dialog-box {
+    margin-left : 3px; 
+    margin-right : 3px; 
+    margin-top : 3px; 
+    overflow-y : auto; 
+    position : relative; 
+    width : 100%; 
+    overflow-y : auto; 
+    overflow-x : auto;
+}
+
 /* TODO: Figure out how to add a blur effect over just an area of content? This would work with a background but not with actual HTML elements... */ 
 /*body::before {
     content: '';

@@ -92,7 +92,7 @@ class CPMElement extends HTMLElement {
             });
 
             this.createMenubarItems(menubar, dockbar);
-            this.openCPMSidebar(dockbar);
+            this.openCPMSidebar(dockbar, layoutElement);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
@@ -187,8 +187,9 @@ class CPMElement extends HTMLElement {
      * Opens the CPM panel in the dockbar, creating it if necessary. 
      * 
      * @param {JQuery} dockbar - The right panel on the BioImageSuite page.  
+     * @param {JQuery} layoutElement - The viewer layout element for the page.
      */
-    openCPMSidebar(dockbar) {
+    openCPMSidebar(dockbar, layoutElement) {
         if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
             this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true, true);
@@ -228,7 +229,7 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            this.createFormButtons(buttonGroup, this.importButton, exportButton);
+            this.createFormButtons(layoutElement);
             buttonGroup.append(this.importButton, exportButton);
             this.cpmDisplayPanel.append(buttonGroup);
         } else {
@@ -239,57 +240,18 @@ class CPMElement extends HTMLElement {
     /**
      * Creates the button associated with the form in the connectivity file panel. 
      * 
-     * @param {JQuery} fileButtonGroup - The button group containing the import and export buttons. 
-     * @param {JQuery} importButton - The 'Import CPM File' button
-     * @param {JQuery} exportButton - The 'Export CPM file' button
+     * @param {JQuery} layoutElement - The layout element for the viewer on the page.
      */
-    createFormButtons(fileButtonGroup, importButton, exportButton) {
-        const self = this;
+    createFormButtons(layoutElement) {
+        
         let listButtonGroup = $(this.fileListForm).find('.btn-group');
         let viewButton = listButtonGroup.find('.btn-info');
         let runButton = listButtonGroup.find('.btn-success');
         let settingsButton = listButtonGroup.find('.btn-primary');
 
+
         viewButton.on('click', () => {
-            let formName = $('#' + this.fileListFormId).val();
-
-            //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
-            let subNumRegex = /^([^\d]*)(\d+)/g;
-            let match = subNumRegex.exec(formName);
-            let fullName = match[0], subjectName = match[1], subjectNum = match[2], strippedSubjectName;
-
-            if (subjectNum === '') { console.log('Error: No subject number associated with', formName, ', please ensure that your subjects are properly identified.'); return; }
-            strippedSubjectName = subjectName + bis_bidsutils.stripLeadingZeroes(subjectNum);
-
-            let subVals = this.connFiles[fullName] || this.connFiles[strippedSubjectName];
-            let connFileVal = subVals[formName];
-
-            //if bigger than 10kB, ask whether user is sure they want to display it
-            if (getMatrixSize(connFileVal) > 1024 * 10) {
-                bootbox.confirm({
-                    'title' : 'Show selected file?',
-                    'message' : 'The selected file is greater than 10kB. Are you sure you want to display the full file?',
-                    'callback' : (accept) => {
-                        if (accept) {
-                            showConnFile();
-                        }
-                    }
-                });
-            } else {
-                showConnFile();
-            }
-
-
-            $(fileButtonGroup).append(importButton, exportButton);
-            function showConnFile() {
-                let dialogBoxHeight = self.layoutElement.viewerheight * 0.7;
-                let message = reformatMatrix(formName, connFileVal); 
-                let output = `<div style='margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dialogBoxHeight}px; overflow-y: auto; overflow-x: auto;'>${message}</div>`;
-                bootbox.alert({
-                    'title' : 'Connectivity file',
-                    'message' : output
-                });
-            }
+           this.createViewDialog(layoutElement);
         });
 
         runButton.on('click', () => {
@@ -339,6 +301,46 @@ class CPMElement extends HTMLElement {
         });
 
         settingsButton.on('click', () => { this.openSettingsModal(); });    
+    }
+
+    createViewDialog(layoutElement) {
+        let formName = $('#' + this.fileListFormId).val();
+
+        //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
+        let subNumRegex = /^([^\d]*)(\d+)/g;
+        let match = subNumRegex.exec(formName);
+        let fullName = match[0], subjectName = match[1], subjectNum = match[2], strippedSubjectName;
+
+        if (subjectNum === '') { console.log('Error: No subject number associated with', formName, ', please ensure that your subjects are properly identified.'); return; }
+        strippedSubjectName = subjectName + bis_bidsutils.stripLeadingZeroes(subjectNum);
+
+        let subVals = this.connFiles[fullName] || this.connFiles[strippedSubjectName];
+        let connFileVal = subVals[formName];
+
+        //if bigger than 10kB, ask whether user is sure they want to display it
+        if (getMatrixSize(connFileVal) > 1024 * 10) {
+            bootbox.confirm({
+                'title' : 'Show selected file?',
+                'message' : 'The selected file is greater than 10kB. Are you sure you want to display the full file?',
+                'callback' : (accept) => {
+                    if (accept) {
+                        showConnFile();
+                    }
+                }
+            });
+        } else {
+            showConnFile();
+        }
+
+        function showConnFile() {
+            let lh = layoutElement.getviewerheight() * 0.7;
+            let message = reformatMatrix(formName, connFileVal); 
+            let output = `<div class='bisweb-dialog-box' style='max-height: ${lh}'>${message}</div>`;
+            bootbox.alert({
+                'title' : 'Connectivity file',
+                'message' : output
+            });
+        }
     }
 
     /**
