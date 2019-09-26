@@ -15,9 +15,6 @@
     
     ENDLICENSE */
 
-/* global window,document,setTimeout,HTMLElement,Event,Image*/
-
-
 "use strict";
 
 const numeric=require('numeric');
@@ -69,20 +66,29 @@ const gui_Networks_ArrayShort = [
 
 
 const gui_Lines = [ 'Positive', 'Negative', 'Both'];
-const gui_Modes = [ 'All', 'Single Node', 'Single Lobe','Single Network'];
+const gui_Modes = [ 'All', 'Single Node', 'Group' ];
 
-const createNetworkNames = function(useyale=true,internal=null) {
+
+const createNetworkNames = function(mode='yale',internal=null) {
         
     let index=0;
-    
-    if (useyale) {
+    //    console.log('mode=',mode);
+    if (mode==='yale') {
         index=1;
         internal.networkAttributeIndex=4;
-    } else {
+        gui_Modes[2]='Single Network';
+    } else if ( mode === 'wshu') {
         index=0;
         internal.networkAttributeIndex=2;
+        gui_Modes[2]='Single Network';
+    } else {
+        internal.networkAttributeIndex=0;
+        index=1;
+        gui_Modes[2]='Single Lobe';
     }
+
     
+
     internal.gui_Networks=gui_Networks_Array[index];
     let keys=Object.keys(internal.gui_Networks);
     internal.gui_Networks_Names=[];
@@ -96,6 +102,7 @@ const createNetworkNames = function(useyale=true,internal=null) {
     internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
     internal.parameters.network=internal.gui_Networks[1];
+    //console.log('mode=',mode,internal.networkAttributeIndex);
 };
 
 
@@ -124,7 +131,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         gui_Networks : null,
         gui_Networks_Names : null,
         gui_Networks_ShortNames : null,
-
+        
         
         // global stuff
         initialized : false,
@@ -151,6 +158,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // DAT
         datgui : null,
         parameters : {
+            autodrawenabled : true,
             node  : 200,
             linestodraw : gui_Lines[2],
             degreethreshold : 10,
@@ -164,6 +172,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             opacity : 0.7,
             mode3d : 'Uniform',
             display3d : 'Both',
+            resol3d : 0,
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
@@ -497,7 +506,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                  midx,y0_0);
                 if (internal.networkAttributeIndex===4)
                     internal.overlaycontext.fillText('Using Yale network definitions from Noble at al 2018.',midx,y0_0+20);
-                else
+                else if (internal.networkAttributeIndex===2)
                     internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
             }
             
@@ -900,6 +909,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                             webutil.createAlert('Negative matrix of dimensions '+np+'*'+np+' read from '+filename);
                         window.dispatchEvent(new Event('resize'));
                     }
+                    setTimeout( () => { autoDrawLines(); },200);
+
                 } else {
                     done();
                 }
@@ -1119,11 +1130,23 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // create GUI
     // -------------------------------------------------------------------------------------------
 
+    var autoDrawLines=function() {
+        if (!internal.parameters.autodrawenabled ||
+            internal.conndata.statMatrix===null) 
+            return;
+        
+        connectvis.removelines();
+        connectvis.createlines();
+    };
+
+    
     // actual GUI creation when main class is ready
     // The parent element is internal.parentDomElement
-    var onDemandCreateGUI = function (useYale=true) {
+    var onDemandCreateGUI = function (mode='yale') {
 
-        createNetworkNames(useYale,internal);
+        
+        createNetworkNames(mode,internal);
+        //console.log('attr=',        internal.networkAttributeIndex,mode);
         
         if (internal.parentDomElement===null)
             return;
@@ -1141,31 +1164,51 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         let coords = gui.addFolder('Core');
         coords.open();
-
+        coords.add(data,'autodrawenabled').name('Auto Draw');
 
         
         let disp = gui.addFolder('Display');
         let disp2 = gui.addFolder('Display 3D');
         let adv = gui.addFolder('Advanced');
+        
+        
         let clist = [];
-        clist.push(coords.add(data,'mode',gui_Modes).name("Mode"));
+        
+        let modecnt=coords.add(data,'mode',gui_Modes).name("Mode");
+        modecnt.onChange( () => {
+            autoDrawLines();
+        });
+    
+        
+        clist.push(modecnt);
         let a1=coords.add(data,'node',1,400).name("Node");
         clist.push(a1);
         a1.onChange(function(val) {
             setnode(Math.round(val-1));
+            autoDrawLines();
         });
         internal.datgui_nodecontroller=a1;
+
+        let dlist=[];
         
-        clist.push(coords.add(data,'lobe',gui_Lobes_Values).name("Lobe"));
-        clist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
+        if (internal.networkAttributeIndex===0)
+            dlist.push(coords.add(data,'lobe',gui_Lobes_Values).name("Lobe"));
+        else
+            dlist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
+        
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
-        clist.push(internal.datgui_degreethresholdcontroller);
-        clist.push(coords.add(data,'linestodraw',gui_Lines).name("Lines to Draw"));
+        dlist.push(internal.datgui_degreethresholdcontroller);
         
-        clist.push(disp.add(data,'length',10,100).name("Length"));
-        clist.push(disp.add(data,'thickness',1,4).name("Thickness"));
-        clist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
-        clist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
+        dlist.push(internal.datgui_degreethresholdcontroller);
+        dlist.push(disp.add(data,'length',10,200).name("Length"));
+        dlist.push(disp.add(data,'thickness',1,4).name("Thickness"));
+        dlist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
+        dlist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
+        for (let i=0;i<dlist.length;i++) {
+            let e=dlist[i];
+            clist.push(e);
+            e.onFinishChange( () => { autoDrawLines();});
+        }
 
 
 
@@ -1173,22 +1216,35 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
 
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
         });
+        let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+        });
+        
+        
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
-            if (data.mode3d!=='Uniform')
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+            if (data.mode3d!=='Uniform') {
                 data.opacity=1.0;
+                da1.domElement.style.opacity = 0.1;
+            } else {
+                da1.domElement.style.opacity = 1.0;
+            }
             da1.updateDisplay();
             setTimeout( () => { drawColorScale(); },200);
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
         });
-        clist.push(disp2.add(data,'radius',0.2,4.0).name("Radius (3D)"));
-        
+
+        let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
+        da4.onFinishChange( () => {   autoDrawLines();      });
+
+        clist.push(da4);
+        clist.push(da15);
         clist.push(da1);
         clist.push(da2);
         clist.push(da3);
@@ -1392,7 +1448,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 return;
 
             internal.subviewers=subviewers;
-            onDemandCreateGUI(true);
+            onDemandCreateGUI('yale');
             const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
             
@@ -1411,12 +1467,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         // recreate gui
-        setNetworksToYale(flag=true) {
+        setnodeGroupOption(flag='yale') {
 
-            if (flag && internal.networkAttributeIndex===4)
+            if (flag === 'yale' && internal.networkAttributeIndex===4)
                 return;
-            if (!flag && internal.networkAttributeIndex===2)
+            if (flag === 'wshu' && internal.networkAttributeIndex===2)
                 return;
+            if (flag === 'lobes' && internal.networkAttributeIndex===0)
+                return;
+
             onDemandCreateGUI(flag);
             setnode(Math.round(internal.parameters.node-1));
             this.handleresize();
@@ -1490,7 +1549,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         handleMouseEvent : function(e) {
-
+            
             if (internal.parcellation===null)
                 return;
             let point=internal.parcellation.findPoint(e.offsetX,e.offsetY,internal.overlaycontext);
@@ -1498,6 +1557,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 return;
             }
             setnode(point);
+            autoDrawLines();
         },
 
         handleKeyEvent : function(event) {
@@ -1634,7 +1694,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             toggleshowlegend();
             connectvis3d.update3DMeshes(internal.parameters.opacity,
                                         internal.parameters.mode3d,
-                                        internal.parameters.display3d
+                                        internal.parameters.display3d,
+                                        internal.parameters.resol3d,
                                        );
             internal.inrestorestate=false;
             setTimeout( () => { drawColorScale();},20);
@@ -1939,8 +2000,8 @@ class ConnectivityControlElement extends HTMLElement {
         return this.innercontrol.getRenderMode();
     }
 
-    setNetworksToYale(flag=true) {
-        return this.innercontrol.setNetworksToYale(flag);
+    setnodeGroupOption(flag='yale') {
+        return this.innercontrol.setnodeGroupOption(flag);
     }
 }
 

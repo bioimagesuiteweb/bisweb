@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/*global window,document,setTimeout,HTMLElement */
-
 "use strict";
 const $ = require('jquery');
 const bootbox = require('bootbox');
@@ -32,7 +30,6 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 const bisweb_scatterplot = require('bisweb_scatterplot.js');
-const bisweb_histoplot = require('bisweb_histogramplot.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
@@ -83,16 +80,12 @@ class CPMElement extends HTMLElement {
             let dockbar = layoutElement.elements.dockbarcontent;
 
             cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
-                cardbar.createTab('Histogram plot', $(), { 'save' : true }).then( (histoobj) => {
-                    this.createCPMGUIManager(layoutElement, scatterobj.content[0], histoobj.content[0]);
+                this.createCPMGUIManager(layoutElement, scatterobj.content[0]);
 
-                    //resizing function for card bar pane
-                    cardbar.setResizingFunction( () => {
-                        scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
-                        scatterobj.content.height(layoutElement.viewerheight / 2);
-                        histoobj.content.width(layoutElement.viewerwidth / 3 + 20);
-                        histoobj.content.height(layoutElement.viewerheight / 2);
-                    });
+                //resizing function for card bar pane
+                cardbar.setResizingFunction( () => {
+                    scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
+                    scatterobj.content.height(layoutElement.viewerheight / 2);
                 });
             });
 
@@ -110,33 +103,75 @@ class CPMElement extends HTMLElement {
      * @param {HTMLElement} scatterElement - The DOM element to append the scatter plot to.
      * @param {HTMLElement} histoElement - The DOM element to append the histogram plot to.
      */
-    createCPMGUIManager(layoutElement, scatterElement, histoElement) {
+    createCPMGUIManager(layoutElement, scatterElement) {
         let dims = [layoutElement.viewerwidth / 3, layoutElement.viewerheight / 2];
         let pos = [0 , layoutElement.viewerheight - 10];
 
         let scatterplot = new bisweb_scatterplot(scatterElement, dims, pos);
-        let histoplot = new bisweb_histoplot(histoElement, dims);
 
         //resizing function for charts
         $(window).on('resize', () => {
             dims = [layoutElement.viewerwidth / 3 , layoutElement.viewerheight / 2];
             pos = [0 , layoutElement.viewerheight - 10];
             scatterplot.resize(dims, pos);
-            histoplot.resize(dims, pos);
         });
     }
 
+    
+    importFileCallback (f)  {
+        bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
+        this.importFiles(f).then( () => {
+            bis_webutil.dismissAlerts();
+            bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
+            this.importButton.remove();
+            if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
+            this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
+        });
+    }
+
+    
     /**
      * Creates the Connectivity Files panel and adds the CPM menubar item to the top of the page. 
      * 
      * @param {JQuery} menubar - The top menubar of the BioImage Suite page.
      * @param {JQuery} dockbar - The right panel on the BioImage Suite page.
      */
-    createMenubarItems(menubar, dockbar) {
-        let topmenu = bis_webutil.createTopMenuBarMenu('CPM', menubar);
-        bis_webutil.createMenuItem(topmenu, 'Open Connectivity File Loader', () => { this.openCPMSidebar(dockbar); });
+    createMenubarItems(menubar) {
+        let topmenu = bis_webutil.createTopMenuBarMenu('File', menubar);
 
+        let importFileCallback = (f) => { this.importFileCallback(f);};
+        
+        let importFileItem = bis_webfileutil.createFileButton({
+            'callback' : importFileCallback
+        }, {
+            'title': 'Import connectivity index file',
+            'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
+            'suffix' : 'json'
+        });
+
+        let importDirectoryItem = bis_webfileutil.createFileButton({
+            'callback' : importFileCallback
+        }, {
+            'mode' : 'directory',
+            'title': 'Import connectivity files from directory',
+            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
+        });
+
+        bis_webutil.createMenuItem(topmenu, 'Import From CPM File', () => {  importFileItem.click(); });
+        bis_webutil.createMenuItem(topmenu, 'Import From Directory', () => {  importDirectoryItem.click(); });
+        bis_webutil.createMenuItem(topmenu, '');
+
+        if (bis_webutil.inElectronApp()) {
+            bis_webutil.createMenuItem(topmenu, ''); // separator
+            bis_webutil.createMenuItem(topmenu, 'Show JavaScript Console',
+                                       function () {
+                                           window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                       });
+        } else {
+            bis_webfileutil.createFileSourceSelector(topmenu);
+        }
     }
+
 
     /**
      * Opens the CPM panel in the dockbar, creating it if necessary. 
@@ -168,7 +203,7 @@ class CPMElement extends HTMLElement {
             `);
 
             let buttonGroup = bis_webutil.createbuttonbar();
-            let importButton = this.createCPMPopoverButton();
+            this.importButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
                 'name' : 'Export CPM file',
                 'type' : 'warning',
@@ -226,8 +261,8 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            this.createFormButtons(buttonGroup, importButton, exportButton);
-            buttonGroup.append(importButton, exportButton);
+            this.createFormButtons(buttonGroup, this.importButton, exportButton);
+            buttonGroup.append(this.importButton, exportButton);
             this.cpmDisplayPanel.append(buttonGroup);
         } else {
             this.cpmDisplayPanel.parent().addClass('in');
@@ -436,15 +471,8 @@ class CPMElement extends HTMLElement {
     createCPMPopoverButton() {
 
         //Unattached buttons that are clicked when one of the popover buttons is clicked
-        let importFileCallback = (f) => {
-            bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
-            this.importFiles(f).then( () => {
-                bis_webutil.dismissAlerts();
-                bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
-                if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
-                this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
-            });
-        };
+        let importFileCallback = (f) => { this.importFileCallback(f);};
+
 
         let importFileItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback

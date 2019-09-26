@@ -26,5 +26,5 @@ setuptools.setup(
         'console_scripts': ['biswebpy=biswebpython.biswebpy:main', 'biswebpython=biswebpython.biswebpy:main' ]
     },
     python_requires='>=3.5',
-    package_data={ '' : [ 'libbiswasm.so','libbiswasm.dylib','biswasm.dll','requirements.txt', 'PythonModuleList.txt' ] }
+    package_data={ '' : [ 'libbiswasm.so','libbiswasm.dylib','biswasm.dll','requirements.txt', 'PythonModuleList.txt', 'test_module.py' ] }
 )

@@ -170,7 +170,7 @@ class ComputeROILargeModule extends BaseModule {
         });
 
         
-        return new Promise( async (resolve,reject) => {
+        return new Promise( (resolve,reject) => {
             
             if (gzip) {
 
@@ -187,11 +187,11 @@ class ComputeROILargeModule extends BaseModule {
                 });
             } else {
                 
-                readstream.on('end', async () => {
+                readstream.on('end',  () => {
                     resolve('Done');
                 });
                 
-                readstream.on('readable', async () => {
+                readstream.on('readable',  () => {
                     let done=false;
                     while (!done) {
                         let chunk = readstream.read();

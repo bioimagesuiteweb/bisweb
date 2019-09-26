@@ -78,12 +78,9 @@
       bis-defaulttext="">
     </bisweb-viewerlayoutelement>
     
-    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
-    
     <bisweb-orthogonalviewer
        id="viewer"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap">
+       bis-layoutwidgetid="#viewer_layout">
     </bisweb-orthogonalviewer>
       
     <bisweb-snapshotelement
@@ -92,16 +89,10 @@
       bis-viewerid="#viewer">
     </bisweb-snapshotelement>
 
-    <bisweb-simplealgorithmcontrollerelement
-       id="algoelement"
-       bis-viewerid="#viewer">
-    </bisweb-simplealgorithmcontrollerelement>
-
     <bisweb-painttoolelement
        id="painttool"
        bis-layoutwidgetid="#viewer_layout"
-       bis-viewerid="#viewer"
-      bis-algorithmcontrollerid="#algoelement">
+       bis-viewerid="#viewer">
     </bisweb-painttoolelement>
 
     <bisweb-landmarkcontrolelement

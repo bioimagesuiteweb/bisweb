@@ -15,8 +15,6 @@
     
     ENDLICENSE */
 
-/* global window, document */
-
 "use strict";
 
 const THREE = require('three');

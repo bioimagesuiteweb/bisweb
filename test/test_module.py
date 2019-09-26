@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 # LICENSE
-# 
+#
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-# 
+#
 # BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # - you may not use this software except in compliance with the License.
 # - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-# 
+#
 # __Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.__
-# 
+#
 # ENDLICENSE
 
 
@@ -22,29 +22,84 @@ import os
 import sys
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../'));
+sys.path.insert(0,os.path.abspath(my_path+'/../'));
+sys.path.insert(1,os.path.abspath(my_path+'/../..'));
+
+
+
 
 import biswebpython.core.bis_objects as bis
 import biswebpython.core.bis_commandline as bis_commandline;
+import biswebpython.core.bis_baseutils as bis_baseutils;
 import argparse
 import json
 import tempfile
+import wget
+
+githuburl='https://bioimagesuiteweb.github.io/test/1.1/';
+githuburlfile='https://bioimagesuiteweb.github.io/test/1.1/module_tests.json';
+
+
 
 
 parser = argparse.ArgumentParser(description='bisweb test python_module tool')
-parser.add_argument('--input',help='filename of the tests to run',default=None)
+parser.add_argument('--input',help='filename of the tests to run',default='')
 parser.add_argument('--first',help='first test to run',default=0,type=int)
 parser.add_argument('--last',help='last test to run',default=-1,type=int)
 parser.add_argument('--testname',help='comma separated list of names of tests to run. If not specified all are run (subject to first:last)',default=None)
 args = vars(parser.parse_args());
 
+
+# -----------------------------------
+
+def get_pathspec(inp):
+
+    global githuburl;
+    global githuburlfile;
+
+    dirname=os.path.dirname(os.path.realpath(__file__));
+    testfilename='';
+    basedir='';
+    if (inp == "local"):
+        testfilename=os.path.abspath(dirname+'/module_tests.json');
+        basedir=dirname+'/';
+    elif (len(inp) > 0):
+        testfilename=inp;
+        basedir=os.path.abspath(os.path.dirname(inp))+'/';
+    else:
+        testfilename=githuburlfile;
+        basedir=githuburl;
+    
+    return {
+        'testfilename' : testfilename,
+        'basedirectory' : basedir
+    };
+# --------------------------------------
+
 testscript_base=os.path.abspath(my_path+"/../biswebpython/biswebpy.py");
+if (not os.path.exists(testscript_base)):
+    testscript_base=os.path.abspath(my_path+"/biswebpy.py");
 
-testlistfilename= args['input'];
-if (args['input'] == None):
-    testlistfilename = os.path.abspath(my_path+"/module_tests.json");
+print('---- Testscript=',testscript_base);
+pathspec=get_pathspec(args['input']);
+        
+testlistfilename = pathspec['testfilename'];
+print('---- Test List Filename=',testlistfilename);
 
 
+with tempfile.TemporaryDirectory() as tempdname:
+    try:
+        print('Here reading',testlistfilename);
+        try:
+            f=bis_baseutils.downloadIfNeeded(testlistfilename,'',tempdname);
+        except AttributeError as e:
+            print(e);
+        json_data=open(f).read()
+        obj = json.loads(json_data)
+    except:
+        e = sys.exc_info()[0]
+        print('---- Failed to read ',e);
+        sys.exit(1);
 
 first_test=args['first'];
 last_test=args['last'];
@@ -53,21 +108,19 @@ test_namelist=None;
 if (test_name != None):
     test_namelist=test_name.lower().split(",")
 
-try:
-    json_data=open(testlistfilename).read()
-    obj = json.loads(json_data)
-except:
-    e = sys.exc_info()[0]
-    print('---- Failed to read ',testfilename,e);
-    sys.exit(1);
-
 testlist=obj['testlist'];
 
+showSkip=True;
+if (first_test == 0 and last_test==-1):
+    showSkip=False;
+
 begin_test=0;
+
 if (first_test<0):
     begin_test=len(testlist)+first_test;
 elif (first_test>0):
     begin_test=first_test;
+    showskip=True;
 
 end_test=len(testlist)-1;
 if (last_test>=0):
@@ -93,8 +146,8 @@ for i in range(begin_test,end_test+1):
     command= [ rawcommand[0:index] , rawcommand[index+1:] ]
     expected_result=testlist[i]['result'];
     dopython=testlist[i]['dopython'];
-    
-    runtest= dopython;        
+
+    runtest= dopython;
     if (test_name != None) :
         doskip=False;
         if ((tname.lower() in test_namelist)==False):
@@ -102,7 +155,7 @@ for i in range(begin_test,end_test+1):
 
 
 
-            
+
     if (runtest==True):
         newargs=testlist[i]['test'].split(" ");
         testopts= {
@@ -118,11 +171,13 @@ for i in range(begin_test,end_test+1):
             k=k+1;
 
         with tempfile.TemporaryDirectory() as dname:
-
+            
             tempName="";
             testtype=testopts['test_type'];
             if (testtype=="image"):
                 tempName= dname+ '/out.nii.gz';
+            elif (testtype=="surface"):
+                tempName= dname+ '/out.ply';
             elif (testtype=="matrix" or testtype=="matrixtransform"):
                 tempName= dname+ '/out.matr';
             elif (testtype=="gridtransform"):
@@ -130,12 +185,14 @@ for i in range(begin_test,end_test+1):
             elif (testtype=="registration"):
                 tempName=dname+'/out.json';
             command[1]=command[1]+" --output "+tempName;
-                
+
             if (testtype=="registration"):
                 tempName=dname+"/out_resl.nii.gz";
                 command[1]=command[1]+" --doreslice true";
                 command[1]=command[1]+" --resliced "+tempName;
                 testtype="image";
+
+            command[1]=command[1]+' --test_base_directory '+pathspec['basedirectory'];
 
             print('====\n-------------------- test',i,'---------------------------------------');
             cmd=sys.executable+" "+testscript_base+' '+command[0]+" "+command[1];
@@ -147,7 +204,8 @@ for i in range(begin_test,end_test+1):
                                                            testopts['test_target'].strip(),
                                                            testtype.strip(),
                                                            float(testopts['test_threshold']),
-                                                           testopts['test_comparison']);
+                                                           testopts['test_comparison'],
+                                                           pathspec['basedirectory'],dname);
             else:
                 print('____ test returned failed to execute code');
 
@@ -167,10 +225,12 @@ for i in range(begin_test,end_test+1):
                 badtests=badtests+"\t"+str(i)+". "+command[0]+" "+command[1]+"\n";
                 testpass=False;
     elif (doskip):
-        print('-------------------- test',i,'----------------------------------------------');
-        print('====\n==== Test ',i,' ' ,rawcommand,'  s k i p p e d\n====');
         numskip=numskip+1;
         skiptests=skiptests+"\t"+str(i)+". "+command[0]+" "+command[1]+"\n";
+        if (showSkip):
+            print('-------------------- test',i,'----------------------------------------------');
+            print('====\n==== Test ',i,' ' ,rawcommand,'  s k i p p e d\n====');
+
 
 print('------------------------------------------------------------------');
 print('++++\n++++ Number of  p a s s e d   = '+str(numgood));
@@ -179,11 +239,11 @@ if (numbad>0):
     print(badtests,'\n');
 
 if (doskip):
-    print('==== Number of  s k i p p e d = '+str(numskip)+'\n');
-    if (numskip>0):
+    print('==== Number of  s k i p p e d = '+str(numskip)+' (some tests do not apply to the Python version of bisweb)\n');
+    if (showSkip and numskip>0):
         print(skiptests,'\n');
 
-    
+
 if (numbad==0):
     print('++++');
     sys.exit(0);

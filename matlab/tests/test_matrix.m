@@ -23,8 +23,7 @@ function result=test_matrix(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test Matrix');
+    [testutil,filepath,lib]=bis_testutils('Test Matrix');
 
     m=zeros(4,'single');
     for c = 1:4
@@ -52,7 +51,7 @@ function result=test_matrix(debug)
     end
     disp('--------------------------------------------------------------------------')
     
-    fname1=[ filepath filesep 'glm' filesep 'Test_bis_glm.matr' ];
+    fname1=testutil.getTestFilename([ 'glm' filesep 'Test_bis_glm.matr' ]);
 
     lines=fileread(fname1);
     out=lib.parseMatrixTextFileWASM(lines,1);
@@ -77,5 +76,6 @@ function result=test_matrix(debug)
     out2=out(1:14,:);
 
     result=testutil.compare(out2,ORIG,'Matrix load (.matr)',0,0.1);
+    testutil.cleanup();
 
 end

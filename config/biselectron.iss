@@ -1,15 +1,15 @@
 [Setup]
 AppVerName=BioImage Suite Web <%= version%>
 AppPublisher=Yale BioImage Suite Project
-AppPublisherURL=http://www.bisweb.yale.edu
-AppSupportURL=http://bisweb.yale.edu
-AppUpdatesURL=http://bisweb.yale.edu
+AppPublisherURL=http://bioimagesuiteweb.org
+AppSupportURL=http://bioimagesuiteweb.org
+AppUpdatesURL=http://bioimagesuiteweb.org
 OutputDir=<%= outputdir%>
 DefaultDirName="C:/Program Files/BioImageSuiteWeb"
 AppName=BioImageSuiteWeb
 DefaultGroupName=BioImageSuiteWeb
-LicenseFile=<%= licensefile%>
-SetupIconFile=<%= iconfile%>
+LicenseFile=<%=licensefile%>
+SetupIconFile=<%=iconfile%>
 OutputBaseFilename=BioImageSuiteWebInstaller-<%= version%>-<%= date%>
 AllowRootDirectory=no
 AllowUNCPath=no
@@ -19,6 +19,8 @@ SolidCompression=yes
 RestartIfNeededByRun=no
 ChangesAssociations=no
 DirExistsWarning=no
+WizardImageFile=<%=iconfile2%>
+WizardSmallImageFile=<%=iconfile3%>
 
 
 

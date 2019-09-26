@@ -24,7 +24,9 @@ to how to use this code.
 
 
 ------------------
-Example -- to run the individualized parcellation code (Salehi et al 2019) do:
+### Example 
+
+To run the individualized parcellation code (Salehi et al 2019) do:
 
 1. Load the files from file names: (Replace the text _Group Parcellation Filename_ with an actual filename.  The images must be in NIfTI-1 .nii or .nii.gz format.
 
@@ -43,7 +45,27 @@ Example -- to run the individualized parcellation code (Salehi et al 2019) do:
         output.save(_Some output filename_
 ----
 
-_Note_: The nii directory contains a cut-down version of the
+### Regression Tests
+
+You can run this by navigating to the tests directory in the biswebmatlab
+distribution and typing
+
+        bis_all_tests()
+        
+        
+__This requires an internet connection__ as all the data is downloaded
+on-the-fly from gitub. If it all goes well you should get a message of the
+form:
+
+        ============================================================
+        === Test Results (1=pass)=[1 1 1 1 1 1 1 1 1 1 1 1]
+        === All 12 Tests Passed
+
+---
+
+### Acknowldgements
+
+The nii directory contains a cut-down version of the
 [Tools for NIfTI and Analyze Image
 ](https://www.mathworks.com/matlabcentral/fileexchange/8797-tools-for-nifti-and-analyze-image)
 provided by Jimmy Shen. We simply renamed the files to prevent name conflicts
@@ -51,6 +73,8 @@ with people that have the original toolbox installed.
 
 
 ---
+
+### More Info on BioImageSuite Web
 
 For more information on bisweb see:
 

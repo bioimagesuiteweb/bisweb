@@ -133,6 +133,7 @@ function moduleOutput = bis_wasmutils()
 
 % Unload Library
   function res = unload()
+    disp('____ unloading bisweb C++ library');
     unloadlibrary(Module);
     res=1;
   end
@@ -288,7 +289,7 @@ function moduleOutput = bis_wasmutils()
 	  case 'int8'
 	    out=1;
 	  case 'uint16'
-	    out=2
+	    out=2;
 	  case 'uint32'
 	    out=4;
     end

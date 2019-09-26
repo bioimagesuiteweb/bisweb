@@ -67,10 +67,15 @@ let dicom2BIDS = async function (opts) {
         let imageFile = bis_genericio.getBaseName(imageFiles[0]), splitImageFile = imageFile.split(/__/), subjectName = '01';
 
         //determine position of protocol name by position of timestamp (which should be a number)
+        console.log('_________________________________________________');
+
+        
         if (!isNaN(splitImageFile[2])) {
             //extract subject name (pa, pb, pc plus a number) 
             let matchstring = /(p[A-z]\d*)/g;
-            subjectName = matchstring.exec(splitImageFile[0])[1]; 
+            subjectName = matchstring.exec(splitImageFile[0]) || [ 'unknown','01' ];
+            subjectName=subjectName[1];
+            console.log('____Subjectname=',subjectName);
         } 
 
 
@@ -108,11 +113,12 @@ let dicom2BIDS = async function (opts) {
                 }
             }
         }
-
+        //console.log(JSON.stringify(dicomobj,null,4));
         await writeDicomMetadataFiles(outputdirectory, dicomobj, changedFilenames);
-        return outputdirectory;
+        return Promise.resolve(outputdirectory);
     } catch (e) {
         console.log('An error occured during BIDS conversion', e);
+        return Promise.reject(e);
     }
 
 };

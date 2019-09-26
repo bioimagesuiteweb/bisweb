@@ -21,7 +21,7 @@ import numpy as np
 import unittest
 
 my_path=os.path.dirname(os.path.realpath(__file__));
-sys.path.append(os.path.abspath(my_path+'/../'));
+sys.path.insert(0,os.path.abspath(my_path+'/../'));
 
 import biswebpython.core.bis_objects as bis
 import biswebpython.core.bis_baseutils as bis_baseutils;

@@ -300,7 +300,7 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     data.twod=method['PVM_SpatDimEnum'];
     if (data.twod.indexOf('2D')>=0) {
         data.dims[2] = parseInt(method['PVM_SPackArrNSlices']);
-        data.dims[2]=data.dims[2];
+        //data.dims[2]=data.dims[2];
         data.thick=parseFloat(acqp['ACQ_slice_thick']);
         data.gapmode=method['PVM_SPackArrSliceGapMode'][0];
         data.gap=parseFloat(method['PVM_SPackArrSliceGap'][0]);
@@ -447,53 +447,59 @@ let createHeader = function(data,debug) {
 /**
  * @alias BisReadBruker.saveTextFiles
  */
-let saveTextFiles = async function(data) {
+let saveTextFiles = function(data) {
 
-    // -------------
-    // Details file
-    // -------------
+    return new Promise ( (resolve,reject) => {
 
-    let exclude = [ 'slopes', 'offset', 'dwdir' ];
-    
-    let detailsname=data.basename+".txt";
-    let details="#Image Header Info\n";
-    let keys=Object.keys(data);
-    for (let count=0;count<keys.length;count++) {
-        let key=keys[count];
-        if (exclude.indexOf(key)<0) {
-            let isarr=Array.isArray(data[key]);
-            if (isarr)
-                details+=key+": "+data[key].join(", ")+"\n";
-            else
-                details+=key+": "+data[key]+"\n";
+        // -------------
+        // Details file
+        // -------------
+        
+        let exclude = [ 'slopes', 'offset', 'dwdir' ];
+        
+        let detailsname=data.basename+".txt";
+        let details="#Image Header Info\n";
+        let keys=Object.keys(data);
+        for (let count=0;count<keys.length;count++) {
+            let key=keys[count];
+            if (exclude.indexOf(key)<0) {
+                let isarr=Array.isArray(data[key]);
+                if (isarr)
+                    details+=key+": "+data[key].join(", ")+"\n";
+                else
+                    details+=key+": "+data[key]+"\n";
+            }
         }
-    }
-    //    if (debug)
-    //      dualPrint("\n"+details+"\n");
-    dualPrint("+++++ saving header info in "+detailsname);
-    await bisgenericio.write(detailsname,details);
-    data.detailsname=detailsname;
-    
-    // --------------------
-    // DTI Directions File
-    // --------------------
-    if (data.ndir>0) {
-        let directionsname=data.basename+".dat";
-        let datatext=data.ndir+"\n";
-        let dw=data.dwdir;
-        let numdir=dw[2];
-        for (let ka=0;ka<numdir;ka++) {
-            let x=[  dw[ka*3], dw[1+ka*3],dw[2+ka*3] ];
-            datatext=datatext+x.join(" ")+"\n";
-        }
-        dualPrint("+++++ saving directions in "+directionsname);
-        await bisgenericio.write(directionsname,datatext);
-        data.directionsname=directionsname;
-    }
-    
-
-
-
+        //    if (debug)
+        //      dualPrint("\n"+details+"\n");
+        dualPrint("+++++ saving header info in "+detailsname);
+        bisgenericio.write(detailsname,details).then( () => {
+            data.detailsname=detailsname;
+            
+            // --------------------
+            // DTI Directions File
+            // --------------------
+            if (data.ndir>0) {
+                let directionsname=data.basename+".dat";
+                let datatext=data.ndir+"\n";
+                let dw=data.dwdir;
+                let numdir=dw[2];
+                for (let ka=0;ka<numdir;ka++) {
+                    let x=[  dw[ka*3], dw[1+ka*3],dw[2+ka*3] ];
+                    datatext=datatext+x.join(" ")+"\n";
+                }
+                dualPrint("+++++ saving directions in "+directionsname);
+                bisgenericio.write(directionsname,datatext).then( () => {
+                    data.directionsname=directionsname;
+                    resolve();
+                }).catch( (e) => {
+                    reject(e);
+                });
+            } else {
+                resolve('');
+            }
+        }).catch( (e) => { reject(e); });
+    });
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -524,84 +530,91 @@ let directSaveImage=async function(part_img,part_imageoutname,forceorient) {
 /** 
  * @alias BisReadBruker.saveRegularImage
  */
-let saveRegularImage = async function (data,debug) {
+let saveRegularImage =  function (data,debug) {
 
-    let header=createHeader(data,debug);
-
-    let headerbin=header.createHeaderRawData(false);
-
+    return new Promise( (resolve,reject) => {
     
-    if (debug)
-        dualPrint('+++++ Reading data from filename='+data.originalfilename);
-
-
-    let obj = await bisgenericio.read(data.originalfilename,true);
-    let raw_file_data=obj.data;
-
-    let rawdata = new Uint8Array(raw_file_data);
-    let c=new Uint8Array(headerbin.length+rawdata.length);
-    
-    c.set(headerbin.data);
-    c.set(rawdata,headerbin.length);
-
-    headerbin=null;
-    rawdata=null;
-    raw_file_data=null;
-
-    let img=new BisWebImage();
-    img.initialize();
-    img.parseNIIModular(c.buffer,data.forceorient);
-    dualPrint("+++++ created image "+img.getDescription());
-    
-
-    if (data.numechos>1) {
-
-        let newimg=new BisWebImage();
-        newimg.cloneImage(img);
+        let header=createHeader(data,debug);
+        
+        let headerbin=header.createHeaderRawData(false);
         
         
-        let dat=img.getImageData();
-        let odat=newimg.getImageData();
+        if (debug)
+            dualPrint('+++++ Reading data from filename='+data.originalfilename);
         
-        let dim=img.getDimensions();
-        let slicesize=dim[0]*dim[1];
-
-        let total=dim[2]*dim[3];
         
-        for (let inslice=0;inslice<total;inslice++) {
-            let slice=Math.floor(inslice/data.numechos);
-            let frame=inslice-slice*data.numechos;
-            let outslice=slice+frame*dim[2];
-
-            let inoffset=inslice*slicesize;
-            let outoffset=outslice*slicesize;
+        bisgenericio.read(data.originalfilename,true).then( (obj) => {
+            let raw_file_data=obj.data;
             
-            for (let k=0;k<slicesize;k++) {
-                odat[outoffset+k]=dat[inoffset+k];
+            let rawdata = new Uint8Array(raw_file_data);
+            let c=new Uint8Array(headerbin.length+rawdata.length);
+            
+            c.set(headerbin.data);
+            c.set(rawdata,headerbin.length);
+            
+            headerbin=null;
+            rawdata=null;
+            raw_file_data=null;
+            
+            let img=new BisWebImage();
+            img.initialize();
+            img.parseNIIModular(c.buffer,data.forceorient);
+            dualPrint("+++++ created image "+img.getDescription());
+            
+            
+            if (data.numechos>1) {
+                
+                let newimg=new BisWebImage();
+                newimg.cloneImage(img);
+                
+                
+                let dat=img.getImageData();
+                let odat=newimg.getImageData();
+                
+                let dim=img.getDimensions();
+                let slicesize=dim[0]*dim[1];
+                
+                let total=dim[2]*dim[3];
+                
+                for (let inslice=0;inslice<total;inslice++) {
+                    let slice=Math.floor(inslice/data.numechos);
+                    let frame=inslice-slice*data.numechos;
+                    let outslice=slice+frame*dim[2];
+                    
+                    let inoffset=inslice*slicesize;
+                    let outoffset=outslice*slicesize;
+                    
+                    for (let k=0;k<slicesize;k++) {
+                        odat[outoffset+k]=dat[inoffset+k];
+                    }
+                    
+                }
+                img=newimg;
+                newimg=null;
             }
             
-        }
-        img=newimg;
-        newimg=null;
-    }
+            debug=true;
+            
+            let imghead=img.getHeader();
+            //    if (debug)
+            dualPrint("+++++ Normal Image Dimensions = "+imghead.struct.dim+", spa=" +imghead.struct.pixdim);
+            
+            let imageoutname=data.basename+".nii.gz";
+            //    img.addQuaternionCode(biswrap);
+            directSaveImage(img,imageoutname,false).then( () => {
     
-    debug=true;
-    
-    let imghead=img.getHeader();
-    //    if (debug)
-        dualPrint("+++++ Normal Image Dimensions = "+imghead.struct.dim+", spa=" +imghead.struct.pixdim);
-
-    let imageoutname=data.basename+".nii.gz";
-    //    img.addQuaternionCode(biswrap);
-    await directSaveImage(img,imageoutname,false);
-    
-    data.imageDimensions=img.getDimensions();
-    
-    data.partnames=[ bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(imageoutname))];
-    await saveTextFiles(data,debug);
-    dualPrint('Text files saved');
-    c=null;
-    img=null;
+                data.imageDimensions=img.getDimensions();
+                
+                data.partnames=[ bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(imageoutname))];
+                saveTextFiles(data,debug).then( () => {
+                    dualPrint('Text files saved');
+                    c=null;
+                    img=null;
+                    resolve();
+                });
+            }).catch( (e) => { reject(e); });
+        }).catch( (e) => { reject(e); });
+    });
 };
 
 // ---------------------------------------------------------------------------------------------------
@@ -827,7 +840,7 @@ let saveMultiPartDTIFile = async function(data,debug) {
     part_img=null;
 
     saveTextFiles(data,debug);
-    return data;
+    return Promise.resolve(data);
     
 };
 

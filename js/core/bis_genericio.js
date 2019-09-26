@@ -415,6 +415,8 @@ let copyFile=function(url) {
     let splitNames = splitFilenames(url);
     let src = splitNames[0], dest = splitNames[1];
 
+    console.log('Copying ',src,' to',dest);
+    
     // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
     let rd = fs.createReadStream(src);
     let wr = fs.createWriteStream(dest);
@@ -643,7 +645,7 @@ var readPartialDataFromStartOfFile=function(filename,end=1024) {
     console.log('++++ Reading '+filename+' end='+end+' gzip='+gzip);
     const gunzip = zlib.createGunzip();
     const bufs=[];
-    return new Promise( async (resolve,reject) => {
+    return new Promise( (resolve,reject) => {
         
         let readstream = fs.createReadStream(filename, {
             'start' : 0,

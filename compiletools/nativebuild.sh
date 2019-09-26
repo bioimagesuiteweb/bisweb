@@ -40,14 +40,7 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
 
 make ${BISMAKEJ} install
 
-#echo "-----------------------------------------------------------------------"
-#rm ${BDIR}/native/bisweb*python*sh
-#make package
-#cp bisweb*python*.sh ${BDIR}/install/zips
-
 echo "-----------------------------------------------------------------------"
-
-
 bash ${CDIR}/pythonwheel.sh
 
 echo "-----------------------------------------------------------------------"

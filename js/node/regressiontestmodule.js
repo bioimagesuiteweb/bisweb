@@ -28,13 +28,13 @@ const path=genericio.getpathmodule();
 class RegressionTestModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'RegressionTest';
+        this.name = 'regressionTest';
     }
     
     createDescription() {
         
         return {
-            "name": "RegressionTest",
+            "name": "regressionTest",
             "description": "This module outputs system info",
             "author": "Xenios Papademetris",
             "version": "1.0",

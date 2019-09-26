@@ -429,6 +429,14 @@ extern "C" {
   // BIS: { 'computeSeedCorrelationImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'ParamObj', 'debug' ] } 
   BISEXPORT  unsigned char* computeSeedCorrelationImageWASM(unsigned char* input_ptr,unsigned char* roi_ptr,unsigned char* weights_ptr,const char* jsonstring,int debug);
 
+  /** Perform time series normalization 
+   * @param input 4d image
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a (unsigned char) serialized timeseries normalized image
+   */
+  // BIS: { 'timeSeriesNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ] } 
+  BISEXPORT unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug);
+
     
 #ifdef __cplusplus
 }

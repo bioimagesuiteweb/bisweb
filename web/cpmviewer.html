@@ -71,60 +71,26 @@
        id="viewer_layout"
        bis-dockwidth="300"
        bis-coreopen="true"
+       bis-dualmode="-1"
        bis-fixed="1"
        bis-defaulttext="">
      </bisweb-viewerlayoutelement>
      
-     <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
-     
-     <bisweb-orthogonalviewer
-       id="viewer"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap">
-     </bisweb-orthogonalviewer>
-     
- 
-     <bisweb-snapshotelement
-        bis-layoutwidgetid="#viewer_layout"
-        bis-dowhite="false"
-        bis-viewerid="#viewer">
-     </bisweb-snapshotelement>
-     
-     <bisweb-collectionelement
-       id="transformelement"
-       bis-elementtype="transform"
-       bis-layoutwidgetid="#viewer_layout">
-     </bisweb-collectionelement>
- 
-     
-     <bisweb-simplealgorithmcontrollerelement
-        id="algoelement"
-        bis-transformelementid="#transformelement"
-        bis-viewerid="#viewer">
-     </bisweb-simplealgorithmcontrollerelement>
- 
-     <bisweb-viewerapplication
-       id="viewer_application"
-       bis-menubarid="#viewer_menubar"
-       bis-graphelementid="#bisweb_graphelement"
-       bis-viewerid="#viewer">
-     </bisweb-viewerapplication>
-     
      <bisweb-cpmelement
-      id='cpm_viewer'
-      bis-menubarid='#viewer_menubar'
-      bis-layoutelementid='#viewer_layout'
-      bis-cardbarid='#card_bar'>
+      id="cpm_viewer"
+      bis-menubarid="#viewer_menubar"
+      bis-layoutelementid="#viewer_layout"
+      bis-cardbarid="#card_bar">
      </bisweb-cpmelement>
      
 
    </div>
  
-    <bisweb-botmenubar id='botmenubar'></bisweb-botmenubar>
+    <bisweb-botmenubar id="botmenubar"></bisweb-botmenubar>
     <bisweb-cardbar 
-     id='card_bar'
-     bis-botmenubarid='#botmenubar'
-     bis-cardbartitle='Show plot select menu'>
+     id="card_bar"
+     bis-botmenubarid="#botmenubar"
+     bis-cardbartitle="Show plot select menu">
     </bisweb-cardbar>
  </body>
  </html>

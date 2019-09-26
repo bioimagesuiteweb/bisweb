@@ -33,4 +33,7 @@ shiftScaleImage
 sliceBiasCorrect
 smoothImage
 thresholdImage
-
+inflateSurface
+regressionTests
+computeImageMatrixCorrelation
+timeseriesNormalizeImage

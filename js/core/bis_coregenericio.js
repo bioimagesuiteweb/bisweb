@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-/* global window,XMLHttpRequest,Blob,process,FileReader, WorkerGlobalScope*/
 "use strict";
 
 /** 

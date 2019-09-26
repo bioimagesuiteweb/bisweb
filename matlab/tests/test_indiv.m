@@ -21,18 +21,16 @@ function result = test_indiv(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    
-    testutil.printheader('Test Indiv');
+    [testutil,filepath,lib]=bis_testutils('Test Indiv');
 
 
 
 %"command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
 %"test"    : "--test_target testdata/indiv/indivp.nii.gz",
 
-   fname1= [ filepath filesep 'indiv' filesep 'prep.nii.gz' ];
-   fname2= [ filepath filesep 'indiv' filesep 'group.nii.gz' ];
-   fname3= [ filepath filesep 'indiv' filesep 'indivp.nii.gz' ];
+   fname1= testutil.getTestFilename([ 'indiv' filesep 'prep.nii.gz' ]);
+   fname2= testutil.getTestFilename([ 'indiv' filesep 'group.nii.gz' ]);
+   fname3= testutil.getTestFilename([ 'indiv' filesep 'indivp.nii.gz' ]);
 
    sigma=4.0;
    numexemplars=268;
@@ -52,6 +50,10 @@ function result = test_indiv(debug)
    indiv_ptr=bis_individualizedparcellation(fmri,group,sigma,numexemplars,debug,'false');
    result2=testutil.compare(gold.getImageData(),indiv_ptr.getImageData(),'Indiv Parcellation Double',0,0.1);
 
-   result=min(result,result2);
-   
+    a=result2{2};
+    b=result{2};
+    d=min(a,b);
+    result={ 'Test_indiv'; d };
+    testutil.cleanup();
+
 end

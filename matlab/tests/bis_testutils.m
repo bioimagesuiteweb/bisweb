@@ -15,19 +15,30 @@
 % 
 % ENDLICENSE
 
-function [ moduleOutput,filepath,lib] = bis_testutils()
+function [ moduleOutput,filepath,lib] = bis_testutils(testname)
+
+    if nargin>0
+        printheader(testname);
+    else
+        testname='Matlab Test';
+    end
 
     internal={};
     internal.initialized=0;
     internal.filepath='';
     internal.lib=0;
 
+    internal.testname=testname;
+
     moduleOutput.gettestdatapath=@gettestdatapath;
     moduleOutput.printresult=@printresult;
     moduleOutput.printheader=@printheader;
     moduleOutput.compare=@compare;
     moduleOutput.getlib=@getlib;
-    
+    moduleOutput.getTestFilename=@getTestFilename;
+    moduleOutput.cleanup=@cleanup;
+    moduleOutput.combineResults=@combineResults;
+
     if (internal.initialized>0)
       result=1;
       return;
@@ -48,6 +59,8 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
     lib=internal.lib;
     filepath=result;
 
+    testfilelist={};
+
 
 
     function result=gettestdatapath()
@@ -65,7 +78,6 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
         disp(['    Runnning ',name]);
         disp('   ')
         disp('   ')
-        pause(1);
         result=0;
     end
 
@@ -114,7 +126,81 @@ function [ moduleOutput,filepath,lib] = bis_testutils()
             end
         end
 
-        result=printresult(testname,success,metric,metricname);
+        result={ internal.testname ; printresult(testname,success,metric,metricname) };
+    end
+
+
+    function result=getTestFilename(fname,forceweb)
+
+      if nargin<2
+        forceweb=0;
+      end
+
+      result=[ internal.filepath filesep fname ];
+
+      if forceweb == 0 && isfile(result)
+        return;
+      end
+
+      [f,n,ext]=fileparts(fname);
+      if strcmp(ext, '.gz')
+        [f,n,e2]=fileparts([f,n]);
+        ext=[ e2,'.gz' ];
+      end
+
+      url=[ 'https://bioimagesuiteweb.github.io/test/1.1/testdata/', strrep(fname,'\','/') ];
+
+
+      
+      disp(['____ Downloading ',mat2str(url),' extension=',mat2str(ext) ]);
+      result=[ tempname(),ext];
+      websave(result,url);
+      
+      
+      testfilelist=[ testfilelist ; result];
+      
+    end
+      
+
+    function cleanup(extrafiles)
+
+        if nargin>0
+            testfilelist=[testfilelist; extrafiles];
+        end
+        
+        disp(['____ Cleaning  temp downloads']);
+        a=size(testfilelist);
+        for i=1:a
+            f=testfilelist{i};
+            disp(['    deleting temp file ',mat2str(i),' = ',mat2str(f)])
+            delete(f);
+        end
+        testfilelist={};
+        %internal.lib.unload();
+        pause(1);
+
+    end
+
+    function output=combineResults(resultlist,name)
+
+        output=resultlist{1};
+        
+        if nargin>1
+            output{1}=name;
+        end
+    
+        s=size(resultlist);
+
+        for i=2:s(2)
+            elem=resultlist{i};
+            r1=output{2};
+            r2=elem{2};
+            output{2}=min(r1,r2);
+        end
+        
+
+
+
     end
 end
 

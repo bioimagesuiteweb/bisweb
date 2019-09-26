@@ -48,7 +48,9 @@ const niftitypes= {
     64 :  [ 'double',Float64Array, 8],
     256 : [ 'schar',Int8Array ,1 ],
     512 : [ 'ushort',Uint16Array,2 ],
-    768 : [ 'uint',Uint32Array,4]
+    768 : [ 'uint',Uint32Array,4],
+    1024 : [ 'int64',BigInt64Array,8],
+    1280 : [ 'uint64',BigUint64Array,8]
 };
 
 /**
@@ -64,10 +66,12 @@ const name2type= {
     "Float64Array" : 64,
     "Int8Array" : 256,
     "Uint16Array" : 512,
-    "Uint32Array" : 768
+    "Uint32Array" : 768,
+    "BigInt64Array"  : 1024,
+    "BigUint64Array"  : 1280,
 };
 
-/** calls web assembly code to allocate memory to a pointer
+/** gets the code 2,4,6,8 etc from the js data dtype
  * @alias bisWasmUtils.getCodeFromType
  * @param {TypedArray} arr - the array whose type we need
  * @returns {number}  --  the nifti type for the array (e.g. Float32Array -> 16)
@@ -75,6 +79,40 @@ const name2type= {
 var getCodeFromType=function(arr) {
     return name2type[arr.constructor.name];
 };
+
+
+/** gets the shortname e.g. float, int etc from the js data dtype
+ * @alias bisWasmUtils.getNameFromType
+ * @param {TypedArray} arr - the array whose type we need
+ * @returns {String}  --  the short name for the array (e.g. Float32Array -> 'float')
+ */
+var getNameFromType=function(arr) {
+    let code=getCodeFromType(arr);
+    let elem=niftitypes[code];
+    return elem[0];
+};
+
+/** gets the type e.g. Float32Array from the short name e.g. float
+ * @alias bisWasmUtils.getNameFromType
+ * @param {String} name - the name whose type we need
+ * @returns {Type}  --  the constructor name (e.g. 'float' ->'Float32Array')
+ */
+var getTypeFromName=function(name) {
+
+    let tp=Float32Array;
+    let i=0,found=false;
+    while (i< niftitypes.length && found===false) {
+        let elem=niftitypes[i];
+        console.log('name=',name,elem[0]);
+        if (name===elem[0]) {
+            tp=elem[1];
+            found=true;
+        }
+    }
+
+    return tp;
+};
+
 
 /** calls web assembly code to allocate memory to a pointer
  * @alias bisWasmUtils.allocate_memory
@@ -497,6 +535,8 @@ var unpackMatrixAndDelete=function(Module,wasmarr) {
 
 
 let outputobject = {
+    getNameFromType : getNameFromType,
+    getTypeFromName : getTypeFromName,
     allocate_memory : allocate_memory,
     release_memory : release_memory,
     release_memory_cpp : release_memory,

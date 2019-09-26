@@ -39,9 +39,12 @@ class FileTreePipeline extends HTMLElement {
     }
 
     connectedCallback() {
-        let algocontrollerid = this.getAttribute('bis-algocontrollerid');
-        bis_webutil.runAfterAllLoaded( () => {     
-            this.algocontroller = document.querySelector(algocontrollerid);
+        const managerid = this.getAttribute('bis-modulemanagerid') || null;
+        bis_webutil.runAfterAllLoaded( () => {
+            let modulemanager = document.querySelector(managerid) || null;
+            if (modulemanager)
+                this.algocontroller = modulemanager.getAlgorithmController();
+            return this.algorithmController;
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();

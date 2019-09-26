@@ -115,19 +115,21 @@ class IndivParcellationModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: individualze parcellation with vals', JSON.stringify(vals));
 
-        let fmri = this.inputs['fmri'];
-        let group = this.inputs['parc'];
+        let i_fmri = this.inputs['fmri'];
+        let i_group = this.inputs['parc'];
         let saveexemplars=super.parseBoolean(vals.saveexemplars);
-        let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();
+        let fmriDim = i_fmri.getDimensions(), groupDim = i_group.getDimensions();
 
-        return new Promise( async (resolve, reject) => {
+        let internal_fn = (async () => { 
 
+            let group=i_group;
+            let fmri=i_fmri;
+            
             // Initialize C++ / WASM Library
             try {
                 await biswrap.initialize();
             } catch(e) {
-                reject(e);
-                return;
+                return Promise.reject(e);
             }
 
             // Reslice Group Parcellation if needed
@@ -146,8 +148,7 @@ class IndivParcellationModule extends BaseModule {
                     linear.identity();
                     group = await biswrap.resliceImageWASM(group, linear, resl_paramobj, vals.debug);
                 } catch(e) {
-                    reject('Resliced failed'+e);
-                    return;
+                    return Promise.reject('Resliced failed'+e);
                 }
             }
 
@@ -169,8 +170,7 @@ class IndivParcellationModule extends BaseModule {
                     try { 
                         fmri = await biswrap.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);
                     } catch(e) {
-                        reject(e);
-                        return;
+                        return Promise.reject(e);
                     }
                 } else {
                     let outdata={};
@@ -185,16 +185,22 @@ class IndivParcellationModule extends BaseModule {
             try {
                 let paramobj= { 'numberofexemplars' : vals.numregions, "usefloat" : true , "saveexemplars": saveexemplars };
                 this.outputs['output']= await biswrap.individualizedParcellationWASM(fmri, group, paramobj, vals.debug);
-                resolve();
+                return Promise.resolve();
             } catch(e) {
                 console.log('error=',e);
-                reject(e);
-                return;
+                return Promise.reject(e);
             }
         });
-    }
-    
 
+        return new Promise( (resolve,reject) => {
+
+            internal_fn().then( (m) => {
+                resolve(m);
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+    }
 }
 
 module.exports = IndivParcellationModule;

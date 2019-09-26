@@ -19,6 +19,7 @@ function pathname = bispath()
   m=mfilename('fullpath');
   [filepath,name,ext] = fileparts(m);
   addpath([ filepath filesep 'nii' ]);
+  addpath([ filepath filesep 'other' ]);
   [filepath,name,ext] = fileparts(filepath);
   pathname=[ filepath filesep  'build' filesep 'native' ];
   if( ~exist([ pathname filesep 'biswrapper.m'] , 'file'))

@@ -30,7 +30,7 @@ const program=require('commander');
 const path=require('path');
 
 const fs=require('fs');
-const modules=require('moduleindex');
+const modules=require('nodemoduleindex');
 
 
 var help = function() {
