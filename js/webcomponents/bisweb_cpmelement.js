@@ -55,6 +55,8 @@ class CPMElement extends HTMLElement {
                 this.showExportWarning  = (obj === null || obj === true) ?  true : false;
                 console.log('export warning', this.showExportWarning);
             });
+
+            bis_webfileutil.initializeFromUserPrefs();
         }); 
 
         //default settings for CPM
@@ -137,10 +139,10 @@ class CPMElement extends HTMLElement {
      * @param {JQuery} dockbar - The right panel on the BioImage Suite page.
      */
     createMenubarItems(menubar) {
-        let topmenu = bis_webutil.createTopMenuBarMenu('File', menubar);
 
-        let importFileCallback = (f) => { this.importFileCallback(f);};
-        
+        let topmenu = bis_webutil.createTopMenuBarMenu('File', menubar);
+        let importFileCallback = (f) => { this.importFileCallback(f);};  
+
         let importFileItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback
         }, {
@@ -148,7 +150,6 @@ class CPMElement extends HTMLElement {
             'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
             'suffix' : 'json'
         });
-
         let importDirectoryItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback
         }, {
@@ -156,9 +157,18 @@ class CPMElement extends HTMLElement {
             'title': 'Import connectivity files from directory',
             'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
         });
+        let exportFileItem = bis_webfileutil.createFileButton({
+            'callback' : this.exportCPMFile.bind(this)
+        }, {
+            'save' : true,
+            'title' : 'Export connectivity file',
+            'filters' : [ {'name': 'Connectivity save files', 'extensions' : ['.json'] } ]
+        });
 
         bis_webutil.createMenuItem(topmenu, 'Import From CPM File', () => {  importFileItem.click(); });
         bis_webutil.createMenuItem(topmenu, 'Import From Directory', () => {  importDirectoryItem.click(); });
+        bis_webutil.createMenuItem(topmenu, '');
+        bis_webutil.createMenuItem(topmenu, 'Export to CPM File', () => { exportFileItem.click(); });
         bis_webutil.createMenuItem(topmenu, '');
 
         if (bis_webutil.inElectronApp()) {
@@ -209,50 +219,7 @@ class CPMElement extends HTMLElement {
                 'type' : 'warning',
                 'css' :  { 'visibility' : 'hidden' },
                 'callback' : (f) => {
-                    const self = this;
-                    if (this.showExportWarning) {
-                        bootbox.dialog({
-                            'title' : 'Ensure files are exportable',
-                            'message' : 'Some CPM files may be too large to export without running node with extra memory, i.e. with the --max-old-space-size=[size in MB] flag.',
-                            'buttons' : {
-                                'noshow' : {
-                                    'label' : "Ok, don't show again",
-                                    'className' : 'btn-success' ,
-                                    'callback' : () => {
-                                        this.showExportWarning = false;
-                                        bisweb_userprefs.setItem('showCPMExportWarning', false, true);
-                                        exportFlow();
-                                    }
-                                },
-                                'ok' : {
-                                    'label' : 'Ok',
-                                    'className' : 'btn-info',
-                                    'callback' : () => {
-                                        exportFlow();
-                                    }
-                                },
-                                'cancel' : {
-                                    'label' : 'Cancel',
-                                    'className' : 'btn-primary',
-                                    'callback' : () => {
-                                        return true;
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        exportFlow();
-                    }
-
-                    function exportFlow() {
-                        bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
-                        self.exportFiles(f).then( () => {
-                            bis_webutil.createAlert('Saved ' + f + ' successfully', false);
-                        }).catch( (e) => {
-                            console.log('Error saving CPM file', e);
-                            bis_webutil.createAlert('An error occured while saving ' + f, true);
-                        });
-                    }
+                    this.exportCPMFile(f);
                 }
             }, {
                 'title': 'Export connectivity index file',
@@ -277,6 +244,7 @@ class CPMElement extends HTMLElement {
      * @param {JQuery} exportButton - The 'Export CPM file' button
      */
     createFormButtons(fileButtonGroup, importButton, exportButton) {
+        const self = this;
         let listButtonGroup = $(this.fileListForm).find('.btn-group');
         let viewButton = listButtonGroup.find('.btn-info');
         let runButton = listButtonGroup.find('.btn-success');
@@ -314,9 +282,12 @@ class CPMElement extends HTMLElement {
 
             $(fileButtonGroup).append(importButton, exportButton);
             function showConnFile() {
+                let dialogBoxHeight = self.layoutElement.viewerheight * 0.7;
+                let message = reformatMatrix(formName, connFileVal); 
+                let output = `<div style='margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dialogBoxHeight}px; overflow-y: auto; overflow-x: auto;'>${message}</div>`;
                 bootbox.alert({
                     'title' : 'Connectivity file',
-                    'message' : $(`<pre>${reformatMatrix(formName, connFileVal)}</pre>`)
+                    'message' : output
                 });
             }
         });
@@ -624,6 +595,53 @@ class CPMElement extends HTMLElement {
             }
         });
         
+    }
+
+    exportCPMFile(f) {
+        const self = this;
+        if (this.showExportWarning) {
+            bootbox.dialog({
+                'title' : 'Ensure files are exportable',
+                'message' : 'Some CPM files may be too large to export without running node with extra memory, i.e. invoking \'node\' in your terminal with the --max-old-space-size=[size in MB] flag.',
+                'buttons' : {
+                    'noshow' : {
+                        'label' : "Ok, don't show again",
+                        'className' : 'btn-success' ,
+                        'callback' : () => {
+                            this.showExportWarning = false;
+                            bisweb_userprefs.setItem('showCPMExportWarning', false, true);
+                            exportFlow(f);
+                        }
+                    },
+                    'ok' : {
+                        'label' : 'Ok',
+                        'className' : 'btn-info',
+                        'callback' : () => {
+                            exportFlow(f);
+                        }
+                    },
+                    'cancel' : {
+                        'label' : 'Cancel',
+                        'className' : 'btn-primary',
+                        'callback' : () => {
+                            return true;
+                        }
+                    }
+                }
+            });
+        } else {
+            exportFlow(f);
+        }
+
+        function exportFlow(f) {
+            bis_webutil.createAlert('Saving connectivity index file to ' + f + '...', false, 0, 0, { 'makeLoadSpinner' : true });
+            self.exportFiles(f).then( () => {
+                bis_webutil.createAlert('Saved ' + f + ' successfully', false);
+            }).catch( (e) => {
+                console.log('Error saving CPM file', e);
+                bis_webutil.createAlert('An error occured while saving ' + f, true);
+            });
+        }
     }
 
     /**
