@@ -28,8 +28,8 @@
 
 from biswebpython.utilities.plyfile import PlyData, PlyElement
 import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+
+
 
 def readPlyFile(fileName):
 
@@ -128,7 +128,9 @@ def writePlyFileWithLabels(vertices, faces, labels, fileName, n = 280, map = 'gi
     v = [tuple(vertices[t]) for t in range(len(vertices))]
     f = [tuple() for t in range(len(faces))]
 
+    import matplotlib as mpl
     norm  = mpl.colors.Normalize(vmin = 1, vmax = n)
+    import matplotlib.pyplot as plt
     cmap = plt.cm.get_cmap(map)
 
     for idx in range(len(faces)):
