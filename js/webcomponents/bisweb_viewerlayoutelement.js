@@ -76,7 +76,7 @@ var detectWebGL = function() {
  *     bis-coreopen  : if true the core (top dock panel) is open else closed
  *     bis-minimizedockpanel : if 1 the dock panel is minimized to a narrow column
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
- *     bis-dualmode : if 1 then operates in dual mode
+ *     bis-dualmode : if 1 then operates in dual mode (if -1 no core controls)
  *     bis-webgl   : if 2 then use webgl2 (if possible)
  *     bis-bright   : if 1 then use bright colors
  */
@@ -420,9 +420,8 @@ class ViewerLayoutElement extends HTMLElement {
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
             this.elements.secondviewercontrols=webutil.createCollapseElement(newpanel,'Viewer 2 Controls',false);
-        } else {
+        } else if (this.dualmode!==-1) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer Controls',coreopen);
-
         }
         
         this.elements.toolbase=webutil.createpanelgroup(this.elements.dockbarcontent);
