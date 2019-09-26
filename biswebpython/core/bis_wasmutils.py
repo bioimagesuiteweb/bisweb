@@ -346,7 +346,7 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
     if (debug):
         print('order=',order,'range=',[beginoffset,total],'dims=',dims);
         
-    s=np.reshape(np.fromstring(bytes(wasm_pointer[beginoffset:total]),dtype=datatype),newshape=dims,order=order);
+    s=np.reshape(np.frombuffer(bytes(wasm_pointer[beginoffset:total]),dtype=datatype),newshape=dims,order=order);
         
     if mode==3 and debug>1:
         mat=s;

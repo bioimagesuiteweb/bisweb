@@ -19,14 +19,21 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
+# Extract version number from package.json parent file
+include(JSONParser.cmake)
+FILE (READ ${PROJECT_SOURCE_DIR}/../package.json jsonpackage)
+sbeParseJson(jsonmod jsonpackage)
+STRING(REGEX REPLACE "\\\." ";" BISWEBV "${jsonmod.version}")
+LIST(GET BISWEBV 0 BISWEB_VERSION_MAJOR)
+LIST(GET BISWEBV 1 BISWEB_VERSION_MINOR)
+LIST(GET BISWEBV 2 BISWEB_VERSION_PATCH)
+SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
+
 MESSAGE("----------------------------------------------------")
-MESSAGE("-- Building BISWEB")
+MESSAGE("-- Building BISWEB ${BISWEB_VERSION} major=${BISWEB_VERSION_MAJOR} minor=${BISWEB_VERSION_MINOR} patch=${BISWEB_VERSION_PATCH}")
 MESSAGE("----------------------------------------------------")
 
-SET (BISWEB_VERSION_MAJOR 1)
-SET (BISWEB_VERSION_MINOR 1)
-SET (BISWEB_VERSION_PATCH 0b2)
-SET (BISWEB_VERSION "${BISWEB_VERSION_MAJOR}.${BISWEB_VERSION_MINOR}.${BISWEB_VERSION_PATCH}")
+
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -53,9 +60,6 @@ SET (BISWEB_PYTHON_SETUP ${BISWEBPYTHON_SOURCE_DIR}/config/setup.py)
 SET (BISWEB_PYTHON_REQUIREMENTS ${BISWEBPYTHON_SOURCE_DIR}/config/requirements.txt)
 SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
 SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
-
-# Needed for everything
-FIND_PROGRAM(NodeInterp node)
 
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
@@ -85,6 +89,8 @@ SET(KITSRCS
   bisExportedFunctions.cpp
   bisExportedFunctions2.cpp
   bisTesting.cpp
+  bisvtkMultiThreader.cxx
+  bisImageDistanceMatrix.cpp
   )
 
 # ---------------------------------------------------------------------------------------------
@@ -103,7 +109,7 @@ SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
 
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
-OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" OFF)
+OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" ON)
 OPTION(BIS_USECPM "Include additional files for the CPM Code" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 MARK_AS_ADVANCED(BIS_USEEXTERNAL)
@@ -167,11 +173,12 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisExportedFunctions.h
   ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
   ${CPP_SOURCE_DIR}/bisTesting.h
+  ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
   )
 
 
 IF (BIS_USEINDIV)
-  MESSAGE("-- Also Building Individualized Parcellation Code")
+  MESSAGE("-- Also Building Individualized Parcellation Code and Sparse Image Distance Matrix Code")
   SET (PARSE_HEADERS
     ${PARSE_HEADERS}
     ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
@@ -182,6 +189,7 @@ IF (BIS_USEINDIV)
     )
   FIND_PACKAGE(IGL REQUIRED)
 ENDIF (BIS_USEINDIV)
+
 
 IF (BIS_USECPM)
   SET (KITSRCS
@@ -341,7 +349,7 @@ IF (BIS_A_EMSCRIPTEN)
     ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
       DEPENDS ${lib} ${TOOLS_DIR}/bis_create_wasm_module.js
       COMMENT "\nCreating Webpack Wasm Module"
-      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE} --gpl ${GPL})
+      COMMAND ${NODE_JS_EXECUTABLE} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE} --gpl ${GPL})
     add_custom_target(wasm_${lib} ALL DEPENDS ${WEBPACK_WASM_MODULE})
   endforeach(lib ${LIBLIST})
 
@@ -355,7 +363,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2}
     DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt ${LIBNAME}
     PRE_BUILD COMMENT "Creating JS Wrappers"
-    COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
+    COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
   
   # ---- create library for command line  -----------
@@ -415,11 +423,6 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
   install (FILES ${NPMPACKAGEFILE2} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
-  # Path Files
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat DESTINATION bisweb)
-
   # ---- create scripts for command line  -----------
   # Read the modules
   IF(BIS_BUILDSCRIPTS)
@@ -430,7 +433,7 @@ IF (BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MODULE_LIST_FILENAME}
       DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Unix)"
-      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
+      COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE_DIR} -m 0)
 
     GET_FILENAME_COMPONENT(MODULE2_DIR ${LIBRARY_OUTPUT_PATH}/winbin ABSOLUTE)
     SET(MODULE_LIST_FILENAME2 "${MODULE2_DIR}/ModuleList.txt")
@@ -438,7 +441,7 @@ IF (BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MODULE_LIST_FILENAME2}
       DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
-      COMMAND ${NodeInterp} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
+      COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
     
     add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME})
 
@@ -515,7 +518,6 @@ IF (BIS_A_EMSCRIPTEN)
   
 ELSE(BIS_A_EMSCRIPTEN)
 
-
   
   # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
@@ -568,7 +570,6 @@ ELSE(BIS_A_EMSCRIPTEN)
   
   IF (BIS_A_PYTHON)
     install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
-    install (FILES ${LICENSE_FILE} DESTINATION biswebpython RENAME LICENSE.md)
     IF (BIS_A_DEVEL)
       install (FILES ${HEADERS} DESTINATION biswebpython/include)
       install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION biswebpython/lib)
@@ -598,7 +599,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${PYTHON_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
       PRE_BUILD COMMENT "Creating Python Header"
-      COMMAND ${NodeInterp} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
+      COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
       )
     add_custom_target(wrappers_py ALL DEPENDS ${PYTHON_WRAP_OUTPUT})
     install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION biswebpython/lib)
@@ -613,7 +614,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
       DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+      COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
@@ -622,7 +623,6 @@ ELSE(BIS_A_EMSCRIPTEN)
     FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/*.py)
     FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
     FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
-    list(REMOVE_ITEM PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/bisweb_path.py)
     FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
     
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
@@ -632,17 +632,8 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYLIST3} DESTINATION biswebpython/utilities)
     install (FILES ${PYLIST2} DESTINATION biswebpython/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION biswebpython
-      PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION biswebpython
-      PERMISSIONS OWNER_READ  WORLD_READ)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION biswebpython
-      PERMISSIONS OWNER_READ  WORLD_READ)
     
-    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
-    install (FILES ${README_FILE} DESTINATION biswebpython)
-    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
+    INSTALL (FILES "${PROJECT_SOURCE_DIR}/../biswebpython/config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
     INSTALL (FILES ${BISWEBPYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
@@ -655,7 +646,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     IF(BIS_MODULETEST)
       SET (COUNT 0)
       FOREACH (item ${PYTHONMODULES})
-	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} WORKING_DIRECTORY ${TEST_DIR})
+	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
 	MATH (EXPR COUNT "${COUNT}+1")
       ENDFOREACH (item ${PYTHONMODULES})
       MESSAGE("~~~~~ Added ${COUNT} python module tests")
@@ -678,7 +669,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     ENDIF(BIS_UNITTEST)
 
     # Do not install this just yet
-    #install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
+    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython)
     
 
   ENDIF(BIS_A_PYTHON)
@@ -690,14 +681,21 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (BIS_A_MATLAB)
     MESSAGE("++ Building Matlab Prerequisites")
 
-    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_matlab.txt")
+
+    OPTION(BIS_MATLABUNITTEST "Enable Matlab Unit Tests" OFF)
+    MARK_AS_ADVANCED(BIS_MATLABUNITTEST)
+
+    SET (README_FILE "${PROJECT_SOURCE_DIR}/../matlab/config/README.md")
     install (FILES ${README_FILE} DESTINATION biswebmatlab)
 
+    configure_file( ${PROJECT_SOURCE_DIR}/../matlab/config/bis_package.m.in "${PROJECT_BINARY_DIR}/creatematlab.sh" @ONLY )
+    install (FILES ${PROJECT_BINARY_DIR}/creatematlab.sh DESTINATION ".")
+    
     SET (MATLAB_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.m)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT}
       PRE_BUILD COMMENT "Creating Matlab Header"
-      COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
+      COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
     add_custom_target(wrappers_mat ALL DEPENDS ${MATLAB_WRAP_OUTPUT})
     install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION biswebmatlab)
     
@@ -705,12 +703,13 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_command(OUTPUT ${MATLAB_OUT_HEADER}
       DEPENDS ${PARSE_HEADERS} ${HEADER_SCRIPT} CMakeLists.txt
       PRE_BUILD COMMENT "Creating Matlab Header"
-      COMMAND ${NodeInterp} ${HEADER_SCRIPT} -i ${PARSE_LIST} -o ${MATLAB_OUT_HEADER})
+      COMMAND ${NODE_JS_EXECUTABLE} ${HEADER_SCRIPT} -i ${PARSE_LIST} -o ${MATLAB_OUT_HEADER})
     add_custom_target(header_mat ALL DEPENDS ${MATLAB_OUT_HEADER})
     install (FILES ${MATLAB_OUT_HEADER} DESTINATION biswebmatlab)
 
     GET_FILENAME_COMPONENT(MATLAB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../matlab ABSOLUTE)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/bis*.m)
+    list(REMOVE_ITEM MLIST ${MATLAB_SOURCE_DIR}/bispath.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/example.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
@@ -718,13 +717,25 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/tests/*.m)
+    install (FILES ${MLIST} DESTINATION biswebmatlab/tests)
+
+    # Install replacement bispath
+    install (FILES ${MATLAB_SOURCE_DIR}/config/bispath.m DESTINATION biswebmatlab)
+
+    IF (BIS_MATLABUNITTEST)
+        FIND_PROGRAM(MATLAB matlab REQUIRED)
+        SET (CMDARGS "-nodesktop -nodisplay < bisweb_runalltests.m")
+        MESSAGE("${MATLAB} ${CMDARGS}")
+        add_test(NAME "MATLAB-unittests" COMMAND ${MATLAB} ${CMDARGS}  WORKING_DIRECTORY  ${CMAKE_INSTALL_PREFIX}/biswebmatlab/tests)
+    ENDIF (BIS_MATLABUNITTEST)
   ENDIF(BIS_A_MATLAB)
 
 
   if(UNIX AND NOT APPLE)
     FILE(GLOB MACEXTRA ${PROJECT_BINARY_DIR}/libbiswasm.dylib)
     FILE(GLOB WINEXTRA ${PROJECT_BINARY_DIR}/biswasm.dll)
-    MESSAGE("--- Intalling Extra libraries ${MACEXTRA},${WINEXTRA}")
+    MESSAGE("--- Intalling Extra libraries if they exist ${MACEXTRA},${WINEXTRA}")
 
     IF (BIS_A_PYTHON)
       install (FILES ${MACEXTRA} DESTINATION biswebpython/lib)

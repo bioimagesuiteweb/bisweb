@@ -22,10 +22,9 @@ function result=test_resample(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test Resample');
+    [testutil,filepath,lib]=bis_testutils('Test Resample');
 
-    fname1=[ filepath  filesep 'MNI_2mm_resliced.nii.gz'];
+    fname1=testutil.getTestFilename('MNI_2mm_resliced.nii.gz');
 
     % Load Images
     input = bis_image(fname1,debug+1);
@@ -53,4 +52,6 @@ function result=test_resample(debug)
     end
 
     result=testutil.compare(testaff,output.getAffine(),'Image Resample (affine matrix)',0,0.1);
+    testutil.cleanup();
+
 end

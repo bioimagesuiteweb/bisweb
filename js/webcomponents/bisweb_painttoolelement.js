@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global window,setTimeout,document,HTMLElement */
-
 "use strict";
 
 const dat = require('bisweb_datgui');
@@ -139,11 +137,7 @@ class PaintToolElement extends HTMLElement {
 
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
-        let algoid=this.getAttribute('bis-algorithmcontrollerid') || null;
-
-        this.internal.algocontroller=null;
-        if (algoid !== null) 
-            this.internal.algocontroller = document.querySelector(algoid) || null;
+        
         
         let in_orthoviewer=document.querySelector(viewerid);
 
@@ -156,6 +150,10 @@ class PaintToolElement extends HTMLElement {
                                        'permanent' : true,
                                        'width' : '300px'
                                    });
+
+        this.internal.algocontroller = document.createElement('bisweb-simplealgorithmcontrollerelement');
+        this.internal.algocontroller.setAttribute('bis-viewerid',viewerid);
+        this.appendChild(this.internal.algocontroller);
         
             
         $(this.panel.widget).attr('aria-label', 'bisweb-paint-widget');
@@ -1076,79 +1074,76 @@ class PaintToolElement extends HTMLElement {
         };
 
 
-        if (this.internal.algocontroller) {
-            
-            const self=this;
-            this.internal.algocontroller.sendImageToViewer=function(input,options) {
-                let type = options.viewersource || 'image';
-                if (type==='overlay') {
-                    self.safeSetNewObjectmap(input).catch( (e) => {
-                        webutil.createAlert(e,true);
-                    });
-                } else {
-                    self.internal.orthoviewer.setimage(input);
-                        self.setObjectmapOpacity(0.5);
-                }
-            };
-            
-            let moduleoptions = { 'numViewers' : 0,
-                                  'dual' : false ,
-                                };
-            
-            moduleoptions.name='Create Objectmap';
-            this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                 this.internal.algocontroller,
-                                                                 modules.getModule('binaryThresholdImage'),
-                                                                 moduleoptions);
+        this.internal.algocontroller.sendImageToViewer=function(input,options) {
+            let type = options.viewersource || 'image';
+            if (type==='overlay') {
+                self.safeSetNewObjectmap(input).catch( (e) => {
+                    webutil.createAlert(e,true);
+                });
+            } else {
+                self.internal.orthoviewer.setimage(input);
+                self.setObjectmapOpacity(0.5);
+            }
+        };
+        
+        let moduleoptions = { 'numViewers' : 0,
+                              'dual' : false ,
+                            };
+        
+        moduleoptions.name='Create Objectmap';
+        this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                             this.internal.algocontroller,
+                                                             modules.getModule('binaryThresholdImage'),
+                                                             moduleoptions);
+        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+            self.internal.thresholdModule.show();
+        });
+        
+        
+        
+        if(window.bioimagesuitewasmpack.usesgpl) {
+            moduleoptions.name='Deface Head Image';
+            let mod=modules.getModule('defaceImage');
+            mod.outputmask=true;
+            this.internal.defaceModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                              this.internal.algocontroller,
+                                                              mod,
+                                                              moduleoptions);
             webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                self.internal.thresholdModule.show();
+                self.internal.defaceModule.show();
+            });
+            webutil.createMenuItem(tmenu,'');
+            
+            moduleoptions.name='Morphology Operations';
+            this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                  this.internal.algocontroller,
+                                                                  modules.getModule('morphologyFilter'),
+                                                                  moduleoptions);
+            webutil.createMenuItem(tmenu, moduleoptions.name, () => {
+                self.internal.morphologyModule.show();
             });
             
-            
-            
-            if(window.bioimagesuitewasmpack.usesgpl) {
-                moduleoptions.name='Deface Head Image';
-                let mod=modules.getModule('defaceImage');
-                mod.outputmask=true;
-                this.internal.defaceModule=biscustom.createCustom(this.internal.layoutcontroller,
+            moduleoptions.name='Regularize Objectmap';
+            this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                   this.internal.algocontroller,
-                                                                  mod,
+                                                                  modules.getModule('regularizeObjectmap'),
                                                                   moduleoptions);
-                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.defaceModule.show();
-                });
-                webutil.createMenuItem(tmenu,'');
-                
-                moduleoptions.name='Morphology Operations';
-                this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                      this.internal.algocontroller,
-                                                                      modules.getModule('morphologyFilter'),
-                                                                      moduleoptions);
-                webutil.createMenuItem(tmenu, moduleoptions.name, () => {
-                    self.internal.morphologyModule.show();
-                });
-                
-                moduleoptions.name='Regularize Objectmap';
-                this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                      this.internal.algocontroller,
-                                                                      modules.getModule('regularizeObjectmap'),
-                                                                      moduleoptions);
-                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.regularizeModule.show();
-                });
-                
-                webutil.createMenuItem(tmenu,'');
-                moduleoptions.name='Mask Image';
-                this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                this.internal.algocontroller,
-                                                                modules.getModule('maskImage'),
-                                                                moduleoptions);
-                    webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                        self.internal.maskModule.show();
-                    });
-            }
+            webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                self.internal.regularizeModule.show();
+            });
+            
+            webutil.createMenuItem(tmenu,'');
+            moduleoptions.name='Mask Image';
+            this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                            this.internal.algocontroller,
+                                                            modules.getModule('maskImage'),
+                                                            moduleoptions);
+            webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                self.internal.maskModule.show();
+            });
         }
     }
+
 
     setViewerObjectmap(vol,plainmode,alert) {
         if (alert !== false)

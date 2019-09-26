@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-/* global window,document,Blob,FileReader,setTimeout,HTMLElement */
 
 /**
  * @file A Broswer module. Contains {@link BisWEB_ViewerElements}.

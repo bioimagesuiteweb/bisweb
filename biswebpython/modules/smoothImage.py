@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # LICENSE
 # 
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -17,12 +15,18 @@
 # 
 # ENDLICENSE
 
+# To enable a module to be executed directly (not as part of biswebpy.py)
+#
+# 1. Add these lines here to add the grandparent biswebpython folder to path
+# first (so that it overrules any global biswebpython file)
+#
+# my_path=os.path.dirname(os.path.realpath(__file__));
+# n=os.path.abspath(my_path+'/../..')
+# sys.path.insert(0,n);
+#
+# 2. See the end of this file
+
 import sys
-try:
-    import bisweb_path;
-except ImportError:
-    bisweb_path=0;
-    
 import biswebpython.core.bis_basemodule as bis_basemodule;
 
 class smoothImage(bis_basemodule.baseModule):
@@ -60,9 +64,13 @@ class smoothImage(bis_basemodule.baseModule):
             return False
         return True
 
-if __name__ == '__main__':
-    import biswebpython.core.bis_commandline as bis_commandline;
-    sys.exit(bis_commandline.loadParse(smoothImage(),sys.argv,False));
+# To enable a module to be executed directly (not as part of biswebpy.py)
+# add these lines here
+#
+#if __name__ == '__main__':
+#    import biswebpython.core.bis_commandline as bis_commandline;
+#    sys.exit(bis_commandline.loadParse(smoothImage(),sys.argv,False));
+#
 
 
 

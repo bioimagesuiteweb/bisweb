@@ -15,7 +15,6 @@
     
     ENDLICENSE */
 
-/* global window,document,setTimeout */
 "use strict";
 
 /**

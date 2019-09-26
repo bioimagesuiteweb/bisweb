@@ -4,11 +4,11 @@ function result=test_loadsave(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
+    [testutil,filepath,lib]=bis_testutils('test_loadsave');
 
 
-    fname1=[ filepath filesep 'glm' filesep 'Test_allruns2.nii' ];
-    fname2=[ filepath filesep 'glm' filesep 'Test_allruns2.nii.gz' ];
+    fname1=testutil.getTestFilename([ 'glm' filesep 'Test_allruns2.nii' ]);
+    fname2=testutil.getTestFilename([ 'glm' filesep 'Test_allruns2.nii.gz' ]);
 
     input1 = bis_image(fname1,debug+1);
     input2 =  bis_image(fname2,debug+1);
@@ -40,11 +40,18 @@ function result=test_loadsave(debug)
     result2=testutil.compare(input2.getImageData(),input3.getImageData(),' save then load .nii',0,0.1);
     result3=testutil.compare(input2.getImageData(),input4.getImageData(),' save then load .nii.gz',0,0.1);
 
-    result=max([result1,result2,result3]);
-
-
-    delete(t1)
-    delete(t2)
     
+    a=result1{2};
+    b=result2{2};
+    c=result3{2};
+
+    r=max(a,max(b,c));
+    result = {  'Test Load Save'; r};
+
+
+    %delete(t1)
+    %delete(t2)
+    testutil.cleanup({ t1 ;t2});
+
 end
     

@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/*global window,document,setTimeout,HTMLElement */
-
 "use strict";
 
 const webutil = require('bis_webutil');
@@ -45,14 +43,35 @@ class ModuleManagerElement extends HTMLElement {
     connectedCallback() {
 
         this.mode=this.getAttribute('bis-mode') || "normal";
-        const algorithmcontrollerid = this.getAttribute('bis-algorithmcontrollerid');
         const layoutwidgetid = this.getAttribute('bis-layoutwidgetid') || null;
+        const algorithmcontrollerid = this.getAttribute('bis-algorithmcontrollerid') || null;
+        
         if (layoutwidgetid === null) {
             this.layoutcontroller = null;
         } else {
             this.layoutcontroller = document.querySelector(layoutwidgetid);
         }
-        this.algorithmController = document.querySelector(algorithmcontrollerid);
+        
+        if (algorithmcontrollerid===null) {
+            let tid=webutil.getuniqueid('collection');
+            let aid=webutil.getuniqueid('controller');
+            
+            let tcont=document.createElement('bisweb-collectionelement');
+            tcont.setAttribute('bis-elementtype','transform');
+            tcont.setAttribute('bis-layoutwidgetid',layoutwidgetid);
+            tcont.setAttribute('id',tid);
+            this.layoutcontroller.appendChild(tcont);
+            
+            this.algorithmController = document.createElement('bisweb-simplealgorithmcontrollerelement');
+            this.algorithmController.setAttribute('id',aid);
+            this.algorithmController.setAttribute('bis-viewerid',this.getAttribute('bis-viewerid') || '');
+            this.algorithmController.setAttribute('bis-viewerid2',this.getAttribute('bis-viewerid2') || '');
+            this.algorithmController.setAttribute('bis-transformelementid','#'+tid);
+            this.layoutcontroller.appendChild(this.algorithmController);
+
+        } else {
+            this.algorithmController = document.querySelector(algorithmcontrollerid);
+        }
         this.customs = [];
         this.modules = {};
         this.moduleMenu = [ null,null,null,null];
@@ -91,6 +110,7 @@ class ModuleManagerElement extends HTMLElement {
     }
 
     attachTransformationController(index) {
+
         if (this.algorithmController.getTransformController()) {
             const self=this;
             webutil.createMenuItem(this.moduleMenu[index],'Transformation Manager',
@@ -224,7 +244,7 @@ class ModuleManagerElement extends HTMLElement {
         if (this.mode!=='single') {
             this.attachTransformationController(3);
             this.createModule('Reslice Image',3, true, modules.getModule('resliceImage'), moduleoptions);
-            
+                
             this.createModule('Manual Registration',3, true, modules.getModule('manualRegistration'), moduleoptions);
             if (usesgpl) {
                 this.createModule('Linear Registration',3, false, modules.getModule('linearRegistration'), moduleoptions);
@@ -235,7 +255,8 @@ class ModuleManagerElement extends HTMLElement {
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
             }
-        } 
+        }
+                                     
         return this.moduleMenu[0];
             
     }

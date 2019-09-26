@@ -16,7 +16,7 @@
     
     ENDLICENSE */
 
-/* global window,document,$ */
+/* global $ */
 "use strict";
 
 /**

@@ -1,8 +1,14 @@
+// Place your settings in this file to overwrite the default settings
 {
+    "git.ignoreLegacyWarning": true,
+    "git.ignoreMissingGitWarning": true,
     "editor.insertSpaces": false,
-    "window.zoomLevel": 2,
+    "window.zoomLevel": 1,
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
-
+    "files.associations": {
+        "*.txx": "cpp",
+        "*.m": "matlab"
+    }
 }

@@ -17,6 +17,8 @@
 
 function result = bis_individualizedparcellation(fmri,group,sigma,numexemplars,debug,usefloat)
 
+  bispath();
+
   if nargin<6
     usefloat='false';
   end

@@ -15,9 +15,6 @@
  
  ENDLICENSE */
 
-/* global document */
-
-
 "use strict";
 
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');

@@ -3,16 +3,15 @@
 # ----------------------------------------------------------------------------------------
 # Imports and paths
 import os
-import setuptools
 import sys
 import importlib
-import inspect
+
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 
 # Make sure biswebpython is in your path
 n=os.path.abspath(my_path+'/..')
-sys.path.append(n);
+sys.path.insert(0,n);
 
 # ----------------------------------------------------------------------------------------
 # Function to print error message
@@ -45,8 +44,6 @@ argc=len(sys.argv);
 if (argc<2):
     initialError('Specify the tool to load ...');
     sys.exit(0);
-
-#print('\n\t'.join(sys.argv))
 
 toolname=sys.argv[1];
 tname=toolname.lower();

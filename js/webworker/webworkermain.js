@@ -1,4 +1,3 @@
-/*global atob, btoa, postMessage,self */
 /* jshint: validthis: true */
 
 "use strict";

@@ -1,6 +1,13 @@
 [![Logo](web/images/bisweb_newlogo_white_small.png)](https://bioimagesuiteweb.github.io/bisweb-manual/)
 
+
 ---
+[ [JS-npm](https://www.npmjs.com/package/biswebnode)] ]
+[ [Python-pypi](https://pypi.org/project/biswebpython/) ]
+[ [Docker](https://hub.docker.com/r/bisweb/devel)]
+
+---
+
 ## Welcome to BioImage Suite Web
 
 BioImage Suite Web (bisweb) is a web-based medical image analysis suite

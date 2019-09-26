@@ -21,10 +21,9 @@ function result=test_combo(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test Combo');
+    [testutil,filepath,lib]=bis_testutils('Test Combo');
     
-    lines=fileread([ filepath filesep 'complex.grd']);
+    lines=fileread(testutil.getTestFilename( 'complex.grd'));
     if (debug>0)
         lines(1:400)
     end
@@ -38,6 +37,9 @@ function result=test_combo(debug)
     result2=compare_combo(combo2,debug);
 
     result=min(result1,result2);
+    testutil.cleanup();
+    result= {'Test Combo', result};
+        
 
     % Internal
     function result=compare_combo(combo,debug)
@@ -98,6 +100,7 @@ function result=test_combo(debug)
         else 
             result=0;
         end
-        result=testutil.printresult('Test Combo (Both)',result,diff,'maxabs');
+        testutil.printresult('Test Combo (Both)',result,diff,'maxabs');
+        
     end
 end

@@ -1,6 +1,9 @@
-numpy
 nibabel
+numpy
 pillow
 scikit-image
-scipy
 scikit-learn
+scipy
+setuptools
+wheel>=0.31
+wget

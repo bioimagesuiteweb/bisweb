@@ -16,7 +16,6 @@
  ENDLICENSE */
 
 "use strict";
-/* global HTMLElement */
 
 /**
  * @file A Broswer module. Contains {@link ColormapControllerElement} and {@link BisF.ColorMapControllerPayload}

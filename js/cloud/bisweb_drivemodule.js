@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global gapi,google,alert,lgapioopReject */
+/* global gapi,google,lgapioopReject */
 /* jshint expr: true*/
 
 "use strict";

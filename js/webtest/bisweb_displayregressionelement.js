@@ -15,8 +15,6 @@
     
     ENDLICENSE */
 
-/* global  HTMLElement, window,document */
-
 "use strict";
 
 const bis_webfileutil=require('bis_webfileutil');

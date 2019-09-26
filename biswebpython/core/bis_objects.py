@@ -146,8 +146,16 @@ class bisMatrix(bisBaseObject):
             raise ValueError('---- Bad input file '+fname+'\n\t ('+str(e)+')')
             return False
 
-        text=file.read()
         ext=os.path.splitext(fname)[1]
+        if (ext=='.binmatr'):
+            file.close();
+            self.loadBinary(fname);
+            self.filename=fname;
+            return True;
+
+        text=file.read()
+        
+        
         if (ext==".csv"):
             self.data_array = np.genfromtxt(fname, delimiter= ",")
         elif (ext==".matr"):
@@ -159,7 +167,9 @@ class bisMatrix(bisBaseObject):
     def save(self,fname):
 
         ext=os.path.splitext(fname)[1]
-        s=self.data_array.shape;
+        
+        if (ext==".binmatr"):
+            return self.saveBinary(fname);
 
         if (ext==".matr"):
             sz=self.data_array.shape;
@@ -194,6 +204,68 @@ class bisMatrix(bisBaseObject):
             return False
 
         return True
+
+    def loadBinary(self,fname):
+
+        with open(fname, mode='rb') as file: 
+            pointer = file.read()
+            hd=np.frombuffer(bytes(pointer[0:16]),dtype=np.uint32);
+            if (hd[0]!=1700):
+                print('Bad binmatr file');
+                return False;
+            
+            dims=[ hd[2],hd[3] ];
+            tp=hd[1];
+            dt=np.int64;
+            sz=8;
+            if (tp==2):
+                dt=np.float32;
+                sz=4;
+            elif (tp==3):
+                dt=np.float64;
+                sz=8;
+
+            self.data_array=np.reshape(np.frombuffer(bytes(pointer[16:sz*hd[2]*hd[3]+16]),dtype=dt),newshape=dims,order='C');
+            file.close();
+        return True;
+
+
+    def saveBinary(self,fname):
+
+        sz=self.data_array.shape;
+        
+        hd=np.zeros([4],dtype=np.int32);
+        hd[0]=1700;
+        hd[1]=0;
+        hd[2]=sz[0];
+        hd[3]=sz[1];
+
+        
+        dat=0;
+        tp=str(self.data_array.dtype);
+        if (tp=='float32'):
+            hd[1]=2;
+            dat=np.zeros(hd[2]*hd[3],dtype=np.float32);
+        elif (tp=='float64'):
+            hd[1]=3;
+            dat=np.zeros(hd[2]*hd[3],type=np.float64);
+        else:
+            hd[1]=1;
+            dat=np.zeros(hd[2]*hd[3],dtype=np.int64)
+
+        index=0;
+        for i in range(0,hd[2]):
+            for j in range(0,hd[3]):
+                dat[index]=self.data_array[i][j];
+                index=index+1;
+
+
+        total=hd.tobytes();
+        total+=dat.tobytes();
+
+        with open(fname, 'wb') as fp:
+            fp.write(total);
+            print('++++ binary matrix saved in',fname,len(total));
 
 
 # --------------------------------------
@@ -312,7 +384,7 @@ class bisImage(bisBaseObject):
 
     def getDescription(self):
         tp=str(self.data_array.dtype);
-        return self.filename+'dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
+        return self.filename+'. dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
 
     def hasSameOrientation(self,otherimage,name1='',name2='',debug=False):
 

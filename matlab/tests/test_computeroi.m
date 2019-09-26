@@ -23,11 +23,10 @@ function result=test_computeroi(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test ComputeROI');
+    [testutil,filepath,lib]=bis_testutils('Test ComputeROI');
 
 
-    fname0=[ filepath filesep 'newtests' filesep 'simpleroi_result.matr' ];
+    fname0=testutil.getTestFilename([ 'newtests' filesep 'simpleroi_result.matr' ]);
     lines=fileread(fname0);
     gold=lib.parseMatrixTextFileWASM(lines,1);
     disp(['Result read: ',fname0,' ',mat2str(size(gold))]);
@@ -36,8 +35,8 @@ function result=test_computeroi(debug)
     %"command" : "computeROI -i testdata/simple4dtest.nii.gz -r testdata/simpleroi.nii.gz --debug true",
     %"test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
     
-    fname1=[ filepath filesep 'simple4dtest.nii.gz' ];
-    fname2=[ filepath filesep 'simpleroi.nii.gz'];
+    fname1=testutil.getTestFilename( 'simple4dtest.nii.gz' );
+    fname2=testutil.getTestFilename( 'simpleroi.nii.gz');
     format long;
 
     param.storecentroids=0;
@@ -50,5 +49,6 @@ function result=test_computeroi(debug)
 
     result=testutil.compare(gold,output,'Compute ROI',0,0.1);
 
+    testutil.cleanup();
 
 end

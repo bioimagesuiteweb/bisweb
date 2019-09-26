@@ -52,9 +52,9 @@ class baseModule:
 
         params=self.parseValues(values);
         for p in inputs:
-            print('Setting input p=',p,inputs[p]);
+            #print('Setting input p=',p,inputs[p]);
             self.setInputObject(inputs[p],p);
-        print(self.inputs);
+        #print(self.inputs);
 
         return self.directInvokeAlgorithm(params);
 
@@ -92,6 +92,37 @@ class baseModule:
 
         return out;
 
+
+    def parseValuesAndAddDefaults(self,args,extra):
+        des = self.getDescription();
+        out = {};
+        for j in range(0,len(des['params'])):
+            param=des['params'][j];
+            vname = param['varname'];
+            name = vname.lower();
+
+            found=False
+            if (name in args):
+                found=True;
+
+            if (found==True and args[name] is not None):
+                found=True;
+            else:
+                found=False;
+
+            if (found==False):
+                
+                if (name in extra):
+                    out[vname]=extra[name];
+                else:
+                    defaultv = param['default'];
+                    out[vname] = defaultv;
+            else:
+                out[vname] = args[name];
+
+        return out;
+
+    
     def typeCheckParam(self,param, val):
 
         try:
@@ -192,7 +223,7 @@ class baseModule:
         return ok;
 
 
-    def loadInputs(self,inputparameters={}):
+    def loadInputs(self,inputparameters={},basedir='',tempdir=''):
 
         desc = self.getDescription();
         for i in range(0,len(desc['inputs'])):
@@ -216,6 +247,7 @@ class baseModule:
                 return False;
 
             if (required or inpname != None):
+                inpname=bis_baseutils.downloadIfNeeded(inpname,basedir,tempdir);
                 ok=self.loadSingleInput(name,inpname,objtype);
                 if (ok==False):
                     return False;

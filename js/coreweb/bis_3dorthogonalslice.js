@@ -15,7 +15,6 @@
     
     ENDLICENSE */
 
-/* global document*/
 
 /** 
  * @file Browser ONLY module.Contains {@link Bis3dOrthogonalSlice} 

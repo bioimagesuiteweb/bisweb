@@ -22,8 +22,8 @@ function result=test_largemem_smooth(debug)
         debug=1;
     end
 
-    [testutil,filepath,lib]=bis_testutils();
-    testutil.printheader('Test LargeMemory Smooth');
+    [testutil,filepath,lib]=bis_testutils('Test LargeMemory Smooth');
+    
 
     bw=lib.getbiswasm();
 
@@ -31,8 +31,8 @@ function result=test_largemem_smooth(debug)
     bw.force_large_memory();
 
 
-    fname1=[ filepath filesep 'indiv' filesep 'prep.nii.gz' ];
-    fname2=[ filepath filesep 'indiv' filesep 'prep_sm.nii.gz'];
+    fname1=testutil.getTestFilename(['indiv' filesep 'prep.nii.gz' ]);
+    fname2=testutil.getTestFilename(['indiv' filesep 'prep_sm.nii.gz']);
     format long;
 
     param.sigmas=0.4247*[4.0,4.0,4.0 ];
@@ -57,6 +57,7 @@ function result=test_largemem_smooth(debug)
     end 
 
     result=testutil.compare(gold.getImageData(),output.getImageData(),'Image Smooth -- Large Memory',0,0.1);
+    testutil.cleanup();
 
 end
 

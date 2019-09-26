@@ -17,7 +17,7 @@
 	    "command" : "smoothImage --sigma 2.0 --paramfile testdata/smoothParam.json --input testdata/MNI_2mm_resliced.nii.gz",
 	    "test"    : "--test_target testdata/newtests/goldsmooth2sigma.nii.gz",
 	    "result"  : true,
-	    "dopython": false
+	    "dopython": true
 	},
 	{
 	    "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false",
@@ -776,8 +776,7 @@
 	    "command" : "computeROI -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz",
 	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
-	    "dopython": false,
-            "noweb"   : true
+	    "dopython": false
 	},
         {
 	    "command" : "computeROILarge -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz --loadall false",
@@ -882,7 +881,22 @@
             "skipjs"  : true,
             "noweb"   : true,
             "dopython" : true
-        }
+        },
+        {
+
+            "command" : "timeseriesNormalizeImage --input testdata/indiv/prep.nii.gz --debug true",
+            "test"    : "--test_target testdata/indiv/normalized.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+	          "command" : "computeImageMatrixCorrelation -i testdata/indiv/prep.nii.gz -r testdata/indiv/group.nii.gz",
+	          "test"    : "--test_target testdata/indiv/imcorr.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	          "result"  : true,
+	          "dopython": true,
+            "noweb"   : true,
+            "skipjs"  : true
+	      }
     ]
 }
 

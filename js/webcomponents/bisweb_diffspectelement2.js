@@ -1,5 +1,3 @@
-/*global window,document,HTMLElement */
-
 "use strict";
 
 // imported modules from open source and bisweb repo

@@ -15,8 +15,6 @@
  
  ENDLICENSE */
 
-/* global window,HTMLElement,document */
-
 "use strict";
 
 
@@ -612,11 +610,13 @@ class BaseViewerElement extends HTMLElement {
     /** handle update from {@link ColormapControllerElement} and update colormap observers
      * @param {BisF.ColorMapControllerPayload} input - definition of new transfer functions to use
      */
-    updatetransferfunctions(input) {
+    updatetransferfunctions(input=null) {
 
-
-
+        if (!input)
+            return;
+        
         this.internal.colormapControllerPayload=input;
+
         let num=this.internal.slices.length;
         
         if (input.image!==null) {
@@ -631,19 +631,21 @@ class BaseViewerElement extends HTMLElement {
                 this.internal.slices[pl].interpolate(input.interpolate);
         }
 
-        let numov=this.internal.overlayslices.length;
-        if (this.internal.overlayslices[0]!==null) {
-            if (input.objectmap!==null) {
-                this.internal.objectmaptransferfunction=input.objectmap;
-                this.internal.objectmaptransferinfo=input.functionalparams;
+        if (this.internal.overlayslices!==null) {
+            let numov=this.internal.overlayslices.length;
+            if (this.internal.overlayslices[0]!==null) {
+                if (input.objectmap!==null) {
+                    this.internal.objectmaptransferfunction=input.objectmap;
+                    this.internal.objectmaptransferinfo=input.functionalparams;
+                    for (let pl=0;pl<numov;pl++) {
+                        if (this.internal.overlayslices[pl]!==null)
+                            this.internal.overlayslices[pl].setnexttimeforce();
+                    }
+                }
                 for (let pl=0;pl<numov;pl++) {
                     if (this.internal.overlayslices[pl]!==null)
-                        this.internal.overlayslices[pl].setnexttimeforce();
+                        this.internal.overlayslices[pl].interpolate(input.objinterpolate);
                 }
-            }
-            for (let pl=0;pl<numov;pl++) {
-                if (this.internal.overlayslices[pl]!==null)
-                    this.internal.overlayslices[pl].interpolate(input.objinterpolate);
             }
         }
         
@@ -653,7 +655,9 @@ class BaseViewerElement extends HTMLElement {
         this.drawcolorscale();
     }
     
-
+    setcoordinates() {
+        // Does nothing in base viewer
+    }
     // ------------------------------------------------------------------------
     // get/set image
     // ------------------------------------------------------------------------

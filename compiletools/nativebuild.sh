@@ -6,7 +6,7 @@ BISMAKEJ="-j8"
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
-
+CDIR="$( cd ${IDIR}/../compiletools && pwd )"
 
 echo "-----------------------------------------------------------------------"
 
@@ -41,28 +41,11 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
 make ${BISMAKEJ} install
 
 echo "-----------------------------------------------------------------------"
-rm ${BDIR}/native/bisweb*python*sh
-make package
-cp bisweb*python*.sh ${BDIR}/install/zips
+bash ${CDIR}/pythonwheel.sh
 
 echo "-----------------------------------------------------------------------"
-
-cd ${BDIR}/install
-rm ${BDIR}/install/zips/biswebmatlab.zip
-zip -ry ${BDIR}/install/zips/biswebmatlab.zip biswebmatlab
+echo " Done with Python Wheel stuff"
 echo "-----------------------------------------------------------------------"
-
-#
-# More needed here
-# 
-#
-#cd ${BDIR}/install/wheel
-#python3 setup.py sdist bdist_wheel
-#echo "-----------------------------------------------------------------------"
-#cd ${BDIR}/install
-#rm bisweb*any.whl
-#rm bisweb*.tar.gz
-#cp ${BDIR}/install/wheel/dist/* .
 
 cd ${BDIR}/install/zips
 pwd

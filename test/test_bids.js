@@ -33,7 +33,7 @@ const inbase=path.resolve(__dirname,path.join('testdata','dicom'));
 const indir=path.join(inbase,'source');
 const odir=path.join(inbase,'bids');
 const tailname=path.join('sourcedata', path.join('sub-01', path.join('anat', 'sub-01_run-01_unknown.nii.gz')));
-
+const tailname2=path.join('sourcedata', path.join('sub-01', path.join('anat', 'sub-01_run-05_unknown.nii.gz')));
 
 const tempfs = require('temp').track();
 const tmpDirPath=tempfs.mkdirSync('bids_output_');
@@ -43,23 +43,26 @@ console.log(colors.cyan('++++ test_bids: Inbase='+inbase));
 
 describe('Testing the DICOM 2 BIDS\n', function() {
 
-    this.timeout(50000);
+    this.timeout(50000000);
     
     it('WS ...test raw dicom conversion', async function() {
 
         let module=new dicomModule();
         try {
-            await module.execute({},{'inputDirectory' : indir,
-                                  'outputDirectory' : tmpDirPath2,
-                                  'convertbids' : false});
-
-
             const img1=new BisWebImage();
             await img1.load(path.join(odir,tailname));
             console.log(colors.cyan('Gold read='+img1.getDescription()));
 
+
+            console.log('______________________________________________________');
+            let outlist=await module.execute({},{'inputDirectory' : indir,
+                                                 'outputDirectory' : tmpDirPath2,
+                                                 'convertbids' : false});
+            console.log('outlist=',outlist.join('\n\t'));
+            console.log('______________________________________________________');
+
             const img2=new BisWebImage();
-            await img2.load(path.join(tmpDirPath2,'source_fl3d_ce_axial_20100120110712_5.nii.gz'));
+            await img2.load(outlist[1]);
             console.log(colors.cyan('Output read='+img2.getDescription()));
 
             let maxd=img1.maxabsdiff(img2,100);
@@ -86,12 +89,14 @@ describe('Testing the DICOM 2 BIDS\n', function() {
                                   'outputDirectory' : tmpDirPath,
                                   'convertbids' : true});
 
+            console.log('______________________________________');
+            
             const img1=new BisWebImage();
             await img1.load(path.join(odir,tailname));
             console.log(colors.cyan('Gold read='+img1.getDescription()));
 
             const img2=new BisWebImage();
-            await img2.load(path.join(tmpDirPath,tailname));
+            await img2.load(path.join(tmpDirPath,tailname2));
             console.log(colors.cyan('Output read='+img2.getDescription()));
 
             let maxd=img1.maxabsdiff(img2,100);

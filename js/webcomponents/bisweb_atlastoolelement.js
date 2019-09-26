@@ -15,9 +15,6 @@
     
     ENDLICENSE */
 
-/* global setTimeout,HTMLElement */
-
-
 "use strict";
 
 const util=require('bis_util');

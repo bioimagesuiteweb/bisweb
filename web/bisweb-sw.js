@@ -2,7 +2,7 @@
 
 const idb=require('idb-keyval');
 
-/*global self, caches,fetch, MessageChannel, clients */
+/*global clients */
 
 // idb-store has a key 'cache' with two values
 

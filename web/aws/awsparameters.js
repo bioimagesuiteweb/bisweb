@@ -1,7 +1,5 @@
 'use strict';
 
-/* global window*/
-
 const localforage = require('localforage');
 
 

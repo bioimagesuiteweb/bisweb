@@ -148,13 +148,12 @@ function moduleOutput = bis_image(fname,debug)
 
         
         internal=load_untouch_nii_bis(f,[],[],[],[],[],[]);
-        internal.desc='Bisweb matlab image';
         computeAffineAndSpacingFromHeader(internal.hdr);
         internal.orcode=computeOrientationCodeFromAffineAndSpacing();
         internal.filename=f;
 
         print(['Loaded image from ', internal.filename],debug);
-        result=internal;
+        result=1;
     end
 
     % --------------------------------------------------------------

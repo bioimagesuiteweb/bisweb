@@ -1,0 +1,81 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>Mescopic Brain Extractor Example</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../node_modules/jstree/dist/themes/default/style.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/three.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+    <script src="./tfjsexample2.js"></script>
+    
+</head>
+<body>
+
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <button class="btn btn-danger" type="submit" id="compute">Strip Brain</button>
+  </nav>
+
+  <nav class="navbar navbar-default navbar-fixed-bottom">
+    <H4>Open the JS Console to see the print outputs</H4>
+  </nav>
+
+  
+  <!-- this is an optional viewer so that you can see what is going on -->
+  <div class="bisviewerwidget" style="width:800px;
+                                left:25px;position:absolute;padding:10 10 10 10;
+                                top:65px; background-color:#2222222">
+    
+    <bisweb-viewerlayoutelement
+      id="viewer_layout"
+      bis-dockwidth="300"
+      bis-coreopen="true"
+      bis-noresize="1">
+    </bisweb-viewerlayoutelement>
+    
+    <bisweb-orthogonalviewer
+      id="viewer"
+      bis-layoutwidgetid="#viewer_layout">
+    </bisweb-orthogonalviewer>
+  </div>
+  
+</body>
+</html>

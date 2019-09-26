@@ -1,6 +1,6 @@
 "use strict";
 
-/* global $,document,window */
+/* global $ */
 
 // Get access to the computational tools 
 const bisweb=window.bioimagesuiteweb;
