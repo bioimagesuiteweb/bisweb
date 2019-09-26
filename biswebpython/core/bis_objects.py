@@ -779,7 +779,7 @@ class bisSurface(bisBaseObject):
                 vertices, triangles, labels = plyutil.readPlyFile(filename);
                 self.create(vertices,triangles, labels);
                 self.filename=filename;
-                print('+++ Surface loaded from',filename,' numverts=',vertices.shape[0])
+                print('+++ Surface loaded ',self.getDescription());
                 return True;
             except:
                 return False;
@@ -788,7 +788,7 @@ class bisSurface(bisBaseObject):
             vertices, triangles, labels = jsonutil.readJsonFile(filename);
             self.create(vertices,triangles,labels);
             self.filename=filename;
-            print('+++ Surface loaded from',filename,' numverts=',vertices.shape[0])
+            print('+++ Surface loaded ',self.getDescription());
             return True;
         except:
             print('---- Failed to load surface from',filename);
@@ -811,19 +811,9 @@ class bisSurface(bisBaseObject):
             except:
                 print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
                 return False;
-        
             
         import json
-        sh=self.vertices.shape;
-        th=self.faces.shape;
-        data={};
-        
-        data['points']=np.reshape(self.vertices,[ sh[0]*sh[1]]).tolist();
-        data['triangles']=np.reshape(self.faces,[ th[0]*th[1]]).tolist();
-        if bool(self.labels.any()):
-            dh=self.labels.shape;
-            print('Labels=',dh[0]);
-            data['indices']=np.reshape(self.labels,[ dh[0] ]).tolist();
+
         out=json.dumps(data);
         try:
             with open(filename, 'w') as fp:
@@ -838,7 +828,39 @@ class bisSurface(bisBaseObject):
         return True;
 
 
+    def toDictionary(self):
+    
+        sh=self.vertices.shape;
+        th=self.faces.shape;
+        dh=self.labels.shape;
+        dz=dh[0];
+        if (len(dh)>1):
+            dz=dh[0]*dh[1];
+            
+        data={};
+        
+        data['points']=np.reshape(self.vertices,[ sh[0]*sh[1]]).tolist();
+        data['triangles']=np.reshape(self.faces,[ th[0]*th[1]]).tolist();
+        data['indices']=np.reshape(self.labels,[ dz ]).tolist();
 
+        return data;
+        
+    def getDescription(self):
+
+        a=self.filename+' '
+        if (self.vertices is None):
+            return a;
+        a=a+'np:'+str(self.vertices.shape);
+
+        if (self.faces is None):
+            return a
+        
+        a=a+' nt='+str(self.faces.shape);
+
+        if (self.labels is None):
+            return a;
+        return a+' nl='+str(self.labels.shape);
+        
 
 # --------------------------------------
 # bisCollection

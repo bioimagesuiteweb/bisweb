@@ -172,6 +172,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             opacity : 0.7,
             mode3d : 'Uniform',
             display3d : 'Both',
+            resol3d : 0,
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
@@ -1215,13 +1216,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
 
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
         });
-
+        let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+        });
+        
         
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
             if (data.mode3d!=='Uniform') {
                 data.opacity=1.0;
                 da1.domElement.style.opacity = 0.1;
@@ -1233,13 +1237,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
         });
 
         let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
         da4.onFinishChange( () => {   autoDrawLines();      });
 
         clist.push(da4);
+        clist.push(da15);
         clist.push(da1);
         clist.push(da2);
         clist.push(da3);
@@ -1689,7 +1694,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             toggleshowlegend();
             connectvis3d.update3DMeshes(internal.parameters.opacity,
                                         internal.parameters.mode3d,
-                                        internal.parameters.display3d
+                                        internal.parameters.display3d,
+                                        internal.parameters.resol3d,
                                        );
             internal.inrestorestate=false;
             setTimeout( () => { drawColorScale();},20);

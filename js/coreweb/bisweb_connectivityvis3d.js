@@ -13,6 +13,9 @@ const globalParams={
     brainmaterial : [ null,null],
     brainindices : [ null,null ],
     braintexture : null,
+    vertexlist : [null,null ],
+    numelements : [ 1,1],
+    lastresol : [ -1,-1],
 };
 
 let lasttexturehue=-1.0;
@@ -167,7 +170,7 @@ let createTexture=function(hue) {
 // @param {Array} color - the color
 // @param {Number} opacity - the opacity
 
-var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2) {
+var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2,resol=0) {
 
     if (globalParams.brainmesh[index] !==null) { 
         globalParams.brainmesh[index].visible=false;
@@ -258,6 +261,14 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         fragmentShader : brain_fragmentshader_text,
     });
 
+
+    if (resol!== globalParams.lastresol[index]) {
+        globalParams.braingeom[index].removeAttribute( 'position');
+        globalParams.braingeom[index].addAttribute( 'position', new THREE.BufferAttribute( globalParams.vertexlist[index][resol], 3 ) );
+        globalParams.braingeom[index].computeVertexNormals();
+        globalParams.lastresol[index]=resol;
+    }
+    
     globalParams.braingeom[index].removeAttribute( 'parcels');
     globalParams.braingeom[index].addAttribute( 'parcels', new THREE.BufferAttribute( attributes, 1 ) );
     
@@ -275,8 +286,9 @@ var parsebrainsurface = function(textstring,filename) {
         meshindex=1;
     
     let obj= JSON.parse(textstring);
+
+    let numelements=obj['numelements'] || 1;
     
-    let vertices = new Float32Array(obj.points.length);
     let indices = new Uint16Array(obj.triangles.length);
     let parcels=null;
 
@@ -285,33 +297,47 @@ var parsebrainsurface = function(textstring,filename) {
         parcels = new Uint16Array(obj.indices.length);
 
     
+    let vertices = new Array(numelements);
     console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
-    for (let i=0;i<obj.points.length;i+=3) {
-        vertices[i+0]=obj.points[i+0];
-        if (meshindex===1) // right
-            vertices[i]+=lobeoffset;
-        else // left
-            vertices[i]-=lobeoffset;
-        vertices[i+1]=obj.points[i+1];
-        vertices[i+2]=obj.points[i+2];
+
+    for (let e=0;e<numelements;e++) {
+        vertices[e]=new Float32Array(obj.points.length);
+        let srcname='points';
+        if (e>0)
+            srcname='points'+e;
+        
+        for (let i=0;i<obj[srcname].length;i+=3) {
+            vertices[e][i+0]=obj[srcname][i+0];
+            if (meshindex===1) // right
+                vertices[e][i]+=lobeoffset;
+            else // left
+                vertices[e][i]-=lobeoffset;
+            vertices[e][i+1]=obj[srcname][i+1];
+            vertices[e][i+2]=obj[srcname][i+2];
+        }
     }
+
     for (let i=0;i<obj.triangles.length;i++) 
         indices[i]=obj.triangles[i];
 
     if (obj.indices) {
         for (let i=0;i<parcels.length;i++)
             parcels[i]=obj.indices[i];
+        console.log('Parcels=',parcels.length,obj.indices.length,obj.points.length/3,' ex=',parcels[0],parcels[22],parcels[73]);
     }
     
     let buf=new THREE.BufferGeometry();
     buf.setIndex( new THREE.BufferAttribute( indices, 1));
-    buf.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    buf.addAttribute( 'position', new THREE.BufferAttribute( vertices[0], 3 ) );
     buf.computeVertexNormals();
 
     globalParams.braingeom[meshindex]=buf;
     globalParams.brainindices[meshindex]=parcels;
+    globalParams.vertexlist[meshindex]=vertices;
+    globalParams.numelements[meshindex]=numelements;
+    globalParams.lastresol[meshindex]=0;
     
-    createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1);
+    createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0);
     
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes
@@ -485,13 +511,13 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     return total;
 };
 // ---------------------------------------------------------------------------------------------
-var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both') {
+var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both',resol=0) {
 
     let mode=color_modes.indexOf(modename)-1;
     let dmode=display_modes.indexOf(displaymode);
 
-    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode);
-    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode);
+    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode,resol);
+    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode,resol);
 
     let show=[true,true];
     if (dmode<=0) 
