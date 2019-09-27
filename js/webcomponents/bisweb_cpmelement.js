@@ -192,7 +192,7 @@ class CPMElement extends HTMLElement {
     openCPMSidebar(dockbar, layoutElement) {
         if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
-            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Connectivity Files', true, true);
+            this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Calculate CPM', true, true);
 
             let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-span-button');
             this.setHelpText(helpButton);
