@@ -49,9 +49,14 @@ const niftitypes= {
     256 : [ 'schar',Int8Array ,1 ],
     512 : [ 'ushort',Uint16Array,2 ],
     768 : [ 'uint',Uint32Array,4],
-    1024 : [ 'int64',BigInt64Array,8],
-    1280 : [ 'uint64',BigUint64Array,8]
 };
+
+try {
+    niftitypes['1024']= [ 'int64',BigInt64Array,8];
+    niftitypes['1280']= [ 'uint64',BigUint64Array,8];
+} catch (e) {
+    console.log('___ In older JS engine. No BigInt support.');
+}
 
 /**
  * Name2Type mapps

@@ -85,11 +85,14 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
         if (this.viewers['viewer1'])
             this.viewers['viewer1'].setName('viewer1');
 
-        const viewerid2 = this.getAttribute('bis-viewerid2');
-        this.viewers['viewer2']=document.querySelector(viewerid2) || null;
-        if (this.viewers['viewer2'])
-            this.viewers['viewer2'].setName('viewer2');
+        const viewerid2 = this.getAttribute('bis-viewerid2') || '';
+        if (viewerid2!=='') {
+            this.viewers['viewer2']=document.querySelector(viewerid2) || null;
+            if (this.viewers['viewer2'])
+                this.viewers['viewer2'].setName('viewer2');
+        }
     }
+        
 
 
     /** Get the Current Image
