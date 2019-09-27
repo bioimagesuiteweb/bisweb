@@ -389,7 +389,8 @@ var inno=function(tools, version, indir , distdir ) {
     let i_license = path.resolve(indir, 'build/web/LICENSE');
     let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-win32-x64');
     let i_date    = getDate();
-
+    let i_icon2   = path.resolve(indir,'various/config/biswizard.bmp');
+    let i_icon3   = path.resolve(indir,'various/config/bissmall.bmp');
 
     
     let i_tools = "";
@@ -417,16 +418,22 @@ var inno=function(tools, version, indir , distdir ) {
         if (i<(max-1))
             i_tools+='\n';
     }
+
+    let options={outputdir : i_odir,
+                 iconfile : i_icon,
+                 licensefile : i_license,
+                 version : version,
+                 date : i_date,
+                 tools : i_tools,
+                 indir : i_indir,
+                 iconfile2 : i_icon2,
+                 iconfile3 : i_icon3,
+                };
+    console.log(colors.yellow(getTime()+' '+JSON.stringify(options,null,2)));
     
     console.log(colors.yellow(getTime()+' Creating electron inno setup file '+distdir+'/biselectron.iss for BioImageSuite Web '+i_date));
     return gulp.src('./config/biselectron.iss')
-        .pipe(template({outputdir : i_odir,
-                        iconfile : i_icon,
-                        licensefile : i_license,
-                        version : version,
-                        date : i_date,
-                        tools : i_tools,
-                        indir : i_indir}))
+        .pipe(template(options))
         .pipe(gulp.dest(distdir));
 };
 

@@ -37,6 +37,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
       -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
+      -DBIS_USECPM=ON \
       ${SRCDIR}/cpp
 
 
