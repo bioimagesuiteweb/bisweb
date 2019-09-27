@@ -334,10 +334,30 @@ class CPMElement extends HTMLElement {
 
         function showConnFile() {
             let lh = layoutElement.getviewerheight() * 0.7;
-            let message = reformatMatrix(formName, connFileVal); 
-            let output = `<div class='bisweb-dialog-box' style='max-height: ${lh}'>${message}</div>`;
+            let matrix = reformatMatrix(formName, connFileVal); 
+
+            //create bootstrap table
+            let table = $(`<table class='table table-dark table-striped'><tbody></tbody></table>`), tableBody = $(table).find('tbody');
+            let matrixRows = matrix.split(';');
+            let matrSep = ( matrixRows[0].includes(',') ? ',' : '\t'); 
+            console.log('matrix rows', matrixRows);
+            for (let row of matrixRows) {
+                let tableRow = $(`<tr></tr>`);
+                let entries = row.split(matrSep);
+                for (let entry of entries) {
+                    entry = Math.round(entry * 1000)/1000; //round to three decimal places
+                    let te = $(`<td>${entry}</td>`);
+                    tableRow.append(te);
+                }
+                $(tableBody).append(tableRow);
+            }
+
+            let output = $(`<div class='bisweb-dialog-box' style='max-height: ${lh}px'></div>`);
+            output.append(table);
+            let matrixDimensions = `(dimensions ${matrixRows[0].split(matrSep).length}x${matrixRows.length}</a>)`;
+            
             bootbox.alert({
-                'title' : 'Connectivity file',
+                'title' : `Connectivity file ${matrixDimensions}`,
                 'message' : output
             });
         }
@@ -753,7 +773,7 @@ let reformatMatrix = (filename, matrix) => {
             default: console.log('Error: unrecognized extension', extension);
         }
     }
-    return reformattedEntry.join('\n');
+    return reformattedEntry.join(';');
 };
 
 /**
