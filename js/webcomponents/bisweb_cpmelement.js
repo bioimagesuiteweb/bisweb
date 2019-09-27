@@ -53,7 +53,10 @@ class CPMElement extends HTMLElement {
         bisweb_userprefs.initialize(bis_dbase).then( () => {
             bis_dbase.getItem('showCPMExportWarning').then( (obj) => {
                 this.showExportWarning  = (obj === null || obj === true) ?  true : false;
-                console.log('export warning', this.showExportWarning);
+            });
+
+            bis_dbase.getItem('showMatrixConcatWarning').then( (obj) => {
+                this.showMatrixConcatWarning = (obj === null || obj === true) ? true : false;
             });
 
             bis_webfileutil.initializeFromUserPrefs();
@@ -258,8 +261,6 @@ class CPMElement extends HTMLElement {
             this.runCPMFlow().then( (results) => {
                 let message = '', data = results.data;
                 for (let item of data) { message = message.concat(`${item}<br>`); }
-                //console.log('conn vis', bisweb_connectivityvis);
-                //bisweb_connectivityvis.drawScatterandHisto();
 
                 bootbox.dialog({
                     'title' : 'CPM Results',
@@ -319,12 +320,25 @@ class CPMElement extends HTMLElement {
 
         //if bigger than 10kB, ask whether user is sure they want to display it
         if (getMatrixSize(connFileVal) > 1024 * 10) {
-            bootbox.confirm({
+            let dimensions = [100, 100];
+            bootbox.dialog({
                 'title' : 'Show selected file?',
-                'message' : 'The selected file is greater than 10kB. Are you sure you want to display the full file?',
-                'callback' : (accept) => {
-                    if (accept) {
-                        showConnFile();
+                'message' : 'The selected file is greater than 10kB, only the top 100 rows and cols will be shown.',
+                'onEscape' : true,
+                'buttons' : {
+                    'confirm' : {
+                        'label' : 'Ok',
+                        'className' : 'btn-success',
+                        'callback' : () => { showConnFile(dimensions); }
+                    },
+                    'noshow' : {
+                        'label' : "Ok, don't show again",
+                        'className' : 'btn-primary',
+                        'callback' : () => { 
+                            this.showMatrixConcatWarning = false;
+                            bisweb_userprefs.setItem('showMatrixConcatWarning', false, true);
+                            showConnFile(dimensions); 
+                        }
                     }
                 }
             });
@@ -332,7 +346,7 @@ class CPMElement extends HTMLElement {
             showConnFile();
         }
 
-        function showConnFile() {
+        function showConnFile(dimensions = ['all', 'all']) {
             let lh = layoutElement.getviewerheight() * 0.7;
             let matrix = reformatMatrix(formName, connFileVal); 
 
@@ -340,12 +354,12 @@ class CPMElement extends HTMLElement {
             let table = $(`<table class='table table-dark table-striped'><tbody></tbody></table>`), tableBody = $(table).find('tbody');
             let matrixRows = matrix.split(';');
             let matrSep = ( matrixRows[0].includes(',') ? ',' : '\t'); 
-            console.log('matrix rows', matrixRows);
-            for (let row of matrixRows) {
+
+            for (let i = 0; (i < matrixRows.length) && (dimensions[0] === 'all' || i < dimensions[0]); i++) {
                 let tableRow = $(`<tr></tr>`);
-                let entries = row.split(matrSep);
-                for (let entry of entries) {
-                    entry = Math.round(entry * 1000)/1000; //round to three decimal places
+                let entries = matrixRows[i].split(matrSep);
+                for (let j = 0; (j < entries.length) && (dimensions[1] === 'all' || j < dimensions[1]); j++) {
+                    let entry = Math.round(entries[j] * 1000)/1000; //round to three decimal places
                     let te = $(`<td>${entry}</td>`);
                     tableRow.append(te);
                 }
@@ -354,7 +368,7 @@ class CPMElement extends HTMLElement {
 
             let output = $(`<div class='bisweb-dialog-box' style='max-height: ${lh}px'></div>`);
             output.append(table);
-            let matrixDimensions = `(dimensions ${matrixRows[0].split(matrSep).length}x${matrixRows.length}</a>)`;
+            let matrixDimensions = `(dimensions ${matrixRows[0].split(matrSep).length}x${matrixRows.length})`;
             
             bootbox.alert({
                 'title' : `Connectivity file ${matrixDimensions}`,
