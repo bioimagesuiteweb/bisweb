@@ -580,7 +580,7 @@ class BisWebSubviewer {
         if ( this._temp.mouseChange.lengthSq() ) {
                 
             this._temp.mouseChange.multiplyScalar( this.internal._eye.length() * this.panSpeed );
-            this._temp.pan.copy( this.internal._eye ).cross( this.camera.up ).setLength( this._temp.mouseChange.x );
+            this._temp.pan.copy( this.internal._eye ).cross( this.camera.up ).setLength( -this._temp.mouseChange.x );
             this._temp.pan.add( this._temp.cameraUp.copy( this.camera.up ).setLength( -this._temp.mouseChange.y ) );
             this.camera.position.add( this._temp.pan );
             this.target.add( this._temp.pan );
@@ -637,10 +637,18 @@ class BisWebSubviewer {
         let ey=event.clientY-offset.top+$(window).scrollTop();
         
         ey=this.screen.height-(ey+1);
-        let vp = [ this.normViewport.x0*this.screen.width ,
-                   this.normViewport.x1*this.screen.width ,
-                   this.normViewport.y0*this.screen.height,
-                   this.normViewport.y1*this.screen.height ];
+        let vp;
+        if (this.plane===3) {
+            vp = [ this.normViewport.old.x0*this.screen.width ,
+                this.normViewport.old.x1*this.screen.width ,
+                this.normViewport.old.y0*this.screen.height,
+                this.normViewport.old.y1*this.screen.height ];
+        } else {
+            vp = [ this.normViewport.x0*this.screen.width ,
+                this.normViewport.x1*this.screen.width ,
+                this.normViewport.y0*this.screen.height,
+                this.normViewport.y1*this.screen.height ];
+        }
         
 
         if (ex <= vp[0] || ex >= vp[1] || ey <= vp[2] || ey>=vp[3])
@@ -651,7 +659,12 @@ class BisWebSubviewer {
             2.0*(ey-vp[2])/(vp[3]-vp[2])-1.0,
             1.0);
         this.lastNormalizedCoordinates[0]=n.x;
-        this.lastNormalizedCoordinates[1]=n.y;
+        if (this.plane===3) {
+            // Scale y coordinate using the proper ratio
+            this.lastNormalizedCoordinates[1]=n.y*this.normViewport.ratio;
+        } else {
+            this.lastNormalizedCoordinates[1]=n.y;
+        }
 
         let w=n.unproject(this.camera);
         this.lastCoordinates[0]=w.x;
@@ -692,7 +705,7 @@ class BisWebSubviewer {
         }
         
         if ( this.internal._state === STATE.ROTATE && !this.noRotate ) {
-            let x=this.getMouseProjectionOnBall( this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] );
+            let x=this.getMouseProjectionOnBall( -this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] );
             this.internal._rotateStart.copy( x);
             this.internal._rotateEnd.copy( this.internal._rotateStart );
             
@@ -727,7 +740,7 @@ class BisWebSubviewer {
         event.stopPropagation();
         
         if ( this.internal._state === STATE.ROTATE && !this.noRotate ) {
-            this.internal._rotateEnd.copy( this.getMouseProjectionOnBall( this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] ) );
+            this.internal._rotateEnd.copy( this.getMouseProjectionOnBall( -this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] ) );
         } else if ( this.internal._state === STATE.ZOOM && !this.noZoom ) {
             this.internal._zoomEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
         } else if ( this.internal._state === STATE.PAN && !this.noPan ) {
@@ -810,7 +823,7 @@ class BisWebSubviewer {
         if ( event.touches.length === 1) {
             if (!this.noRotate) {
                 this.internal._state = STATE.TOUCH_ROTATE;
-                this.internal._rotateStart.copy( this.getMouseProjectionOnBall( this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] ) );
+                this.internal._rotateStart.copy( this.getMouseProjectionOnBall( -this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] ) );
                 this.internal._rotateEnd.copy( this.internal._rotateStart );
             }
         } else if (event.touches.length===2) {
@@ -845,7 +858,7 @@ class BisWebSubviewer {
             return;
         
         if ( event.touches.length ===1) {
-            this.internal._rotateEnd.copy( this.getMouseProjectionOnBall( this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] ) );
+            this.internal._rotateEnd.copy( this.getMouseProjectionOnBall( -this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] ) );
         } else if ( event.touches.length ===2) {
             let dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
             let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
