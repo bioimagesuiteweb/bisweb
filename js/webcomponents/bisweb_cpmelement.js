@@ -47,6 +47,7 @@ class CPMElement extends HTMLElement {
         this.cpmComputationPanel = null;
         this.fileInputForm = null;
         this.madeSettingsMenu = false;
+        this.madeCPMButtons = false;
 
         bisweb_connectivityvis.initialize();
 
@@ -80,23 +81,23 @@ class CPMElement extends HTMLElement {
         this.initializeWasm = libbiswasm.initialize();
 
         bis_webutil.runAfterAllLoaded( () => {
+            this.layoutElement = document.querySelector(this.layoutelementid);
             let menubar = document.querySelector(this.menubarid).getMenuBar();
-            let layoutElement = document.querySelector(this.layoutelementid);
             let cardbar = document.querySelector(this.cardbarid);
-            let dockbar = layoutElement.elements.dockbarcontent;
+            let dockbar = this.layoutElement.elements.dockbarcontent;
 
             cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
-                this.createCPMGUIManager(layoutElement, scatterobj.content[0]);
+                this.createCPMGUIManager(scatterobj.content[0]);
 
                 //resizing function for card bar pane
                 cardbar.setResizingFunction( () => {
-                    scatterobj.content.width(layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
-                    scatterobj.content.height(layoutElement.viewerheight / 2);
+                    scatterobj.content.width(this.layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
+                    scatterobj.content.height(this.layoutElement.viewerheight / 2);
                 });
             });
 
             this.createMenubarItems(menubar, dockbar);
-            this.openCPMSidebar(dockbar, layoutElement);
+            this.createCPMPanel(dockbar);
         });
 
         bisweb_popoverhandler.addPopoverDismissHandler();
@@ -109,16 +110,16 @@ class CPMElement extends HTMLElement {
      * @param {HTMLElement} scatterElement - The DOM element to append the scatter plot to.
      * @param {HTMLElement} histoElement - The DOM element to append the histogram plot to.
      */
-    createCPMGUIManager(layoutElement, scatterElement) {
-        let dims = [layoutElement.viewerwidth / 3, layoutElement.viewerheight / 2];
-        let pos = [0 , layoutElement.viewerheight - 10];
+    createCPMGUIManager(scatterElement) {
+        let dims = [this.layoutElement.viewerwidth / 3, this.layoutElement.viewerheight / 2];
+        let pos = [0 , this.layoutElement.viewerheight - 10];
 
         let scatterplot = new bisweb_scatterplot(scatterElement, dims, pos);
 
         //resizing function for charts
         $(window).on('resize', () => {
-            dims = [layoutElement.viewerwidth / 3 , layoutElement.viewerheight / 2];
-            pos = [0 , layoutElement.viewerheight - 10];
+            dims = [this.layoutElement.viewerwidth / 3 , this.layoutElement.viewerheight / 2];
+            pos = [0 , this.layoutElement.viewerheight - 10];
             scatterplot.resize(dims, pos);
         });
     }
@@ -129,11 +130,11 @@ class CPMElement extends HTMLElement {
         this.importFiles(f).then( (filenames) => {
             bis_webutil.dismissAlerts();
             bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
-            //if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
             this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
             
             $(this.importButton).remove();
-            if (!this.madeSettingsMenu) { this.updateSettingsMenu(filenames); }
+            this.updateSettingsMenu(filenames); 
+            if (!this.madeCPMButtons) { this.createCPMButtons(); }
         });
     }
 
@@ -190,12 +191,11 @@ class CPMElement extends HTMLElement {
 
 
     /**
-     * Opens the CPM panel in the dockbar, creating it if necessary. 
+     * Creates the CPM panel in its initial state in the dockbar. 
      * 
      * @param {JQuery} dockbar - The right panel on the BioImageSuite page.  
-     * @param {JQuery} layoutElement - The viewer layout element for the page.
      */
-    openCPMSidebar(dockbar, layoutElement) {
+    createCPMPanel(dockbar) {
         if (!this.cpmDisplayPanel) {
             let panelGroup = bis_webutil.createpanelgroup(dockbar);
             this.cpmDisplayPanel = bis_webutil.createCollapseElement(panelGroup, 'Calculate CPM', true, true);
@@ -203,14 +203,8 @@ class CPMElement extends HTMLElement {
             let helpButton = this.cpmDisplayPanel.parent().parent().find('.bisweb-span-button');
             this.setHelpText(helpButton);
 
-            this.fileListFormId = bis_webutil.getuniqueid();
             this.fileListForm = $(`
             <div>
-                <label for=${this.fileListFormId}>Select an input</label>
-                <div class='form-group'>
-                    <select class='form-control' id=${this.fileListFormId}>
-                    </select>
-                </div>
                 <div class='btn-group' role='group'>
                     <button class='btn btn-sm btn-info'>View</button>
                     <button class='btn btn-sm btn-success'>Run CPM</button>
@@ -219,77 +213,81 @@ class CPMElement extends HTMLElement {
             `);
 
             this.importButton = this.createCPMPopoverButton();
-
-            this.attachFormButtonCb(layoutElement);
             this.cpmDisplayPanel.append(this.importButton);
-        } else {
-            this.cpmDisplayPanel.parent().addClass('in');
         }
     }
 
     /**
      * Creates the button associated with the form in the connectivity file panel. 
-     * 
-     * @param {JQuery} layoutElement - The layout element for the viewer on the page.
      */
-    attachFormButtonCb(layoutElement) {
-        
-        let listButtonGroup = $(this.fileListForm).find('.btn-group');
-        let viewButton = listButtonGroup.find('.btn-info');
-        let runButton = listButtonGroup.find('.btn-success');
+    createCPMButtons() {
+        let buttonGroup = $(`
+            <div>
+                <div class='btn-group' role='group'>
+                    <button class='btn btn-sm btn-info'>View</button>
+                    <button class='btn btn-sm btn-success'>Run CPM</button>
+                </div>
+            </div>
+            `);
+
+        let viewButton = buttonGroup.find('.btn-info');
+        let runButton = buttonGroup.find('.btn-success');
 
 
         viewButton.on('click', () => {
-           this.createViewDialog(layoutElement);
+            this.createViewDialog();
         });
 
         runButton.on('click', () => {
-            this.runCPMFlow().then( (results) => {
+            this.runCPMFlow().then((results) => {
                 let message = '', data = results.data;
                 for (let item of data) { message = message.concat(`${item}<br>`); }
 
                 bootbox.dialog({
-                    'title' : 'CPM Results',
-                    'message' : `<pre>${message}</pre>`,
-                    'buttons' : {
-                        'save' : {
-                            'label' : 'Save results',
-                            'className' : 'btn-warning',
-                            'callback' : () => {
+                    'title': 'CPM Results',
+                    'message': `<pre>${message}</pre>`,
+                    'buttons': {
+                        'save': {
+                            'label': 'Save results',
+                            'className': 'btn-warning',
+                            'callback': () => {
 
                                 //create a file button then click it to mimic the button in the modal being the file button
                                 let fileBtn = bis_webfileutil.createFileButton({
-                                    'callback' : (name) => { 
+                                    'callback': (name) => {
                                         //TODO: bypassing bisweb_matrix save method because of some strangeness with how it handles files (method signature requiring an object causes it to bypass the server client save function)
                                         results.filename = name;
-                                        let serializedMat = results.serializeToText({'name' : name });
+                                        let serializedMat = results.serializeToText({ 'name': name });
                                         bis_genericio.write(name, serializedMat);
                                     }
                                 }, {
-                                    'title' : 'Save CPM results file',
-                                    'filters' : [{ 'name' : 'Matrix files', 'extensions' : ['.matr', '.biswebmatr'] }],
-                                    'save' : true,
-                                    'initialCallback' : () => { return 'cpmresults.matr'; }
+                                    'title': 'Save CPM results file',
+                                    'filters': [{ 'name': 'Matrix files', 'extensions': ['.matr', '.biswebmatr'] }],
+                                    'save': true,
+                                    'initialCallback': () => { return 'cpmresults.matr'; }
                                 });
 
                                 fileBtn.click();
                             }
                         },
-                        'cancel' : {
-                            'label' : 'Ok',
-                            'className' : 'btn-primary'
+                        'cancel': {
+                            'label': 'Ok',
+                            'className': 'btn-primary'
                         }
                     }
                 });
-            }).catch( (e) => { 
-                bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true); 
+            }).catch((e) => {
+                bis_webutil.createAlert('Could not run CPM code. Check your settings and ensure that they are valid for your dataset (more details are in the web console).', true);
                 console.log('An error occured while running CPM code', e);
             });
         });
+
+        this.cpmDisplayPanel.append(buttonGroup);
+        this.madeCPMButtons = true;
     }
 
-    createViewDialog(layoutElement) {
-        let formName = $('#' + this.fileListFormId).val();
+    createViewDialog() {
+        let formName = $('#' + this.filenameFormId).val();
 
         //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
         let subNumRegex = /^([^\d]*)(\d+)/g;
@@ -331,7 +329,7 @@ class CPMElement extends HTMLElement {
         }
 
         function showConnFile(dimensions = ['all', 'all']) {
-            let lh = layoutElement.getviewerheight() * 0.7;
+            let lh = this.layoutElement.getviewerheight() * 0.7;
             let matrix = reformatMatrix(formName, connFileVal); 
 
             //create bootstrap table
@@ -517,6 +515,8 @@ class CPMElement extends HTMLElement {
 
     /**
      * Opens a modal for the user to change the settings of the CPM computation.
+     * 
+     * @param {Array} filenames - The list of filenames to put in the filename list of the settings menu.
      */
     updateSettingsMenu(filenames) {
         
