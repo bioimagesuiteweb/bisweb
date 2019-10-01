@@ -128,9 +128,9 @@ class CPMElement extends HTMLElement {
         this.importFiles(f).then( () => {
             bis_webutil.dismissAlerts();
             bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
-            this.importButton.remove();
             if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
             this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
+            $(this.importButton).remove();
         });
     }
 
@@ -216,25 +216,10 @@ class CPMElement extends HTMLElement {
             </div>
             `);
 
-            let buttonGroup = bis_webutil.createbuttonbar();
             this.importButton = this.createCPMPopoverButton();
-            let exportButton = bis_webfileutil.createFileButton({
-                'name' : 'Export CPM file',
-                'type' : 'warning',
-                'css' :  { 'visibility' : 'hidden' },
-                'callback' : (f) => {
-                    this.exportCPMFile(f);
-                }
-            }, {
-                'title': 'Export connectivity index file',
-                'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
-                'save' : true,
-                'suffix' : 'json'
-            });
 
             this.createFormButtons(layoutElement);
-            buttonGroup.append(this.importButton, exportButton);
-            this.cpmDisplayPanel.append(buttonGroup);
+            this.cpmDisplayPanel.append(this.importButton);
         } else {
             this.cpmDisplayPanel.parent().addClass('in');
         }
@@ -477,10 +462,13 @@ class CPMElement extends HTMLElement {
      */
     createCPMPopoverButton() {
 
+        let importButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM file</button>`);
+
+        let importFileCallback = (f) => { 
+            this.importFileCallback(f); 
+        };
+
         //Unattached buttons that are clicked when one of the popover buttons is clicked
-        let importFileCallback = (f) => { this.importFileCallback(f);};
-
-
         let importFileItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback
         }, {
@@ -498,7 +486,6 @@ class CPMElement extends HTMLElement {
         });
 
 
-        let importButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM file</button>`);
         let popoverContent = $(
             `<div>
                 <div class='list-group'>
