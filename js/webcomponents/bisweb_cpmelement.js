@@ -46,7 +46,7 @@ class CPMElement extends HTMLElement {
         this.cpmDisplayPanel = null;
         this.cpmComputationPanel = null;
         this.fileInputForm = null;
-        this.settingsModal = null;
+        this.madeSettingsMenu = false;
 
         bisweb_connectivityvis.initialize();
 
@@ -130,7 +130,9 @@ class CPMElement extends HTMLElement {
             bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
             if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
             this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
+            
             $(this.importButton).remove();
+            if (!this.madeSettingsMenu) { this.createSettingsMenu(); }
         });
     }
 
@@ -235,7 +237,7 @@ class CPMElement extends HTMLElement {
         let listButtonGroup = $(this.fileListForm).find('.btn-group');
         let viewButton = listButtonGroup.find('.btn-info');
         let runButton = listButtonGroup.find('.btn-success');
-        let settingsButton = listButtonGroup.find('.btn-primary');
+        //let settingsButton = listButtonGroup.find('.btn-primary');
 
 
         viewButton.on('click', () => {
@@ -285,8 +287,6 @@ class CPMElement extends HTMLElement {
                 console.log('An error occured while running CPM code', e);
             });
         });
-
-        settingsButton.on('click', () => { this.openSettingsModal(); });    
     }
 
     createViewDialog(layoutElement) {
@@ -519,59 +519,46 @@ class CPMElement extends HTMLElement {
     /**
      * Opens a modal for the user to change the settings of the CPM computation.
      */
-    openSettingsModal() {
-        if (!this.settingsModal) {
-            let settingsModal = bis_webutil.createmodal('CPM Settings', 'modal-sm');
-            let settingsObj = Object.assign({}, this.settings);
+    createSettingsMenu() {
+        
+        let settingsObj = Object.assign({}, this.settings);
 
-            let listObj = {
-                'kfold' : ['3', '4', '5', '6', '8', '10'],
-                'numtasks' : ['0', '1', '2', '3'],
-                'numnodes' : ['3', '9', '268']
-            };
+        let listObj = {
+            'kfold': ['3', '4', '5', '6', '8', '10'],
+            'numtasks': ['0', '1', '2', '3'],
+            'numnodes': ['3', '9', '268']
+        };
 
-            let container = new dat.GUI({ 'autoPlace' : false });
-            container.add(settingsObj, 'threshold', 0, 1);
-            container.add(settingsObj, 'kfold', listObj.kfold);
-            container.add(settingsObj, 'numtasks', listObj.numtasks);
-            container.add(settingsObj, 'numnodes', listObj.numnodes),
-            container.add(settingsObj, 'lambda', 0.0001, 0.01);
+        let container = new dat.GUI({ 'autoPlace': false });
+        container.add(settingsObj, 'threshold', 0, 1);
+        container.add(settingsObj, 'kfold', listObj.kfold);
+        container.add(settingsObj, 'numtasks', listObj.numtasks);
+        container.add(settingsObj, 'numnodes', listObj.numnodes),
+        container.add(settingsObj, 'lambda', 0.0001, 0.01);
 
-            settingsModal.body.append(container.domElement);
-            $(container.domElement).find('.close-button').remove();
+        this.cpmDisplayPanel.append(container.domElement);
+        $(container.domElement).find('.close-button').remove();
 
 
-            let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'btn-success' });
-            confirmButton.on('click', () => {
-                console.log('settings obj', settingsObj);
-                this.settings = Object.assign({}, settingsObj);
-                settingsModal.dialog.modal('hide');
-            });
+        /*let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+        confirmButton.on('click', () => {
+            console.log('settings obj', settingsObj);
+            this.settings = Object.assign({}, settingsObj);
+        });*/
 
-            let cancelButton = bis_webutil.createbutton({ 'name' : 'Close', 'type' : 'btn-default' });
-            cancelButton.on('click', () => {
-                for (let key of Object.keys(settingsObj)) {
-                    settingsObj[key] = this.settings[key];
+        /*let cancelButton = bis_webutil.createbutton({ 'name': 'Close', 'type': 'btn-default' });
+        cancelButton.on('click', () => {
+            for (let key of Object.keys(settingsObj)) {
+                settingsObj[key] = this.settings[key];
+            }
+                for (let i in container.__controllers) {
+                    container.__controllers[i].updateDisplay();
                 }
 
-                //do this on modal hide to avoid the controllers being moved while the user can see it
-                settingsModal.dialog.one('hidden.bs.modal', () => {
-                    for (let i in container.__controllers) {
-                        container.__controllers[i].updateDisplay();
-                    }
-                });
+            settingsModal.dialog.modal('hide');
+        });*/
 
-                settingsModal.dialog.modal('hide');
-            });
-            
-            settingsModal.footer.empty();
-            settingsModal.footer.append(confirmButton);
-            settingsModal.footer.append(cancelButton);
-
-            this.settingsModal = settingsModal;
-        }
-
-        this.settingsModal.dialog.modal('show');
+        this.madeSettingsMenu = true;
     }
 
     /**
