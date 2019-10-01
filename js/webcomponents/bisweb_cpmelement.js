@@ -287,11 +287,14 @@ class CPMElement extends HTMLElement {
     }
 
     createViewDialog() {
-        let formName = $('#' + this.filenameFormId).val();
+        const self = this;
+        let formName = $('#' + this.fileListFormId).val();
 
         //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
         let subNumRegex = /^([^\d]*)(\d+)/g;
         let match = subNumRegex.exec(formName);
+
+        console.log('form name', formName, 'match', match);
         let fullName = match[0], subjectName = match[1], subjectNum = match[2], strippedSubjectName;
 
         if (subjectNum === '') { console.log('Error: No subject number associated with', formName, ', please ensure that your subjects are properly identified.'); return; }
@@ -329,7 +332,7 @@ class CPMElement extends HTMLElement {
         }
 
         function showConnFile(dimensions = ['all', 'all']) {
-            let lh = this.layoutElement.getviewerheight() * 0.7;
+            let lh = self.layoutElement.getviewerheight() * 0.7;
             let matrix = reformatMatrix(formName, connFileVal); 
 
             //create bootstrap table
@@ -364,7 +367,9 @@ class CPMElement extends HTMLElement {
      * For example, if the file is a behavior file, it will try to find a subject file correlating to the same subject. If there's more than one it will prompt the user to select one.
      */
     runCPMFlow() {
-        let formVal = this.fileListForm.find('.form-control').val();
+        let form = $(this.cpmDisplayPanel).find('#' + this.fileListFormId);
+        let formVal = form.val();
+
         let subjectKey = formVal.split('_')[0];
         let numRegex = /0*(\d+)/g, subjectNum = numRegex.exec(subjectKey)[1], foundKey = null;
         const self = this;
@@ -381,7 +386,8 @@ class CPMElement extends HTMLElement {
 
             //create secondary list for cpm files for the given subject if behavior is specified
             if (formVal.includes('behavior')) {
-                let formOptions = this.fileListForm.find('option'), valsList = [];
+                let filenameForm = $(this.cpmDisplayPanel).find('#' + this.fileListFormId);
+                let formOptions = filenameForm.find('option'), valsList = [];
                 for (let option of formOptions) {
                     let numRegex = /0*(\d+)/g;
                     if (numRegex.exec(option.value)[1] === subjectNum && !option.value.includes('behavior')) { valsList.push(option.value); }
@@ -514,7 +520,7 @@ class CPMElement extends HTMLElement {
     }
 
     /**
-     * Opens a modal for the user to change the settings of the CPM computation.
+     * Creates or alters the CPM settings menu.
      * 
      * @param {Array} filenames - The list of filenames to put in the filename list of the settings menu.
      */
@@ -540,8 +546,22 @@ class CPMElement extends HTMLElement {
             this.cpmDisplayPanel.append(container.domElement);
             $(container.domElement).find('.close-button').remove();
 
+            //attach an id to the filename select so that the view button can find it later
+            this.fileListFormId = bis_webutil.getuniqueid();
+            $(filenameController.domElement).find('select').attr('id', this.fileListFormId);
 
-            /*let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            this.controllerUpdateFn = regenerateFilenameList.bind(this, filenameController);
+            this.madeSettingsMenu = true;
+        } else {
+            this.controllerUpdateFn(filenames);
+        }
+
+        function regenerateFilenameList(controller, flist) {
+            console.log('regenerate fname', controller, flist);
+            controller.setValue(controller, flist);
+        }
+
+         /*let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
             confirmButton.on('click', () => {
                 console.log('settings obj', settingsObj);
                 this.settings = Object.assign({}, settingsObj);
@@ -558,17 +578,6 @@ class CPMElement extends HTMLElement {
 
                 settingsModal.dialog.modal('hide');
             });*/
-
-            this.controllerUpdateFn = regenerateFilenameList.bind(this, filenameController);
-            this.madeSettingsMenu = true;
-        } else {
-            this.controllerUpdateFn(filenames);
-        }
-
-        function regenerateFilenameList(controller, flist) {
-            console.log('regenerate fname', controller, flist);
-            controller.setValue(controller, flist);
-        }
     }
 
     /**
