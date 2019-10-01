@@ -402,7 +402,6 @@ class CPMElement extends HTMLElement {
                         if (!file.includes('behavior')) { subjectFileKey = file; }
                     }
 
-                    console.log('subject key', subjectKey, 'subject file key', subjectFileKey, 'form val', formVal);
                     runCPM(this.connFiles[foundKey][subjectFileKey], this.connFiles[foundKey][formVal]);
                 } else { //create a modal that'll allow the user to select a file manually 
 
