@@ -64,6 +64,7 @@ class CPMElement extends HTMLElement {
 
         //default settings for CPM
         this.settings = {
+            'filename' : '',
             'threshold' : 0.01,
             'kfold' : '3',
             'numtasks' : '0',
@@ -125,14 +126,14 @@ class CPMElement extends HTMLElement {
     
     importFileCallback (f)  {
         bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
-        this.importFiles(f).then( () => {
+        this.importFiles(f).then( (filenames) => {
             bis_webutil.dismissAlerts();
             bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
-            if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
+            //if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
             this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
             
             $(this.importButton).remove();
-            if (!this.madeSettingsMenu) { this.createSettingsMenu(); }
+            if (!this.madeSettingsMenu) { this.updateSettingsMenu(filenames); }
         });
     }
 
@@ -213,14 +214,13 @@ class CPMElement extends HTMLElement {
                 <div class='btn-group' role='group'>
                     <button class='btn btn-sm btn-info'>View</button>
                     <button class='btn btn-sm btn-success'>Run CPM</button>
-                    <button class='btn btn-sm btn-primary'><span class='glyphicon glyphicon-cog'></span></button>
                 </div>
             </div>
             `);
 
             this.importButton = this.createCPMPopoverButton();
 
-            this.createFormButtons(layoutElement);
+            this.attachFormButtonCb(layoutElement);
             this.cpmDisplayPanel.append(this.importButton);
         } else {
             this.cpmDisplayPanel.parent().addClass('in');
@@ -232,12 +232,11 @@ class CPMElement extends HTMLElement {
      * 
      * @param {JQuery} layoutElement - The layout element for the viewer on the page.
      */
-    createFormButtons(layoutElement) {
+    attachFormButtonCb(layoutElement) {
         
         let listButtonGroup = $(this.fileListForm).find('.btn-group');
         let viewButton = listButtonGroup.find('.btn-info');
         let runButton = listButtonGroup.find('.btn-success');
-        //let settingsButton = listButtonGroup.find('.btn-primary');
 
 
         viewButton.on('click', () => {
@@ -519,46 +518,57 @@ class CPMElement extends HTMLElement {
     /**
      * Opens a modal for the user to change the settings of the CPM computation.
      */
-    createSettingsMenu() {
+    updateSettingsMenu(filenames) {
         
-        let settingsObj = Object.assign({}, this.settings);
+        if (!this.madeSettingsMenu) {
 
-        let listObj = {
-            'kfold': ['3', '4', '5', '6', '8', '10'],
-            'numtasks': ['0', '1', '2', '3'],
-            'numnodes': ['3', '9', '268']
-        };
+            let listObj = {
+                'kfold': ['3', '4', '5', '6', '8', '10'],
+                'numtasks': ['0', '1', '2', '3'],
+                'numnodes': ['3', '9', '268'],
+                'filenames' : filenames
+            };
 
-        let container = new dat.GUI({ 'autoPlace': false });
-        container.add(settingsObj, 'threshold', 0, 1);
-        container.add(settingsObj, 'kfold', listObj.kfold);
-        container.add(settingsObj, 'numtasks', listObj.numtasks);
-        container.add(settingsObj, 'numnodes', listObj.numnodes),
-        container.add(settingsObj, 'lambda', 0.0001, 0.01);
+            let container = new dat.GUI({ 'autoPlace': false });
+            let filenameController = container.add(this.settings, 'filename', listObj.filenames);
+            container.add(this.settings, 'threshold', 0, 1);
+            container.add(this.settings, 'kfold', listObj.kfold);
+            container.add(this.settings, 'numtasks', listObj.numtasks);
+            container.add(this.settings, 'numnodes', listObj.numnodes),
+            container.add(this.settings, 'lambda', 0.0001, 0.01);
 
-        this.cpmDisplayPanel.append(container.domElement);
-        $(container.domElement).find('.close-button').remove();
+            this.cpmDisplayPanel.append(container.domElement);
+            $(container.domElement).find('.close-button').remove();
 
 
-        /*let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
-        confirmButton.on('click', () => {
-            console.log('settings obj', settingsObj);
-            this.settings = Object.assign({}, settingsObj);
-        });*/
+            /*let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            confirmButton.on('click', () => {
+                console.log('settings obj', settingsObj);
+                this.settings = Object.assign({}, settingsObj);
+            });*/
 
-        /*let cancelButton = bis_webutil.createbutton({ 'name': 'Close', 'type': 'btn-default' });
-        cancelButton.on('click', () => {
-            for (let key of Object.keys(settingsObj)) {
-                settingsObj[key] = this.settings[key];
-            }
-                for (let i in container.__controllers) {
-                    container.__controllers[i].updateDisplay();
+            /*let cancelButton = bis_webutil.createbutton({ 'name': 'Close', 'type': 'btn-default' });
+            cancelButton.on('click', () => {
+                for (let key of Object.keys(settingsObj)) {
+                    settingsObj[key] = this.settings[key];
                 }
+                    for (let i in container.__controllers) {
+                        container.__controllers[i].updateDisplay();
+                    }
 
-            settingsModal.dialog.modal('hide');
-        });*/
+                settingsModal.dialog.modal('hide');
+            });*/
 
-        this.madeSettingsMenu = true;
+            this.controllerUpdateFn = regenerateFilenameList.bind(this, filenameController);
+            this.madeSettingsMenu = true;
+        } else {
+            this.controllerUpdateFn(filenames);
+        }
+
+        function regenerateFilenameList(controller, flist) {
+            console.log('regenerate fname', controller, flist);
+            controller.setValue(controller, flist);
+        }
     }
 
     /**
@@ -573,8 +583,8 @@ class CPMElement extends HTMLElement {
             if (!extension) { //flow for a directory of .csv or .tsv files
                 bisweb_serverutils.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then( (obj) => {
                     this.formatLoadedConnData(obj.output.file);
-                    this.populateFileElementList(obj.output.filenames);
-                    resolve();
+                    let trimmedOutlist = obj.output.filenames.map( element =>  bis_genericio.getBaseName(element) );
+                    resolve(trimmedOutlist);
                 }).catch( (e) => { reject(e); });
             } else if (extension.toLowerCase() === 'json') { //flow for connectome index file
                 bis_genericio.read(f).then((obj) => {
@@ -595,8 +605,7 @@ class CPMElement extends HTMLElement {
                     }
 
                     this.formatLoadedConnData(rawConnFiles);
-                    this.populateFileElementList(flist);
-                    resolve();
+                    resolve(flist);
                 }).catch( (e) => { reject(e); });
             } else {
                 console.log('Unrecognized extension', extension, 'for cpm file');
@@ -651,21 +660,6 @@ class CPMElement extends HTMLElement {
                 console.log('Error saving CPM file', e);
                 bis_webutil.createAlert('An error occured while saving ' + f, true);
             });
-        }
-    }
-
-    /**
-     * Creates a series of <option> elements that are then added to the select in the connectivity file panel. 
-     * 
-     * @param {Array} fileList - List of filenames read from disk. 
-     */
-    populateFileElementList(fileList) {
-        let formSelect = this.fileListForm.find('select');
-        formSelect.empty();
-        for (let file of fileList) {
-            let basename = bis_genericio.getBaseName(file);
-            let option = $(`<option value=${basename}>${basename}</file>`);
-            formSelect.append(option);
         }
     }
 
