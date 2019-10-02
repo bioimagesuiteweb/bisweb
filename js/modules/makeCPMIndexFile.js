@@ -25,10 +25,10 @@ const path = bis_genericio.getpathmodule();
 /**
  * Combines a set of parameter files and connectivity matrices in a given directory into a single file
  */
-class MakeConnMatrixFileModule extends BaseModule {
+class MakeCPMIndexFileModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'makeConnMatrixFile';
+        this.name = 'makeConnIndexFile';
         this.useworker=false;
     }
 
@@ -284,4 +284,4 @@ class MakeConnMatrixFileModule extends BaseModule {
 
 }
 
-module.exports = MakeConnMatrixFileModule;
+module.exports = MakeCPMIndexFileModule;

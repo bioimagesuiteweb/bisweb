@@ -74,7 +74,7 @@ const moduleImports = {
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),
     individualizedparcellation : require('individualizedParcellation.js'),
-    makeconnmatrixfile : require('makeConnectivityMatrixFile.js'),
+    makecpmindexfile : require('makeCPMIndexFile.js'),
 
     joinmatrices : require('joinMatrices.js'),
     removematrixcols : require('removeMatrixCols.js'),

@@ -36,8 +36,6 @@ const bisweb_userprefs = require('bisweb_userpreferences.js');
 const bisweb_serverutils = require('bisweb_serverutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
-//const connmatrixModule = moduleIndex.getModule('makeconnmatrixfile');
-
 class CPMElement extends HTMLElement {
 
     constructor() {

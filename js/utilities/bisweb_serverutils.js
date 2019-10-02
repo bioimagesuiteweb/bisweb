@@ -81,7 +81,7 @@ let runCPMMatrixFileModule = (params) => {
     return new Promise( (resolve, reject) => {
         let fileServerClient = bis_genericio.getFileServerObject();
         if (fileServerClient) {
-            fileServerClient.runModule('makeconnmatrixfile', params, false, console.log, true)
+            fileServerClient.runModule('makecpmindexfile', params, false, console.log, true)
                 .then( (obj) => {
                     console.log('Conn matrix module done', obj);
                     resolve(obj);
