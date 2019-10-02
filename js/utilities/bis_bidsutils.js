@@ -1059,6 +1059,15 @@ let stripLeadingZeroes = (input) => {
     return '';
 };
 
+let padLeadingZero = (input) => {
+    let inputNum = parseInt(input);
+    
+    if (inputNum < 10) { 
+        return '0' + stripLeadingZeroes(input);
+    }
+
+    return input;
+};
 
 module.exports = {
     dicom2BIDS: dicom2BIDS,
@@ -1068,5 +1077,6 @@ module.exports = {
     convertTASKFileToTSV : convertTASKFileToTSV,
     parseTaskFileFromTSV : parseTaskFileFromTSV,
     dicomParametersFilename : dicomParametersFilename,
-    stripLeadingZeroes : stripLeadingZeroes
+    stripLeadingZeroes : stripLeadingZeroes,
+    padLeadingZero : padLeadingZero
 };

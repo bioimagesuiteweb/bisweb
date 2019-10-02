@@ -16,7 +16,7 @@
  ENDLICENSE */
 
 /* jshint node:true */
-/*global describe, it, before */
+/*global describe, it */
 "use strict";
 
 require('../config/bisweb_pathconfig.js');
@@ -32,40 +32,35 @@ let cleanRow = (line) => {
     return line.trim().replace(/\t/g,' ').replace(/ +/g,' ').replace(/ /g,'').replace(/\n/g,'').replace(/\r/g,'');
 };
 
-let compareFiles = (obj1, obj2) => {
-    console.log(colors.green('+++ COMPARING +++\n', obj1, '\n', obj2, '\n'));
+let compareFiles = (obj1, obj2, debug = true) => {
+    //console.log(colors.green('+++ COMPARING +++\n', obj1, '\n', obj2, '\n'));
     if ( !(typeof obj1 === 'object') && !(typeof obj2 === 'object') ) {
-        return cleanRow(obj1) === cleanRow(obj2);
+        let cleanRow1 = cleanRow(obj1), cleanRow2 = cleanRow(obj2);
+        if (cleanRow1 !== cleanRow2) {
+            if (debug)
+                console.log(colors.red('+++ ERROR +++\n', cleanRow1, '\nand', cleanRow2, '\nare not equal'));
+            return false;
+        }
+        return true;
     } else {
 
         //ensure that objects contain the same keys
         let obj1Keys = Object.keys(obj1).sort(), obj2Keys = Object.keys(obj2).sort();
         for (let i = 0; i < obj1Keys.length; i++) { 
-            if (obj1Keys[i] !== obj2Keys[i]) { return false; }
+            if (obj1Keys[i] !== obj2Keys[i]) { 
+                if (debug)
+                    console.log(colors.red('+++ ERROR +++\nKeys for first comparator', obj1Keys, '\nand second comparator', obj2Keys, 'are different'));
+                return false; 
+            }
         }
 
         let compArray = [];
         for (let key of Object.keys(obj1)) {
-            compArray.push(compareFiles(obj1[key], obj2[key]));
+            compArray.push(compareFiles(obj1[key], obj2[key], debug));
         }
 
         return !compArray.includes(false);
     }
-
-    /*function compareKeys(obj1, obj2) {
-
-        //check if objects have same keys
-        let keys1 = Object.keys(obj1).sort(), keys2 = Object.keys(obj2).sort();
-        for(let i = 0; i < keys1.length; i++) {
-            if (keys2[i] !== keys1[i]) { return false; }
-        }
-
-        //check if values are the same
-        for (let key of Object.keys(obj1)) {
-            if (!obj2.hasOwnProperty(key)) { return false; }
-            if (cleanRow(obj1[key] !== cleanRow(obj2[key]))) { return false; }
-        }
-    }*/
 };
 
 describe('Testing CPM ingestor', () => {
@@ -96,9 +91,31 @@ describe('Testing CPM ingestor', () => {
             }
 
             console.log('contents', contents);
+            console.log('sample contents', parsedCorrectContents);
             assert(compareFiles(contents, parsedCorrectContents));
         } catch (e) {
             console.log(colors.red('An error occured while making a connectivity file', e));
+            assert(false);
+        }
+    });
+
+    it('injests raw data', async () => {
+        let connModule = new MakeMatrixConnModule();
+        try {
+            let indir = ['.', 'testdata', 'unparsed_cpm'], baserawfile = ['.', 'testdata', 'unparsed_cpm', 'sample_rawfile.json'];
+            let obj = await connModule.execute({}, { 'indir': indir.join(sep), 'writeout': false, 'reformat' : true });
+            let correctContents = await bis_genericio.read(baserawfile.join(sep));
+            let contents = obj.file, parsedCorrectContents;
+
+            try {
+                parsedCorrectContents = JSON.parse(correctContents.data);
+            } catch(e) { 
+                console.log(colors.red('An error occured while parsing baseline contents', e));
+            }
+
+            assert(compareFiles(contents, parsedCorrectContents, false));
+        } catch(e) {
+            console.log(colors.red('An error occured while injesting raw data', e));
             assert(false);
         }
     });

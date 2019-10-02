@@ -150,6 +150,9 @@ class MakeConnMatrixFileModule extends BaseModule {
                                 let splitChar = row.includes(',') ? ',' : '\t';
                                 let splitRow = row.split(splitChar), subname = splitRow.shift();
 
+                                //unpaired quotation marks seem to make their way into the regex so trim them explicitly
+                                // -Zach
+                                subname = subname.replace(/"/g, '');
                                 let formattedBehaviorFilename = reformattedIndir + sep + subname + '_behaviors' + (splitChar === ',' ? '.csv' : '.tsv');
                                 let behaviorFilePromise = bis_genericio.write(formattedBehaviorFilename, splitRow.join(splitChar));
                                 promiseArray.push(behaviorFilePromise);
@@ -217,20 +220,25 @@ class MakeConnMatrixFileModule extends BaseModule {
 
         /* Adds an entry to the combined connectivity file*/ 
         function addEntry(filename, contents) {
+
             let splitName = filename.split('_');
             let subjectNumberRegex = /^([^\d]*)(\d+)/;
+
+            //see note on unpaired quotation marks above
             let regexMatch = subjectNumberRegex.exec(splitName[0]);
-            let strippedNumber = bis_bidsutils.stripLeadingZeroes(regexMatch[2]);
-            let escapedSubjectName = regexMatch[1] + strippedNumber;
+            let formattedSubname = regexMatch[1].replace('"', '');
+            let paddedNumber = bis_bidsutils.padLeadingZero(regexMatch[2]);
+            let escapedSubjectName = formattedSubname + paddedNumber;
 
             if (!combinedFile[escapedSubjectName]) {
                 combinedFile[escapedSubjectName] = {};
             }
 
+            filename = formattedSubname + paddedNumber + '_' + splitName[1];
             combinedFile[escapedSubjectName][filename] = contents;
         }
 
-        /* Searches for files formatted to the connectivity file structure that BioImage Suite expects*/
+        /* Searches for files formatted to the connectivity file structure that BioImage Suite expects */
         function searchForFormattedFiles(indir) {
             return new Promise( (resolve, reject) => {
                 let behaviorMatchString = indir + sep + '*+(_behavior)*';
