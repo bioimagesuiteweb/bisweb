@@ -32,7 +32,14 @@ const boldoff = "";
 let initialError = function (extra) {
     console.log(`${extra}\nUsage: bisweb modulename [ options ]\n`);
     console.log(` Type 'node bisweb [modulename] --help' for more information`);
-    let outstring = modules.getModuleNames().join("\n");
+    let a=modules.getModuleNames().sort();
+    let outstring='';
+    for (let i=0;i<a.length;i++) {
+        let n=a[i].padEnd(27,' ');
+        outstring=outstring+n;
+        if (i%3==2)
+            outstring+='\n';
+    }
 
     console.log('\tThe list of available modules is :\n\n'+outstring);
 };
@@ -55,7 +62,7 @@ let attachSingleFlag=function(param,cmd) {
         bstr = '<';
         estr = '>';
     }
-    
+
     if (param.type === "float")
         cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseFloat);
     else if (param.type === "int")
