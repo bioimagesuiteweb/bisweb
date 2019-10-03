@@ -28,7 +28,7 @@ const sysutils = require('bis_filesystemutils.js');
 const bis_util = require('bis_util.js');
 const bis_commandlineutils = require('bis_commandlineutils.js');
 const bis_genericio = require('bis_genericio.js');
-const BidsModule = require('./bis_bidsmodule.js');
+const BidsModule = require('bidsmodule.js');
 const path = bis_genericio.getpathmodule();
 const fs = bis_genericio.getfsmodule();
 const os = bis_genericio.getosmodule();
@@ -65,7 +65,7 @@ class DicomModule extends BaseModule {
                     "description": "Input directory for the DICOM conversion",
                     "advanced": true,
                     "type": "string",
-                    "varname": "inputDirectory",
+                    "varname": "inputdirectory",
                     "shortname" : "i",
                     "default": ""
                 },
@@ -75,7 +75,7 @@ class DicomModule extends BaseModule {
                     "advanced": true,
                     "required": false,
                     "type": "string",
-                    "varname": "outputDirectory",
+                    "varname": "outputdirectory",
                     "shortname" : "o",
                     "default": ""
                 },
@@ -158,7 +158,7 @@ class DicomModule extends BaseModule {
         console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
         // -------------------- Check Directories and create as needed --------------------
-        let indir = vals.inputDirectory, outdir = vals.outputDirectory, tmpdir = null;
+        let indir = vals.inputdirectory, outdir = vals.outputdirectory, tmpdir = null;
         let fixpaths = super.parseBoolean(vals.fixpaths);
         if (path.sep !== '\\')
             fixpaths=false;
@@ -169,6 +169,7 @@ class DicomModule extends BaseModule {
         
         if (fixpaths)  {
             indir = bis_util.filenameUnixToWindows(indir);
+            console.log('New in dir=',indir);
         }
         
         // Input directory
@@ -178,17 +179,19 @@ class DicomModule extends BaseModule {
         
         // Output Directory
         // --------------------------------------------
-        let outdir2 = outdir;
-        if (fixpaths)
-            outdir2=bis_util.filenameUnixToWindows(outdir);
+        if (fixpaths) {
+            outdir=bis_util.filenameUnixToWindows(outdir);
+            console.log('New outdir=',outdir);
+        }
         
-        if (!sysutils.validateFilename(outdir2)) 
+        if (!sysutils.validateFilename(outdir)) 
             return Promise.reject('Bad output directory '+outdir);
 
         // Create this
         try {
             fs.mkdirSync(outdir);
         } catch (e) {
+            console.log(e);
             if (e.code !== 'EEXIST') {
                 return Promise.reject('Failed to create output directory ' + outdir);
             }
@@ -198,7 +201,8 @@ class DicomModule extends BaseModule {
         // Temp Dir 
         // --------------------------------------------
         tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
-
+        console.log('Tmpdir=',tmpdir);
+        
         try {
             fs.mkdirSync(tmpdir);
         } catch (e) {
@@ -238,8 +242,8 @@ class DicomModule extends BaseModule {
                 console.log('converting to bids...');
                 let bidsoutput=null;
                 try {
-                    bidsoutput = await bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir,
-                                                                          'outputDirectory' : outdir,
+                    bidsoutput = await bidsmodule.directInvokeAlgorithm({ 'inputdirectory' : tmpdir,
+                                                                          'outputdirectory' : outdir,
                                                                           'dcm2nii' : true});
                 } catch(e) {
                     console.log('Bids conversion error',e);

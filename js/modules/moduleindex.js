@@ -81,7 +81,7 @@ const moduleImports = {
 
     // these are here so that can be accessed by electron
     dicomconversion : require('./dicommodule.js'),
-    bidsconversion : require('./bis_bidsmodule.js'),
+    bidsconversion : require('./bidsmodule.js'),
 
 };
 
