@@ -21,7 +21,6 @@
 const util=require('bis_util');
 const webutil=require('bis_webutil');
 const $=require('jquery');
-const bootbox=require('bootbox');
 const BisWebImage = require('bisweb_image');
 
 /**
@@ -1049,15 +1048,15 @@ class BaseViewerElement extends HTMLElement {
         }
 
         let txt=a+'<BR> <BR>'+b;
-
         let dh=Math.round(this.internal.layoutcontroller.getviewerheight()*0.7);
+        webutil.createLongInfoText(txt,'Viewer Information',dh);
         
-        const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
+        /*const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
         
         bootbox.dialog({
             title: 'Viewer Information',
             message: output,
-        });
+        });*/
     }
 
 

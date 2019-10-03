@@ -1251,34 +1251,32 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
-        if (!webutil.inElectronApp()) {
-            userPreferences.safeGetItem("internal").then( (f) => {
-                if (f) {
-                    const dicomid = this.getAttribute('bis-dicomimportid') || null;
-                    if (dicomid) {
-                        let dicommodule = document.querySelector(dicomid) || null;
-                        webutil.createMenuItem(bmenu,'');
-                        webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
-                            dicommodule.show();
-                        });
-                        
-                        webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-                            dicommodule.showDICOMImportModal();
-                        });
-                    }
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                if (dicomid) {
+                    let dicommodule = document.querySelector(dicomid) || null;
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
+                        dicommodule.show();
+                    });
+                    
+                    webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+                        dicommodule.showDICOMImportModal();
+                    });
                 }
-                webutil.createMenuItem(bmenu,'');
-                webutil.createMenuItem(bmenu, 'Restart Application', () => {
-                    bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                    (e) => {
-                                        if (e)
-                                            window.open(self.applicationURL,'_self');
-                                    }
-                                   );
-                });
+            }
+            webutil.createMenuItem(bmenu,'');
+            webutil.createMenuItem(bmenu, 'Restart Application', () => {
+                bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                (e) => {
+                                    if (e)
+                                        window.open(self.applicationURL,'_self');
+                                }
+                               );
             });
-        }
-                                                        
+        });
+        
         return bmenu;
     }
 

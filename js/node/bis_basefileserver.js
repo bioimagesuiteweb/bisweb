@@ -211,12 +211,12 @@ class BaseFileServer {
     }
 
     /**
- * Sends a message to the client describing the server error that occured during their request. 
- * 
- * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
- * @param {String} reason - Text describing the error.
- * @param {Number} id - the request id
- */
+     * Sends a message to the client describing the server error that occured during their request. 
+     * 
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {String} reason - Text describing the error.
+     * @param {Number} id - the request id
+     */
     handleBadRequestFromClient(socket, reason, id = -1) {
         let error = "An error occured:" + reason;
         this.sendCommand(socket, 'error', { 'text': error, 'id': id }).then(() => {
@@ -290,8 +290,8 @@ class BaseFileServer {
         };
         this.fileInProgress.data = new Uint8Array(upload.storageSize);
         console.log('._._._._._._-\n._._._._._._- \t fileinProgress data created=', this.fileInProgress.totalSize,
-            'count=', this.fileInProgress.uploadCount,
-            'name=', upload.filename);
+                    'count=', this.fileInProgress.uploadCount,
+                    'name=', upload.filename);
     }
 
     // .................................................................................................................................................................
@@ -309,78 +309,78 @@ class BaseFileServer {
             console.log(this.indent, 'text request', JSON.stringify(parsedText));
         switch (parsedText.command) {
             //get file list
-            case 'getfilelist': {
-                this.serveFileList(socket, parsedText.directory, parsedText.id);
-                break;
-            }
-            case 'readfile': {
-                this.readFileAndSendToClient(parsedText, socket, false);
-                break;
-            }
-            case 'readfilestream': {
-                this.readFileAndSendToClient(parsedText, socket, true);
-                break;
-            }
-            case 'uploadfile': {
-                console.log('._._._._._._-\n._._._._._._- beginning upload event');
-                this.getFileFromClientAndSave(parsedText, socket, control);
-                break;
-            }
-            case 'getserverbasedirectory': {
-                this.serveServerBaseDirectory(socket, parsedText.id);
-                break;
-            }
+        case 'getfilelist': {
+            this.serveFileList(socket, parsedText.directory, parsedText.id);
+            break;
+        }
+        case 'readfile': {
+            this.readFileAndSendToClient(parsedText, socket, false);
+            break;
+        }
+        case 'readfilestream': {
+            this.readFileAndSendToClient(parsedText, socket, true);
+            break;
+        }
+        case 'uploadfile': {
+            console.log('._._._._._._-\n._._._._._._- beginning upload event');
+            this.getFileFromClientAndSave(parsedText, socket, control);
+            break;
+        }
+        case 'getserverbasedirectory': {
+            this.serveServerBaseDirectory(socket, parsedText.id);
+            break;
+        }
 
-            case 'restart': {
-                console.log(this.indent, 'Received restart, sending tryagain');
-                this.sendCommand(socket, 'tryagain', '');
-                break;
-            }
+        case 'restart': {
+            console.log(this.indent, 'Received restart, sending tryagain');
+            this.sendCommand(socket, 'tryagain', '');
+            break;
+        }
 
-            case 'getservertempdirectory': {
-                this.serveServerTempDirectory(socket, parsedText.id);
-                break;
-            }
+        case 'getservertempdirectory': {
+            this.serveServerTempDirectory(socket, parsedText.id);
+            break;
+        }
 
 
-            case 'gettempfilename': {
-                this.gettempfilename(socket, parsedText);
-                break;
-            }
+        case 'gettempfilename': {
+            this.gettempfilename(socket, parsedText);
+            break;
+        }
 
-            case 'filesystemoperation': {
-                this.fileSystemOperations(socket, parsedText.operation, parsedText.url, parsedText.id);
-                break;
-            }
+        case 'filesystemoperation': {
+            this.fileSystemOperations(socket, parsedText.operation, parsedText.url, parsedText.id);
+            break;
+        }
 
-            case 'runModule': {
-                this.runModule(socket, parsedText);
-                break;
-            }
+        case 'runModule': {
+            this.runModule(socket, parsedText);
+            break;
+        }
 
-            case 'dicom2BIDS': {
-                this.dicom2BIDS(socket, parsedText);
-                break;
-            }
+        case 'dicom2BIDS': {
+            this.dicom2BIDS(socket, parsedText);
+            break;
+        }
 
-            case 'ignore': {
-                console.log(this.indent, 'Received ignore, ignoring');
-                break;
-            }
+        case 'ignore': {
+            console.log(this.indent, 'Received ignore, ignoring');
+            break;
+        }
 
-            case 'terminate': {
-                console.log(this.indent, 'received terminate from client');
-                this.closeSocket(socket, true);
-                this.stopServer(this.netServer);
-                this.netServer.close();
-                this.terminating = true;
-                setTimeout(() => { this.callback(true); }, 500);
-                break;
-            }
+        case 'terminate': {
+            console.log(this.indent, 'received terminate from client');
+            this.closeSocket(socket, true);
+            this.stopServer(this.netServer);
+            this.netServer.close();
+            this.terminating = true;
+            setTimeout(() => { this.callback(true); }, 500);
+            break;
+        }
 
-            default: {
-                console.log(this.indent, 'Cannot interpret request with unknown command', parsedText.command);
-            }
+        default: {
+            console.log(this.indent, 'Cannot interpret request with unknown command', parsedText.command);
+        }
         }
     }
 
@@ -404,8 +404,8 @@ class BaseFileServer {
 
         if (!sysutils.validateFilename(filename)) {
             this.handleBadRequestFromClient(socket,
-                'filename ' + filename + ' is not valid',
-                parsedText.id);
+                                            'filename ' + filename + ' is not valid',
+                                            parsedText.id);
             return;
         }
 
@@ -594,12 +594,12 @@ class BaseFileServer {
                         } else {
                             let extension = path.parse(fname).ext;
                             switch (extension) {
-                                case 'gz': {
-                                    treeEntry.type = 'picture'; break;
-                                }
-                                default: {
-                                    treeEntry.type = 'file';
-                                }
+                            case 'gz': {
+                                treeEntry.type = 'picture'; break;
+                            }
+                            default: {
+                                treeEntry.type = 'file';
+                            }
                             }
                             treeEntry.size = stats["size"];
                         }
@@ -725,8 +725,8 @@ class BaseFileServer {
 
             if (!sysutils.validateFilename(url)) {
                 this.handleBadRequestFromClient(socket,
-                    'url ' + url + ' is not valid',
-                    id);
+                                                'url ' + url + ' is not valid',
+                                                id);
                 return;
             }
         }
@@ -735,7 +735,8 @@ class BaseFileServer {
         if (path.sep === '\\')
             url = util.filenameUnixToWindows(url);
 
-        switch (opname) {
+        switch (opname)
+        {
             case 'getFileSize': {
                 prom = bisgenericio.getFileSize(url);
                 break;
@@ -788,10 +789,10 @@ class BaseFileServer {
                 break;
             }
         }
-
+        
         if (prom === null)
             return;
-
+        
         prom.then((m) => {
             if (opname === 'getMatchingFiles' && path.sep === '\\') {
                 let s = [];
@@ -883,7 +884,7 @@ class BaseFileServer {
         let external = opts.external || false;
         
         console.log('___ running module', modulename,JSON.stringify(moduleparams),' external=',external);
-
+        
         let done = (success, text) => {
             console.log('___ finished running module',modulename,' external=',external,' success=',success);
             if (!success)
@@ -899,12 +900,15 @@ class BaseFileServer {
             return;
         };
 
+        console.log('External=',external);
+        external=true;
+        
         if (external) {
             
             let scriptname=process.mainModule.filename;
             scriptname=path.resolve(path.normalize(path.join(path.dirname(scriptname),'bisweb.js')));
             let nodejs=process.execPath;
-
+            
             let keys=Object.keys(moduleparams);
             
             let cmd = nodejs+' '+scriptname+' '+modulename.toLowerCase()+' ';
@@ -920,20 +924,20 @@ class BaseFileServer {
             cmd+=extra;
 
             /*let totallog='';
-            let count=0;
-            
-                            let logfunction= (m,force=false) => {
-                totallog=totallog+m+'\n';
-                ++count;
-                if (count===10 || force) {
-                    this.sendCommand(socket, 'bisModuleProgress', {
-                        'output': totallog,
-                        'id': id
-                    });
-                    totallog='';
-                    count=0;
-                }
-            };*/
+              let count=0;
+              
+              let logfunction= (m,force=false) => {
+              totallog=totallog+m+'\n';
+              ++count;
+              if (count===10 || force) {
+              this.sendCommand(socket, 'bisModuleProgress', {
+              'output': totallog,
+              'id': id
+              });
+              totallog='';
+              count=0;
+              }
+              };*/
             
             console.log('.... executing :'+cmd+'\n....');
 
@@ -952,9 +956,12 @@ class BaseFileServer {
         // -----------------------------------------------------------------
         let module = moduleindex.getModule(modulename, true);
         if (!module) {
+            console.log('Bad Module',modulename);
             done(false,'Failed to find module='+modulename);
-                return;
+            return;
         }
+
+        console.log("Executing module");
         
         //flag needed in order to get module.execute to hit the save trigger for outputs
         module.execute({}, moduleparams).then((m) => {
