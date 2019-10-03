@@ -133,6 +133,8 @@ class CPMElement extends HTMLElement {
             $(this.importButton).remove();
             this.updateSettingsMenu(filenames); 
             if (!this.madeCPMButtons) { this.createCPMButtons(); }
+
+            console.log('conn files', this.connFiles);
         });
     }
 
@@ -333,6 +335,7 @@ class CPMElement extends HTMLElement {
             let lh = self.layoutElement.getviewerheight() * 0.7;
             let matrix = reformatMatrix(formName, connFileVal); 
 
+            console.log('reformatted matrix', matrix);
             //create bootstrap table
             let table = $(`<table class='table table-dark table-striped'><tbody></tbody></table>`), tableBody = $(table).find('tbody');
             let matrixRows = matrix.split(';');
@@ -755,6 +758,7 @@ let reformatMatrix = (filename, matrix) => {
 
     let reformattedEntry = [];
     for (let i = 0; i < numericMatr.length; i++) {
+        for (let j = 0; j < numericMatr[i].length; j++) { numericMatr[i][j] = roundDecimal(numericMatr[i][j]); }
         switch (extension) {
             case 'tsv': reformattedEntry.push(numericMatr[i].join('\t')); break;
             case 'csv': reformattedEntry.push(numericMatr[i].join(',')); break;
@@ -772,6 +776,26 @@ let reformatMatrix = (filename, matrix) => {
 let getMatrixSize = (matrix) => {
     return matrix.data.BYTES_PER_ELEMENT * matrix.data.length;
 };
+
+let roundDecimal = (num) => {
+    //count the number of zeroes in the number
+    let decimalPlaces = 3, stringifiedNum = num.toString();
+    let decimalNumbers = stringifiedNum.split('.')[1];
+    if (!decimalNumbers) { return num; } //if no decimal places simply return;
+
+    for (let i = 0; i < decimalNumbers.length; i++) {
+        if (stringifiedNum[i] === '0') { decimalPlaces = decimalPlaces + 1; }
+        else { break; }
+    }
+
+
+    //now round to three significant digits
+    let rawNum = parseFloat(num);
+    rawNum = rawNum * (Math.pow(10, decimalPlaces));
+    rawNum = Math.round(rawNum);
+    //console.log('decimal', (rawNum / Math.pow(10, decimalPlaces)), 'original', num, 'decimal places', decimalPlaces, 'raw numbers', decimalNumbers);
+    return rawNum / Math.pow(10, decimalPlaces);
+}
 
 bis_webutil.defineElement('bisweb-cpmelement', CPMElement);
 

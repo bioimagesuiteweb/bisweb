@@ -220,7 +220,6 @@ class MakeCPMIndexFileModule extends BaseModule {
 
         /* Adds an entry to the combined connectivity file*/ 
         function addEntry(filename, contents) {
-
             let splitName = filename.split('_');
             let subjectNumberRegex = /^([^\d]*)(\d+)/;
 
@@ -235,6 +234,24 @@ class MakeCPMIndexFileModule extends BaseModule {
             }
 
             filename = formattedSubname + paddedNumber + '_' + splitName[1];
+
+            //format contents getting saved to disk to be three decimal places (if it's a number)
+            let splitChar = filename.split('.')[1] === 'csv' ? ',' : '\t';
+            let rawRows = contents.split('\n'), rows = [];
+            for (let i = 0; i < rawRows.length; i++) { rows.push(rawRows[i].split(splitChar)); }
+
+            for (let i = 0; i < rows.length; i++) {
+                let row = rows[i];
+                for (let j = 0; j < row.length; j++) {
+                    let parsedFloat = parseFloat(row[j]);
+                    if (!isNaN(parsedFloat)) {
+                        row[j] = roundDecimal(parsedFloat);
+                    }
+                }
+                rows[i] = row.join(splitChar);
+            }
+
+            contents = rows.join('\n');
             combinedFile[escapedSubjectName][filename] = contents;
         }
 
@@ -279,6 +296,26 @@ class MakeCPMIndexFileModule extends BaseModule {
                     }
                 }).catch( (e) => { console.log('An error occured while searching for files', e); reject(e); });
             });
+        }
+
+        function roundDecimal(num) {
+            //count the number of zeroes in the number
+            let decimalPlaces = 0, stringifiedNum = num.toString();
+            let decimalNumbers = stringifiedNum.split('.')[1];
+            if (!decimalNumbers) { return num; } //if no decimal places simply return;
+
+            for (let i = 0; i < decimalNumbers.length; i++) {
+                if (stringifiedNum[i] === '0') { decimalPlaces = decimalPlaces + 1; }
+                else { break; }
+            }
+
+
+            //now round to three significant digits
+            let rawNum = parseFloat(num);
+            rawNum = rawNum * (Math.pow(10, decimalPlaces));
+            rawNum = rawNum.toFixed(3);
+            //console.log('decimal', (rawNum / Math.pow(10, decimalPlaces)), 'original', num, 'decimal places', decimalPlaces, 'raw numbers', decimalNumbers);
+            return rawNum / Math.pow(10, decimalPlaces);
         }
     }
 

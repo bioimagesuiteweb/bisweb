@@ -21,7 +21,7 @@
 
 require('../config/bisweb_pathconfig.js');
 const assert = require('assert');
-const MakeMatrixConnModule = require('makeConnectivityMatrixFile.js');
+const MakeCPMIndexFileModule = require('makeCPMIndexFile.js');
 const bis_genericio = require('bis_genericio.js');
 const path = require('path');
 const colors = require('colors/safe');
@@ -67,7 +67,7 @@ describe('Testing CPM ingestor', () => {
 
     it('makes a connectivity file', async () => {
         try {
-            let connModule = new MakeMatrixConnModule();
+            let connModule = new MakeCPMIndexFileModule();
             let indir = ['.', 'testdata', 'sample_csvs'];
             await connModule.execute({}, { 'indir': indir.join(sep), 'writeout': false });
         } catch(e) {
@@ -78,7 +78,7 @@ describe('Testing CPM ingestor', () => {
     });
 
     it('makes the correct connectivity file', async () => {
-        let connModule = new MakeMatrixConnModule();
+        let connModule = new MakeCPMIndexFileModule();
         try {
             let indir = ['.', 'testdata', 'sample_csvs'], baseconnfile = ['.', 'testdata', 'sample_csvs', 'sample_connmatrixfile.json'];
             let obj = await connModule.execute({}, { 'indir': indir.join(sep), 'writeout': false });
@@ -99,10 +99,12 @@ describe('Testing CPM ingestor', () => {
         }
     });
 
-    it('injests raw data', async () => {
-        let connModule = new MakeMatrixConnModule();
+    it('ingests raw data', async () => {
+        //assert(true);
+        //return;
+        let connModule = new MakeCPMIndexFileModule();
         try {
-            let indir = ['.', 'testdata', 'unparsed_cpm'], baserawfile = ['.', 'testdata', 'unparsed_cpm', 'sample_rawfile.json'];
+            let indir = ['.', 'testdata', 'small_unparsed_cpm'], baserawfile = ['.', 'testdata', 'small_unparsed_cpm', 'sample_rawfile.json'];
             let obj = await connModule.execute({}, { 'indir': indir.join(sep), 'writeout': false, 'reformat' : true });
             let correctContents = await bis_genericio.read(baserawfile.join(sep));
             let contents = obj.file, parsedCorrectContents;
@@ -113,6 +115,8 @@ describe('Testing CPM ingestor', () => {
                 console.log(colors.red('An error occured while parsing baseline contents', e));
             }
 
+            //console.log('contents', contents);
+            //console.log('sample contents', parsedCorrectContents);
             assert(compareFiles(contents, parsedCorrectContents, false));
         } catch(e) {
             console.log(colors.red('An error occured while injesting raw data', e));
