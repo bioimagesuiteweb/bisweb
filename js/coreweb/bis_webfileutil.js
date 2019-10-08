@@ -298,7 +298,6 @@ const webfileutils = {
      * @param {Function} callback - Callback to call when done. Typically this is provided by bis_genericio and will put the loaded image onto the viewer or perform any necessary actions after saving an image. 
      */
     webFileCallback: function (fileopts, callback) {
-
         fileopts.suffix=fileopts.suffix || null;
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
@@ -568,10 +567,10 @@ const webfileutils = {
      * @param {function} opts.callback - if specified adds this is a callback ``on click''. The event (e) is passed as argument.
      * @param {string} opts.tooltip - string to use for tooltip
      * @param {string} opts.position - position of tooltip (one of top,bottom,left,right)
+     * @param {boolean} opts.altkeys - if true, lets user select multiple files using shift and alt
      * @returns {JQueryElement} 
      */
     createFileButton: function (opts, fileopts={}) {
-        
         let finalcallback = opts.callback || null;
         if (finalcallback !== null && typeof finalcallback === "function") {
             opts.callback = finalcallback;
