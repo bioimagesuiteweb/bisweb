@@ -47,6 +47,12 @@ class CPMElement extends HTMLElement {
         this.madeSettingsMenu = false;
         this.madeCPMButtons = false;
 
+        this.mode = ''; //TODO: Fix webfileutil method so that it returns correct data?
+
+        //load directory buttons to disable when the file source is local
+        this.menuDirectoryItem = null;
+        this.popoverDirectoryButton = null;
+
         bisweb_connectivityvis.initialize();
 
         bisweb_userprefs.initialize(bis_dbase).then( () => {
@@ -56,6 +62,10 @@ class CPMElement extends HTMLElement {
 
             bis_dbase.getItem('showMatrixConcatWarning').then( (obj) => {
                 this.showMatrixConcatWarning = (obj === null || obj === true) ? true : false;
+            });
+
+            bis_dbase.getItem('filesource').then( (obj) => {
+                this.changeLoadDictionaryButtonStatus(obj);
             });
 
             bis_webfileutil.initializeFromUserPrefs();
@@ -124,10 +134,11 @@ class CPMElement extends HTMLElement {
 
     
     importFileCallback (f)  {
-        bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
+        let inputName = typeof f === 'string' ? f : f.name;
+        bis_webutil.createAlert('Loading from ' + inputName, false, 0, 0, {'makeLoadSpinner' : true });
         this.importFiles(f).then( (filenames) => {
             bis_webutil.dismissAlerts();
-            bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
+            bis_webutil.createAlert('' + inputName + ' loaded successfully.', false, 0, 3000);
             this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
             
             $(this.importButton).remove();
@@ -162,6 +173,7 @@ class CPMElement extends HTMLElement {
         }, {
             'mode' : 'directory',
             'title': 'Import connectivity files from directory',
+            'altkeys' : true,
             'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
         });
         let exportFileItem = bis_webfileutil.createFileButton({
@@ -173,7 +185,7 @@ class CPMElement extends HTMLElement {
         });
 
         bis_webutil.createMenuItem(topmenu, 'Import From CPM File', () => {  importFileItem.click(); });
-        bis_webutil.createMenuItem(topmenu, 'Import From Directory', () => {  importDirectoryItem.click(); });
+        this.menuDirectoryItem = bis_webutil.createMenuItem(topmenu, 'Import From Directory', () => {  if (this.mode !== 'local') { importDirectoryItem.click(); }});
         bis_webutil.createMenuItem(topmenu, '');
         bis_webutil.createMenuItem(topmenu, 'Export to CPM File', () => { exportFileItem.click(); });
         bis_webutil.createMenuItem(topmenu, '');
@@ -185,10 +197,20 @@ class CPMElement extends HTMLElement {
                                            window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
                                        });
         } else {
-            bis_webfileutil.createFileSourceSelector(topmenu);
+            bis_webfileutil.createFileSourceSelector(topmenu, 'Set File Source', null, this.changeLoadDictionaryButtonStatus.bind(this));
         }
     }
 
+    changeLoadDictionaryButtonStatus(selected) {
+        this.mode = selected;
+        if (selected === 'local') {
+            $(this.menuDirectoryItem).addClass('disabled');
+            $(this.popoverDirectoryButton).addClass('disabled');
+        } else {
+            $(this.menuDirectoryItem).removeClass('disabled');
+            $(this.popoverDirectoryButton).removeClass('disabled');
+        }
+    }
 
     /**
      * Creates the CPM panel in its initial state in the dockbar. 
@@ -467,9 +489,7 @@ class CPMElement extends HTMLElement {
 
         let importButton = $(`<button type='button' class='btn btn-sm btn-primary' data-toggle='popover' data-placement='left'>Import CPM file</button>`);
 
-        let importFileCallback = (f) => { 
-            this.importFileCallback(f); 
-        };
+        let importFileCallback = (f) => { this.importFileCallback(f); };
 
         //Unattached buttons that are clicked when one of the popover buttons is clicked
         let importFileItem = bis_webfileutil.createFileButton({
@@ -486,6 +506,7 @@ class CPMElement extends HTMLElement {
             'mode' : 'directory',
             'title': 'Import connectivity files from directory',
             'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
+            'altkeys' : true
         });
 
 
@@ -497,6 +518,9 @@ class CPMElement extends HTMLElement {
                 </div>
             </div>`
         );
+
+        //keep track of this to disable it when local file source is selected
+        this.popoverDirectoryButton = $(popoverContent).find('.list-group-item:contains("Import from directory")');
 
         $(importButton).popover({
             'title': 'Select input source',
@@ -514,7 +538,11 @@ class CPMElement extends HTMLElement {
         let popoverDirectoryButton = popoverContent.find('.list-group-item').get(1);
 
         $(popoverFileButton).on('click', () => { importFileItem.click(); bisweb_popoverhandler.dismissPopover(); });
-        $(popoverDirectoryButton).on('click', () => { importDirectoryItem.click(); bisweb_popoverhandler.dismissPopover(); });
+        $(popoverDirectoryButton).on('click', () => { 
+            if (this.mode !== 'local') {
+                importDirectoryItem.click(); bisweb_popoverhandler.dismissPopover(); 
+            }
+        });
 
         return importButton;
     }
@@ -587,10 +615,12 @@ class CPMElement extends HTMLElement {
      * @returns A Promise resolving once the files have been loaded and the form select populated, or rejecting with an error. 
      */
     importFiles(f) {
+        console.log('f', f);
         return new Promise( (resolve, reject) => {
-            let extension = f.split('.')[1];
+            let inputName = typeof f === 'string' ? f : f.name;
+            let extension = inputName.split('.')[1];
             if (!extension) { //flow for a directory of .csv or .tsv files
-                bisweb_serverutils.runCPMMatrixFileModule({ 'indir': f, 'writeout': false }).then( (obj) => {
+                bisweb_serverutils.runCPMMatrixFileModule({ 'indir': inputName, 'writeout': false }).then( (obj) => {
                     this.formatLoadedConnData(obj.output.file);
                     let trimmedOutlist = obj.output.filenames.map( element =>  bis_genericio.getBaseName(element) );
                     resolve(trimmedOutlist);
@@ -601,8 +631,8 @@ class CPMElement extends HTMLElement {
                     try {
                         rawConnFiles = JSON.parse(obj.data);
                     } catch (e) {
-                        console.log('Encountered an error while parsing', f, e);
-                        bis_webutil.createAlert('Encountered an error while parsing ' + f, true);
+                        console.log('Encountered an error while parsing', inputName, e);
+                        bis_webutil.createAlert('Encountered an error while parsing ' + inputName, true);
                     }
 
                     let flist = [];
@@ -737,7 +767,7 @@ class CPMElement extends HTMLElement {
         button.on('click', () => {
             bootbox.alert(`
                 This panel controls how connectivity files are loaded and how CPM computational code is run.<br>
-                The 'Import CPM file' button will allow you to load connectivity file data from either a .json file containing the full data for a connectivity study, or from a directory containing these files.<br>
+                The 'Import CPM file' button will allow you to load connectivity file data from either a .json file containing the full data for a connectivity study, or from a directory containing these files (use shift and ctrl to select all the files associated with your study).<br>
                 The 'Export CPM file' button will export an injested file to one of these .json files for later use. <br>
                 The input select will let a user choose a file to either view or run the CPM code on. If a behavior file is chosen, the user may need to specify which connectivity file from the study to associate it with, should there be more than one.<br>
                 The gear icon will allow the user to specify what settings the CPM code is run with. For more information about this, consult the documentation for computeCPMWASM.
@@ -793,9 +823,8 @@ let roundDecimal = (num) => {
     let rawNum = parseFloat(num);
     rawNum = rawNum * (Math.pow(10, decimalPlaces));
     rawNum = Math.round(rawNum);
-    //console.log('decimal', (rawNum / Math.pow(10, decimalPlaces)), 'original', num, 'decimal places', decimalPlaces, 'raw numbers', decimalNumbers);
     return rawNum / Math.pow(10, decimalPlaces);
-}
+};
 
 bis_webutil.defineElement('bisweb-cpmelement', CPMElement);
 

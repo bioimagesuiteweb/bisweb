@@ -126,7 +126,6 @@ const webfileutils = {
      */
 
     setMode : function(m='',save=true) {
-
         fileMode='local';
         
       // TODO: Check if fileserver and aws are enabled else disable
@@ -638,7 +637,7 @@ const webfileutils = {
      * @param {String} name - The name for the dropdown button. 
      * @param {Boolean} separator - Whether or not the dropdown should be followed by a separator line in the menu. True by default.
      */
-    createFileSourceSelector : function(bmenu,name="Set File Source",separator=false) {
+    createFileSourceSelector : function(bmenu,name="Set File Source",separator=false, cb = () => {}) {
 
         const self=this;
         
@@ -658,6 +657,7 @@ const webfileutils = {
                                                       self.getModeList(),
                                                       extra).then( (m) => {
                                                          self.setMode(m);
+                                                         cb(m);
                                                      }).catch(() => {
                                                          
                                                      });
