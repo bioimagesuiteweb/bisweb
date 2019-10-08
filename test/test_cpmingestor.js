@@ -35,10 +35,10 @@ let cleanRow = (line) => {
 let compareFiles = (obj1, obj2, debug = true) => {
     //console.log(colors.green('+++ COMPARING +++\n', obj1, '\n', obj2, '\n'));
     if ( !(typeof obj1 === 'object') && !(typeof obj2 === 'object') ) {
-        let cleanRow1 = cleanRow(obj1), cleanRow2 = cleanRow(obj2);
-        if (cleanRow1 !== cleanRow2) {
+        //let cleanRow1 = cleanRow(obj1), cleanRow2 = cleanRow(obj2);
+        if (!compareRows(obj1, obj2)) {
             if (debug)
-                console.log(colors.red('+++ ERROR +++\n', cleanRow1, '\nand', cleanRow2, '\nare not equal'));
+                console.log(colors.red('+++ ERROR +++\n', obj1, '\nand\n', obj2, '\nare not equal'));
             return false;
         }
         return true;
@@ -60,6 +60,50 @@ let compareFiles = (obj1, obj2, debug = true) => {
         }
 
         return !compArray.includes(false);
+    }
+
+
+    function compareRows(r1, r2) {
+        console.log('type of r1', r1 instanceof String);
+        //determine which character to split on
+        if (typeof r1 === 'string') {
+            let splitChar;
+            if (r1.includes('\t')) { splitChar = '\t'; }
+            if (r1.includes(',')) { splitChar = ','; }
+
+            let splitr1 = r1.split(splitChar), splitr2 = r2.split(splitChar);
+            if (splitr1.length !== splitr2.length) { 
+                console.log(colors.red('+++ ERROR +++\n rows are different lengths, row one =', splitr1.length, 'row two =', splitr2.length)); 
+                return false;
+            }
+
+            for (let i = 0; i < splitr1.length; i++) {
+                if (!compareEntry(splitr1[i], splitr2[i])) {
+                    console.log(colors.red('+++ ERROR +++\n entry', splitr1[i], 'does not equal', splitr2[i]));
+                    return false;
+                }
+            }
+        } else if (Array.isArray(r1)) {
+            for (let i = 0; i < r1.length; i++) {
+                if (!compareEntry(r1[i], r2[i])) {
+                    console.log(colors.red('+++ ERROR +++\n entry', r1[i], 'does not equal', r2[i]));
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    function compareEntry(e1, e2) {
+        e1 = cleanRow(e1), e2 = cleanRow(e2);
+        if ( e1 === '') {
+            return e2 === '0' || e2 === '';
+        } else if (e2 === '') {
+            return e1 === '0' || e2 === '';
+        }
+
+        return e1 === e2;
     }
 };
 
@@ -100,8 +144,6 @@ describe('Testing CPM ingestor', () => {
     });
 
     it('ingests raw data', async () => {
-        //assert(true);
-        //return;
         let connModule = new MakeCPMIndexFileModule();
         try {
             let indir = ['.', 'testdata', 'small_unparsed_cpm'], baserawfile = ['.', 'testdata', 'small_unparsed_cpm', 'sample_rawfile.json'];

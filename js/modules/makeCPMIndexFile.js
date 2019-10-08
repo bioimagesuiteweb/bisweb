@@ -300,7 +300,7 @@ class MakeCPMIndexFileModule extends BaseModule {
 
         function roundDecimal(num) {
             //count the number of zeroes in the number
-            let decimalPlaces = 0, stringifiedNum = num.toString();
+            let decimalPlaces = 3, stringifiedNum = num.toString();
             let decimalNumbers = stringifiedNum.split('.')[1];
             if (!decimalNumbers) { return num; } //if no decimal places simply return;
 
@@ -313,7 +313,7 @@ class MakeCPMIndexFileModule extends BaseModule {
             //now round to three significant digits
             let rawNum = parseFloat(num);
             rawNum = rawNum * (Math.pow(10, decimalPlaces));
-            rawNum = rawNum.toFixed(3);
+            rawNum = Math.round(rawNum);
             //console.log('decimal', (rawNum / Math.pow(10, decimalPlaces)), 'original', num, 'decimal places', decimalPlaces, 'raw numbers', decimalNumbers);
             return rawNum / Math.pow(10, decimalPlaces);
         }
