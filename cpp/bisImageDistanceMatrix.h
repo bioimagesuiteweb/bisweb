@@ -56,6 +56,19 @@ extern "C" {
   // BIS: { 'createPatchReformatedImage', 'bisImage', [ 'bisImage', 'ParamObj',  'debug' ] }
   BISEXPORT unsigned char* createPatchReformatedImage(unsigned char* input,const char* jsonstring,int debug);
 
+  /** Compute sparse Eigen Vectors based on distance Matrix and IndexMap 
+   * @param sparseMatrix the sparse Matrix (output of computeImageDistanceMatrix)
+   * @param indexMap the indexMap image (output of computeImageIndexMap)
+   * @param eigenVectors the output eigenVector image
+   * @param maxeigen maxnumber of eigenvalues/eigenvectors to compute
+   * @param sigma smoothness factor used in exponentiating the distance to a probability (default=1.0)
+   * @param lambda weight of Euclidean distance (default=0.0)
+   * @param tolerance convergence threshold 1e-5
+   * @param maxiter max number of eigendecomposition iterations (default=500)
+   */
+  // BIS: { 'computeSparseImageEigenvectorsWASM', 'bisImage', [ 'Matrix', 'bisImage', 'ParamObj',  'debug' ] }
+  BISEXPORT unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned char* indexmap,const char* jsonstring,int debug);
+
 }
 
 

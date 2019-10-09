@@ -890,13 +890,21 @@
             "dopython": true
         },
         {
-	          "command" : "computeImageMatrixCorrelation -i testdata/indiv/prep.nii.gz -r testdata/indiv/group.nii.gz",
-	          "test"    : "--test_target testdata/indiv/imcorr.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
-	          "result"  : true,
-	          "dopython": true,
+	    "command" : "computeImageMatrixCorrelation -i testdata/indiv/prep.nii.gz -r testdata/indiv/group.nii.gz",
+	    "test"    : "--test_target testdata/indiv/imcorr.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true,
             "noweb"   : true,
             "skipjs"  : true
-	      }
+	},
+        {
+	    "command" : "imageDistanceMatrix -i testdata/distancematrix/distimage.nii.gz -m testdata/distancematrix/objmap.nii.gz --useradius false --sparsity 0.1 --numthreads 2",
+	    "test"    : "--test_target testdata/distancematrix/double.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true,
+            "noweb"   : true,
+            "skipjs"  : true
+	}
     ]
 }
 

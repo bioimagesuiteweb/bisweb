@@ -1,3 +1,5 @@
+/* global tf,tfvis */
+
 console.log('Hello TensorFlow');
 
 import {MnistData} from './data.js';
@@ -165,4 +167,4 @@ async function run() {
     await showConfusion(model, data);
 }
 
-document.addEventListener('DOMContentLoaded', run)
+document.addEventListener('DOMContentLoaded', run);

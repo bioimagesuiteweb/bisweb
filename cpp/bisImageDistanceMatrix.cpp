@@ -18,7 +18,15 @@
 #include "bisUtil.h"
 #include <algorithm>
 #include <sstream>
+#include <Eigen/Core>
+#include <Eigen/SparseCore>
+#include <Spectra/SymEigsSolver.h>
+#include <Spectra/GenEigsSolver.h>
+#include <Spectra/MatOp/SparseGenMatProd.h>
 
+
+
+typedef double BISTYPE;
 
 namespace bisImageDistanceMatrix {
 
@@ -91,7 +99,7 @@ namespace bisImageDistanceMatrix {
     float spa[5];objectmap->getSpacing(spa);
     
     dim2[3]=1; dim2[4]=1;
-    temp->allocate(dim2,spa);
+    temp->allocateIfDifferent(dim2,spa);
     temp->fill(0);
     int index=1;
     int nt=temp->getLength();
@@ -651,7 +659,7 @@ namespace bisImageDistanceMatrix {
     int dim[5]; input->getDimensions(dim);
     dim[3]=numframes; dim[4]=1;
     float spa[5]; input->getSpacing(spa);
-    output->allocate(dim,spa);
+    output->allocateIfDifferent(dim,spa);
 
     std::cout << "++++ Allocating output image " << dim[0] << "*" << dim[1] << "*" << dim[2] << ", numframes=" << numframes << std::endl;
     std::cout << "++++ \t radius = " << radius[0] << "," << radius[1] << "," << radius[2] << std::endl;
@@ -671,9 +679,195 @@ namespace bisImageDistanceMatrix {
     return numframes;
   }
 
-  // End name space
+  // End name space 
 }
 
+// -----------------------------------------------------------------------------------------------------------------------
+
+namespace bisSparseEigenSystem {
+
+
+  
+  // sparseMatrix is output of createSparseMatrixParallel/createSparseMatrixRadius  4 columns i,j, dist and euc dist
+  
+  int computeEigenVectors(bisSimpleMatrix<double>* sparseMatrix,
+                          bisSimpleImage<int>*     indexMap,
+                          bisSimpleImage<float>*   eigenVectors,
+                          int maxeigen=10,
+                          double sigma=1.0, double lambda=0.0,double tolerance=0.001,int maxiter=50) {
+
+
+    int nt=sparseMatrix->getNumRows();
+    int nc=sparseMatrix->getNumCols();
+
+    if (nc!=4 || nt< 4) {
+      std::cerr << "Bad Distance Matrix " << nt << "*" << nc << std::endl;
+      return 0;
+    }
+
+    double* inp_dat=sparseMatrix->getData();
+    double r[2]; indexMap->getRange(r);
+    int numrows=int(r[1]);
+
+    std::cout << "+++++ Beginning sparse eigensystem: numelements=" << nt << " numrows=" << numrows << std::endl;
+
+    // Assume I have exponentiated and normalized 
+    // 1. Compute Median
+    // 2. Exponentiate
+    
+    // Inp_dat is an array of size nt*3
+    
+    
+    
+    // Compute The Median
+    // Take every nth value to compute the median (for now n=1)
+    int samplerate=1;
+    int numvalues=int(nt/samplerate);
+    float* values=new float[numvalues];
+    for(int i=0;i<numvalues;i++) {
+      int offset=i*(nc*samplerate);
+      values[i]=inp_dat[offset+2]+lambda*inp_dat[offset+3];
+    }
+    float median=bisImageDistanceMatrix::selectKthLargest(numvalues/2,numvalues,values);
+    delete [] values;
+    if (median<0.00001)
+      median=0.00001;
+    if (sigma<0.0001)
+      sigma=0.0001;
+    double factor=1.0/(median*sigma);
+
+  
+    std::cout << "+++++ Computing Degree ... median= " << median << "factor= " << factor << std::endl;
+    
+
+    // remember row,col in input sparse matrix triple are 1-offset so subtract 1 for row,col
+    BISTYPE* D=new BISTYPE[numrows];
+    for (int i=0;i<numrows;i++)
+      D[i]=0.0;
+    int index=0;
+  
+    for (int i=0;i<nt;i++)
+      {
+        int row=(long)inp_dat[index]-1;
+        double v2=inp_dat[index+2]+lambda*inp_dat[index+3];
+        double v=exp(-v2*factor);
+
+        inp_dat[index+2]=v;
+        //      if (row%step==0 && abs(col-row)<10 )
+        //fprintf(stdout,"Reporting %d,%d = \t %f->%f\n",row,col,v2,v);
+        
+        D[row]+=v;
+        index+=nc;
+      }
+
+    // Compute Dinv plus regularizer
+    int step=numrows/7;
+    for (int row=0;row<numrows;row++)
+      {
+        D[row]=1.0/sqrt(D[row]+1.0);
+        if (row%step == 0 || row==numrows-1)
+          std::cout << "+++++ 1.0/sqrt(Degree) row=" << row+1 << " D=" << D[row] << std::endl;
+      }
+    
+
+    std::cout << "+++++ Storing in Sparse matrix " << numrows << "*" << numrows << std::endl;
+    // Store in Sparse Matrix
+    // remember row,col in input sparse matrix triple are 1-offset so subtract 1 for row,col -- Ignore
+
+    typedef Eigen::Triplet<BISTYPE> T;
+    std::vector<T> tripletList;
+    tripletList.reserve(nt*2);
+    index=0;
+    std::cout << "+++++ Allocated in Sparse matrix " << std::endl;
+    for(int i = 0; i < nt; i++) {
+      long row=(long)inp_dat[index];
+      long col=(long)inp_dat[index+1];
+      //BISTYPE add=0.0;
+      if (row==col)
+	{
+	  // Add 0.5 regularizer to diagonal ...
+	  BISTYPE v=D[row]*D[row]*(inp_dat[index+2]+0.5);
+	  tripletList.push_back(T(row,col,v));
+	}
+      else
+	{
+	  BISTYPE v=0.5*D[row]*D[col]*inp_dat[index+2];
+	  tripletList.push_back(T(row,col,v));
+	  tripletList.push_back(T(col,row,v));
+	}
+      index+=nc;
+    }
+
+    delete [] D;
+
+    std::cout << "+++++ Beginning eigendecomposition num triplets=" << tripletList.size() << std::endl;
+    // Now On To Solver from Spectra
+    Eigen::SparseMatrix<BISTYPE> M(numrows,numrows);
+    M.setFromTriplets(tripletList.begin(),tripletList.end());
+    std::cout << "+++++ Compressed Matrix created" << std::endl;
+
+  
+    Spectra::SparseGenMatProd<BISTYPE> op(M);
+    Spectra::SymEigsSolver< BISTYPE, Spectra::LARGEST_ALGE, Spectra::SparseGenMatProd<BISTYPE> > eigs(&op,  maxeigen, maxeigen*2);
+
+    eigs.init();
+    std::cout << "+++++ Init Done on to Compute " << maxeigen << " Eigenvalues (tolerance=" << tolerance << " maxiter=" << maxiter << ")" << std::endl;
+
+    int nconv = eigs.compute(maxiter,tolerance);
+  
+    // Retrieve results
+    if(eigs.info() != Spectra::SUCCESSFUL) {
+      std::cerr << "---- Eigen decomposition failed " << std::endl;
+      return 0;
+    }
+    
+    int numeigen=eigs.eigenvalues().size();
+    std::cout << "+++++ Done with Eigendecomposition (numeigen=" << numeigen << "), nconv=" << nconv << std::endl;
+    
+    int tenth=numeigen/10;
+    if (tenth<1)
+      tenth=1;
+    for (int ia=0;ia<numeigen;ia+=tenth) {
+      float l=eigs.eigenvalues().coeff(ia);
+      std::cout << "+++++\t Eigenvalue " << ia+1 << "/" << numeigen << " = " << l << std::endl;
+    }
+    
+    int numeigenrows=eigs.eigenvectors().rows();
+    
+    std::cout << "+++++ numeigenrows=" << numeigenrows << "\n";
+    std::cout.flush();
+    
+    int dim[5];   indexMap->getDimensions(dim);
+    dim[3]=numeigen; dim[4]=1;
+    float spa[5]; indexMap->getSpacing(spa);
+
+    eigenVectors->allocateIfDifferent(dim,spa);
+    eigenVectors->fill(0.0);
+    float* eig_dat=eigenVectors->getImageData();
+
+
+    int* ind_dat=indexMap->getImageData();
+
+    BISTYPE *eigcolmajor=eigs.eigenvectors().data();
+    for (int voxel=0;voxel<nt;voxel++)
+      {
+        int index=ind_dat[voxel];
+        if (index>=0 && index<nt)
+          {
+            for (int ia=0;ia<numeigen;ia++) 
+              eig_dat[voxel*numeigen+ia]=eigcolmajor[ia*numeigenrows+index];
+          }
+      }
+    
+    double range[2];
+    eigenVectors->getRange(range);
+    std::cout << "+++++ Rane of eigenvector image =" << range[0] << ":" << range[1] << std::endl;
+    return numeigen;
+  
+  }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
 
 // --------------- External stufff --------------------------------------
 
@@ -798,3 +992,57 @@ unsigned char* createPatchReformatedImage(unsigned char* input,const char* jsons
   return out_image->releaseAndReturnRawArray();
 }
 
+
+/** Compute sparse Eigen Vectors based on distance Matrix and IndexMap 
+ * @param sparseMatrix the sparse Matrix (output of computeImageDistanceMatrix)
+ * @param indexMap the indexMap image (output of computeImageIndexMap)
+ * @param eigenVectors the output eigenVector image
+ * @param maxeigen maxnumber of eigenvalues/eigenvectors to compute
+ * @param sigma smoothness factor used in exponentiating the distance to a probability (default=1.0)
+ * @param lambda weight of Euclidean distance (default=0.0)
+ * @param tolerance convergence threshold 1e-5
+ * @param maxiter max number of eigendecomposition iterations (default=500)
+ */
+// BIS: { 'computeSparseImageEigenvectorsWASM', 'bisImage', [ 'Matrix', 'bisImage', 'ParamObj',  'debug' ] }
+unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned char* indexmap,const char* jsonstring,int debug) {
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+  
+  if (debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleMatrix<double> > dist_matrix(new bisSimpleMatrix<double>("inp_matrix"));
+  if (!dist_matrix->linkIntoPointer(input))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<int> > obj_image(new bisSimpleImage<int>("indexmap_image"));
+  if (!obj_image->linkIntoPointer(indexmap))
+    return 0;
+  
+  int   maxeigen=params->getIntValue("maxeigen",10);
+  float  sigma=params->getFloatValue("sigma",1.0);
+  float  lambda=params->getFloatValue("lamdba",0.0);
+  float  tolerance=params->getFloatValue("tolerance",1.0e-5);
+  int iter=params->getIntValue("maxiter",500);
+  
+  if (debug)  {
+    std::cout << "........................" << std::endl;
+    std::cout << ".... Beginning image distance matrix computation " << std::endl;
+    int rows=dist_matrix->getNumRows();
+    int cols=dist_matrix->getNumCols();
+    
+    std::cout << "....      Input  Matrix=" << rows << "*" << cols << std::endl;
+    int dim[5]; obj_image->getDimensions(dim);
+    std::cout << "....      Indexmap  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "........................" << std::endl << std::endl;
+  }
+
+  
+  std::unique_ptr<bisSimpleImage<float> > Output(new bisSimpleImage<float>("eigenvect"));
+  bisSparseEigenSystem::computeEigenVectors(dist_matrix.get(),obj_image.get(),Output.get(),
+                                            maxeigen,sigma,lambda,tolerance,iter);
+  return Output->releaseAndReturnRawArray();
+}

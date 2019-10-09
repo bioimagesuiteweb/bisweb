@@ -1,3 +1,5 @@
+/* global tf */
+
 /**
  * @license
  * Copyright 2018 Google LLC. All Rights Reserved.
@@ -42,7 +44,7 @@ export class MnistData {
         console.log('Loading data');
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const imgRequest = new Promise((resolve, reject) => {
+        const imgRequest = new Promise((resolve) => {
 
             img.crossOrigin = '';
             img.onload = () => {
@@ -77,7 +79,7 @@ export class MnistData {
             };
             img.src = MNIST_IMAGES_SPRITE_PATH;
         });
-
+        
         const labelsRequest = fetch(MNIST_LABELS_PATH);
         const [imgResponse, labelsResponse] = await Promise.all([imgRequest, labelsRequest]);
         
@@ -93,6 +95,7 @@ export class MnistData {
         this.testImages =  this.datasetImages.slice(IMAGE_SIZE * NUM_TRAIN_ELEMENTS);
         this.trainLabels = this.datasetLabels.slice(0, NUM_CLASSES * NUM_TRAIN_ELEMENTS);
         this.testLabels =  this.datasetLabels.slice(NUM_CLASSES * NUM_TRAIN_ELEMENTS);
+        console.log(imgResponse);
     }
 
     nextTrainBatch(batchSize) {
