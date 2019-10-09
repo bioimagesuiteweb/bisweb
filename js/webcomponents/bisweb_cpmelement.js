@@ -311,12 +311,12 @@ class CPMElement extends HTMLElement {
     createViewDialog() {
         const self = this;
         let formName = $('#' + this.fileListFormId).val();
+        if (!formName) { bis_webutil.createAlert('Error: no file selected', true); return; }
 
         //sometimes subject numbers contain a leading zero, e.g. 'sub01' vs 'sub1', so check for both.
         let subNumRegex = /^([^\d]*)(\d+)/g;
         let match = subNumRegex.exec(formName);
 
-        console.log('form name', formName, 'match', match);
         let fullName = match[0], subjectName = match[1], subjectNum = match[2], strippedSubjectName;
 
         if (subjectNum === '') { console.log('Error: No subject number associated with', formName, ', please ensure that your subjects are properly identified.'); return; }
@@ -357,7 +357,6 @@ class CPMElement extends HTMLElement {
             let lh = self.layoutElement.getviewerheight() * 0.7;
             let matrix = reformatMatrix(formName, connFileVal); 
 
-            console.log('reformatted matrix', matrix);
             //create bootstrap table
             let table = $(`<table class='table table-dark table-striped'><tbody></tbody></table>`), tableBody = $(table).find('tbody');
             let matrixRows = matrix.split(';');
@@ -655,7 +654,7 @@ class CPMElement extends HTMLElement {
         
     }
 
-    exportCPMFile(f) {
+    exportCPMFile(f = 'connfile.json') {
         const self = this;
         if (this.showExportWarning) {
             bootbox.dialog({
@@ -712,7 +711,8 @@ class CPMElement extends HTMLElement {
         let fileNames = [], formattedData = rawData;
         for (let key of Object.keys(rawData)) {
             for (let fileKey of Object.keys(rawData[key])) {
-                let data = rawData[key][fileKey].trim().split('\n');
+                let rowSplitChar = rawData[key][fileKey].trim().includes(';') ? ';' : '\n';
+                let data = rawData[key][fileKey].trim().split(rowSplitChar);
                 let extension = fileKey.split('.')[1];
                 for (let i = 0; i < data.length; i++) {
                     switch (extension) {
@@ -753,6 +753,7 @@ class CPMElement extends HTMLElement {
                 }
             }
 
+            console.log('f', f);
             let stringifiedObj = JSON.stringify(exportedObj, null, 2);
             bis_genericio.write(f, stringifiedObj).then(() => {
                 resolve();
