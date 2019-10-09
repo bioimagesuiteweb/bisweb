@@ -22,6 +22,59 @@
 
 namespace bisImageDistanceMatrix {
 
+  // ------------------------------------------------------------------------------------------------
+  // Payload classes
+  
+  class bisMThreadStructure {
+  public:
+    short* wgt_dat;
+    int*   index_dat;
+    float* img_dat;
+    long   numvoxels;
+    int    numframes;
+    long   numbest;
+    long   numgoodvox;
+    long   slicesize;
+
+    // Stuff for radius
+    int dim[3];
+    float spa[3];
+    float DistanceRadius;
+    double maxintensity;
+    double normalization;
+    std::vector<double> output_array[VTK_MAX_THREADS];
+    int numcols;
+
+    bisMThreadStructure() {
+      this->wgt_dat=NULL;
+      this->index_dat=NULL;
+      this->img_dat=NULL;
+      this->numcols=4;
+    }
+
+    ~bisMThreadStructure() {
+      for (int i=0;i<VTK_MAX_THREADS;i++) {
+        this->output_array[i].clear();
+        this->output_array[i].shrink_to_fit();
+      }
+      this->wgt_dat=NULL;
+      this->index_dat=NULL;
+      this->img_dat=NULL;
+      this->numcols=0;
+    }
+  };
+  
+  class bisMImagePair {
+  public:
+    float* idata;
+    float* odata;
+    int dim[3];
+    int radius[3];
+    int numframes;
+  };
+
+  // ------------------------------------------------------------------------------------------------
+
   float selectKthLargest(unsigned long k0offset, unsigned long n, float* arr0offset)
   {
 
@@ -504,7 +557,123 @@ namespace bisImageDistanceMatrix {
     delete ds;
     return 1;
   }
+
+  // ----------------------------------------------------------------------------------
+  //
+  // -------------------------- reformat Image Code -- make patches into frames
+
+
+  static void reformatThreadFunction(bisvtkMultiThreader::vtkMultiThreader::ThreadInfo *data) {
+
+    bisMImagePair   *ds = (bisMImagePair *)(data->UserData);
+    int thread=data->ThreadID;
+    int numthreads=data->NumberOfThreads;
+
+    int slicerange[2];
+    bisImageDistanceMatrix_ComputeFraction(thread,numthreads,ds->dim[2],slicerange);
+    if (slicerange[1]==0)
+      slicerange[1]=1;
+
+    std::cout << "++++ reformatImage Thread(" << thread << ") radius=" << ds->radius[0] << "," << ds->radius[1] << "," << ds->radius[2];
+    std::cout << ", computing slices " << slicerange[0] << "->" << slicerange[1] << " numframes=" << ds->numframes << std::endl;
+
+    
+    int volumesize=ds->dim[0]*ds->dim[1]*ds->dim[2];
+    int slicesize=ds->dim[0]*ds->dim[1];
+
+    int voxel=slicerange[0]*slicesize;
+
+    for (int k=slicerange[0];k<slicerange[1];k++) {
+      for (int j=0;j<ds->dim[1];j++) {
+        for (int i=0;i<ds->dim[0];i++) {
+          
+          int frame=0;
+
+          for (int ka=-ds->radius[2];ka<=ds->radius[2];ka++) {
+            int newk=k+ka;
+            if (newk<0)
+              newk=0;
+            else if (newk>=ds->dim[2])
+              newk=ds->dim[2]-1;
+
+            //std::cout << "ka = " << ka << "-->" << newk << std::endl;
+            
+            for (int ja=-ds->radius[1];ja<=ds->radius[1];ja++) {
+              int newj=j+ja;
+              if (newj<0)
+                newj=0;
+              else if (newj>=ds->dim[1])
+                newj=ds->dim[1]-1;
+
+              //std::cout << "ja = " << ja << "-->" << newj << std::endl;
+              
+              for (int ia=-ds->radius[0];ia<=ds->radius[0];ia++) {
+                int newi=i+ia;
+                if (newi<0)
+                  newi=0;
+                else if (newi>=ds->dim[0])
+                  newi=ds->dim[0]-1;
+
+
+                
+                ds->odata[volumesize*frame+voxel]=ds->idata[newk*slicesize+newj*ds->dim[0]+newi];
+                ++frame;
+              } //ia
+            } //ja
+          } //ka
+          ++voxel;
+        } //i
+      } //j
+    } //k 
+
+
+
+  }
+    
+  
+  int reformatImage(bisSimpleImage<float>* input, bisSimpleImage<float>* output,int radius[3],int NumberOfThreads=4) {
+
+    // First copy data around
+    int numframes=1;
+    radius[0]=2;
+    radius[1]=1;
+    radius[2]=1;
+    
+    for (int i=0;i<=2;i++) {
+      if (radius[i]<1)
+        radius[i]=1;
+      else if (radius[i]>4)
+        radius[i]=4;
+      numframes=numframes*(1+2*radius[i]);
+    }
+
+    int dim[5]; input->getDimensions(dim);
+    dim[3]=numframes; dim[4]=1;
+    float spa[5]; input->getSpacing(spa);
+    output->allocate(dim,spa);
+
+    std::cout << "++++ Allocating output image " << dim[0] << "*" << dim[1] << "*" << dim[2] << ", numframes=" << numframes << std::endl;
+    std::cout << "++++ \t radius = " << radius[0] << "," << radius[1] << "," << radius[2] << std::endl;
+
+    bisMImagePair* ds=  new bisMImagePair();
+    ds->idata=input->getImageData();
+    ds->odata=output->getImageData();
+    for (int i=0;i<=2;i++) {
+      ds->dim[i]=dim[i];
+      ds->radius[i]=radius[i];
+    }
+    ds->numframes=numframes;
+
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&reformatThreadFunction,ds,"Reformat Image",NumberOfThreads);
+
+    return numframes;
+  }
+
+  // End name space
 }
+
+
+// --------------- External stufff --------------------------------------
 
 /** Computes a sparse distance matrix among voxels in the image
  * @param input serialized 4D input file as unsigned char array 
@@ -556,8 +725,7 @@ unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned cha
   } else {
     bisImageDistanceMatrix::createSparseMatrixParallel(inp_image.get(),obj_image.get(),indexmap.get(),Output.get(),sparsity,numthreads);
   }
-
-
+  
   return Output->releaseAndReturnRawArray();
 }
 
@@ -583,5 +751,46 @@ unsigned char* computeImageIndexMapWASM(unsigned char* input,int debug) {
 
   std::unique_ptr<bisSimpleImage<int> > result(bisImageDistanceMatrix::createIndexMap(inp_image.get()));
   return result->releaseAndReturnRawArray();
+}
+
+/** Creates a reformatted image where a patch is mapped into frames. This is so as to recycle the ImageDistanceMatrix code for 
+ * patch distances as opposed to frame comparisons
+ * @param input serialized 3D input file as unsigned char array 
+ * @param jsonstring the parameter string for the algorithm 
+ * { "radius" : 2,  numthreads: 4 }
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to the reformated image
+ */
+// BIS: { 'createPatchReformatedImage', 'bisImage', [ 'bisImage', 'ParamObj',  'debug' ] }
+unsigned char* createPatchReformatedImage(unsigned char* input,const char* jsonstring,int debug) {
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+  
+  if (debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > inp_image(new bisSimpleImage<float>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  int radius=params->getIntValue("radius",2.0);
+  int numthreads=params->getIntValue("numthreads",4);
+  
+  if (debug)  {
+    std::cout << "........................" << std::endl;
+    std::cout << ".... Beginning reformatted image " << std::endl;
+    int dim[5]; inp_image->getDimensions(dim);
+    std::cout << "....      Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "........................" << std::endl << std::endl;
+  }
+
+  int rad[3] = { radius,radius,radius };
+  
+  std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("output"));
+  bisImageDistanceMatrix::reformatImage(inp_image.get(),out_image.get(),rad,numthreads);
+  return out_image->releaseAndReturnRawArray();
 }
 

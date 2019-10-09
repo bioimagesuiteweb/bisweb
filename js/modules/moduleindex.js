@@ -47,7 +47,6 @@ const moduleImports = {
     preprocessoptical : require('preprocessOptical.js'),
     diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
-// FIltering
     butterworthfilter : require('butterworthFilter.js'),
     butterworthfilterimage : require('butterworthFilterImage.js'),
     regressglobal : require('regressGlobal.js'),
@@ -59,6 +58,7 @@ const moduleImports = {
     computeroi : require('computeROI.js'),
     bilateralfilter : require('bilateralfilter.js'),
     timeseriesnormalizeimage: require('timeseriesNormalizeImage'),
+    patchreformatimage: require('patchReformatImage'),
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
     displacementfield : require('displacementField.js'),
