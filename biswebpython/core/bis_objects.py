@@ -167,7 +167,6 @@ class bisMatrix(bisBaseObject):
     def save(self,fname):
 
         ext=os.path.splitext(fname)[1]
-        
         if (ext==".binmatr"):
             return self.saveBinary(fname);
 
@@ -233,22 +232,23 @@ class bisMatrix(bisBaseObject):
     def saveBinary(self,fname):
 
         sz=self.data_array.shape;
-        
         hd=np.zeros([4],dtype=np.int32);
         hd[0]=1700;
         hd[1]=0;
         hd[2]=sz[0];
         hd[3]=sz[1];
 
+
         
         dat=0;
         tp=str(self.data_array.dtype);
+        
         if (tp=='float32'):
             hd[1]=2;
             dat=np.zeros(hd[2]*hd[3],dtype=np.float32);
         elif (tp=='float64'):
             hd[1]=3;
-            dat=np.zeros(hd[2]*hd[3],type=np.float64);
+            dat=np.zeros(hd[2]*hd[3],dtype=np.float64);
         else:
             hd[1]=1;
             dat=np.zeros(hd[2]*hd[3],dtype=np.int64)
@@ -258,7 +258,6 @@ class bisMatrix(bisBaseObject):
             for j in range(0,hd[3]):
                 dat[index]=self.data_array[i][j];
                 index=index+1;
-
 
         total=hd.tobytes();
         total+=dat.tobytes();
