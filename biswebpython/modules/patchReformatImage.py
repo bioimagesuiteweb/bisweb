@@ -43,6 +43,7 @@ class patchReformatImage(bis_basemodule.baseModule):
         print('oooo invoking: something with vals', vals);
         paramobj= {
             'numthreads' : vals['numthreads'],
+            'increment' : vals['increment'],
             'radius' : vals['radius']
         };
 

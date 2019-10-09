@@ -49,7 +49,7 @@ extern "C" {
     * patch distances as opposed to frame comparisons
     * @param input serialized 3D input file as unsigned char array 
     * @param jsonstring the parameter string for the algorithm 
-    * { "radius" : 2,  numthreads: 4 }
+    * { "radius" : 2, "increment" : 1, numthreads: 4 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to the reformated image
    */

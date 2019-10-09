@@ -50,26 +50,42 @@ class patchReformatImage extends BaseModule {
                     "advanced": false,
                     "gui": "slider",
                     "type": 'int',
-                    "default": 2,
+                    "default": 1,
                     "lowbound": 1,
                     "highbound": 4,
                     "varname": "radius"
                 },
+                {
+                    "name": "Increment",
+                    "description": "The increment size for each patch. Increment > 1 --> skip voxels",
+                    "priority": 10,
+                    "advanced": true,
+                    "gui": "slider",
+                    "type": 'int',
+                    "default": 1,
+                    "low": 1,
+                    "high": 5,
+                    "varname": "increment"
+                },
+
                 baseutils.getDebugParam(),
             ]
         };
     }
+
     
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: patchReformatImage', JSON.stringify(vals));
         
         let input = this.inputs['input'];
         let radius= parseFloat(vals.radius);
+        let incr= parseFloat(vals.increment);
         return new Promise( (resolve, reject) => {
             console.log('inp=',input.getDescription());
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.createPatchReformatedImage(input, {
                     "radius": radius,
+                    "increment": incr,
                     "numthreads" : 1
                 },super.parseBoolean(vals.debug));
                 resolve();

@@ -70,6 +70,7 @@ namespace bisImageDistanceMatrix {
     float* odata;
     int dim[3];
     int radius[3];
+    int increment[3];
     int numframes;
   };
 
@@ -590,7 +591,7 @@ namespace bisImageDistanceMatrix {
           int frame=0;
 
           for (int ka=-ds->radius[2];ka<=ds->radius[2];ka++) {
-            int newk=k+ka;
+            int newk=k+ka*ds->increment[2];
             if (newk<0)
               newk=0;
             else if (newk>=ds->dim[2])
@@ -599,7 +600,7 @@ namespace bisImageDistanceMatrix {
             //std::cout << "ka = " << ka << "-->" << newk << std::endl;
             
             for (int ja=-ds->radius[1];ja<=ds->radius[1];ja++) {
-              int newj=j+ja;
+              int newj=j+ja*ds->increment[1];
               if (newj<0)
                 newj=0;
               else if (newj>=ds->dim[1])
@@ -608,7 +609,7 @@ namespace bisImageDistanceMatrix {
               //std::cout << "ja = " << ja << "-->" << newj << std::endl;
               
               for (int ia=-ds->radius[0];ia<=ds->radius[0];ia++) {
-                int newi=i+ia;
+                int newi=i+ia*ds->increment[0];
                 if (newi<0)
                   newi=0;
                 else if (newi>=ds->dim[0])
@@ -631,15 +632,15 @@ namespace bisImageDistanceMatrix {
   }
     
   
-  int reformatImage(bisSimpleImage<float>* input, bisSimpleImage<float>* output,int radius[3],int NumberOfThreads=4) {
+  int reformatImage(bisSimpleImage<float>* input, bisSimpleImage<float>* output,int radius[3],int increment[3],int NumberOfThreads=4) {
 
     // First copy data around
     int numframes=1;
-    radius[0]=2;
-    radius[1]=1;
-    radius[2]=1;
-    
     for (int i=0;i<=2;i++) {
+      if (increment[i]<1)
+        increment[i]=1;
+      if (increment[i]>4)
+        increment[i]=4;
       if (radius[i]<1)
         radius[i]=1;
       else if (radius[i]>4)
@@ -661,6 +662,7 @@ namespace bisImageDistanceMatrix {
     for (int i=0;i<=2;i++) {
       ds->dim[i]=dim[i];
       ds->radius[i]=radius[i];
+      ds->increment[i]=increment[i];
     }
     ds->numframes=numframes;
 
@@ -776,8 +778,9 @@ unsigned char* createPatchReformatedImage(unsigned char* input,const char* jsons
   if (!inp_image->linkIntoPointer(input))
     return 0;
 
-  int radius=params->getIntValue("radius",2.0);
+  int radius=params->getIntValue("radius",2);
   int numthreads=params->getIntValue("numthreads",4);
+  int increment=params->getIntValue("increment",1);
   
   if (debug)  {
     std::cout << "........................" << std::endl;
@@ -788,9 +791,10 @@ unsigned char* createPatchReformatedImage(unsigned char* input,const char* jsons
   }
 
   int rad[3] = { radius,radius,radius };
+  int incr[3] = { increment,increment,increment };
   
   std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("output"));
-  bisImageDistanceMatrix::reformatImage(inp_image.get(),out_image.get(),rad,numthreads);
+  bisImageDistanceMatrix::reformatImage(inp_image.get(),out_image.get(),rad,incr,numthreads);
   return out_image->releaseAndReturnRawArray();
 }
 
