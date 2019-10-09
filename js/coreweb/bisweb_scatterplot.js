@@ -25,7 +25,7 @@ class Bisweb_Scatterplot {
         let innerDim = svgDim - sizeOffset;
 
         //Create the svg that will contain the scatter chart
-        let SVG = d3.select(parentDiv).append('div')
+        let SVG = d3.select(parentDiv).insert('div', ':first-child')
             .attr('class', 'bis-ScatterContainer')
             .attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`)
             .append("svg").attr("id", globalParams.Id)
