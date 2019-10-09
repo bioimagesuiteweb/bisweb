@@ -90,11 +90,12 @@ class CPMElement extends HTMLElement {
 
         bis_webutil.runAfterAllLoaded( () => {
             this.layoutElement = document.querySelector(this.layoutelementid);
-            let menubar = document.querySelector(this.menubarid).getMenuBar();
-            let cardbar = document.querySelector(this.cardbarid);
-            let dockbar = this.layoutElement.elements.dockbarcontent;
 
-            cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
+            let menubar = document.querySelector(this.menubarid).getMenuBar();
+            //let cardbar = document.querySelector(this.cardbarid);
+            let dockbar = this.layoutElement.elements.dockbarcontent;
+            this.createCPMGUIManager(this.layoutElement.elements.rendererbase[0]);
+            /*cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
                 this.createCPMGUIManager(scatterobj.content[0]);
 
                 //resizing function for card bar pane
@@ -102,7 +103,7 @@ class CPMElement extends HTMLElement {
                     scatterobj.content.width(this.layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
                     scatterobj.content.height(this.layoutElement.viewerheight / 2);
                 });
-            });
+            });*/
 
             this.createMenubarItems(menubar, dockbar);
             this.createCPMPanel(dockbar);
