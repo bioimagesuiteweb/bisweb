@@ -76,7 +76,7 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
                     "type": "float",
                     "default": 0.0,
                     "lowbound": 0.0,
-                    "highbound": 10.0,
+                    "highbound": 100.0,
                     "varname": "lambda"
                 },
                 {
@@ -85,7 +85,7 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
                     "type": "int",
                     "default": 100,
                     "lowbound": 1,
-                    "highbound": 1000,
+                    "highbound": 10000,
                     "varname": "maxiter"
                 },
                 bis_baseutils.getDebugParam()
@@ -101,17 +101,15 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
             'sigma' : vals['sigma'],
             'maxiter' : vals['maxiter'],
         };
-
+        print('Paramobj=',paramobj);
         indexmap=bis_baseutils.getDynamicLibraryWrapper().computeImageIndexMapWASM(self.inputs['mask'],
                                                                                    self.parseBoolean(vals['debug']));
 
-        out=bis_baseutils.getDynamicLibraryWrapper().computeSparseImageEigenvectorsWASM(self.inputs['input'],
+        self.outputs['output']=bis_baseutils.getDynamicLibraryWrapper().computeSparseImageEigenvectorsWASM(self.inputs['input'],
                                                                                         indexmap,
                                                                                         paramobj,
                                                                                         self.parseBoolean(vals['debug']));
-        self.outputs['output']=bis_objects.bisMatrix();
-        self.outputs['output'].create(out);        
-        print('Output=',self.outputs['output']);
+
         return True
     
 

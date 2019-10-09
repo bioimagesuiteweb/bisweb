@@ -737,7 +737,7 @@ namespace bisSparseEigenSystem {
     double factor=1.0/(median*sigma);
 
   
-    std::cout << "+++++ Computing Degree ... median= " << median << "factor= " << factor << std::endl;
+    std::cout << "+++++ Computing Degree ... median= " << median << "factor= " << factor << " lamda=" << lambda << " sigma=" << sigma << std::endl;
     
 
     // remember row,col in input sparse matrix triple are 1-offset so subtract 1 for row,col
@@ -745,20 +745,29 @@ namespace bisSparseEigenSystem {
     for (int i=0;i<numrows;i++)
       D[i]=0.0;
     int index=0;
-  
+
+    int minrow=(int)inp_dat[0],maxrow=(int)inp_dat[0];
+    
+    
     for (int i=0;i<nt;i++)
       {
         int row=(long)inp_dat[index]-1;
         double v2=inp_dat[index+2]+lambda*inp_dat[index+3];
         double v=exp(-v2*factor);
 
-        inp_dat[index+2]=v;
+        //        inp_dat[index+2]=v;
         //      if (row%step==0 && abs(col-row)<10 )
         //fprintf(stdout,"Reporting %d,%d = \t %f->%f\n",row,col,v2,v);
         
         D[row]+=v;
+        if (row<minrow)
+          minrow=row;
+        else if (row>maxrow)
+          maxrow=row;
         index+=nc;
       }
+
+    std::cout << "++++ Minrow=" << minrow << "\t maxrow=" << maxrow << std::endl;
 
     // Compute Dinv plus regularizer
     int step=numrows/7;
@@ -780,18 +789,20 @@ namespace bisSparseEigenSystem {
     index=0;
     std::cout << "+++++ Allocated in Sparse matrix " << std::endl;
     for(int i = 0; i < nt; i++) {
-      long row=(long)inp_dat[index];
-      long col=(long)inp_dat[index+1];
-      //BISTYPE add=0.0;
+      long row=(long)inp_dat[index]-1;
+      long col=(long)inp_dat[index+1]-1;
+      double v0=inp_dat[index+2]+lambda*inp_dat[index+3];
+      double v1=exp(-v0*factor);
+
       if (row==col)
 	{
 	  // Add 0.5 regularizer to diagonal ...
-	  BISTYPE v=D[row]*D[row]*(inp_dat[index+2]+0.5);
+	  BISTYPE v=D[row]*D[row]*(v1+0.5);
 	  tripletList.push_back(T(row,col,v));
 	}
       else
 	{
-	  BISTYPE v=0.5*D[row]*D[col]*inp_dat[index+2];
+	  BISTYPE v=0.5*D[row]*D[col]*v1;
 	  tripletList.push_back(T(row,col,v));
 	  tripletList.push_back(T(col,row,v));
 	}
@@ -833,8 +844,9 @@ namespace bisSparseEigenSystem {
     }
     
     int numeigenrows=eigs.eigenvectors().rows();
+    int numeigencols=eigs.eigenvectors().cols();
     
-    std::cout << "+++++ numeigenrows=" << numeigenrows << "\n";
+    std::cout << "+++++ numeigenrows*numeigencols=" << numeigenrows << "*" << numeigencols << std::endl;
     std::cout.flush();
     
     int dim[5];   indexMap->getDimensions(dim);
@@ -845,23 +857,35 @@ namespace bisSparseEigenSystem {
     eigenVectors->fill(0.0);
     float* eig_dat=eigenVectors->getImageData();
 
-
     int* ind_dat=indexMap->getImageData();
-
     BISTYPE *eigcolmajor=eigs.eigenvectors().data();
-    for (int voxel=0;voxel<nt;voxel++)
+
+    int volumesize=dim[0]*dim[1]*dim[2];
+    int eleventh=volumesize/11;
+    int numgood=0;
+    for (int voxel=0;voxel<volumesize;voxel++)
       {
-        int index=ind_dat[voxel];
-        if (index>=0 && index<nt)
-          {
-            for (int ia=0;ia<numeigen;ia++) 
-              eig_dat[voxel*numeigen+ia]=eigcolmajor[ia*numeigenrows+index];
+        int index=ind_dat[voxel]-1;
+        if (voxel%eleventh==0 || (index>=0 && numgood < 10 ))
+          std::cout << "voxel=" << voxel << "\t" << index << std::endl;
+        
+        if (index>=0) {
+          numgood++;
+          for (int frame=0;frame<numeigen;frame++) {
+            int ia=voxel+frame*volumesize;
+            int ib=frame*numeigenrows+index;
+            eig_dat[ia]=eigcolmajor[ib]*10000;
+            if (numgood < 10 ) {
+              std::cout << "frame=" << frame << " ia=" << ia << " ib=" << ib << "voxel=" << voxel << ", index=" << index << " value=" << eig_dat[ia] << std::endl;
+            }
           }
+        }
       }
-    
+
+    std::cout << "++++ Done Assigning numgood=" << numgood << " vs " << volumesize << std::endl;
     double range[2];
     eigenVectors->getRange(range);
-    std::cout << "+++++ Rane of eigenvector image =" << range[0] << ":" << range[1] << std::endl;
+    std::cout << "+++++ Range of eigenvector image =" << range[0] << ":" << range[1] << " Numeigen=" << numeigen << std::endl;
     return numeigen;
   
   }
@@ -1024,7 +1048,7 @@ unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned
   
   int   maxeigen=params->getIntValue("maxeigen",10);
   float  sigma=params->getFloatValue("sigma",1.0);
-  float  lambda=params->getFloatValue("lamdba",0.0);
+  float  lambda=params->getFloatValue("lambda",0.0);
   float  tolerance=params->getFloatValue("tolerance",1.0e-5);
   int iter=params->getIntValue("maxiter",500);
   
