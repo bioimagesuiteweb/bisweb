@@ -875,9 +875,6 @@ namespace bisSparseEigenSystem {
             int ia=voxel+frame*volumesize;
             int ib=frame*numeigenrows+index;
             eig_dat[ia]=eigcolmajor[ib]*10000;
-            if (numgood < 10 ) {
-              std::cout << "frame=" << frame << " ia=" << ia << " ib=" << ib << "voxel=" << voxel << ", index=" << index << " value=" << eig_dat[ia] << std::endl;
-            }
           }
         }
       }
