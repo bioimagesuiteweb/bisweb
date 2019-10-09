@@ -953,6 +953,21 @@ const webutil = {
         }
         return menuitem;
     },
+
+    // ------------------------------------------------------------------------
+    createLongInfoText: function(txt,title='For your Information',dh=-1.0) {
+
+        if (dh<0) {
+            dh=Math.round(window.innerHeight*0.7);
+        }
+        const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
+        
+        bootbox.dialog({
+            title: title,
+            message: output,
+        });
+    },
+    
     // ------------------------------------------------------------------------
     /** create alert message
      * @param {string} text - text to display in the alert message
@@ -973,14 +988,17 @@ const webutil = {
         top     = top + internal.alerttop;
         
         let b = 'info';
-        if (error === true)
+        let extraz=0;
+        if (error === true) {
             b = 'danger';
-        else if (error==="progress")
+            extraz=5000;
+        } else if (error==="progress") {
             b='success';
-
+        }
+        
 
         let w = $(`
-            <div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alertcount}">
+            <div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alertcount+extraz}">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>

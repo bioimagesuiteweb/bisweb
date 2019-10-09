@@ -627,9 +627,9 @@ class StudyPanel extends HTMLElement {
 
                     console.log('input directory name', inputDirectoryName, outputDirectoryName);
                     if (!inputDirectoryName || inputDirectoryName === '') {
-                        webutil.createAlert('No input directory defined. Please define an input directory before converting'); return;
+                        webutil.createAlert('No input directory defined. Please define an input directory before converting',true); return;
                     } else if (!outputDirectoryName || outputDirectoryName === '') {
-                        webutil.createAlert('No output directory defined. Please define an output directory before converting'); return;
+                        webutil.createAlert('No output directory defined. Please define an output directory before converting',true); return;
                     }
 
                     dicomModal.dialog.modal('hide');
@@ -1496,26 +1496,25 @@ class StudyPanel extends HTMLElement {
 
             promise = bisweb_serverutils.runDICOMConversion({
                 'fixpaths': true,
-                'inputDirectory': inputDirectory,
-                'outputDirectory': outputDirectory,
+                'inputdirectory': inputDirectory,
+                'outputdirectory': outputDirectory,
                 'convertbids': doBIDS
             });
         } else {
             //if on electron just run the module directly
             let dicomModule = new DicomModule();
-            promise = dicomModule.execute({}, { 'inputDirectory': inputDirectory, 'outputDirectory': outputDirectory, 'convertbids': doBIDS });
+            promise = dicomModule.execute({}, { 'inputdirectory': inputDirectory, 'outputdirectory': outputDirectory, 'convertbids': doBIDS });
         }
 
         promise.then((fileConversionOutput) => {
-            console.log('output', fileConversionOutput);
-            let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
-
             webutil.dismissAlerts();
+            webutil.createLongInfoText(`<PRE>${fileConversionOutput.output}</PRE>`,'Dicom Conversion Output');
+            let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
             this.show();
-            this.importBIDSDirectory(output);
+            if (doBIDS)
+                this.importBIDSDirectory(output);
         }).catch((e) => {
-            console.log('An error occured during file conversion', e);
-            webutil.createAlert('An error occured during file conversion.', true);
+            webutil.createLongInfoText(`<PRE>${e.output}</PRE>`,'Dicom Conversion Output Error');
         });
     }
 
@@ -1603,8 +1602,6 @@ let readParamsFile = (sourceDirectory) => {
  */
 let getFileList = (filename) => {
 
-    console.log('Filename=', filename);
-
     return new Promise((resolve, reject) => {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
@@ -1619,8 +1616,6 @@ let getFileList = (filename) => {
         }
 
         readParamsFile(filename).then((data) => {
-            console.log('Filename');
-
             let type = data.type || data.acquisition || data.bisformat || 'Unknown type';
             bis_genericio.getMatchingFiles(queryString).then((files) => {
 

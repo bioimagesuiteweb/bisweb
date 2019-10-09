@@ -985,15 +985,20 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
-        const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
-        if (filetreepipelineid) {
-            let filetreepipeline = document.querySelector(filetreepipelineid);
-            webutil.createMenuItem(hmenu, '');
-            webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
-                                    () => {
-                                        filetreepipeline.openPipelineCreationModal();
-                                    });
-        }
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
+                if (filetreepipelineid) {
+                    let filetreepipeline = document.querySelector(filetreepipelineid);
+                    webutil.createMenuItem(hmenu, '');
+                    webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
+                                           () => {
+                                               filetreepipeline.openPipelineCreationModal();
+                                       });
+                }
+            }
+        });
+                                                    
 
         return hmenu;
     }
@@ -1246,30 +1251,32 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
-        const dicomid = this.getAttribute('bis-dicomimportid') || null;
-        if (dicomid) {
-            let dicommodule = document.querySelector(dicomid) || null;
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                if (dicomid) {
+                    let dicommodule = document.querySelector(dicomid) || null;
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
+                        dicommodule.show();
+                    });
+                    
+                    webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+                        dicommodule.showDICOMImportModal();
+                    });
+                }
+            }
             webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
-                dicommodule.show();
+            webutil.createMenuItem(bmenu, 'Restart Application', () => {
+                bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                (e) => {
+                                    if (e)
+                                        window.open(self.applicationURL,'_self');
+                                }
+                               );
             });
-
-            /*
-            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-                            dicommodule.showDICOMImportModal();
-            });*/
-        }
+        });
         
-        webutil.createMenuItem(bmenu,'');
-        webutil.createMenuItem(bmenu, 'Restart Application',
-                               function () {
-                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function(e) {
-                                                       if (e)
-                                                           window.open(self.applicationURL,'_self');
-                                                   }
-                                                  );
-                               });
         return bmenu;
     }
 
