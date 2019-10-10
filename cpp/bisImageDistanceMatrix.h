@@ -45,6 +45,17 @@ extern "C" {
   // BIS: { 'computeImageIndexMapWASM', 'bisImage', [ 'bisImage', 'debug' ] }
   BISEXPORT unsigned char* computeImageIndexMapWASM(unsigned char* input,int debug);
 
+  
+  /** Computes a sparse temporal distance matrix among frames in the image (patches perhaps)
+   * @param input serialized 4D input file as unsigned char array 
+   * @param jsonstring the parameter string for the algorithm 
+   * { sparsity : 0.01, numthreads: 4 }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the sparse distance matrix serialized 
+   */
+  // BIS: { 'computeTemporalImageDistanceMatrixWASM', 'Matrix', [ 'bisImage', 'ParamObj', 'debug' ] }
+  unsigned char* computeTemporalImageDistanceMatrixWASM(unsigned char* input,const char* jsonstring,int debug);
+    
    /** Creates a reformatted image where a patch is mapped into frames. This is so as to recycle the ImageDistanceMatrix code for 
     * patch distances as opposed to frame comparisons
     * @param input serialized 3D input file as unsigned char array 

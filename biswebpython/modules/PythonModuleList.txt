@@ -39,4 +39,5 @@ computeImageMatrixCorrelation
 timeseriesNormalizeImage
 patchReformatImage
 imageDistanceMatrix
+temporalImageDistanceMatrix
 computeImageEigenvectors

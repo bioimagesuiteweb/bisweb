@@ -202,7 +202,7 @@ namespace bisImageDistanceMatrix {
         std::cout << n << " ";
       }
 
-    std::cout << ", total rows=" << nt << std::endl;
+    std::cout << ", total rows (pairs)=" << nt << " cols=" << nc <<  std::endl;
   
     combined->zero(nt,nc);
 
@@ -212,6 +212,7 @@ namespace bisImageDistanceMatrix {
     for (int i=0;i<NumberOfThreads;i++)
       {
         int num=output_array[i].size();
+        std::cout << "+++ Combining thread=" << i+1 << " num=" << num << " elements=" << num/nc << std::endl;
         if (num>0)
           {
             for (int j=0;j<num;j++)
@@ -467,7 +468,60 @@ namespace bisImageDistanceMatrix {
     std::cout << "++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
   
   }
-// ---------------------------------------------------------------------------
+
+
+  // --------------------------------------------------------------------------------------------------------
+  static void temporalSparseThreadFunction(bisvtkMultiThreader::vtkMultiThreader::ThreadInfo *data)
+  {
+    bisMThreadStructure *ds = (bisMThreadStructure *)(data->UserData);
+    int thread=data->ThreadID;
+    int numthreads=data->NumberOfThreads;
+    int framerange[2];
+    
+    bisImageDistanceMatrix_ComputeFraction(thread,numthreads,ds->numframes,framerange);
+    std::cout << "++++ Temporal Sparse Matrix Thread (" << thread << "). Computing " << framerange[0] << ":" << framerange[1] << std::endl;
+    float* d_dist=new float[ds->numframes];
+    float* d_tmp =new float[ds->numframes];
+    
+    for (int frame1=framerange[0];frame1<framerange[1];frame1++)
+      {
+        d_tmp[frame1]=0.0;
+        d_dist[frame1]=0.0;
+
+        for (int frame2=0;frame2<ds->numframes;frame2++)
+          {
+            if (frame2!=frame1)
+              {
+                int index1=frame1*ds->numvoxels;
+                int index2=frame2*ds->numvoxels;
+                double sum=0.0;
+                for (int voxel=0;voxel<ds->numvoxels;voxel++)
+                  sum+=pow(ds->img_dat[index1+voxel]-ds->img_dat[index2+voxel],2.0f);
+                d_dist[frame2]=sum;
+                d_tmp[frame2]=sum;
+              }
+          }
+        
+        double thr=selectKthLargest(ds->numbest,ds->numframes,d_tmp);
+
+        for (int frame2=0;frame2<ds->numframes;frame2++)
+          {
+            if (d_dist[frame2]<thr)
+              {
+                ds->output_array[thread].push_back(frame1);
+                ds->output_array[thread].push_back(frame2);
+                ds->output_array[thread].push_back(d_dist[frame2]);
+              }
+          }
+      }
+    
+    std::cout << "++++      Thread (" << thread << ") done numpairs=" << ds->output_array[thread].size()/ds->numcols << std::endl;
+    
+    delete [] d_dist;
+    delete [] d_tmp;
+  }
+
+  // ---------------------------------------------------------------------------
   int createSparseMatrixParallel(bisSimpleImage<float>* Input,
                                  bisSimpleImage<short>* ObjectMap,
                                  bisSimpleImage<int>* IndexMap,
@@ -563,6 +617,48 @@ namespace bisImageDistanceMatrix {
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
     std::cout << "++++ Radius matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
 
+    delete ds;
+    return 1;
+  }
+
+  // ---------------------------------------------------------------------------
+  int createSparseMatrixParallelTemporal(bisSimpleImage<float>* Input,
+                                         bisSimpleMatrix<double>* Output,
+                                         float sparsity,int numthreads)
+  {
+    float Sparsity=bisUtil::frange(sparsity,0.001,50.0);
+    int NumberOfThreads=bisUtil::irange(numthreads,1,VTK_MAX_THREADS);
+
+    
+    int d[3]; Input->getImageDimensions(d);
+    int nv=d[0]*d[1]*d[2];
+    if (nv<NumberOfThreads)
+      NumberOfThreads=nv;
+
+    std::cout << "++++ CreateSparseMatrixParallel sparsity=" << Sparsity << " Number Of Threads= "
+              << NumberOfThreads << " (max=" << VTK_MAX_THREADS  << ")" << std::endl;
+
+    bisMThreadStructure* ds=  new bisMThreadStructure();
+    int dim[5]; Input->getDimensions(dim);
+    ds->img_dat=Input->getData();
+    ds->numvoxels=dim[0]*dim[1]*dim[2];
+    ds->numframes=dim[3]*dim[4];
+    ds->numbest=int(sparsity*ds->numframes)+1;
+    ds->numcols=3;
+
+    int piecesize=2*(ds->numbest*ds->numframes)/NumberOfThreads;
+    for (int i=0;i<NumberOfThreads;i++)
+      {
+        ds->output_array[i].clear();
+        ds->output_array[i].reserve(piecesize);
+      }
+    
+    std::stringstream strss;  strss <<  "Numbest=" << ds->numbest << ", expected total size=" << ds->numframes*ds->numbest;
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&temporalSparseThreadFunction,ds,strss.str(),NumberOfThreads);
+    combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
+    std::cout << "Total Rows=" << Output->getNumRows() << " frames=" << ds->numframes << std::endl;
+    double density=100.0*Output->getNumRows()/(double(ds->numframes*ds->numframes));
+    std::cout << "++++ Sparse matrix done. Final density: num_rows=" << ds->numframes << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
     delete ds;
     return 1;
   }
@@ -896,7 +992,7 @@ namespace bisSparseEigenSystem {
  * @param input serialized 4D input file as unsigned char array 
  * @param objectmap serialized input objectmap as unsigned char array 
  * @param jsonstring the parameter string for the algorithm 
- * { "useradius" : false, "radius" : 2.0, sparsity : 0.01, numthreads: 4 }
+ * { "useradius" : false, "radius" : 2.0, sparsity : 0.01, numthreads: 4}
  * @param debug if > 0 print debug messages
  * @returns a pointer to the sparse distance matrix serialized 
  */
@@ -937,12 +1033,52 @@ unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned cha
   
   std::unique_ptr<bisSimpleImage<int> > indexmap(bisImageDistanceMatrix::createIndexMap(obj_image.get()));
   std::unique_ptr<bisSimpleMatrix<double> > Output(new bisSimpleMatrix<double>("combined"));
+  
   if (useradius) {
     bisImageDistanceMatrix::createRadiusMatrixParallel(inp_image.get(),obj_image.get(),indexmap.get(),Output.get(),radius,numthreads);
   } else {
     bisImageDistanceMatrix::createSparseMatrixParallel(inp_image.get(),obj_image.get(),indexmap.get(),Output.get(),sparsity,numthreads);
   }
   
+  return Output->releaseAndReturnRawArray();
+}
+
+
+/** Computes a sparse temporal distance matrix among frames in the image (patches perhaps)
+ * @param input serialized 4D input file as unsigned char array 
+ * @param jsonstring the parameter string for the algorithm 
+ * { sparsity : 0.01, numthreads: 4 }
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to the sparse distance matrix serialized 
+ */
+// BIS: { 'computeTemporalImageDistanceMatrixWASM', 'Matrix', [ 'bisImage', 'ParamObj', 'debug' ], {"checkorientation" : "all"} }
+unsigned char* computeTemporalImageDistanceMatrixWASM(unsigned char* input,const char* jsonstring,int debug) {
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+  
+  if (debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > inp_image(new bisSimpleImage<float>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  float sparsity=params->getFloatValue("sparsity",0.01);
+  int numthreads=params->getIntValue("numthreads",4);
+  
+  if (debug)  {
+    std::cout << "........................" << std::endl;
+    std::cout << ".... Beginning temporal image distance matrix computation " << std::endl;
+    int dim[5]; inp_image->getDimensions(dim);
+    std::cout << "....      Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+  }
+
+  
+  std::unique_ptr<bisSimpleMatrix<double> > Output(new bisSimpleMatrix<double>("combined"));
+  bisImageDistanceMatrix::createSparseMatrixParallelTemporal(inp_image.get(),Output.get(),sparsity,numthreads);
   return Output->releaseAndReturnRawArray();
 }
 
