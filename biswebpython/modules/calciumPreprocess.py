@@ -18,11 +18,18 @@
 # ENDLICENSE
 
 import sys
+import pdb
+
+
+sys.path.append('/data15/mri_group/dave_data/bisweb/src/')
+
 try:
     import bisweb_path;
 except ImportError:
     bisweb_path=0;
     
+
+
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
@@ -104,7 +111,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     "name": "Bleach Correction",
                     "description": "Do exponential regression ('expReg') or top hat ('topHat')",
                     "type": "str",
-                    "varname": "bleachType",
+                    "varname": "bleachtype",
                     "default": 'expReg'
                 },
                 {
@@ -147,21 +154,16 @@ class calciumPreprocess(bis_basemodule.baseModule):
         print('oooo invoking: something with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
-        # blueMovie = self.inputs['blue'].get_data()
-        # uvMovie = self.inputs['uv'].get_data()
         inputMovie = self.inputs['blue'].get_data()
         blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
         mask = self.inputs['mask'].get_data()
 
         # Parameters
         dualChannel = self.parseBoolean(vals['dual'])
-        # topHatWindow = self.params['tophat']
-        # rotationAngle = self.params['rotation']
-        # downsampleRatio = self.params['downsample']
         topHatWindow = vals['tophat']
         rotationAngle = vals['rotation']
         downsampleRatio = vals['downsample']
-        bleachType = vals['bleachType']
+        bleachType = vals['bleachtype']
         outputEveryStep = debug
 
         if bleachType not in ['expReg','topHat']:
@@ -171,38 +173,16 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_blue_movie_mc.nii.gz')
+            out.save('calcium_blue_movie_mc.nii.gz')
             out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_uv_movie_mc.nii.gz')
+            out.save('calcium_uv_movie_mc.nii.gz')
             #out = bis_objects.bisImage().create(mask,[1,1,1,1,1],np.eye(4))
             #out.save('mask.nii.gz')
 
-
-        # Downsample, rotation
-
-        blueMovie = calcium_image.resize(blueMovie,(int(blueMovie.shape[0]*downsampleRatio),
-                                                    int(blueMovie.shape[1]*downsampleRatio)))
-        uvMovie = calcium_image.resize(uvMovie,(int(uvMovie.shape[0]*downsampleRatio),
-                                                int(uvMovie.shape[1]*downsampleRatio)))
-        mask = calcium_image.resize(mask,(int(mask.shape[0]*downsampleRatio),
-                                        int(mask.shape[1]*downsampleRatio)))
-        blueMovie = calcium_image.rotate(blueMovie,rotationAngle)
-        uvMovie = calcium_image.rotate(uvMovie,rotationAngle)
-        mask = calcium_image.rotate(mask,rotationAngle)
-
-        # other place is to look at is bisImage.load
         
-        rotatedSize3D = blueMovie.shape
+        blueMovieSize = blueMovie.shape
+        uvMovieSize = uvMovie.shape
 
-
-        if outputEveryStep:
-            out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_blue_movie_mc_rot.nii.gz')
-            out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_uv_movie_mc_rot.nii.gz')
-
-        #sys.exit()
-        
 
         # Top Hat filter
         if bleachType == 'topHat':
@@ -212,44 +192,36 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_blue_movie_mc_rot_filt.nii.gz')
+            out.save('calcium_blue_movie_mc_filt.nii.gz')
             out = bis_objects.bisImage().create(uvMovieFiltered,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_uv_movie_mc_rot_filt.nii.gz')
+            out.save('calcium_uv_movie_mc_filt.nii.gz')
 
         #### Two-wavelength Regression
         blueReg = calcium_analysis.twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,mask)
         
         if outputEveryStep:
-            out = bis_objects.bisImage().create(blueReg.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_blue_movie_mc_rot_filt_regress.nii.gz')
+            out = bis_objects.bisImage().create(blueReg.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
+            out.save('calcium_blue_movie_mc_filt_regress.nii.gz')
 
         #### dF/F
 
-        # pdb.set_trace()
         #blue
         blueDFF,uvDFF = calcium_analysis.dFF(blueMovie,uvMovieFiltered,blueReg,mask)
 
         if outputEveryStep:
-            out = bis_objects.bisImage().create(blueDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_blue_movie_mc_rot_filt_regress_dff.nii.gz')
-            out = bis_objects.bisImage().create(uvDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
-            out.save('calcium_down_uv_movie_mc_rot_filt_regress_dff.nii.gz')
+            out = bis_objects.bisImage().create(blueDFF.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
+            out.save('calcium_blue_movie_mc_filt_regress_dff.nii.gz')
+            out = bis_objects.bisImage().create(uvDFF.reshape(uvMovieSize),[1,1,1,1,1],np.eye(4))
+            out.save('calcium_uv_movie_mc_filt_regress_dff.nii.gz')
         
         # for memory
         blueMovie = []
         uvMovie = []
-        out = bis_objects.bisImage().create(blueDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
-        # out.save('calcium_down_blue_movie_mc_rot_filt_regress_dff.nii.gz')
+        out = bis_objects.bisImage().create(blueDFF.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
         self.outputs['blueout']=out
-        out = bis_objects.bisImage().create(uvDFF.reshape(rotatedSize3D),[1,1,1,1,1],np.eye(4))
+        out = bis_objects.bisImage().create(uvDFF.reshape(uvMovieSize),[1,1,1,1,1],np.eye(4))
         self.outputs['uvout']=out
-        # out.save('calcium_down_uv_movie_mc_rot_filt_regress_dff.nii.gz')
         
-
-        # out=bisImage();
-        # imagedata = numpy array with the voxel intensities (order is i,j,k,t,c)
-        # [ frame 1 ][ frame 2 ][ frame 3 ]
-        # out.create(imagedata,imagespacing,imagematrix)
 
         
         
