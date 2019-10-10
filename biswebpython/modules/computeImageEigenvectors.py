@@ -110,6 +110,9 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
                                                                                         paramobj,
                                                                                         self.parseBoolean(vals['debug']));
 
+        # Propagate Orientation in this weird matrix to image thing
+        self.outputs['output'].affine=self.inputs['mask'].affine;
+
         return True
     
 
