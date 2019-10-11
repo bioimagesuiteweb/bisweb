@@ -1,11 +1,11 @@
 {
   "sub01": {
-    "sub01_behaviors.csv": "0,1,2\n",
-    "sub01_conn01.csv": "1,2,3\n4,5,6\n7,8,9",
-    "sub01_conn02.csv": "1,2,3\n4,5,9\n7,8,9\n"
+    "sub01_behaviors.csv": "0,1,2",
+    "sub01_conn01.csv": "1,2,3;4,5,6;7,8,9",
+    "sub01_conn02.csv": "1,2,3;4,5,9;7,8,9"
   },
   "sub02": {
-    "sub02_behaviors.csv": "1,2,3\n",
-    "sub02_conn01.csv": "1,2,3\n5,5,5\n7,8,9"
+    "sub02_behaviors.csv": "1,2,3",
+    "sub02_conn01.csv": "1,2,3;5,5,5;7,8,9"
   }
 }
