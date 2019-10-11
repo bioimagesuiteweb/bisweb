@@ -911,6 +911,7 @@ var removelines = function() {
  */
 
 let drawScatterandHisto = function(){
+    
     /*
     if (globalParams.internal.laststate === null) {
         bootbox.alert('you need to create the lines before you do anything (Need to fix)');
@@ -936,7 +937,7 @@ let drawScatterandHisto = function(){
     // Draw the Histogram to the svgModal Div
     createHistogram(svgModal, dim);
     
-    /*
+    
     svgModal.bind('drop',(data) =>{
         const reader = new FileReader();
 
@@ -992,8 +993,8 @@ let drawScatterandHisto = function(){
             });
 
         };
-    });
-    */
+    });*/
+    
     globalParams.displayDialog.show();
 };
 

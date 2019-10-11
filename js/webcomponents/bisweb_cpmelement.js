@@ -30,6 +30,7 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
 const bisweb_popoverhandler = require('bisweb_popoverhandler.js');
 const bisweb_scatterplot = require('bisweb_scatterplot.js');
+const bisweb_histoplot = require('bisweb_histoplot.js');
 
 const bis_dbase = require('bisweb_dbase');
 const bisweb_userprefs = require('bisweb_userpreferences.js');
@@ -113,23 +114,25 @@ class CPMElement extends HTMLElement {
     }
 
     /**
-     * Creates the scatter plot and relevant event listeners to display it.
+     * Creates the scatter and histogram plot and relevant event listeners to display it.
      * 
-     * @param {ViewerLayoutElement} layoutElement - The canvas associated with displaying graphics and charts. 
-     * @param {HTMLElement} scatterElement - The DOM element to append the scatter plot to.
-     * @param {HTMLElement} histoElement - The DOM element to append the histogram plot to.
+     * @param {HTMLElement} baseElement - The base element to append the two charts to.
      */
-    createCPMGUIManager(scatterElement) {
+    createCPMGUIManager(baseElement) {
         let dims = [this.layoutElement.viewerwidth / 3, this.layoutElement.viewerheight / 2];
-        let pos = [0 , this.layoutElement.viewerheight - 10];
-
-        let scatterplot = new bisweb_scatterplot(scatterElement, dims, pos);
+        let histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight - 10];
+        let scatterpos = [0 , this.layoutElement.viewerheight - 10];
+        
+        let histoplot = new bisweb_histoplot(baseElement, dims, histopos);
+        let scatterplot = new bisweb_scatterplot(baseElement, dims, scatterpos);
 
         //resizing function for charts
         $(window).on('resize', () => {
             dims = [this.layoutElement.viewerwidth / 3 , this.layoutElement.viewerheight / 2];
-            pos = [0 , this.layoutElement.viewerheight - 10];
-            scatterplot.resize(dims, pos);
+            scatterpos = [0 , this.layoutElement.viewerheight - 10];
+            histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight - 10];
+            histoplot.resize(dims, histopos);
+            scatterplot.resize(dims, scatterpos);
         });
     }
 
