@@ -82,6 +82,7 @@ namespace bisImageDistanceMatrix {
     int numframes;
   };
 
+
   // ------------------------------------------------------------------------------------------------
 
   float selectKthLargest(unsigned long k0offset, unsigned long n, float* arr0offset)
@@ -663,6 +664,11 @@ namespace bisImageDistanceMatrix {
     return 1;
   }
 
+
+  
+
+
+  
   // ----------------------------------------------------------------------------------
   //
   // -------------------------- reformat Image Code -- make patches into frames
@@ -790,7 +796,7 @@ namespace bisSparseEigenSystem {
                           bisSimpleImage<int>*     indexMap,
                           bisSimpleImage<float>*   eigenVectors,
                           int maxeigen=10,
-                          double sigma=1.0, double lambda=0.0,double tolerance=0.001,int maxiter=50) {
+                          double sigma=1.0, double lambda=0.0,double tolerance=0.001,int maxiter=50,float scale=10000) {
 
 
     int nt=sparseMatrix->getNumRows();
@@ -970,7 +976,7 @@ namespace bisSparseEigenSystem {
           for (int frame=0;frame<numeigen;frame++) {
             int ia=voxel+frame*volumesize;
             int ib=frame*numeigenrows+index;
-            eig_dat[ia]=eigcolmajor[ib]*10000;
+            eig_dat[ia]=eigcolmajor[ib]*scale;
           }
         }
       }
@@ -982,6 +988,61 @@ namespace bisSparseEigenSystem {
     return numeigen;
   
   }
+
+  // ----------------------------------------------------------------------------------
+
+  int eigenvectorDenoiseImage(bisSimpleImage<float>* Input,
+                              bisSimpleImage<float>* Eigenvectors,
+                              bisSimpleImage<float>* Output,
+                              float scale)
+  {
+
+
+    int dim[5]; Input->getDimensions(dim);
+    int dim2[5]; Eigenvectors->getDimensions(dim2);
+    float* idata=Input->getData();
+    float* edata=Eigenvectors->getImageData();
+
+    Output->copyStructure(Input);
+    float* odata=Output->getImageData();
+
+
+    
+    int numinputframes=dim[3]*dim[4];
+    int numeigenvectors=dim2[3]*dim2[4];
+
+    std::cout << "++++ denoiseImageParallel scale=" << scale << " numeigenvectors=" << numeigenvectors << std::endl;
+    
+    int volumesize=dim[0]*dim[1]*dim[2];
+    double* coeff=new double[numeigenvectors];
+    
+    for (int frame=0;frame<numinputframes;frame++) {
+
+      int i_offset=frame*volumesize;
+      std::cout << "Frame=" << frame << " off=" << i_offset << std::endl;
+      
+      for (int c=0;c<numeigenvectors;c++) {
+        coeff[c]=0.0;
+        int e_offset=c*volumesize;
+        for (int voxel=0;voxel<volumesize;voxel++) {
+          coeff[c]+=idata[i_offset+voxel]*edata[e_offset+voxel];
+        }
+        coeff[c]/=(scale*scale);
+        std::cout << "Coeff=" << c << " = " << coeff[c] << " e_offset=" << e_offset << std::endl;
+      }
+
+      for (int voxel=0;voxel<volumesize;voxel++) {
+        odata[voxel]=0.0;
+        for (int c=0;c<numeigenvectors;c++) 
+          odata[voxel]+=edata[c*volumesize+voxel]*coeff[c];
+      }
+    }
+    delete [] coeff;
+    return 1;
+  }
+
+  // -----------------------------------------------------------------------------------------------------------------------
+  // End of namespace
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -1150,15 +1211,15 @@ unsigned char* createPatchReformatedImage(unsigned char* input,const char* jsons
 }
 
 
+
 /** Compute sparse Eigen Vectors based on distance Matrix and IndexMap 
  * @param sparseMatrix the sparse Matrix (output of computeImageDistanceMatrix)
  * @param indexMap the indexMap image (output of computeImageIndexMap)
  * @param eigenVectors the output eigenVector image
- * @param maxeigen maxnumber of eigenvalues/eigenvectors to compute
- * @param sigma smoothness factor used in exponentiating the distance to a probability (default=1.0)
- * @param lambda weight of Euclidean distance (default=0.0)
- * @param tolerance convergence threshold 1e-5
- * @param maxiter max number of eigendecomposition iterations (default=500)
+ * @param jsonstring the parameter string for the algorithm 
+ * { "maxeigen" : 10, "sigma" : 1.0, "lambda" : 0.0, "tolerance" : 0.00001 , "maxiter" : 500, "scale" : 10000 }
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to the reformated image
  */
 // BIS: { 'computeSparseImageEigenvectorsWASM', 'bisImage', [ 'Matrix', 'bisImage', 'ParamObj',  'debug' ] }
 unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned char* indexmap,const char* jsonstring,int debug) {
@@ -1184,6 +1245,7 @@ unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned
   float  lambda=params->getFloatValue("lambda",0.0);
   float  tolerance=params->getFloatValue("tolerance",1.0e-5);
   int iter=params->getIntValue("maxiter",500);
+  float scale=params->getFloatValue("scale",10000);
   
   if (debug)  {
     std::cout << "........................" << std::endl;
@@ -1200,6 +1262,54 @@ unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned
   
   std::unique_ptr<bisSimpleImage<float> > Output(new bisSimpleImage<float>("eigenvect"));
   bisSparseEigenSystem::computeEigenVectors(dist_matrix.get(),obj_image.get(),Output.get(),
-                                            maxeigen,sigma,lambda,tolerance,iter);
+                                            maxeigen,sigma,lambda,tolerance,iter,scale);
   return Output->releaseAndReturnRawArray();
+}
+
+
+
+
+/** Eigenvector denoise image -- project image into eigenspace
+ * @param input serialized 3D input file as unsigned char array 
+ * @param 4D eigenvector image
+ * @param jsonstring the parameter string for the algorithm 
+ * { "scale" : 10000 , numthreads: 4 }
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to the denoise image
+ */
+// BIS: { 'computeEigenvectorDenoiseImageWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
+unsigned char* computeEigenvectorDenoiseImageWASM(unsigned char* input, unsigned char* eigenvectors,const char* jsonstring,int debug) {
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+  
+  if (debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > inp_image(new bisSimpleImage<float>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<float> > eig_image(new bisSimpleImage<float>("obj_image"));
+  if (!eig_image->linkIntoPointer(eigenvectors))
+    return 0;
+  
+  float scale=params->getFloatValue("scale",10000.0);
+  
+  if (debug)  {
+    std::cout << "........................" << std::endl;
+    std::cout << ".... Beginning image eigenvector denoising " << std::endl;
+    int dim[5]; inp_image->getDimensions(dim);
+    std::cout << "....      Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    eig_image->getDimensions(dim);
+    std::cout << "....      Eigenvector  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "........................" << std::endl << std::endl;
+  }
+
+  std::unique_ptr<bisSimpleImage<float> > Output(new bisSimpleImage<float>("output"));
+  bisSparseEigenSystem::eigenvectorDenoiseImage(inp_image.get(),eig_image.get(),Output.get(),scale);
+  return Output->releaseAndReturnRawArray();
+
 }

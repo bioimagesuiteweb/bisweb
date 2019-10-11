@@ -41,3 +41,5 @@ patchReformatImage
 imageDistanceMatrix
 temporalImageDistanceMatrix
 computeImageEigenvectors
+eigenvectorDenoiseImage
+extractImagePatches

@@ -80,6 +80,15 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
                     "varname": "lambda"
                 },
                 {
+                    "name": "Scale",
+                    "description": "A value to scale the eigenvectors by (default=10000)",
+                    "type": "float",
+                    "default": 10000.0,
+                    "lowbound": 1.0,
+                    "highbound": 100000.0,
+                    "varname": "scale"
+                },
+                {
                     "name": "Max Iterations",
                     "description": "The maximum number of iterations",
                     "type": "int",
@@ -100,6 +109,7 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
             'lambda' : vals['lambda'],
             'sigma' : vals['sigma'],
             'maxiter' : vals['maxiter'],
+            'scale' : vals['scale'],
         };
         print('Paramobj=',paramobj);
         indexmap=bis_baseutils.getDynamicLibraryWrapper().computeImageIndexMapWASM(self.inputs['mask'],

@@ -37,6 +37,19 @@ extern "C" {
   // BIS: { 'computeImageDistanceMatrixWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
   BISEXPORT unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned char* objectmap,const char* jsonstring,int debug);
 
+
+  /** Eigenvector denoise image -- project image into eigenspace
+   * @param input serialized 3D input file as unsigned char array 
+   * @param 4D eigenvector image
+   * @param jsonstring the parameter string for the algorithm 
+   * { "scale" : 10000 }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the denoise image
+   */
+  // BIS: { 'computeEigenvectorDenoiseImageWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
+  BISEXPORT unsigned char* computeEigenvectorDenoiseImageWASM(unsigned char* input, unsigned char* eigenvectors,const char* jsonstring,int debug);
+
+  
   /** Creates an indexmap image
    * @param input objectmap
    * @param debug if > 0 print debug messages
@@ -71,11 +84,10 @@ extern "C" {
    * @param sparseMatrix the sparse Matrix (output of computeImageDistanceMatrix)
    * @param indexMap the indexMap image (output of computeImageIndexMap)
    * @param eigenVectors the output eigenVector image
-   * @param maxeigen maxnumber of eigenvalues/eigenvectors to compute
-   * @param sigma smoothness factor used in exponentiating the distance to a probability (default=1.0)
-   * @param lambda weight of Euclidean distance (default=0.0)
-   * @param tolerance convergence threshold 1e-5
-   * @param maxiter max number of eigendecomposition iterations (default=500)
+   * @param jsonstring the parameter string for the algorithm 
+   * { "maxeigen" : 10, "sigma" : 1.0, "lambda" : 0.0, "tolerance" : 0.00001 , "maxiter" : 500, "scale" : 10000 }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the reformated image
    */
   // BIS: { 'computeSparseImageEigenvectorsWASM', 'bisImage', [ 'Matrix', 'bisImage', 'ParamObj',  'debug' ] }
   BISEXPORT unsigned char* computeSparseImageEigenvectorsWASM(unsigned char* input, unsigned char* indexmap,const char* jsonstring,int debug);
