@@ -27,7 +27,7 @@ class Bisweb_Scatterplot {
         //Create the svg that will contain the scatter chart
         let SVG = d3.select(parentDiv).insert('div', ':first-child')
             .attr('class', 'bis-ScatterContainer')
-            .attr('style', `width: ${dim[0]}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`)
+            .attr('style', `width: ${dim[0]}px; height: ${dim[1]}; left: ${pos[0]}px; position: absolute;`)
             .append("svg").attr("id", globalParams.Id)
             .attr('class', 'bis-scatterplotchart')
             .attr('style', 'z-index: 1000; position: relative;')
@@ -183,7 +183,7 @@ class Bisweb_Scatterplot {
         this.resize = (dim, pos) => {
             let svgDim = Math.min(dim[0], dim[1]);
 
-            $('.bis-ScatterContainer').attr('style', `width: ${svgDim}px; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`);
+            $('.bis-ScatterContainer').attr('style', `width: ${svgDim}px; left: ${pos[0]}px; position: absolute;`);
             xAxis.ticks(svgDim / 25);
             scatterChart.selectAll('.bis-axisX').call(xAxis);
             yAxis.ticks(svgDim / 25);

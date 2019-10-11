@@ -130,7 +130,7 @@ class CPMElement extends HTMLElement {
         $(window).on('resize', () => {
             dims = [this.layoutElement.viewerwidth / 3 , this.layoutElement.viewerheight / 2];
             scatterpos = [0 , this.layoutElement.viewerheight - 10];
-            histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight - 10];
+            histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight / 2];
             histoplot.resize(dims, histopos);
             scatterplot.resize(dims, scatterpos);
         });

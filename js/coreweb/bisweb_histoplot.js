@@ -18,11 +18,16 @@ class Bisweb_Histoplot {
         let innerWidth = svgWidth - sizeOffset;
         let innerHeight = svgHeight - sizeOffset;
 
-        //create the svg Parent and the graphic div that everything will be drawn to
-        let histoChart = d3.select(parentDiv[0]).append("svg").attr("class", 'bis-histogramChart')
-            .attr("width", svgWidth)
-            .attr("height", svgHeight)
-            .attr('style', `left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`)
+        console.log('width', dim[0], 'height', dim[1], 'pos', pos);
+        //create the svg Parent and the graphic div that everything will be drawn to (pos[1] currently unused)
+        let histoChart = d3.select(parentDiv).insert('div', ':first-child')
+            .attr('class', 'bis-HistoContainer')
+            .attr('style', `width: ${dim[0]}px; height: ${dim[1]}px; left: ${pos[0]}px; position: absolute;`)
+            .append("svg")
+            .attr("class", 'bis-histogramChart')
+            .attr('style', 'z-index: 1000; position: relative;')
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
             .append("g")
             .attr("id", globalParams.Id)
             .attr("transform", `translate(${sizeOffset},${sizeOffset / 2})`);
@@ -54,12 +59,12 @@ class Bisweb_Histoplot {
 
         //Add the Axes to the chart
         histoChart.append("g")
-            .attr("class", "x bis-axis")
+            .attr("class", "bis-axisX")
             .attr("transform", `translate(${sizeOffset},${innerHeight - sizeOffset})`)
             .call(xAxis);
 
         histoChart.append("g")
-            .attr("class", "y bis-axis")
+            .attr("class", "bis-axisY")
             .attr("transform", `translate(${sizeOffset},0)`)
             .call(yAxis);
 
@@ -272,6 +277,18 @@ class Bisweb_Histoplot {
 
             genGraph(bins, groupColor, means);
         });
+
+        
+        //On resize
+        this.resize = (dim, pos) => {
+            let svgDim = Math.min(dim[0], dim[1]);
+
+            $('.bis-HistoContainer').attr('style', `width: ${svgDim}px; height: ${dim[1]}; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`);
+            xAxis.ticks(svgDim / 25);
+            histoChart.selectAll('.bis-axisX').call(xAxis);
+            yAxis.ticks(svgDim / 25);
+            histoChart.selectAll('.bis-axisY').call(yAxis);
+        };
     }
 }
 
