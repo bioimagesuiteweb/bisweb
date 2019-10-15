@@ -3,13 +3,15 @@ const d3 = require('d3');
 const webutil = require('bis_webutil');
 
 const globalParams = {
-    Id : null
+    Id : null,
+    Ticks : null
 };
 
 class Bisweb_Histoplot {
 
-    constructor(parentDiv, dim, pos, binCnt = 30) {
+    constructor(parentDiv, dim, pos, binCnt = 50) {
         globalParams.Id = webutil.getuniqueid();
+        globalParams.Ticks = binCnt;
 
         //Size Settings
         let sizeOffset = 29;
@@ -18,13 +20,12 @@ class Bisweb_Histoplot {
         let innerWidth = svgWidth - sizeOffset;
         let innerHeight = svgHeight - sizeOffset;
 
-        console.log('width', dim[0], 'height', dim[1], 'pos', pos);
         //create the svg Parent and the graphic div that everything will be drawn to (pos[1] currently unused)
         let histoChart = d3.select(parentDiv).insert('div', ':first-child')
             .attr('class', 'bis-HistoContainer')
             .attr('style', `width: ${dim[0]}px; height: ${dim[1]}px; left: ${pos[0]}px; position: absolute;`)
             .append("svg")
-            .attr("class", 'bis-histogramChart')
+            .attr("class", 'bis-histogramchart')
             .attr('style', 'z-index: 1000; position: relative;')
             .attr("preserveAspectRatio", "xMinYMin meet")
             .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
@@ -72,13 +73,15 @@ class Bisweb_Histoplot {
         //Add labels to the chart
         histoChart.append('text')
             .text("Correlation (R)")
-            .attr("transform", `translate(${svgWidth / 2},${innerHeight})`)
-            .attr('class', 'bis-label');
+            .attr("transform", `translate(${svgWidth/2},${innerHeight})`)
+            .attr('class', 'bis-label')
+            .attr('style', 'font-size: 10px');
 
         histoChart.append('text')
             .text("Count")
             .attr("transform", `translate(0,${innerHeight / 2})rotate(-90)`)
-            .attr('class', 'bis-label');
+            .attr('class', 'bis-label')
+            .attr('style', 'font-size: 10px');
 
         //Add legend group to the histogram
         let legend = histoChart.append('g').attr('class', 'legend');
@@ -212,7 +215,8 @@ class Bisweb_Histoplot {
 
         genGraph([], [], []);
 
-        $('#histogramChart').bind('changeData', (e, newData) => {
+        $(parentDiv).find('.bis-histogramchart').on('changeData', (e, newData) => {
+            console.log('change data event', newData);
             let { colors = ['#1995e8', '#e81818'], data } = newData;
 
             //Map colors to group names for use in styling
@@ -284,9 +288,9 @@ class Bisweb_Histoplot {
             let svgDim = Math.min(dim[0], dim[1]);
 
             $('.bis-HistoContainer').attr('style', `width: ${svgDim}px; height: ${dim[1]}; left: ${pos[0]}px; top: ${pos[1]}; position: absolute;`);
-            xAxis.ticks(svgDim / 25);
+            xAxis.ticks(svgDim / globalParams.Ticks);
             histoChart.selectAll('.bis-axisX').call(xAxis);
-            yAxis.ticks(svgDim / 25);
+            yAxis.ticks(svgDim / globalParams.Ticks);
             histoChart.selectAll('.bis-axisY').call(yAxis);
         };
     }

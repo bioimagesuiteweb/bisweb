@@ -5,6 +5,7 @@ const regression = require('regression');
 
 const globalParams = {
     Id: null,
+    Ticks : 35
 };
 
 class Bisweb_Scatterplot {
@@ -54,7 +55,7 @@ class Bisweb_Scatterplot {
 
         let xAxis = d3.svg.axis()
             .orient("bottom")
-            .ticks(svgDim / 30)
+            .ticks(svgDim / globalParams.Ticks)
             .scale(xScale);
 
 
@@ -65,20 +66,18 @@ class Bisweb_Scatterplot {
 
         let yAxis = d3.svg.axis()
             .orient("left")
-            .ticks(svgDim / 30)
+            .ticks(svgDim / globalParams.Ticks)
             .scale(yScale);
 
         //draw the Axes to the screen
         scatterChart.append("g")
             .attr("class", "bis-axisX")
-            .attr('style', 'font-size: 10px;')
             .attr("transform", `translate(${sizeOffset},${innerDim - sizeOffset})`)
             .attr("width", "inherit")
             .call(xAxis);
 
         scatterChart.append("g")
             .attr("class", "bis-axisY")
-            .attr('style', 'font-size: 10px;')
             .attr("transform", `translate(${sizeOffset},0)`)
             .call(yAxis);
 
@@ -184,13 +183,13 @@ class Bisweb_Scatterplot {
             let svgDim = Math.min(dim[0], dim[1]);
 
             $('.bis-ScatterContainer').attr('style', `width: ${svgDim}px; left: ${pos[0]}px; position: absolute;`);
-            xAxis.ticks(svgDim / 25);
+            xAxis.ticks(svgDim / globalParams.Ticks);
             scatterChart.selectAll('.bis-axisX').call(xAxis);
-            yAxis.ticks(svgDim / 25);
+            yAxis.ticks(svgDim / globalParams.Ticks);
             scatterChart.selectAll('.bis-axisY').call(yAxis);
         };
 
-        $(`.bis-scatterplotchart`).bind('changeData', changeData);
+        $(`.bis-scatterplotchart`).on('changeData', changeData);
     }
 }
 

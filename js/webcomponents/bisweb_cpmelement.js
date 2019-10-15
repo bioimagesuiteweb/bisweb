@@ -24,7 +24,6 @@ const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_bidsutils = require('bis_bidsutils.js');
-// const moduleIndex = require('moduleindex.js');
 
 const bis_webfileutil = require('bis_webfileutil.js');
 const bisweb_connectivityvis = require('bisweb_connectivityvis.js');
@@ -153,7 +152,7 @@ class CPMElement extends HTMLElement {
      */
     createMenubarItems(menubar) {
 
-        let topmenu = bis_webutil.createTopMenuBarMenu('File', menubar);
+        let topfilemenu = bis_webutil.createTopMenuBarMenu('File', menubar);
         let importFileCallback = (f) => { this.importFileCallback(f);};  
 
         let importFileItem = bis_webfileutil.createFileButton({
@@ -178,21 +177,31 @@ class CPMElement extends HTMLElement {
             'title' : 'Export connectivity file',
             'filters' : [ {'name': 'Connectivity save files', 'extensions' : ['json'] } ]
         });
+        let importHistogramItem = bis_webfileutil.createFileButton({
+            'callback' : this.loadHistogramFile.bind(this);
+        }, {
+            'title': 'Import histogram file from directory',
+            'altkeys' : true,
+            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['tsv', 'csv']}]
+        });
 
-        bis_webutil.createMenuItem(topmenu, 'Import From CPM File', () => {  importFileItem.click(); });
-        this.menuDirectoryItem = bis_webutil.createMenuItem(topmenu, 'Import From Directory', () => {  if (this.mode !== 'local') { importDirectoryItem.click(); }});
-        bis_webutil.createMenuItem(topmenu, '');
-        bis_webutil.createMenuItem(topmenu, 'Export to CPM File', () => { exportFileItem.click(); });
-        bis_webutil.createMenuItem(topmenu, '');
+        bis_webutil.createMenuItem(topfilemenu, 'Import From CPM File', () => {  importFileItem.click(); });
+        this.menuDirectoryItem = bis_webutil.createMenuItem(topfilemenu, 'Import From Directory', () => {  if (this.mode !== 'local') { importDirectoryItem.click(); }});
+        bis_webutil.createMenuItem(topfilemenu, '');
+        bis_webutil.createMenuItem(topfilemenu, 'Export to CPM File', () => { exportFileItem.click(); });
+        bis_webutil.createMenuItem(topfilemenu, '');
 
         if (bis_webutil.inElectronApp()) {
-            bis_webutil.createMenuItem(topmenu, ''); // separator
-            bis_webutil.createMenuItem(topmenu, 'Show JavaScript Console',
+            bis_webutil.createMenuItem(topfilemenu, ''); // separator
+            bis_webutil.createMenuItem(topfilemenu, 'Show JavaScript Console',
                                        function () {
                                            window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
                                        });
+
+        let tophistomenu = bis_webutil.createTopMenuBarMenu('Histogram', menubar);
+        bis_webutil.createMenuItem(tophistomenu, 'Import from file', () => { importHistogramItem.click(); });
         } else {
-            bis_webfileutil.createFileSourceSelector(topmenu, 'Set File Source', null, this.changeLoadDictionaryButtonStatus.bind(this));
+            bis_webfileutil.createFileSourceSelector(topfilemenu, 'Set File Source', null, this.changeLoadDictionaryButtonStatus.bind(this));
         }
     }
 
@@ -465,12 +474,11 @@ class CPMElement extends HTMLElement {
                         }
 
                         $('.bis-scatterplotchart').trigger('changeData', {scatterData: data});
+
                         resolve(cpmResults);
                     } catch (e) { 
                         reject(e);
                     }
-
-                    //TODO: Send to scatter plot
                 });
             }
         });
@@ -757,6 +765,10 @@ class CPMElement extends HTMLElement {
                 reject(e);
             });
         });
+    }
+
+    loadHistogramFile(filename) {
+        //TODO: implement this!
     }
 
     setHelpText(button) {

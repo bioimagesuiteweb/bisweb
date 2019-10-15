@@ -463,7 +463,11 @@ input[type="radio"] .styled:checked + label::after {
     background-color : rgba(12, 227, 172, 0.2);
 }
 
-.bis-axis{
+.bis-axisX {
+    font-size: 1rem;
+}
+
+.bis-axisY {
     font-size: 1rem;
 }
 
@@ -475,6 +479,11 @@ input[type="radio"] .styled:checked + label::after {
 }
 
 .bis-scatterplotchart{
+    z-index: 1000;
+	position: relative;
+}
+
+.bis-histogramchart{
     z-index: 1000;
 	position: relative;
 }
