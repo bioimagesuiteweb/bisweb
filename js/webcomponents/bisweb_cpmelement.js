@@ -66,6 +66,7 @@ class CPMElement extends HTMLElement {
             });
 
             bis_dbase.getItem('filesource').then( (obj) => {
+                obj = obj || 'local';
                 this.changeLoadDictionaryButtonStatus(obj);
             });
 
@@ -93,18 +94,8 @@ class CPMElement extends HTMLElement {
             this.layoutElement = document.querySelector(this.layoutelementid);
 
             let menubar = document.querySelector(this.menubarid).getMenuBar();
-            //let cardbar = document.querySelector(this.cardbarid);
             let dockbar = this.layoutElement.elements.dockbarcontent;
             this.createCPMGUIManager(this.layoutElement.elements.rendererbase[0]);
-            /*cardbar.createTab('Scatter plot', $(), { 'save' : true }).then( (scatterobj) => {
-                this.createCPMGUIManager(scatterobj.content[0]);
-
-                //resizing function for card bar pane
-                cardbar.setResizingFunction( () => {
-                    scatterobj.content.width(this.layoutElement.viewerwidth / 3 + 20); //add a little bit to the width to accomodate buttons on the right
-                    scatterobj.content.height(this.layoutElement.viewerheight / 2);
-                });
-            });*/
 
             this.createMenubarItems(menubar, dockbar);
             this.createCPMPanel(dockbar);
@@ -169,7 +160,7 @@ class CPMElement extends HTMLElement {
             'callback' : importFileCallback
         }, {
             'title': 'Import connectivity index file',
-            'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
+            'filters' : [ { 'name': 'JSON', 'extensions': ['json']}],
             'suffix' : 'json'
         });
         let importDirectoryItem = bis_webfileutil.createFileButton({
@@ -178,14 +169,14 @@ class CPMElement extends HTMLElement {
             'mode' : 'directory',
             'title': 'Import connectivity files from directory',
             'altkeys' : true,
-            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
+            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['tsv', 'csv']}],
         });
         let exportFileItem = bis_webfileutil.createFileButton({
             'callback' : this.exportCPMFile.bind(this)
         }, {
             'save' : true,
             'title' : 'Export connectivity file',
-            'filters' : [ {'name': 'Connectivity save files', 'extensions' : ['.json'] } ]
+            'filters' : [ {'name': 'Connectivity save files', 'extensions' : ['json'] } ]
         });
 
         bis_webutil.createMenuItem(topmenu, 'Import From CPM File', () => {  importFileItem.click(); });
