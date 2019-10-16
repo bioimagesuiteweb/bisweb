@@ -182,7 +182,7 @@ class CPMElement extends HTMLElement {
         }, {
             'title': 'Import histogram file from directory',
             'altkeys' : true,
-            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['tsv', 'csv']}]
+            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['tsv', 'csv', 'json']}]
         });
 
         bis_webutil.createMenuItem(topfilemenu, 'Import From CPM File', () => {  importFileItem.click(); });
@@ -197,12 +197,12 @@ class CPMElement extends HTMLElement {
                                        function () {
                                            window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
                                        });
-
-        let tophistomenu = bis_webutil.createTopMenuBarMenu('Histogram', menubar);
-        bis_webutil.createMenuItem(tophistomenu, 'Import from file', () => { importHistogramItem.click(); });
         } else {
             bis_webfileutil.createFileSourceSelector(topfilemenu, 'Set File Source', null, this.changeLoadDictionaryButtonStatus.bind(this));
         }
+
+        let tophistomenu = bis_webutil.createTopMenuBarMenu('Histogram', menubar);
+        bis_webutil.createMenuItem(tophistomenu, 'Import from file', () => { importHistogramItem.click(); });
     }
 
     changeLoadDictionaryButtonStatus(selected) {
@@ -749,9 +749,34 @@ class CPMElement extends HTMLElement {
     }
 
     loadHistogramFile(filename) {
-        //TODO: implement this!
-        bis_genericio.load(filename).then( (obj) => {
+        bis_genericio.read(filename).then( (obj) => {
+            let parsedData;
+            try {
+                parsedData = JSON.parse(obj.data);
+            } catch(e) { 
+                console.log('Error parsing JSON from histogram file', e);
+            }
 
+            let histogramData = parsedData.histogramData || parsedData; 
+
+            let histoData = {
+                groups: [],
+                data_array: [],
+                data_groups: {}
+            };
+
+            histogramData.forEach((val_group)=>{
+                histoData.groups.push(val_group.name);
+                histoData.data_array.push(val_group.values);
+                histoData.data_groups[val_group.name] = val_group.values;
+            });
+
+            console.log('histogram data', histoData);
+            // Draw the Histogram to the svgModal Div
+            $('.bis-histogramChart').trigger('changeData',{
+                data: histoData,
+                colors: ['#1995e8','#e81818']
+            });
         });
     }
 
