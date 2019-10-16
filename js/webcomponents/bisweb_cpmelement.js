@@ -178,7 +178,7 @@ class CPMElement extends HTMLElement {
             'filters' : [ {'name': 'Connectivity save files', 'extensions' : ['json'] } ]
         });
         let importHistogramItem = bis_webfileutil.createFileButton({
-            'callback' : this.loadHistogramFile.bind(this);
+            'callback' : this.loadHistogramFile.bind(this)
         }, {
             'title': 'Import histogram file from directory',
             'altkeys' : true,
@@ -590,24 +590,6 @@ class CPMElement extends HTMLElement {
             console.log('regenerate fname', controller, flist);
             controller.setValue(controller, flist);
         }
-
-         /*let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
-            confirmButton.on('click', () => {
-                console.log('settings obj', settingsObj);
-                this.settings = Object.assign({}, settingsObj);
-            });*/
-
-            /*let cancelButton = bis_webutil.createbutton({ 'name': 'Close', 'type': 'btn-default' });
-            cancelButton.on('click', () => {
-                for (let key of Object.keys(settingsObj)) {
-                    settingsObj[key] = this.settings[key];
-                }
-                    for (let i in container.__controllers) {
-                        container.__controllers[i].updateDisplay();
-                    }
-
-                settingsModal.dialog.modal('hide');
-            });*/
     }
 
     /**
@@ -756,7 +738,6 @@ class CPMElement extends HTMLElement {
                 }
             }
 
-            console.log('f', f);
             let stringifiedObj = JSON.stringify(exportedObj, null, 2);
             bis_genericio.write(f, stringifiedObj).then(() => {
                 resolve();
@@ -769,6 +750,9 @@ class CPMElement extends HTMLElement {
 
     loadHistogramFile(filename) {
         //TODO: implement this!
+        bis_genericio.load(filename).then( (obj) => {
+
+        });
     }
 
     setHelpText(button) {
