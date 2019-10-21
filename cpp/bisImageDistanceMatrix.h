@@ -34,7 +34,7 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to the sparse distance matrix serialized 
    */
-  // BIS: { 'computeImageDistanceMatrixWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
+  // BIS: { 'computeImageDistanceMatrixWASM', 'Matrix', [ 'bisImage', 'bisImage_opt', 'ParamObj',  'debug' ], {"checkorientation" : "all"} } 
   BISEXPORT unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned char* objectmap,const char* jsonstring,int debug);
 
 

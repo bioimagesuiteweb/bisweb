@@ -359,6 +359,8 @@ class BisWebImage extends BisWebDataObject {
         this.internal.range = [ 0,0];
         if (this.internal.imgdata===null)
             return;
+
+        
         
         let l=this.internal.imgdata.length;
         if (l===0)
@@ -371,6 +373,8 @@ class BisWebImage extends BisWebDataObject {
             else if (v<this.internal.range[0])
                 this.internal.range[0]=v;
         }
+
+
     }
     
     /** get intensity range as a 2-array [ min,max]
@@ -1927,6 +1931,7 @@ class BisWebImage extends BisWebDataObject {
             if (debug)
                 console.log('+++++++ dt=',dt,' tpname=',typename);
             
+            
             internal.imginfo =  {
                 type: typename[1],
                 size: internal.header.struct.bitpix/8,
@@ -1950,9 +1955,11 @@ class BisWebImage extends BisWebDataObject {
             };
         }
 
+        
         if (parseMode===0) {
             return;
         }
+
 
         let headerlength=this.tmpheaderinfo.headerlength;   
         let imgend=this.tmpheaderinfo.end;
@@ -1983,6 +1990,8 @@ class BisWebImage extends BisWebDataObject {
             }
         }
 
+
+
         
         if (forceorient === "None" || forceorient === internal.orient.name) {
             if (debug) console.log('++++++ not permuting data');
@@ -2001,6 +2010,27 @@ class BisWebImage extends BisWebDataObject {
         }
         
         
+        if (internal.imginfo.name === 'int64') { 
+            console.log('Remapping BigInt ',internal.imginfo.name);
+            let oldd=this.internal.imgdata;
+            internal.rawsize=oldd.length*8;
+            let newbuffer=new ArrayBuffer(internal.rawsize);
+            internal._rawdata=new Uint8Array(newbuffer);
+            internal.imgdata=new Float64Array(newbuffer);
+            console.log('Rawsize=',internal.rawsize,internal.imgdata.constructor.name);
+            for (let i=0;i<internal.imgdata.length;i++)
+                internal.imgdata[i]=parseFloat(oldd[i]);
+            internal.imginfo.type=internal.imgdata.constructor.name;
+            internal.imginfo.size=8;
+            internal.imginfo.name='double';
+            console.log('imginfo=',internal.imginfo);
+            this.computeIntensityRange();
+            console.log('Data = ',this.getImageData().constructor.name,internal.imgdata.constructor.name);
+            
+        }
+
+
+
         // Eliminate Nan's
         for (let i=0;i<internal.imgdata.length;i++) {
             if (internal.imgdata[i]!==internal.imgdata[i])
@@ -2009,7 +2039,6 @@ class BisWebImage extends BisWebDataObject {
         
         this.commentlist=internal.header.parseExtensionsToArray();
         this.computeIntensityRange();
-        
     }
 
     

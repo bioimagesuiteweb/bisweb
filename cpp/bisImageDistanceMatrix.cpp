@@ -1073,8 +1073,18 @@ unsigned char* computeImageDistanceMatrixWASM(unsigned char* input, unsigned cha
     return 0;
 
   std::unique_ptr<bisSimpleImage<short> > obj_image(new bisSimpleImage<short>("obj_image"));
-  if (!obj_image->linkIntoPointer(objectmap))
-    return 0;
+  if (objectmap) {
+    if (!obj_image->linkIntoPointer(objectmap))
+      return 0;
+  } else {
+    std::cout << "++++ creating mask as none was provided" << std::endl;
+    int dim[5];   inp_image->getDimensions(dim);
+    float spa[5]; inp_image->getSpacing(spa);
+    dim[3]=1; dim[4]=1;
+    obj_image->allocate(dim,spa);
+    obj_image->fill(1);
+  }
+
   
   int useradius=params->getBooleanValue("useradius",true);
   float radius=params->getFloatValue("radius",2.0);

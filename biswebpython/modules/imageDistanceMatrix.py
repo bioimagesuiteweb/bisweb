@@ -18,6 +18,7 @@
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_baseutils as bis_baseutils
 import biswebpython.core.bis_objects as bis_objects
+from biswebpython.modules.extractImagePatches import *
 
 class imageDistanceMatrix(bis_basemodule.baseModule):
 
@@ -47,7 +48,7 @@ class imageDistanceMatrix(bis_basemodule.baseModule):
                     "description": "The objectmap/mask image",
                     "varname": "mask",
                     "shortname" : "m",
-                    "required": True
+                    "required": False
                 },
             ],
             "outputs": bis_baseutils.getMatrixToMatrixOutputs('The output distance matrix','.binmatr'),
@@ -72,7 +73,7 @@ class imageDistanceMatrix(bis_basemodule.baseModule):
                     "name": "Radius",
                     "description": "The radius constraint (if useradius=true)",
                     "type": "float",
-                    "default": 3.0,
+                    "default": 4.0,
                     "lowbound": 0.1,
                     "highbound": 10.0,
                     "varname": "radius"
@@ -86,6 +87,35 @@ class imageDistanceMatrix(bis_basemodule.baseModule):
                     "highbound": 0.2,
                     "varname": "sparsity"
                 },
+                {
+                    "name": "Numpatches",
+                    "description": "Number of patches to extract (default=0 i.e. use whole image as opposed to patches)",
+                    "type": "int",
+                    "default": 0,
+                    "lowbound": 0,
+                    "highbound": 65536,
+                    "varname": "numpatches"
+                },
+                {
+                    "name": "Patchsize",
+                    "description": "Patch size (in voxels) (default=32) if using patches",
+                    "type": "int",
+                    "default": 32,
+                    "lowbound": 2,
+                    "highbound": 256,
+                    "varname": "patchsize"
+                },
+                {
+                    "name": "3d",
+                    "description": "if true 3d patches (default=false) if using patches",
+                    "priority": 1000,
+                    "advanced": False,
+                    "gui": "check",
+                    "varname": "threed",
+                    "type": 'boolean',
+                    "default": False,
+                },
+        
                 bis_baseutils.getDebugParam()
             ],
         }
@@ -93,11 +123,30 @@ class imageDistanceMatrix(bis_basemodule.baseModule):
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
+
+
+        if (vals['numpatches']>0):
+            print('_____________________________________________');
+            print('____ First extracting patches')
+
+            patchExtractor=extractImagePatches();
+            patchExtractor.execute({ 'input' : self.inputs['input'] },
+                            { 'numpatches' : vals['numpatches'],
+                              'patchsize'  : vals['patchsize'],
+                              'threed' : vals['threed'],
+                              'ordered' : False
+                              });
+            self.inputs['input']=patchExtractor.getOutputObject('output');
+            self.inputs['mask']=0;
+            print('_____________________________________________');
+        
+        
         paramobj= {
             'numthreads' : vals['numthreads'],
             'sparsity' : vals['sparsity'],
             'radius' : vals['radius'],
             'useradius' : self.parseBoolean(vals['useradius'])
+            
         };
 
         out=bis_baseutils.getDynamicLibraryWrapper().computeImageDistanceMatrixWASM(self.inputs['input'],
@@ -106,7 +155,6 @@ class imageDistanceMatrix(bis_basemodule.baseModule):
                                                                                     self.parseBoolean(vals['debug']));
         self.outputs['output']=bis_objects.bisMatrix();
         self.outputs['output'].create(out);        
-        print('Output=',self.outputs['output']);
         return True
     
 
