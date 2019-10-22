@@ -33,10 +33,15 @@ class clusterThreshold(bis_basemodule.baseModule):
         print('oooo invoking: clusterThresholdImage with vals', (vals));
         input = self.inputs['input'];
         libbis=self.getDynamicLibraryWrapper();
+
+        sz=vals['size'];
+        if (self.parseBoolean(vals['keeplargest'])):
+            sz=-1;
+        
         try:
             self.outputs['output'] =libbis.clusterThresholdImageWASM(input, {
                 "threshold": vals['threshold'],
-                "clustersize": vals['size'],
+                "clustersize": sz,
                 "oneconnected" : self.parseBoolean(vals['oneconnected']),
                 "outputclusterno" : self.parseBoolean(vals['outclustno']),
                 "frame" : vals['frame'], 
