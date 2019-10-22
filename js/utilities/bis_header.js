@@ -287,10 +287,10 @@ class BisHeader {
         dim[0]=num;
 
         // Units fix, force mm
-        let units=this.struct['xyzt_units'];
-        if (units !==0 && units !== 10) {
-            console.log('+++ warning units=',units,' may need to rescale');
-        }
+        //let units=this.struct['xyzt_units'];
+        //        if (units !==0 && units !== 2) {
+        //  console.log('+++ warning units=',units,' may need to rescale');
+        //      }
     }
     
     

@@ -229,6 +229,13 @@
 	    "result"  : true,
 	    "dopython": true
 	},
+        {
+	    "command" : "clusterThreshold  --paramfile testdata/clusterThreshold_2019_10_22.param --input testdata/avg152T1_LR_nifti.nii.gz",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti__biggestcluster.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+
 	{
 	    "command" : "displacementField -i testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --debug true",
 	    "test"    : "--test_target testdata/MNI_6mm_scaleddispfield.nii.gz",
