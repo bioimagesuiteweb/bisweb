@@ -208,6 +208,7 @@ class ModuleManagerElement extends HTMLElement {
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
                 this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+                this.createModule('Patch Reformat Image', 1, false, modules.getModule('patchReformatImage'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);

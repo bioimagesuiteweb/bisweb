@@ -1218,8 +1218,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
         });
-        let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
+                    connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+                });
+                clist.push(da15);
+            }
         });
         
         
@@ -1244,7 +1250,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         da4.onFinishChange( () => {   autoDrawLines();      });
 
         clist.push(da4);
-        clist.push(da15);
         clist.push(da1);
         clist.push(da2);
         clist.push(da3);

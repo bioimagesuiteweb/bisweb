@@ -1,0 +1,13 @@
+{
+    "module": "clusterThreshold",
+    "params": {
+        "threshold": 255,
+        "size": 100,
+        "outclustno": false,
+        "oneconnected": true,
+        "frame": 0,
+        "component": 1,
+        "keeplargest": true,
+        "debug": false
+    }
+}

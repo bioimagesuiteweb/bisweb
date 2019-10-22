@@ -494,8 +494,9 @@ var create_parameter_checking_code=function(extrachecks,names,wrapper_mode) {
 
         let flag=extrachecks.checkorientation || '';
         if (flag === 'all' || flag.indexOf('python')>=0) {
-            outstr=`    if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',True)==False):
-       return False;
+            outstr=`    if (${names[1].variablename} != 0 and ${names[1].variablename} != None ):\n`;
+            outstr+=`        if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',True)==False):
+           return False;
 
 `;
         }

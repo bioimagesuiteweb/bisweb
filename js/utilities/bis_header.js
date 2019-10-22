@@ -285,6 +285,12 @@ class BisHeader {
                 num=i;
         }
         dim[0]=num;
+
+        // Units fix, force mm
+        //let units=this.struct['xyzt_units'];
+        //        if (units !==0 && units !== 2) {
+        //  console.log('+++ warning units=',units,' may need to rescale');
+        //      }
     }
     
     
