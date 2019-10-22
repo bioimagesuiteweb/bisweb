@@ -87,9 +87,10 @@ class Bisweb_Histoplot {
         let legend = histoChart.append('g').attr('class', 'legend');
 
         //Create infobox for hover data if it doesnt exist
-        if (!d3.select('.bis-chartInfoBox')[0][0])
-            d3.select("body").append('div')
+        /*if (!d3.select('.bis-chartInfoBox')[0][0])
+            d3.select(parentDiv).append('div', ':first-child')
                 .attr("class", "bis-chartInfoBox");
+        */
 
         //-------------------------------------
         //       Generate graph
@@ -108,7 +109,7 @@ class Bisweb_Histoplot {
                     .attr("fill", groupColor[bin.group])
                     .on("mousemove", function (d) {
                         //Get elements
-                        let target = d3.event.target;
+                        /*let target = d3.event.target;
                         let info = d3.select('.bis-chartInfoBox');
 
                         //Get height of infobox so that it is above the mouse
@@ -133,14 +134,16 @@ class Bisweb_Histoplot {
 
                         //attatch infobox to element
                         info.attr("data-attatched", target.id);
+                        */
                     })
                     .on("mouseout", function () {
                         //hide the box
-                        let info = d3.select('.bis-chartInfoBox');
+                        /*let info = d3.select('.bis-chartInfoBox');
                         info.style('display', "none");
 
                         //Detatch infobox
                         info.attr("data-attatched", 0);
+                        */
                     }).attr("height", 0)
                     .transition().duration(1000).ease('sin-in-out')
                     .attr("height", (d) => innerHeight - sizeOffset - yScale(d.y))
@@ -170,26 +173,31 @@ class Bisweb_Histoplot {
             meanline.exit().remove();
 
             //Add the tag displays the mean of each group
-            histoChart.selectAll('.meanTag').remove();
+            //Removed this for now and added it to the legend 
+            // -Zach
+            /*histoChart.selectAll('.bis-meantag').remove();
 
-            let meanTag = histoChart.selectAll('.meanTag').data(means);
+            let meanTag = histoChart.selectAll('.bis-meantag').data(means);
 
             meanTag.enter().append('text')
                 .text(d => `Mean: ${d.value.toFixed(2)}`)
                 .attr("fill", d => groupColor[d.group])
                 .attr("transform", d => `translate(${xScale(d.value) + sizeOffset},0)`)
-                .attr('class', 'meanTag');
+                .attr('class', 'bis-meantag');
 
-            meanTag.exit().remove();
+            meanTag.exit().remove();*/
 
+            console.log('means', means, groupColor);
             //convert object to Object[]
             let groupColorArr = [];
-            for (let i in groupColor)
-                groupColorArr.push({ name: i, color: groupColor[i] });
+            for (let i in groupColor) {
+                let mean = means.find( (e) => { return e.group === i; });
+                groupColorArr.push({ name: i, color: groupColor[i], mean: mean });
+            }
+
 
             //Move legend to the front
             legend.each(function () {
-
                 this.parentNode.appendChild(this);
             });
 
@@ -206,7 +214,7 @@ class Bisweb_Histoplot {
             //Add a name to the legend for each color dot
             let groupTag = legend.selectAll('.groupTag').data(groupColorArr);
             groupTag.enter().append('text')
-                .text(d => d.name)
+                .text(d => d.name + ' (mean ' + d.mean.value.toFixed(3) + ')')
                 .attr('transform', (d, i) => `translate(${sizeOffset * 2 + 5},${(i + 1) * 12 + 2})`)
                 .attr('class', 'groupTag');
 
