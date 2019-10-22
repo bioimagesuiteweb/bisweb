@@ -879,125 +879,6 @@ var removelines = function() {
     globalParams.internal.updateFn();
 };
 
-// -----------------------------------------------------
-//
-// Kol's added code
-//
-// -----------------------------------------------------
-
-/**
- * @typedef Point
- * @property {number} x a point's X pos
- * @property {number} y a point's Y pos
- */
-
-/**
- * @typedef JsonInput
- * @property {String} name name of the input
- * @property {String} description description of the data group (I dont think that we need this)
- * @property {number} id id of the file (I dont think that we need this)
- * @property {JsonDataGroup[]} scatterplotData data relating to the scatter plot
- * @property {JsonDataGroup[]} histogramData data relating to the histogram
- * @property {*} modelPositive postitive model data
- * @property {*} modelNegitive negitive model data
- */        
-
-/**
- * @typedef JsonDataGroup
- * @property {String} name name of the data group
- * @property {String} description description of the data group (I dont think that we need this)
- * @property {number} id id of the group (I dont think that we need this)
- * @property {number[]} values contains the value points for the group
- */
-
-let drawScatterandHisto = function(){
-    
-    /*
-    if (globalParams.internal.laststate === null) {
-        bootbox.alert('you need to create the lines before you do anything (Need to fix)');
-        return;
-    }
-
-    //Setup the Display Div
-    let dim = createDisplayDialog("Diagrams");
-    let displayArea = globalParams.displayDialog.getWidgetBase();
-    displayArea.css({'background-color':"#ffffff"});
-    displayArea.append('<div class="bis-chartContainer"></div>');
-    let svgModal = $('.bis-chartContainer');
-    
-    dim[0] = displayArea.innerWidth()-displayArea.css("padding").replace(/[a-zA-Z]/g,"")*2;
-
-    globalParams.mode='chord'; //what does this do
-
-    addHistoScatterStyles();
-    
-    //Draw the Scatterplot to the svgModal Div
-    createScatter(svgModal, dim);
-    
-    // Draw the Histogram to the svgModal Div
-    createHistogram(svgModal, dim);
-    
-    
-    svgModal.bind('drop',(data) =>{
-        const reader = new FileReader();
-
-        let event = data.originalEvent;
-        event.preventDefault();
-        console.log('DROPPED DATA', event);
-        reader.readAsText(event.dataTransfer.files[0]);
-
-        reader.onloadend = (ev)=>{
-            if(ev.target.readyState != 2) return;
-            if(ev.target.error) {
-                alert('Error while reading file');
-                return;
-            }
-    
-            let jsonData = ev.target.result;
-            console.log('----- LOADED FILE -----');
-
-
-            let dataToParse = JSON.parse(jsonData); 
-
-            //Scatterplot Data Construction
-            let scatterData = [];
-
-            for(let i = 0; i < dataToParse.scatterplotData[0].values.length; i++){
-                scatterData.push([
-                    dataToParse.scatterplotData[0].values[i],
-                    dataToParse.scatterplotData[1].values[i]
-                ]);
-            }
-            
-            // Draw the Histogram to the svgModal Div
-            $('.bis-scatterplotChart').trigger('changeData', {scatterData});
-
-            // histogram Data Construction
-            let histoData = {
-                groups: [],
-                data_array: [],
-                data_groups: {}
-            };
-
-            dataToParse.histogramData.forEach((val_group)=>{
-                histoData.groups.push(val_group.name);
-                histoData.data_array.push(val_group.values);
-                histoData.data_groups[val_group.name] = val_group.values;
-            });
-
-
-            // Draw the Histogram to the svgModal Div
-            $('.bis-histogramChart').trigger('changeData',{
-                data: histoData,
-                colors: ['#1995e8','#e81818']
-            });
-
-        };
-    });*/
-    
-    globalParams.displayDialog.show();
-};
-
 /**
  * 
  * @param {JQuery<Element>} parentDiv 
@@ -1469,7 +1350,6 @@ module.exports = {
     drawlines : drawlines,
     removelines : removelines,
     filter_modes : filter_modes,
-    drawScatterandHisto : drawScatterandHisto,
     createScatter : createScatter,
     createHistogram : createHistogram,
     addHistoScatterStyles : addHistoScatterStyles
