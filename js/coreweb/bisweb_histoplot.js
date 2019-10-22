@@ -3,8 +3,8 @@ const d3 = require('d3');
 const webutil = require('bis_webutil');
 
 const globalParams = {
-    Id : null,
-    Ticks : null
+    Id: null,
+    Ticks: null
 };
 
 class Bisweb_Histoplot {
@@ -16,6 +16,7 @@ class Bisweb_Histoplot {
         //Size Settings
         let sizeOffset = 29;
         let svgWidth = dim[0] / 2;
+        let chartWidth = dim[0] / 4;
         let svgHeight = dim[1] - 150;
         let innerWidth = svgWidth - sizeOffset;
         let innerHeight = svgHeight - sizeOffset;
@@ -36,7 +37,7 @@ class Bisweb_Histoplot {
 
         //Create X Scale
         let xScale = d3.scale.linear()
-            .range([0, innerWidth - sizeOffset * 1.25])
+            .range([0, (innerWidth - sizeOffset * 1.25) / 2])
             .domain([-1, 1]);
 
         //Get maximum and minimum y value
@@ -73,7 +74,7 @@ class Bisweb_Histoplot {
         //Add labels to the chart
         histoChart.append('text')
             .text("Correlation (R)")
-            .attr("transform", `translate(${svgWidth/2},${innerHeight})`)
+            .attr("transform", `translate(${chartWidth / 2},${innerHeight})`)
             .attr('class', 'bis-label')
             .attr('style', 'font-size: 10px');
 
@@ -191,7 +192,7 @@ class Bisweb_Histoplot {
             //convert object to Object[]
             let groupColorArr = [];
             for (let i in groupColor) {
-                let mean = means.find( (e) => { return e.group === i; });
+                let mean = means.find((e) => { return e.group === i; });
                 groupColorArr.push({ name: i, color: groupColor[i], mean: mean });
             }
 
@@ -202,21 +203,22 @@ class Bisweb_Histoplot {
             });
 
             //Add a color dot for each group to the legend
-            let colorTag = legend.selectAll('.colorTag').data(groupColorArr);
+            let colorTag = legend.selectAll('.bis-colortag').data(groupColorArr);
             colorTag.enter().append('circle')
                 .attr('r', 3)
                 .attr('fill', d => d.color)
-                .attr('transform', (d, i) => `translate(${sizeOffset * 2},${(i + 1) * 12})`)
-                .attr('class', 'colorTag');
+                .attr('transform', (d, i) => `translate(${chartWidth} ${(i + 1) * 12})`)
+                .attr('class', 'bis-colortag');
 
             colorTag.exit().remove();
 
+            let offsetChartWidth = chartWidth + 5;
             //Add a name to the legend for each color dot
-            let groupTag = legend.selectAll('.groupTag').data(groupColorArr);
+            let groupTag = legend.selectAll('.bis-grouptag').data(groupColorArr);
             groupTag.enter().append('text')
                 .text(d => d.name + ' (mean ' + d.mean.value.toFixed(3) + ')')
-                .attr('transform', (d, i) => `translate(${sizeOffset * 2 + 5},${(i + 1) * 12 + 2})`)
-                .attr('class', 'groupTag');
+                .attr('transform', (d, i) => `translate(${offsetChartWidth}, ${(i + 1) * 18 + 2}) rotate(45)`)
+                .attr('class', 'bis-grouptag');
 
             groupTag.exit().remove();
         };
@@ -225,7 +227,7 @@ class Bisweb_Histoplot {
 
         let changeData = this.changeData = (e, newData) => {
             let { colors = ['#1995e8', '#e81818'], data } = newData;
-            let groups =  newData.data.groups || newData;
+            let groups = newData.data.groups || newData;
 
             //Map colors to group names for use in styling
             let groupColor = {};
@@ -287,7 +289,7 @@ class Bisweb_Histoplot {
 
             genGraph(bins, groupColor, means);
         };
-        
+
         //On resize
         this.resize = (dim, pos) => {
             let svgDim = Math.min(dim[0], dim[1]);

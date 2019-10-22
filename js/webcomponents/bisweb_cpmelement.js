@@ -109,20 +109,22 @@ class CPMElement extends HTMLElement {
      * @param {HTMLElement} baseElement - The base element to append the two charts to.
      */
     createCPMGUIManager(baseElement) {
-        let dims = [this.layoutElement.viewerwidth / 3, this.layoutElement.viewerheight / 2];
+        let scatterdims = [this.layoutElement.viewerwidth / 3, this.layoutElement.viewerheight / 2];
+        let histodims = [this.layoutElement.viewerwidth / 3  * 2, this.layoutElement.viewerheight / 2];
         let histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight - 10];
         let scatterpos = [0 , this.layoutElement.viewerheight - 10];
         
-        let histoplot = new bisweb_histoplot(baseElement, dims, histopos);
-        let scatterplot = new bisweb_scatterplot(baseElement, dims, scatterpos);
+        let histoplot = new bisweb_histoplot(baseElement, histodims, histopos);
+        let scatterplot = new bisweb_scatterplot(baseElement, scatterdims, scatterpos);
 
         //resizing function for charts
         $(window).on('resize', () => {
-            dims = [this.layoutElement.viewerwidth / 3 , this.layoutElement.viewerheight / 2];
+            histodims = [this.layoutElement.viewerwidth / 3 * 2, this.layoutElement.viewerheight / 2];
+            scatterdims = [this.layoutElement.viewerwidth / 3, this.layoutElement.viewerheight / 2];
             scatterpos = [0 , this.layoutElement.viewerheight - 10];
             histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight / 2];
-            histoplot.resize(dims, histopos);
-            scatterplot.resize(dims, scatterpos);
+            histoplot.resize(histodims, histopos);
+            scatterplot.resize(scatterdims, scatterpos);
         });
     }
 
