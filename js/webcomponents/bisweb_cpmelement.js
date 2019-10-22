@@ -138,8 +138,6 @@ class CPMElement extends HTMLElement {
             $(this.importButton).remove();
             this.updateSettingsMenu(filenames); 
             if (!this.madeCPMButtons) { this.createCPMButtons(); }
-
-            console.log('conn files', this.connFiles);
         });
     }
 
@@ -587,7 +585,6 @@ class CPMElement extends HTMLElement {
         }
 
         function regenerateFilenameList(controller, flist) {
-            console.log('regenerate fname', controller, flist);
             controller.setValue(controller, flist);
         }
     }
@@ -599,7 +596,6 @@ class CPMElement extends HTMLElement {
      * @returns A Promise resolving once the files have been loaded and the form select populated, or rejecting with an error. 
      */
     importFiles(f) {
-        console.log('f', f);
         return new Promise( (resolve, reject) => {
             let inputName = typeof f === 'string' ? f : f.name;
             let extension = inputName.split('.')[1];
@@ -771,9 +767,8 @@ class CPMElement extends HTMLElement {
                 histoData.data_groups[val_group.name] = val_group.values;
             });
 
-            console.log('histogram data', histoData);
             // Draw the Histogram to the svgModal Div
-            $('.bis-histogramChart').trigger('changeData',{
+            $('.bis-histogramchart').trigger('changeData',{
                 data: histoData,
                 colors: ['#1995e8','#e81818']
             });

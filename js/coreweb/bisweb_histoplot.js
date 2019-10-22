@@ -95,7 +95,6 @@ class Bisweb_Histoplot {
         //       Generate graph
         //-------------------------------------
         let genGraph = (bins, groupColor, means) => {
-            console.log('gen graph', bins, groupColor, means);
             histoChart.selectAll('.bis-histobar').remove();
             for (let i in bins) {
                 let bin = bins[i];
@@ -216,11 +215,10 @@ class Bisweb_Histoplot {
 
         genGraph([], [], []);
 
-        $(parentDiv).find('.bis-histogramchart').on('changeData', (e, newData) => {
+        let changeData = this.changeData = (e, newData) => {
             let { colors = ['#1995e8', '#e81818'], data } = newData;
-            let groups =  newData.groups || newData;
+            let groups =  newData.data.groups || newData;
 
-            console.log('groups', newData);
             //Map colors to group names for use in styling
             let groupColor = {};
             let colorCnt = 0;
@@ -280,8 +278,7 @@ class Bisweb_Histoplot {
             }
 
             genGraph(bins, groupColor, means);
-        });
-
+        };
         
         //On resize
         this.resize = (dim, pos) => {
@@ -293,6 +290,8 @@ class Bisweb_Histoplot {
             yAxis.ticks(svgDim / globalParams.Ticks);
             histoChart.selectAll('.bis-axisY').call(yAxis);
         };
+
+        $('.bis-histogramchart').on('changeData', changeData);
     }
 }
 
