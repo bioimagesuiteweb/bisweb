@@ -88,10 +88,9 @@ class Bisweb_Histoplot {
         let legend = histoChart.append('g').attr('class', 'legend');
 
         //Create infobox for hover data if it doesnt exist
-        /*if (!d3.select('.bis-chartInfoBox')[0][0])
-            d3.select(parentDiv).append('div', ':first-child')
+        if (!d3.select('.bis-chartInfoBox')[0][0])
+            d3.select('.bis-histogramchart').append('text')
                 .attr("class", "bis-chartInfoBox");
-        */
 
         //-------------------------------------
         //       Generate graph
@@ -108,43 +107,39 @@ class Bisweb_Histoplot {
                     .attr("width", (innerWidth - sizeOffset * 1.25) / bin.length)
                     .attr("class", `g${bin.group.replace(/\s/g, "")} bis-histobar`)
                     .attr("fill", groupColor[bin.group])
-                    .on("mousemove", function (d) {
+                    .on("mouseover", function (d) {
                         //Get elements
-                        /*let target = d3.event.target;
+                        let target = d3.event.target;
                         let info = d3.select('.bis-chartInfoBox');
 
-                        //Get height of infobox so that it is above the mouse
-                        let heightOffset = $('.bis-chartInfoBox').height();
+                        let histogramDOMElement = $('.bis-histogramchart')[0];
+                        let cursorLocation = d3.mouse(histogramDOMElement);
 
                         //Move the infobox to the pointer
-                        info.style('transform', `translate(${d3.event.x}px,${d3.event.y - heightOffset}px)`);
+                        info.style('transform', `translate(${cursorLocation[0]}px,${cursorLocation[1]}px)`);
 
                         //If mouse is still on the same element dont update text and style
                         if (info.attr("data-attatched") == target.id) return;
 
                         //Set text
-                        info.html(`x:${d.x.toFixed(2)}<br>y:${d.y.toFixed(2)}</br>`);
-
-                        //get New Height after text insertion
-                        heightOffset = $('.bis-chartInfoBox').height();
+                        info.html(`x:${d.x.toFixed(2)} y:${d.y.toFixed(2)}`);
 
                         //Change some styles
-                        info.style('transform', `translate(${d3.event.x}px,${d3.event.y - heightOffset}px)`);
+                        //info.style('transform', `translate(${d3.event.x}px,${d3.event.y - heightOffset}px)`);
                         info.style('display', "block");
                         info.style('background-color', groupColor[bin.group]);
 
                         //attatch infobox to element
                         info.attr("data-attatched", target.id);
-                        */
+
                     })
                     .on("mouseout", function () {
                         //hide the box
-                        /*let info = d3.select('.bis-chartInfoBox');
+                        let info = d3.select('.bis-chartInfoBox');
                         info.style('display', "none");
 
                         //Detatch infobox
                         info.attr("data-attatched", 0);
-                        */
                     }).attr("height", 0)
                     .transition().duration(1000).ease('sin-in-out')
                     .attr("height", (d) => innerHeight - sizeOffset - yScale(d.y))
@@ -172,21 +167,6 @@ class Bisweb_Histoplot {
                 .attr("y2", yScale(yMax));
 
             meanline.exit().remove();
-
-            //Add the tag displays the mean of each group
-            //Removed this for now and added it to the legend 
-            // -Zach
-            /*histoChart.selectAll('.bis-meantag').remove();
-
-            let meanTag = histoChart.selectAll('.bis-meantag').data(means);
-
-            meanTag.enter().append('text')
-                .text(d => `Mean: ${d.value.toFixed(2)}`)
-                .attr("fill", d => groupColor[d.group])
-                .attr("transform", d => `translate(${xScale(d.value) + sizeOffset},0)`)
-                .attr('class', 'bis-meantag');
-
-            meanTag.exit().remove();*/
 
             console.log('means', means, groupColor);
             //convert object to Object[]

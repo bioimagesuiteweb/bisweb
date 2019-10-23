@@ -527,7 +527,7 @@ input[type="radio"] .styled:checked + label::after {
 }
 
 .bis-grouptag {
-    font-size : 0.8em;
+    font-size : 0.6em;
 }
 /* TODO: Figure out how to add a blur effect over just an area of content? This would work with a background but not with actual HTML elements... */ 
 /*body::before {
