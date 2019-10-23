@@ -19,6 +19,7 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const dat = require('bisweb_datgui');
+const savesvg = require('save-svg-as-png');
 
 const libbiswasm = require('libbiswasm_wrapper');
 const bis_genericio = require('bis_genericio.js');
@@ -114,8 +115,8 @@ class CPMElement extends HTMLElement {
         let histopos = [this.layoutElement.viewerwidth / 3 + 20, this.layoutElement.viewerheight - 10];
         let scatterpos = [0 , this.layoutElement.viewerheight - 10];
         
-        let histoplot = new bisweb_histoplot(baseElement, histodims, histopos);
-        let scatterplot = new bisweb_scatterplot(baseElement, scatterdims, scatterpos);
+        let histoplot = this.histoPlot = new bisweb_histoplot(baseElement, histodims, histopos);
+        let scatterplot = this.scatterPlot = new bisweb_scatterplot(baseElement, scatterdims, scatterpos);
 
         //resizing function for charts
         $(window).on('resize', () => {
@@ -162,6 +163,7 @@ class CPMElement extends HTMLElement {
             'filters' : [ { 'name': 'JSON', 'extensions': ['json']}],
             'suffix' : 'json'
         });
+
         let importDirectoryItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback
         }, {
@@ -170,6 +172,7 @@ class CPMElement extends HTMLElement {
             'altkeys' : true,
             'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['tsv', 'csv']}],
         });
+
         let exportFileItem = bis_webfileutil.createFileButton({
             'callback' : this.exportCPMFile.bind(this)
         }, {
@@ -177,12 +180,29 @@ class CPMElement extends HTMLElement {
             'title' : 'Export connectivity file',
             'filters' : [ {'name': 'Connectivity save files', 'extensions' : ['json'] } ]
         });
+
         let importHistogramItem = bis_webfileutil.createFileButton({
             'callback' : this.loadHistogramFile.bind(this)
         }, {
             'title': 'Import histogram file from directory',
             'altkeys' : true,
             'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['tsv', 'csv', 'json']}]
+        });
+
+        let exportHistogramItem = bis_webfileutil.createFileButton({
+            'callback' : this.exportPlot.bind(this, 'histo')
+        }, {
+            'save' : true,
+            'title' : 'Export histogram plot', 
+            'filters' : [ { 'name' : 'Image files', 'extensions' : ['img', 'png'] }]
+        });
+
+        let exportScatterItem = bis_webfileutil.createFileButton({
+            'callback' : this.exportPlot.bind(this, 'scatter')
+        }, {
+            'save' : true,
+            'title' : 'Export histogram plot', 
+            'filters' : [ { 'name' : 'Image files', 'extensions' : ['img', 'png'] }]
         });
 
         bis_webutil.createMenuItem(topfilemenu, 'Import From CPM File', () => {  importFileItem.click(); });
@@ -201,8 +221,12 @@ class CPMElement extends HTMLElement {
             bis_webfileutil.createFileSourceSelector(topfilemenu, 'Set File Source', null, this.changeLoadDictionaryButtonStatus.bind(this));
         }
 
+        let topscattermenu = bis_webutil.createTopMenuBarMenu('Scatter', menubar);
+        bis_webutil.createMenuItem(topscattermenu, 'Export chart to png', () => { exportScatterItem.click(); });
+
         let tophistomenu = bis_webutil.createTopMenuBarMenu('Histogram', menubar);
-        bis_webutil.createMenuItem(tophistomenu, 'Import from file', () => { importHistogramItem.click(); });
+        bis_webutil.createMenuItem(tophistomenu, 'Import data from file', () => { importHistogramItem.click(); });
+        bis_webutil.createMenuItem(tophistomenu, 'Export chart to png', () => { exportHistogramItem.click(); });
     }
 
     changeLoadDictionaryButtonStatus(selected) {
@@ -746,6 +770,11 @@ class CPMElement extends HTMLElement {
         });
     }
 
+    /**
+     * Loads a file contining histogram data from the user's machine.
+     * 
+     * @param {String} filename - Name of the file containing histogram data.
+     */
     loadHistogramFile(filename) {
         bis_genericio.read(filename).then( (obj) => {
             let parsedData;
@@ -775,6 +804,38 @@ class CPMElement extends HTMLElement {
                 colors: ['#1995e8','#e81818']
             });
         });
+    }
+
+    exportPlot(plot, f) {
+        console.log('plot', plot, 'f', f);
+        if (plot === 'scatter') {
+            extractPlotFromSVGandSave(this.scatterPlot);
+        } else if (plot === 'histo' || plot === 'histogram') {
+            extractPlotFromSVGandSave(this.histoPlot);
+        }
+
+        function extractPlotFromSVGandSave(element) {
+            let svg = $(element).find('svg');
+            savesvg.svgAsPngUri(svg[0]).then( (uri) => {
+                        
+                //https://stackoverflow.com/questions/12168909/blob-from-dataurl
+                fetch(uri)
+                .then( res =>  res.blob() )
+                .then( (blob) => {
+                    let reader = new FileReader();
+                    reader.addEventListener('loadend', () => {
+                        let savedata = new Uint8Array(reader.result);
+                        bis_genericio.write(f, savedata, true).then( () => {
+                            bis_webutil.createAlert('Saved ' + f + ' successfully');
+                        }).catch( (e) => { 
+                            console.log('An error occured during save', e);
+                            bis_webutil.createAlert('An error occured while saving ' + f, true, 0, 5000);
+                        });
+                    });
+                    reader.readAsArrayBuffer(blob);
+                });
+            });
+        }
     }
 
     setHelpText(button) {

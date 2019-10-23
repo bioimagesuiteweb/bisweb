@@ -190,6 +190,8 @@ class Bisweb_Scatterplot {
         };
 
         $(`.bis-scatterplotchart`).on('changeData', changeData);
+
+        return $('.bis-ScatterContainer');
     }
 }
 
