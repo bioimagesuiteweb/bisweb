@@ -806,13 +806,12 @@ class CPMElement extends HTMLElement {
         });
     }
 
-    exportPlot(plot, f) {
-        console.log('plot', plot, 'f', f);
+    exportPlot(plot, f = 'exported_chart.png') {
         if (plot === 'scatter') {
             extractPlotFromSVGandSave(this.scatterPlot);
         } else if (plot === 'histo' || plot === 'histogram') {
             extractPlotFromSVGandSave(this.histoPlot);
-        }
+        } 
 
         function extractPlotFromSVGandSave(element) {
             let svg = $(element).find('svg');
