@@ -20,6 +20,7 @@ class Bisweb_Histoplot {
         let svgHeight = dim[1] - 150;
         let innerWidth = svgWidth - sizeOffset;
         let innerHeight = svgHeight - sizeOffset;
+        let currentlyHoveredElement = null;
 
         //create the svg Parent and the graphic div that everything will be drawn to (pos[1] currently unused)
         let histoChart = d3.select(parentDiv).insert('div', ':first-child')
@@ -104,10 +105,16 @@ class Bisweb_Histoplot {
                 currBar.enter().append("rect")
                     .attr("x", d => xScale(d.x) + sizeOffset)
                     .attr("transform", `translate(0,${yScale(0)})`)
-                    .attr("width", (innerWidth - sizeOffset * 1.25) / bin.length)
+                    .attr("width", (innerWidth - sizeOffset * 1.25) / (bin.length * 1.5) )
                     .attr("class", `g${bin.group.replace(/\s/g, "")} bis-histobar`)
                     .attr("fill", groupColor[bin.group])
+                    .attr("opacity", "0.7")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", "1")
                     .on("mouseover", function (d) {
+                        if (!currentlyHoveredElement) { currentlyHoveredElement = this; }
+                        else { return; }
+
                         //Get elements
                         let target = d3.event.target;
                         let info = d3.select('.bis-chartInfoBox');
@@ -125,13 +132,11 @@ class Bisweb_Histoplot {
                         info.html(`x:${d.x.toFixed(2)} y:${d.y.toFixed(2)}`);
 
                         //Change some styles
-                        //info.style('transform', `translate(${d3.event.x}px,${d3.event.y - heightOffset}px)`);
                         info.style('display', "block");
                         info.style('background-color', groupColor[bin.group]);
 
                         //attatch infobox to element
                         info.attr("data-attatched", target.id);
-
                     })
                     .on("mouseout", function () {
                         //hide the box
@@ -140,6 +145,7 @@ class Bisweb_Histoplot {
 
                         //Detatch infobox
                         info.attr("data-attatched", 0);
+                        currentlyHoveredElement = null;
                     }).attr("height", 0)
                     .transition().duration(1000).ease('sin-in-out')
                     .attr("height", (d) => innerHeight - sizeOffset - yScale(d.y))
@@ -282,6 +288,8 @@ class Bisweb_Histoplot {
         };
 
         $('.bis-histogramchart').on('changeData', changeData);
+
+        return $('.bis-HistoContainer');
     }
 }
 
