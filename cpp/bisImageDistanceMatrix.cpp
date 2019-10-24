@@ -20,10 +20,11 @@
 #include <sstream>
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
+#ifndef _WIN32
 #include <Spectra/SymEigsSolver.h>
 #include <Spectra/GenEigsSolver.h>
 #include <Spectra/MatOp/SparseGenMatProd.h>
-
+#endif
 
 
 typedef double BISTYPE;
@@ -799,6 +800,8 @@ namespace bisSparseEigenSystem {
                           double sigma=1.0, double lambda=0.0,double tolerance=0.001,int maxiter=50,float scale=10000) {
 
 
+#ifndef _WIN32
+    
     int nt=sparseMatrix->getNumRows();
     int nc=sparseMatrix->getNumCols();
 
@@ -986,7 +989,9 @@ namespace bisSparseEigenSystem {
     eigenVectors->getRange(range);
     std::cout << "+++++ Range of eigenvector image =" << range[0] << ":" << range[1] << " Numeigen=" << numeigen << std::endl;
     return numeigen;
-  
+#else
+    return 0;
+#endif
   }
 
   // ----------------------------------------------------------------------------------

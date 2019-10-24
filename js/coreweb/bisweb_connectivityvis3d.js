@@ -289,12 +289,12 @@ var parsebrainsurface = function(textstring,filename) {
 
     let numelements=obj['numelements'] || 1;
     
-    let indices = new Uint16Array(obj.triangles.length);
+    let indices = new Uint32Array(obj.triangles.length);
     let parcels=null;
 
     
     if (obj.indices)
-        parcels = new Uint16Array(obj.indices.length);
+        parcels = new Uint32Array(obj.indices.length);
 
     
     let vertices = new Array(numelements);

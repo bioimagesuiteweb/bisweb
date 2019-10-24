@@ -1,10 +1,10 @@
 #include "predictory.hpp"
-# include <cstdlib>
+#include <cstdlib>
 # include <iostream>
-# include <iomanip>
-# include <cmath>
-# include <ctime>
-
+#include <iomanip>
+#include <cmath>
+#include <ctime>
+#include <numeric>
 
 using namespace std;
 
@@ -296,7 +296,7 @@ double predictory::spearman(vector<double> v1, vector<double> v2){
 		d.push_back(sq_diff );
 	}
 	// Sum the Squared difference
-	double sum = accumulate(d.begin(), d.end(), 0.0);
+	double sum = std::accumulate(d.begin(), d.end(), 0.0);
 	int en = n;
 	double en3n = (en * en * en) - en;
 	double numerator = 6 * sum;
