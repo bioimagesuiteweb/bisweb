@@ -173,6 +173,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             mode3d : 'Uniform',
             display3d : 'Both',
             resol3d : 0,
+            hidecereb : false,
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
@@ -896,7 +897,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     if (updatemeshes) {
                         connectvis3d.update3DMeshes(internal.parameters.opacity,
                                                     internal.parameters.mode3d,
-                                                    internal.parameters.display3d);
+                                                    internal.parameters.display3d,
+                                                    internal.parameters.resol3d,
+                                                    internal.parameters.hidecereb);
                         setTimeout( () => { drawColorScale(); },1000);
                     }
                     
@@ -1216,22 +1219,26 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
 
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
         });
 
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
-                    connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+                    connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
                 });
                 clist.push(da15);
+                let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
+                    connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+                });
+                clist.push(da16);
             }
         });
         
         
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
             if (data.mode3d!=='Uniform') {
                 data.opacity=1.0;
                 da1.domElement.style.opacity = 0.1;
@@ -1243,7 +1250,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
         });
 
         let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
@@ -1701,7 +1708,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                         internal.parameters.mode3d,
                                         internal.parameters.display3d,
                                         internal.parameters.resol3d,
-                                       );
+                                        internal.parameters.hidecereb);
             internal.inrestorestate=false;
             setTimeout( () => { drawColorScale();},20);
 

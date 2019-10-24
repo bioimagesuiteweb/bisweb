@@ -16,6 +16,7 @@ const globalParams={
     vertexlist : [null,null ],
     numelements : [ 1,1],
     lastresol : [ -1,-1],
+    maxpoint : [ 200000,200000 ],
 };
 
 let lasttexturehue=-1.0;
@@ -48,8 +49,12 @@ const brain_vertexshader_text = `
 
       void main() {
 
-           float c=(parcels)/maxValue;           
-           vColor= texture2D(cmTexture, vec2(c, 0));
+           if (parcels<0.0) {
+              vColor=vec4(0,0,0,0);
+           } else {
+              float c=(parcels)/maxValue;           
+              vColor= texture2D(cmTexture, vec2(c, 0));
+           }
            vNormal = normalize( normalMatrix * normal );
            vec3 transformed = vec3( position );
            vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
@@ -68,6 +73,10 @@ const brain_fragmentshader_text=`
       
 
       void main() {
+
+         if (vColor[3]<=0.0)
+            discard;
+
          float v=max(0.0,vNormal.z);
          gl_FragColor = vec4( v*vColor.x,
                               v*vColor.y,
@@ -170,7 +179,7 @@ let createTexture=function(hue) {
 // @param {Array} color - the color
 // @param {Number} opacity - the opacity
 
-var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2,resol=0) {
+var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2,resol=0,hidecereb=false) {
 
     if (globalParams.brainmesh[index] !==null) { 
         globalParams.brainmesh[index].visible=false;
@@ -201,7 +210,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=matrix[parcels[i]-1][attributeIndex];
         }
-
+        
         mina=matrix[0][attributeIndex];
         maxa=matrix[0][attributeIndex];
 
@@ -211,6 +220,13 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
             if (a>maxa) maxa=a;
         }
     }
+
+    if (hidecereb) {
+        for (let i=globalParams.maxpoint[index];i<parcels.length;i++) {
+            attributes[i]=-1000;
+        }
+    }
+
         
     if (attributeIndex===0) {
         createTexture(0.02);
@@ -336,8 +352,9 @@ var parsebrainsurface = function(textstring,filename) {
     globalParams.vertexlist[meshindex]=vertices;
     globalParams.numelements[meshindex]=numelements;
     globalParams.lastresol[meshindex]=0;
+    globalParams.maxpoint[meshindex]=obj.maxpoint;
     
-    createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0);
+    createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0,false);
     
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes
@@ -511,13 +528,13 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     return total;
 };
 // ---------------------------------------------------------------------------------------------
-var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both',resol=0) {
+var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both',resol=0,hidecereb=false) {
 
     let mode=color_modes.indexOf(modename)-1;
     let dmode=display_modes.indexOf(displaymode);
 
-    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode,resol);
-    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode,resol);
+    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode,resol,hidecereb);
+    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode,resol,hidecereb);
 
     let show=[true,true];
     if (dmode<=0) 
