@@ -985,7 +985,37 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
+
+        
         userPreferences.safeGetItem("internal").then( (f) => {
+
+            webutil.createMenuItem(hmenu, '');
+
+            let restartf= () => {
+                setTimeout( () => {
+                    bootbox.confirm("Must restart application. Are you sure? You will lose all unsaved data.",
+                                    (e) => {
+                                        if (e)
+                                            window.open(this.applicationURL,'_self');
+                                    }
+                                   );
+                },500);
+            };
+            
+            if (f) {
+                webutil.createMenuItem(hmenu, 'Disable Internal Features', 
+                                       () => {
+                                           userPreferences.setItem('internal',false,true);
+                                           restartf();
+                                       });
+            } else {
+                webutil.createMenuItem(hmenu, 'Enable Internal Features (At your own risk!)', 
+                                       () => {
+                                           userPreferences.setItem('internal',true,true);
+                                           restartf();
+                                       });
+            }
+            
             if (f) {
                 const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
                 if (filetreepipelineid) {
@@ -1670,6 +1700,8 @@ class ViewerApplicationElement extends HTMLElement {
                                            self.loadApplicationState(f);
                                        });
             }
+
+            
         }
 
         // ----------------------------------------------------------

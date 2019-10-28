@@ -239,7 +239,7 @@ class ModuleManagerElement extends HTMLElement {
         }
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f)
-                this.createModule('Skull Strip Image (DL)',2, true, modules.getModule('skullStrip'), moduleoptions);
+                this.createModule('Skull Strip Image (DL)',2, false, modules.getModule('skullStrip'), moduleoptions);
         });
 
         this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);
