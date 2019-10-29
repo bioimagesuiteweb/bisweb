@@ -344,7 +344,6 @@ class CPMElement extends HTMLElement {
     }
 
     createViewDialog() {
-        const self = this;
         let formName = $('#' + this.fileListFormId).val();
         if (!formName) { bis_webutil.createAlert('Error: no file selected', true); return; }
 
