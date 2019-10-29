@@ -519,6 +519,7 @@ input[type="radio"] .styled:checked + label::after {
     margin-left : 3px; 
     margin-right : 3px; 
     margin-top : 3px; 
+    max-height: 70vh;
     overflow-y : auto; 
     position : relative; 
     width : 100%; 

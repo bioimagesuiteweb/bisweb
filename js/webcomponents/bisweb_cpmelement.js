@@ -290,12 +290,19 @@ class CPMElement extends HTMLElement {
 
         runButton.on('click', () => {
             this.runCPMFlow().then((results) => {
-                let message = '', data = results.data;
-                for (let item of data) { message = message.concat(`${item}<br>`); }
+                let message = $(`<div class='bisweb-dialog-box'>
+                                    <table class='table table-dark table-striped'>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>`);
+
+                let data = results.data, mbody = $(message).find('tbody');
+
+                for (let item of data) { mbody.append($(`<tr><td>${item}</td></tr>`)); }
 
                 bootbox.dialog({
                     'title': 'CPM Results',
-                    'message': `<pre>${message}</pre>`,
+                    'message': message,
                     'buttons': {
                         'save': {
                             'label': 'Save results',
@@ -382,7 +389,6 @@ class CPMElement extends HTMLElement {
         }
 
         function showConnFile(dimensions = ['all', 'all']) {
-            let lh = self.layoutElement.getviewerheight() * 0.7;
             let matrix = reformatMatrix(formName, connFileVal); 
 
             //create bootstrap table
@@ -401,7 +407,7 @@ class CPMElement extends HTMLElement {
                 $(tableBody).append(tableRow);
             }
 
-            let output = $(`<div class='bisweb-dialog-box' style='max-height: ${lh}px'></div>`);
+            let output = $(`<div class='bisweb-dialog-box'></div>`);
             output.append(table);
             let matrixDimensions = `(dimensions ${matrixRows[0].split(matrSep).length}x${matrixRows.length})`;
             
