@@ -8,6 +8,13 @@ const globalParams = {
     Ticks : 35
 };
 
+/**
+ * Scatter plot by kol. Takes the data produced by running CPM code and plots it with a trend line.
+ * Known issues:
+ *  -Data aren't consistent between runs, which I presume is a product of how the CPM code runs. Might be nice to average a few runs before plotting to give more consistent results.
+ * 
+ * Zach, 10/31/19
+ */
 class Bisweb_Scatterplot {
 
     /**

@@ -26,7 +26,12 @@ const layoutTemplate = `
         </div>
     </div>`;
 
-
+/**
+ * A modal container that will let you create a pipeline from within the viewer. Currently non-functional and pretty buggy, but did work in a previous commit/branch. Shouldn't take too much to get it running again.
+ * Tons of known issues, likely requires an overhaul. Note that the command line 'pipeline' tool still works independent of this. 
+ * There's a sample file in testdata/pipeline.json
+ * -Zach, 10/31/19
+ */
 class FileTreePipeline extends HTMLElement {
     
     constructor() {

@@ -1,0 +1,43 @@
+{
+  "command": "biswebnode",
+  "inputs": [
+    {
+      "name": "input",
+      "files": [
+        "/home/zach/javascript/bisweb/test/testdata/avg152T1_LR_nifti.nii.gz",
+        "/home/zach/javascript/bisweb/test/testdata/avg152T1_LR_nifti_normalized.nii.gz",
+        "/home/zach/javascript/bisweb/test/testdata/avg152T1_LR_nifti_resampled.nii.gz"
+      ]
+    }
+  ],
+  "jobs": [
+    {
+      "name": "Command 0",
+      "subcommand": "smoothimage",
+      "options": " --input %input%  --output %out1% --sigma 1 --inmm true --fwhmax false --radiusfactor 2 --vtkboundary false --usejs false --debug false ",
+      "outputs": [
+        {
+          "name": "out1",
+          "depends": [
+            "%input%"
+          ],
+          "naming": "smoothimage_%input%.nii.gz"
+        }
+      ]
+    },
+    {
+      "name": "Command 1",
+      "subcommand": "thresholdimage",
+      "options": " --input %out1%  --output %out2% --low 1 --high 2 --replacein false --replaceout true --inval 1 --outval 0 --outtype Same --debug false ",
+      "outputs": [
+        {
+          "name": "out2",
+          "depends": [
+            "%out1%"
+          ],
+          "naming": "thresholdimage_%out1%.nii.gz"
+        }
+      ]
+    }
+  ]
+} 

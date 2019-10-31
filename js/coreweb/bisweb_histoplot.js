@@ -7,6 +7,19 @@ const globalParams = {
     Ticks: null
 };
 
+/**
+ * Histogram plot by kol. Uses data contained in testdata/histogram/kol_plots_data.json (as of 10/31/19)
+ * Pretty straightforward. Plots a bar graph for the histogram described by the dataset with options to save and a cursor that can tell you the X and Y values for each bar.
+ * 
+ * Known issues: 
+ *  -Resizing the chart currently produces some strangeness, haven't tested it extensively on other aspect ratios and screen sizes. Try reloading the page with the console open to see what I mean.
+ *  -When some errors occur in the histogram it will produce another row of buttoms (i.e. file, scatter, histogram) on the top menu. I didn't prioritize solving this because it only occurs on unhandled logic exceptions, most of which I handled.
+ *  -Some flickering can occur when hovering on the bar items of the histogram. I wasn't sure how important those data provided by hovering were to begin with, so I didn't prioritize this.
+ * 
+ * Did not write test scripts.
+ * 
+ * -Zach, 10/31/19
+ */
 class Bisweb_Histoplot {
 
     constructor(parentDiv, dim, pos, binCnt = 50) {
@@ -105,7 +118,7 @@ class Bisweb_Histoplot {
                 currBar.enter().append("rect")
                     .attr("x", d => xScale(d.x) + sizeOffset)
                     .attr("transform", `translate(0,${yScale(0)})`)
-                    .attr("width", (innerWidth - sizeOffset * 1.25) / (bin.length * 1.5) )
+                    .attr("width", (innerWidth - sizeOffset * 1.25) / (bin.length * 1.5))
                     .attr("class", `g${bin.group.replace(/\s/g, "")} bis-histobar`)
                     .attr("fill", groupColor[bin.group])
                     .attr("opacity", "0.7")

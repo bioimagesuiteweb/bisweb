@@ -37,6 +37,16 @@ const bisweb_userprefs = require('bisweb_userpreferences.js');
 const bisweb_serverutils = require('bisweb_serverutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
+/**
+ * UI elements that invoke CPM code. Also contains histogram and scatter plot containers and the UI elements that will allow a user to load/save data. 
+ * 
+ * Known issues: 
+ *  -Import directory items don't grey out when file sources other than server are selected. I think I fixed this but I'm not 100% sure. Cursory testing seems fine.
+ *  -Hasn't been tested on electron extensively.
+ * 
+ * Did not write test scripts.
+ * Zach, 10/31/19
+ */
 class CPMElement extends HTMLElement {
 
     constructor() {
@@ -596,6 +606,7 @@ class CPMElement extends HTMLElement {
 
             let container = new dat.GUI({ 'autoPlace': false });
             let filenameController = container.add(this.settings, 'filename', listObj.filenames);
+
             container.add(this.settings, 'threshold', 0, 1);
             container.add(this.settings, 'kfold', listObj.kfold);
             container.add(this.settings, 'numtasks', listObj.numtasks);
@@ -609,14 +620,26 @@ class CPMElement extends HTMLElement {
             this.fileListFormId = bis_webutil.getuniqueid();
             $(filenameController.domElement).find('select').attr('id', this.fileListFormId);
 
-            this.controllerUpdateFn = regenerateFilenameList.bind(this, filenameController);
+            this.controllerUpdateFn = regenerateFilenameList.bind(this, filenameController, container);
+            this.controllerUpdateFn(filenames);
             this.madeSettingsMenu = true;
         } else {
             this.controllerUpdateFn(filenames);
         }
 
-        function regenerateFilenameList(controller, flist) {
+
+        function regenerateFilenameList(controller, container, flist) {
             controller.setValue(controller, flist);
+            this.settings.filename = filenames[0];
+            updateDisplay(container);
+
+            console.log('controller', controller, container);
+        }
+
+        function updateDisplay(gui) {
+            for (let i in gui.__controllers) {
+                gui.__controllers[i].updateDisplay();
+            }
         }
     }
 
@@ -846,11 +869,10 @@ class CPMElement extends HTMLElement {
         button.on('click', () => {
             bootbox.alert(`
                 This panel controls how connectivity files are loaded and how CPM computational code is run.<br>
-                The 'Import CPM file' button will allow you to load connectivity file data from either a .json file containing the full data for a connectivity study, or from a directory containing these files (use shift and ctrl to select all the files associated with your study).<br>
-                The 'Export CPM file' button will export an injested file to one of these .json files for later use. <br>
+                The 'Import CPM file' button will allow you to load connectivity file data from either a .json file containing the full data for a connectivity study, or from a directory containing these files (use shift and ctrl to select all the files associated with your study). Note that loading from directory will only work if the server is running.<br>
+                You may export a loaded study using File->Export to CPM File.
                 The input select will let a user choose a file to either view or run the CPM code on. If a behavior file is chosen, the user may need to specify which connectivity file from the study to associate it with, should there be more than one.<br>
-                The gear icon will allow the user to specify what settings the CPM code is run with. For more information about this, consult the documentation for computeCPMWASM.
-                `
+                The settings menu open in the 'Calculate CPM' pane will let you change the parameters to the CPM computation. For more information, see the documentation for computeCPMWASM.`
             );
         });
     }
