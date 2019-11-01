@@ -216,8 +216,9 @@ const webfileutils = {
      * @param {String} fileopts.altkeys - if enabled, allows a user to select multiple files in the dialog
      * @param {Function} callback - callback to call when done
      */
-    electronFileCallback: function (fileopts, callback) {
-        fileopts = fileopts || {};
+    electronFileCallback: function (in_fileopts, callback) {
+
+		let fileopts=in_fileopts || {};
         fileopts.save = fileopts.save || false;
         fileopts.title = fileopts.title || 'Specify filename';
         fileopts.defaultpath = fileopts.defaultpath || '';
@@ -247,16 +248,8 @@ const webfileutils = {
 			fileopts.filters[i].extensions=newext;
 		}
 
-
-
-        if (fileopts.defaultpath==='') {
-            try {
-                if (fileopts.initialCallback)
-                    fileopts.defaultpath=fileopts.initialCallback() || '';
-            } catch(e) {
-                console.log(e);
-            }
-        }
+        if (fileopts.initialCallback)
+            fileopts.defaultpath=fileopts.initialCallback() || '';
 
 
         fileopts.filters = fileopts.filters ||
@@ -631,6 +624,7 @@ const webfileutils = {
         menuitem.append(linkitem);
         parent.append(menuitem);
         webutil.disableDrag(menuitem,true);
+
         this.attachFileCallback(menuitem,callback,fileopts);
         return menuitem;
     },
