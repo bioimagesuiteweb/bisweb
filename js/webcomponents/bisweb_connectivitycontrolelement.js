@@ -1,18 +1,18 @@
 /*  LICENSE
-    
+
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-    
+
     BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-    
+
     - you may not use this software except in compliance with the License.
     - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-    
+
     __Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.__
-    
+
     ENDLICENSE */
 
 "use strict";
@@ -70,7 +70,7 @@ const gui_Modes = [ 'All', 'Single Node', 'Group' ];
 
 
 const createNetworkNames = function(mode='yale',internal=null) {
-        
+
     let index=0;
     //    console.log('mode=',mode);
     if (mode==='yale') {
@@ -87,18 +87,18 @@ const createNetworkNames = function(mode='yale',internal=null) {
         gui_Modes[2]='Single Lobe';
     }
 
-    
+
 
     internal.gui_Networks=gui_Networks_Array[index];
     let keys=Object.keys(internal.gui_Networks);
     internal.gui_Networks_Names=[];
     internal.gui_Networks_ShortNames=[];
-    for (let i=0;i<keys.length;i++) { 
+    for (let i=0;i<keys.length;i++) {
         internal.gui_Networks_Names.push(internal.gui_Networks[keys[i]]);
         internal.gui_Networks_ShortNames.push(gui_Networks_ArrayShort[index][keys[i]]);
     }
     //    console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
-    
+
     internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
     internal.parameters.network=internal.gui_Networks[1];
@@ -117,22 +117,22 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // -------------------------------------------------------------------------
 
 
-    
+
     let internal = {
 
         // store here
         gui_Lines : gui_Lines,
         gui_Modes : gui_Modes,
         gui_Lobes : gui_Lobes,
-        
-        
+
+
         // Network stuff
         networkAttributeIndex : 4,
         gui_Networks : null,
         gui_Networks_Names : null,
         gui_Networks_ShortNames : null,
-        
-        
+
+
         // global stuff
         initialized : false,
         this : null,
@@ -150,7 +150,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         overlaymode : false,
         mni2tal : null,
         mni : [ 0,0,0, -1 ],
-        currentnode : 1,                
+        currentnode : 1,
         // GUI Stuff
         posFileInfo : [ "NONE", 0 ],
         negFileInfo : [ "NONE", 0 ],
@@ -192,7 +192,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // meshes
         meshes : [],
         axisline : [null,null,null ],
-        
+
         // state stuff
         inrestorestate : false,
         parcellationtext : null,
@@ -205,13 +205,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     };
 
 
-    
+
     internal.conndata.offset=connectvis3d.lobeoffset;
 
     connectvis.initialize(internal);
     connectvis3d.initialize(internal);
     //    createNetworkNames(useYaleNetworks,internal);
-    
+
     // -------------------------------------------------------------------------
     // Undo Stuff
     // -------------------------------------------------------------------------
@@ -220,7 +220,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             stack : internal.linestack
         };
         internal.undostack.addOperation([JSON.stringify(undoobj)]);
-        
+
     };
 
     var copyStateFromUndoStateElement=function(state) {
@@ -237,10 +237,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.parameters.thickness = state.thickness;
         internal.parameters.radius = state.radius;
         internal.parameters.matrixthreshold = state.matrixthreshold;
-        for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+        for (let ia=0;ia<internal.datgui_controllers.length;ia++)
             internal.datgui_controllers[ia].updateDisplay();
     };
-    
+
     var getStateFromUndoOrRedo = function(doredo) {
         doredo=doredo || false;
         let elem;
@@ -248,10 +248,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             elem=internal.undostack.getRedo();
         else
             elem=internal.undostack.getUndo();
-        
-        if (elem === null) 
+
+        if (elem === null)
             return;
-        
+
         let undoobj=JSON.parse(elem[0]);
         internal.linestack=undoobj.stack;
         console.log('\n\n\n ***** Parsed undo element numops='+internal.linestack.length);
@@ -288,10 +288,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // ----------------------------------------------------------------------------
     var togglemode = function(doupdate=true) {
 
-        
+
         if (internal.parcellation===null)
             return;
-        
+
         if (doupdate) {
             internal.rendermode=internal.rendermode+1;
             if (internal.rendermode>8)
@@ -312,12 +312,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             setnode(Math.round(internal.parameters.node-1));
 
     };
-    
+
     // ----------------------------------------------------------------------------
     // Draw Matrices As Images
     // ----------------------------------------------------------------------------
     var drawMatricesInWindow = function() {
-        
+
         if (internal.conndata.statMatrix===null) {
             bootbox.alert('No connectivity data loaded');
             return;
@@ -334,7 +334,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                        [ 2*padding_x+scalefactor*numrows,
                          padding_y,
                          scalefactor*numrows ] ];
-        
+
         let names=[ 'Positive','Negative' ];
 
         if (internal.matrixdlg === null)
@@ -353,18 +353,18 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         actualcanvas.height=ch;
         internal.matrixdlg.body.append(cv);
         internal.matrixdlg.dialog.modal('show');
-        
+
         let actualcontext=actualcanvas.getContext("2d");
         actualcontext.save();
         actualcontext.fillStyle="#ffeedd";
         actualcontext.fillRect(0,0,cw,ch);
-        
+
         for (let im=0;im<=1;im++) {
             let image = internal.conndata.getImageData(1-im,0,
                                                        actualcontext,
                                                        internal.parcellation);
             let minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
-            
+
             if (image!==null) {
                 actualcontext.lineWidth=1;
                 actualcontext.fillStyle="#000000";
@@ -390,7 +390,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 tmpcontext.putImageData(image,0,0);
                 let ImageObject = new Image();
                 ImageObject.src = internal.tmpcanvas.toDataURL("image/png");
-                
+
                 actualcontext.fillStyle="#ffeedd";
                 actualcontext.fillRect(minx,miny,sz,sz);
 
@@ -408,20 +408,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                 0,0,numrows,numrows,
                                                 a1,b1,c1,c1);
                     };
-                }          
+                }
             }
         }
         actualcontext.restore();
 
-        
+
     };
-    
+
     var drawMatricesAndLegendsAsImages = function() {
 
         if (internal.parcellation===null)
             return;
-        
-        if (internal.parcellation.lobeStats===null || 
+
+        if (internal.parcellation.lobeStats===null ||
             (internal.parcellation.viewport.x0 ===internal.parcellation.viewport.x1 ))
             return;
 
@@ -437,7 +437,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         };
         let fnsize=webutil.getfontsize(cnv);
         let fnsize2=webutil.getfontsize(cnv,true);
-        
+
         let originx= Math.floor(vp.x0*cw);
         let originy= internal.parcellation.box[1];
         let leftgap=internal.parcellation.box[0]-originx;
@@ -454,14 +454,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         needed=numgaps*dlobe+8;
         if (dlobe<0.75*fnsize || imagewidth<50)
             return;
-        
+
         // Draw Legends
         let pw=0.8*leftgap;
         if (pw>8*fnsize)
             pw=8*fnsize;
-        
+
         let px=width-pw-2;
-        
+
         let py=originy+4+offset;
         let lobegap=dlobe;
 
@@ -476,7 +476,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.overlaycontext.textAlign="center";
             internal.overlaycontext.font=fnsize+"px Arial";
             py+=(2*lobegap);
-            
+
             for (let i=1;i<=10;i++) {
                 let tot=util.range(internal.parcellation.lobeStats[i][2],0,10000),tot2=0;
                 if (internal.parcellation.lobeStats.length>(i+10))
@@ -492,8 +492,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 }
             }
         }
-        
-        
+
+
         let y0=fnsize2*2;
         if (internal.showlegend) {
             if (y0<internal.parcellation.box[1]) {
@@ -510,21 +510,21 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 else if (internal.networkAttributeIndex===2)
                     internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
             }
-            
+
             internal.overlaycontext.restore();
         }
-        
+
         let needed2=2*(imagewidth+25+4)+30;
         if (needed2>boxheight) {
             imagewidth=0.5*(needed2-30)-29;
         } else {
             originy+=0.5*(boxheight-needed2);
         }
-        
+
         if (2*imagewidth+80>boxheight) {
             imagewidth=(boxheight-80)/2;
         }
-        
+
         let offsets = [ [ originx+0.1*leftgap,
                           originy+30,
                           imagewidth ],
@@ -533,21 +533,21 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                           imagewidth ]
                       ];
 
-        let numrows=internal.parcellation.rois.length;      
-        
+        let numrows=internal.parcellation.rois.length;
+
         let names=[ 'Positive','Negative' ];
 
-        
+
         for (let im=0;im<=1;im++) {
 
             let image = internal.conndata.getImageData(1-im,0,
                                                        internal.overlaycontext,
                                                        internal.parcellation);
             let minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
-            
-            
+
+
             if (internal.showlegend && image!==null) {
-                
+
                 internal.overlaycontext.save();
                 internal.overlaycontext.lineWidth=1;
                 internal.overlaycontext.fillStyle="rgb(0,0,0)";
@@ -555,7 +555,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.overlaycontext.lineWidth=1;
                 internal.overlaycontext.textAlign="center";
                 internal.overlaycontext.fillText(names[im],minx+0.5*sz,miny-10);
-                
+
                 internal.overlaycontext.lineWidth=1;
                 internal.overlaycontext.fillStyle="#ffffff";
                 internal.overlaycontext.fillRect(minx,miny,sz,sz);
@@ -566,12 +566,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.overlaycontext.lineTo(minx-2,   miny+sz+2);
                 internal.overlaycontext.lineTo(minx-2,   miny-2);
                 internal.overlaycontext.stroke();
-                
-                
+
+
                 internal.overlaycontext.fillStyle="#ffeedd";
                 internal.overlaycontext.fillRect(minx,miny,sz,sz);
                 internal.overlaycontext.restore();
-                
+
                 internal.tmpcanvas.width = numrows;
                 internal.tmpcanvas.height = numrows;
                 let tmpcontext = internal.tmpcanvas.getContext("2d");
@@ -579,7 +579,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let ImageObject = new Image();
                 ImageObject.src = internal.tmpcanvas.toDataURL("image/png");
 
-                
+
                 if (im==0) {
                     let a=minx,b=miny,c=sz;
                     ImageObject.onload = function() {
@@ -609,7 +609,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         }
     };
 
-    
+
     // Update Display skip3d -- if true skip 3d updates
     var update = function(skip3d=false) {
 
@@ -617,7 +617,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
 
         let skip2d=false;
-        
+
         if (internal.parcellation.viewport.x0 ===
             internal.parcellation.viewport.x1 ) {
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
@@ -626,10 +626,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         }
 
         drawColorScale();
-        
+
         if (skip2d && skip3d)
             return;
-        
+
         let max=internal.linestack.length-1;
         let bd=internal.parcellation.clearCanvas(internal.context);
         if (bd[2]>0) {
@@ -639,7 +639,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             //console.log('canvas too small ... skipping 2d');
             skip2d=true;
         }
-        
+
         // First remove what's there
         if (!skip3d) {
             internal.meshes.forEach(function(m) {
@@ -656,9 +656,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             for (let axis=0;axis<=2;axis++)
                 internal.axisline[axis].visible=false;
         }
-        
+
         if (internal.linestack.length>0) {
-            
+
             for (let i=0;i<internal.linestack.length;i++) {
                 ok=1;
                 if (!skip2d)
@@ -669,7 +669,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     connectvis3d.drawlines3d(internal.linestack[i],true);
             }
 
-            
+
             if (max>=0 ) {
                 let state=internal.linestack[max];
                 let mode=state.mode;
@@ -683,7 +683,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 donewithmatrices=true;
             }
 
-            
+
         }
 
         //if (internal.showlegend === true)
@@ -696,12 +696,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     };
 
-    
+
     var setnode = function(node) {
 
         if (internal.parcellation===null)
             return;
-        
+
         node = node || 0;
         internal.lastnode=node;
         let singlevalue=util.range(Math.round(node),0,internal.parcellation.rois.length-1);
@@ -721,29 +721,29 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.axisline[0].visible=false;
             internal.axisline[1].visible=false;
             internal.axisline[2].visible=false;
-            
+
         }
         updatetext();
     };
 
-    
+
     // Update Text
     var updatetext = function() {
 
         if (!internal.showlegend)
             return;
-        
+
         let ch=internal.canvas.height;
         let cw=internal.canvas.width;
         if (internal.parcellation.box[0]>=internal.parcellation.box[2] ||
             internal.parcellation.viewport.x0 >=internal.parcellation.viewport.x1)
             return;
-        
+
         let nodenumber=internal.mni[3];
 
         let s_text='MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
         let s_text2="";
-        
+
         if (nodenumber>-1) {
             let orignode=internal.parcellation.indexmap[nodenumber];
             let humannumber=nodenumber+1;
@@ -751,8 +751,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
             internal.parameters.lobe=lobe;
 
-            // 
-            
+            //
+
             let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
             let network=internal.gui_Networks[n];
             if (network===undefined) {
@@ -764,7 +764,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let brod=gui_BrodLabels[internal.parcellation.rois[orignode].attr[3]];
             if (brod===undefined) {
                 brod="n/a";
-            } 
+            }
             s_text='Node:'+humannumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
             s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
 
@@ -778,7 +778,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.parameters.node=humannumber;
 
 
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
                 internal.datgui_controllers[ia].updateDisplay();
         }
 
@@ -786,7 +786,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.overlaycontext.textAlign="center";
         let x=0.5*(internal.parcellation.viewport.x0+internal.parcellation.viewport.x1)*cw;
         let wx=(internal.parcellation.viewport.x1-internal.parcellation.viewport.x0)*cw;
-        let cnv = { 
+        let cnv = {
             width: wx
         };
         let fnsize=webutil.getfontsize(cnv);
@@ -806,7 +806,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     var cleanmatrixdata = function() {
         internal.conndata.cleanup();
-        if (internal.keynodedlg!==null) 
+        if (internal.keynodedlg!==null)
             internal.keynodedlg.getWidget().empty();
         internal.keynodedlg=null;
         internal.posFileInfo=[ "NONE", 0 ];
@@ -816,12 +816,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
         connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
         internal.parameters.mode3d='Uniform';
-        for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+        for (let ia=0;ia<internal.datgui_controllers.length;ia++)
             internal.datgui_controllers[ia].updateDisplay();
         update();
     };
-    
-    // Loads matrix. Called from input=File element 
+
+    // Loads matrix. Called from input=File element
     // @param {number} index - 0=positive,1=negative
     // @param {string} filename - file to load from
     // @param {callback} done - call this when loaded (used for sample)
@@ -832,7 +832,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         done= done || null;
         sample = sample || false;
-        
+
         if (internal.parcellation===null) {
             loaderror('Load parcellation before loading connectivity matrix');
             return true;
@@ -845,12 +845,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         bisgenericio.read(filename).then( (obj) => {
 
             let text=obj.data;
-            
+
             if (internal.parcellation===null) {
                 loaderror('Load parcellation before loading connectivity matrix');
                 return;
             }
-            
+
             if (index===-1) {
                 if (internal.conndata.posMatrix===null)
                     index=0;
@@ -867,7 +867,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 cleanmatrixdata();
                 return;
             }
-            
+
             internal.undostack.initialize();
             internal.linestack=[];
 
@@ -893,7 +893,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     update();
                     setnode(internal.conndata.maxsumnode);
 
-                    
+
                     if (updatemeshes) {
                         connectvis3d.update3DMeshes(internal.parameters.opacity,
                                                     internal.parameters.mode3d,
@@ -902,7 +902,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                     internal.parameters.hidecereb);
                         setTimeout( () => { drawColorScale(); },1000);
                     }
-                    
+
                     if (!sample) {
                         if (filename.name)
                             filename=filename.name;
@@ -926,7 +926,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         return false;
     };
 
-    
+
     // Parses Parcellation
     // @param {string} text - parcellation text
     // @param {string} filename - file to load from (either .json or .txt)
@@ -940,9 +940,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             text : text,
             filename : filename,
         };
-        
+
         togglemode(false);//update();
-        
+
         setnode(0);
         internal.undostack.initialize();
         internal.hadlinesonce=false;
@@ -956,10 +956,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
     };
-    // Loads Parcellation. 
+    // Loads Parcellation.
     // @param {string} in_filename - file to load from (either .json or .txt)
     var loadparcellation = function(in_filename) {
-        
+
         internal.parcellation=null;
         bisgenericio.read(in_filename).then( (obj) => {
             parseparcellation( obj.data,obj.filename);
@@ -982,7 +982,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             bootbox.alert('Failed to read internal atlas file. Something is wrong here.');
             return 0;
         };
-        
+
         let internalreadatlas = function(atlas,save=true) {
             atlasimage=atlas;
             if (save) {
@@ -1022,7 +1022,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let out="";
         let loadsuccess = function(textstring,filename) {
             console.log('++++ textstring of length='+textstring.length+' read from'+filename);
-            try { 
+            try {
                 out=new BisParcellation().createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
             } catch(e) {
                 bootbox.alert(e);
@@ -1047,14 +1047,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 description=result;
                 loadsuccess(textstring,filename);
             };
-            
-            try { 
+
+            try {
                 util.parseMatrix(textstring,filename,false,3);
             } catch(e) {
                 bootbox.alert('Failed to parse file '+filename+' it does not have 3 columns or something else is wrong. ('+e+')');
                 return;
             }
-            
+
             readatlas(loadsuccess1);
         }).catch( (e) => {
             loaderror(e);
@@ -1067,20 +1067,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // Imports Parcellation Image and outputs text file in json format
     // @param {BisWebImage} image - image to create from
     var importParcellationImage = function(vol,atlasdesc=null) {
-        
+
 
         let save=true;
         if (atlasdesc)
             save=false;
 
         let createparcellationfromimage = function(atlasimage,description) {
-            
+
             let fname=vol.getFilename();
             let index=fname.lastIndexOf(".nii.gz");
             if (index>0)
                 fname=fname.slice(0,index)+".parc";
             let out="";
-            try { 
+            try {
                 out=new BisParcellation().createParcellationFromImage(vol,atlasimage,description)+"\n";
             } catch(e) {
                 bootbox.alert(e);
@@ -1114,7 +1114,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         console.log(numeric.sub(s,truespa));
         let diff2=numeric.norminf(numeric.sub(s,truespa));
         let orient=vol.getOrientation().name;
-        
+
         console.log([diff,diff2]);
         if (diff>0 || diff2>0.01 || orient!=="RAS") {
             bootbox.alert("Bad Parcellation Image for creating a Parcellation file."+
@@ -1135,25 +1135,25 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     var autoDrawLines=function() {
         if (!internal.parameters.autodrawenabled ||
-            internal.conndata.statMatrix===null) 
+            internal.conndata.statMatrix===null)
             return;
-        
+
         connectvis.removelines();
         connectvis.createlines();
     };
 
-    
+
     // actual GUI creation when main class is ready
     // The parent element is internal.parentDomElement
     var onDemandCreateGUI = function (mode='yale') {
 
-        
+
         createNetworkNames(mode,internal);
         //console.log('attr=',        internal.networkAttributeIndex,mode);
-        
+
         if (internal.parentDomElement===null)
             return;
-        
+
         internal.parentDomElement.empty();
         let basediv=webutil.creatediv({ parent : internal.parentDomElement});
         internal.domElement=basediv;
@@ -1161,28 +1161,28 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let data = internal.parameters;
         data.this=this;
         internal.datgui = new dat.GUI({autoPlace: false});
-        
+
         let gui=internal.datgui;
         basediv.append(gui.domElement);
-        
+
         let coords = gui.addFolder('Core');
         coords.open();
         coords.add(data,'autodrawenabled').name('Auto Draw');
 
-        
+
         let disp = gui.addFolder('Display');
         let disp2 = gui.addFolder('Display 3D');
         let adv = gui.addFolder('Advanced');
-        
-        
+
+
         let clist = [];
-        
+
         let modecnt=coords.add(data,'mode',gui_Modes).name("Mode");
         modecnt.onChange( () => {
             autoDrawLines();
         });
-    
-        
+
+
         clist.push(modecnt);
         let a1=coords.add(data,'node',1,400).name("Node");
         clist.push(a1);
@@ -1193,15 +1193,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.datgui_nodecontroller=a1;
 
         let dlist=[];
-        
+
         if (internal.networkAttributeIndex===0)
             dlist.push(coords.add(data,'lobe',gui_Lobes_Values).name("Lobe"));
         else
             dlist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
-        
+
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
         dlist.push(internal.datgui_degreethresholdcontroller);
-        
+
         dlist.push(internal.datgui_degreethresholdcontroller);
         dlist.push(disp.add(data,'length',10,200).name("Length"));
         dlist.push(disp.add(data,'thickness',1,4).name("Thickness"));
@@ -1222,20 +1222,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
         });
 
-        userPreferences.safeGetItem("internal").then( (f) => {
-            if (f) {
-                let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
-                    connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-                });
-                clist.push(da15);
-                let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
-                    connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-                });
-                clist.push(da16);
-            }
+        let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
         });
-        
-        
+        clist.push(da15);
+        let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+        });
+        clist.push(da16);
+
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
@@ -1262,9 +1257,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(da3);
 
         internal.datgui_controllers=clist;
-        
+
         webutil.removedatclose(gui);
-        
+
         let ldiv0=$("<H4> </H4>").css({ 'margin':'5px'});   basediv.append(ldiv0);
 
         let bbar1=webutil.createbuttonbar({ parent : basediv});
@@ -1276,7 +1271,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                parent : bbar1,
                                callback : toggleshowlegend,
                              });
-        
+
 
         webutil.createbutton({ type : "default",
                                name : "Toggle 3D Mode",
@@ -1321,8 +1316,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                    connectvis.drawchords();
                                },
                              });
-        
-        
+
+
         webutil.createbutton({ type : "info",
                                name : "Summary Matrix",
                                position : "bottom",
@@ -1350,7 +1345,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
 
-        
+
 
         webutil.tooltip(internal.parentDomElement);
 
@@ -1363,17 +1358,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         if (internal.rendermode===8)
             return;
-        
+
         let context=internal.layoutmanager.overlaycontext;
         let fullwidth=internal.layoutmanager.getviewerwidth();
         let dw=fullwidth*internal.orthoviewer.cleararea[1];
         let dh=internal.layoutmanager.getviewerheight();
         let y0=30;
-        
+
         let fnsize=webutil.getfontsize(context.canvas);
         if (dw<1700)
             fnsize=Math.round((dw/1000)*fnsize);
-        
+
         let minv=connectvis3d.transferfunction.minth;
         let maxv=connectvis3d.transferfunction.maxth;
         let numsteps=14;
@@ -1381,22 +1376,22 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let wd=(0.25*dw)/(numsteps+1);
         let dvalue=maxv-minv;
         let dv=dvalue/numsteps;
-        
+
         let x0=0.7*dw;
         x0=x0+internal.orthoviewer.cleararea[0]*fullwidth;
-        
+
         y0+=2;
         let ht=0.5*(dh-y0);
         if (ht>wd)
             ht=wd;
-        
+
         let power=10.0;
         if (dvalue>100)
             power=1.0;
         if (dvalue<0.1)
             power=100.0;
-        
-        
+
+
         context.font=fnsize+"px Arial";
         context.textAlign="center";
         context.textBaseline="top";
@@ -1434,12 +1429,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let data=i*dv+minv;
                 context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
             }
-            
+
             x0+=wd;
         }
     };
-    
-    
+
+
     // -------------------------------------------------------------------------------------------
     // Public Interface from here on
     // -------------------------------------------------------------------------------------------
@@ -1448,13 +1443,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // Internal stuff
         internal : internal,
         setnode : setnode,
-        
-        
+
+
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
         // @param {BisWebSubViewer[]} subviewers - subviewers to place info in
         // @param {BisWebImage} volume - new image (not used)
-        initialize : function(subviewers) { 
+        initialize : function(subviewers) {
 
             if (internal.inrestorestate)
                 return;
@@ -1463,15 +1458,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             onDemandCreateGUI('yale');
             const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
-            
+
             bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
                 connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
-            
+
             bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
                 connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
-            
+
             update(false);
             setTimeout(function() {
                 window.dispatchEvent(new Event('resize'));
@@ -1492,14 +1487,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             setnode(Math.round(internal.parameters.node-1));
             this.handleresize();
         },
-        
+
         // Loads a parcellation from fname (json or txt)
         // @memberof BisGUIConnectivityControl.prototype
         loadparcellationfile : function(fname) {
             console.log('Loading from'+fname);
             loadparcellation(fname);
         },
-        
+
 
         // receive mousecoordinates and act appropriately!
         // (This implements a function from the {@link BisMouseObserver} interface.)
@@ -1516,17 +1511,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.mni[3]=-1;
             if (internal.mni===null)
                 return;
-            
+
             if (internal.parcellation!==null) {
                 internal.mni[3]=internal.parcellation.findMNIPoint(internal.mni[0],internal.mni[1],internal.mni[2],
                                                                    internal.overlaycontext);
-            } 
+            }
 
             connectvis3d.draw3dcrosshairs();
             updatetext();
         },
-        
-        // receive window resize events and redraw 
+
+        // receive window resize events and redraw
         // (This implements a function from the {@link BisResizeObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
         handleresize : function() {
@@ -1561,7 +1556,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         handleMouseEvent : function(e) {
-            
+
             if (internal.parcellation===null)
                 return;
             let point=internal.parcellation.findPoint(e.offsetX,e.offsetY,internal.overlaycontext);
@@ -1598,7 +1593,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 intnode=maxnode;
             else if (intnode>maxnode)
                 intnode=0;
-            
+
             let newnode=0;
             if (domap) {
                 newnode=internal.parcellation.rois[intnode].index;
@@ -1627,10 +1622,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.parameters.radius=1.0;
             internal.parameters.poscolor= "#ff0000";
             internal.parameters.negcolor= "#00dddd";
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
                 internal.datgui_controllers[ia].updateDisplay();
         },
-        
+
         showmatrices : function() {
             drawMatricesInWindow();
         },
@@ -1649,10 +1644,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             importParcellationText(filename);
         },
 
-        
+
 
         // -------------------------------------------------------------------
-        /** Set the element state from a dictionary object 
+        /** Set the element state from a dictionary object
             @param {object} state -- the state of the element */
         setElementState : function (dt=null) {
 
@@ -1666,16 +1661,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.posFileInfo=[ "NONE", 0 ];
             internal.negFileInfo=[ "NONE", 0 ];
 
-            if (dt.parcellation) 
+            if (dt.parcellation)
                 parseparcellation(dt.parcellation.text,dt.parcellation.filename,false,true);
 
-            
+
             if (dt.posmatrix) {
                 let neg=null;
                 let pos=new BisWebMatrix();
                 pos.parseFromJSON(dt['posmatrix'].matrix);
                 internal.posFileInfo=dt['posmatrix'].info;
-                
+
                 pos=pos.getNumericMatrix();
 
                 if (dt.negmatrix) {
@@ -1690,11 +1685,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             for (let attr in dt.parameters) {
                 if (internal.parameters.hasOwnProperty(attr)) {
                     internal.parameters[attr] = dt.parameters[attr];
-                } 
+                }
             }
             //console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
             //console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
                 internal.datgui_controllers[ia].updateDisplay();
 
             if (dt.linestack) {
@@ -1713,11 +1708,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             setTimeout( () => { drawColorScale();},20);
 
         },
-        
-        /** Get State as Object 
+
+        /** Get State as Object
             @returns {object} -- the state of the element as a dictionary*/
         getElementState : function() {
-            
+
             let obj = {  };
 
             let mat=[ internal.conndata.posMatrix, internal.conndata.negMatrix ];
@@ -1745,7 +1740,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             obj.parameters=JSON.parse(JSON.stringify(internal.parameters));
             console.log('storing params=',JSON.stringify(obj.parameters,null,2));
-            
+
             obj.parcellation = internal.parcellationtext;
             obj.lastnode=internal.lastnode;
             obj.showlegend=internal.showlegend;
@@ -1770,7 +1765,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return internal.rendermode;
         }
 
-        
+
     };
 
     internal.updateFn=update;
@@ -1800,11 +1795,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.this.handleKeyEvent(fe);
     },true);
 
-    
+
     return control;
 };
 
-/** 
+/**
  * A web element to create and manage a GUI for a Connectivity Display Tool (brain connectivity matrix visualizations.)
  *  The GUI for this appears inside a {@link ViewerLayoutElement}.
  * A manager element gets a pointer to this and calls the createMenu function to add
@@ -1818,14 +1813,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
  * </bisweb-connectivitycontrolelement>
  *
  * Attributes:
- *      bis-viewerid : the orthogonal viewer to draw in 
+ *      bis-viewerid : the orthogonal viewer to draw in
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
 
 class ConnectivityControlElement extends HTMLElement {
 
     connectedCallback() {
-        
+
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         let viewer=document.querySelector(viewerid);
@@ -1839,13 +1834,13 @@ class ConnectivityControlElement extends HTMLElement {
         this.innercontrol=bisGUIConnectivityControl(panel.getWidget(),viewer,layoutcontroller);
     }
 
-    /** load parcellation file 
-     * @param {string} fname - the url or filename or file object or an electron object with members 
+    /** load parcellation file
+     * @param {string} fname - the url or filename or file object or an electron object with members
      */
     loadparcellationfile(fname) { this.innercontrol.loadparcellationfile(fname); }
-    
-    /** loads a a matrix file 
-     * @param {string} fname - the url or filename or file object or an electron object with members 
+
+    /** loads a a matrix file
+     * @param {string} fname - the url or filename or file object or an electron object with members
      */
     loadmatrix(index,fname) { this.innercontrol.loadmatrix(index,fname); }
 
@@ -1868,12 +1863,12 @@ class ConnectivityControlElement extends HTMLElement {
 
     /* reset default display parameters */
     resetdefault() { this.innercontrol.resetdefault(); }
-    
+
     /* shows a popup dialog listing the most "interesting" nodes */
     viewInteresting() {
 
         const internal=this.innercontrol.internal;
-        
+
         if (internal.conndata.statMatrix===null) {
             bootbox.alert('No connectivity data loaded');
             return;
@@ -1884,8 +1879,8 @@ class ConnectivityControlElement extends HTMLElement {
             internal.keynodedlg.show();
             return;
         }
-        
-        
+
+
         let c_data=internal.conndata.getSortedNodesByDegree(2);
         let numnodes=c_data.length-1;
         let maxnodes=Math.round(0.1*numnodes);
@@ -1908,7 +1903,7 @@ class ConnectivityControlElement extends HTMLElement {
         let templates=webutil.getTemplates();
         let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
         let stable=$('#'+newid);
-        
+
         let buttonnodepairs = [];
 
         let callback = (e) => {
@@ -1927,7 +1922,7 @@ class ConnectivityControlElement extends HTMLElement {
                    'user-select': 'none'});
         thead.css({'font-size':'12px',
                    'user-select': 'none'});
-        
+
         let hd=$('<tr>'+
                  ' <td width="5%">#</th>'+
                  ' <td width="15%">Node</th>'+
@@ -1945,14 +1940,14 @@ class ConnectivityControlElement extends HTMLElement {
                 let c = [ internal.parcellation.rois[node].x,
                           internal.parcellation.rois[node].y,
                           internal.parcellation.rois[node].z];
-                
+
                 let s0= i+1+".";
                 let s1= node+1;
                 let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
-                
+
                 let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
                 let nid=webutil.getuniqueid();
-                
+
                 let w=$(`<tr>
                               <td width="5%">${s0}</td>
                               <td width="15%">${s1}</td>
@@ -1972,13 +1967,13 @@ class ConnectivityControlElement extends HTMLElement {
 
     /* displays the matrices */
     showmatrices() { this.innercontrol.showmatrices(); }
-    
-    /** Imports a parcellation as text file 
+
+    /** Imports a parcellation as text file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
     importparcellationtext(f) { this.innercontrol.importparcellationtext(f); }
 
-    /** Imports a parcellation as json file 
+    /** Imports a parcellation as json file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
     importparcellation(f,desc) { this.innercontrol.importparcellation(f,desc); }
@@ -1986,13 +1981,13 @@ class ConnectivityControlElement extends HTMLElement {
     /** popups a dialog showing info about this control */
     about() { this.innercontrol.about(); }
 
-    /** Set the element state from a dictionary object 
+    /** Set the element state from a dictionary object
         @param {object} state -- the state of the element */
     setElementState(dt=null) {
         this.innercontrol.setElementState(dt);
     }
 
-    /** Get State as Object 
+    /** Get State as Object
         @returns {object} -- the state of the element as a dictionary*/
     getElementState() {
         return this.innercontrol.getElementState();
@@ -2007,7 +2002,7 @@ class ConnectivityControlElement extends HTMLElement {
     setRenderMode(md) {
         this.innercontrol.setRenderMode(md);
     }
-    
+
     getRenderMode() {
         return this.innercontrol.getRenderMode();
     }
@@ -2020,4 +2015,3 @@ class ConnectivityControlElement extends HTMLElement {
 
 webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControlElement);
 export default ConnectivityControlElement;
-
