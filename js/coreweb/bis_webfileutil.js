@@ -1,18 +1,18 @@
 /*  LICENSE
- 
+
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
+
  BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
+
  - you may not use this software except in compliance with the License.
  - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
+
  __Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.__
- 
+
  ENDLICENSE */
 
 "use strict";
@@ -76,7 +76,7 @@ const webfileutils = {
 
     /**
      * Checks whether one of Google Drive, Dropbox, or OneDrive has usable keys in the current configuration.
-     * These keys live in the 'internal' directory outside of the rest of the codebase. 
+     * These keys live in the 'internal' directory outside of the rest of the codebase.
      *
      * TODO: Revert this to normal!
      */
@@ -85,7 +85,7 @@ const webfileutils = {
             return true;
         if (enableaws || enableserver)
             return true;
-        return false; 
+        return false;
     },
 
     /**
@@ -94,12 +94,12 @@ const webfileutils = {
     getMode: function() {
         return fileMode;
     },
-    
+
     /**
-     * Creates a list containing the file sources that are available to the application. This is based on the keys that are present in 'internal', and whether or not the document supports a local fileserver. 
+     * Creates a list containing the file sources that are available to the application. This is based on the keys that are present in 'internal', and whether or not the document supports a local fileserver.
      */
     getModeList : function() {
-        let s=[ 
+        let s=[
             { value: "local", text: "Local File System" }
         ];
 
@@ -111,16 +111,16 @@ const webfileutils = {
 
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox (Load Only)" });
-        if (gkey.length>1) 
+        if (gkey.length>1)
             s.push({ value: "googledrive", text: "Google Drive (Load Only)" });
-        //  if (mkey.length>1) 
+        //  if (mkey.length>1)
         //     s.push({ value: "onedrive", text: "Microsoft OneDrive (Load Only)" });
 
         return s;
     },
-    
+
     /**
-     * Changes the file source of the application. 
+     * Changes the file source of the application.
      * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'onedrive', 'amazonaws', 'server', or 'local'
      * @param {Boolean} save - If true -- save preferences on change
      */
@@ -128,27 +128,27 @@ const webfileutils = {
     setMode : function(m='',save=true) {
 
         fileMode='local';
-        
+
       // TODO: Check if fileserver and aws are enabled else disable
         switch(m)
         {
             case 'dropbox' : {
-                if(dkey) 
+                if(dkey)
                     fileMode = 'dropbox';
                 break;
-            } 
+            }
             case 'googledrive' : {
-                if (gkey) 
+                if (gkey)
                     fileMode = 'googledrive';
                 break;
             }
             case 'onedrive' :  {
-                if (mkey) 
+                if (mkey)
                     fileMode = 'onedrive';
                 break;
             }
             case 'amazonaws' : {
-                if (enableaws) 
+                if (enableaws)
                     fileMode = 'amazonaws';
                 break;
             }
@@ -183,13 +183,13 @@ const webfileutils = {
     candoComplexIO: function(serveronly=false) {
 
         //console.log('In cando complex');
-        
+
         if (genericio.getmode()!=='browser')
             return true;
 
         if (fileMode==='server')
             return true;
-        
+
         if (fileMode==='amazonaws' && serveronly===false)
             return true;
 
@@ -197,17 +197,17 @@ const webfileutils = {
             webutil.createAlert('You need to connect to a local fileserver before this operation.',true);
         else
             webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
-        
+
         return false;
     },
 
 
     // ------------------------------------------------------------------------------------------
-    
-    /** 
-     * Electron file callback function -- invoked instead of webFileCallback if the application is running in Electron. 
+
+    /**
+     * Electron file callback function -- invoked instead of webFileCallback if the application is running in Electron.
      * @alias WebFileUtil.electronFileCallback
-     * @param {Object} fileopts - the file options object 
+     * @param {Object} fileopts - the file options object
      * @param {String} fileopts.title - if in file mode and file set the title of the file dialog
      * @param {Boolean} fileopts.save - if in file mode and file determine load or save
      * @param {String} fileopts.defaultpath - if in file mode and file use this as original filename
@@ -231,9 +231,24 @@ const webfileutils = {
         if (suffix === "DIRECTORY")
             fileopts.filters = "DIRECTORY";
 
+		// Clean up filters that begin with a "." as electron does not like that
+		let l=fileopts.filters.length;
+		for (let i=0;i<l;i++) {
+			let elem=fileopts.filters[i];
+			let ext=elem.extensions;
+			let l2=ext.length;
+			let newext=[];
+			for (let j=0;j<l2;j++) {
+				let a=ext[j];
+				if (a.indexOf(".")===0)
+					a=a.substr(1,a.length-1);
+				newext.push(a);
+			}
+			fileopts.filters[i].extensions=newext;
+		}
 
-        
-        
+
+
         if (fileopts.defaultpath==='') {
             try {
                 if (fileopts.initialCallback)
@@ -242,8 +257,8 @@ const webfileutils = {
                 console.log(e);
             }
         }
-        
-        
+
+
         fileopts.filters = fileopts.filters ||
             [{ name: 'All Files', extensions: ['*'] }];
 
@@ -283,9 +298,9 @@ const webfileutils = {
         }
     },
 
-    /** 
-     * Web file callback function. This function will be invoked by any buttons that load or save if the application has been launched from a browser. 
-     * This function will call the load and save functions of whichever file source is specified (see setFileSource or another similar function). 
+    /**
+     * Web file callback function. This function will be invoked by any buttons that load or save if the application has been launched from a browser.
+     * This function will call the load and save functions of whichever file source is specified (see setFileSource or another similar function).
      * @alias WebFileUtil.webFileCallback
      * @param {Object} fileopts - the callback options object
      * @param {String} fileopts.title - if in file mode and web set the title of the file dialog
@@ -295,7 +310,7 @@ const webfileutils = {
      * @param {String} fileopts.force - force file selection mode (e.g. 'local');
      * @param {string}  fileopts.serveronly - if true only for server operations (or electron)
      * @param {boolean} fileopts.altkeys - if true, enables alt keys for the file dialog (shift and ctrl). false by default
-     * @param {Function} callback - Callback to call when done. Typically this is provided by bis_genericio and will put the loaded image onto the viewer or perform any necessary actions after saving an image. 
+     * @param {Function} callback - Callback to call when done. Typically this is provided by bis_genericio and will put the loaded image onto the viewer or perform any necessary actions after saving an image.
      */
     webFileCallback: function (fileopts, callback) {
 
@@ -316,7 +331,7 @@ const webfileutils = {
             }
         }
 
-        
+
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
             fileopts.filters=[{ name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] }];
@@ -349,7 +364,7 @@ const webfileutils = {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
-            
+
             if (fileopts.serveronly && fmode !== 'server') {
                 webutil.createAlert('You need to connect to a local fileserver before this operation.',true);
                 return false;
@@ -360,10 +375,10 @@ const webfileutils = {
         }
 
         // -------------------- End of Part IA -------------
-        
+
         if (fileopts.save) {
             // We are now saving only server, aws or local
-            
+
             if (fmode === 'server' || fmode === 'amazonaws') {
 
                 let initialDir=null;
@@ -386,17 +401,17 @@ const webfileutils = {
                         }
                     }
                 } catch(e) {
-                    console.log(e); 
+                    console.log(e);
                 }
 
                 if (!initialFilename && defaultpath.length>0) {
                     initialDir=defaultpath;
                     initialFilename=null;
                 }
-                
+
                 cbopts.initialFilename=initialFilename || '';
                 cbopts.mode='save';
-                if (fmode === 'server') 
+                if (fmode === 'server')
                     bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
                 else
                     bisweb_awsmodule.wrapInAuth('uploadfile', cbopts);
@@ -410,20 +425,20 @@ const webfileutils = {
             callback();
             return;
         }
-        
+
         // -------- Part II Load -----------
-        
-        if (fmode==='dropbox') { 
+
+        if (fmode==='dropbox') {
             fileopts.suffix=suffix;
             return bisweb_dropbox.pickReadFile(fileopts, callback);
         }
-        
-        if (fmode==='onedrive') { 
+
+        if (fmode==='onedrive') {
             fileopts.suffix=suffix;
             return bisweb_onedrive.pickReadFile(fileopts, callback);
         }
-        
-        
+
+
         if (fmode==="googledrive") {
             bisweb_googledrive.create().then( () => {
                 bisweb_googledrive.pickReadFile("").then(
@@ -452,8 +467,8 @@ const webfileutils = {
         for (let i=0;i<fileInputElements.length;i++)
             fileInputElements[i].remove();
 
-        
-        
+
+
         let multiple = fileopts.altkeys ? 'multiple' : ''; //enables shift and ctrl in native file select
         if (!genericio.inIOS()) {
             let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}" ${multiple}/>`);
@@ -465,9 +480,9 @@ const webfileutils = {
             $('body').append(loadelement);
             loadelement[0].click();
         } else {
-            if (!iosFileDialog) 
+            if (!iosFileDialog)
                 iosFileDialog=webutil.createmodal('Select Input File');
-            
+
             iosFileDialog.titlediv.empty();
             if (fileopts.title.length<1)
                 fileopts.title='Select File';
@@ -485,10 +500,10 @@ const webfileutils = {
             iosFileDialog.dialog.modal('show');
             iosFileDialog.body[0].click();
         }
-            
+
     },
 
-    /** 
+    /**
      * Use this to activate a file callback directly (in electron or for server/s3)
      * @alias WebFileUtil.genericFileCallback
      * @param {object} fileopts - the file dialog options object (in file style)
@@ -517,7 +532,7 @@ const webfileutils = {
         }
     },
 
-    /** Create File Callback 
+    /** Create File Callback
      * @alias WebFileUtil.attachFileCallback
      * @param {JQueryElement} button -- the element to attach the callback to
      * @param {object} fileopts - the file dialog options object (in file style)
@@ -535,11 +550,11 @@ const webfileutils = {
         fileopts.save = fileopts.save || false;
 
         if (webutil.inElectronApp()) {
-            
+
             button.click( (e) => {
                 setTimeout( () => {
                     e.stopPropagation();
-                    e.preventDefault();  
+                    e.preventDefault();
                     this.electronFileCallback(fileopts, callback);
                 },1);
             });
@@ -556,7 +571,7 @@ const webfileutils = {
 
 
 
-    /** 
+    /**
      * Function that creates button using Jquery/Bootstrap (for styling) & a hidden
      * input type="file" element to load a file. Calls WebFileUtil.createbutton for most things
      * @alias WebFileUtil.createFileButton
@@ -568,17 +583,17 @@ const webfileutils = {
      * @param {function} opts.callback - if specified adds this is a callback ``on click''. The event (e) is passed as argument.
      * @param {string} opts.tooltip - string to use for tooltip
      * @param {string} opts.position - position of tooltip (one of top,bottom,left,right)
-     * @returns {JQueryElement} 
+     * @returns {JQueryElement}
      */
     createFileButton: function (opts, fileopts={}) {
-        
+
         let finalcallback = opts.callback || null;
         if (finalcallback !== null && typeof finalcallback === "function") {
             opts.callback = finalcallback;
         } else {
             throw (new Error('create file button needs a non-null callback'));
         }
-        
+
         opts.callback=null;
         let but= webutil.createbutton(opts);
         this.attachFileCallback(but,finalcallback,fileopts);
@@ -586,7 +601,7 @@ const webfileutils = {
     },
 
 
-    /** 
+    /**
      * Create drop down menu item (i.e. a single button) with the appropriate file callback.
      * @param {JQueryElement} parent - the parent to add this to
      * @param {String} name - the menu name (if '') adds separator
@@ -595,7 +610,7 @@ const webfileutils = {
      * @param {Object} opts - the electron options object -- used if in electron
      * @param {String} opts.title - if in file mode and electron set the title of the file dialog
      * @param {Boolean} opts.save - if in file mode and electron determine load or save
-     * @param {BisImage} opts.saveFile - file to save. 
+     * @param {BisImage} opts.saveFile - file to save.
      * @param {String} opts.defaultpath - if in file mode and electron use this as original filename
      * @param {String} opts.filter - if in file mode and electron use this to filter electron style
      * @param {String} css - styling info for link element
@@ -622,7 +637,7 @@ const webfileutils = {
     // ------------------------------------------------------------------------
 
     /**
-     * Creates a file menu item with standard BioImageSuite styling. 
+     * Creates a file menu item with standard BioImageSuite styling.
      * See parameters for createFileMenuItem.
      */
     createDropdownFileItem : function (dropdown,name,callback,fileopts,classname='') {
@@ -635,14 +650,14 @@ const webfileutils = {
 
     /**
      * Creates a modal with radio buttons to allow a user to change the file source for the application and a dropdown button in the navbar to open the modal.
-     * @param {JQueryElement} bmenu - The navbar menu to attach the dropdown button to. 
-     * @param {String} name - The name for the dropdown button. 
+     * @param {JQueryElement} bmenu - The navbar menu to attach the dropdown button to.
+     * @param {String} name - The name for the dropdown button.
      * @param {Boolean} separator - Whether or not the dropdown should be followed by a separator line in the menu. True by default.
      */
     createFileSourceSelector : function(bmenu,name="Set File Source",separator=false) {
 
         const self=this;
-        
+
         let fn=function() {
             userPreferences.safeGetItem('filesource').then( (initial) => {
                 initial= initial || 'local';
@@ -652,7 +667,7 @@ const webfileutils = {
                         <HR><p>You may download the bisweb fileserver using npm. Type <BR><TT>sudo npm install -g biswebnode</TT><BR> Once this is installed look into the <B>biswebnode/serverconfig</B> directory for instructions. <B> To Start type:</B><TT> biswebnode bisserver -h </TT>. (The -h flag prints help info). Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 10.x</a>
                         </p>`;
                 }
-                
+
                 webutil.createRadioSelectModalPromise(`<H4>Select File Source</H4><HR>`,
                                                       "Close",
                                                       initial,
@@ -660,11 +675,11 @@ const webfileutils = {
                                                       extra).then( (m) => {
                                                          self.setMode(m);
                                                      }).catch(() => {
-                                                         
+
                                                      });
             });
         };
-        
+
         //TODO: debug dropbox, googledrive and one dirve to make sure they work
         if (!webutil.inElectronApp()) {
             if (separator)
@@ -684,7 +699,7 @@ const webfileutils = {
 
     initializeFromUserPrefs : function () {
         if (!webutil.inElectronApp() ) {
-            
+
             Promise.all( [ userPreferences.safeGetItem('filesource'),
                            userPreferences.safeGetItem('enables3') ]).then( (lst) => {
                                let f=lst[0];
@@ -705,5 +720,3 @@ const webfileutils = {
 };
 
 module.exports=webfileutils;
-
-                          
