@@ -6,7 +6,7 @@
         "extra" : "Mouse Brain",
         "data" : [
             {
-                "name"  : "Regions",
+                "name"  : "Allen Atlas Regions",
                 "description" : "Allen Atlas Regions",
                 "labels": {
                     "1" : "Frontal pole, cerebral cortex (FRP), (184)",
