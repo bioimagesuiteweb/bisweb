@@ -1147,7 +1147,7 @@ class BaseViewerElement extends HTMLElement {
             this.internal.cmapcontroller.updateTransferFunctions(true);
         }
 
-        this.internal.ignorecolormapobservers=false
+        this.internal.ignorecolormapobservers=false;
         
         if (this.internal.snapshotcontroller) 
             this.internal.snapshotcontroller.setElementState(dt['snapshotcontroller']);
