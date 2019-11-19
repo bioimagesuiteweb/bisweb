@@ -3,5 +3,10 @@
         "filename" : "humanmni.json",
         "dimensions" : [ 181,217,181 ],
         "spacing" : [ 1.0,1.0,1.0 ]
+    },
+    "allenmri" : {
+        "filename" : "mouseallenmri.json",
+        "dimensions" : [ 64,47,75 ],
+        "spacing" : [ 0.2,0.2,0.2 ]
     }
 }

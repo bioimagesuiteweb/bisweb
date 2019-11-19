@@ -1,0 +1,60 @@
+{
+    "anatomical" : "../m19_ReslicedToAllen_Cropped.nii.gz",
+    "labels" : {
+        "filename" : "../Allen_Annotation_Xilin_Fixed_Cropped.nii.gz",
+        "description" : "Allen Atlas Mapped to MRI",
+        "extra" : "Mouse Brain",
+        "data" : [
+            {
+                "name"  : "Regions",
+                "description" : "Allen Atlas Regions",
+                "labels": {
+                    "1" : "Frontal pole, cerebral cortex (FRP), (184)",
+                    "2" : "Primary motor area (MO p), (985)",
+                    "3" : "Secondary motor area (MO s), (993)",
+                    "4" : "Primary somatosensory area nose (SSp-n), (353)",
+                    "5" : "Primary somatosensory area barrel field (SSp-bfd), (329)",
+                    "6" : "Primary somatosensory area lower limb (SSp-ll), (337)",
+                    "7" : "Primary somatosensory area mouth (SSp-m), (345)",
+                    "8" : "Primary somatosensory area upper limb (SSp-ul), (369)",
+                    "9" : "Primary somatosensory area trunk (SSp-tr), (361)",
+                    "10" : "Primary somatosensory area unassigned (SSp-un), (1.82E+08)",
+                    "11" : "Supplemental somatosensory area (SSs), (378)",
+                    "12" : "Gustatory areas (GU), (1057)",
+                    "13" : "Visceral areas (VISC), (677)",
+                    "14" : "Dorsal auditory area (AUDd), (1011)",
+                    "15" : "Primary auditory area (AUDp), (1002)",
+                    "16" : "Posterior auditory area (AUDpo), (1027)",
+                    "17" : "Ventral auditory area (AUDv), (1018)",
+                    "18" : "Anterolateral visual area (VISal), (402)",
+                    "19" : "Anteromedial visual area (VISam), (394)",
+                    "20" : "Lateral visual area (VISl), (409)",
+                    "21" : "Primary visual area (VISp), (385)",
+                    "22" : "posterolateral visual area (VISpl), (425)",
+                    "23" : "posteromedial visual area (VISpm), (533)",
+                    "24" : "Anterior area (VISa), (3.13E+08)",
+                    "25" : "Laterointermediate area (VISli), (3.13E+08)",
+                    "26" : "Rostrolateral visual area (VISrl), (417)",
+                    "27" : "Postrhinal area (VISpor), (3.13E+08)",
+                    "28" : "Anterior cingulate area (dorsal part ACAd), (39)",
+                    "29" : "Anterior cingulate area (ventral part ACAv), (48)",
+                    "30" : "Prelimbic area (PL), (972)",
+                    "31" : "Infralimbic area (ILA), (44)",
+                    "32" : "Orbital area (Lateral part, ORBI), (723)",
+                    "33" : "Orbital area, medial part (ORBm), (731)",
+                    "34" : "Orbital area, venterolateral part (ORBvl), (746)",
+                    "35" : "Agranular insular area, dorsal part (Ald), (104)",
+                    "36" : "Agranular insular area, posterior part (Alp), (111)",
+                    "37" : "Agranular insular area, ventral part (Alv), (119)",
+                    "38" : "Retrosplenial area, lateral agranular part (RSPagl), (894)",
+                    "39" : "Retrosplenial area, dorsal part (RSPd), (879)",
+                    "40" : "Retrosplenial area, ventral part (RSPv), (886)",
+                    "41" : "Tempral assosciation areas (TE a), (541)",
+                    "42" : "Perirhinal area (PERI), (922)",
+                    "43" : "Ectorhinal area (ECT), (895)"                    
+                }
+            }
+        ]
+    }
+}
+

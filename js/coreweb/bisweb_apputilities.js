@@ -24,30 +24,62 @@ module.exports = {
 
 
     createMNIImageLoadMenuEntries : function(fmenu,callback,viewerno=0) {
-        webutil.createMenuItem(fmenu,'Load MNI T1 (1mm)',
+        webutil.createMenuItem(fmenu,'Load MNI T1 (1mm, RAS)',
                                function() {
                                    let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno);
+                                   callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno,'RAS');
                                });
-        webutil.createMenuItem(fmenu,'Load MNI T1 (2mm)',
+        webutil.createMenuItem(fmenu,'Load MNI T1 (2mm, RAS)',
                                function() {
                                    let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno);
+                                   callback(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno,'RAS');
                                });
+        webutil.createMenuItem(fmenu,'Load MNI T1 (1mm, LPS)',
+                               function() {
+                                   let imagepath=webutil.getWebPageImagePath();
+                                   callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno,'LPS');
+                               });
+        webutil.createMenuItem(fmenu,'Load Yale Mouse MRI Template (0.2mm, RAS)',
+                               function() {
+                                   let imagepath=webutil.getWebPageImagePath();
+                                   callback(`${imagepath}/m19_ReslicedToAllen_Cropped.nii.gz`,viewerno,'RAS');
+                               });
+        webutil.createMenuItem(fmenu,'Load Yale Mouse MRI Template (0.2mm, LPS)',
+                               function() {
+                                   let imagepath=webutil.getWebPageImagePath();
+                                   callback(`${imagepath}/m19_ReslicedToAllen_Cropped.nii.gz`,viewerno,'LPS');
+                               });
+    
     },
     
     createBroadmannAtlasLoadMenuEntries : function(fmenu,callback,viewerno=0) {
 
-        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm)',
+        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm, RAS)',
                                function () {
                                    let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno);
+                                   callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno,'RAS');
                                });
         
-        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm)',
+        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm, RAS)',
                                function () {
                                    let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/yale_broadmann_2mm_ras.nii.gz`, viewerno);
+                                   callback(`${imagepath}/yale_broadmann_2mm_ras.nii.gz`, viewerno,'RAS');
+                               });
+
+        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm, LPS)',
+                               function () {
+                                   let imagepath=webutil.getWebPageImagePath();
+                                   callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno,'LPS');
+                               });
+        webutil.createMenuItem(fmenu,'Load Yale-Allen Mouse Regions (0.2mm, RAS)',
+                               function() {
+                                   let imagepath=webutil.getWebPageImagePath();
+                                   callback(`${imagepath}/Allen_Annotation_Xilin_Fixed_Cropped.nii.gz`,viewerno,'RAS');
+                               });
+        webutil.createMenuItem(fmenu,'Load Yale-Allen Mouse Regions (0.2mm, LPS)',
+                               function() {
+                                   let imagepath=webutil.getWebPageImagePath();
+                                   callback(`${imagepath}/Allen_Annotation_Xilin_Fixed_Cropped.nii.gz`,viewerno,'LPS');
                                });
 
     },
