@@ -1119,15 +1119,12 @@ class BaseViewerElement extends HTMLElement {
         if (img.length>1) {
             let newimg=new BisWebImage();
             newimg.parseFromJSON(dt['image']);
-            //            console.log('has image',newimg.getDescription());
-                                    
             this.setimage(newimg);
             
             let ovr=dt['overlay'] || '';
             if (ovr.length >1) {
                 let newobj=new BisWebImage();
                 newobj.parseFromJSON(dt['overlay']);
-                //console.log('has overlay',newobj.getDescription());
                 let colortype=dt['colortype'] || 'Overlay';
                 let plainmode= (colortype === "Objectmap");
                 this.setobjectmap(newobj,plainmode,colortype);

@@ -305,7 +305,7 @@ class AtlasControlElement extends HTMLElement {
 
         let voxelcoords=[0,0,0,0];
         for (let i=0;i<=2;i++) {
-            voxelcoords[i]=util.range(mm[i]/this.atlasspacing[i],0,this.atlasdimensions[i]-1);
+            voxelcoords[i]=Math.floor(util.range(mm[i]/this.atlasspacing[i],0,this.atlasdimensions[i]-1));
             if (this.flips[i])
                 voxelcoords[i]=(this.atlasdimensions[i]-1)-voxelcoords[i];
         }
@@ -335,6 +335,7 @@ class AtlasControlElement extends HTMLElement {
             let elem=data[j];
             if (elem.name!=='') {
                 let v=( this.atlaslabelimage.getVoxel(voxelcoords));
+                //console.log('V=',v,voxelcoords, 'mm=',mm,'flips=',this.flips);
                 let desc=elem.labels[v] || '(Not Defined)';
                 if (desc) {
                     results.data.push( { 
