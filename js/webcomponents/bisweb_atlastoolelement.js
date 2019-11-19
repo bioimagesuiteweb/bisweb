@@ -157,7 +157,7 @@ class AtlasControlElement extends HTMLElement {
             return;
         }
 
-        console.log('Dim=',dim,spa,this.orientation,volume.getDescription());
+        //console.log('Dim=',dim,spa,this.orientation,volume.getDescription());
         
         if (this.atlaslabelimage) {
             let atlasdim=this.atlaslabelimage.getDimensions();
