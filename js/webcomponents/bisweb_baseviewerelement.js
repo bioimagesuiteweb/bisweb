@@ -650,6 +650,7 @@ class BaseViewerElement extends HTMLElement {
         
         //this.handleresize();
         this.setcoordinates();
+        
         this.updateColormapObservers(input);
         this.drawcolorscale();
     }
@@ -688,19 +689,20 @@ class BaseViewerElement extends HTMLElement {
      */
     updateColormapObservers(input) {
 
+        if (this.internal.colormapobservers.length <1)
+            return;
         const self=this;
 
-        if (this.internal.ignorecolormapobservers)
+        if (this.internal.ignorecolormapobservers ||
+            this.internal.ignoreimageobservers )
             return;
-        
-        this.internal.ignorecolormapobservers = true;
 
+        
+        //console.log('**** Updating observers from=',this);
         this.internal.colormapobservers.forEach(function(f) {
             f.updatecmap(self.internal.cmapcontroller,input);
         });
-        setTimeout( () => {
-            this.internal.ignorecolormapobservers = false;
-        });
+
     }
     
     /** update the transfer functions of this viewer from outside.
@@ -715,8 +717,12 @@ class BaseViewerElement extends HTMLElement {
             return;
 
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
+
+            //console.log('++++++++ Being updated from  observers=',this);
             this.internal.cmapcontroller.setElementState(other.getElementState());
+            this.internal.ignorecolormapobservers = true;
             this.updatetransferfunctions(input);
+            this.internal.ignorecolormapobservers = false;
         }
     }
     
@@ -820,6 +826,7 @@ class BaseViewerElement extends HTMLElement {
             return;
 
         this.internal.ignoreimageobservers=true;
+
         
         this.internal.imagechangedobservers.forEach((f) => {
             f.handleViewerImageChanged(this,mode,this.internal.objectmaptransferinfo.colormode);
@@ -1119,15 +1126,12 @@ class BaseViewerElement extends HTMLElement {
         if (img.length>1) {
             let newimg=new BisWebImage();
             newimg.parseFromJSON(dt['image']);
-            //            console.log('has image',newimg.getDescription());
-                                    
             this.setimage(newimg);
             
             let ovr=dt['overlay'] || '';
             if (ovr.length >1) {
                 let newobj=new BisWebImage();
                 newobj.parseFromJSON(dt['overlay']);
-                //console.log('has overlay',newobj.getDescription());
                 let colortype=dt['colortype'] || 'Overlay';
                 let plainmode= (colortype === "Objectmap");
                 this.setobjectmap(newobj,plainmode,colortype);
@@ -1135,15 +1139,20 @@ class BaseViewerElement extends HTMLElement {
         }
 
 
-        this.internal.ignorecolormapobservers = false;
-        
+        if (!this.is_slave_viewer)
+            this.internal.ignorecolormapobservers = false;
+
         if (this.internal.cmapcontroller) {
             this.internal.cmapcontroller.setElementState(dt['colormap']);
             this.internal.cmapcontroller.updateTransferFunctions(true);
         }
 
+        this.internal.ignorecolormapobservers=false;
+        
         if (this.internal.snapshotcontroller) 
             this.internal.snapshotcontroller.setElementState(dt['snapshotcontroller']);
+        
+        
         
 
 

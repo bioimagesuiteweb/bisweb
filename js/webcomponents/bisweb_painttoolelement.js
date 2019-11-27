@@ -546,12 +546,10 @@ class PaintToolElement extends HTMLElement {
                 self.internal.objectmap=in_objmap;
                 self.internal.objectmapdata=self.internal.objectmap.getImageData();
                 self.internal.settingviewer=true;
-                console.log('objectmap loaded',self.internal.objectmap.getDescription());
                 self.setViewerObjectmap(in_objmap,true,"Objectmap");
                 self.internal.settingviewer=false;
                 self.resetundo();
                 self.updategui();
-                self.setObjectmapOpacity(0.8);
                 resolve('all set');
             },1);
         });
@@ -573,6 +571,8 @@ class PaintToolElement extends HTMLElement {
         }
         if (infile.length<2)
             return;
+
+        //        console.log('Loading objectmap',evt);
         
         let img=new bisweb_image();
         img.load(infile)

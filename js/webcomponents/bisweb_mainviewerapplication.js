@@ -358,7 +358,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // I/O Code
     // ---------------------------------------------------------------------------
-    loadImage(fname, viewer = 0) {
+    loadImage(fname, viewer = 0, orient='None') {
         const self=this;
 
         
@@ -367,7 +367,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress', 30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
-                img.load(fname)
+                img.load(fname,orient)
                     .then(function () {
                         webutil.createAlert('Image loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setimage(img);
@@ -380,14 +380,14 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
-    loadOverlay(fname, viewer=0) {
+    loadOverlay(fname, viewer=0,orient='None') {
 
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
-                img.load(fname)
+                img.load(fname,orient)
                     .then(function () {
                         webutil.createAlert('Objectmap loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setobjectmap(img, false);
@@ -672,8 +672,8 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         // Essentially bind self here
-        let load_image=function(f,v) { return self.loadImage(f,v); };        
-        let load_objectmap=function(f,v) { return self.loadOverlay(f,v); };
+        let load_image=function(f,v,orient='None') { return self.loadImage(f,v,orient); };        
+        let load_objectmap=function(f,v,orient='None') { return self.loadOverlay(f,v,orient); };
 
         //  ---------------------------------------------------------------------------
         // Internal Function to eliminate having a loop variable inside callbacks
