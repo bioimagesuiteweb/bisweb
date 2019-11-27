@@ -498,14 +498,14 @@ class bisGridTransformation(bisBaseObject):
         self.grid_spacing=[10,10,10];
         self.grid_origin=[0,0,0];
         self.grid_usebspline=True;
-        print('Created Grid Transform')
-
+        
     def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],newdata=None,usebspline=True):
-        if len(dim.shape)==3:
+
+        if dim.shape[0]==3:
             self.grid_dimensions=dim;
-        if len(spa.shape)==3:
+        if spa.shape[0]==3:
             self.grid_spacing=spa;
-        if len(ori.shape)==3:
+        if ori.shape[0]==3:
             self.grid_origin=ori;
         if usebspline==True or usebspline==1:
             self.grid_usebspline=True;
@@ -514,36 +514,41 @@ class bisGridTransformation(bisBaseObject):
 
         self.data_array=None
 
-        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2];
+        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2]*3
 
-        if (newdata is None):
+        if (newdata is not None):
             s=newdata.shape
-            d=s[0]*3
+            print('S=',s)
+            d=s[0]
+            transpose=False
             if (len(newdata.shape)==2):
-                d=s[0]*s[1]*3
-            
-            print('D=',d,sz,newdata.shape)
+                d=s[0]*s[1]
+                transpose=True
 
             if (d==sz):
-                self.data_array=np.reshape(newdata,-1)
+                if (transpose):
+                    self.data_array=np.reshape(np.transpose(newdata),-1)
+                else:
+                    self.data_array=np.reshape(newdata,-1)
             else:
-                raise Exception('Bad data array dimensions',s,' needed', [ sz,3])
+                raise Exception('Bad data array dimensions',s,' needed', self.grid_dimensions,'*',3)
 
         if (self.data_array is None):
             self.data_array=np.zeros([sz*3],dtype=np.float32);
-        
+            
         return self;
     
     def getDescription(self):
+        
+        tp='none'
+        sh=[0]
         try:
             tp=str(self.data_array.dtype)
             sh=self.data_array.shape
-        finally:
-            sh=[0]
-            tp="None"
-        a='';
-        if (len(self.filename)>0):
-            a=self.filename+', '
+        finally:       
+            a='';
+            if (len(self.filename)>0):
+                a=self.filename+', '
         
         return a+'dims='+str(self.grid_dimensions)+' spa='+str(self.grid_spacing)+' origin='+str(self.grid_origin)+' bspline='+str(self.grid_usebspline)+' dispfield='+str(sh)+','+tp
         
