@@ -44,9 +44,11 @@ let dicom2BIDS = async function (opts) {
         console.log('++++ dicom2BIDS opts=', opts);
 
         //read size of directory to determine whether or not to calculate checksums
-        let total = await readSizeRecursive(indir) / 1024 / 1024 / 1024; //convert to gigabytes
-        let calcHash = true;
-        if (total > 2) { console.log('---- dicom2BIDS: study too large to parse checksums, skipping'); calcHash = false; }
+        let calcHash = false;
+        if (calcHash) {
+            let total = await readSizeRecursive(indir) / 1024 / 1024 / 1024; //convert to gigabytes
+            if (total > 2) { console.log('---- dicom2BIDS: study too large to parse checksums, skipping'); calcHash = false; }
+        }
 
         let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
         let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
