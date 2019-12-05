@@ -20,6 +20,7 @@ import sys
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
 import biswebpython.core.bis_baseutils as bis_baseutils
+import pdb
 
 class linearRegistration(bis_basemodule.baseModule):
 
@@ -31,7 +32,7 @@ class linearRegistration(bis_basemodule.baseModule):
         return self.getModuleDescriptionFromFile('linearRegistration');
 
     def directInvokeAlgorithm(self,vals):
-        
+
         print('oooo invoking: linearRegistration', (vals));	
         target = self.inputs['target'];
         reference = self.inputs['reference'];

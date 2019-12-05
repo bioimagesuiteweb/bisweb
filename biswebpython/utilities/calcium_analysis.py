@@ -1,5 +1,7 @@
 import numpy as np
 import pdb
+from scipy.optimize import curve_fit 
+
 def topHatFilter(blueMovie,uvMovie,mask,topHat=300):
     # Mask (spatial), resize, and rotate
     # mask = np.array(Image.open('mask.tif').resize(downsampledSize, Image.BILINEAR).rotate(rotationAngle,Image.NEAREST,True))
@@ -43,52 +45,51 @@ def expRegression(blueMovie,uvMovie,mask,debug):
     from biswebpython.modules.driftCorrectImage import driftCorrectImage
     import biswebpython.core.bis_objects as bis_objects
     
-    driftcorr = driftCorrectImage()
-    
     # Make sure we have a time dimension in the input data
     blueShape = blueMovie.shape
     uvShape = uvMovie.shape
 
     if (len(blueShape) == 3) and (len(uvShape) == 3):
         print('Both input images are 3D, assuming third dimension is time and reshaping')
-        blueMovie=np.reshape(blueMovie,[blueShape[0],blueShape[1],1,blueShape[2]])
-        uvMovie=np.reshape(uvMovie,[uvShape[0],uvShape[1],1,uvShape[2]])
+        blueMovie=np.reshape(blueMovie,[blueShape[0]*blueShape[1],blueShape[2]])
+        uvMovie=np.reshape(uvMovie,[uvShape[0]*uvShape[1],uvShape[2]])
     elif (len(blueShape) == 4) and (len(uvShape) == 4):
-        pass
+        print('Both input images are 4D, assuming fourth dimension is time and reshaping')
+        blueMovie=np.reshape(blueMovie,[blueShape[0]*blueShape[1],blueShape[3]])
+        uvMovie=np.reshape(uvMovie,[uvShape[0]*uvShape[1],uvShape[3]])
     else:
         raise Exception('Blue and UV images are not the same dimension and/or are not 3/4 dimensions')
 
 
-    # Log transform input images
-    blueMovieLog=np.log(1+blueMovie)
-    uvMovieLog=np.log(1+uvMovie)
+    def exponential_func(t, a, b, c):
+        return a*np.exp(-b*t)+c
 
 
-    # Create image objects for input to drift correction
-    blueMovieDriftip = bis_objects.bisImage().create(blueMovieLog,[1,1,1,1,1],np.eye(4))
-    uvMovieDriftip = bis_objects.bisImage().create(uvMovieLog,[1,1,1,1,1],np.eye(4))
+    meanTsBlue = np.mean(blueMovie,axis=0)
+    meanTsUV = np.mean(uvMovie,axis=0)
 
-    if debug:
-        blueMovieDriftip.save('calcium_down_blue_movie_mc_rot_log.nii.gz')
-        uvMovieDriftip.save('calcium_down_uv_movie_mc_rot_log.nii.gz')
+    numTps=len(meanTsBlue)
 
-    #pdb.set_trace()
+    lintrend=np.linspace(1,-1,numTps)
+    exptrend=np.squeeze(np.exp(lintrend))
+
+    # Blue Regress
+    poptBlue,pcovBlue=curve_fit(exponential_func,exptrend,meanTsBlue,p0=(1,1e-6,1),maxfev=10000)
+    yfitBlue=exponential_func(exptrend,*poptBlue)
+    yfitBlueMin=yfitBlue/np.min(yfitBlue)
+    blueMovieRegress=blueMovie/yfitBlueMin
 
 
-    # Run first order drift correction on log transformed data
-    driftcorr.execute({'input' : blueMovieDriftip},{'weight':0,'order':1,'demean_regressor':True})
-    blueOutput=driftcorr.getOutputObject()
-    driftcorr.execute({'input' : uvMovieDriftip},{'weight':0,'order':1,'demean_regressor':True})
-    uvOutput=driftcorr.getOutputObject()
+    # Blue Regress
+    poptUV,pcovUV=curve_fit(exponential_func,exptrend,meanTsUV,p0=(1,1e-6,1),maxfev=10000)
+    yfitUV=exponential_func(exptrend,*poptUV)
+    yfitUVMin=yfitUV/np.min(yfitUV)
+    uvMovieRegress=uvMovie/yfitUVMin
 
-    if debug:
-        blueOutput.save('calcium_down_blue_movie_mc_rot_log_reg.nii.gz')
-        uvOutput.save('calcium_down_uv_movie_mc_rot_log_reg.nii.gz')
-        
 
-    # Exponential transform data back to normal, and remove inserted time dimension
-    blueMovieRegress = np.squeeze(np.exp(blueOutput.get_data())-1)
-    uvMovieRegress = np.squeeze(np.exp(uvOutput.get_data())-1)
+    blueMovieRegress=np.reshape(blueMovieRegress,blueShape)
+    uvMovieRegress=np.reshape(uvMovieRegress,uvShape)
+
 
     return blueMovieRegress, uvMovieRegress
 

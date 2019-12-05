@@ -35,6 +35,7 @@ import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
 import biswebpython.utilities.calcium_image as calcium_image;
 import biswebpython.utilities.calcium_analysis as calcium_analysis;
+from biswebpython.modules.linearRegistration import *
 
 
 # from PIL import Image
@@ -149,14 +150,107 @@ class calciumPreprocess(bis_basemodule.baseModule):
             ],
         }
         
+    
+
+    def computeMotionCorrection(self,image,regFrame='mean'):
+        '''
+        Expects an image in the form of an np array of size X x Y x T
+        '''
+
+        ipImageShape=image.shape
+        numFrames=ipImageShape[2];
+        opImg=np.zeros(ipImageShape)
+
+
+        if (type(regFrame) == str) and (regFrame.lower() == 'mean'):
+            targetFrame=np.mean(image,axis=2)
+        elif (type(regFrame) == int) and (regFrame <= numFrames-1):
+            targetFrame image[:,:,regFrame]
+        else:
+            message = '''Variable "regFrame" must be "mean" or an integer \n
+            less than or equal to the number of frames'''
+            raise Exception(message)
+
+
+        initial=0;
+        for frame in range(0,numFrames):
+            extractedFrame= image[:,:,frame]
+
+            ipRef = bis_objects.bisImage().create(targetFrame,[1,1,1,1,1],np.eye(4))
+            ipTar = bis_objects.bisImage().create(extractedFrame,[1,1,1,1,1],np.eye(4))
+
+            LinRegister=linearRegistration()
+
+            fileSpec={ 'reference' : ipRef,                                    
+                    'target' :  ipTar,
+                    'initial' : initial }
+
+   
+            paramSpec={'intscale' : 1,
+                'numbins' :  32,
+                'levels' :   1,
+                'optimization' : 'gradientdescent', # 0 hillclimb, 1 gradient descent, 2 conjugate descent
+                'normalize' : True, # True? 
+                'steps' : 4,
+                'iterations' : 32,
+                'mode' : 'rigid', # rigid
+                'resolution' : 1.5,
+                'return_vector' : "false",
+                'metric' : 'NMI', # 1=CC 0,=SSD 3=NMI, 2=MI
+                'debug' : True,
+                'doreslice' : True}
+
+        
+            LinRegister.execute(fileSpec,paramSpec);
+    
+            initial=LinRegister.getOutputObject('output')
+            resliced=LinRegister.getOutputObject('resliced')
+            # append resliced.data_array
+
+
+
+            opImg[:,:,frame]=np.squeeze(resliced.get_data())
+
+        return opImg,targetFrame
+
+            
+    def checkTriggers(ipMovie,expectedStructure=[0,1],ipTriggerFile=None):
+        
+        import nibabel as nb
+        import numpy as np
+        from matplotlib import pyplot as plt
+        from sklearn.cluster import AgglomerativeClustering
+
+        
+        meanSpace=allMovieData.mean(axis=1).mean(axis=0)
+        #plt.scatter(np.arange(0,meanSpace.shape[0]),meanSpace)
+        #plt.show()
+        timeArr=np.arange(0,meanSpace.shape[0]/10000,1/10000)
+        timeArr=np.expand_dims(timeArr,axis=1)
+        meanSpace=np.expand_dims(meanSpace,axis=1)
+        meanSpaceTimeArr=np.stack([meanSpace,timeArr]).squeeze()
+        clustering = AgglomerativeClustering(n_clusters=2).fit(meanSpaceTimeArr.T)
+        #plt.scatter(np.arange(0,meanSpace.shape[0]),meanSpace,c=clustering.labels_)
+        #plt.show()
+
+        nFrames=ipMovie.shape[2]
+        nChannels=len(expectedStructure)
+        exepectedSeq=np.tile(expectedStructure,nFrame/nChannels)
+
+        clusterLabels=clustering.labels_
+
+        if np.array_equal(expectedSeq,clusterLabels):
+            pass
+        else:
+            raise Exception('Misaligned triggers')
+
+        
+
+    
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
 
-        debug=self.parseBoolean(vals['debug'])
-        inputMovie = self.inputs['blue'].get_data()
-        blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
-        mask = self.inputs['mask'].get_data()
 
         # Parameters
         dualChannel = self.parseBoolean(vals['dual'])
@@ -164,25 +258,59 @@ class calciumPreprocess(bis_basemodule.baseModule):
         rotationAngle = vals['rotation']
         downsampleRatio = vals['downsample']
         bleachType = vals['bleachtype']
+        debug=self.parseBoolean(vals['debug'])
         outputEveryStep = debug
+
+
+        inputMovie = self.inputs['blue'].get_data()
+
+        if outputEveryStep:
+            out = bis_objects.bisImage().create(inputMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_movie_all.nii.gz')
+
+
+        blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
+        mask = self.inputs['mask'].get_data()
+
+
 
         if bleachType not in ['expReg','topHat']:
             raise Exception(ValueError, 'bleachType must be "expReg" or "topHat" (case sensitive)')
 
-
-
-        if outputEveryStep:
-            out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie_mc.nii.gz')
-            out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_uv_movie_mc.nii.gz')
-            #out = bis_objects.bisImage().create(mask,[1,1,1,1,1],np.eye(4))
-            #out.save('mask.nii.gz')
-
-        
         blueMovieSize = blueMovie.shape
         uvMovieSize = uvMovie.shape
 
+        if outputEveryStep:
+            out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_blue_movie.nii.gz')
+            out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_uv_movie.nii.gz')
+
+        ###########################
+
+
+        blueMovieMC,blueMovieRef = self.computeMotionCorrection(blueMovie)
+        uvMovieMC,uvMovieRef = self.computeMotionCorrection(uvMovie)
+        
+
+        ###########################
+
+
+        if outputEveryStep:
+            out = bis_objects.bisImage().create(blueMovieMC,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_blue_movie_mc.nii.gz')
+            out = bis_objects.bisImage().create(uvMovieMC,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_uv_movie_mc.nii.gz')
+
+            out = bis_objects.bisImage().create(blueMovieRef,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_blue_movie_mcRef.nii.gz')
+            out = bis_objects.bisImage().create(uvMovieRef,[1,1,1,1,1],np.eye(4))
+            out.save('calcium_uv_movie_mcRef.nii.gz')
+            #out = bis_objects.bisImage().create(mask,[1,1,1,1,1],np.eye(4))
+            #out.save('mask.nii.gz')
+
+                
+        sys.exit()
 
         # Top Hat filter
         if bleachType == 'topHat':
