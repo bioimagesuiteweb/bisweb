@@ -518,13 +518,13 @@ class bisGridTransformation(bisBaseObject):
 
         if (newdata is not None):
             s=newdata.shape
-            print('S=',s)
+            print('++++ Trying to copy grid displacements from matrix of size=',s, ' need total=',sz)
             d=s[0]
             transpose=False
             if (len(newdata.shape)==2):
                 d=s[0]*s[1]
                 transpose=True
-
+            
             if (d==sz):
                 if (transpose):
                     self.data_array=np.reshape(np.transpose(newdata),-1)
@@ -533,7 +533,8 @@ class bisGridTransformation(bisBaseObject):
             else:
                 raise Exception('Bad data array dimensions',s,' needed', self.grid_dimensions,'*',3)
 
-        if (self.data_array is None):
+            print('++++ Finale Data Array =',self.data_array.shape)
+        else:
             self.data_array=np.zeros([sz*3],dtype=np.float32);
             
         return self;
