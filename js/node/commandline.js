@@ -248,7 +248,9 @@ let loadParse = function (args, toolname,basedirectory='') {
                         });
                     }).catch((e) => {
                         slicerupd.end();
-                        reject('---- Failed to invoke algorithm'+e);
+                        console.log('---- Failed to invoke module "'+mod.name+'". '+e);
+                        program.help();
+                        reject('---- Failed to invoke module "'+mod.name+'". '+e);
                     });
                 } else {
                     slicerupd.end();

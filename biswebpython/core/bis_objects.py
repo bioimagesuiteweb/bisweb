@@ -27,8 +27,6 @@ import biswebpython.core.bis_baseutils as bis_baseutils;
 import biswebpython.utilities.plyFileTool as plyutil
 import biswebpython.utilities.jsonFileTool as jsonutil
 
-
-
 # --------------------------------------
 # bisBaseObject
 # --------------------------------------
@@ -479,6 +477,14 @@ class bisLinearTransformation(bisMatrix):
             return False;
         return True;
 
+    def getDescription(self):
+        v=str(np.reshape(self.data_array,-1))
+        a=''
+        if (len(self.filename)>0):
+            a=self.filename+', '
+        
+        return a+v
+
 # --------------------------------------
 # bisGridTransformation
 # --------------------------------------
@@ -492,24 +498,61 @@ class bisGridTransformation(bisBaseObject):
         self.grid_spacing=[10,10,10];
         self.grid_origin=[0,0,0];
         self.grid_usebspline=True;
+        
+    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],newdata=None,usebspline=True):
 
-    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],usebpline=True):
-        if len(dim.shape)==3:
+        if dim.shape[0]==3:
             self.grid_dimensions=dim;
-        if len(spa.shape)==3:
+        if spa.shape[0]==3:
             self.grid_spacing=spa;
-        if len(ori.shape)==3:
+        if ori.shape[0]==3:
             self.grid_origin=ori;
         if usebspline==True or usebspline==1:
             self.grid_usebspline=True;
         else:
             self.grid_usebspline=False;
 
-        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2];
+        self.data_array=None
 
-        self.data_array=np.zeros([sz,3],dtype=np.float32);
+        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2]*3
+
+        if (newdata is not None):
+            s=newdata.shape
+            print('++++ Trying to copy grid displacements from matrix of size=',s, ' need total=',sz)
+            d=s[0]
+            transpose=False
+            if (len(newdata.shape)==2):
+                d=s[0]*s[1]
+                transpose=True
+            
+            if (d==sz):
+                if (transpose):
+                    self.data_array=np.reshape(np.transpose(newdata),-1)
+                else:
+                    self.data_array=np.reshape(newdata,-1)
+            else:
+                raise Exception('Bad data array dimensions',s,' needed', self.grid_dimensions,'*',3)
+
+            print('++++ Finale Data Array =',self.data_array.shape)
+        else:
+            self.data_array=np.zeros([sz*3],dtype=np.float32);
+            
         return self;
-
+    
+    def getDescription(self):
+        
+        tp='none'
+        sh=[0]
+        try:
+            tp=str(self.data_array.dtype)
+            sh=self.data_array.shape
+        finally:       
+            a='';
+            if (len(self.filename)>0):
+                a=self.filename+', '
+        
+        return a+'dims='+str(self.grid_dimensions)+' spa='+str(self.grid_spacing)+' origin='+str(self.grid_origin)+' bspline='+str(self.grid_usebspline)+' dispfield='+str(sh)+','+tp
+        
     def serializeWasm(self):
         s=self.data_array.shape;
         top_header=np.zeros([4],dtype=np.int32);
@@ -531,7 +574,6 @@ class bisGridTransformation(bisBaseObject):
             f_head[ia+3]=self.grid_origin[ia];
 
         return top_header.tobytes()+i_head.tobytes()+f_head.tobytes()+self.data_array.tobytes('F');
-
 
     def deserializeWasm(self,wasm_pointer,offset=0):
 
@@ -736,6 +778,15 @@ class bisComboTransformation(bisBaseObject):
             print('---- Failed to save in',filename);
 
         return False;
+
+    def getDescription(self):
+        v=str(np.reshape(self.data_array,-1))
+        out=self.filename+' numgrids='+str(len(self.grids))+'\n'
+        if (self.linear!=0):
+            out=out+'\t linear: '+self.linear.getDescription()+'\n'
+        for i in range(0,len(self.grids)):
+            out=out+'\t grid('+str(i+1)+'): '+self.grids[i].getDescription()+'\n'
+        return out
 
 
 # --------------------------------------

@@ -191,9 +191,11 @@ class DicomModule extends BaseModule {
         try {
             fs.mkdirSync(outdir);
         } catch (e) {
-            console.log(e);
             if (e.code !== 'EEXIST') {
+                console.log(e);
                 return Promise.reject('Failed to create output directory ' + outdir);
+            } else {
+                console.log('+++ Directory ',outdir,'exists')
             }
         }
 
@@ -224,7 +226,7 @@ class DicomModule extends BaseModule {
             
             let dcm2nii = await this.getdcm2niibinary();
 
-            let cmd = dcm2nii + ` -z y -f "%f__%p__%t__%s"` + ' -o ' + tmpdir + ' -ba y -c bisweb ' + indir;
+            let cmd = dcm2nii + ` -z y -f "%i__%p__%t__%s"` + ' -o ' + tmpdir + ' -ba y -c bisweb ' + indir;
             console.log('.... executing :'+cmd+'\n....');
             
             try { 

@@ -156,7 +156,8 @@ class AtlasControlElement extends HTMLElement {
             this.removeAtlas();
             return;
         }
-            
+
+        //console.log('Dim=',dim,spa,this.orientation,volume.getDescription());
         
         if (this.atlaslabelimage) {
             let atlasdim=this.atlaslabelimage.getDimensions();
@@ -261,8 +262,10 @@ class AtlasControlElement extends HTMLElement {
     updateGUI(results) {
 
         this.tablebody.empty();
-        let w=`<tr><td width="50%">Coordinates (mm)</td><td width="50%">${results.coords.join(', ')}</td></tr>`;
-        this.tablebody.append($(w));
+        if (results.coords.length>0) {
+            let w=`<tr><td width="50%">Coordinates (mm)</td><td width="50%">${results.coords.join(', ')}</td></tr>`;
+            this.tablebody.append($(w));
+        }
                 
         for (let i=0;i<results.data.length;i++) {
 
@@ -299,16 +302,16 @@ class AtlasControlElement extends HTMLElement {
 
     queryAtlas(mm) {
 
+
         let voxelcoords=[0,0,0,0];
         for (let i=0;i<=2;i++) {
-            voxelcoords[i]=util.range(mm[i]*this.atlasspacing[i],0,this.atlasdimensions[i]-1);
+            voxelcoords[i]=Math.floor(util.range(mm[i]/this.atlasspacing[i],0,this.atlasdimensions[i]-1));
             if (this.flips[i])
                 voxelcoords[i]=(this.atlasdimensions[i]-1)-voxelcoords[i];
         }
 
-
         let results={
-            'coords' : [ mm[0],mm[1],mm[2] ],
+            'coords' : [ ],
             'data' : []
         };
 
@@ -326,12 +329,14 @@ class AtlasControlElement extends HTMLElement {
         
 
         let data=this.atlasdescription.labels.data;
+
         for (let j=0;j<this.atlasdimensions[3];j++) {
             voxelcoords[3]=j;
             let elem=data[j];
-            if (elem.name!=='') { 
+            if (elem.name!=='') {
                 let v=( this.atlaslabelimage.getVoxel(voxelcoords));
-                let desc=elem.labels[v] || 'None';
+                //console.log('V=',v,voxelcoords, 'mm=',mm,'flips=',this.flips);
+                let desc=elem.labels[v] || '(Not Defined)';
                 if (desc) {
                     results.data.push( { 
                         name : elem.name,
