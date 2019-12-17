@@ -230,7 +230,7 @@ var createMatrix=function(nets,pairs,symm=false) {
 
         let network1=fixNetworkIndex(rois[node].attr[globalParams.internal.networkAttributeIndex]);
         let network2=fixNetworkIndex(rois[othernode].attr[globalParams.internal.networkAttributeIndex]);
-
+	if(network1 != network2)
         matrix[network1-1][network2-1]+=1;
         if (symm)
             matrix[network2-1][network1-1]+=1;
