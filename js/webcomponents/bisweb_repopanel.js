@@ -23,11 +23,6 @@ require('jstree');
  */
 
 
-
-
-//const IMAGETYPES = ['Image', 'Task', 'Rest', 'DWI', '3DAnat', '2DAnat'];
-//const IMAGEVALUES = ['image', 'task', 'rest', 'dwi', '3danat', '2danat'];
-
 class RepoPanel extends HTMLElement {
 
     constructor() {
@@ -38,7 +33,9 @@ class RepoPanel extends HTMLElement {
         this.created=false;
         this.filelist=[];
         this.currentlySelectedNode=null;
+        this.currentBottomChoice=null;
         this.plotobj= null;
+        this.bottom=null;
     }
 
     createGUI() {
@@ -72,9 +69,12 @@ class RepoPanel extends HTMLElement {
         
         webutil.createbutton({
             'name' : 'Connect to Repository',
-            'type ' : 'success',
+            'type ' : 'alert',
             'parent' : top,
-            'callback' : () => { self.openDirectoryPrompt(); }
+            'callback' : () => { self.openDirectoryPrompt(); },
+            'css' : {
+                'margin-left' : '5px',
+            }
         });
 
         parent.append($('<HR width="90%">'));
@@ -84,12 +84,12 @@ class RepoPanel extends HTMLElement {
         parent.append($('<HR width="90%">'));
         
 
-        
-        
-        
+        this.bottom= $(`<div></div>`);
+        parent.append(this.bottom);
         this.created=true;
     }
 
+    
     /**
      * Shows file tree panel in the sidebar.
      */
@@ -100,15 +100,11 @@ class RepoPanel extends HTMLElement {
 
     getAttributes(ln) {
 
-        //console.log('=======================\n',ln,'\n');
         const lst=ln.split('</td>');
         const l=lst.length;
-        //console.log('lst',lst.join('___'),l);
         const out = [ lst[l-4], lst[l-3] ];
-        //console.log('Out=',out);
         for (let i=0;i<=1;i++) {
             let a=(out[i].split('>'));
-            //   console.log(a.join('___'));
             a=a[1].trim();
             out[i]=a;
         }
@@ -121,8 +117,13 @@ class RepoPanel extends HTMLElement {
             console.log('result=',result);
             if (result===null)
                 return;
+
+            if (result==='SAVE') {
+                bis_genericio.write('current.json',JSON.stringify(this.filelist,null,4));
+                return;
+            }
             
-            if (result=='')
+            if (result==='')
                 result='http://bisweb.yale.edu/data/sub-rid000001';
             this.openDirectory(result);
         });
@@ -148,6 +149,7 @@ class RepoPanel extends HTMLElement {
             let index2=data[i].indexOf('alt');
             if (index>=0 && index2>=0) {
 
+                let istsv=false;
                 let link=data[i].substr(index+6,1000);
                 let endind=link.indexOf('"');
                 link=link.substr(0,endind).trim();
@@ -160,6 +162,9 @@ class RepoPanel extends HTMLElement {
                 let extension=link.substr(lastdot+1,1000).trim().toLowerCase();
                 if (extlist.indexOf(extension)>=0) {
                     tp='TXT';
+                }
+                if (extension==='tsv' || extension==='TSV') {
+                    istsv=true;
                 }
 
 
@@ -202,12 +207,12 @@ class RepoPanel extends HTMLElement {
                             });
                         } 
                     } else if (tp==='TXT') {
-
                         lst.push({
                             'type' : 'file',
                             'text' : link,
                             'attr' : this.getAttributes(data[i]),
                             'link' : fullurl+link,
+                            'istsv'  : istsv,
                         });
                     } else {
                         this.getAttributes(data[i]);
@@ -227,19 +232,27 @@ class RepoPanel extends HTMLElement {
 
     }
 
-    treeCallback(node) {
+    getMenu(tp,istsv=false) {
 
-        let tp=node.original.type;
+        if (tp==='tsv') {
+            tp='file';
+            istsv=true;
+        }
         
         if (tp==='image') {
 
             let imageMenu = {
+                'Info': {
+                    'label': 'File Info',
+                    'separator_after': true,
+                    'action': () => {this.fileInfo();  },
+                },
                 'Display': {
                     'separator_before': false,
                     'separator_after': false,
                     'label': 'Display Image',
                     'action': () => {
-                        this.displayImageFromTree(node.original.link,0,false);
+                        this.displayImageFromTree(this.currentlySelectedNode.link,0,false);
                     },
                 },
                 'DisplayOverlay': {
@@ -247,63 +260,70 @@ class RepoPanel extends HTMLElement {
                     'separator_after': false,
                     'label': 'Display Overlay',
                     'action': () => {
-                        this.displayImageFromTree(node.original.link,0,true);
-                }
+                        this.displayImageFromTree(this.currentlySelectedNode.link,0,true);
+                    }
                 }
             };
-            
+
             
             if (this.viewers[1]!==null) {
                 
                 imageMenu['Display2']= {
-                        'separator_before': true,
-                        'separator_after': false,
-                        'label': 'Load Image (2)',
-                        'action': () => {
-                            this.displayImageFromTree(node.original.link,1,false);
-                        },
+                    'separator_before': true,
+                    'separator_after': false,
+                    'label': 'Load Image (2)',
+                    'action': () => {
+                        this.displayImageFromTree(this.currentlySelectedNode.link,1,false);
+                    },
                 };
                 imageMenu['DisplayOverlay2'] = {
                     'separator_before': false,
                     'separator_after': false,
                     'label': 'Load Overlay (2)',
                     'action': () => {
-                        this.displayImageFromTree(node.original.link,1,true);
+                        this.displayImageFromTree(this.currentlySelectedNode.link,1,true);
                     }
                 };
             }
             return imageMenu;
         }
-
+        
         if (tp==='file') {
 
-            let l=node.original.link.length;
-            if (node.original.link.lastIndexOf('.tsv')===l-4) {
+            if (istsv) {
                 return {
                     'Info': {
-                        'label': 'File Info',
+                    'label': 'File Info',
+                        'separator_after': true,
+                        'action': () => {this.fileInfo();  },
+                    },
+                    'Show': {
+                        'label': 'Show File Contents',
                         'action': () => {
-                            this.displayFile(node.original.link);
+                            this.displayFile(this.currentlySelectedNode.link);
                         },
                     },
                     'Plot': {
                         'label': 'Plot TSV File',
                         'action': () => {
-                            this.displayFile(node.original.link,true);
+                            this.displayFile(this.currentlySelectedNode.link,true);
                         },
                     },
                 };
             }
             
-
-            
             return {
-                'Info': {
+                    'Info': {
                     'label': 'File Info',
-                    'action': () => {
-                        this.displayFile(node.original.link);
-                    }
-                }
+                        'separator_after': true,
+                        'action': () => {this.fileInfo();  },
+                    },
+                    'Show': {
+                        'label': 'Show File Contents',
+                        'action': () => {
+                            this.displayFile(this.currentlySelectedNode.link);
+                        },
+                    },
             };
         }
 
@@ -312,7 +332,7 @@ class RepoPanel extends HTMLElement {
                 'Open': {
                     'label': 'Load Repo',
                     'action': () => {
-                        this.openLink(node.original.link);
+                        this.openLink(this.currentlySelectedNode.link);
                     }
                 }
             };
@@ -321,9 +341,56 @@ class RepoPanel extends HTMLElement {
         return {};
     }
     
+    treeCallback(node) {
+
+        this.currentlySelectedNode=node.original;
+        let tp=this.currentlySelectedNode.type;
+        let istsv=this.currentlySelectedNode.istsv || false;
+        console.log('Tp=',tp,istsv);
+        return this.getMenu(tp,istsv);
+    }
+
+    showBottom() {
+
+        let tp=this.currentlySelectedNode.type;
+        let istsv=this.currentlySelectedNode.istsv || false;
+        let option=tp;
+        
+        if (this.currentlySelectedNode.istsv)
+            option='tsv';
+
+        if (this.currentBottomChoice===option)
+            return;
+        
+        this.bottom.empty();
+        let lst=this.getMenu(tp,istsv);
+        let keys=Object.keys(lst);
+        for (let i=0;i<keys.length;i++) {
+            let elem=lst[keys[i]];
+            webutil.createbutton({
+                'name' : elem.label,
+                'type ' : 'success',
+                'parent' : this.bottom,
+                'callback' : elem.action,
+                'css' : {
+                    'margin-left' : '5px',
+                    'margin-bottom' : '10px'
+                },
+            });
+            if (tp==='image' && i===2) {
+                this.bottom.append('<BR>');
+            }
+        }
+    }
+        
+        
     createTree(fileTree) {
 
+
+        this.filelist=fileTree;
         this.plotobj= null;
+        this.currentlySelectedNode=null;
+        this.currentBottomChoice=null;
         this.listContainer.empty();
         let treeOptionsCallback=this.treeCallback.bind(this);
         
@@ -331,7 +398,7 @@ class RepoPanel extends HTMLElement {
             {
                 parent: this.listContainer,
                 css: {
-                    'height' : '800px',
+                    'height' : '600px',
                     'max-height': '1500px',
                     'width': '99%',
                     'overflow': 'auto',
@@ -341,7 +408,7 @@ class RepoPanel extends HTMLElement {
         
         let tree = treeDiv.jstree({
             'core': {
-                'data': fileTree,
+                'data': this.filelist,
                 'dblclick_toggle': true,
                 'check_callback': true
             },
@@ -350,6 +417,9 @@ class RepoPanel extends HTMLElement {
                     'icon': 'glyphicon glyphicon-file'
                 },
                 'file': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'tsv': {
                     'icon': 'glyphicon glyphicon-file'
                 },
                 'root': {
@@ -372,6 +442,10 @@ class RepoPanel extends HTMLElement {
         //this.setOnClickListeners(tree, treeDiv);
         this.fileTree = tree;
 
+        tree.on("select_node.jstree", (e, data) => {
+            this.currentlySelectedNode=data.node.original;
+            this.showBottom();
+        });
     }
 
 
@@ -447,6 +521,7 @@ class RepoPanel extends HTMLElement {
         if (filelist!==null) {
             filelist=this.reorderItems(filelist);
             this.createTree(filelist);
+
             //            bis_genericio.write('test.json',JSON.stringify(filelist,null,2),false);
         } else {
             webutil.createAlert('Failed to parse '+url,true);
@@ -480,6 +555,13 @@ class RepoPanel extends HTMLElement {
 
 
     // -------------------------------------------------------------------------------------------------------
+
+    fileInfo() {
+        let attr=this.currentlySelectedNode.attr || null;
+        if (attr) {
+            webutil.createAlert('File attributes '+this.currentlySelectedNode.link+':'+attr);
+        } 
+    }
     
     async displayImageFromTree(fname,viewer,overlay) {
 
