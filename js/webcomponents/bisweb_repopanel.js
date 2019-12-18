@@ -1,11 +1,12 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
-const webutil = require('bis_webutil.js');
-const bis_genericio = require('bis_genericio.js');
-//const bisweb_taskutils = require('bisweb_taskutils.js');
+const webutil = require('bis_webutil');
+const bis_genericio = require('bis_genericio');
 const bisweb_panel = require('bisweb_panel.js');
-//const BisWebTaskManager = require('bisweb_studytaskmanager');
-const BisWebImage = require('bisweb_image.js');
+const BisWebImage = require('bisweb_image');
+const bisweb_bidsutils= require('bis_bidsutils');
+const BisWebTaskManager = require('bisweb_studytaskmanager');
+
 require('jstree');
 
 
@@ -37,6 +38,7 @@ class RepoPanel extends HTMLElement {
         this.created=false;
         this.filelist=[];
         this.currentlySelectedNode=null;
+        this.plotobj= null;
     }
 
     createGUI() {
@@ -94,7 +96,6 @@ class RepoPanel extends HTMLElement {
     show() {
         this.createGUI();
         this.panel.show();
-        this.openDirectoryPrompt();
     }
 
     getAttributes(ln) {
@@ -116,11 +117,13 @@ class RepoPanel extends HTMLElement {
 
     openDirectoryPrompt() {
         
-        bootbox.prompt("Enter the URL to connect. Blank=Dartmouth root.", (result) => {
+        bootbox.prompt("Enter the URL to connect. Blank=Default", (result) => {
+            console.log('result=',result);
+            if (result===null)
+                return;
+            
             if (result=='')
                 result='http://bisweb.yale.edu/data/sub-rid000001';
-            if (result.lastIndexOf('/')!==result.length-1)
-                result=result+'/';
             this.openDirectory(result);
         });
     }
@@ -130,18 +133,14 @@ class RepoPanel extends HTMLElement {
         let lst = [];
         let obj=null;
 
-        console.log('R E A D I N G '+url);
-        
         try {
             obj=await bis_genericio.read(url);
         } catch(e) {
             console.log('Error'+e);
-            return lst;
+            return null;
         }
 
         const extlist = [ 'json','bval','bvec' ];
-        
-        console.log('Continuing'+obj.filename);
         
         let data=obj.data.split('\n');
         for (let i=0;i<data.length;i++) {
@@ -181,7 +180,6 @@ class RepoPanel extends HTMLElement {
                                 'type' : 'directory',
                                 'text' : '['+linkname+']',
                                 'link' : fullurl,
-                                'selected': false,
                                 'state' : {
                                     'opened'    : true
                                 }
@@ -278,6 +276,27 @@ class RepoPanel extends HTMLElement {
         }
 
         if (tp==='file') {
+
+            let l=node.original.link.length;
+            if (node.original.link.lastIndexOf('.tsv')===l-4) {
+                return {
+                    'Info': {
+                        'label': 'File Info',
+                        'action': () => {
+                            this.displayFile(node.original.link);
+                        },
+                    },
+                    'Plot': {
+                        'label': 'Plot TSV File',
+                        'action': () => {
+                            this.displayFile(node.original.link,true);
+                        },
+                    },
+                };
+            }
+            
+
+            
             return {
                 'Info': {
                     'label': 'File Info',
@@ -285,7 +304,7 @@ class RepoPanel extends HTMLElement {
                         this.displayFile(node.original.link);
                     }
                 }
-            }
+            };
         }
 
         if (tp==='default') {
@@ -296,14 +315,15 @@ class RepoPanel extends HTMLElement {
                         this.openLink(node.original.link);
                     }
                 }
-            }
+            };
         }
 
         return {};
     }
     
     createTree(fileTree) {
-        
+
+        this.plotobj= null;
         this.listContainer.empty();
         let treeOptionsCallback=this.treeCallback.bind(this);
         
@@ -311,9 +331,9 @@ class RepoPanel extends HTMLElement {
             {
                 parent: this.listContainer,
                 css: {
-                    'height': '350px',
+                    'height' : '800px',
                     'max-height': '1500px',
-                    'width': '95%',
+                    'width': '99%',
                     'overflow': 'auto',
                     'margin-top': '5px'
                 }
@@ -415,13 +435,52 @@ class RepoPanel extends HTMLElement {
     
     async openDirectory(url) {
 
-        let filelist=await this.parseItem(url,0,2);
-        filelist=this.reorderItems(filelist);
+        let l=url.length;
+        if (url.lastIndexOf('.json')===l-5) {
+            return this.openJSONFile(url);
+        }
+        
+        if (url.lastIndexOf('/')!==url.length-1)
+            url=url+'/';
 
-        this.createTree(filelist);
+        let filelist=await this.parseItem(url,0,2);
+        if (filelist!==null) {
+            filelist=this.reorderItems(filelist);
+            this.createTree(filelist);
+            //            bis_genericio.write('test.json',JSON.stringify(filelist,null,2),false);
+        } else {
+            webutil.createAlert('Failed to parse '+url,true);
+        }
+    }
+
+    async openJSONFile(url) {
+
+        let obj=null;
+        try {
+            obj=await bis_genericio.read(url);
+        } catch(e) {
+            bootbox.alert('Failed to read file '+url);
+            return;
+        }
+
+        try {
+            obj=JSON.parse(obj.data);
+        } catch(e) {
+            bootbox.alert('Failed to parse file '+url);
+            return;
+        }
+
+        this.createTree(obj);
     }
 
 
+    // ------------------------------------------------------------------------------------------------------
+
+    
+
+
+    // -------------------------------------------------------------------------------------------------------
+    
     async displayImageFromTree(fname,viewer,overlay) {
 
         let img=new BisWebImage();
@@ -444,12 +503,12 @@ class RepoPanel extends HTMLElement {
 
     }
 
-    openLink(node) {
-        
-
+    openLink(link) {
+        console.log('Opening',link);
+        this.openDirectory(link);
     }
 
-    async displayFile(fname) {
+    async displayFile(fname,plot=false) {
 
         let obj=null;
         try {
@@ -458,21 +517,55 @@ class RepoPanel extends HTMLElement {
             bootbox.alert('Failed to read file '+fname);
             return;
         }
-        
-        let txt=obj.data;
-        let ext=fname.split('.');
-        let l=ext.length;
-        if (ext[l-1]==='json' || ext[l-1]==='JSON') {
-            try {
-                txt=JSON.stringify(JSON.parse(txt),null,2);
-            } catch(e) {
-                console.log(e);
-            }
-        }
+
+        if (plot) {
+
+            let tsk=bisweb_bidsutils.parseIndividualTaskFileFromTSV(obj.data);
+            let ind=fname.lastIndexOf('/');
+            let filename=fname.substr(ind+1,ind+1000);
+
+            if (this.plotobj===null) {
             
+                this.plotobj = {
+                    "units" : "frames",
+                    "TR" : 1.0,
+                    "offset": 0,
+                    "taskNames" : Object.keys(tsk),
+                    "runs" : { }
+                };
+                this.plotobj['runs'][filename]=tsk;
+            } else {
+                let tsknames=Object.keys(tsk);
+                for (let tname of tsknames) {
+                    if (this.plotobj['taskNames'].indexOf(tname)<0)
+                        this.plotobj['taskNames'].push(tname);
+                }
+                this.plotobj['runs'][filename]=tsk;
+            }
+
+            if (this.taskManager===null) 
+                this.taskManager = new BisWebTaskManager(null, '#'+this.viewerid);
+            this.taskManager.createGUI();
+            this.taskManager.setTaskData(this.plotobj, true);
+            this.taskManager.plotTaskDataRun(filename);
+
+        } else {
         
-        let dh=Math.round(this.layoutcontroller.getviewerheight()*0.7);
-        webutil.createLongInfoText('<PRE>'+txt+'</PRE>',fname,dh);
+            let txt=obj.data;
+            let ext=fname.split('.');
+            let l=ext.length;
+            if (ext[l-1]==='json' || ext[l-1]==='JSON') {
+                try {
+                    txt=JSON.stringify(JSON.parse(txt),null,2);
+                } catch(e) {
+                    console.log(e);
+                }
+            }
+            
+            
+            let dh=Math.round(this.layoutcontroller.getviewerheight()*0.7);
+            webutil.createLongInfoText('<PRE>'+txt+'</PRE>',fname,dh);
+        }
     }
         
 }

@@ -1281,6 +1281,9 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
+
+        this.repopanel=document.createElement('bisweb-repopanel');
+        
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 const dicomid = this.getAttribute('bis-dicomimportid') || null;
@@ -1296,7 +1299,7 @@ class ViewerApplicationElement extends HTMLElement {
                     });
                 }
 
-                let cont=document.createElement('bisweb-repopanel');
+                let cont=this.repopanel;
                 cont.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
                 cont.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
                 if (this.VIEWERS[1])
@@ -1335,6 +1338,16 @@ class ViewerApplicationElement extends HTMLElement {
         let imagename2=webutil.getQueryParameter('image2') || '';
         let overlayname=webutil.getQueryParameter('overlay') || '';
         let overlayname2=webutil.getQueryParameter('overlay2') || '';
+        let repo=webutil.getQueryParameter('repo') || '';
+
+        if (repo.length>0) {
+
+            
+            this.repopanel.show();
+            this.repopanel.openDirectory(repo);
+            return;
+        }
+        
         
         if (load.length>0) {
             this.loadApplicationState(load);

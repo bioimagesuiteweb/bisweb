@@ -941,6 +941,61 @@ let cleanRow=(line) => {
  * @param {String} outputDirectory - Filepath of the output directory.
  * @param {Boolean} save - Whether or not to save the parsed JSON file to disk.  
  */
+
+let parseIndividualTaskFileFromTSV = (text)   => {
+
+
+    function formatEntry(onset, duration) {
+        let lowRange = parseInt(onset), highRange = parseInt(lowRange) + parseInt(duration);
+        return `${lowRange}-${highRange}`;
+    }
+
+    //Adds a row from the tsv file as an entry in parsedData
+    function addData(onset, duration, type, parsedData) {
+        
+        let entry = formatEntry(onset, duration);
+
+        //adding to an existing key may require making the data at the existing key an array
+        if (parsedData[type]) {
+            if (Array.isArray(parsedData[type])) {
+                parsedData[type].push(entry);
+            } else {
+                parsedData[type] = [ parsedData[type] ];
+                parsedData[type].push(entry);
+            }
+        } else {
+            parsedData[type] = entry;
+        }
+    }
+
+    
+    let tsvData = text, parsedData = {};
+                    
+    //Split rows based on newline character to get each row
+    let splitRows = tsvData.split('\n');
+    let cols = cleanRow(splitRows[0]).split('\t');
+    
+    let onsetIndex = cols.findIndex ( (element) => { return element.toLowerCase() === 'onset'; } );
+    let durationIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'duration'; });
+    let typeIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'trial_type'; });
+    
+    splitRows = splitRows.slice(1,-1);
+    for (let row of splitRows) {
+        row = cleanRow(row).split('\t');
+        let onset = row[onsetIndex];
+        let duration = row[durationIndex]; 
+        let type = row[typeIndex];
+        
+        addData(onset, duration, type, parsedData);
+    }
+    
+    return parsedData;
+    
+
+    
+};
+
+
 let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, save = true) => {
     return new Promise ( (resolve, reject) => {
         let matchstring = tsvDirectory + SEPARATOR + '*.tsv';
@@ -1052,6 +1107,7 @@ module.exports = {
     getSettingsFile : getSettingsFile,
     getSettingsEntry : getSettingsEntry,
     convertTASKFileToTSV : convertTASKFileToTSV,
+    parseIndividualTaskFileFromTSV : parseIndividualTaskFileFromTSV,
     parseTaskFileFromTSV : parseTaskFileFromTSV,
     dicomParametersFilename : dicomParametersFilename
 };
