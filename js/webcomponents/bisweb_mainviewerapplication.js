@@ -1299,6 +1299,8 @@ class ViewerApplicationElement extends HTMLElement {
                 let cont=document.createElement('bisweb-repopanel');
                 cont.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
                 cont.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
+                if (this.VIEWERS[1])
+                    cont.setAttribute('bis-viewerid2',this.VIEWERS[1].getAttribute('id'));
                 cont.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
                                   
                 this.VIEWERS[0].getLayoutController().appendChild(cont);

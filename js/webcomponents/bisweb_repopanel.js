@@ -1,11 +1,10 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const webutil = require('bis_webutil.js');
-const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
-const bisweb_taskutils = require('bisweb_taskutils.js');
+//const bisweb_taskutils = require('bisweb_taskutils.js');
 const bisweb_panel = require('bisweb_panel.js');
-const BisWebTaskManager = require('bisweb_studytaskmanager');
+//const BisWebTaskManager = require('bisweb_studytaskmanager');
 const BisWebImage = require('bisweb_image.js');
 require('jstree');
 
@@ -25,8 +24,8 @@ require('jstree');
 
 
 
-const IMAGETYPES = ['Image', 'Task', 'Rest', 'DWI', '3DAnat', '2DAnat'];
-const IMAGEVALUES = ['image', 'task', 'rest', 'dwi', '3danat', '2danat'];
+//const IMAGETYPES = ['Image', 'Task', 'Rest', 'DWI', '3DAnat', '2DAnat'];
+//const IMAGEVALUES = ['image', 'task', 'rest', 'dwi', '3danat', '2danat'];
 
 class RepoPanel extends HTMLElement {
 
@@ -49,15 +48,15 @@ class RepoPanel extends HTMLElement {
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
-        this.viewer = document.querySelector('#'+this.viewerid);
-        this.viewertwo = document.querySelector('#'+this.viewertwoid) || null;
-        this.layout = document.querySelector('#'+this.layoutid);
+        this.viewers = [  document.querySelector('#'+this.viewerid),
+                          document.querySelector('#'+this.viewertwoid) || null   ];
+        this.layoutcontroller = document.querySelector('#'+this.layoutid);
         this.viewerapplication = document.querySelector('#'+this.viewerappid);
 
-        this.panel = new bisweb_panel(this.layout, {
+        this.panel = new bisweb_panel(this.layoutcontroller, {
             name: 'Repository Panel',
             permanent: false,
-            width: '600',
+            width: '500',
             dual: false,
             mode: 'sidebar',
             helpButton: true
@@ -82,33 +81,10 @@ class RepoPanel extends HTMLElement {
 
         parent.append($('<HR width="90%">'));
         
+
         
-        this.contextMenuDefaultSettings = {
-            'Info': {
-                'separator_before': false,
-                'separator_after': false,
-                'label': 'File Info',
-                'action': (node) => {
-                    this.createFileInfoModal(node);
-                }
-            },
-            'Display': {
-                'separator_before': false,
-                'separator_after': false,
-                'label': 'Display Image',
-                'action': () => {
-                    this.displayImageFromTree(0,false);
-                },
-            },
-            'DisplayOverlay': {
-                'separator_before': false,
-                'separator_after': false,
-                'label': 'Display Overlay',
-                'action': () => {
-                    this.displayImageFromTree(0,true);
-                }
-            }
-        };
+        
+        
         this.created=true;
     }
 
@@ -205,8 +181,10 @@ class RepoPanel extends HTMLElement {
                                 'type' : 'directory',
                                 'text' : '['+linkname+']',
                                 'link' : fullurl,
-                                'opened': false,
-                                'selected': false
+                                'selected': false,
+                                'state' : {
+                                    'opened'    : true
+                                }
                             };
                             if (depth<maxdepth) {
                                 dt.children=await this.parseItem(fullurl,depth+1,maxdepth);
@@ -221,7 +199,7 @@ class RepoPanel extends HTMLElement {
                             fullurl=url.substr(0,nm)+'/';
                             lst.push({
                                 'type' : 'default',
-                                'text' : '[UP ONE LEVEL]',
+                                'text' : 'Open '+link,
                                 'link' : link,
                             });
                         } 
@@ -251,48 +229,83 @@ class RepoPanel extends HTMLElement {
 
     }
 
-    setOnClickListeners(tree, listContainer) {
+    treeCallback(node) {
 
-        let handleLeftClick = (data) => {
-            if (data.node.original.type === 'directory') {
-                data.instance.open_node(this, false);
-                this.currentlySelectedNode = data.node;
+        let tp=node.original.type;
+        
+        if (tp==='image') {
+
+            let imageMenu = {
+                'Display': {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Display Image',
+                    'action': () => {
+                        this.displayImageFromTree(node.original.link,0,false);
+                    },
+                },
+                'DisplayOverlay': {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Display Overlay',
+                    'action': () => {
+                        this.displayImageFromTree(node.original.link,0,true);
+                }
+                }
+            };
+            
+            
+            if (this.viewers[1]!==null) {
+                
+                imageMenu['Display2']= {
+                        'separator_before': true,
+                        'separator_after': false,
+                        'label': 'Load Image (2)',
+                        'action': () => {
+                            this.displayImageFromTree(node.original.link,1,false);
+                        },
+                };
+                imageMenu['DisplayOverlay2'] = {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Overlay (2)',
+                    'action': () => {
+                        this.displayImageFromTree(node.original.link,1,true);
+                    }
+                };
             }
-            //node is already selected by select_node event handler so nothing to do for selecting a picture
-        };
+            return imageMenu;
+        }
 
-
-        let handleRightClick = (data) => {
-            let tree = this.fileTree.jstree(true);
-            //let existingTreeSettings = tree.settings.contextmenu.items;
-            //console.log('data',data);
-        };
-
-        let handleDblClick = () => {
-            if (this.currentlySelectedNode.original.type === 'image') {
-                this.loadImageFromTree();
+        if (tp==='file') {
+            return {
+                'Info': {
+                    'label': 'File Info',
+                    'action': () => {
+                        this.displayFile(node.original.link);
+                    }
+                }
             }
-        };
+        }
 
-        listContainer.on('select_node.jstree', (event, data) => {
-
-            this.currentlySelectedNode = data.node;
-            console.log('Node=',JSON.stringify(this.currentlySelectedNode));
-            if (data.event.type === 'click') {
-                handleLeftClick(data);
-            } else if (data.event.type === 'contextmenu') {
-                handleRightClick(data);
+        if (tp==='default') {
+            return {
+                'Open': {
+                    'label': 'Load Repo',
+                    'action': () => {
+                        this.openLink(node.original.link);
+                    }
+                }
             }
-        });
+        }
 
-        tree.bind('dblclick.jstree', () => {
-            handleDblClick();
-        });
+        return {};
     }
-
+    
     createTree(fileTree) {
         
         this.listContainer.empty();
+        let treeOptionsCallback=this.treeCallback.bind(this);
         
         let treeDiv = webutil.creatediv(
             {
@@ -331,39 +344,12 @@ class RepoPanel extends HTMLElement {
             },
             'plugins': ["types", "dnd", "contextmenu"],
             'contextmenu': {
-                'show_at_node': false,
-                'items': this.contextMenuDefaultSettings,
+                'items': treeOptionsCallback,
             },
         });
 
-        let newSettings = this.contextMenuDefaultSettings;
-        //add viewer one and viewer two options to pages with multiple viewers
-        if (this.viewertwo) {
-            newSettings['Display2']= {
-                'separator_before': false,
-                'separator_after': false,
-                'label': 'Load Image (2)',
-                'action': () => {
-                    this.displayImageFromTree(1,false);
-                },
-            };
-            newSettings['DisplayOverlay2'] = {
-                'separator_before': false,
-                'separator_after': false,
-                'label': 'Load Overlay (2)',
-                'action': () => {
-                    this.displayImageFromTree(1,true);
-                }
-            };
-        }
-
-        tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
-
-        let enabledButtons = this.panel.widget.find('.bisweb-load-enable');
-        enabledButtons.prop('disabled', false);
-
-        this.setOnClickListeners(tree, treeDiv);
+        //this.setOnClickListeners(tree, treeDiv);
         this.fileTree = tree;
 
     }
@@ -372,7 +358,6 @@ class RepoPanel extends HTMLElement {
     reorderItems(filelist) {
 
         let remove=[];
-        console.log('In reorder items',filelist.length);
         
         for (let i=0;i<filelist.length;i++) {
 
@@ -390,8 +375,6 @@ class RepoPanel extends HTMLElement {
                     let ind2=fname.lastIndexOf('_');
                     let base2=fname.substr(0,ind2);
                     
-                    console.log('fname',fname,base1,base2);
-                    
                     let found=false, foundindex=-1, j=0;
                     while (j<filelist.length && found===false) {
                         let item2=filelist[j];
@@ -406,16 +389,13 @@ class RepoPanel extends HTMLElement {
                                 base2+'_bold.nii' === fname2) {
                                 found=true;
                                 foundindex=j;
-                                console.log('Found',base1,base2,fname);
                             }
                         }
                         j=j+1;
                     }
                     
                     if (found) {
-                        console.log('Found=',found,foundindex,filelist[foundindex]);
                         filelist[foundindex].children.push(JSON.parse(JSON.stringify(filelist[i])));
-                        console.log('Adding to ',filelist[foundindex]);
                         remove.push(i);
                     }
                 }
@@ -435,15 +415,67 @@ class RepoPanel extends HTMLElement {
     
     async openDirectory(url) {
 
-        console.log('-------------------------------------------');
         let filelist=await this.parseItem(url,0,2);
-        console.log('-------------------------------------------');
-        console.log(this.filelist);
-
         filelist=this.reorderItems(filelist);
 
         this.createTree(filelist);
     }
+
+
+    async displayImageFromTree(fname,viewer,overlay) {
+
+        let img=new BisWebImage();
+        try {
+            webutil.createAlert('Loading image from ' + fname,'progress', 30, 0, { 'makeLoadSpinner' : true });
+            await img.load(fname);
+            webutil.createAlert('Loaded image from ' + fname);
+        } catch(e) {
+            webutil.createAlert('Failed to load image '+fname);
+            return;
+        }
+
+        if (!overlay) {
+            this.viewers[viewer].setimage(img);
+            img=null;
+        } else {
+            this.viewers[viewer].setobjectmap(img);
+            img=null;
+        }
+
+    }
+
+    openLink(node) {
+        
+
+    }
+
+    async displayFile(fname) {
+
+        let obj=null;
+        try {
+            obj=await bis_genericio.read(fname);
+        } catch(e) {
+            bootbox.alert('Failed to read file '+fname);
+            return;
+        }
+        
+        let txt=obj.data;
+        let ext=fname.split('.');
+        let l=ext.length;
+        if (ext[l-1]==='json' || ext[l-1]==='JSON') {
+            try {
+                txt=JSON.stringify(JSON.parse(txt),null,2);
+            } catch(e) {
+                console.log(e);
+            }
+        }
+            
+        
+        let dh=Math.round(this.layoutcontroller.getviewerheight()*0.7);
+        webutil.createLongInfoText('<PRE>'+txt+'</PRE>',fname,dh);
+    }
+        
 }
 
 webutil.defineElement('bisweb-repopanel', RepoPanel);
+
