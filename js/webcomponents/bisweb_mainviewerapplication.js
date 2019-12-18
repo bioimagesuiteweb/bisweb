@@ -1295,6 +1295,20 @@ class ViewerApplicationElement extends HTMLElement {
                         dicommodule.showDICOMImportModal();
                     });
                 }
+
+                let cont=document.createElement('bisweb-repopanel');
+                cont.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
+                cont.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
+                cont.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
+                                  
+                this.VIEWERS[0].getLayoutController().appendChild(cont);
+                webutil.createMenuItem(bmenu,'');
+                webutil.createMenuItem(bmenu, 'Repository Panel', () => {
+                    cont.show();
+                });
+                    
+               
+                
             }
             webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, 'Restart Application', () => {
@@ -1555,6 +1569,7 @@ class ViewerApplicationElement extends HTMLElement {
 
 
     }
+
     
     connectedCallback() {
 

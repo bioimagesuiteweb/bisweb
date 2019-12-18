@@ -56,7 +56,7 @@ class BidsModule extends BaseModule {
     directInvokeAlgorithm(vals) {
 
         if (vals.inputdirectory.length<2) { 
-            return Promise.reject('Must specify input directory.')
+            return Promise.reject('Must specify input directory.');
         }
 
 
