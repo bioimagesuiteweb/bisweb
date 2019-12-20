@@ -55,12 +55,13 @@ class RepoPanel extends HTMLElement {
         this.panel = new bisweb_panel(this.layoutcontroller, {
             name: 'Repository Panel',
             permanent: false,
-            width: '500',
+            width: '400',
             dual: false,
             mode: 'sidebar',
             helpButton: true
         });
 
+        this.panel.setHelpModalMessage(`<H3> DataLab.Org</H3><P> This control enables browsing of the <a href="https://datasets.datalad.org" target="_blank" rel="noopener">Repository</a>.</P><P> To access a dataset click "Connect to Repository" and enter the URL of the subject/study (e.g. "https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/") in the dialog box.</P>`);        
         let parent=this.panel.getWidget();
         
         const self=this;
@@ -113,7 +114,7 @@ class RepoPanel extends HTMLElement {
     openDirectoryPrompt() {
         
         bootbox.prompt("Enter the URL to connect. Blank=Default", (result) => {
-            console.log('result=',result);
+            //console.log('result=',result);
             if (result===null)
                 return;
 
@@ -128,11 +129,17 @@ class RepoPanel extends HTMLElement {
         });
     }
 
-    async parseItem(url,depth=0,maxdepth=2) {
+    async parseURL(url,depth=0,maxdepth=2) {
 
         let lst = [];
         let obj=null;
 
+        //console.log('Parsing ',url,'depth=',depth,maxdepth);
+        if (depth>maxdepth)
+            return lst;
+        
+        
+        
         try {
             obj=await bis_genericio.read(url);
         } catch(e) {
@@ -149,30 +156,59 @@ class RepoPanel extends HTMLElement {
         const extlist = [ 'json','bval','bvec' ];
         
         let data=obj.data.split('\n');
+        let parent=lst;
 
-
-        if (maxdepth>1) {
-            console.log('Must find either anat or func in href , else set maxdepth to 1');
+        if (depth==1) {
+            //console.log('Must find either anat or func in href , else set maxdepth to 0');
             let found=false,i=0;
             while (i<data.length && found===false) {
                 let index=data[i].indexOf('href');
-                let link=data[i].substr(index+6,1000);
-                let endind=link.indexOf('"');
-                link=link.substr(0,endind).trim();
-                let l=link.length;
-                if (link.indexOf('anat/')===l-5 || link.indexOf('func/')===l-5) {
-                    console.log('Found anat or func in',data[i]);
-                    found=true;
+                if (index>=0) {
+                    let link=data[i].substr(index+6,1000);
+                    let endind=link.indexOf('"');
+                    link=link.substr(0,endind).trim();
+                    let l=link.length;
+                    if (link.indexOf('anat/')===l-5 ||
+                        link.indexOf('func/')===l-5 || 
+                        link.indexOf('anat/index.html')===l-15 ||
+                        link.indexOf('func/index.html')===l-15) {
+                        //console.log('Found anat or func in',data[i]);
+                        found=true;
+                    }
                 }
                 i=i+1;
             }
-            if (!found) {
-                maxdepth=1;
-                console.log('Maxdepth set to 1');
+            if (found) {
+                return [];
             }
         }
 
+        if (depth===0) {
+
+
+            let link=url.substr(0,url.length-1);
+            let a=link.lastIndexOf('/');
+            link=link.substr(0,a+1);
+            //console.log('Up Link=',link);
+            lst.push({
+                'type' : 'default',
+                'text' : '[UP]',
+                'link' : link,
+            });
+
+            let extra={
+                'type' : 'directory',
+                'text' : url,
+                'state' : {
+                    'opened'    : true
+                },
+                'children' : [],
+            }; 
+            lst.push(extra);
+            parent=extra.children;
+        }
         
+            
         for (let i=0;i<data.length;i++) {
             let index=data[i].indexOf('href');
             let index2=data[i].indexOf('alt');
@@ -198,7 +234,7 @@ class RepoPanel extends HTMLElement {
 
 
                 let isback=(data[i].indexOf('icons/back.gif')>=0);
-                if (tp==="DIR" || tp==="PARENTDIR"  || tp=='' || tp==='TXT') {
+                if (tp==="DIR" || tp=='' || tp==='TXT') {
 
                     let fullurl=url+link;
                     let nm=fullurl.lastIndexOf('/',url);
@@ -220,47 +256,45 @@ class RepoPanel extends HTMLElement {
 
                             
                             let dt={
-                                'type' : 'directory',
                                 'text' : '['+linkname+']',
                                 'link' : fullurl,
                                 'state' : {
                                     'opened'    : true
                                 }
                             };
-                            
-                            dt.children=await this.parseItem(fullurl,depth+1,maxdepth);
-                            dt.link='';
-                            lst.push(dt);
-                        }
-                    } else if (tp==="PARENTDIR") {
-                        if (depth===0) { 
-                            if (link.indexOf('http')!==0) {
-                                let a=url.lastIndexOf('/');
-                                if (a===url.length-1) {
-                                    link=url.substr(0,url.length-1)+link;
+
+                            if (depth<maxdepth) {
+                                dt['type']= 'directory';
+                                dt.children=await this.parseURL(fullurl,depth+1,maxdepth);
+                                if (dt.children.length>0) {
+                                    dt.link='';
                                 } else {
-                                    link=url+link;
+                                    dt['type']='default';
                                 }
+                            } else {
+                                dt['type']='default';
                             }
-                            let nm=url.substr(0,url.length-1).lastIndexOf('/',url);
-                            fullurl=url.substr(0,nm)+'/';
-                            lst.push({
-                                'type' : 'default',
-                                'text' : 'Open '+link,
-                                'link' : link,
+                            parent.push(dt);
+                        }
+                    }  else if (tp==='TXT') {
+                        if (!istsv) {
+                            parent.push({
+                                'type' : 'file',
+                                'text' : link,
+                                'attr' : this.getAttributes(data[i]),
+                                'link' : fullurl+link,
+                            });
+                        } else {
+                            parent.push({
+                                'type' : 'tsv',
+                                'text' : link,
+                                'attr' : this.getAttributes(data[i]),
+                                'link' : fullurl+link,
                             });
                         }
-                    } else if (tp==='TXT') {
-                        lst.push({
-                            'type' : 'file',
-                            'text' : link,
-                            'attr' : this.getAttributes(data[i]),
-                            'link' : fullurl+link,
-                            'istsv'  : istsv,
-                        });
                     } else {
                         this.getAttributes(data[i]);
-                        lst.push({
+                        parent.push({
                             'type' : 'image',
                             'text' : link,
                             'attr' : this.getAttributes(data[i]),
@@ -276,13 +310,8 @@ class RepoPanel extends HTMLElement {
 
     }
 
-    getMenu(tp,istsv=false) {
+    getMenu(tp) {
 
-        if (tp==='tsv') {
-            tp='file';
-            istsv=true;
-        }
-        
         if (tp==='image') {
 
             let imageMenu = {
@@ -332,30 +361,30 @@ class RepoPanel extends HTMLElement {
             return imageMenu;
         }
         
-        if (tp==='file') {
+        if (tp==='tsv') {
 
-            if (istsv) {
-                return {
-                    'Info': {
+            return {
+                'Info': {
                     'label': 'File Info',
-                        'separator_after': true,
-                        'action': () => {this.fileInfo();  },
-                    },
+                    'separator_after': true,
+                    'action': () => {this.fileInfo();  },
+                },
                     'Show': {
                         'label': 'Show File Contents',
                         'action': () => {
                             this.displayFile(this.currentlySelectedNode.link);
                         },
                     },
-                    'Plot': {
-                        'label': 'Plot TSV File',
-                        'action': () => {
-                            this.displayFile(this.currentlySelectedNode.link,true);
-                        },
+                'Plot': {
+                    'label': 'Plot TSV File',
+                    'action': () => {
+                        this.displayFile(this.currentlySelectedNode.link,true);
                     },
-                };
-            }
-            
+                },
+            };
+        }
+
+        if (tp==='file') {
             return {
                     'Info': {
                     'label': 'File Info',
@@ -389,24 +418,25 @@ class RepoPanel extends HTMLElement {
 
         this.currentlySelectedNode=node.original;
         let tp=this.currentlySelectedNode.type;
-        let istsv=this.currentlySelectedNode.istsv || false;
-        return this.getMenu(tp,istsv);
+        return this.getMenu(tp);
     }
 
     showBottom() {
 
         let tp=this.currentlySelectedNode.type;
-        let istsv=this.currentlySelectedNode.istsv || false;
-        let option=tp;
-        
-        if (this.currentlySelectedNode.istsv)
-            option='tsv';
-
-        if (this.currentBottomChoice===option)
+        if (this.currentBottomChoice===tp)
             return;
         
         this.bottom.empty();
-        let lst=this.getMenu(tp,istsv);
+        //console.log('Tp=',tp);
+        
+        if (tp === 'default') {
+            this.openLink(this.currentlySelectedNode.link);
+            return;
+        }
+
+        
+        let lst=this.getMenu(tp);
         let keys=Object.keys(lst);
         for (let i=0;i<keys.length;i++) {
             let elem=lst[keys[i]];
@@ -428,7 +458,6 @@ class RepoPanel extends HTMLElement {
         
         
     createTree(fileTree) {
-
 
         this.filelist=fileTree;
         this.plotobj= null;
@@ -457,13 +486,13 @@ class RepoPanel extends HTMLElement {
             },
             'types': {
                 'default': {
-                    'icon': 'glyphicon glyphicon-file'
+                    'icon': 'glyphicon glyphicon-new-window'
                 },
                 'file': {
                     'icon': 'glyphicon glyphicon-file'
                 },
                 'tsv': {
-                    'icon': 'glyphicon glyphicon-file'
+                    'icon': 'glyphicon glyphicon-list'
                 },
                 'root': {
                     'icon': 'glyphicon glyphicon-home'
@@ -482,8 +511,6 @@ class RepoPanel extends HTMLElement {
         });
 
         tree.jstree(true).redraw(true);
-        //this.setOnClickListeners(tree, treeDiv);
-        this.fileTree = tree;
 
         tree.on("select_node.jstree", (e, data) => {
             this.currentlySelectedNode=data.node.original;
@@ -504,7 +531,7 @@ class RepoPanel extends HTMLElement {
             } else {
                 let item=filelist[i];
                 let tp=item.type;
-                if (tp==='file') {
+                if (tp==='file' || tp === 'tsv')  {
 
                     let fname=item.link;
                     let ind=fname.lastIndexOf('.');
@@ -560,12 +587,13 @@ class RepoPanel extends HTMLElement {
         if (url.lastIndexOf('/')!==url.length-1 && url.lastIndexOf('.html')!==url.length-5)
             url=url+'/';
 
-        let filelist=await this.parseItem(url,0,2);
+        
+        let filelist=await this.parseURL(url,0,1);
         if (filelist!==null) {
             filelist=this.reorderItems(filelist);
             this.createTree(filelist);
         } else {
-            webutil.createAlert('Failed to parse '+url,true);
+            webutil.createAlert('Failed to read '+url,true);
         }
     }
 

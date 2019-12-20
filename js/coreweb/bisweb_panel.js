@@ -109,6 +109,7 @@ class BisWebPanel {
         this.sidebarMinimizeButton=null;
         this.sidebarMaximizeButton=null;
         this.sidebarCloseButton=null;
+        this.sidebarHelpButton=null;
         this.dummyWidget=$('<div></div>');
         this.createHeader();
     }
@@ -136,9 +137,11 @@ class BisWebPanel {
         } else {
             if (this.state!=="sidebar")
                 this.addToDock();
-            else
+            else 
                 this.addToSidebar();
         }
+        this.addDisplayHelpCallback();
+
     }
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
@@ -207,18 +210,16 @@ class BisWebPanel {
             });
         }
 
-
+        
         if (this.options.initialstate === "docked" && this.options.dual===false) {
-
+            
             if (this.options.helpButton) {
                 this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
             }
-            return;
         }
 
         
         this.dockToggleButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-log-out"></span></button>`);
-        
         this.dockToggleButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -228,6 +229,8 @@ class BisWebPanel {
             return false;
         });
 
+
+        // Dual Stuff
         
         if (this.options.dual) {
             this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
@@ -286,8 +289,8 @@ class BisWebPanel {
         buttonbar.append(this.sidebarCloseButton);
 
         if (this.options.helpButton) {
-            this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
-            buttonbar.append(this.helpButton);
+            this.sidebarHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
+            buttonbar.append(this.sidebarHelpButton);
         }
         buttonbar.append(this.sidebarMinimizeButton);
         if (this.options.dual) {
@@ -297,11 +300,6 @@ class BisWebPanel {
         
         if (this.options.helpButton) {
             this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign bisweb-span-button"></span></button>`);
-            this.dockHelpButton.click( (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                self.displayHelpModal();
-            });
         }
 
         this.minimalHeader.append(this.sidebarMaximizeButton);
@@ -456,15 +454,21 @@ class BisWebPanel {
 
     /** add display help callback */
     addDisplayHelpCallback() {
-        if (!this.dockHelpButton)
-            return;
 
-        this.dockHelpButton.off('click');
-        this.dockHelpButton.on('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.displayHelpModal();
-        });
+        const add=(bt) => {
+            bt.off('click');
+            bt.on('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.displayHelpModal();
+            });
+        };
+
+        if (this.dockHelpButton)
+            add(this.dockHelpButton);
+        
+        if (this.sidebarHelpButton)
+            add(this.sidebarHelpButton);
     }
     /** Display a modal containing information specific to whichever panel this is meant to represent. This should be assigned by whichever context creates the bisweb_panel. */
     displayHelpModal() {

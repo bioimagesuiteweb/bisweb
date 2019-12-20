@@ -1282,8 +1282,6 @@ class ViewerApplicationElement extends HTMLElement {
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
 
-        this.repopanel=document.createElement('bisweb-repopanel');
-        
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 /*const dicomid = this.getAttribute('bis-dicomimportid') || null;
@@ -1299,17 +1297,9 @@ class ViewerApplicationElement extends HTMLElement {
                     });
                 }*/
 
-                let cont=this.repopanel;
-                cont.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
-                cont.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
-                if (this.VIEWERS[1])
-                    cont.setAttribute('bis-viewerid2',this.VIEWERS[1].getAttribute('id'));
-                cont.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
-                                  
-                this.VIEWERS[0].getLayoutController().appendChild(cont);
                 webutil.createMenuItem(bmenu,'');
                 webutil.createMenuItem(bmenu, 'Repository Panel', () => {
-                    cont.show();
+                    this.repopanel.show();
                 });
                     
                
@@ -1585,6 +1575,18 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
 
+    createExtraComponents() {
+
+        this.repopanel=document.createElement('bisweb-repopanel');
+        this.repopanel.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
+        if (this.VIEWERS[1])
+            this.repopanel.setAttribute('bis-viewerid2',this.VIEWERS[1].getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
+        this.VIEWERS[0].getLayoutController().appendChild(this.repopanel);
+        
+    }
+
     
     connectedCallback() {
 
@@ -1606,7 +1608,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         this.findViewers();
-        
+        this.createExtraComponents();
 
 
         let menubar = document.querySelector(menubarid).getMenuBar();
