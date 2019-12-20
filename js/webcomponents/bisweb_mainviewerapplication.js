@@ -1286,7 +1286,7 @@ class ViewerApplicationElement extends HTMLElement {
         
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
-                const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                /*const dicomid = this.getAttribute('bis-dicomimportid') || null;
                 if (dicomid) {
                     let dicommodule = document.querySelector(dicomid) || null;
                     webutil.createMenuItem(bmenu,'');
@@ -1297,7 +1297,7 @@ class ViewerApplicationElement extends HTMLElement {
                     webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
                         dicommodule.showDICOMImportModal();
                     });
-                }
+                }*/
 
                 let cont=this.repopanel;
                 cont.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));

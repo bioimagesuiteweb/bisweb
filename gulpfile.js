@@ -171,7 +171,7 @@ internal.serveroptions = {
     "root" : path.normalize(__dirname),
     "host" : options.hostname,
     "port" : `${options.portno}`,
-    'directoryListing': true,
+    'directoryListing': false,
 };
 
 if (options.external>0) {

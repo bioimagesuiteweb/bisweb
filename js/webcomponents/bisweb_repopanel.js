@@ -69,7 +69,7 @@ class RepoPanel extends HTMLElement {
         
         webutil.createbutton({
             'name' : 'Connect to Repository',
-            'type ' : 'alert',
+            'type' : 'danger',
             'parent' : top,
             'callback' : () => { self.openDirectoryPrompt(); },
             'css' : {
@@ -78,14 +78,13 @@ class RepoPanel extends HTMLElement {
         });
 
         parent.append($('<HR width="90%">'));
-        this.listContainer = $(`<div></div>`);
-        parent.append(this.listContainer);
-
-        parent.append($('<HR width="90%">'));
-        
-
         this.bottom= $(`<div></div>`);
         parent.append(this.bottom);
+        parent.append($('<HR width="90%">'));
+        this.listContainer = $(`<div></div>`);
+
+        parent.append(this.listContainer);
+
         this.created=true;
     }
 
@@ -141,9 +140,39 @@ class RepoPanel extends HTMLElement {
             return null;
         }
 
+        if (url.lastIndexOf('.html')===url.length-5) {
+            let ind=url.lastIndexOf('/');
+            url=url.substr(0,ind+1);
+        }
+
+        
         const extlist = [ 'json','bval','bvec' ];
         
         let data=obj.data.split('\n');
+
+
+        if (maxdepth>1) {
+            console.log('Must find either anat or func in href , else set maxdepth to 1');
+            let found=false,i=0;
+            while (i<data.length && found===false) {
+                let index=data[i].indexOf('href');
+                let link=data[i].substr(index+6,1000);
+                let endind=link.indexOf('"');
+                link=link.substr(0,endind).trim();
+                let l=link.length;
+                if (link.indexOf('anat/')===l-5 || link.indexOf('func/')===l-5) {
+                    console.log('Found anat or func in',data[i]);
+                    found=true;
+                }
+                i=i+1;
+            }
+            if (!found) {
+                maxdepth=1;
+                console.log('Maxdepth set to 1');
+            }
+        }
+
+        
         for (let i=0;i<data.length;i++) {
             let index=data[i].indexOf('href');
             let index2=data[i].indexOf('alt');
@@ -179,7 +208,16 @@ class RepoPanel extends HTMLElement {
                     if (tp==='DIR') {
                         if (!isback) {
                             let a=link.lastIndexOf('/index.html');
-                            let linkname=link.substr(0,a);
+                            let linkname=link;
+                            if (a>0) {
+                                linkname=link.substr(0,a);
+                            } else {
+                                a=link.lastIndexOf('/');
+                                if (a>0) {
+                                    linkname=link.substr(0,a);
+                                }
+                            }
+
                             
                             let dt={
                                 'type' : 'directory',
@@ -189,15 +227,21 @@ class RepoPanel extends HTMLElement {
                                     'opened'    : true
                                 }
                             };
-                            if (depth<maxdepth) {
-                                dt.children=await this.parseItem(fullurl,depth+1,maxdepth);
-                                dt.link='';
-                            }
+                            
+                            dt.children=await this.parseItem(fullurl,depth+1,maxdepth);
+                            dt.link='';
                             lst.push(dt);
                         }
                     } else if (tp==="PARENTDIR") {
                         if (depth===0) { 
-                            //let fullurl=url;
+                            if (link.indexOf('http')!==0) {
+                                let a=url.lastIndexOf('/');
+                                if (a===url.length-1) {
+                                    link=url.substr(0,url.length-1)+link;
+                                } else {
+                                    link=url+link;
+                                }
+                            }
                             let nm=url.substr(0,url.length-1).lastIndexOf('/',url);
                             fullurl=url.substr(0,nm)+'/';
                             lst.push({
@@ -205,7 +249,7 @@ class RepoPanel extends HTMLElement {
                                 'text' : 'Open '+link,
                                 'link' : link,
                             });
-                        } 
+                        }
                     } else if (tp==='TXT') {
                         lst.push({
                             'type' : 'file',
@@ -271,7 +315,7 @@ class RepoPanel extends HTMLElement {
                 imageMenu['Display2']= {
                     'separator_before': true,
                     'separator_after': false,
-                    'label': 'Load Image (2)',
+                    'label': 'Display Image (2)',
                     'action': () => {
                         this.displayImageFromTree(this.currentlySelectedNode.link,1,false);
                     },
@@ -279,7 +323,7 @@ class RepoPanel extends HTMLElement {
                 imageMenu['DisplayOverlay2'] = {
                     'separator_before': false,
                     'separator_after': false,
-                    'label': 'Load Overlay (2)',
+                    'label': 'Display Overlay (2)',
                     'action': () => {
                         this.displayImageFromTree(this.currentlySelectedNode.link,1,true);
                     }
@@ -346,7 +390,6 @@ class RepoPanel extends HTMLElement {
         this.currentlySelectedNode=node.original;
         let tp=this.currentlySelectedNode.type;
         let istsv=this.currentlySelectedNode.istsv || false;
-        console.log('Tp=',tp,istsv);
         return this.getMenu(tp,istsv);
     }
 
@@ -514,15 +557,13 @@ class RepoPanel extends HTMLElement {
             return this.openJSONFile(url);
         }
         
-        if (url.lastIndexOf('/')!==url.length-1)
+        if (url.lastIndexOf('/')!==url.length-1 && url.lastIndexOf('.html')!==url.length-5)
             url=url+'/';
 
         let filelist=await this.parseItem(url,0,2);
         if (filelist!==null) {
             filelist=this.reorderItems(filelist);
             this.createTree(filelist);
-
-            //            bis_genericio.write('test.json',JSON.stringify(filelist,null,2),false);
         } else {
             webutil.createAlert('Failed to parse '+url,true);
         }
@@ -586,7 +627,6 @@ class RepoPanel extends HTMLElement {
     }
 
     openLink(link) {
-        console.log('Opening',link);
         this.openDirectory(link);
     }
 
