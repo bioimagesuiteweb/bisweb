@@ -131,6 +131,10 @@ class RepoPanel extends HTMLElement {
 
     async parseURL(url,depth=0,maxdepth=2) {
 
+        let oldurl=url;
+        url=oldurl.replace(/\?dir=\//g,'');
+        //console.log('old=',oldurl,'-->',url);
+        
         let lst = [];
         let obj=null;
 
@@ -152,7 +156,7 @@ class RepoPanel extends HTMLElement {
             url=url.substr(0,ind+1);
         }
 
-        
+        console.log('Object=',JSON.stringify(obj,null,2));
         const extlist = [ 'json','bval','bvec' ];
         
         let data=obj.data.split('\n');
@@ -265,10 +269,14 @@ class RepoPanel extends HTMLElement {
 
                             if (depth<maxdepth) {
                                 dt['type']= 'directory';
-                                dt.children=await this.parseURL(fullurl,depth+1,maxdepth);
-                                if (dt.children.length>0) {
-                                    dt.link='';
-                                } else {
+                                try {
+                                    dt.children=await this.parseURL(fullurl,depth+1,maxdepth);
+                                    if (dt.children.length>0) {
+                                        dt.link='';
+                                    } else {
+                                        dt['type']='default';
+                                    }
+                                } catch(e) {
                                     dt['type']='default';
                                 }
                             } else {
