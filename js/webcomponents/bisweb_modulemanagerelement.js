@@ -203,11 +203,11 @@ class ModuleManagerElement extends HTMLElement {
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
-                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
+//                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
-                this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+//               this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
                 this.createModule('Patch Reformat Image', 1, false, modules.getModule('patchReformatImage'), moduleoptions);
             }
         });
@@ -231,6 +231,8 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
         this.createModule('Drift Correct 4D Image',1, dosep, modules.getModule('driftCorrectImage'), moduleoptions);
         this.createModule('Temporal Filter 4D Image',1, dosep, modules.getModule('butterworthFilterImage'), moduleoptions);
+        this.createModule('Normalize Time Series',1, dosep, modules.getModule('timeseriesnormalizeimage'), moduleoptions);
+        
         this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {

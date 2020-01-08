@@ -20,7 +20,7 @@
 const moduleImports = {
     
     smoothimage : require('smoothImage.js'),
-    qualitymeasures : require('qualityMeasures.js'),
+//    qualitymeasures : require('qualityMeasures.js'),
     gradientimage : require('gradientImage.js'),
     thresholdimage : require('thresholdImage.js'),
     shiftscaleimage : require('shiftScaleImage.js'),
@@ -57,7 +57,7 @@ const moduleImports = {
     seedcorrelation : require('seedCorrelation.js'),
     computeroi : require('computeROI.js'),
     computevolume : require('computeVolume.js'),
-    bilateralfilter : require('bilateralfilter.js'),
+//    bilateralfilter : require('bilateralfilter.js'),
     timeseriesnormalizeimage: require('timeseriesNormalizeImage'),
     patchreformatimage: require('patchReformatImage'),
     computeglm : require('computeGLM.js'),
