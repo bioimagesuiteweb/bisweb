@@ -56,6 +56,7 @@ const moduleImports = {
     computecorrelation : require('computeCorrelation.js'),
     seedcorrelation : require('seedCorrelation.js'),
     computeroi : require('computeROI.js'),
+    computevolume : require('computeVolume.js'),
     bilateralfilter : require('bilateralfilter.js'),
     timeseriesnormalizeimage: require('timeseriesNormalizeImage'),
     patchreformatimage: require('patchReformatImage'),

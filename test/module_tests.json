@@ -109,6 +109,24 @@
 	    "result"  : false,
 	    "dopython": true
 	},
+        {
+	    "command" : "computeVolume -i testdata/testvol.nii.gz --keepzero false --debug true",
+	    "test"    : "--test_target testdata/testvol.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "computeVolume -i testdata/testvol4d.nii.gz --keepzero false --debug true",
+	    "test"    : "--test_target testdata/testvol4d.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "computeVolume -i testdata/testvol4d.nii.gz --keepzero true --debug true",
+	    "test"    : "--test_target testdata/testvol4d.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": false
+	},
 	{
 	    "command" : "thresholdImage -i testdata/MNI_6mm.nii.gz --low 128.0 --high 1000 --debug 1",
 	    "test"    : "--test_target testdata/newtests/MNI_thr.nii.gz ",
