@@ -671,13 +671,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
             if (max>=0 ) {
-                let state=internal.linestack[max];
-                let mode=state.mode;
-                if (mode===1) {
-                    setnode(Math.round(internal.parameters.node-1));
-                    donewithmatrices=true;
-                }
-
+                //let state=internal.linestack[max];
+                //let mode=state.mode;
+                // Show the node in all times
+                setnode(Math.round(internal.parameters.node-1));
+                donewithmatrices=true;
             } else if (donewithmatrices===false) {
                 setnode(Math.round(internal.parameters.node-1));
                 donewithmatrices=true;
@@ -710,7 +708,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.mni[1]= internal.parcellation.rois[intnode].y;
         internal.mni[2]= internal.parcellation.rois[intnode].z;
         internal.mni[3]= singlevalue;
-        if (internal.showlegend)
+        
+        if (internal.showlegend) 
             internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
         let coords = internal.mni2tal.getMMCoordinates(internal.mni);
         internal.orthoviewer.setcoordinates(coords);
@@ -769,11 +768,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
 
             if (internal.conndata.statMatrix!==null) {
-                s_text2+=', (Degree: p='+internal.conndata.statMatrix[orignode][0]+', ';
-                s_text2+='n='+internal.conndata.statMatrix[orignode][1]+', ';
-                s_text2+='s='+internal.conndata.statMatrix[orignode][2]+') ';
+                s_text2+=', (Degree: pos='+internal.conndata.statMatrix[orignode][0]+', ';
+                s_text2+='neg='+internal.conndata.statMatrix[orignode][1]+', ';
+                s_text2+='sum='+internal.conndata.statMatrix[orignode][2]+') ';
             }
-            s_text2+=' (sorted='+(internal.parcellation.indexmap[nodenumber]+1)+')';
+            s_text2+=' (draw orderg ='+(internal.parcellation.indexmap[nodenumber]+1)+')';
 
             internal.parameters.node=humannumber;
 
@@ -1201,6 +1200,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
         dlist.push(internal.datgui_degreethresholdcontroller);
+
+        dlist.push(coords.add(data,'linestodraw',gui_Lines).name("Lines to Draw"));
+
+        
 
         dlist.push(internal.datgui_degreethresholdcontroller);
         dlist.push(disp.add(data,'length',10,200).name("Length"));

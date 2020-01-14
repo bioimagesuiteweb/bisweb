@@ -197,7 +197,7 @@ var createNets=function() {
 
     let nets = new Set();
     const rois=globalParams.internal.parcellation.rois;
-    console.log('Creating nets attr=',globalParams.internal.networkAttributeIndex);
+    
 
     for (let i=0;i<rois.length;i++) {
         let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
@@ -220,6 +220,7 @@ var createMatrix=function(nets,pairs,symm=false) {
         }
     }
     let n=pairs.length;
+    //console.log('Pairs=',pairs);
     
     for (let index=0;index<n;index++) {
         let a_node=pairs[index][0];
@@ -231,7 +232,7 @@ var createMatrix=function(nets,pairs,symm=false) {
         let network1=fixNetworkIndex(rois[node].attr[globalParams.internal.networkAttributeIndex]);
         let network2=fixNetworkIndex(rois[othernode].attr[globalParams.internal.networkAttributeIndex]);
 	if(network1 != network2)
-        matrix[network1-1][network2-1]+=1;
+            matrix[network1-1][network2-1]+=1;
         if (symm)
             matrix[network2-1][network1-1]+=1;
     }
@@ -300,7 +301,7 @@ var createDisplayDialog=function(name,height=-1,width=-1) {
     let linestodraw =globalParams.internal.laststate.linestodraw;
     name+=' (mode='+linestodraw+')';
     
-    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 800,false);
+    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 50, 800,false,false);
     globalParams.displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
     globalParams.displayDialog.removeCloseButton();
     
@@ -750,6 +751,9 @@ var createlines = function() {
         return;
     }
 
+    if (globalParams.displayDialog)
+        globalParams.displayDialog.hide();
+
 
     let getKeyByValue = function( obj,value,base ) {
         for( let prop in obj ) {
@@ -821,6 +825,7 @@ var createlines = function() {
 
 var drawlines=function(state) {
 
+    
     let ok=globalParams.internal.conndata.createFlagMatrix(globalParams.internal.parcellation,
                                               state.mode, // mode
                                               state.singlevalue, // singlevalue
