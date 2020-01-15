@@ -207,6 +207,38 @@ var createNets=function() {
     return nets;
 };
 
+var countEdgesBetweenNets=function(nets) {
+        
+    const rois=globalParams.internal.parcellation.rois;
+    console.log('Counting edges between network pairs');
+    let nodesPerNetwork = {};
+    
+    for (let i=0;i<rois.length;i++) {
+    
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+    
+        if(nodesPerNetwork[n] !== undefined){
+                nodesPerNetwork[n] = nodesPerNetwork[n]+1;
+        } else {
+                nodesPerNetwork[n] = 1;
+        }
+    }
+    
+   let edgesPerNetworkPair = new Array(nets.size);
+   for (let i=0;i<nets.size;i++) {
+        edgesPerNetworkPair[i] = new Array(nets.size);
+        for (let j=0;j<nets.size;j++) {
+            if(i==j) {
+                edgesPerNetworkPair[i][j]=nodesPerNetwork[i+1]*(nodesPerNetwork[j+1]-1)/2;
+            } else { 
+                edgesPerNetworkPair[i][j]=nodesPerNetwork[i+1]*nodesPerNetwork[j+1];
+            }
+        }
+   }    
+    
+    return edgesPerNetworkPair; 
+};  
+
 var createMatrix=function(nets,pairs,symm=false) {
 
     const parc=globalParams.internal.parcellation;
@@ -527,7 +559,16 @@ var createCorrMapSVG=function(parentDiv,
         endColor =  '#0044ff';
     }    
 
-    
+    // if specified, scale matrix by network size
+    if (globalParams.internal.parameters.matrixscaling) {
+        const scaling=countEdgesBetweenNets(nets);
+        for (let i=0;i<nets.size;i++) {
+            for (let j=0;j<nets.size;j++) {
+                data[i][j]=data[i][j]/scaling[i][j];
+                data[i][j]=Math.round(data[i][j]*100)/100;
+            }
+        }
+    }
     
     const widthLegend = 100;
     

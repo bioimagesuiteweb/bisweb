@@ -159,6 +159,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         datgui : null,
         parameters : {
             autodrawenabled : true,
+            matrixscaling : false,
             node  : 200,
             linestodraw : gui_Lines[2],
             degreethreshold : 10,
@@ -1253,11 +1254,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
         da4.onFinishChange( () => {   autoDrawLines();      });
+        
+        let da17=disp2.add(data,'matrixscaling').name('Matrix Scaling');
 
         clist.push(da4);
         clist.push(da1);
         clist.push(da2);
         clist.push(da3);
+        clist.push(da17);
 
         internal.datgui_controllers=clist;
 
