@@ -1,13 +1,11 @@
 const $=require('jquery');
 const bootbox=require('bootbox');
+const genericio=require('bis_genericio');
 const d3=require('d3');
+const webutil=require('bis_webutil');
 const saveSvgAsPng=require('save-svg-as-png');
 const filesaver = require('FileSaver');
 const regression = require('regression');
-
-const webutil=require('bis_webutil');
-const genericio=require('bis_genericio');
-//const bisweb_matrix=require('bisweb_matrix');
 
 // -------------------------------
 // Todo ---
@@ -27,8 +25,7 @@ const globalParams = {
     displayDialog : null,
     Id : null,
     Id2: null,
-    mode : 'chord',
-    addedStyles : false
+    mode : 'chord'
 };
 
 const network_colors=[
@@ -197,19 +194,17 @@ var saveAsPNG = function() {
 // -----------------------------------------------------
 var createNets=function() {
                     
-                
-    let nets = new Set();
-    const rois=globalParams.internal.parcellation.rois;
-    console.log('Creating nets attr=',globalParams.internal.networkAttributeIndex);
-    let nodesPerNetwork = {};
+    
+    let nets = new Set();
+    const rois=globalParams.internal.parcellation.rois;
+    
 
-    for (let i=0;i<rois.length;i++) {
-        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
-        nets.add(fixNetworkIndex(n));
-    }
+    for (let i=0;i<rois.length;i++) {
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+        nets.add(fixNetworkIndex(n));
+    }
 
     return nets;
-
 };
 
 var countEdgesBetweenNets=function(nets) {
@@ -257,6 +252,7 @@ var createMatrix=function(nets,pairs,symm=false) {
         }
     }
     let n=pairs.length;
+    //console.log('Pairs=',pairs);
     
     for (let index=0;index<n;index++) {
         let a_node=pairs[index][0];
@@ -267,8 +263,8 @@ var createMatrix=function(nets,pairs,symm=false) {
 
         let network1=fixNetworkIndex(rois[node].attr[globalParams.internal.networkAttributeIndex]);
         let network2=fixNetworkIndex(rois[othernode].attr[globalParams.internal.networkAttributeIndex]);
-
-        matrix[network1-1][network2-1]+=1;
+	if(network1 != network2)
+            matrix[network1-1][network2-1]+=1;
         if (symm)
             matrix[network2-1][network1-1]+=1;
     }
@@ -337,7 +333,7 @@ var createDisplayDialog=function(name,height=-1,width=-1) {
     let linestodraw =globalParams.internal.laststate.linestodraw;
     name+=' (mode='+linestodraw+')';
     
-    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 800,false);
+    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 50, 800,false,false);
     globalParams.displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
     globalParams.displayDialog.removeCloseButton();
     
@@ -804,6 +800,9 @@ var createlines = function() {
         return;
     }
 
+    if (globalParams.displayDialog)
+        globalParams.displayDialog.hide();
+
 
     let getKeyByValue = function( obj,value,base ) {
         for( let prop in obj ) {
@@ -846,7 +845,7 @@ var createlines = function() {
     let filter=filter_modes.indexOf(globalParams.internal.parameters.filter);
     if (filter<0)
         filter=2;
-    console.log('Filter',filter);
+    //console.log('Filter',filter);
     
     let state = { mode: mode,
                   guimode : globalParams.internal.parameters.mode,
@@ -875,6 +874,7 @@ var createlines = function() {
 
 var drawlines=function(state) {
 
+    
     let ok=globalParams.internal.conndata.createFlagMatrix(globalParams.internal.parcellation,
                                               state.mode, // mode
                                               state.singlevalue, // singlevalue
@@ -981,21 +981,22 @@ let drawScatterandHisto = function(){
     dim[0] = displayArea.innerWidth()-displayArea.css("padding").replace(/[a-zA-Z]/g,"")*2;
 
     globalParams.mode='chord'; //what does this do
-    addHistoScatterStyles();
 
+    addHistoScatterStyles();
+    
     //Draw the Scatterplot to the svgModal Div
     createScatter(svgModal, dim);
     
     // Draw the Histogram to the svgModal Div
     createHistogram(svgModal, dim);
     
+    /*
     svgModal.bind('drop',(data) =>{
         const reader = new FileReader();
 
         let event = data.originalEvent;
         event.preventDefault();
-        event.stopPropagation();
-        console.log('DROPPED DATA', event, data);
+        console.log('DROPPED DATA', event);
         reader.readAsText(event.dataTransfer.files[0]);
 
         reader.onloadend = (ev)=>{
@@ -1005,18 +1006,15 @@ let drawScatterandHisto = function(){
                 return;
             }
     
-            let data = ev.target.result;
+            let jsonData = ev.target.result;
             console.log('----- LOADED FILE -----');
-            console.log('data', data);
 
-            let matr = new bisweb_matrix();
-            matr.parseFromText(data, '.matr');
-            console.log('matr', matr);
+
+            let dataToParse = JSON.parse(jsonData); 
 
             //Scatterplot Data Construction
             let scatterData = [];
 
-            //TODO: find out the format Kol used to use the scatter plots
             for(let i = 0; i < dataToParse.scatterplotData[0].values.length; i++){
                 scatterData.push([
                     dataToParse.scatterplotData[0].values[i],
