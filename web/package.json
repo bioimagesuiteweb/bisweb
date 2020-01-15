@@ -1,12 +1,18 @@
 {
+    "authors": {
+        "name": "Yale BioImage Suitre Team",
+        "email": "xenophon.papademetris@yale.edu",
+        "url": "http://bioimagesuiteweb.org/"
+    },
     "name": "bioimagesuitewebelectron",
-    "version": "1.1.1",
+    "version": "1.1.0b8",
     "license": "GPL",
     "homepage": "http//www.bioimagesuite.org",
     "description": "The Electron version of BioImageSuite Web",
     "main": "biselectron.js",
     "dependencies": {
         "@tensorflow/tfjs-node": "^0.2.1",
+        "commander": "2.16.0",
         "colors": "1.1.2",
         "electron-debug": "^1.0.1",
         "glob": "^7.1.1",

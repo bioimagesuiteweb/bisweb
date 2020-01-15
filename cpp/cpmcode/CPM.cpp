@@ -182,7 +182,7 @@ void CPM::run(){
         }
       
 
-      double coefficients[order + 1]; // resulting array of coefs
+      double* coefficients=new double[order + 1]; // resulting array of coefs
       //		// Perform the polyfit
       int result = polyfit(train_sum,
                            ytrain,
@@ -201,6 +201,8 @@ void CPM::run(){
             testInd++;
           }
         }
+
+
       
       if (this->debug)
         std::cout<<std::endl;
@@ -211,6 +213,7 @@ void CPM::run(){
       delete[] ytrain;
       delete [] test_sum;
       delete [] train_sum;
+      delete [] coefficients;
     }
 
   delete [] indices;

@@ -171,7 +171,7 @@ internal.serveroptions = {
     "root" : path.normalize(__dirname),
     "host" : options.hostname,
     "port" : `${options.portno}`,
-    'directoryListing': true,
+    'directoryListing': false,
 };
 
 if (options.external>0) {
@@ -306,6 +306,7 @@ gulp.task('eslint',  () => {
                 'no-console': 'off',
                 'no-prototype-builtins': 'off',
                 'indent' : 'off',
+                'require-atomic-updates' : 'off',
                 "semi": [
                     "error",
                     "always"

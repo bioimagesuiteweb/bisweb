@@ -33,6 +33,13 @@ shiftScaleImage
 sliceBiasCorrect
 smoothImage
 thresholdImage
+inflateSurface
 regressionTests
 computeImageMatrixCorrelation
 timeseriesNormalizeImage
+patchReformatImage
+imageDistanceMatrix
+temporalImageDistanceMatrix
+computeImageEigenvectors
+eigenvectorDenoiseImage
+extractImagePatches

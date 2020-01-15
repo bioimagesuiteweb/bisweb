@@ -28,7 +28,7 @@ const BaseModule = require('basemodule.js');
 class timeseriesNormalizeImage extends BaseModule {
     constructor() {
         super();
-        this.name= "TimeSeriesNormalize";
+        this.name= "timeSeriesNormalizeImage";
     }
     
     createDescription() {

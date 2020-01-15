@@ -91,12 +91,12 @@ int vtkMultiThreader::GetGlobalDefaultNumberOfThreads()
     }
 #endif
 
-#ifdef _WIN32
-    {
+#ifdef VTK_USE_WIN32_THREADS
+  {
       SYSTEM_INFO sysInfo;
       GetSystemInfo(&sysInfo);
       num = sysInfo.dwNumberOfProcessors;
-    }
+  }
 #endif
 
 #ifndef VTK_USE_WIN32_THREADS
@@ -649,8 +649,9 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
                         
     if (NumberOfThreads>1)
       {
+#ifndef _WIN32
         std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. " << msg << std::endl << "++++" << std::endl;
-        
+#endif
         vtkMultiThreader* threader=new vtkMultiThreader();
         threader->SetSingleMethod(func,ds);
         threader->SetNumberOfThreads(NumberOfThreads);
@@ -659,7 +660,9 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
       }
     else
       {
+#ifndef _WIN32
         std::cout << "++++ \n++++ Running in Single Threaded Mode." << msg << std::endl << "++++" << std::endl;
+#endif
         vtkMultiThreader::ThreadInfo data;
         data.UserData=(void*)ds;
         data.ThreadID=0;

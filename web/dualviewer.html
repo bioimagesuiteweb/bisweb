@@ -68,29 +68,22 @@
   <div class="bisviewerwidget">
     
     <bisweb-viewerlayoutelement
-       id="viewer_layout"
-       bis-dockwidth="300"
-       bis-coreopen="true"
-       bis-dualmode="1"
-       bis-defaulttext="">
+      id="viewer_layout"
+      bis-dockwidth="300"
+      bis-coreopen="true"
+      bis-dualmode="1"
+      bis-defaulttext="">
     </bisweb-viewerlayoutelement>
     
-    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
-    
     <bisweb-orthogonalviewer
-       id="viewer"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap">
+      id="viewer"
+       bis-layoutwidgetid="#viewer_layout">
     </bisweb-orthogonalviewer>
     
-
-    <bisweb-colormapcontrollerelement id="viewer_cmap2"></bisweb-colormapcontrollerelement>
-    
     <bisweb-orthogonalviewer
-       id="viewer2"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap2"
-       bis-otherviewer="#viewer">
+      id="viewer2"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-otherviewer="#viewer">
     </bisweb-orthogonalviewer>
 
 
@@ -100,35 +93,21 @@
        bis-viewerid="#viewer2">
     </bisweb-snapshotelement>
 
-    <bisweb-collectionelement
-       id="transformelement"
-       bis-elementtype="transform"
-       bis-layoutwidgetid="#viewer_layout">
-    </bisweb-collectionelement>
-
-
-    <bisweb-simplealgorithmcontrollerelement
-       id="algoelement"
-       bis-matrixelementid="#matrixelement"
-       bis-transformelementid="#transformelement"
-       bis-viewerid="#viewer"
-       bis-viewerid2="#viewer2">
-    </bisweb-simplealgorithmcontrollerelement>
-
     <bisweb-modulemanager
       id="modulemanager"
       bis-mode="dual"
       bis-layoutwidgetid="#viewer_layout"
-      bis-algorithmcontrollerid="#algoelement">
+      bis-viewerid="#viewer"
+      bis-viewerid2="#viewer2">
     </bisweb-modulemanager>
     
-    <bisweb-studypanel
+<!--    <bisweb-studypanel
       id="dicom_import"
       bis-layoutwidgetid="#viewer_layout" 
       bis-viewerid="#viewer"
       bis-viewerapplicationid="#viewer_application"
       bis-painttoolid="#painttool">
-    </bisweb-studypanel>
+    </bisweb-studypanel> -->
 
     <bisweb-viewerapplication
       id="viewer_application"

@@ -48,8 +48,14 @@ def load_library(name=''):
     if not os.path.isfile(name):
         my_path=(os.path.dirname(os.path.dirname(name)));
         name=my_path+'/win32/Release/biswasm.dll';
+        if not os.path.isfile(name):
+            my_path=(os.path.dirname(os.path.dirname(name)));
+            name=my_path+'/biswasm.dll';
+
         print('____ Recomputing name:',name);
-        
+
+    
+    print('___ Loading library from',name);
     m=ctypes.CDLL(name);
     if (m.uses_gpl()):
         print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)');

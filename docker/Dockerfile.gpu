@@ -1,5 +1,5 @@
 # Base
-FROM tensorflow/tensorflow:1.13.2-gpu-py3
+FROM tensorflow/tensorflow:1.14.0-gpu-py3
 
 MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 
@@ -41,6 +41,10 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 COPY biswebconfig.gpu.sh /usr/local/bin/biswebconfig.sh
 RUN dos2unix /usr/local/bin/biswebconfig.sh
 RUN chmod +x /usr/local/bin/biswebconfig.sh
+
+# Instal tfjs converter
+RUN pip3 install tensorflowjs==1.2.10.1
+
 
 # Specify entrypoint --
 ENTRYPOINT ["bash", "/usr/local/bin/entrypoint.sh"]

@@ -1,0 +1,121 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>BioImage Suite Web Electron Module</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+    <link rel="icon" href="images/favicon.ico">
+
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/three.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+    <!-- begin stay as is -->
+    <link rel="stylesheet" type="text/css" href="dualviewer.css">
+    <!-- end of stay as is -->
+</head>
+<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
+
+
+  <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
+
+  <div class="bisviewerwidget">
+    
+    <bisweb-viewerlayoutelement
+       id="viewer_layout"
+       bis-dockwidth="300"
+       bis-coreopen="false"
+       bis-dualmode="1"
+       bis-defaulttext="">
+    </bisweb-viewerlayoutelement>
+    
+    <bisweb-orthogonalviewer
+       id="viewer"
+       bis-layoutwidgetid="#viewer_layout">
+    </bisweb-orthogonalviewer>
+    
+
+    <bisweb-orthogonalviewer
+       id="viewer2"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-otherviewer="#viewer">
+    </bisweb-orthogonalviewer>
+
+    <bisweb-snapshotelement
+       bis-layoutwidgetid="#viewer_layout"
+       bis-dowhite="false"
+       bis-viewerid="#viewer2">
+    </bisweb-snapshotelement>
+
+    <bisweb-collectionelement
+      id="transformelement"
+      bis-elementtype="transform"
+      bis-layoutwidgetid="#viewer_layout">
+    </bisweb-collectionelement>
+
+    <bisweb-simplealgorithmcontrollerelement
+      id="algoelement"
+      bis-transformelementid="#transformelement"
+      bis-viewerid="#viewer"
+      bis-viewerid2="#viewer2">
+    </bisweb-simplealgorithmcontrollerelement>
+
+    <bisweb-viewerapplication
+      id="viewer_application"
+      bis-menubarid="#viewer_menubar"
+      bis-algocontroller="#algoelement"
+      bis-viewerid="#viewer"
+      bis-viewerid2="#viewer2">
+    </bisweb-viewerapplication>
+    
+  </div>
+  
+  <bisweb-botmenubar></bisweb-botmenubar>
+</body>
+</html>

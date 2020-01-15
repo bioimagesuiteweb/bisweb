@@ -33,7 +33,7 @@ MESSAGE("----------------------------------------------------")
 MESSAGE("-- Building BISWEB ${BISWEB_VERSION} major=${BISWEB_VERSION_MAJOR} minor=${BISWEB_VERSION_MINOR} patch=${BISWEB_VERSION_PATCH}")
 MESSAGE("----------------------------------------------------")
 
-
+FIND_PROGRAM(NODE_JS_EXECUTABLE node REQUIRED)
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -601,6 +601,8 @@ ELSE(BIS_A_EMSCRIPTEN)
       PRE_BUILD COMMENT "Creating Python Header"
       COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
       )
+
+    #    MESSAGE("${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}")
     add_custom_target(wrappers_py ALL DEPENDS ${PYTHON_WRAP_OUTPUT})
     install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION biswebpython/lib)
 
@@ -610,12 +612,20 @@ ELSE(BIS_A_EMSCRIPTEN)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
     FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
-    
-    add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
-      DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
-      PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
-      )
+
+    IF (WIN32)
+      add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
+        DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt #${JMODS}
+        PRE_BUILD COMMENT "Creating Python Module Descriptions"
+        COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+        )
+    ELSE(WIN32)
+        add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
+        DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
+        PRE_BUILD COMMENT "Creating Python Module Descriptions"
+        COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+        )
+    ENDIF(WIN32)
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
@@ -646,7 +656,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     IF(BIS_MODULETEST)
       SET (COUNT 0)
       FOREACH (item ${PYTHONMODULES})
-	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
+	add_test(NAME "py-module-${item}" COMMAND ${PYTHON_EXECUTABLE} test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
 	MATH (EXPR COUNT "${COUNT}+1")
       ENDFOREACH (item ${PYTHONMODULES})
       MESSAGE("~~~~~ Added ${COUNT} python module tests")

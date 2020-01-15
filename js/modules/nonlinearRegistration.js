@@ -63,6 +63,7 @@ class NonLinearRegistrationModule extends BaseModule {
             "default" : 20.0,
             "low": 1.0,
             "high": 60.0,
+            "step" : 0.25
         });
 
         des.params.push({

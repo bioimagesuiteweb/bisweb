@@ -463,7 +463,7 @@ const util = {
                         out_lines.push(s);
                     } else {
                         badfound=true;
-                        console.log('----- First non matrix line in line '+i+', numcols='+s.length);
+                        //                        console.log('----- First non matrix line in line '+i+', numcols='+s.length);
                     }
                 } else {
                     i=numrows; // skip to end, bad found

@@ -74,20 +74,14 @@
       bis-defaulttext="">
     </bisweb-viewerlayoutelement>
     
-    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
-    
     <bisweb-orthogonalviewer
       id="viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-colormapeditorid="#viewer_cmap">
+      bis-layoutwidgetid="#viewer_layout">
     </bisweb-orthogonalviewer>
-    
-    <bisweb-colormapcontrollerelement id="viewer_cmap2"></bisweb-colormapcontrollerelement>
     
     <bisweb-orthogonalviewer
       id="viewer2"
       bis-layoutwidgetid="#viewer_layout"
-      bis-colormapeditorid="#viewer_cmap2"
       bis-otherviewer="#viewer">
     </bisweb-orthogonalviewer>
     
@@ -98,24 +92,11 @@
       bis-viewerid="#viewer2">
     </bisweb-snapshotelement>
     
-        
-    <bisweb-collectionelement
-      id="transformelement"
-      bis-elementtype="transform"
-      bis-layoutwidgetid="#viewer_layout">
-    </bisweb-collectionelement>
-    
-    <bisweb-simplealgorithmcontrollerelement
-      id="algoelement"
-      bis-transformelementid="#transformelement"
-      bis-viewerid="#viewer"
-      bis-viewerid2="#viewer2">
-    </bisweb-simplealgorithmcontrollerelement>
-    
     <bisweb-modulemanager
       id="modulemanager"
-      bis-algorithmcontrollerid="#algoelement"
       bis-layoutwidgetid="#viewer_layout"
+      bis-viewerid="#viewer"
+      bis-viewerid2="#viewer2"
       bis-mode="paravision">
     </bisweb-modulemanager>
     
@@ -133,7 +114,6 @@
       bis-modulemanagerid="#modulemanager"
       bis-viewerid="#viewer"
       bis-viewerid2="#viewer2"
-      bis-algorithmcontrollerid="algoelement"
       bis-paravisionimportid="#paravisionimport">
     </bisweb-paravisionapplication>
     

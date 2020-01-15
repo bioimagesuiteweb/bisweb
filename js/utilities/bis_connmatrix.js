@@ -659,7 +659,13 @@ class ConnMatrix {
 
         var numrows=numeric.dim(matrix)[0];
         var imgData=context.createImageData(numrows,numrows);
-        var yesc=[255,0,0,255],noc=[192,224,224,224];
+        var yesc=[128,0,0,255],noc=[255,255,255,255];//[192,224,224,224];
+
+        if (!ispositive) {
+            yesc=[0,128,0,255];
+            noc =[255,255,255,255];
+        }
+        
         let px=0;
         
         for (var j=0;j<numrows;j++) {

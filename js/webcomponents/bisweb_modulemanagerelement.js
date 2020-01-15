@@ -43,14 +43,35 @@ class ModuleManagerElement extends HTMLElement {
     connectedCallback() {
 
         this.mode=this.getAttribute('bis-mode') || "normal";
-        const algorithmcontrollerid = this.getAttribute('bis-algorithmcontrollerid');
         const layoutwidgetid = this.getAttribute('bis-layoutwidgetid') || null;
+        const algorithmcontrollerid = this.getAttribute('bis-algorithmcontrollerid') || null;
+        
         if (layoutwidgetid === null) {
             this.layoutcontroller = null;
         } else {
             this.layoutcontroller = document.querySelector(layoutwidgetid);
         }
-        this.algorithmController = document.querySelector(algorithmcontrollerid);
+        
+        if (algorithmcontrollerid===null) {
+            let tid=webutil.getuniqueid('collection');
+            let aid=webutil.getuniqueid('controller');
+            
+            let tcont=document.createElement('bisweb-collectionelement');
+            tcont.setAttribute('bis-elementtype','transform');
+            tcont.setAttribute('bis-layoutwidgetid',layoutwidgetid);
+            tcont.setAttribute('id',tid);
+            this.layoutcontroller.appendChild(tcont);
+            
+            this.algorithmController = document.createElement('bisweb-simplealgorithmcontrollerelement');
+            this.algorithmController.setAttribute('id',aid);
+            this.algorithmController.setAttribute('bis-viewerid',this.getAttribute('bis-viewerid') || '');
+            this.algorithmController.setAttribute('bis-viewerid2',this.getAttribute('bis-viewerid2') || '');
+            this.algorithmController.setAttribute('bis-transformelementid','#'+tid);
+            this.layoutcontroller.appendChild(this.algorithmController);
+
+        } else {
+            this.algorithmController = document.querySelector(algorithmcontrollerid);
+        }
         this.customs = [];
         this.modules = {};
         this.moduleMenu = [ null,null,null,null];
@@ -89,6 +110,7 @@ class ModuleManagerElement extends HTMLElement {
     }
 
     attachTransformationController(index) {
+
         if (this.algorithmController.getTransformController()) {
             const self=this;
             webutil.createMenuItem(this.moduleMenu[index],'Transformation Manager',
@@ -181,11 +203,12 @@ class ModuleManagerElement extends HTMLElement {
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
-                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
+//                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
-                this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+//               this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+                this.createModule('Patch Reformat Image', 1, false, modules.getModule('patchReformatImage'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);
@@ -208,13 +231,18 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
         this.createModule('Drift Correct 4D Image',1, dosep, modules.getModule('driftCorrectImage'), moduleoptions);
         this.createModule('Temporal Filter 4D Image',1, dosep, modules.getModule('butterworthFilterImage'), moduleoptions);
+        this.createModule('Normalize Time Series',1, dosep, modules.getModule('timeseriesnormalizeimage'), moduleoptions);
+        
         this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {
             this.createModule('Segment Image',2, true, modules.getModule('segmentImage'), moduleoptions);
             this.createModule('Deface Head Image',2, true, modules.getModule('defaceImage'), moduleoptions);
         }
-        this.createModule('Skull Strip Image (DL)',2, true, modules.getModule('skullStrip'), moduleoptions);                    
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f)
+                this.createModule('Skull Strip Image (DL)',2, false, modules.getModule('skullStrip'), moduleoptions);
+        });
 
         this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);
         this.createModule('Mask Image', 2, false, modules.getModule('maskImage'), moduleoptions);
@@ -222,7 +250,7 @@ class ModuleManagerElement extends HTMLElement {
         if (this.mode!=='single') {
             this.attachTransformationController(3);
             this.createModule('Reslice Image',3, true, modules.getModule('resliceImage'), moduleoptions);
-            
+                
             this.createModule('Manual Registration',3, true, modules.getModule('manualRegistration'), moduleoptions);
             if (usesgpl) {
                 this.createModule('Linear Registration',3, false, modules.getModule('linearRegistration'), moduleoptions);
@@ -233,7 +261,8 @@ class ModuleManagerElement extends HTMLElement {
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
             }
-        } 
+        }
+                                     
         return this.moduleMenu[0];
             
     }

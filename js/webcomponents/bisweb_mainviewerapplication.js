@@ -33,6 +33,8 @@ const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
+const biscustom = require('bisweb_custommodule.js');
+const moduleindex = require('moduleindex.js');
 
 
 const clipboard=localforage.createInstance({
@@ -356,7 +358,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // I/O Code
     // ---------------------------------------------------------------------------
-    loadImage(fname, viewer = 0) {
+    loadImage(fname, viewer = 0, orient='None') {
         const self=this;
 
         
@@ -365,7 +367,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress', 30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
-                img.load(fname)
+                img.load(fname,orient)
                     .then(function () {
                         webutil.createAlert('Image loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setimage(img);
@@ -378,14 +380,14 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
-    loadOverlay(fname, viewer=0) {
+    loadOverlay(fname, viewer=0,orient='None') {
 
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
-                img.load(fname)
+                img.load(fname,orient)
                     .then(function () {
                         webutil.createAlert('Objectmap loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setobjectmap(img, false);
@@ -670,8 +672,8 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         // Essentially bind self here
-        let load_image=function(f,v) { return self.loadImage(f,v); };        
-        let load_objectmap=function(f,v) { return self.loadOverlay(f,v); };
+        let load_image=function(f,v,orient='None') { return self.loadImage(f,v,orient); };        
+        let load_objectmap=function(f,v,orient='None') { return self.loadOverlay(f,v,orient); };
 
         //  ---------------------------------------------------------------------------
         // Internal Function to eliminate having a loop variable inside callbacks
@@ -801,6 +803,73 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------
     // Electron default callbacks (load image from arguments) 
     // ---------------------------------------------------------------------
+    async initializeElectronModule(args) {
+
+        if (this.applicationName !== 'biswebelectron')
+            return args;
+        
+        let modulename=args[0];
+        // Let's create a module
+        const algoid = this.getAttribute('bis-algocontroller') || null;
+        if (!algoid)
+            return args;
+        
+        const algomanager = document.querySelector(algoid) || null;
+        if (!algomanager)
+            return args;
+        
+        args.splice(0,1);
+        const md=moduleindex.getModule(modulename.toLowerCase());
+        if (!md)
+            return args;
+        
+        let numviewers=this.VIEWERS.length || 1;
+
+        let mod=biscustom.createCustom(this.VIEWERS[0].getLayoutController(),
+                                       algomanager,
+                                       md,
+                                       { 'numViewers': numviewers, 'dual' : false, 'permanent' : true });
+        mod.show();
+        this.VIEWERS[1].setDualViewerMode(1.0);
+        let vr=mod.getVars();
+        let keys=Object.keys(vr);
+        for (let i=0;i<keys.length;i++) {
+            let tst='--'+keys[i];
+            let ind=args.indexOf(tst);
+            if (ind>=0 && ind<keys.length-1) {
+                let v=args[ind+1];
+                if (v==='true')
+                    v=true;
+                else if (v==='false')
+                    v=false;
+                vr[keys[i]]=v;
+                args.splice(ind,2);
+            }
+        }
+        mod.updateParams(JSON.parse(JSON.stringify(vr)));
+        let inp=mod.getDescription().inputs;
+
+        for (let i=0;i<inp.length;i++)  {
+            if (args.length>0) {
+                if (inp[i].type==='image') {
+                    let guiviewer=inp[i].guiviewer || 'viewer1';
+                    let itype=inp[i].guiviewertype || 'image';
+                    let vno=0;
+                    if (guiviewer ==='viewer2')
+                        vno=1;
+                    if (vno>numviewers-1)
+                        vno=numviewers-1;
+                    if (itype === 'image') 
+                        await this.loadImage(args[0], vno);
+                    else
+                        await this.loadOverlay(args[0],vno);
+                    args.splice(0,1);
+                }
+            }
+        }
+        return [];
+    }
+
     
     parseElectronArguments() {
 
@@ -810,7 +879,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             let n=genericio.getFixedLoadFileName(fname);
             let ext=n.split(".").pop();
-            if (ext===this.getApplicationStateFilenameExtension(true)) {
+            if (ext===self.getApplicationStateFilenameExtension(true)) {
                 self.loadApplicationState(fname);
                 return 1;
             } else {
@@ -818,7 +887,7 @@ class ViewerApplicationElement extends HTMLElement {
                 return 0;
             }
         };
-
+        
         if (webutil.inElectronApp()) {
             let title = $(document).find("title").text();
             setTimeout(function () {
@@ -827,16 +896,21 @@ class ViewerApplicationElement extends HTMLElement {
             
             window.BISELECTRON.ipc.on('arguments-reply', function (evt, args) {
                 window.BISELECTRON.ipc.send('ping', 'Arguments received: ' + args);
-                let a=-1;
-                if (args.length > 0) {
-                    a=load(args[0], 0, false);
-                }
-                if (args.length > 1 && this.num_independent_viewers > 1 && a===0) {
-                    load(args[1], 1, false);
-                }
+
+                self.initializeElectronModule(args).then( (args) => {
+                    let a=-1;
+                    if (args.length > 0) {
+                        a=load(args[0], 0, false);
+                    }
+                    
+                    if (args.length > 1 && this.num_independent_viewers > 1 && a===0) {
+                        load(args[1], 1, false);
+                    }
+                });
             });
         }
     }
+                                    
 
 
     // ---------------------------------------------
@@ -911,15 +985,50 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
-        const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
-        if (filetreepipelineid) {
-            let filetreepipeline = document.querySelector(filetreepipelineid);
+
+        
+        userPreferences.safeGetItem("internal").then( (f) => {
+
             webutil.createMenuItem(hmenu, '');
-            webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
-                                    () => {
-                                        filetreepipeline.openPipelineCreationModal();
-                                    });
-        }
+
+            let restartf= () => {
+                setTimeout( () => {
+                    bootbox.confirm("Must restart application. Are you sure? You will lose all unsaved data.",
+                                    (e) => {
+                                        if (e)
+                                            window.open(this.applicationURL,'_self');
+                                    }
+                                   );
+                },500);
+            };
+            
+            if (f) {
+                webutil.createMenuItem(hmenu, 'Disable Internal Features', 
+                                       () => {
+                                           userPreferences.setItem('internal',false,true);
+                                           restartf();
+                                       });
+            } else {
+                webutil.createMenuItem(hmenu, 'Enable Internal Features (At your own risk!)', 
+                                       () => {
+                                           userPreferences.setItem('internal',true,true);
+                                           restartf();
+                                       });
+            }
+            
+            if (f) {
+                const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
+                if (filetreepipelineid) {
+                    let filetreepipeline = document.querySelector(filetreepipelineid);
+                    webutil.createMenuItem(hmenu, '');
+                    webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
+                                           () => {
+                                               filetreepipeline.openPipelineCreationModal();
+                                       });
+                }
+            }
+        });
+                                                    
 
         return hmenu;
     }
@@ -1172,30 +1281,41 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
-        const dicomid = this.getAttribute('bis-dicomimportid') || null;
-        if (dicomid) {
-            let dicommodule = document.querySelector(dicomid) || null;
-            webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
-                dicommodule.show();
-            });
 
-            /*
-            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-                            dicommodule.showDICOMImportModal();
-            });*/
-        }
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                /*const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                if (dicomid) {
+                    let dicommodule = document.querySelector(dicomid) || null;
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
+                        dicommodule.show();
+                    });
+                    
+                    webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+                        dicommodule.showDICOMImportModal();
+                    });
+                }*/
+
+                webutil.createMenuItem(bmenu,'');
+                webutil.createMenuItem(bmenu, 'Repository Panel', () => {
+                    this.repopanel.show();
+                });
+                    
+               
+                
+            }
+            webutil.createMenuItem(bmenu,'');
+            webutil.createMenuItem(bmenu, 'Restart Application', () => {
+                bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                (e) => {
+                                    if (e)
+                                        window.open(self.applicationURL,'_self');
+                                }
+                               );
+            });
+        });
         
-        webutil.createMenuItem(bmenu,'');
-        webutil.createMenuItem(bmenu, 'Restart Application',
-                               function () {
-                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function(e) {
-                                                       if (e)
-                                                           window.open(self.applicationURL,'_self');
-                                                   }
-                                                  );
-                               });
         return bmenu;
     }
 
@@ -1208,6 +1328,16 @@ class ViewerApplicationElement extends HTMLElement {
         let imagename2=webutil.getQueryParameter('image2') || '';
         let overlayname=webutil.getQueryParameter('overlay') || '';
         let overlayname2=webutil.getQueryParameter('overlay2') || '';
+        let repo=webutil.getQueryParameter('repo') || '';
+
+        if (repo.length>0) {
+
+            
+            this.repopanel.show();
+            this.repopanel.openDirectory(repo);
+            return;
+        }
+        
         
         if (load.length>0) {
             this.loadApplicationState(load);
@@ -1444,6 +1574,19 @@ class ViewerApplicationElement extends HTMLElement {
 
 
     }
+
+    createExtraComponents() {
+
+        this.repopanel=document.createElement('bisweb-repopanel');
+        this.repopanel.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
+        if (this.VIEWERS[1])
+            this.repopanel.setAttribute('bis-viewerid2',this.VIEWERS[1].getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
+        this.VIEWERS[0].getLayoutController().appendChild(this.repopanel);
+        
+    }
+
     
     connectedCallback() {
 
@@ -1465,7 +1608,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         this.findViewers();
-        
+        this.createExtraComponents();
 
 
         let menubar = document.querySelector(menubarid).getMenuBar();
@@ -1589,6 +1732,8 @@ class ViewerApplicationElement extends HTMLElement {
                                            self.loadApplicationState(f);
                                        });
             }
+
+            
         }
 
         // ----------------------------------------------------------

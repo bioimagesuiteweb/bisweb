@@ -58,7 +58,7 @@ namespace bisImageAlgorithms {
     float spa2[5]; image2->getSpacing(spa2);
 
     double sumf=0.0;
-    for (int i=0;i<=max;i++) 
+    for (int i=0;i<max;i++) 
       sumf+=fabs(spa1[i]-spa2[i]);
     if (sumf>0.01) 
       {
@@ -1644,13 +1644,11 @@ namespace bisImageAlgorithms {
 					 clusterImage.get(),clusters,frame,component);
 
 
-    std::cout << "Clusters size=" << clusters.size() << std::endl;
+    if (clustersizethreshold<0)
+      clustersizethreshold=maxsize;
+    
+    std::cout << "___ Filtering: Number of Clusters=" << clusters.size() << " maxsize=" << maxsize << " clustersizethreshold=" << clustersizethreshold << std::endl;
 
-    int dimc[5]; clusterImage->getDimensions(dimc);
-    int maxv=dimc[0]*dimc[1]*dimc[2]*dimc[3]*dimc[4];
-    
-    std::cout << "Returned " << maxsize << std::endl;
-    
     int dim[5]; output->getDimensions(dim);
     int volsize=dim[0]*dim[1]*dim[2];
     int numcomp=dim[3]*dim[4];
@@ -1660,8 +1658,6 @@ namespace bisImageAlgorithms {
     T* idata=input->getImageData();
     int numpass=0;
 
-    std::cout << "Volsize " << volsize << " maxv=" << maxv << std::endl;
-    
     for (int i=0;i<volsize;i++)
       {
 	int clusterno=clustdata[i];
@@ -1676,7 +1672,6 @@ namespace bisImageAlgorithms {
       }
 
     std::cout << "+ +  cluster size masking biggest_cluster=" << maxsize << " threshold=" << clustersizethreshold << " numpass=" << numpass << std::endl;
-    std::cout << "returning\n";
     return std::move(output);
   }
 
@@ -1684,7 +1679,6 @@ namespace bisImageAlgorithms {
   // ---------------------- -------------------
   template<class T> std::unique_ptr<bisSimpleImage<T> >  cropImage(bisSimpleImage<T>* input,int bounds[8],int incr[4])
   {
-
 
     int dim[5]; input->getDimensions(dim);
     float spa[5];  input->getSpacing(spa);

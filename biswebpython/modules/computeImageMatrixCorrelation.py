@@ -52,18 +52,7 @@ class computeImageMatrixCorrelation(bis_basemodule.baseModule):
                     "required": True
                 },
             ],
-            "outputs": [
-                {
-                    "type": "matrix",
-                    "name": "Output Matrix",
-                    "description": "The output correlation matrix",
-                    "varname": "output",
-                    "shortname": "o",
-                    "required": True,
-                    "extension": ".matr"
-                }
-
-            ],
+            "outputs": bis_baseutils.getMatrixToMatrixOutputs('The output correlation matrix','.binmatr'),
             "params": [
                 {
                     "name": "Zscore",
@@ -72,13 +61,7 @@ class computeImageMatrixCorrelation(bis_basemodule.baseModule):
                     "type": "boolean",
                     "default": True
                 },
-                {
-                    "name": "Debug",
-                    "description": "Toggles debug logging. Will also output intermediate steps (similar name to Xilin's MATLAB code)",
-                    "varname": "debug",
-                    "type": "boolean",
-                    "default": False
-                }
+                bis_baseutils.getDebugParam()
             ],
         }
         
@@ -93,17 +76,9 @@ class computeImageMatrixCorrelation(bis_basemodule.baseModule):
         if (input.hasSameOrientation(roi,'Input Image','ROI Image',True)==False):
             return False;
 
-        # Fix tiny spacing differences
-        dist=0.0;
-        for i in range (0,3):
-            dist+=abs(input.spacing[i]-roi.spacing[i]);
-
-        if (dist<0.001):
-            roi.spacing=input.spacing;
-
         lib=bis_baseutils.getDynamicLibraryWrapper();
         timeseries=lib.computeROIWASM(input,roi,{},1);
-        print('Timeseries done',timeseries.shape);
+        print('Timeseries roi mean done',timeseries.shape);
 
         cc=lib.computeCorrelationMatrixWASM(timeseries,0, { 'zscore' : True },1);
         print('CC done',cc.shape);

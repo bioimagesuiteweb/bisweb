@@ -71,7 +71,19 @@
             "width" : "1280",
             "height" : "900"
 
+	},
+        "cpmviewer" : {
+	    "title" : "CPM Viewer Application",
+	    "url"   : "cpmviewer",
+	    "description" : "The cpm-viewer tool",
+	    "picture" : "",
+	    "electrononly": false,
+            "hide" : true,
+            "width" : "1280",
+            "height" : "900"
+
 	}
+
     }
 
 }

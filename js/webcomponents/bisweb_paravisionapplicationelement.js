@@ -86,7 +86,11 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
             userPreferences.safeGetItem("internal").then( (f) =>  {
                 if (f) {
                     let misactool=document.createElement('bisweb-misactool');
-                    let algoid=this.getAttribute('bis-algorithmcontrollerid');
+                    //let algoid=this.getAttribute('bis-algorithmcontrollerid');
+                    const managerid = this.getAttribute('bis-modulemanagerid') || null;
+                    let modulemanager=document.querySelector(managerid);
+                    let algocontroller = modulemanager.getAlgorithmController();
+                    let algoid=algocontroller.getAttribute('id');
                     misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
                     document.body.appendChild(misactool);
                     let regmenu=menus[3] || editmenu;

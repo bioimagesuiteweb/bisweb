@@ -40,10 +40,8 @@ const typesizes = {
     'int' :     [ 4,   Int32Array   ],
     'float' :   [ 4,   Float32Array ],
     'double' :  [ 8,   Float64Array ],
-    'int64' :   [ 8,    BigInt64Array],
-    'uint64' :  [ 8,   BigUint64Array]
-
 };
+
 
 /** Map from niftitype (code or number) to name and TypedArray type 
     @alias BisHeader~niftitypes
@@ -56,10 +54,18 @@ const niftitypes= {
     64 :  [ 'double',Float64Array,64],
     256 : [ 'schar',Int8Array ,256],
     512 : [ 'ushort',Uint16Array,512 ],
-    768 : [ 'uint',Uint32Array,768],
-    1024 : [ 'int64',BigInt64Array,8],
-    1280 : [ 'uint64',BigUint64Array,8]
+    768 : [ 'uint',Uint32Array,768]
 };
+
+
+try {
+    typesizes['int64']=   [ 8,    BigInt64Array];
+    typesizes['uint64']=  [ 8,   BigUint64Array];
+    niftitypes['1024']= [ 'int64',BigInt64Array,8];
+    niftitypes['1280']= [ 'uint64',BigUint64Array,8];
+} catch(e) {
+    // Ignore
+}
 
 /** Map from type name (e.g. char) to niftitype (e.g. 256))
     @alias BisHeader~name2nifticode
@@ -279,6 +285,12 @@ class BisHeader {
                 num=i;
         }
         dim[0]=num;
+
+        // Units fix, force mm
+        //let units=this.struct['xyzt_units'];
+        //        if (units !==0 && units !== 2) {
+        //  console.log('+++ warning units=',units,' may need to rescale');
+        //      }
     }
     
     

@@ -84,7 +84,7 @@ class InvertTransformationModule extends BaseModule {
                     "gui": "slider",
                     "type": "float",
                     "varname": "spacing",
-                    "low": 2.0,
+                    "low": 1.0,
                     "high": 50.0,
                     "default": 25.0,
                 },

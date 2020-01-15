@@ -6,7 +6,7 @@ const bidsutils = require('bis_bidsutils.js');
 class BidsModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'Info';
+        this.name = 'BidsModule';
     }
 
     createDescription() {
@@ -35,9 +35,9 @@ class BidsModule extends BaseModule {
                     "description": "Input directory for the DICOM conversion",
                     "advanced": true,
                     "type": "string",
-                    "varname": "inputDirectory",
+                    "varname": "inputdirectory",
                     "required": true,
-                    "default": "Error: no input directory specified"
+                    "default": ""
                 },
                 {
                     "name": "Output Directory",
@@ -45,7 +45,7 @@ class BidsModule extends BaseModule {
                     "advanced": true,
                     "required": false,
                     "type": "string",
-                    "varname": "outputDirectory",
+                    "varname": "outputdirectory",
                     "default": sysutils.tempdir
                 },
                 baseutils.getDebugParam()
@@ -55,8 +55,13 @@ class BidsModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
 
+        if (vals.inputdirectory.length<2) { 
+            return Promise.reject('Must specify input directory.');
+        }
+
+
         return new Promise( (resolve,reject) => {
-            bidsutils.dicom2BIDS({ 'indir': vals.inputDirectory, 'outdir': vals.outputDirectory, 'dcm2nii' : vals.dcm2nii }).then( (msg) => {
+            bidsutils.dicom2BIDS({ 'indir': vals.inputdirectory, 'outdir': vals.outputdirectory, 'dcm2nii' : vals.dcm2nii }).then( (msg) => {
                 if (msg.split(' ').length > 1) {
                     reject('An error occured during conversion', msg);
                 }  else {

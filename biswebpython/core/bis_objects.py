@@ -24,9 +24,8 @@ import json
 import nibabel as nib
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.core.bis_baseutils as bis_baseutils;
-import biswebpython.utilities.surface_utils as surutil
-
-
+import biswebpython.utilities.plyFileTool as plyutil
+import biswebpython.utilities.jsonFileTool as jsonutil
 
 # --------------------------------------
 # bisBaseObject
@@ -166,7 +165,6 @@ class bisMatrix(bisBaseObject):
     def save(self,fname):
 
         ext=os.path.splitext(fname)[1]
-        
         if (ext==".binmatr"):
             return self.saveBinary(fname);
 
@@ -232,22 +230,23 @@ class bisMatrix(bisBaseObject):
     def saveBinary(self,fname):
 
         sz=self.data_array.shape;
-        
         hd=np.zeros([4],dtype=np.int32);
         hd[0]=1700;
         hd[1]=0;
         hd[2]=sz[0];
         hd[3]=sz[1];
 
+
         
         dat=0;
         tp=str(self.data_array.dtype);
+        
         if (tp=='float32'):
             hd[1]=2;
             dat=np.zeros(hd[2]*hd[3],dtype=np.float32);
         elif (tp=='float64'):
             hd[1]=3;
-            dat=np.zeros(hd[2]*hd[3],type=np.float64);
+            dat=np.zeros(hd[2]*hd[3],dtype=np.float64);
         else:
             hd[1]=1;
             dat=np.zeros(hd[2]*hd[3],dtype=np.int64)
@@ -257,7 +256,6 @@ class bisMatrix(bisBaseObject):
             for j in range(0,hd[3]):
                 dat[index]=self.data_array[i][j];
                 index=index+1;
-
 
         total=hd.tobytes();
         total+=dat.tobytes();
@@ -319,7 +317,7 @@ class bisImage(bisBaseObject):
         return 1;
 
     def load(self,fname):
-        
+
         try:
             # Jackson to add
             # to add tif or anything
@@ -380,7 +378,7 @@ class bisImage(bisBaseObject):
         a=nib.aff2axcodes(self.affine);
         b=a[0]+a[1]+a[2];
         return b;
-    
+
     def getDescription(self):
         tp=str(self.data_array.dtype);
         return self.filename+'. dims='+str(self.dimensions)+' spa='+str(self.spacing)+' orientation='+self.getOrientationName()+' tp='+tp;
@@ -479,6 +477,14 @@ class bisLinearTransformation(bisMatrix):
             return False;
         return True;
 
+    def getDescription(self):
+        v=str(np.reshape(self.data_array,-1))
+        a=''
+        if (len(self.filename)>0):
+            a=self.filename+', '
+        
+        return a+v
+
 # --------------------------------------
 # bisGridTransformation
 # --------------------------------------
@@ -492,24 +498,61 @@ class bisGridTransformation(bisBaseObject):
         self.grid_spacing=[10,10,10];
         self.grid_origin=[0,0,0];
         self.grid_usebspline=True;
+        
+    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],newdata=None,usebspline=True):
 
-    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],usebpline=True):
-        if len(dim.shape)==3:
+        if dim.shape[0]==3:
             self.grid_dimensions=dim;
-        if len(spa.shape)==3:
+        if spa.shape[0]==3:
             self.grid_spacing=spa;
-        if len(ori.shape)==3:
+        if ori.shape[0]==3:
             self.grid_origin=ori;
         if usebspline==True or usebspline==1:
             self.grid_usebspline=True;
         else:
             self.grid_usebspline=False;
 
-        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2];
+        self.data_array=None
 
-        self.data_array=np.zeros([sz,3],dtype=np.float32);
+        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2]*3
+
+        if (newdata is not None):
+            s=newdata.shape
+            print('++++ Trying to copy grid displacements from matrix of size=',s, ' need total=',sz)
+            d=s[0]
+            transpose=False
+            if (len(newdata.shape)==2):
+                d=s[0]*s[1]
+                transpose=True
+            
+            if (d==sz):
+                if (transpose):
+                    self.data_array=np.reshape(np.transpose(newdata),-1)
+                else:
+                    self.data_array=np.reshape(newdata,-1)
+            else:
+                raise Exception('Bad data array dimensions',s,' needed', self.grid_dimensions,'*',3)
+
+            print('++++ Finale Data Array =',self.data_array.shape)
+        else:
+            self.data_array=np.zeros([sz*3],dtype=np.float32);
+            
         return self;
-
+    
+    def getDescription(self):
+        
+        tp='none'
+        sh=[0]
+        try:
+            tp=str(self.data_array.dtype)
+            sh=self.data_array.shape
+        finally:       
+            a='';
+            if (len(self.filename)>0):
+                a=self.filename+', '
+        
+        return a+'dims='+str(self.grid_dimensions)+' spa='+str(self.grid_spacing)+' origin='+str(self.grid_origin)+' bspline='+str(self.grid_usebspline)+' dispfield='+str(sh)+','+tp
+        
     def serializeWasm(self):
         s=self.data_array.shape;
         top_header=np.zeros([4],dtype=np.int32);
@@ -531,7 +574,6 @@ class bisGridTransformation(bisBaseObject):
             f_head[ia+3]=self.grid_origin[ia];
 
         return top_header.tobytes()+i_head.tobytes()+f_head.tobytes()+self.data_array.tobytes('F');
-
 
     def deserializeWasm(self,wasm_pointer,offset=0):
 
@@ -737,6 +779,15 @@ class bisComboTransformation(bisBaseObject):
 
         return False;
 
+    def getDescription(self):
+        v=str(np.reshape(self.data_array,-1))
+        out=self.filename+' numgrids='+str(len(self.grids))+'\n'
+        if (self.linear!=0):
+            out=out+'\t linear: '+self.linear.getDescription()+'\n'
+        for i in range(0,len(self.grids)):
+            out=out+'\t grid('+str(i+1)+'): '+self.grids[i].getDescription()+'\n'
+        return out
+
 
 # --------------------------------------
 # bisSurface
@@ -748,10 +799,12 @@ class bisSurface(bisBaseObject):
         super().__init__();
         self.vertices=None;
         self.faces=None;
+        self.labels=None;
 
-    def create(self,vertices,faces):
+    def create(self,vertices,faces,labels):
         self.vertices=vertices;
         self.faces=faces;
+        self.labels=labels;
 
     def getRawSize():
         raise Exception('----- Not Implemented');
@@ -770,29 +823,94 @@ class bisSurface(bisBaseObject):
         # PLY Reader
         # surutil.loadPly();
         # self.create()
+        fileExtension = filename.split('.')[-1];
+        if fileExtension=='ply' or fileExtension == 'PLY':
+            try:
+                vertices, triangles, labels = plyutil.readPlyFile(filename);
+                self.create(vertices,triangles, labels);
+                self.filename=filename;
+                print('+++ Surface loaded ',self.getDescription());
+                return True;
+            except:
+                return False;
+
         try:
-            vertices,triangles= surutil.readPlyFile(filename);
-            self.create(vertices,triangles);
+            vertices, triangles, labels = jsonutil.readJsonFile(filename);
+            self.create(vertices,triangles,labels);
             self.filename=filename;
-            print('+++ Surface loaded from',filename,' numverts=',vertices.shape[0])
+            print('+++ Surface loaded ',self.getDescription());
             return True;
         except:
             print('---- Failed to load surface from',filename);
             return False;
 
     def save(self,filename):
+
+        fileExtension = filename.split('.')[-1];
+        print('fileExt=',fileExtension);
+        if fileExtension=='ply' or fileExtension == 'PLY':
+            try:
+                if bool(self.labels.any()):
+                    plyutil.writePlyFileWithLabels(self.vertices, self.faces, self.labels, filename);
+                    self.filename=filename;
+                    print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+                else:
+                    plyutil.writePlyFile(self.vertices, self.faces, filename);
+                    self.filename=filename;
+                    print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+            except:
+                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
+                return False;
+            
+        import json
+
+        out=json.dumps(data);
         try:
-            surutil.writePlyFile(self.vertices, self.faces, filename);
-            self.filename=filename;
-            print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+            with open(filename, 'w') as fp:
+                fp.write(out);
+                print('++++\t saved in ',filename,len(out));
+                return True
         except:
             print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
             return False;
-
+        
+            
         return True;
 
 
+    def toDictionary(self):
+    
+        sh=self.vertices.shape;
+        th=self.faces.shape;
+        dh=self.labels.shape;
+        dz=dh[0];
+        if (len(dh)>1):
+            dz=dh[0]*dh[1];
+            
+        data={};
+        
+        data['points']=np.reshape(self.vertices,[ sh[0]*sh[1]]).tolist();
+        data['triangles']=np.reshape(self.faces,[ th[0]*th[1]]).tolist();
+        data['indices']=np.reshape(self.labels,[ dz ]).tolist();
 
+        return data;
+        
+    def getDescription(self):
+
+        a=self.filename+' '
+        if (self.vertices is None):
+            return a;
+        a=a+'np:'+str(self.vertices.shape);
+
+        if (self.faces is None):
+            return a
+        
+        a=a+' nt='+str(self.faces.shape);
+
+        if (self.labels is None):
+            return a;
+        return a+' nl='+str(self.labels.shape);
+        
 
 # --------------------------------------
 # bisCollection

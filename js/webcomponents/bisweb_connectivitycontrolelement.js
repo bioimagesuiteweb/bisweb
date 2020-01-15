@@ -415,11 +415,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
     };
-    
-    // ----------------------------------------------------------------------------
-    // Draw Matrices And Legends Around Circle Plot
-    // ----------------------------------------------------------------------------
-    
+
+
     var drawMatricesAndLegendsAsImages = function() {
 
         if (internal.parcellation===null)
@@ -898,6 +895,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     connectvis.createlines();
 
 
+
+
                     if (updatemeshes) {
                         connectvis3d.update3DMeshes(internal.parameters.opacity,
                                                     internal.parameters.mode3d,
@@ -1258,19 +1257,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(da2);
         clist.push(da3);
 
-        let c1=adv.add(data,'radius',0.2,4.0).name("Radius (3D)");
-        c1.onFinishChange( () => {   autoDrawLines();      });
-        let c2=adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold');
-        c2.onFinishChange( () => {   autoDrawLines();      });
-        let c3=adv.add(data,'filter',connectvis.filter_modes).name('Threshold by');
-        c3.onFinishChange( () => {   autoDrawLines();      });
-        adv.add(data,'autodrawenabled').name('Auto Draw');
-        adv.add(data,'matrixscaling').name('Matrix Scaling');
-       
-        clist.push(c1);
-        clist.push(c2);
-        clist.push(c3);
-        
+
         internal.datgui_controllers=clist;
 
         webutil.removedatclose(gui);
