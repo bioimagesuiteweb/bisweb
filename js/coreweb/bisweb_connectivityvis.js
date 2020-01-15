@@ -416,7 +416,6 @@ var createChordsSVG=function(parentDiv,parc,pairs,dim) {
         });
     }
 
-    // TODO: add scaling here too - smn
 
 
     layout.matrix(matrix);
