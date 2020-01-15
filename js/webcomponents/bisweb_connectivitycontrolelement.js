@@ -155,6 +155,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         datgui : null,
         parameters : {
             autodrawenabled : true,
+            matrixscaling : true,
             node  : 200,
             linestodraw : gui_Lines[2],
             degreethreshold : 10,
@@ -1163,7 +1164,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         let coords = gui.addFolder('Nodes');
         coords.open();
-        coords.add(data,'autodrawenabled').name('Auto Draw');
 
         let disp = gui.addFolder('Edges');
         let disp2 = gui.addFolder('Surface');
@@ -1215,6 +1215,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Paint Surface by");
         da2.onChange( () => {
+
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
             if (data.mode3d!=='Uniform') {
                 data.opacity=1.0;
@@ -1223,6 +1224,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 da1.domElement.style.opacity = 1.0;
             }
             da1.updateDisplay();
+            
+            connectvis.removelines();
             setTimeout( () => { drawColorScale(); },200);
         });
         
@@ -1241,7 +1244,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         c2.onFinishChange( () => {   autoDrawLines();      });
         let c3=adv.add(data,'filter',connectvis.filter_modes).name('Threshold by');
         c3.onFinishChange( () => {   autoDrawLines();      });
-
+        adv.add(data,'autodrawenabled').name('Auto Draw');
+        adv.add(data,'matrixscaling').name('Matrix Scaling');
+       
         clist.push(c1);
         clist.push(c2);
         clist.push(c3);
@@ -1264,7 +1269,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
 
         webutil.createbutton({ type : "default",
-                               name : "Toggle 3D Mode",
+                               name : "Toggle Display",
                                position : "top",
                                css : { "margin-left": "5px"},
                                tooltip : "Click this to switch display mode from circle+3D to circle to 3D",

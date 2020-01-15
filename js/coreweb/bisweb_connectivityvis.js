@@ -196,18 +196,52 @@ var saveAsPNG = function() {
 // Create Nets and Matrix
 // -----------------------------------------------------
 var createNets=function() {
+                    
+                
+    let nets = new Set();
+    const rois=globalParams.internal.parcellation.rois;
+    console.log('Creating nets attr=',globalParams.internal.networkAttributeIndex);
+    let nodesPerNetwork = {};
 
-
-    let nets = new Set();
-    const rois=globalParams.internal.parcellation.rois;
-    console.log('Creating nets attr=',globalParams.internal.networkAttributeIndex);
-
-    for (let i=0;i<rois.length;i++) {
-        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
-        nets.add(fixNetworkIndex(n));
-    }
+    for (let i=0;i<rois.length;i++) {
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+        nets.add(fixNetworkIndex(n));
+    }
 
     return nets;
+
+};
+
+var countEdgesBetweenNets=function(nets) {
+    
+    const rois=globalParams.internal.parcellation.rois;
+    console.log('Counting edges between network pairs');
+    let nodesPerNetwork = {};
+
+    for (let i=0;i<rois.length;i++) {
+   
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+
+        if(nodesPerNetwork[n] !== undefined){
+                nodesPerNetwork[n] = nodesPerNetwork[n]+1;
+        } else {
+                nodesPerNetwork[n] = 1;
+        }
+    }
+
+   let edgesPerNetworkPair = new Array(nets.size);
+   for (let i=0;i<nets.size;i++) {
+        edgesPerNetworkPair[i] = new Array(nets.size);
+        for (let j=0;j<nets.size;j++) {
+            if(i==j) {
+                edgesPerNetworkPair[i][j]=nodesPerNetwork[i+1]*(nodesPerNetwork[j+1]-1)/2;
+            } else { 
+                edgesPerNetworkPair[i][j]=nodesPerNetwork[i+1]*nodesPerNetwork[j+1];
+            }
+        }
+   }
+    
+    return edgesPerNetworkPair; 
 };
 
 var createMatrix=function(nets,pairs,symm=false) {
@@ -386,6 +420,9 @@ var createChordsSVG=function(parentDiv,parc,pairs,dim) {
         });
     }
 
+    // TODO: add scaling here too - smn
+
+
     layout.matrix(matrix);
     
     // Add a group per neighborhood.
@@ -529,7 +566,17 @@ var createCorrMapSVG=function(parentDiv,
         endColor =  '#0044ff';
     }    
 
-    
+    // new for scaling - smn
+    //let testScalingButton='Scaled' // TODO: introduce button and connect with globalParams.internal.laststate.corrscaling
+    if (globalParams.internal.parameters.matrixscaling) {
+        const scaling=countEdgesBetweenNets(nets);
+        for (let i=0;i<nets.size;i++) {
+            for (let j=0;j<nets.size;j++) {
+                data[i][j]=data[i][j]/scaling[i][j];
+                data[i][j]=Math.round(data[i][j]*100)/100;
+            }
+        }
+    }
     
     const widthLegend = 100;
     
