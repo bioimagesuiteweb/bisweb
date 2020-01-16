@@ -704,12 +704,12 @@ class ColormapControllerElement extends HTMLElement {
         this.internal.plainmode = plainmode || false;
         if (this.internal.plainmode) {
             colormapmode="Objectmap";
-            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>400 || this.internal.objectmaprange[0]<0) {
+            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>800 || this.internal.objectmaprange[0]<0) {
                 let r= this.internal.objectmaprange[0]+":"+this.internal.objectmaprange[1];
                 webutil.createAlert(`The loaded objectmap does not look like an objectmap type= ${dt} range:${r}.`,true);
             }
         } else if (index <0 ) {
-            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>160 || this.internal.objectmaprange[0]<0) {
+            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>800 || this.internal.objectmaprange[0]<0) {
                 if (this.internal.objectmaprange[0]<0.0) {
                     colormapmode="Overlay";
                 } else {

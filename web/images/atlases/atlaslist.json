@@ -6,7 +6,7 @@
     },
     "allenmri" : {
         "filename" : "mouseallenmri.json",
-        "dimensions" : [ 64,47,75 ],
-        "spacing" : [ 0.2,0.2,0.2 ]
+        "dimensions" : [ 114,80,132 ],
+        "spacing" : [ 0.1,0.1,0.1 ]
     }
 }
