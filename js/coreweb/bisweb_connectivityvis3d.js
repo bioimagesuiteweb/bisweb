@@ -178,6 +178,9 @@ let createTexture=function(hue) {
 // @param {Number} index - 0=left, 1=right
 // @param {Array} color - the color
 // @param {Number} opacity - the opacity
+// @param {Number} attributeindex -- the attribute used to color
+// @param {Number} resol -- the resolution level to use
+// @param {Number} hidecereb -- if true hide part of brain
 
 var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2,resol=0,hidecereb=false) {
 
@@ -200,12 +203,22 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
     let attributes=new Float32Array(parcels.length);
     let mina=0,maxa=1;
-    if (attributeIndex<0 || dim[0]!==268) {
+    // -------------------
+    // XP -- Hard code 268
+    // --------------------
+
+    let colorsurface=true;
+    if (globalParams.internal.baseatlas!=='humanmni' || attributeIndex<0)
+        colorsurface=false;
+    else if (! (dim[0]===268 || dim[0]===368)) {
+        colorsurface=false;
+    }
+    
+    if (!colorsurface) {
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=1;
         }
         attributeIndex=-1;
-
     } else {
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=matrix[parcels[i]-1][attributeIndex];

@@ -251,6 +251,19 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                    const imagepath=webutil.getWebPageImagePath();
                                    loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
+
+        webutil.createMenuItem(imenu,'Use the Shen 368 Atlas',
+                               function() {
+                                   let img=new BisWebImage();
+                                   const imagepath=webutil.getWebPageImagePath();
+                                   img.load(`${imagepath}/Shen_1mm_368_parcellation_RAS.nii.gz`,'RAS').then( () => {
+                                       control.clearmatrices();
+                                       console.log('---------------',368);
+                                       control.importparcellation(img,'Shen 368 Atlas',[ 'lobes_368_right.json', 'lobes_368_left.json' ]);
+                                   });
+                               });
+
+        
         webutil.createMenuItem(imenu,'Use the AAL Atlas',
                                function() {
                                    let img=new BisWebImage();

@@ -51,6 +51,11 @@ var initialize=function(internal) {
 // Fix gaps in WSHU network indices
 var fixNetworkIndex=function(n) {
 
+    if (globalParams.internal.baseatlas!=='humanmni')
+        return n;
+    
+    
+    // XP: Human Stuff 
     // Yale networks are OK
     if (globalParams.internal.networkAttributeIndex===4)
         return n;

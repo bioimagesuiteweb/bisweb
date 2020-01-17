@@ -47,6 +47,8 @@ const gui_Lobes = humanmni.labels.data[0].labels;
 const gui_BrodLabels = humanmni.labels.data[3].labels;
 const gui_Lobes_Values = [];
 let keys=Object.keys(gui_Lobes);
+
+
 for (let i=0;i<keys.length;i++) {
     gui_Lobes_Values.push(gui_Lobes[keys[i]]);
 }
@@ -117,9 +119,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // -------------------------------------------------------------------------
 
 
-
     let internal = {
 
+        baseatlas : 'humanmni',
+        
         // store here
         gui_Lines : gui_Lines,
         gui_Modes : gui_Modes,
@@ -745,7 +748,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         if (nodenumber>-1) {
             let orignode=internal.parcellation.indexmap[nodenumber];
-            let humannumber=nodenumber+1;
+            let displaynumber=nodenumber+1;
 
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
             internal.parameters.lobe=lobe;
@@ -764,7 +767,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (brod===undefined) {
                 brod="n/a";
             }
-            s_text='Node:'+humannumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
+            s_text='Node:'+displaynumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
             s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
 
             if (internal.conndata.statMatrix!==null) {
@@ -772,9 +775,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 s_text2+='neg='+internal.conndata.statMatrix[orignode][1]+', ';
                 s_text2+='sum='+internal.conndata.statMatrix[orignode][2]+') ';
             }
-            s_text2+=' (draw orderg ='+(internal.parcellation.indexmap[nodenumber]+1)+')';
+            s_text2+=' (draw order ='+(internal.parcellation.indexmap[nodenumber]+1)+')';
 
-            internal.parameters.node=humannumber;
+            internal.parameters.node=displaynumber;
 
 
             for (let ia=0;ia<internal.datgui_controllers.length;ia++)
@@ -1065,7 +1068,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     // Imports Parcellation Image and outputs text file in json format
     // @param {BisWebImage} image - image to create from
-    var importParcellationImage = function(vol,atlasdesc=null) {
+    var importParcellationImage = function(vol,atlasdesc=null,surfacenames=null) {
 
 
         let save=true;
@@ -1098,14 +1101,29 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
                 },out);
             }
+
+            if (surfacenames) {
+                const imagepath=webutil.getWebPageImagePath();
+                bisgenericio.read(`${imagepath}/${surfacenames[0]}`).then( (obj) => {
+                    connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                }).catch( (e) => { console.log(e); });
+
+                bisgenericio.read(`${imagepath}/${surfacenames[1]}`).then( (obj) => {
+                    connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                }).catch( (e) => { console.log(e); });
+            }
+            
         };
 
         let d=vol.getDimensions();
         let s=vol.getSpacing();
+        // Hard code parcellation human size
+        // ---------------------------------
         let truedim = [  181,217,181,1 ] ;
         let truespa = [  1.0,1.0,1.0,1.0 ];
         d[3]=truedim[3];
         s[3]=truespa[3];
+        // -------------------------------------
 
 
         let diff=numeric.norminf(numeric.sub(d,truedim));
@@ -1457,7 +1475,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (internal.inrestorestate)
                 return;
 
+            console.log('Initializing');
+            
             internal.subviewers=subviewers;
+
+            // Human Hardcode
             onDemandCreateGUI('yale');
             const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
@@ -1638,9 +1660,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
         },
 
-        importparcellation : function(image,atlasdesc=null) {
-            console.log('at=',atlasdesc);
-            importParcellationImage(image,atlasdesc);
+        importparcellation : function(image,atlasdesc=null,surfacenames=null) {
+            console.log('at=',atlasdesc,surfacenames);
+            importParcellationImage(image,atlasdesc,surfacenames);
         },
 
         importparcellationtext : function(filename) {
@@ -1979,7 +2001,7 @@ class ConnectivityControlElement extends HTMLElement {
     /** Imports a parcellation as json file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellation(f,desc) { this.innercontrol.importparcellation(f,desc); }
+    importparcellation(f,desc,surfacenames=null) { this.innercontrol.importparcellation(f,desc,surfacenames); }
 
     /** popups a dialog showing info about this control */
     about() { this.innercontrol.about(); }
