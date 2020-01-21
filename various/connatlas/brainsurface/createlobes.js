@@ -8,11 +8,6 @@ const bis_genericio=require("bis_genericio");
 
 const setupname = "setup.json"
 
-
-/*let idata = [ [ 'index_big_combo_right_2.vtk.json', 'lobes_right.json' ],
-              [ 'index_big_combo_left_2.vtk.json' , 'lobes_left.json' ] ];
-              let odata= [ 'lobes_368_right.json' ,  'lobes_368_left.json' ];*/
-
 const fn=async () => { 
 
     console.log("Reading ",setupname);
@@ -24,16 +19,18 @@ const fn=async () => {
     
     for (let i=0;i<=1;i++) {
 
-        let ppp = await bis_genericio.read(filenames.multires[i]);
-        let orig= await bis_genericio.read(filenames.atlas[i]);
-        let parcels=JSON.parse(ppp.data);
-        let input=JSON.parse(orig.data);
-        console.log('Parsed ',filenames.multires[i],filenames.atlas[i],Object.keys(parcels),Object.keys(input));
+        let multiresobj = await bis_genericio.read(filenames.multires[i]);
+        let atlasobj= await bis_genericio.read(filenames.atlas[i]);
+
+        let multires=JSON.parse(multiresobj.data);
+        let atlas=JSON.parse(atlasobj.data);
         
-        input.indices=parcels.indices;
+        console.log('Parsed ',filenames.multires[i],filenames.atlas[i],Object.keys(atlas),Object.keys(multires));
+        
+        multires.indices=atlas.indices;
 
         let outname=filenames.output[i];
-        let out=JSON.stringify(input);
+        let out=JSON.stringify(multires);
 
         await bis_genericio.write(outname,out);
         console.log('Saved in',outname);
