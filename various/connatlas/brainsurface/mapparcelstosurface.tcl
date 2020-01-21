@@ -62,10 +62,10 @@ for { set j 0 } { $j <= 1 } { incr j } {
         } else {
             set lps_pt [ list [ expr 180.0 - [ lindex $pt 0 ] ] [ expr 216.0 - [  lindex $pt 1 ] ] [ lindex $pt 2 ] ]
         }
-        if { $i ==0 } { puts stdout "Mapping $pt --> $lps_pt"  }
+        if { $i ==0 || $i == int($np/3) } { puts stdout "Mapping $pt --> $lps_pt"  }
         # Map LPS to RAS
         set index [ $atl FindPoint [ lindex $lps_pt 0 ]  [  lindex $lps_pt 1 ]  [ lindex $lps_pt 2 ] ]
-        if { $i ==0 } { puts stdout "\t Index = $index" }
+        if { $i ==0 || $i == int($np/3) } { puts stdout "\t Index = $index" }
         
         set atl_pt [ [ $atl GetPoints ] GetPoint $index ]
         if { $i ==0 } { puts stdout "\t Atlas Point = $atl_pt" }
