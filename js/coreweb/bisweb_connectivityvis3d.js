@@ -210,9 +210,10 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     let colorsurface=true;
     if (globalParams.internal.baseatlas!=='humanmni' || attributeIndex<0)
         colorsurface=false;
-    else if (! (dim[0]===268 || dim[0]===368)) {
+    else if (globalParams.internal.hassurfaceindices===false)
         colorsurface=false;
-    }
+
+    console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')');
     
     if (!colorsurface) {
         for (let i=0;i<parcels.length;i++) {
@@ -220,9 +221,25 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         }
         attributeIndex=-1;
     } else {
+
+        console.log('Parcels=',parcels.length);
+        let mdim=numeric.dim(matrix);
+        console.log('Mdim=',mdim);
+        
         for (let i=0;i<parcels.length;i++) {
-            attributes[i]=matrix[parcels[i]-1][attributeIndex];
+            if (parcels[i]>0) {
+                try { 
+                    attributes[i]=matrix[parcels[i]-1][attributeIndex];
+                } catch(e) {
+                    console.log('Failed',i,parcels[i]);
+                    return;
+                }
+            } else {
+                attributes[i]=0;
+            }
         }
+
+        
         
         mina=matrix[0][attributeIndex];
         maxa=matrix[0][attributeIndex];
@@ -350,9 +367,13 @@ var parsebrainsurface = function(textstring,filename) {
         indices[i]=obj.triangles[i];
 
     if (obj.indices) {
-        for (let i=0;i<parcels.length;i++)
+        let maxp=0;
+        for (let i=0;i<parcels.length;i++) {
             parcels[i]=obj.indices[i];
-        console.log('Parcels=',parcels.length,obj.indices.length,obj.points.length/3,' ex=',parcels[0],parcels[22],parcels[73]);
+            if (parcels[i]>maxp)
+                maxp=parcels[i];
+        }
+        console.log('Parcels=',parcels.length,obj.indices.length,obj.points.length/3,' ex=',parcels[0],parcels[22],parcels[73],'maxparcel=',maxp);
     }
     
     let buf=new THREE.BufferGeometry();

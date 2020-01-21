@@ -744,11 +744,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let nodenumber=internal.mni[3];
 
-        console.log('Setting:=',internal.mni);
-        if (internal.conndata.statMatrix) {
-            console.log('Internal=',internal.conndata.statMatrix[0]);
-            console.log('Internal=',internal.conndata.statMatrix[1]);
-        }
+        //console.log('Setting:=',internal.mni);
+        //        if (internal.conndata.statMatrix) {
+        //  console.log('Internal=',internal.conndata.statMatrix[0]);
+        //console.log('Internal=',internal.conndata.statMatrix[1]);
+        //        }
         
         let s_text='MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
         let s_text2="";
@@ -757,7 +757,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             let orignode=nodenumber;//internal.parcellation.indexmap[nodenumber];
 
-            console.log('Nodenumber=',nodenumber,orignode);
+            //console.log('Nodenumber=',nodenumber,orignode);
             let displaynumber=nodenumber+1;
 
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
@@ -970,6 +970,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!keepobjectmap)
             internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
+        console.log('Parcellation parsed',filename);
         internal.hassurfaceindices=false;
     };
     // Loads Parcellation.
@@ -1072,6 +1073,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
 
             readatlas(loadsuccess1);
+            console.log('import parc text');
             internal.hassurfaceindices=false;
         }).catch( (e) => {
             loaderror(e);
@@ -1121,6 +1123,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 const imagepath=webutil.getWebPageImagePath();
                 bisgenericio.read(`${imagepath}/${surfacenames[0]}`).then( (obj) => {
                     connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                    console.log('importparcimage=true');
                     internal.hassurfaceindices=true;
                 }).catch( (e) => { console.log(e); });
 
@@ -1128,6 +1131,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     connectvis3d.parsebrainsurface(obj.data,obj.filename);
                 }).catch( (e) => { console.log(e); });
             } else {
+                console.log('importparcimage=false');
                 internal.hassurfaceindices=false;
             }
             
