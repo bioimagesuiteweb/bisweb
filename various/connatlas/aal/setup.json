@@ -1,0 +1,5 @@
+{
+    "multires" : [ "../brainsurface/index_big_combo_right_2.vtk.json", "../brainsurface/index_big_combo_left_2.vtk.json" ],
+    "atlas"   : [ "right_aal.json",  "left_aal.json" ],
+    "output"  : [ "lobes_aal_right.json" , "lobes_aal_left.json"  ]
+}
