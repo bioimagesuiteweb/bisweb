@@ -270,7 +270,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                    const imagepath=webutil.getWebPageImagePath();
                                    img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
                                        control.clearmatrices();
-                                       control.importparcellation(img,'AAL Atlas');
+                                       control.importparcellation(img,'AAL Atlas',[ 'lobes_aal_right.json', 'lobes_aal_left.json' ]);
                                    });
                                });
         webutil.createMenuItem(imenu,''); // separator

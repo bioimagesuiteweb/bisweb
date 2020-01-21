@@ -122,6 +122,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     let internal = {
 
         baseatlas : 'humanmni',
+        hassurfaceindices : false,
         
         // store here
         gui_Lines : gui_Lines,
@@ -743,11 +744,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let nodenumber=internal.mni[3];
 
+        console.log('Setting:=',internal.mni);
+        if (internal.conndata.statMatrix) {
+            console.log('Internal=',internal.conndata.statMatrix[0]);
+            console.log('Internal=',internal.conndata.statMatrix[1]);
+        }
+        
         let s_text='MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
         let s_text2="";
 
         if (nodenumber>-1) {
-            let orignode=internal.parcellation.indexmap[nodenumber];
+
+            let orignode=nodenumber;//internal.parcellation.indexmap[nodenumber];
+
+            console.log('Nodenumber=',nodenumber,orignode);
             let displaynumber=nodenumber+1;
 
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
@@ -808,8 +818,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     var cleanmatrixdata = function() {
         internal.conndata.cleanup();
-        if (internal.keynodedlg!==null)
+        if (internal.keynodedlg!==null) {
+            internal.keynodedlg.hide();
             internal.keynodedlg.getWidget().empty();
+        }
         internal.keynodedlg=null;
         internal.posFileInfo=[ "NONE", 0 ];
         internal.negFileInfo=[ "NONE", 0 ];
@@ -821,6 +833,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         for (let ia=0;ia<internal.datgui_controllers.length;ia++)
             internal.datgui_controllers[ia].updateDisplay();
         update();
+
     };
 
     // Loads matrix. Called from input=File element
@@ -957,6 +970,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!keepobjectmap)
             internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
+        internal.hassurfaceindices=false;
     };
     // Loads Parcellation.
     // @param {string} in_filename - file to load from (either .json or .txt)
@@ -1058,6 +1072,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
 
             readatlas(loadsuccess1);
+            internal.hassurfaceindices=false;
         }).catch( (e) => {
             loaderror(e);
         });
@@ -1106,11 +1121,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 const imagepath=webutil.getWebPageImagePath();
                 bisgenericio.read(`${imagepath}/${surfacenames[0]}`).then( (obj) => {
                     connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                    internal.hassurfaceindices=true;
                 }).catch( (e) => { console.log(e); });
 
                 bisgenericio.read(`${imagepath}/${surfacenames[1]}`).then( (obj) => {
                     connectvis3d.parsebrainsurface(obj.data,obj.filename);
                 }).catch( (e) => { console.log(e); });
+            } else {
+                internal.hassurfaceindices=false;
             }
             
         };
@@ -1486,6 +1504,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
                 connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                internal.hassurfaceindices=true;
             }).catch( (e) => { console.log(e); });
 
             bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
@@ -1907,9 +1926,12 @@ class ConnectivityControlElement extends HTMLElement {
 
 
         let c_data=internal.conndata.getSortedNodesByDegree(2);
+
         let numnodes=c_data.length-1;
         let maxnodes=Math.round(0.1*numnodes);
 
+        console.log(JSON.stringify(c_data,null,2),' Numnodes=',numnodes,maxnodes);
+        
         let ch=internal.context.canvas.height;
         let cw=internal.context.canvas.width;
         let vp=internal.parcellation.viewport;
@@ -1959,8 +1981,10 @@ class ConnectivityControlElement extends HTMLElement {
 
         for (let i=0;i<maxnodes;i++) {
 
+            // numnodes-i, reverse sort greater to smaller
             let node=c_data[numnodes-i].node;
             let degree=c_data[numnodes-i].degree;
+
             if (degree>0) {
                 let c = [ internal.parcellation.rois[node].x,
                           internal.parcellation.rois[node].y,

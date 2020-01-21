@@ -205,6 +205,8 @@ class ConnMatrix {
         */
     getSortedNodesByDegree(index) {
 
+
+        
         if (this.statMatrix===null) {
             console.log('Stat Matrix is null\n');
             return 0;
@@ -213,11 +215,14 @@ class ConnMatrix {
         if (index === undefined)
             index=2;
         index=util.range(index,0,3);
-
+        
         var arr=[];
         var np=numeric.dim(this.statMatrix)[0];
         for (var i=0;i<np;i++) {
             var val=this.statMatrix[i][index];
+            if (val>0) {
+                console.log('Node=',i,this.statMatrix[i],'index=',index,'val=',val);
+            }
             arr.push({ node: i, degree:val });
         }
 
