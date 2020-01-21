@@ -220,9 +220,9 @@ class ConnMatrix {
         var np=numeric.dim(this.statMatrix)[0];
         for (var i=0;i<np;i++) {
             var val=this.statMatrix[i][index];
-            if (val>0) {
-                console.log('Node=',i,this.statMatrix[i],'index=',index,'val=',val);
-            }
+            //if (val>0) {
+                //console.log('Node=',i,this.statMatrix[i],'index=',index,'val=',val);
+            //            }
             arr.push({ node: i, degree:val });
         }
 

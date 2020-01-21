@@ -472,10 +472,10 @@ var parsebrainsurface = function(surfacedata,filename,binary=false) {
     for (let meshindex=0;meshindex<=1;meshindex++) {
 
         if (surfaces[meshindex]!==null) {
-            console.log('Keys=',Object.keys(surfaces[meshindex]));
-            console.log('Vertices[0]=',surfaces[meshindex]['vertices'][0].length);
-            console.log('Indices=',surfaces[meshindex]['indices'].length);
-            console.log('Parcels=',surfaces[meshindex]['parcels'].length);
+            //console.log('Keys=',Object.keys(surfaces[meshindex]));
+            //console.log('Vertices[0]=',surfaces[meshindex]['vertices'][0].length);
+            //            console.log('Indices=',surfaces[meshindex]['indices'].length);
+            //            console.log('Parcels=',surfaces[meshindex]['parcels'].length);
             let buf=new THREE.BufferGeometry();
             buf.setIndex( new THREE.BufferAttribute( surfaces[meshindex].indices, 1));
             buf.addAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );

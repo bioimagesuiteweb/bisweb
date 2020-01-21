@@ -245,14 +245,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         // ------------------------------------ Parcellations Menu ----------------------------
         
         var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
-        webutil.createMenuItem(imenu,'Use the Shen Atlas',
+        webutil.createMenuItem(imenu,'Use the Shen (268) Atlas',
                                function() {
                                    control.clearmatrices();
                                    const imagepath=webutil.getWebPageImagePath();
                                    loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
         /*        webutil.createMenuItem(imenu,''); // separator
-        webutil.createMenuItem(imenu,'Use the Shen 268 Atlas',
+        webutil.createMenuItem(imenu,'Use the Original Shen 268 Atlas',
                                function() {
                                    let img=new BisWebImage();
                                    const imagepath=webutil.getWebPageImagePath();
@@ -280,7 +280,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                    const imagepath=webutil.getWebPageImagePath();
                                    img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
                                        control.clearmatrices();
-                                       control.importparcellation(img,'AAL Atlas', [ 'aal_surface_atlas.bin.gz' ] );
+                                       control.importparcellation(img,'AAL Atlas', [ 'aal_surface_atlas.bin.gz' ] );  
                                    });
                                });
         webutil.createMenuItem(imenu,''); // separator

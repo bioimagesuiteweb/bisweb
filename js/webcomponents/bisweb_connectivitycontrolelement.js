@@ -699,7 +699,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     };
 
 
-    var setnode = function(node) {
+    var setnode = function(node,updateviewer=true) {
 
         if (internal.parcellation===null)
             return;
@@ -716,7 +716,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (internal.showlegend) 
             internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
         let coords = internal.mni2tal.getMMCoordinates(internal.mni);
-        internal.orthoviewer.setcoordinates(coords);
+        if (updateviewer)
+            internal.orthoviewer.setcoordinates(coords);
         drawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
             connectvis3d.draw3dcrosshairs();
@@ -1526,6 +1527,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             },10);
         },
 
+        // autoDrawLines
+        autoDrawLines() {
+            autoDrawLines();
+        },
+        
         // recreate gui
         setnodeGroupOption(flag='yale') {
 
@@ -1560,6 +1566,29 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (mousestate<0 || mousestate === undefined || mousestate===2)
                 return;
 
+            let objmap=internal.orthoviewer.getobjectmap();
+            if (objmap!==null) {
+                let spa=objmap.getSpacing();
+                let dim=objmap.getDimensions();
+                let c=[0,0,0];
+                for (let i=0;i<=2;i++) {
+                    c[i]=Math.floor(mm[i]/spa[i]+0.5);
+                }
+
+                let voxel=c[0]+c[1]*dim[0]+c[2]*dim[0]*dim[1];
+                //console.log('mm=',mm,spa,c,'voxel=',voxel);
+                try {
+                    let val=objmap.getImageData()[voxel];
+                    if (val>=0)
+                        setnode(val-1,false);
+                    return;
+                } catch (e) {
+                    console.log('Some error trying old fashioned way',e);
+                }
+            }
+                
+            
+            
             internal.mni=internal.mni2tal.getMNICoordinates(mm);
             internal.mni[3]=-1;
             if (internal.mni===null)
@@ -1630,7 +1659,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (offset===0)
                 return;
 
-            let domap=(event.shiftKey);
+            let domap=!(event.shiftKey);
 
             let nodenumber=Math.round(internal.parameters.node)-1 || 0;
             let maxnode= internal.parcellation.rois.length-1;
@@ -1654,6 +1683,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 newnode=intnode;
             }
             setnode(newnode);
+            autoDrawLines();
         },
 
         clearmatrices : function() {
@@ -1941,11 +1971,11 @@ class ConnectivityControlElement extends HTMLElement {
 
         //        console.log(JSON.stringify(c_data,null,2),' Numnodes=',numnodes,maxnodes);
         
-        let ch=internal.context.canvas.height;
-        let cw=internal.context.canvas.width;
-        let vp=internal.parcellation.viewport;
+        //let ch=internal.context.canvas.height;
+        //let cw=internal.context.canvas.width;
+        //let vp=internal.parcellation.viewport;
         let width  = 350;
-        console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
+        //console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
 
         let showdialog=new BisWebPanel(internal.layoutmanager,
                                        {
@@ -1967,6 +1997,13 @@ class ConnectivityControlElement extends HTMLElement {
             let node=buttonnodepairs[id];
             internal.parameters.mode="Single Node";
             this.innercontrol.setnode(node);
+            this.innercontrol.autoDrawLines();
+            /*if (!internal.parameters.autodrawenabled ||
+                internal.conndata.statMatrix===null)
+                return;
+            
+            connectvis.removelines();
+            connectvis.createlines();*/
         };
 
         let thead = stable.find(".bisthead");
