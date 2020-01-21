@@ -7,12 +7,13 @@ const bis_genericio=require("bis_genericio");
 
 const filenames = [ 'lobes_left.json','lobes_right.json' ];
 
+const outputnames = [ 'lobes_left.vtk','lobes_right.vtk' ];
+
 const fn=async () => { 
 
     for (let mesh=0;mesh<=1;mesh++) {
         const obj= await bis_genericio.read(filenames[mesh]);
         const data=JSON.parse(obj.data);
-        console.log('keys=',Object.keys(data));
 
 
         //console.log('\n\t\t saving in ',outname);
@@ -22,6 +23,13 @@ const fn=async () => {
         let pts=data['points'];
         let numpts=Math.floor(pts.length/3);
         outstr=outstr+`POINTS ${numpts} float\n`;
+
+        let pnames = [ 'points', 'points1', 'points2','points3'];
+        for (let j=0;j<pnames.length;j++) {
+            console.log(pnames[j],' =', data[pnames[j]].length/3);
+        }
+        console.log('maxpoint=',data['maxpoint']);
+
         
         let count=0;
         for (let i=0;i<pts.length;i++) {
@@ -43,8 +51,8 @@ const fn=async () => {
             index+=3;
         }
 
-        
-        await bis_genericio.write(filenames[mesh]+'.vtk',outstr);
+        console.log('Saving in ',outputnames[mesh],' numpoints=',numpts,' numtri=',numtri);
+        await bis_genericio.write(outputnames[mesh],outstr);
     }
 }
 

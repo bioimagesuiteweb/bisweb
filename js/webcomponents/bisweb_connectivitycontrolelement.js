@@ -1121,15 +1121,24 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             if (surfacenames) {
                 const imagepath=webutil.getWebPageImagePath();
-                bisgenericio.read(`${imagepath}/${surfacenames[0]}`).then( (obj) => {
-                    connectvis3d.parsebrainsurface(obj.data,obj.filename);
-                    console.log('importparcimage=true');
-                    internal.hassurfaceindices=true;
-                }).catch( (e) => { console.log(e); });
 
-                bisgenericio.read(`${imagepath}/${surfacenames[1]}`).then( (obj) => {
-                    connectvis3d.parsebrainsurface(obj.data,obj.filename);
-                }).catch( (e) => { console.log(e); });
+                if (surfacenames.length===2) {
+                    // old style json files
+                    bisgenericio.read(`${imagepath}/${surfacenames[0]}`).then( (obj) => {
+                        connectvis3d.parsebrainsurface(obj.data,obj.filename,false);
+                        internal.hassurfaceindices=true;
+                    }).catch( (e) => { console.log(e); });
+                    
+                    bisgenericio.read(`${imagepath}/${surfacenames[1]}`).then( (obj) => {
+                        connectvis3d.parsebrainsurface(obj.data,obj.filename,false);
+                    }).catch( (e) => { console.log(e); });
+                } else {
+                    // assume one
+                    bisgenericio.read(`${imagepath}/${surfacenames[0]}`,true).then( (obj) => {
+                        connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
+                        internal.hassurfaceindices=true;
+                    });
+                }
             } else {
                 console.log('importparcimage=false');
                 internal.hassurfaceindices=false;
@@ -1150,11 +1159,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let diff=numeric.norminf(numeric.sub(d,truedim));
 
-        console.log(numeric.sub(s,truespa));
+        //console.log(numeric.sub(s,truespa));
         let diff2=numeric.norminf(numeric.sub(s,truespa));
         let orient=vol.getOrientation().name;
 
-        console.log([diff,diff2]);
+        //console.log([diff,diff2]);
         if (diff>0 || diff2>0.01 || orient!=="RAS") {
             bootbox.alert("Bad Parcellation Image for creating a Parcellation file."+
                           "Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space)."+
@@ -1506,13 +1515,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
 
-            bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename);
+            bisgenericio.read(`${imagepath}/268_surface_atlas.bin.gz`,true).then( (obj) => {
+                connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
                 internal.hassurfaceindices=true;
-            }).catch( (e) => { console.log(e); });
-
-            bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
 
             update(false);
@@ -1934,7 +1939,7 @@ class ConnectivityControlElement extends HTMLElement {
         let numnodes=c_data.length-1;
         let maxnodes=Math.round(0.1*numnodes);
 
-        console.log(JSON.stringify(c_data,null,2),' Numnodes=',numnodes,maxnodes);
+        //        console.log(JSON.stringify(c_data,null,2),' Numnodes=',numnodes,maxnodes);
         
         let ch=internal.context.canvas.height;
         let cw=internal.context.canvas.width;

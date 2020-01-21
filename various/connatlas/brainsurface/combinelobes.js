@@ -26,10 +26,14 @@ const fn=async () => {
 
         let multires=JSON.parse(multiresobj.data);
         let atlas=JSON.parse(atlasobj.data);
-        
-        console.log('Parsed ',filenames.multires[i],filenames.atlas[i],Object.keys(atlas),Object.keys(multires));
+        console.log('\n-----------------------------\n');
+        console.log('Parsed ',filenames.multires[i],filenames.atlas[i],Object.keys(atlas),Object.keys(multires),
+                    '\n\t atlaspoints=',
+                    atlas['points'].length,
+                    'Multires=',multires['points'].length);
 
-        console.log('Lengths= triangles=',multires.triangles.length,' indices=',multires.indices.length,'points=',multires.points.length/3);
+        console.log('Multires Lengths= triangles=',multires.triangles.length,' indices=',multires.indices.length,'points=',multires.points.length/3);
+        console.log('Atlas Lengths= triangles=',atlas.triangles.length,' indices=',atlas.indices.length,'points=',atlas.points.length/3);
         
         multires.indices=atlas.indices;
 
@@ -58,6 +62,8 @@ const fn=async () => {
         Surface 2 repeat
     */
 
+//    process.exit(0);
+    
     let pnames = [ 'points', 'points1', 'points2','points3'];
     
     let length=4; // 5 int32s

@@ -1,5 +1,15 @@
 {
-    "multires" : [ "../brainsurface/index_big_combo_right_2.vtk.json", "../brainsurface/index_big_combo_left_2.vtk.json" ],
-    "atlas"   : [ "right_aal.json",  "left_aal.json" ],
-    "output"  : [ "lobes_aal_right.json" , "lobes_aal_left.json"  ]
+    "multires" : [
+        "../brainsurface/lobes_right.json",
+        "../brainsurface/lobes_left.json"
+    ],
+    "atlas"   : [
+        "output/right_aal.json",
+        "output/left_aal.json"
+    ],
+    "output"  : [
+        "output/lobes_aal_right.json" ,
+        "output/lobes_aal_left.json",
+        "output/aal_surface_atlas.bin.gz"
+    ]
 }

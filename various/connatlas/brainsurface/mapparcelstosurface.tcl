@@ -24,16 +24,17 @@ for { set j 0 } { $j <= 1 } { incr j } {
     $r Update
 
     set n [ [ $r GetOutput ] GetNumberOfPoints ]
-    
-    set cl [ vtkCleanPolyData New ]
-    $cl SetInput [ $r GetOutput ]
-    $cl Update
+
+#    puts stdout "Cleaning $name"
+#    set cl [ vtkCleanPolyData New ]
+#    $cl SetInput [ $r GetOutput ]
+#    $cl Update
     
     set at [ vtkPolyDataReader New ]
     $at SetFileName $aname
     $at Update
     
-    set sur [ $cl GetOutput ]
+    set sur [ $r  GetOutput ]
     set atl [ $at GetOutput ]
 
     set filter [ vtkSmoothPolyDataFilter New ]

@@ -203,9 +203,6 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
     let attributes=new Float32Array(parcels.length);
     let mina=0,maxa=1;
-    // -------------------
-    // XP -- Hard code 268
-    // --------------------
 
     let colorsurface=true;
     if (globalParams.internal.baseatlas!=='humanmni' || attributeIndex<0)
@@ -213,7 +210,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     else if (globalParams.internal.hassurfaceindices===false)
         colorsurface=false;
 
-    console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')');
+    //    console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')');
     
     if (!colorsurface) {
         for (let i=0;i<parcels.length;i++) {
@@ -324,28 +321,23 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     globalParams.internal.subviewers[3].getScene().add(globalParams.brainmesh[index]);
 };
 
-var parsebrainsurface = function(textstring,filename) {
-    
-    let meshindex=0;
-    let isright=filename.lastIndexOf("right");
-    if (isright>=0)
-        meshindex=1;
-    
-    let obj= JSON.parse(textstring);
+// ------------------------------------------------------
+// Read multires surface files
+// ------------------------------------------------------
+// text
+var parse_multires_text_surface=function(textstring,filename,meshindex) {
 
+    let obj= JSON.parse(textstring);
+        
     let numelements=obj['numelements'] || 1;
-    
     let indices = new Uint32Array(obj.triangles.length);
     let parcels=null;
-
-    
     if (obj.indices)
         parcels = new Uint32Array(obj.indices.length);
-
     
     let vertices = new Array(numelements);
-    console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
-
+    console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length,obj.indices.length]);
+    
     for (let e=0;e<numelements;e++) {
         vertices[e]=new Float32Array(obj.points.length);
         let srcname='points';
@@ -362,10 +354,10 @@ var parsebrainsurface = function(textstring,filename) {
             vertices[e][i+2]=obj[srcname][i+2];
         }
     }
-
+    
     for (let i=0;i<obj.triangles.length;i++) 
         indices[i]=obj.triangles[i];
-
+    
     if (obj.indices) {
         let maxp=0;
         for (let i=0;i<parcels.length;i++) {
@@ -375,21 +367,131 @@ var parsebrainsurface = function(textstring,filename) {
         }
         console.log('Parcels=',parcels.length,obj.indices.length,obj.points.length/3,' ex=',parcels[0],parcels[22],parcels[73],'maxparcel=',maxp);
     }
-    
-    let buf=new THREE.BufferGeometry();
-    buf.setIndex( new THREE.BufferAttribute( indices, 1));
-    buf.addAttribute( 'position', new THREE.BufferAttribute( vertices[0], 3 ) );
-    buf.computeVertexNormals();
 
-    globalParams.braingeom[meshindex]=buf;
-    globalParams.brainindices[meshindex]=parcels;
-    globalParams.vertexlist[meshindex]=vertices;
-    globalParams.numelements[meshindex]=numelements;
-    globalParams.lastresol[meshindex]=0;
-    globalParams.maxpoint[meshindex]=obj.maxpoint;
+    return {
+        'vertices' : vertices,
+        'indices' : indices,
+        'parcels'  : parcels,
+        'numelements' : numelements,
+        'maxpoint' : obj.maxpoint,
+    };
+};
+
+
+var parse_multires_binary_surfaces=function(in_data,filename) {
+
+    let buffer=in_data.buffer;
+
+    console.log('Parsing binary file',filename,in_data.length);
     
-    createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0,false);
+    let cursor=0;
+    let header=new Uint32Array(buffer,0,1);
     
+    if (header[0]!==1702) {
+        console.log('Bad Surface Data');
+        return [ null,null ];
+    }
+
+    cursor+=4;
+    let surfaces=[null,null];
+    // Store things right, then left
+    for (let mesh=1;mesh>=0;mesh=mesh-1) {
+        let header=new Uint32Array(buffer,cursor,4);
+        cursor=cursor+header.byteLength;
+
+        //console.log('-------------------------------');
+        //console.log('Initializing Mesh',mesh,'cursor=',cursor);
+        surfaces[mesh]={};
+        let numelements=header[0];
+        let maxpoint=header[1];
+        let numpoints=header[2];
+        let numtriangles=header[3];
+        
+        surfaces[mesh]['numelements']=numelements;
+        surfaces[mesh]['maxpoint']=maxpoint;
+        surfaces[mesh]['vertices'] = new Array(numelements);
+
+        
+        //console.log('NumPoints=',numpoints,'numtriangles=',numtriangles,'maxpoint=',maxpoint,'numelements=',numelements);
+        
+        for (let j=0;j<numelements;j++) {
+            let arr=new Float32Array(buffer,cursor,numpoints*3);
+            //            if (j===0)
+            //  console.log('Points=',arr[0],arr[1],arr[2],arr[arr.length-3],arr[arr.length-2],arr[arr.length-1]);
+
+            cursor=cursor+arr.byteLength;
+            
+            let shiftx=lobeoffset;
+            if (mesh===0) // left
+                shiftx=-lobeoffset;
+            for (let p=0;p<arr.length;p+=3)
+                arr[p]+=shiftx;
+
+            
+            surfaces[mesh]['vertices'][j]=arr;
+            //console.log('Created points array',j,arr.length,arr.byteLength,' cursor=',cursor);
+
+        }
+        surfaces[mesh]['indices']=new Uint32Array(buffer,cursor,numtriangles*3);
+        cursor=cursor+surfaces[mesh]['indices'].byteLength;
+
+        //let tarr=surfaces[mesh]['indices'];
+        //console.log('Triangles=',tarr[0],tarr[1],tarr[2],tarr[tarr.length-3],tarr[tarr.length-2],tarr[tarr.length-1]);
+
+        
+        //console.log('Indices=',numtriangles*3,'cursor=',cursor);
+        surfaces[mesh]['parcels']=new Uint32Array(buffer,cursor,numpoints);
+        //let iarr=surfaces[mesh]['parcels'];
+        //console.log('Indices=',iarr[0],iarr[1],iarr[2],iarr[25000],iarr[iarr.length-3],iarr[iarr.length-2],iarr[iarr.length-1]);
+        cursor=cursor+surfaces[mesh]['parcels'].byteLength;
+        //console.log('Parcels=',numpoints,'cursor=',cursor);
+    }
+    return surfaces;
+
+};
+
+var parsebrainsurface = function(surfacedata,filename,binary=false) {
+
+    let surfaces=[null,null ];
+    
+    if (!binary) {
+    
+        let index=0;
+        let isright=filename.lastIndexOf("right");
+        if (isright>=0)
+            index=1;
+
+        surfaces[index]= parse_multires_text_surface(surfacedata,filename,index);
+    } else {
+        surfaces=parse_multires_binary_surfaces(surfacedata,filename);
+    }
+
+    if (surfaces[0]===null && surfaces[1]===null)
+        return;
+    
+    for (let meshindex=0;meshindex<=1;meshindex++) {
+
+        if (surfaces[meshindex]!==null) {
+            console.log('Keys=',Object.keys(surfaces[meshindex]));
+            console.log('Vertices[0]=',surfaces[meshindex]['vertices'][0].length);
+            console.log('Indices=',surfaces[meshindex]['indices'].length);
+            console.log('Parcels=',surfaces[meshindex]['parcels'].length);
+            let buf=new THREE.BufferGeometry();
+            buf.setIndex( new THREE.BufferAttribute( surfaces[meshindex].indices, 1));
+            buf.addAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );
+            buf.computeVertexNormals();
+            
+            globalParams.braingeom[meshindex]=buf;
+            globalParams.brainindices[meshindex]=surfaces[meshindex]['parcels'];
+            globalParams.vertexlist[meshindex]=surfaces[meshindex]['vertices'];
+            globalParams.numelements[meshindex]=surfaces[meshindex]['numelements'];
+            globalParams.lastresol[meshindex]=0;
+            globalParams.maxpoint[meshindex]=surfaces[meshindex]['maxpoint'];
+    
+            createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0,false);
+        }
+    }
+        
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes
         

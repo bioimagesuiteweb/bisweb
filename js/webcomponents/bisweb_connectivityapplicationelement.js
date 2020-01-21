@@ -251,26 +251,36 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                    const imagepath=webutil.getWebPageImagePath();
                                    loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
-
+        /*        webutil.createMenuItem(imenu,''); // separator
+        webutil.createMenuItem(imenu,'Use the Shen 268 Atlas',
+                               function() {
+                                   let img=new BisWebImage();
+                                   const imagepath=webutil.getWebPageImagePath();
+                                   img.load(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS').then( () => {
+                                       control.clearmatrices();
+                                       control.importparcellation(img,'Shen 268 Atlas',
+                                                                  [ '268_surface_atlas.bin.gz']);
+                                   });
+                               });*/
         webutil.createMenuItem(imenu,'Use the Shen 368 Atlas',
                                function() {
                                    let img=new BisWebImage();
                                    const imagepath=webutil.getWebPageImagePath();
                                    img.load(`${imagepath}/Shen_1mm_368_parcellation_RAS.nii.gz`,'RAS').then( () => {
                                        control.clearmatrices();
-                                       console.log('---------------',368);
-                                       control.importparcellation(img,'Shen 368 Atlas',[ 'lobes_368_right.json', 'lobes_368_left.json' ]);
+                                       control.importparcellation(img,'Shen 368 Atlas',  [ '368_surface_atlas.bin.gz']);
+                                    
                                    });
                                });
 
-        
+        webutil.createMenuItem(imenu,''); // separator
         webutil.createMenuItem(imenu,'Use the AAL Atlas',
                                function() {
                                    let img=new BisWebImage();
                                    const imagepath=webutil.getWebPageImagePath();
                                    img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
                                        control.clearmatrices();
-                                       control.importparcellation(img,'AAL Atlas',[ 'lobes_aal_right.json', 'lobes_aal_left.json' ]);
+                                       control.importparcellation(img,'AAL Atlas', [ 'aal_surface_atlas.bin.gz' ] );
                                    });
                                });
         webutil.createMenuItem(imenu,''); // separator
