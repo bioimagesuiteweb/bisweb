@@ -92,9 +92,7 @@ const comparerois=function(a,b) {
 
 class BisParcellation {
 
-    constructor(basename='humanmni') {
-
-        //        console.log('Creating parcellation',basename);
+    constructor(atlasspec = { }) {
         this.initialized=false;
         this.regions=null;
         
@@ -107,12 +105,13 @@ class BisParcellation {
         this.thickness=20.0;
         
         this.points = [];
-        this.basename=basename;
-        if (basename==='humanmni')
-            this.midlobe=11;
-        else
-            this.midlobe=17;
-        //console.log('Midlobe=',this.midlobe,this.basename);
+        this.atlasspec = { 
+            'midlobe' : atlasspec.midlobe || 11,
+            'origin'  : atlasspec.origin || [ 90, 126, 72 ],
+        };
+        
+        //        this.midlobe=this.atlasspec['midlobe'];
+
         this.maxlobe=-1;
         this.midpoint=-1;
         this.maxpoint=-1;
@@ -337,7 +336,7 @@ class BisParcellation {
             return 0;
         }
 
-        //console.log('Midlobe=',this.midlobe);
+        //console.log('Midlobe=',this.atlasspec['midlobe']);
         
         var i;
         var numpoints=this.rois.length;
@@ -384,10 +383,10 @@ class BisParcellation {
         // This has to do with the number of lobes
         //console.log('Lobestats=',this.lobeStats);
 
-        this.midpoint=this.lobeStats[this.midlobe-1][1];
+        this.midpoint=this.lobeStats[this.atlasspec['midlobe']-1][1];
         var count=2;
-        while (this.midpoint==-1 && (this.midlobe-count)>0) {
-            this.midpoint=this.lobeStats[this.midlobe-count][1];
+        while (this.midpoint==-1 && (this.atlasspec['midlobe']-count)>0) {
+            this.midpoint=this.lobeStats[this.atlasspec['midlobe']-count][1];
             count++;
         }
         this.maxpoint=this.lobeStats[this.lobeStats.length-1][1];
@@ -455,15 +454,15 @@ class BisParcellation {
      * @returns {string} color
      */
     getNonSidedLobeColor(lobe) {
-        if (lobe>=this.midlobe)
-            lobe=lobe-this.midlobe+1;
+        if (lobe>=this.atlasspec['midlobe'])
+            lobe=lobe-this.atlasspec['midlobe']+1;
         var c=util.objectmapcolormap[lobe];
         return 'rgb(' + Math.floor(c[0])+ ',' + Math.floor(c[1])+ ',' + Math.floor(c[2])+")";
     }
 
     getInverseNonSidedLobeColor(lobe) {
-        if (lobe>=this.midlobe)
-            lobe=lobe-this.midlobe+1;
+        if (lobe>=this.atlasspec['midlobe'])
+            lobe=lobe-this.atlasspec['midlobe']+1;
         if (lobe===1 || lobe===5 || lobe===8 || lobe===10)
             return "#ffffff";
         return "#000000";
@@ -952,12 +951,7 @@ class BisParcellation {
         obj.description=description;
         obj.rois=[];
 
-        var MNI = [ 90, 126, 72 ];
-        if (this.basename!=='humanmni') {
-            MNI=[0,0,0];
-        }
-
-        console.log("MNI=",MNI);
+        let MNI = this.atlasspec['origin'];
         
         for (i=1;i<=maxvoi;i++) {
             if (Nv[i]>0) {
@@ -971,7 +965,7 @@ class BisParcellation {
                 obj.rois.push(elem);
             }
         }
-        //console.log('Midlobe=',this.midlobe);
+        //console.log('Midlobe=',this.atlasspec['midlobe']);
         
         return JSON.stringify(obj);
     }
