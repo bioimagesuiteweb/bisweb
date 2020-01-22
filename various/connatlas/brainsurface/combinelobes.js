@@ -74,7 +74,7 @@ const fn=async () => {
     for (let pass=0;pass<=1;pass++) {
         
         for (let mesh=0;mesh<=1;mesh++) {
-            let numelements=pieces[mesh]['numelements'];
+            let numelements=pieces[mesh]['numelements'] || 1;
             let numpoints=Math.floor(pieces[mesh]['points'].length/3);
             let numtriangles=Math.floor(pieces[mesh]['triangles'].length/3);
             let maxpoint= pieces[mesh]['maxpoint'];
