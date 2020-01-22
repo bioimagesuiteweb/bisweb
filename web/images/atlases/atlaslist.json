@@ -5,7 +5,8 @@
         "spacing" : [ 1.0,1.0,1.0 ],
         "midlobe" : 11,
         "offset"  : 20.0,
-        "origin"  : [ 90,126,72 ]
+        "origin"  : [ 90,126,72 ],
+        "center"  : [ 90,126,72 ]
     },
     "allenmri" : {
         "filename" : "mouseallenmri.json",
@@ -13,6 +14,7 @@
         "spacing" : [ 0.1,0.1,0.1 ],
         "midlobe" : 17,
         "offset"  : 2.0,
-        "origin"  : [ 0,0,0]
+        "origin"  : [ 0,0,0],
+        "center"  : [ 68,39,60 ]
     }
 }

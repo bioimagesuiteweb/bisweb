@@ -1,5 +1,6 @@
 {
     "anatomical" : "MNI_T1_1mm_stripped_ras.nii.gz",
+    "species" : "human",
     "labels" : {
         "filename" : "Reorder_Atlas.nii.gz",
         "description" : "BioImage Suite Atlas (MNI)",
@@ -191,26 +192,44 @@
             }
         ]
     },
-    "parcellations" : {
-        "Shen 268" : {
+    "parcellations" : [
+        {
+            "name" : "Shen 268",
             "image" : "gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz",
             "surface" : "268_surface_atlas.bin.gz",
-            "parc" : "shen.json"
+            "parc" : "shen.json",
+            "species" : "human"
         },
-        "Shen 368" : {
+        {
+            "name" : "Shen 368",
             "image" : "Shen_1mm_368_parcellation_RAS.nii.gz",
-            "surface" : "368_surface_atlas.bin.gz"
+            "surface" : "368_surface_atlas.bin.gz",
+            "species" : "human"
         },
-        "AAL" : {
+        {
+            "name" : "AAL",
             "image" : "AAL_1mm_ras.nii.gz",
-            "surface" : "aal_surface_atlas.bin.gz"
+            "surface" : "aal_surface_atlas.bin.gz",
+            "species" : "human"
         }
-    },
-    "groupdefinitions" : {
-        "lobes" :  0,
-        "washu" :  2,
-        "yale"  :  4
-    }
+    ],
+    "groupdefinitions" : [
+        {
+            "name" : "lobes" ,
+            "index": 0,
+            "description" : "Yale Network Definitions"
+        },
+        {
+            "name" : "washu",
+            "index":  2,
+            "description" : "WSHU Network Definitions"
+        },
+        {
+            "name" : "yale" ,
+            "index":  4,
+            "description" : "Lobe Definitions"
+        }
+    ]
     
 }
 

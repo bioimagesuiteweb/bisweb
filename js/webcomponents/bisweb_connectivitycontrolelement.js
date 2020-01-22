@@ -36,9 +36,14 @@ const BisWebImage = require('bisweb_image.js');
 const dat = require('bisweb_datgui');
 
 
-const atlas = {};
-atlas['humanmni']=require('atlases/humanmni.json');
-atlas['allenmri']=require('atlases/mouseallenmri.json');
+const MAP = {
+    'mouse' : 'allenmri',
+    'human' : 'humanmni',
+};
+
+const ATLAS = {};
+ATLAS['humanmni']=require('atlases/humanmni.json');
+ATLAS['allenmri']=require('atlases/mouseallenmri.json');
 const atlaslist= require('atlases/atlaslist.json');
 
 const connectvis=require('bisweb_connectivityvis');
@@ -50,10 +55,10 @@ const userPreferences = require('bisweb_userpreferences.js');
 // Parse Data
 // -------------------------------------------------------------------------
 
-let gui_Lobes = atlas['humanmni'].labels.data[0].labels;
-let gui_Lobes2 = atlas['allenmri'].labels.data[1].labels;
-let gui_Lobes3 = atlas['allenmri'].labels.data[2].labels;
-let gui_BrodLabels = atlas['humanmni'].labels.data[3].labels;
+let gui_Lobes = ATLAS['humanmni'].labels.data[0].labels;
+let gui_Lobes2 = ATLAS['allenmri'].labels.data[1].labels;
+let gui_Lobes3 = ATLAS['allenmri'].labels.data[2].labels;
+let gui_BrodLabels = ATLAS['humanmni'].labels.data[3].labels;
 let gui_Lobes_Values = [];
 let keys=Object.keys(gui_Lobes);
 
@@ -63,13 +68,13 @@ for (let i=0;i<keys.length;i++) {
 }
 
 const gui_Networks_Array = [
-    atlas['humanmni'].labels.data[2].labels,
-    atlas['humanmni'].labels.data[4].labels
+    ATLAS['humanmni'].labels.data[2].labels,
+    ATLAS['humanmni'].labels.data[4].labels
 ];
 
 const gui_Networks_ArrayShort = [
-    atlas['humanmni'].labels.data[2].shortlabels,
-    atlas['humanmni'].labels.data[4].shortlabels
+    ATLAS['humanmni'].labels.data[2].shortlabels,
+    ATLAS['humanmni'].labels.data[4].shortlabels
 ];
 
 // Critical flag for now, eventually make it an option
@@ -84,7 +89,7 @@ const initializeBaseNameInformation = function(mode='yale',internal=null) {
 
     let index=0;
     gui_Lobes_Values = [];
-    console.log('Mode=',mode,index);
+    //console.log('Mode=',mode,index);
 
     if (internal.baseatlas!=='humanmni') {
         mode='mouse';
@@ -94,7 +99,7 @@ const initializeBaseNameInformation = function(mode='yale',internal=null) {
         internal.networkAttributeIndex=0;
         index=1;
         gui_Modes[2]='Single Lobe';
-        gui_Lobes = atlas['allenmri'].labels.data[0].labels;
+        gui_Lobes = ATLAS['allenmri'].labels.data[0].labels;
         let keys=Object.keys(gui_Lobes);
         for (let i=0;i<keys.length;i++) {
             let k=keys[i];
@@ -105,7 +110,7 @@ const initializeBaseNameInformation = function(mode='yale',internal=null) {
             }
         }
     } else {
-        gui_Lobes = atlas['humanmni'].labels.data[0].labels;
+        gui_Lobes = ATLAS['humanmni'].labels.data[0].labels;
     
         
         //    console.log('mode=',mode);
@@ -142,7 +147,6 @@ const initializeBaseNameInformation = function(mode='yale',internal=null) {
     internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
     internal.parameters.network=internal.gui_Networks[1];
-    console.log('mode=',mode,internal.networkAttributeIndex);
 };
 
 
@@ -777,6 +781,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let coords=[ 0,0,0];
             for (let i=0;i<=2;i++)
                 coords[i]=internal.mni[i];
+
             if (updateviewer)
                 internal.orthoviewer.setcoordinates(coords);
         }
@@ -854,7 +859,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 atlasinfo=' ( '+lobe+', '+lobe2+', ';
                 coordinfo= lobe3+').';
             }
-                
+            
             s_text='Node:'+displaynumber+atlasinfo;
             s_text2=coordinfo;
 
@@ -908,9 +913,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
         connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
         internal.parameters.mode3d='Uniform';
-        for (let ia=0;ia<internal.datgui_controllers.length;ia++)
-            internal.datgui_controllers[ia].updateDisplay();
-        update();
+        if (internal.datgui_controllers) {
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                internal.datgui_controllers[ia].updateDisplay();
+            update();
+        }
 
     };
 
@@ -921,102 +928,108 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {boolean} sample - if sample then no alert
     // @param {boolean} updatemeshes - if true then update surface
     //
-    var loadmatrix = function(index,filename,done,sample,updatemeshes=true) {
+    var loaderror = function(msg) {
+        webutil.createAlert(msg,true);
+    };
+    
+    var loadmatrix = function(index,filename,doupdate=true,sample=false,updatemeshes=true) {
 
-        done= done || null;
-        sample = sample || false;
+        return new Promise( (resolve,reject) => {
 
-        if (internal.parcellation===null) {
-            loaderror('Load parcellation before loading connectivity matrix');
-            return true;
-        }
-
-        let loaderror = function(msg) {
-            webutil.createAlert(msg,true);
-        };
-
-        bisgenericio.read(filename).then( (obj) => {
-
-            let text=obj.data;
-
+            sample = sample || false;
+            
             if (internal.parcellation===null) {
                 loaderror('Load parcellation before loading connectivity matrix');
-                return;
+                reject();
             }
+            
+            bisgenericio.read(filename).then( (obj) => {
 
-            if (index===-1) {
-                if (internal.conndata.posMatrix===null)
-                    index=0;
-                else if (internal.conndata.hasnegMatrix!==false)
-                    index=0;
-                else
-                    index=1;
-            }
-            let n=internal.conndata.parsematrix(text,index,filename,loaderror);
-
-            let np=internal.parcellation.rois.length;
-            if (n>0 && n!==np) {
-                loaderror('Matrix has '+n+' rows, while parcellation has '+np+' nodes. This is a problem!');
-                cleanmatrixdata();
-                return;
-            }
-
-            internal.undostack.initialize();
-            internal.linestack=[];
-
-
-
-            if (n>0) {
-                if (index===0) {
-                    internal.posFileInfo[0]=filename;
-                    internal.posFileInfo[1] =n;
-                    internal.negFileInfo[0] ="NONE";
-                    internal.negFileInfo[1] =0;
-                } else {
-                    internal.negFileInfo[0] =filename;
-                    internal.negFileInfo[1] =n;
+                let text=obj.data;
+                if (internal.parcellation===null) {
+                    loaderror('Load parcellation before loading connectivity matrix');
+                    reject();
                 }
 
-                if (done===null) {
-                    internal.showlegend=true;
-                    if (internal.parameters.degreethreshold>internal.conndata.maxsum)
-                        internal.parameters.degreethreshold=Math.round(internal.conndata.maxsum/2);
-                    internal.datgui_degreethresholdcontroller.min(0.1).max(internal.conndata.maxsum);
-                    internal.datgui_degreethresholdcontroller.updateDisplay();
-                    update();
-                    setnode(internal.conndata.maxsumnode);
-
-
-                    if (updatemeshes) {
-                        connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                                    internal.parameters.mode3d,
-                                                    internal.parameters.display3d,
-                                                    internal.parameters.resol3d,
-                                                    internal.parameters.hidecereb);
-                        setTimeout( () => { drawColorScale(); },1000);
-                    }
-
-                    if (!sample) {
-                        if (filename.name)
-                            filename=filename.name;
-                        if (index===0)
-                            webutil.createAlert('Positive matrix of dimensions '+np+'*'+np+' read from '+filename);
-                        else
-                            webutil.createAlert('Negative matrix of dimensions '+np+'*'+np+' read from '+filename);
-                        window.dispatchEvent(new Event('resize'));
-                    }
-                    setTimeout( () => { autoDrawLines(); },200);
-
-                } else {
-                    done();
+                if (index===-1) {
+                    if (internal.conndata.posMatrix===null)
+                        index=0;
+                    else if (internal.conndata.hasnegMatrix!==false)
+                        index=0;
+                    else
+                        index=1;
                 }
-                if (internal.keynodedlg!==null)
-                    internal.keynodedlg.hide();
-                internal.keynodedlg=null;
-            }
-        }).catch( (e) => { loaderror(e); });
+                let n=internal.conndata.parsematrix(text,index,filename,loaderror);
+                
+                let np=internal.parcellation.rois.length;
+                if (n>0 && n!==np) {
+                    loaderror('Matrix has '+n+' rows, while parcellation has '+np+' nodes. This is a problem!');
+                    cleanmatrixdata();
+                    reject();
+                }
+                
+                internal.undostack.initialize();
+                internal.linestack=[];
+                
+                if (n>0) {
+                    if (index===0) {
+                        internal.posFileInfo[0]=filename;
+                        internal.posFileInfo[1] =n;
+                        internal.negFileInfo[0] ="NONE";
+                        internal.negFileInfo[1] =0;
+                    } else {
+                        internal.negFileInfo[0] =filename;
+                        internal.negFileInfo[1] =n;
+                    }
+                    
+                    if (doupdate) {
+                        console.log('Updating after matrix load');
+                        internal.showlegend=true;
+                        if (internal.parameters.degreethreshold>internal.conndata.maxsum)
+                            internal.parameters.degreethreshold=Math.round(internal.conndata.maxsum/2);
+                        internal.datgui_degreethresholdcontroller.min(0.1).max(internal.conndata.maxsum);
+                        internal.datgui_degreethresholdcontroller.updateDisplay();
+                        update();
+                        setnode(internal.conndata.maxsumnode);
 
-        return false;
+
+                        if (updatemeshes) {
+                            connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                                        internal.parameters.mode3d,
+                                                        internal.parameters.display3d,
+                                                        internal.parameters.resol3d,
+                                                        internal.parameters.hidecereb);
+                        }
+
+                        if (!sample) {
+                            if (filename.name)
+                                filename=filename.name;
+                            if (index===0)
+                                webutil.createAlert('Positive matrix of dimensions '+np+'*'+np+' read from '+filename);
+                            else
+                                webutil.createAlert('Negative matrix of dimensions '+np+'*'+np+' read from '+filename);
+                            window.dispatchEvent(new Event('resize'));
+                        }
+                        
+                        setTimeout( () => {
+                            if (updatemeshes) 
+                                drawColorScale();
+                            autoDrawLines();
+                            resolve();
+                        },200);
+                    } else {
+                        resolve();
+                    }
+                    
+                    if (internal.keynodedlg!==null)
+                        internal.keynodedlg.hide();
+                    internal.keynodedlg=null;
+                }
+            }).catch( (e) => {
+                loaderror(e);
+                reject(e);
+            });
+        });
     };
 
 
@@ -1024,9 +1037,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {string} text - parcellation text
     // @param {string} filename - file to load from (either .json or .txt)
     var parseparcellation = function(text,filename,silent,keepobjectmap=false) {
+
         silent = silent || false;
-        //console.log('Parsing parcellation',internal.baseatlas);
-        internal.parcellation=new BisParcellation(atlas[internal.baseatlas]);
+        internal.parcellation=new BisParcellation(atlaslist[internal.baseatlas]);
         internal.parcellation.loadrois(text,filename,bootbox.alert);
         internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
 
@@ -1049,63 +1062,84 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!keepobjectmap)
             internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
-        console.log('Parcellation parsed',filename);
         internal.hassurfaceindices=false;
     };
     // Loads Parcellation.
     // @param {string} in_filename - file to load from (either .json or .txt)
-    var loadparcellation = function(in_filename) {
+    var loadparcellation = function(in_filename,silent=false,keepobjectmap=false) {
 
-        internal.parcellation=null;
-        bisgenericio.read(in_filename).then( (obj) => {
-            parseparcellation( obj.data,obj.filename);
-        }).catch( (msg) => {
-            console.log('msg=',msg,in_filename);
-            bootbox.alert(msg);
+        return new Promise( (resolve,reject) => {
+            internal.parcellation=null;
+            bisgenericio.read(in_filename).then( (obj) => {
+                parseparcellation( obj.data,obj.filename,silent,keepobjectmap);
+                resolve();
+            }).catch( (e) => {
+                reject(e);
+            });
         });
-        return false;
     };
 
+    // Loads the surface atlas files
+    var loadatlassurface = function(surfacename) {
 
-
-    // Reads BioImage Suite atlas file gets a description and off to callback
-    // @param {callback} callback function with (atlasimage,description)
-    var readatlas = function(callback,save=true,description=null) {
-
-        let atlasimage=null;
-
-        let myerror =  function () {
-            bootbox.alert('Failed to read internal atlas file. Something is wrong here.');
-            return 0;
-        };
-
-        let internalreadatlas = function(atlas,save=true) {
-            atlasimage=atlas;
-            if (save) {
-                bootbox.prompt({
-                    title: "Please enter a description of the node definition file",
-                    value: "Unknown",
-                    callback: function(result) {
-                        if (result !== null) {
-                            setTimeout(function() {
-                                callback(atlasimage,result);
-                            },100);
-                        }
-                    },
+        return new Promise( (resolve,reject) => {
+            if (surfacename) {
+                bisgenericio.read(surfacename,true).then( (obj) => {
+                    connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
+                    internal.hassurfaceindices=true;
+                    resolve();
+                }).catch( (e) => {
+                    reject(e);
                 });
             } else {
-                callback(atlasimage,description);
+                console.log('importparcimage=false');
+                internal.hassurfaceindices=false;
+                resolve();
             }
-        };
-        const img=new bisweb_image();
-        const imagepath=webutil.getWebPageImagePath();
-        let fname=imagepath+'/'+atlas[internal.baseatlas].labels.filename;
-        console.log('Loading ',fname);
-        img.load(fname,'RAS')
-            .then(function() { internalreadatlas(img,save); })
-            .catch( (e) => {
-                myerror(e) ;
-            });
+        });
+    };
+
+    // Reads BioImage Suite atlas file gets a description and off to callback
+    var read_ordered_lobes_image = function(save=true,description=null) {
+
+        return new Promise( (resolve,reject) => {
+
+            let atlasimage=null;
+            
+            let myerror =  function () {
+                bootbox.alert('Failed to read internal atlas file. Something is wrong here.');
+                return 0;
+            };
+            
+            let internalreadatlas = function(atlas,save=true) {
+                atlasimage=atlas;
+                if (save) {
+                    bootbox.prompt({
+                        title: "Please enter a description of the node definition file",
+                        value: "Unknown",
+                        callback: function(result) {
+                            if (result !== null) {
+                                setTimeout(function() {
+                                    resolve([atlasimage,result]);
+                                },100);
+                            }
+                        },
+                    });
+                } else {
+                    resolve([atlasimage,description]);
+                }
+            };
+            const img=new bisweb_image();
+            const imagepath=webutil.getWebPageImagePath();
+            let fname=imagepath+'/'+ATLAS[internal.baseatlas].labels.filename;
+            console.log('Loading ',fname);
+            img.load(fname,'RAS')
+                .then(function() { internalreadatlas(img,save); })
+                .catch( (e) => {
+                    myerror(e) ;
+                    reject(e);
+                });
+        });
     };
 
     // Imports Parcellation Text and outputs text file in json format
@@ -1113,187 +1147,198 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {filename} textfile - file to create node definition from
     var importParcellationText = function(textfile) {
 
-        let loaderror = function(msg) {
-            bootbox.alert(msg);
-        };
-
-        let atlasimage=null;
-        let description="";
-        let out="";
-        let loadsuccess = function(textstring,filename) {
-            console.log('++++ textstring of length='+textstring.length+' read from'+filename);
-            try {
-                out=new BisParcellation(atlas[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
-            } catch(e) {
-                bootbox.alert(e);
-                return;
-            }
-            parseparcellation(out,filename+".parc",true);
-            bisgenericio.write({
-                filename : filename+".parc",
-                title : 'File to save node definition in',
-                filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-            },out);
-        };
-
-
-        bisgenericio.read(textfile).then( (obj) => {
-
-            let textstring=obj.data;
-            let filename=obj.filename;
-
-            let loadsuccess1 =function(atlas,result) {
-                atlasimage=atlas;
-                description=result;
-                loadsuccess(textstring,filename);
+        return new Promise( (resolve,reject) => {
+            
+            let loaderror = function(msg) {
+                bootbox.alert(msg);
+            };
+            
+            let atlasimage=null;
+            let description="";
+            let out="";
+            let loadsuccess = function(textstring,filename) {
+                console.log('++++ textstring of length='+textstring.length+' read from'+filename);
+                try {
+                    out=new BisParcellation(atlaslist[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
+                } catch(e) {
+                    bootbox.alert(e);
+                    return;
+                }
+                parseparcellation(out,filename+".parc",true);
+                bisgenericio.write({
+                    filename : filename+".parc",
+                    title : 'File to save node definition in',
+                    filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
+                },out).then( () => {
+                    resolve();
+                }).catch( (e) => {
+                    reject(e);
+                });
             };
 
-            try {
-                util.parseMatrix(textstring,filename,false,3);
-            } catch(e) {
-                bootbox.alert('Failed to parse file '+filename+' it does not have 3 columns or something else is wrong. ('+e+')');
-                return;
-            }
 
-            readatlas(loadsuccess1);
-            console.log('import parc text');
-            internal.hassurfaceindices=false;
-        }).catch( (e) => {
-            loaderror(e);
+            bisgenericio.read(textfile).then( (obj) => {
+                
+                let textstring=obj.data;
+                let filename=obj.filename;
+                
+                let loadsuccess1 =function(atlas,result) {
+                    atlasimage=atlas;
+                    description=result;
+                    loadsuccess(textstring,filename);
+                };
+                
+                try {
+                    util.parseMatrix(textstring,filename,false,3);
+                } catch(e) {
+                    bootbox.alert('Failed to parse file '+filename+' it does not have 3 columns or something else is wrong. ('+e+')');
+                    reject(e);
+                    return;
+                }
+
+                read_ordered_lobes_image().then( (arr) => {
+                    loadsuccess1(arr[0],arr[1]);
+                    console.log('import parc text');
+                    internal.hassurfaceindices=false;
+                }).catch( (e) => {
+                    loaderror(e);
+                    reject(e);
+                });
+            }).catch( (e)=> {
+                reject(e);
+            });
         });
     };
 
+    var compareLoadedImageWithAtlas=function() {
 
+        let d=[0,0,0],s=[0,0,0];
+        try {
+            d=internal.orthoviewer.getimage().getDimensions();
+            s=internal.orthoviewer.getimage().getSpacing();
+        } catch(e) {
+            return false;
+        }
+        
+        let truedim = atlaslist[internal.baseatlas]['dimensions'];
+        let truespa = atlaslist[internal.baseatlas]['spacing'];
+        let sum=0.0,sumsp=0.0;
+        for (let i=0;i<=2;i++) {
+            sum=sum+Math.abs(d[i]-truedim[i]);
+            sumsp=sumsp+Math.abs(s[i]-truespa[i]);
+        }
 
+        if (sum>0 || sumsp>0.01) {
+            return false;
+        }
+
+        return true;
+    };
+    
+    
 
     // Imports Parcellation Image and outputs text file in json format
     // @param {BisWebImage} image - image to create from
-    var importParcellationImage = function(vol,atlasdesc=null,surfacenames=null) {
-
+    var importParcellationImage = function(vol,atlasdesc=null,surfacename=null) {
 
         let save=true;
         if (atlasdesc)
             save=false;
+        
+        return new Promise( (resolve,reject) => {
 
-        let createparcellationfromimage = function(atlasimage,description) {
+            let createparcellationfromimage = function(atlasimage,description) {
+                
+                let fname=vol.getFilename();
+                let index=fname.lastIndexOf(".nii.gz");
+                if (index>0)
+                    fname=fname.slice(0,index)+".parc";
+                let out="";
+                try {
+                    out=new BisParcellation(atlaslist[internal.baseatlas]).createParcellationFromImage(vol,atlasimage,description)+"\n";
+                } catch(e) {
+                    bootbox.alert(e);
+                    reject(e);
+                    return;
+                }
+                if (save)
+                    parseparcellation(out,fname,true);
+                else
+                    parseparcellation(out,fname,false);
+                
+                internal.orthoviewer.setobjectmap(vol,true);
+                loadatlassurface(surfacename).then( () => {
+                    if (save) {
+                        bisgenericio.write({
+                            filename : fname,
+                            title : 'File to save node definition in',
+                            filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
+                        },out).then( () => { resolve(); }).catch( (e) => { reject(e); });
+                    } else {
+                        resolve();
+                    }
+                }).catch( (e) => { reject(e); });
+            };
+            
+            let d=vol.getDimensions();
+            let s=vol.getSpacing();
+            let correct_str="Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space).";
+            internal.baseatlas=MAP['human'];
+            if (d[0]===114) {
+                internal.baseatlas=MAP['mouse'];
+                correct_str="Must be RAS 114x80x132 and 0.1x0.1x0.1 mm";
+                onDemandCreateGUI('mouse');
+            } else {
+                onDemandCreateGUI('yale');
+            }
+            //console.log('Base=',internal.baseatlas,' correct=',correct_str);
+            
+            // Hard code parcellation human size
+            // ---------------------------------
+            let truedim = atlaslist[internal.baseatlas]['dimensions'];
+            let truespa = atlaslist[internal.baseatlas]['spacing'];
+            d[3]=truedim[3];
+            s[3]=truespa[3];
+            // -------------------------------------
+            
+            let diff=numeric.norminf(numeric.sub(d,truedim));
+            let diff2=numeric.norminf(numeric.sub(s,truespa));
+            let orient=vol.getOrientation().name;
+            
 
-            let fname=vol.getFilename();
-            let index=fname.lastIndexOf(".nii.gz");
-            if (index>0)
-                fname=fname.slice(0,index)+".parc";
-            let out="";
-            try {
-                out=new BisParcellation(atlas[internal.baseatlas]).createParcellationFromImage(vol,atlasimage,description)+"\n";
-            } catch(e) {
-                bootbox.alert(e);
+            if (diff>0.01 || diff2>0.01 || orient!=="RAS") {
+                console.log('Diff=',diff,diff2,orient);
+                bootbox.alert("Bad Parcellation Image for creating a Parcellation file."+
+                              correct_str+
+                              "This image has orientation "+orient+", dimensions="+[d[0],d[1],d[2]]+
+                              " voxel size="+
+                              [ util.scaledround(s[0],10),util.scaledround(s[1],10),
+                                util.scaledround(s[2],10) ]);
+                reject();
                 return;
             }
-            if (save)
-                parseparcellation(out,fname,true);
-            else
-                parseparcellation(out,fname,false);
 
-            
-            internal.orthoviewer.setobjectmap(vol,true);
-
-            if (save) {
-                bisgenericio.write({
-                    filename : fname,
-                    title : 'File to save node definition in',
-                    filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-                },out);
-            }
-
-            if (surfacenames) {
-                const imagepath=webutil.getWebPageImagePath();
-
-                if (surfacenames.length===2) {
-                    // old style json files
-                    bisgenericio.read(`${imagepath}/${surfacenames[0]}`).then( (obj) => {
-                        connectvis3d.parsebrainsurface(obj.data,obj.filename,false);
-                        internal.hassurfaceindices=true;
-                    }).catch( (e) => { console.log(e); });
-                    
-                    bisgenericio.read(`${imagepath}/${surfacenames[1]}`).then( (obj) => {
-                        connectvis3d.parsebrainsurface(obj.data,obj.filename,false);
-                    }).catch( (e) => { console.log(e); });
-                } else {
-                    // assume one
-                    bisgenericio.read(`${imagepath}/${surfacenames[0]}`,true).then( (obj) => {
-                        connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
-                        internal.hassurfaceindices=true;
-                    });
-                }
+            let same=compareLoadedImageWithAtlas();
+            if (!same) { 
+                // Load something
+                console.log('Loading base');
+                let base=new BisWebImage();
+                let fname=ATLAS[internal.baseatlas].anatomical;
+                fname=webutil.getWebPageImagePath()+'/'+fname;
+                base.load(fname,'RAS').then( () => {
+                    internal.loadingimage=true;
+                    internal.orthoviewer.setimage(base);
+                    internal.loadingimage=false;
+                    read_ordered_lobes_image(save,atlasdesc).then( (arr) => {
+                        createparcellationfromimage(arr[0],arr[1]);
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => { reject(e); });
             } else {
-                console.log('importparcimage=false');
-                internal.hassurfaceindices=false;
+                read_ordered_lobes_image(save,atlasdesc).then( (arr) => {
+                    createparcellationfromimage(arr[0],arr[1]);
+                }).catch( (e) => { reject(e); });
             }
-            
-        };
-
-        let d=vol.getDimensions();
-        let s=vol.getSpacing();
-        let correct="Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space).";
-        internal.baseatlas='humanmni';
-        if (d[0]===114) {
-            internal.baseatlas='allenmri';
-            correct="Must be RAS 114x80x132 and 0.1x0.1x0.1 mm";
-            console.log('atlas=',atlaslist[internal.baseatlas]);
-            onDemandCreateGUI('mouse');
-        } else {
-            onDemandCreateGUI('yale');
-        }
-        console.log('Base=',internal.baseatlas);
-
-        //let i_dim=internal.orthoviewer.getImage().getDimensions();
-
-        
-        // Hard code parcellation human size
-        // ---------------------------------
-        let truedim = atlaslist[internal.baseatlas]['dimensions'];
-        let truespa = atlaslist[internal.baseatlas]['spacing'];
-        d[3]=truedim[3];
-        s[3]=truespa[3];
-        // -------------------------------------
-
-        console.log('True=',truedim,truespa);
-        let diff=numeric.norminf(numeric.sub(d,truedim));
-
-        //console.log(numeric.sub(s,truespa));
-        let diff2=numeric.norminf(numeric.sub(s,truespa));
-        let orient=vol.getOrientation().name;
-
-        //console.log([diff,diff2]);
-        if (diff>0 || diff2>0.01 || orient!=="RAS") {
-            bootbox.alert("Bad Parcellation Image for creating a Parcellation file."+
-                          correct+
-                          "This image has orientation "+orient+", dimensions="+[d[0],d[1],d[2]]+
-                          " voxel size="+
-                          [ util.scaledround(s[0],10),util.scaledround(s[1],10),
-                            util.scaledround(s[2],10) ]);
-            return 0;
-        }
-
-        let i_dim=[0,0,0];
-        try {
-            i_dim=internal.orthoviewer.getimage().getDimensions();
-        } catch(e) {
-            console.log('No image',e);
-        }
-        if (i_dim[0]!==d[0]) {
-            // Load something
-            let base=new BisWebImage();
-            let fname=atlas[internal.baseatlas].anatomical;
-            fname=webutil.getWebPageImagePath()+'/'+fname;
-            base.load(fname,'RAS').then( () => {
-                internal.loadingimage=true;
-                internal.orthoviewer.setimage(base);
-                internal.loadingimage=false;
-                readatlas(createparcellationfromimage,save,atlasdesc);
-            });
-        } else {
-            readatlas(createparcellationfromimage,save,atlasdesc);
-        }
+        });
     };
 
     // -------------------------------------------------------------------------------------------
@@ -1509,13 +1554,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createbutton({ type : "info",
-                    name : "Graphs",
-                    position : "bottom",
-                    css : { "margin": "5px"},
-                    tooltip : "Click this to display the scatterplot",
-                    parent : bbar3,
-                    callback : connectvis.drawScatterandHisto
-                });
+                                       name : "Graphs",
+                                       position : "bottom",
+                                       css : { "margin": "5px"},
+                                       tooltip : "Click this to display the scatterplot",
+                                       parent : bbar3,
+                                       callback : connectvis.drawScatterandHisto
+                                     });
             }
         });
 
@@ -1622,6 +1667,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         setnode : setnode,
 
 
+        loaddefaultatlas(atlasname='humanmni') {
+
+            internal.baseatlas=atlasname;
+            let USEATLAS=ATLAS[internal.baseatlas];
+            let gdef=USEATLAS['groupdefinitions'];
+            let name=gdef[gdef.length-1]['name'];
+            onDemandCreateGUI(name);
+            return this.setParcellation(USEATLAS['parcellations'][0]);
+        },
+
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
         // @param {BisWebSubViewer[]} subviewers - subviewers to place info in
@@ -1631,22 +1686,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (internal.inrestorestate)
                 return;
 
-            console.log('Initializing');
-            
             internal.subviewers=subviewers;
-
-            // Human Hardcode
-
             if (!internal.loadingimage) {
-                onDemandCreateGUI('yale');
-                const imagepath=webutil.getWebPageImagePath();
-                loadparcellation(`${imagepath}/shen.json`);
-                
-                bisgenericio.read(`${imagepath}/268_surface_atlas.bin.gz`,true).then( (obj) => {
-                    connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
-                    internal.hassurfaceindices=true;
-                }).catch( (e) => { console.log(e); });
+                this.loaddefaultatlas();
             }
+
+
+            
             
             update(false);
             setTimeout(function() {
@@ -1713,7 +1759,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     console.log('Some error trying old fashioned way',e);
                 }
             }
-                
+            
             
             
             internal.mni=internal.mni2tal.getMNICoordinates(mm);
@@ -1747,13 +1793,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         loadsamplematrices : function(filenames) {
 
-            let loadnext = function() {
-                loadmatrix(1,filenames[1],null,true,true);
-                webutil.createAlert('Sample connectivity matrices loaded.');
-                //window.dispatchEvent(new Event('resize'));
-            };
-            loadmatrix(0,filenames[0],loadnext,true,false);
-
+            return new Promise( (resolve,reject) => {
+                loadmatrix(0,filenames[0],false,true,false).then( () => {
+                    console.log(filenames[0],'loaded');
+                    loadmatrix(1,filenames[1],true,true,true).then( () => {
+                        console.log(filenames[1],'loaded');
+                        webutil.createAlert('Sample connectivity matrices loaded.');
+                        resolve();
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => { reject(e); });
+            });
         },
 
         info : function() {
@@ -1845,9 +1894,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
         },
 
-        importparcellation : function(image,atlasdesc=null,surfacenames=null) {
-            console.log('at=',atlasdesc,surfacenames);
-            importParcellationImage(image,atlasdesc,surfacenames);
+        importparcellation : function(image,atlasdesc=null,surfacename=null) {
+            importParcellationImage(image,atlasdesc,surfacename);
         },
 
         importparcellationtext : function(filename) {
@@ -1973,9 +2021,82 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         /** get the rendermode externally */
         getRenderMode() {
             return internal.rendermode;
-        }
+        },
+
+        setobjectmap( vol ) {
+            internal.orthoviewer.setobjectmap(vol,true);
+        },
+        
+        loadatlas(objname,species='human') {
 
 
+            return new Promise( (resolve,reject) => {
+                
+                const imagepath=webutil.getWebPageImagePath();
+                internal.baseatlas=MAP[species];
+                let same=compareLoadedImageWithAtlas();
+                let p=null;
+                if (!same) {
+                    p=new Promise( (resolve,reject) => {
+                        let image0 = new BisWebImage();
+                        let fname=ATLAS[internal.baseatlas].anatomical;
+                        let imgname=`${imagepath}/${fname}`;
+                        console.log('Loading new image',imgname);
+                        image0.load(imgname,"RAS").then( () => {
+                            internal.loadingimage=true;
+                            internal.orthoviewer.setimage(image0);
+                            internal.loadingimage=false;
+                            let center = atlaslist[internal.baseatlas]['center'];
+                            setTimeout( () => {
+                                internal.orthoviewer.setcoordinates(center);
+                                resolve();
+                            },100);
+                        }).catch( (e) => { reject(e); });
+                    });
+                } else {
+                    p=Promise.resolve();
+                }
+
+                p.then( () => { 
+                    let image1 = new BisWebImage();
+                    image1.load(objname,"RAS").then( () => { 
+                        this.setobjectmap(image1);
+                        resolve(image1);
+                    }).catch( (e) => {
+                        bootbox.alert("Error loading"+ (e|| ''));
+                        reject(e);
+                    });
+                }).catch( (e) => { reject(e); });
+            });
+        },
+
+
+        setParcellation(element) {
+
+
+            let name=element['name'];
+            let imagename=element['image'];
+            let surfacename=element['surface'];
+            let parcfile=element['parc'] || null;
+            internal.baseatlas=MAP[element['species']];
+            const imagepath=webutil.getWebPageImagePath();
+            this.clearmatrices();
+            
+            return new Promise( (resolve,reject) => {
+                this.loadatlas(imagepath+'/'+imagename,element['species']).then( (img) => {
+                    if (parcfile) {
+                        loadparcellation(imagepath+'/'+parcfile,false,true).then( () => {
+                            loadatlassurface(imagepath+'/'+surfacename);
+                            resolve();
+                        }).catch( (e) => { reject(e); });
+                    } else {
+                        importParcellationImage(img,name+' Atlas',imagepath+'/'+surfacename).then( () => {
+                            resolve();
+                        }).catch( (e) => { reject(e); });
+                    }
+                }).catch( (e) => { reject(e); });
+            });
+        },
     };
 
     internal.updateFn=update;
@@ -2198,7 +2319,7 @@ class ConnectivityControlElement extends HTMLElement {
     /** Imports a parcellation as json file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellation(f,desc,surfacenames=null) { this.innercontrol.importparcellation(f,desc,surfacenames); }
+    importparcellation(f,desc,surfacename=null) { this.innercontrol.importparcellation(f,desc,surfacename); }
 
     /** popups a dialog showing info about this control */
     about() { this.innercontrol.about(); }
@@ -2232,6 +2353,36 @@ class ConnectivityControlElement extends HTMLElement {
     setnodeGroupOption(flag='yale') {
         return this.innercontrol.setnodeGroupOption(flag);
     }
+
+    setParcellation(element) {
+        return this.innercontrol.setParcellation(element);
+    }
+
+    loaddefaultatlas() {
+        
+        return new Promise( (resolve,reject) => {
+            
+            userPreferences.safeGetItem('species').then( (species) => {
+                setTimeout( () => {
+                    if (species==='all')
+                        species='human';
+                    let atnames=Object.keys(ATLAS);
+                    for (let sp=0;sp<atnames.length;sp++) {
+                        let spname=ATLAS[atnames[sp]]['species'];
+                        if (spname===species) {
+                            this.innercontrol.loaddefaultatlas(atnames[sp]).then( () =>{
+                                resolve();
+                            }).catch( (e) => {
+                                reject(e);
+                            });
+                        }
+                    }
+                },500);
+            }).catch( (e) => { reject(e); });
+        });
+
+    }
+
 }
 
 
