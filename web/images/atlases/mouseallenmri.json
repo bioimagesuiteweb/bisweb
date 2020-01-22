@@ -1,7 +1,7 @@
 {
-   "anatomical": "../m19_ReslicedToAllen_0.1.nii.gz",
+   "anatomical": "m19_ReslicedToAllen_0.1.nii.gz",
    "labels": {
-      "filename": "../CCFv3_map19_0.1.nii.gz",
+      "filename": "CCFv3_map19_0.1.nii.gz",
       "description": "Allen Atlas Mapped to MRI",
       "extra": "Mouse Brain",
       "data": [
@@ -977,6 +977,16 @@
                "756": "L-root (root,997)"
             }
          }
-      ]
-   }
+     ]
+   },
+    "parcellations" : {
+        "YaleAllen" : {
+            "image" : "allen_parcellation.nii.gz",
+            "surface" : "allen_185_surface_atlas.bin.gz"
+        }
+    },
+    "groupdefinitions" : {
+        "lobes" :  0
+    }
+
 }

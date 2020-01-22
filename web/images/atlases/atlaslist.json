@@ -2,11 +2,17 @@
     "humanmni" : {
         "filename" : "humanmni.json",
         "dimensions" : [ 181,217,181 ],
-        "spacing" : [ 1.0,1.0,1.0 ]
+        "spacing" : [ 1.0,1.0,1.0 ],
+        "midlobe" : 11,
+        "offset"  : 20.0,
+        "origin"  : [ 90,126,72 ]
     },
     "allenmri" : {
         "filename" : "mouseallenmri.json",
         "dimensions" : [ 114,80,132 ],
-        "spacing" : [ 0.1,0.1,0.1 ]
+        "spacing" : [ 0.1,0.1,0.1 ],
+        "midlobe" : 17,
+        "offset"  : 2.0,
+        "origin"  : [ 0,0,0]
     }
 }

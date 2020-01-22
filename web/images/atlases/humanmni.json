@@ -1,7 +1,7 @@
 {
-    "anatomical" : "../MNI_T1_1mm_stripped_ras.nii.gz",
+    "anatomical" : "MNI_T1_1mm_stripped_ras.nii.gz",
     "labels" : {
-        "filename" : "../Reorder_Atlas.nii.gz",
+        "filename" : "Reorder_Atlas.nii.gz",
         "description" : "BioImage Suite Atlas (MNI)",
         "extra" : "Human Brain",
         "coordinates" : {
@@ -190,6 +190,27 @@
                 }
             }
         ]
+    },
+    "parcellations" : {
+        "Shen 268" : {
+            "image" : "gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz",
+            "surface" : "268_surface_atlas.bin.gz",
+            "parc" : "shen.json"
+        },
+        "Shen 368" : {
+            "image" : "Shen_1mm_368_parcellation_RAS.nii.gz",
+            "surface" : "368_surface_atlas.bin.gz"
+        },
+        "AAL" : {
+            "image" : "AAL_1mm_ras.nii.gz",
+            "surface" : "aal_surface_atlas.bin.gz"
+        }
+    },
+    "groupdefinitions" : {
+        "lobes" :  0,
+        "washu" :  2,
+        "yale"  :  4
     }
+    
 }
 

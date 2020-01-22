@@ -774,7 +774,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (updateviewer)
                 internal.orthoviewer.setcoordinates(coords);
         } else {
-            let truespa = atlaslist[internal.baseatlas]['spacing'];
             let coords=[ 0,0,0];
             for (let i=0;i<=2;i++)
                 coords[i]=internal.mni[i];
@@ -1027,7 +1026,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var parseparcellation = function(text,filename,silent,keepobjectmap=false) {
         silent = silent || false;
         //console.log('Parsing parcellation',internal.baseatlas);
-        internal.parcellation=new BisParcellation(internal.baseatlas);
+        internal.parcellation=new BisParcellation(atlas[internal.baseatlas]);
         internal.parcellation.loadrois(text,filename,bootbox.alert);
         internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
 
@@ -1100,13 +1099,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         };
         const img=new bisweb_image();
         const imagepath=webutil.getWebPageImagePath();
-        let fname=atlas[internal.baseatlas].labels.filename;
-        let ind=fname.lastIndexOf('/');
-        fname=fname.substr(ind,fname.length);
-
-        
-        
-        img.load(`${imagepath}${fname}`,'RAS')
+        let fname=imagepath+'/'+atlas[internal.baseatlas].labels.filename;
+        console.log('Loading ',fname);
+        img.load(fname,'RAS')
             .then(function() { internalreadatlas(img,save); })
             .catch( (e) => {
                 myerror(e) ;
@@ -1128,7 +1123,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let loadsuccess = function(textstring,filename) {
             console.log('++++ textstring of length='+textstring.length+' read from'+filename);
             try {
-                out=new BisParcellation(internal.baseatlas).createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
+                out=new BisParcellation(atlas[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
             } catch(e) {
                 bootbox.alert(e);
                 return;
@@ -1188,7 +1183,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 fname=fname.slice(0,index)+".parc";
             let out="";
             try {
-                out=new BisParcellation(internal.baseatlas).createParcellationFromImage(vol,atlasimage,description)+"\n";
+                out=new BisParcellation(atlas[internal.baseatlas]).createParcellationFromImage(vol,atlasimage,description)+"\n";
             } catch(e) {
                 bootbox.alert(e);
                 return;
@@ -1289,8 +1284,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             // Load something
             let base=new BisWebImage();
             let fname=atlas[internal.baseatlas].anatomical;
-            let ind=fname.lastIndexOf('/');
-            fname=webutil.getWebPageImagePath()+fname.substr(ind,fname.length);
+            fname=webutil.getWebPageImagePath()+'/'+fname;
             base.load(fname,'RAS').then( () => {
                 internal.loadingimage=true;
                 internal.orthoviewer.setimage(base);
