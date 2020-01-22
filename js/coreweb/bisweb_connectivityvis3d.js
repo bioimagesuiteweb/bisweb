@@ -20,7 +20,7 @@ const globalParams={
 };
 
 let lasttexturehue=-1.0;
-const lobeoffset=20.0;
+let lobeoffset=20.0;
 const axisoffset=[0,5.0,20.0];
 
     
@@ -205,7 +205,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     let mina=0,maxa=1;
 
     let colorsurface=true;
-    if (globalParams.internal.baseatlas!=='humanmni' || attributeIndex<0)
+    if (attributeIndex<0)
         colorsurface=false;
     else if (globalParams.internal.hassurfaceindices===false)
         colorsurface=false;
@@ -373,13 +373,15 @@ var parse_multires_text_surface=function(textstring,filename,meshindex) {
         'indices' : indices,
         'parcels'  : parcels,
         'numelements' : numelements,
-        'maxpoint' : obj.maxpoint,
+        'maxpoint' : obj.maxpoint || 1000000,
     };
 };
 
 
 var parse_multires_binary_surfaces=function(in_data,filename) {
 
+    globalParams.maxpoint=[ 200000,200000 ];
+    
     let buffer=in_data.buffer;
 
     console.log('Parsing binary file',filename,in_data.length);
@@ -406,11 +408,14 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
         let maxpoint=header[1];
         let numpoints=header[2];
         let numtriangles=header[3];
+
+        //        console.log('Maxpoint=',maxpoint);
         
         surfaces[mesh]['numelements']=numelements;
         surfaces[mesh]['maxpoint']=maxpoint;
         surfaces[mesh]['vertices'] = new Array(numelements);
 
+        
         
         //console.log('NumPoints=',numpoints,'numtriangles=',numtriangles,'maxpoint=',maxpoint,'numelements=',numelements);
         
@@ -452,6 +457,15 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
 
 var parsebrainsurface = function(surfacedata,filename,binary=false) {
 
+    if (globalParams.internal.baseatlas!=='humanmni')
+        lobeoffset=0.2;
+    else
+        lobeoffset=20.0;
+    
+    if (binary) {
+        globalParams.internal.subviewers[3].reset();
+    }
+    
     let surfaces=[null,null ];
     
     if (!binary) {

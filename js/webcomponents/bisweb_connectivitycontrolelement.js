@@ -32,8 +32,15 @@ const bismni2tal=require('bis_mni2tal');
 const BisWebMatrix=require('bisweb_matrix');
 
 const BisWebPanel = require('bisweb_panel.js');
+const BisWebImage = require('bisweb_image.js');
 const dat = require('bisweb_datgui');
-const humanmni=require('atlases/humanmni.json');
+
+
+const atlas = {};
+atlas['humanmni']=require('atlases/humanmni.json');
+atlas['allenmri']=require('atlases/mouseallenmri.json');
+const atlaslist= require('atlases/atlaslist.json');
+
 const connectvis=require('bisweb_connectivityvis');
 const connectvis3d=require('bisweb_connectivityvis3d');
 
@@ -43,9 +50,11 @@ const userPreferences = require('bisweb_userpreferences.js');
 // Parse Data
 // -------------------------------------------------------------------------
 
-const gui_Lobes = humanmni.labels.data[0].labels;
-const gui_BrodLabels = humanmni.labels.data[3].labels;
-const gui_Lobes_Values = [];
+let gui_Lobes = atlas['humanmni'].labels.data[0].labels;
+let gui_Lobes2 = atlas['allenmri'].labels.data[1].labels;
+let gui_Lobes3 = atlas['allenmri'].labels.data[2].labels;
+let gui_BrodLabels = atlas['humanmni'].labels.data[3].labels;
+let gui_Lobes_Values = [];
 let keys=Object.keys(gui_Lobes);
 
 
@@ -54,13 +63,13 @@ for (let i=0;i<keys.length;i++) {
 }
 
 const gui_Networks_Array = [
-    humanmni.labels.data[2].labels,
-    humanmni.labels.data[4].labels
+    atlas['humanmni'].labels.data[2].labels,
+    atlas['humanmni'].labels.data[4].labels
 ];
 
 const gui_Networks_ArrayShort = [
-    humanmni.labels.data[2].shortlabels,
-    humanmni.labels.data[4].shortlabels
+    atlas['humanmni'].labels.data[2].shortlabels,
+    atlas['humanmni'].labels.data[4].shortlabels
 ];
 
 // Critical flag for now, eventually make it an option
@@ -71,28 +80,57 @@ const gui_Lines = [ 'Positive', 'Negative', 'Both'];
 const gui_Modes = [ 'All', 'Single Node', 'Group' ];
 
 
-const createNetworkNames = function(mode='yale',internal=null) {
+const initializeBaseNameInformation = function(mode='yale',internal=null) {
 
     let index=0;
-    //    console.log('mode=',mode);
-    if (mode==='yale') {
-        index=1;
-        internal.networkAttributeIndex=4;
-        gui_Modes[2]='Single Network';
-    } else if ( mode === 'wshu') {
-        index=0;
-        internal.networkAttributeIndex=2;
-        gui_Modes[2]='Single Network';
-    } else {
+    gui_Lobes_Values = [];
+    console.log('Mode=',mode,index);
+
+    if (internal.baseatlas!=='humanmni') {
+        mode='mouse';
+        internal.gui_Networks_Names=[];
+        internal.gui_Networks_ShortNames=[];
+        internal.baseatlas='allenmri';
         internal.networkAttributeIndex=0;
         index=1;
         gui_Modes[2]='Single Lobe';
+        gui_Lobes = atlas['allenmri'].labels.data[0].labels;
+        let keys=Object.keys(gui_Lobes);
+        for (let i=0;i<keys.length;i++) {
+            let k=keys[i];
+            let v=gui_Lobes[k];
+            let ind = v.indexOf(' ');
+            if (ind>=5) {
+                gui_Lobes[k]=v.substr(0,ind);
+            }
+        }
+    } else {
+        gui_Lobes = atlas['humanmni'].labels.data[0].labels;
+    
+        
+        //    console.log('mode=',mode);
+        if (mode==='yale') {
+            index=1;
+            internal.networkAttributeIndex=4;
+            gui_Modes[2]='Single Network';
+        } else if ( mode === 'wshu') {
+            index=0;
+            internal.networkAttributeIndex=2;
+            gui_Modes[2]='Single Network';
+        } else {
+            internal.networkAttributeIndex=0;
+            index=1;
+            gui_Modes[2]='Single Lobe';
+        }
     }
 
-
+    let keys=Object.keys(gui_Lobes);
+    for (let i=0;i<keys.length;i++) {
+        gui_Lobes_Values.push(gui_Lobes[keys[i]]);
+    }
 
     internal.gui_Networks=gui_Networks_Array[index];
-    let keys=Object.keys(internal.gui_Networks);
+    keys=Object.keys(internal.gui_Networks);
     internal.gui_Networks_Names=[];
     internal.gui_Networks_ShortNames=[];
     for (let i=0;i<keys.length;i++) {
@@ -104,7 +142,7 @@ const createNetworkNames = function(mode='yale',internal=null) {
     internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
     internal.parameters.network=internal.gui_Networks[1];
-    //console.log('mode=',mode,internal.networkAttributeIndex);
+    console.log('mode=',mode,internal.networkAttributeIndex);
 };
 
 
@@ -199,6 +237,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         // state stuff
         inrestorestate : false,
+        loadingimage   : false,
         parcellationtext : null,
         lastnode : 0,
 
@@ -214,7 +253,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     connectvis.initialize(internal);
     connectvis3d.initialize(internal);
-    //    createNetworkNames(useYaleNetworks,internal);
+    //    initializeBaseNameInformation(useYaleNetworks,internal);
 
     // -------------------------------------------------------------------------
     // Undo Stuff
@@ -433,6 +472,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
 
 
+        let half=10;
+        if (internal.baseatlas === 'allenmri') {
+            half=14;
+        }
+        //console.log('Half=',half,internal.baseatlas);
+            
+        
         let cw=internal.context.canvas.width;
         let vp=internal.parcellation.viewport;
         let width  = Math.floor((vp.x1-vp.x0)*cw);
@@ -449,7 +495,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let offset=0;
         let boxheight=internal.parcellation.box[3]-internal.parcellation.box[1];
-        let numgaps=22;
+        let numgaps=half*2+2;
         let dlobe=Math.round(1.5*fnsize);
         let needed=numgaps*dlobe+8;
         if (needed>boxheight) {
@@ -481,7 +527,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.overlaycontext.font=fnsize+"px Arial";
             py+=(2*lobegap);
 
-            for (let i=1;i<=10;i++) {
+            
+            for (let i=1;i<=half;i++) {
                 let tot=util.range(internal.parcellation.lobeStats[i][2],0,10000),tot2=0;
                 if (internal.parcellation.lobeStats.length>(i+10))
                     tot2=util.range(internal.parcellation.lobeStats[i+10][2],0,10000);
@@ -490,7 +537,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.overlaycontext.fillRect(px,py,pw,1.5*lobegap);
                     internal.overlaycontext.fillStyle=internal.parcellation.getInverseNonSidedLobeColor(i);
                     let name=gui_Lobes[i];
-                    name=name.slice(2,name.length);
+                    let ind = name.indexOf(' ');
+                    if (ind<5)
+                        ind=name.length;
+                    name=name.slice(2,ind);
                     internal.overlaycontext.fillText(name,px+0.5*pw,py+lobegap);
                     py+=(2*lobegap);
                 }
@@ -509,10 +559,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
                 internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
                                                  midx,y0_0);
-                if (internal.networkAttributeIndex===4)
-                    internal.overlaycontext.fillText('Using Yale network definitions from Noble at al 2018.',midx,y0_0+20);
-                else if (internal.networkAttributeIndex===2)
-                    internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
+                if (internal.baseatlas === 'humanmni') {
+                    if (internal.networkAttributeIndex===4)
+                        internal.overlaycontext.fillText('Using Yale network definitions from Noble at al 2018.',midx,y0_0+20);
+                    else if (internal.networkAttributeIndex===2)
+                        internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
+                }
             }
 
             internal.overlaycontext.restore();
@@ -712,12 +764,25 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.mni[1]= internal.parcellation.rois[intnode].y;
         internal.mni[2]= internal.parcellation.rois[intnode].z;
         internal.mni[3]= singlevalue;
-        
+        //console.log('Internal=',internal.mni);
         if (internal.showlegend) 
             internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
-        let coords = internal.mni2tal.getMMCoordinates(internal.mni);
-        if (updateviewer)
-            internal.orthoviewer.setcoordinates(coords);
+        
+        // HUMAN SPECIFIC -- FIX
+        if (internal.baseatlas==='humanmni') {
+            let coords = internal.mni2tal.getMMCoordinates(internal.mni);
+            if (updateviewer)
+                internal.orthoviewer.setcoordinates(coords);
+        } else {
+            let truespa = atlaslist[internal.baseatlas]['spacing'];
+            let coords=[ 0,0,0];
+            for (let i=0;i<=2;i++)
+                coords[i]=internal.mni[i];
+            if (updateviewer)
+                internal.orthoviewer.setcoordinates(coords);
+        }
+        // END
+        
         drawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
             connectvis3d.draw3dcrosshairs();
@@ -766,20 +831,33 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             //
 
-            let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
-            let network=internal.gui_Networks[n];
-            if (network===undefined) {
-                network="unknown";
+            let atlasinfo='';
+            let coordinfo='';
+            if (internal.baseatlas === 'humanmni') {
+                let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
+                let network=internal.gui_Networks[n];
+                if (network===undefined) {
+                    network="unknown";
+                } else {
+                    internal.parameters.network=network;
+                }
+                
+                let brod=gui_BrodLabels[internal.parcellation.rois[orignode].attr[3]];
+                if (brod===undefined) {
+                    brod="n/a";
+                }
+                atlasinfo=' ( '+lobe+', NTW='+network+', BA='+brod+').';
+                coordinfo=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
             } else {
-                internal.parameters.network=network;
+                let lobe2=gui_Lobes2[internal.parcellation.rois[orignode].attr[1]];
+                let lobe3=gui_Lobes3[internal.parcellation.rois[orignode].attr[2]];
+                
+                atlasinfo=' ( '+lobe+', '+lobe2+', ';
+                coordinfo= lobe3+').';
             }
-
-            let brod=gui_BrodLabels[internal.parcellation.rois[orignode].attr[3]];
-            if (brod===undefined) {
-                brod="n/a";
-            }
-            s_text='Node:'+displaynumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
-            s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
+                
+            s_text='Node:'+displaynumber+atlasinfo;
+            s_text2=coordinfo;
 
             if (internal.conndata.statMatrix!==null) {
                 s_text2+=', (Degree: pos='+internal.conndata.statMatrix[orignode][0]+', ';
@@ -948,7 +1026,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {string} filename - file to load from (either .json or .txt)
     var parseparcellation = function(text,filename,silent,keepobjectmap=false) {
         silent = silent || false;
-        internal.parcellation=new BisParcellation();
+        //console.log('Parsing parcellation',internal.baseatlas);
+        internal.parcellation=new BisParcellation(internal.baseatlas);
         internal.parcellation.loadrois(text,filename,bootbox.alert);
         internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
 
@@ -1021,9 +1100,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         };
         const img=new bisweb_image();
         const imagepath=webutil.getWebPageImagePath();
-        img.load(`${imagepath}/Reorder_Atlas.nii.gz`,false)
+        let fname=atlas[internal.baseatlas].labels.filename;
+        let ind=fname.lastIndexOf('/');
+        fname=fname.substr(ind,fname.length);
+
+        
+        
+        img.load(`${imagepath}${fname}`,'RAS')
             .then(function() { internalreadatlas(img,save); })
-            .catch( (e) => { myerror(e) ; });
+            .catch( (e) => {
+                myerror(e) ;
+            });
     };
 
     // Imports Parcellation Text and outputs text file in json format
@@ -1041,7 +1128,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let loadsuccess = function(textstring,filename) {
             console.log('++++ textstring of length='+textstring.length+' read from'+filename);
             try {
-                out=new BisParcellation().createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
+                out=new BisParcellation(internal.baseatlas).createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
             } catch(e) {
                 bootbox.alert(e);
                 return;
@@ -1101,7 +1188,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 fname=fname.slice(0,index)+".parc";
             let out="";
             try {
-                out=new BisParcellation().createParcellationFromImage(vol,atlasimage,description)+"\n";
+                out=new BisParcellation(internal.baseatlas).createParcellationFromImage(vol,atlasimage,description)+"\n";
             } catch(e) {
                 bootbox.alert(e);
                 return;
@@ -1110,6 +1197,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 parseparcellation(out,fname,true);
             else
                 parseparcellation(out,fname,false);
+
+            
             internal.orthoviewer.setobjectmap(vol,true);
 
             if (save) {
@@ -1149,15 +1238,30 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let d=vol.getDimensions();
         let s=vol.getSpacing();
+        let correct="Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space).";
+        internal.baseatlas='humanmni';
+        if (d[0]===114) {
+            internal.baseatlas='allenmri';
+            correct="Must be RAS 114x80x132 and 0.1x0.1x0.1 mm";
+            console.log('atlas=',atlaslist[internal.baseatlas]);
+            onDemandCreateGUI('mouse');
+        } else {
+            onDemandCreateGUI('yale');
+        }
+        console.log('Base=',internal.baseatlas);
+
+        //let i_dim=internal.orthoviewer.getImage().getDimensions();
+
+        
         // Hard code parcellation human size
         // ---------------------------------
-        let truedim = [  181,217,181,1 ] ;
-        let truespa = [  1.0,1.0,1.0,1.0 ];
+        let truedim = atlaslist[internal.baseatlas]['dimensions'];
+        let truespa = atlaslist[internal.baseatlas]['spacing'];
         d[3]=truedim[3];
         s[3]=truespa[3];
         // -------------------------------------
 
-
+        console.log('True=',truedim,truespa);
         let diff=numeric.norminf(numeric.sub(d,truedim));
 
         //console.log(numeric.sub(s,truespa));
@@ -1167,7 +1271,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //console.log([diff,diff2]);
         if (diff>0 || diff2>0.01 || orient!=="RAS") {
             bootbox.alert("Bad Parcellation Image for creating a Parcellation file."+
-                          "Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space)."+
+                          correct+
                           "This image has orientation "+orient+", dimensions="+[d[0],d[1],d[2]]+
                           " voxel size="+
                           [ util.scaledround(s[0],10),util.scaledround(s[1],10),
@@ -1175,7 +1279,27 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return 0;
         }
 
-        readatlas(createparcellationfromimage,save,atlasdesc);
+        let i_dim=[0,0,0];
+        try {
+            i_dim=internal.orthoviewer.getimage().getDimensions();
+        } catch(e) {
+            console.log('No image',e);
+        }
+        if (i_dim[0]!==d[0]) {
+            // Load something
+            let base=new BisWebImage();
+            let fname=atlas[internal.baseatlas].anatomical;
+            let ind=fname.lastIndexOf('/');
+            fname=webutil.getWebPageImagePath()+fname.substr(ind,fname.length);
+            base.load(fname,'RAS').then( () => {
+                internal.loadingimage=true;
+                internal.orthoviewer.setimage(base);
+                internal.loadingimage=false;
+                readatlas(createparcellationfromimage,save,atlasdesc);
+            });
+        } else {
+            readatlas(createparcellationfromimage,save,atlasdesc);
+        }
     };
 
     // -------------------------------------------------------------------------------------------
@@ -1197,7 +1321,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var onDemandCreateGUI = function (mode='yale') {
 
 
-        createNetworkNames(mode,internal);
+        initializeBaseNameInformation(mode,internal);
         //console.log('attr=',        internal.networkAttributeIndex,mode);
 
         if (internal.parentDomElement===null)
@@ -1275,14 +1399,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
         });
 
-        let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-        });
-        clist.push(da15);
-        let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-        });
-        clist.push(da16);
+        if (internal.baseatlas==='humanmni') {
+            let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
+                connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+            });
+            clist.push(da15);
+            
+            let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
+                connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+            });
+            clist.push(da16);
+        } else {
+            data['hidecereb']=false;
+            data['smoothness']=0;
+        }
 
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
@@ -1512,15 +1642,18 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.subviewers=subviewers;
 
             // Human Hardcode
-            onDemandCreateGUI('yale');
-            const imagepath=webutil.getWebPageImagePath();
-            loadparcellation(`${imagepath}/shen.json`);
 
-            bisgenericio.read(`${imagepath}/268_surface_atlas.bin.gz`,true).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
-                internal.hassurfaceindices=true;
-            }).catch( (e) => { console.log(e); });
-
+            if (!internal.loadingimage) {
+                onDemandCreateGUI('yale');
+                const imagepath=webutil.getWebPageImagePath();
+                loadparcellation(`${imagepath}/shen.json`);
+                
+                bisgenericio.read(`${imagepath}/268_surface_atlas.bin.gz`,true).then( (obj) => {
+                    connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
+                    internal.hassurfaceindices=true;
+                }).catch( (e) => { console.log(e); });
+            }
+            
             update(false);
             setTimeout(function() {
                 window.dispatchEvent(new Event('resize'));

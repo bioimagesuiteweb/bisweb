@@ -92,7 +92,9 @@ const comparerois=function(a,b) {
 
 class BisParcellation {
 
-    constructor() {
+    constructor(basename='humanmni') {
+
+        //        console.log('Creating parcellation',basename);
         this.initialized=false;
         this.regions=null;
         
@@ -105,7 +107,12 @@ class BisParcellation {
         this.thickness=20.0;
         
         this.points = [];
-        this.midlobe=11;
+        this.basename=basename;
+        if (basename==='humanmni')
+            this.midlobe=11;
+        else
+            this.midlobe=17;
+        //console.log('Midlobe=',this.midlobe,this.basename);
         this.maxlobe=-1;
         this.midpoint=-1;
         this.maxpoint=-1;
@@ -330,6 +337,8 @@ class BisParcellation {
             return 0;
         }
 
+        //console.log('Midlobe=',this.midlobe);
+        
         var i;
         var numpoints=this.rois.length;
 
@@ -349,6 +358,9 @@ class BisParcellation {
         }
 
         var numrows=maxv+1;
+
+        //        console.log('Numrows=',numrows);
+        
         this.lobeStats=new Array(numrows);//new BisMatrix<int>(maxv+1,3,-1);
         for (i=0;i<numrows;i++) 
             this.lobeStats[i]=[ -1,-1,-1];
@@ -370,7 +382,8 @@ class BisParcellation {
                 this.lobeStats[i][2]=this.lobeStats[i][1]-this.lobeStats[i][0]+1;
         }
         // This has to do with the number of lobes
-        this.midlobe=11;
+        //console.log('Lobestats=',this.lobeStats);
+
         this.midpoint=this.lobeStats[this.midlobe-1][1];
         var count=2;
         while (this.midpoint==-1 && (this.midlobe-count)>0) {
@@ -814,6 +827,7 @@ class BisParcellation {
      */
     createParcellationFromImage (parcimage,atlas,description) {
 
+        
         description = description || "unknown";
 
         var dim_p=parcimage.getDimensions();
@@ -838,6 +852,8 @@ class BisParcellation {
         var volsize=dim_a[0]*dim_a[1]*dim_a[2];
         var numattr=dim_a[3];
 
+        //console.log('Number of attributes=',numattr,parcimage.getDimensions(),atlas.getDimensions());
+        
         var cx=new Array(maxvoi+1);
         var cy=new Array(maxvoi+1);
         var cz=new Array(maxvoi+1);
@@ -937,6 +953,12 @@ class BisParcellation {
         obj.rois=[];
 
         var MNI = [ 90, 126, 72 ];
+        if (this.basename!=='humanmni') {
+            MNI=[0,0,0];
+        }
+
+        console.log("MNI=",MNI);
+        
         for (i=1;i<=maxvoi;i++) {
             if (Nv[i]>0) {
                 var elem = { };
@@ -949,6 +971,8 @@ class BisParcellation {
                 obj.rois.push(elem);
             }
         }
+        //console.log('Midlobe=',this.midlobe);
+        
         return JSON.stringify(obj);
     }
 

@@ -123,12 +123,15 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         };
         
 
-        var loadatlas=function(fname) {
+        var loadatlas=function(fname,mouse=false) {
 
             return new Promise( (resolve,reject) => {
                 let image0 = new BisWebImage();
                 const imagepath=webutil.getWebPageImagePath();
-                image0.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,"RAS")
+                let imgname=`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`;
+                if (mouse)
+                    imgname=`${imagepath}/m19_ReslicedToAllen_0.1.nii.gz`;
+                image0.load(imgname,"RAS")
                     .then(function() {
                         VIEWER.viewer.setimage(image0);
                         VIEWER.viewer.setcoordinates([90,126,72]);
@@ -284,6 +287,19 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                    });
                                });
         webutil.createMenuItem(imenu,''); // separator
+        webutil.createMenuItem(imenu,'Use the Allen 185 Mouse Atlas',
+                               function() {
+                                   let img=new BisWebImage();
+                                   const imagepath=webutil.getWebPageImagePath();
+                                   img.load(`${imagepath}/allen_parcellation.nii.gz`,'RAS').then( () => {
+                                       control.clearmatrices();
+                                       control.importparcellation(img,'Allen 185 Atlas',  [ 'allen_185_surface_atlas.bin.gz']);
+                                   });
+                               });
+
+
+
+        webutil.createMenuItem(imenu,''); // separator
         webutil.createMenuItem(imenu,'Group nodes using the Yale Network Definitions', function() {
             control.setnodeGroupOption('yale');
         });
@@ -293,7 +309,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(imenu,'Group Nodes using Lobe Definitions', function() {
             control.setnodeGroupOption('lobes');
         });
-        
+
+
         // ------------------------------------ Advanced Menu ----------------------------
         
         var advmenu=webutil.createTopMenuBarMenu("Advanced",menubar);
