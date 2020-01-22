@@ -783,7 +783,6 @@ var createlines = function() {
     let singlevalue=-1,attribcomponent=0;
     if (mode === 1) {
         singlevalue=Math.round(globalParams.internal.parameters.node)-1;
-        //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
     } else if (mode===2 ) {
         if (globalParams.internal.networkAttributeIndex===0) {
             attribcomponent=0;
