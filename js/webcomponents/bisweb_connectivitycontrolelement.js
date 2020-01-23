@@ -251,6 +251,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         // Info for external use
         laststate : null,
+        lastsurfacename : '',
 
 
     };
@@ -1137,6 +1138,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             bisgenericio.read(surfacename,true).then( (obj) => {
                 connectvis3d.parsebrainsurface(obj.data,obj.filename);
                 internal.hassurfaceindices=true;
+                internal.lastsurfacename=obj.filename;
                 resolve();
             }).catch( (e) => {
                 bootbox.alert('Failed to load surfacename'+surfacename);
@@ -1738,16 +1740,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // @param {BisWebImage} volume - new image (not used)
         initialize : function(subviewers) {
 
+            internal.subviewers=subviewers;
             if (internal.inrestorestate)
                 return;
-
-            internal.subviewers=subviewers;
+            
             if (!internal.loadingimage) {
                 this.loaddefaultatlas();
             }
-
-
-            
             
             update(false);
             setTimeout(function() {
@@ -1973,58 +1972,73 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
-            console.log('New Render mode=',dt.rendermode);
             togglemode(false);
 
             internal.posFileInfo=[ "NONE", 0 ];
             internal.negFileInfo=[ "NONE", 0 ];
 
-            if (dt.parcellation)
+            if (dt.parcellation) {
+
+                let obj=JSON.parse(dt.parcellation.text);
+                internal.baseatlas=obj.baseatlas || 'humanmni';
                 parseparcellation(dt.parcellation.text,dt.parcellation.filename,false);
+                
+                let USEATLAS=ATLAS[internal.baseatlas];
+                let gdef=USEATLAS['groupdefinitions'];
+                let name=gdef[gdef.length-1]['name'];
+                onDemandCreateGUI(name);
+            }
+            
+            let prom=Promise.resolve();
+            if (dt.hassurfaceindices) {
+                prom=loadatlassurface(dt.lastsurfacename);
+            }
 
-
-            if (dt.posmatrix) {
-                let neg=null;
-                let pos=new BisWebMatrix();
-                pos.parseFromJSON(dt['posmatrix'].matrix);
-                internal.posFileInfo=dt['posmatrix'].info;
-
-                pos=pos.getNumericMatrix();
-
-                if (dt.negmatrix) {
-                    neg=new BisWebMatrix();
-                    neg.parseFromJSON(dt['negmatrix'].matrix);
-                    neg=neg.getNumericMatrix();
-                    internal.negFileInfo=dt['negmatrix'].info;
+            prom.then( () => {
+                if (dt.posmatrix) {
+                    let neg=null;
+                    let pos=new BisWebMatrix();
+                    pos.parseFromJSON(dt['posmatrix'].matrix);
+                    internal.posFileInfo=dt['posmatrix'].info;
+                    
+                    pos=pos.getNumericMatrix();
+                    
+                    if (dt.negmatrix) {
+                        neg=new BisWebMatrix();
+                        neg.parseFromJSON(dt['negmatrix'].matrix);
+                        neg=neg.getNumericMatrix();
+                        internal.negFileInfo=dt['negmatrix'].info;
+                    }
+                    internal.conndata.setMatrices(pos,neg);
                 }
-                internal.conndata.setMatrices(pos,neg);
-            }
-
-            for (let attr in dt.parameters) {
-                if (internal.parameters.hasOwnProperty(attr)) {
-                    internal.parameters[attr] = dt.parameters[attr];
+                
+                for (let attr in dt.parameters) {
+                    if (internal.parameters.hasOwnProperty(attr)) {
+                        internal.parameters[attr] = dt.parameters[attr];
+                    }
                 }
-            }
-            //console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
-            //console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
-                internal.datgui_controllers[ia].updateDisplay();
+                
+                for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                    internal.datgui_controllers[ia].updateDisplay();
+                
+                if (dt.linestack) {
+                    internal.linestack=dt.linestack;
+                    update();
+                }
+                
+                internal.showlegend=!dt.showlegend;
+                toggleshowlegend();
 
-            if (dt.linestack) {
-                internal.linestack=dt.linestack;
-                update();
-            }
-
-            internal.showlegend=!dt.showlegend;
-            toggleshowlegend();
-            connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                        internal.parameters.mode3d,
-                                        internal.parameters.display3d,
-                                        internal.parameters.resol3d,
-                                        internal.parameters.hidecereb);
-            internal.inrestorestate=false;
-            setTimeout( () => { drawColorScale();},20);
-
+                connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                            internal.parameters.mode3d,
+                                            internal.parameters.display3d,
+                                            internal.parameters.resol3d,
+                                            internal.parameters.hidecereb);
+                internal.inrestorestate=false;
+                setTimeout( () => { drawColorScale();},20);
+            }).catch( (e) => {
+                bootbox.alert('Failed to restore state'+e);
+            });
         },
 
         /** Get State as Object
@@ -2059,6 +2073,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             obj.parameters=JSON.parse(JSON.stringify(internal.parameters));
             console.log('storing params=',JSON.stringify(obj.parameters,null,2));
 
+            obj.hassurfaceindices=internal.hassurfaceindices;
+            obj.lastsurfacename=internal.lastsurfacename;
+  
             obj.parcellation = internal.parcellationtext;
             obj.lastnode=internal.lastnode;
             obj.showlegend=internal.showlegend;

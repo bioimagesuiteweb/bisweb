@@ -194,6 +194,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     if (globalParams.brainmesh[index] !==null) { 
         globalParams.brainmesh[index].visible=false;
         globalParams.internal.subviewers[3].getScene().remove(globalParams.brainmesh[index]);
+
     }
 
 
@@ -481,8 +482,11 @@ var parsebrainsurface = function(surfacedata,filename) {
     create_axis_lines();
     
     let surfaces=parse_multires_binary_surfaces(surfacedata,filename);
-    if (surfaces[0]===null && surfaces[1]===null)
+    
+    if (surfaces[0]===null && surfaces[1]===null) {
+        console.log('Nothing found');
         return;
+    }
 
     // Remove all
     // Mass cleanup
@@ -564,7 +568,13 @@ var draw3dcrosshairs = function (coords=null) {
 // ---------------------------------------------------------------------------------------------
 
 var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
-   
+
+    try {
+        globalParams.internal.subviewers[3].getScene();
+    } catch(e) {
+        console.log('Viewer not initialized');
+        return;
+    }
 
     doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
 

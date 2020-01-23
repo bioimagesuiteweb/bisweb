@@ -269,7 +269,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         if (!this.externalMode) {
             let helpmenu=this.createHelpMenu(menubar);
             webutil.createMenuItem(helpmenu,''); // separator
-            helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
+            //helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
             webutil.createMenuItem(helpmenu,''); // separator
             webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
                 const imagepath=webutil.getWebPageImagePath();
