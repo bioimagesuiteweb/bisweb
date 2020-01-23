@@ -5,27 +5,9 @@ const bootbox=require('bootbox');
 const $=require('jquery');
 const numeric=require('numeric');
 
-const globalParams={
-
-    internal : null,
-    brainmesh : [ null,null],
-    braingeom : [ null,null],
-    brainmaterial : [ null,null],
-    brainindices : [ null,null ],
-    braintexture : null,
-    vertexlist : [null,null ],
-    numelements : [ 1,1],
-    lastresol : [ -1,-1],
-    maxpoint : [ 200000,200000 ],
-};
 
 let lasttexturehue=-1.0;
-let lobeoffset=20.0;
-const axisoffset=[0,5.0,20.0];
-
-    
 const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
-
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
 const displayimg= $('<img>');
 const transferfunction = {
@@ -34,9 +16,34 @@ const transferfunction = {
     maxth : null
 };
 
+const globalParams={
+    internal : null
+};
+
 // ---------------------------------------------------------------------------------------------------
 // Shaders
 // ---------------------------------------------------------------------------------------------------
+
+var reset_global_params=function() {
+
+    globalParams['brainmesh']= [ null,null];
+    globalParams['braingeom']= [ null,null];
+    globalParams['brainmaterial']= [ null,null];
+    globalParams['brainindices']= [ null,null ];
+    globalParams['braintexture']= null;
+    globalParams['vertexlist']= [null,null ];
+    globalParams['numelements']= [ 1,1];
+    globalParams['lastresol']= [ -1,-1];
+    globalParams['maxpoint']= [ 200000,200000 ];
+    globalParams['LOBEOFFSET']= 20.0;
+    globalParams['AXISOFFSET']= [0,5.0,20.0];
+    globalParams['AXISSIZE']= [ 180.0,216.0, 170.0 ];
+    globalParams['AXISSCALE']= [ 1.0,1.0,1.0 ];
+    globalParams['ATLAS']=null;
+};
+
+
+reset_global_params();
 
 const brain_vertexshader_text = `
       varying vec3  vNormal;
@@ -210,7 +217,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     else if (globalParams.internal.hassurfaceindices===false)
         colorsurface=false;
 
-    //    console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')');
+    console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')', parcels.length);
     
     if (!colorsurface) {
         for (let i=0;i<parcels.length;i++) {
@@ -229,7 +236,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
                     attributes[i]=matrix[parcels[i]-1][attributeIndex];
                 } catch(e) {
                     console.log('Failed',i,parcels[i]);
-                    return;
+                    attributes[i]=0;
                 }
             } else {
                 attributes[i]=0;
@@ -321,62 +328,6 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     globalParams.internal.subviewers[3].getScene().add(globalParams.brainmesh[index]);
 };
 
-// ------------------------------------------------------
-// Read multires surface files
-// ------------------------------------------------------
-// text
-var parse_multires_text_surface=function(textstring,filename,meshindex) {
-
-    let obj= JSON.parse(textstring);
-        
-    let numelements=obj['numelements'] || 1;
-    let indices = new Uint32Array(obj.triangles.length);
-    let parcels=null;
-    if (obj.indices)
-        parcels = new Uint32Array(obj.indices.length);
-    
-    let vertices = new Array(numelements);
-    console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length,obj.indices.length]);
-    
-    for (let e=0;e<numelements;e++) {
-        vertices[e]=new Float32Array(obj.points.length);
-        let srcname='points';
-        if (e>0)
-            srcname='points'+e;
-        
-        for (let i=0;i<obj[srcname].length;i+=3) {
-            vertices[e][i+0]=obj[srcname][i+0];
-            if (meshindex===1) // right
-                vertices[e][i]+=lobeoffset;
-            else // left
-                vertices[e][i]-=lobeoffset;
-            vertices[e][i+1]=obj[srcname][i+1];
-            vertices[e][i+2]=obj[srcname][i+2];
-        }
-    }
-    
-    for (let i=0;i<obj.triangles.length;i++) 
-        indices[i]=obj.triangles[i];
-    
-    if (obj.indices) {
-        let maxp=0;
-        for (let i=0;i<parcels.length;i++) {
-            parcels[i]=obj.indices[i];
-            if (parcels[i]>maxp)
-                maxp=parcels[i];
-        }
-        console.log('Parcels=',parcels.length,obj.indices.length,obj.points.length/3,' ex=',parcels[0],parcels[22],parcels[73],'maxparcel=',maxp);
-    }
-
-    return {
-        'vertices' : vertices,
-        'indices' : indices,
-        'parcels'  : parcels,
-        'numelements' : numelements,
-        'maxpoint' : obj.maxpoint || 1000000,
-    };
-};
-
 
 var parse_multires_binary_surfaces=function(in_data,filename) {
 
@@ -425,13 +376,18 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
             //  console.log('Points=',arr[0],arr[1],arr[2],arr[arr.length-3],arr[arr.length-2],arr[arr.length-1]);
 
             cursor=cursor+arr.byteLength;
+
+            /*            if (j===0)
+                          console.log('Mesh=',mesh, 'Point 0 = ',arr[300],arr[301],arr[302]);*/
             
-            let shiftx=lobeoffset;
+            let shiftx=globalParams.LOBEOFFSET;
             if (mesh===0) // left
-                shiftx=-lobeoffset;
+                shiftx=-globalParams.LOBEOFFSET;
             for (let p=0;p<arr.length;p+=3)
                 arr[p]+=shiftx;
 
+            /*if (j===0)
+              console.log('Point 0 --> ',arr[300],arr[301],arr[302]);*/
             
             surfaces[mesh]['vertices'][j]=arr;
             //console.log('Created points array',j,arr.length,arr.byteLength,' cursor=',cursor);
@@ -455,41 +411,87 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
 
 };
 
-var parsebrainsurface = function(surfacedata,filename,binary=false) {
+var removesurfacemeshes = function() {
+    /*for (let i=0;i<=1;i++) {
+        if (globalParams.brainmesh[i] !==null) { 
+            globalParams.brainmesh[i].visible=false;
+            globalParams.internal.subviewers[3].getScene().remove(globalParams.brainmesh[i]);
+        }
+        }*/
 
-    if (globalParams.internal.baseatlas!=='humanmni')
-        lobeoffset=0.2;
-    else
-        lobeoffset=20.0;
-    
-    if (binary) {
-        globalParams.internal.subviewers[3].reset();
+    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
+    //console.log('Base Atlas=',globalParams['ATLAS']);
+    globalParams.LOBEOFFSET=globalParams['ATLAS']['midoffset'];
+    globalParams.AXISOFFSET=globalParams['ATLAS']['axisoffset'];
+    globalParams.AXISSIZE  =globalParams['ATLAS']['axissize'];
+    globalParams.AXISSCALE =globalParams['ATLAS']['spacing'];
+    globalParams.internal.subviewers[3].reset();
+    //reset_global_params();
+};
+
+var create_axis_lines=function() {
+
+    for (let axis=0;axis<=2;axis++) {
+        if (globalParams.internal.axisline[axis]!==null) {
+            globalParams.internal.axisline[axis].visible=false;
+            globalParams.internal.subviewers[3].getScene().remove(globalParams.internal.axisline[axis]);
+        }
     }
-    
-    let surfaces=[null,null ];
-    
-    if (!binary) {
-    
-        let index=0;
-        let isright=filename.lastIndexOf("right");
-        if (isright>=0)
-            index=1;
 
-        surfaces[index]= parse_multires_text_surface(surfacedata,filename,index);
-    } else {
-        surfaces=parse_multires_binary_surfaces(surfacedata,filename);
+
+    //console.log('Mid Coords=',globalParams.LOBEOFFSET);
+    
+    let p_indices = new Uint16Array(2);
+    p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
+    for (let axis=0;axis<=2;axis++) {
+        let p_vertices = new Float32Array(6);
+        p_vertices[0]=-globalParams.AXISOFFSET[0];
+        p_vertices[1]=-globalParams.AXISOFFSET[1];
+        p_vertices[2]=-globalParams.AXISOFFSET[2];
+        p_vertices[3]=-globalParams.AXISOFFSET[0];
+        p_vertices[4]=-globalParams.AXISOFFSET[1];
+        p_vertices[5]=-globalParams.AXISOFFSET[2];
+        if (axis===0) {
+            p_vertices[3]=globalParams.AXISSIZE[0]+globalParams.LOBEOFFSET+globalParams.AXISOFFSET[0];
+            p_vertices[0]-=globalParams.LOBEOFFSET;
+        } else if (axis===1) {
+            p_vertices[4]=globalParams.AXISSIZE[1]+globalParams.AXISOFFSET[1];
+        } else {
+            p_vertices[5]=globalParams.AXISSIZE[2];
+        }
+        
+        let pbuf=new THREE.BufferGeometry();
+        pbuf.setIndex( new THREE.BufferAttribute( p_indices, 1));
+        pbuf.addAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
+        globalParams.internal.axisline[axis] = new THREE.Line(pbuf,
+                                                              new THREE.LineBasicMaterial( {
+                                                                  color: 0xff8800, 
+                                                                  transparent: false,
+                                                                  opacity: 1.0,
+                                                              }));
+        globalParams.internal.axisline[axis].visible=false;
+        globalParams.internal.subviewers[3].getScene().add(globalParams.internal.axisline[axis]);
     }
+};
 
+var parsebrainsurface = function(surfacedata,filename) {
+
+    console.log('In parse brainsurface\n',filename,'\n');
+    removesurfacemeshes();
+    create_axis_lines();
+    
+    let surfaces=parse_multires_binary_surfaces(surfacedata,filename);
     if (surfaces[0]===null && surfaces[1]===null)
         return;
+
+    // Remove all
+    // Mass cleanup
+
+
     
     for (let meshindex=0;meshindex<=1;meshindex++) {
 
         if (surfaces[meshindex]!==null) {
-            //console.log('Keys=',Object.keys(surfaces[meshindex]));
-            //console.log('Vertices[0]=',surfaces[meshindex]['vertices'][0].length);
-            //            console.log('Indices=',surfaces[meshindex]['indices'].length);
-            //            console.log('Parcels=',surfaces[meshindex]['parcels'].length);
             let buf=new THREE.BufferGeometry();
             buf.setIndex( new THREE.BufferAttribute( surfaces[meshindex].indices, 1));
             buf.addAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );
@@ -500,62 +502,57 @@ var parsebrainsurface = function(surfacedata,filename,binary=false) {
             globalParams.vertexlist[meshindex]=surfaces[meshindex]['vertices'];
             globalParams.numelements[meshindex]=surfaces[meshindex]['numelements'];
             globalParams.lastresol[meshindex]=0;
-            globalParams.maxpoint[meshindex]=surfaces[meshindex]['maxpoint'];
+            globalParams.maxpoint[meshindex]=surfaces[meshindex]['maxpoint'] || 0;
     
             createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0,false);
         }
     }
-        
-    if (globalParams.internal.axisline[0]===null) {
-        // create axis line meshes
-        
-        let p_indices = new Uint16Array(2);
-        p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
-        for (let axis=0;axis<=2;axis++) {
-            let p_vertices = new Float32Array(6);
-            p_vertices[0]=-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
-            p_vertices[3]=-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
-            if (axis===0) {
-                p_vertices[3]=180+lobeoffset+axisoffset[0];
-                p_vertices[0]-=lobeoffset;
-            } else if (axis===1) {
-                p_vertices[4]=216.0+axisoffset[1];
-            } else {
-                p_vertices[5]=170.0;
-            }
-            let pbuf=new THREE.BufferGeometry();
-            pbuf.setIndex( new THREE.BufferAttribute( p_indices, 1));
-            pbuf.addAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
-            globalParams.internal.axisline[axis] = new THREE.Line(pbuf,
-                                                     new THREE.LineBasicMaterial( {
-                                                         color: 0xff8800, 
-                                                         transparent: false,
-                                                         opacity: 1.0,
-                                                     }));
-            globalParams.internal.axisline[axis].visible=false;
-            globalParams.internal.subviewers[3].getScene().add(globalParams.internal.axisline[axis]);
-        }
-        if (globalParams.internal.showlegend)
-            globalParams.internal.setnodeFn(Math.round(globalParams.internal.parameters.node-1));
+    
+    if (globalParams.internal.showlegend)
+        globalParams.internal.setnodeFn(Math.round(globalParams.internal.parameters.node-1));
 
-        window.dispatchEvent(new Event('resize'));
-    }
+    window.dispatchEvent(new Event('resize'));
+    
 };
 
 // ---------------------------------------------------------------------------------------------
-var draw3dcrosshairs = function () {
+var draw3dcrosshairs = function (coords=null) {
     if (globalParams.internal.axisline[0]===null)
         return;
+
+    let inmm=true;
     
-    let coords = globalParams.internal.mni2tal.getMMCoordinates(globalParams.internal.mni);
-    //        console.log('MNI=',globalParams.internal.mni,' --> Coords=',coords);
-    if (globalParams.internal.mni[0]<0.0)
-        coords[0]-=lobeoffset;
-    else
-        coords[0]+=lobeoffset;
-    coords[1]+=axisoffset[1];
-    coords[2]+=axisoffset[2];
-    
+    if (coords===null) {
+        coords=[ globalParams.internal.mni[0],globalParams.internal.mni[1],globalParams.internal.mni[2] ];
+        inmm=false;
+    }
+
+    if (!inmm) {
+        if (globalParams['ATLAS']['ismni']) {
+            coords = globalParams.internal.mni2tal.getMMCoordinates(globalParams.internal.mni);
+        }
+    }
+
+    let shift=globalParams.LOBEOFFSET;
+    if (!inmm) {
+        if (globalParams['ATLAS']['ismni']) {
+            if (globalParams.internal.mni[0]<0.0)
+                shift-=globalParams.LOBEOFFSET;
+        } else {
+            if (coords[0]<globalParams['ATLAS']['dimensions'][0]/2) 
+                shift=-shift;
+            for (let i=0;i<=2;i++)
+                coords[i]=coords[i]*globalParams.AXISSCALE[i];
+        }
+    } else {
+        if (coords[0]<globalParams['ATLAS']['dimensions'][0]*globalParams['ATLAS']['spacing'][0]/2)
+            shift=-shift;
+        coords[0]+=shift;
+    }
+
+    coords[0]+=globalParams.AXISOFFSET[0];
+    coords[1]+=globalParams.AXISOFFSET[1];
+    coords[2]+=globalParams.AXISOFFSET[2];
     globalParams.internal.axisline[0].position.set(0.0,coords[1],coords[2]);
     globalParams.internal.axisline[1].position.set(coords[0],0.0,coords[2]);
     globalParams.internal.axisline[2].position.set(coords[0],coords[1],0.0);
@@ -707,7 +704,7 @@ module.exports = {
     parsebrainsurface : parsebrainsurface,
     draw3dcrosshairs : draw3dcrosshairs,
     drawlines3d : drawlines3d,
-    lobeoffset : lobeoffset,
+    lobeoffset : globalParams.LOBEOFFSET,
     createAndDisplayBrainSurface : createAndDisplayBrainSurface,
     color_modes  : color_modes,
     displayimg : displayimg,

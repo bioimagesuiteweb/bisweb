@@ -5,9 +5,11 @@
         "dimensions" : [ 181,217,181 ],
         "spacing" : [ 1.0,1.0,1.0 ],
         "midlobe" : 11,
-        "offset"  : 20.0,
         "origin"  : [ 90,126,72 ],
-        "center"  : [ 90,126,72 ]
+        "midoffset"  : 20.0,
+        "axisoffset" : [0,5.0,20.0],
+        "axissize" : [ 180.0,216.0, 170.0 ],
+        "ismni"  : true
     },
     "allenmri" : {
         "name" : "allenmri",
@@ -15,8 +17,10 @@
         "dimensions" : [ 114,80,132 ],
         "spacing" : [ 0.1,0.1,0.1 ],
         "midlobe" : 17,
-        "offset"  : 2.0,
+        "midoffset"  : 2.0,
+        "axissize" : [ 14.0,9.0,15.2 ],
+        "axisoffset" : [ 0,0.5,1.0 ],
         "origin"  : [ 0,0,0],
-        "center"  : [ 68,39,60 ]
+        "ismni" : false
     }
 }

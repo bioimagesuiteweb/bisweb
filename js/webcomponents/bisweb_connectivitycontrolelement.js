@@ -46,7 +46,7 @@ const MAP = {
 const ATLAS = {};
 ATLAS['humanmni']=require('atlases/humanmni.json');
 ATLAS['allenmri']=require('atlases/mouseallenmri.json');
-const atlaslist= require('atlases/atlaslist.json');
+const ATLASLIST= require('atlases/atlaslist.json');
 
 const connectvis=require('bisweb_connectivityvis');
 const connectvis3d=require('bisweb_connectivityvis3d');
@@ -166,6 +166,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     let internal = {
 
         baseatlas : 'humanmni',
+        ATLAS : ATLAS,
+        ATLASLIST : ATLASLIST,
         hassurfaceindices : false,
         
         // store here
@@ -773,17 +775,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //console.log('Internal=',internal.mni);
         if (internal.showlegend) 
             internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
+
+        let coords=[];
         
         // HUMAN SPECIFIC -- FIX
         if (internal.baseatlas==='humanmni') {
-            let coords = internal.mni2tal.getMMCoordinates(internal.mni);
+            coords = internal.mni2tal.getMMCoordinates(internal.mni);
             if (updateviewer)
                 internal.orthoviewer.setcoordinates(coords);
         } else {
-            let coords=[ 0,0,0];
+            coords=[ 0,0,0];
             for (let i=0;i<=2;i++)
                 coords[i]=internal.mni[i];
-
+            
             if (updateviewer)
                 internal.orthoviewer.setcoordinates(coords);
         }
@@ -791,7 +795,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         drawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
-            connectvis3d.draw3dcrosshairs();
+            if (updateviewer)
+                connectvis3d.draw3dcrosshairs(coords);
         } else {
             internal.axisline[0].visible=false;
             internal.axisline[1].visible=false;
@@ -901,7 +906,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.overlaycontext.restore();
     };
 
-    var cleanmatrixdata = function() {
+    var cleanmatrixdata = function(dosurfaces=true) {
         internal.conndata.cleanup();
         if (internal.keynodedlg!==null) {
             internal.keynodedlg.hide();
@@ -912,8 +917,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.negFileInfo=[ "NONE", 0 ];
         internal.undostack.initialize();
         internal.linestack=[];
-        connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
-        connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+        if (dosurfaces) {
+            connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
+            connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+        }
         internal.parameters.mode3d='Uniform';
         if (internal.datgui_controllers) {
             for (let ia=0;ia<internal.datgui_controllers.length;ia++)
@@ -1034,14 +1041,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         });
     };
 
+
     // Parses Parcellation
     // @param {string} text - parcellation text
     // @param {string} filename - file to load from (either .json or .txt)
-    var parseparcellation = function(text,filename,silent,keepobjectmap=false) {
+    var parseparcellation = function(text,filename,silent) {
 
         silent = silent || false;
 
-        internal.parcellation=new BisParcellation(atlaslist[internal.baseatlas]);
+        internal.parcellation=new BisParcellation(ATLASLIST[internal.baseatlas]);
         internal.parcellation.loadrois(text,filename,bootbox.alert);
         internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
 
@@ -1061,14 +1069,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             webutil.createAlert('Connectivity Viewer initialized. The node definition loaded is from '+internal.parcellation.description+'.',
                                 false);
         }
-        if (!keepobjectmap)
-            internal.orthoviewer.clearobjectmap();
-        cleanmatrixdata();
         internal.hassurfaceindices=false;
     };
     // Loads Parcellation.
     // @param {string} in_filename - file to load from (either .json or .txt)
-    var loadparcellation = function(in_filename,silent=false,keepobjectmap=false) {
+    var loadparcellation = function(in_filename,silent=false) {
 
         return new Promise( (resolve,reject) => {
             internal.parcellation=null;
@@ -1097,11 +1102,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                         'numframes' : 1
                                                       });
                             internal.orthoviewer.setobjectmap(objmap,true);
-
-
                             
-                            
-                            parseparcellation( obj.data,obj.filename,silent,keepobjectmap);
+                            parseparcellation( obj.data,obj.filename,silent);
                             loadatlassurface(null).then( () => {
                                 resolve();
                             }).catch( (e) => {
@@ -1112,7 +1114,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 } catch(e) {
                     console.log('Not JSON ' +e );
                 }
-                parseparcellation( obj.data,obj.filename,silent,keepobjectmap);
+                parseparcellation( obj.data,obj.filename,silent);
                 resolve();
             }).catch( (e) => {
                 reject(e);
@@ -1123,17 +1125,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // Loads the surface atlas files
     var loadatlassurface = function(surfacename=null) {
 
-        console.log('Surfacename=',surfacename);
+        //console.log('Surfacename=',surfacename);
         
         return new Promise( (resolve,reject) => {
             if (!surfacename) {
                 let USEATLAS=ATLAS[internal.baseatlas];
                 surfacename=webutil.getWebPageImagePath()+'/'+USEATLAS['parcellations'][0].surface;
-                console.log('New name=',internal.baseatlas,surfacename);
+                console.log('Loading default surface=',internal.baseatlas,surfacename);
             }
                 
             bisgenericio.read(surfacename,true).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename,true);
+                connectvis3d.parsebrainsurface(obj.data,obj.filename);
                 internal.hassurfaceindices=true;
                 resolve();
             }).catch( (e) => {
@@ -1188,6 +1190,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {filename} textfile - file to create node definition from
     var importParcellationText = function(textfile) {
 
+        cleanmatrixdata();
+        
         return new Promise( (resolve,reject) => {
             
             let loadsuccess =async function(atlasimage,textstring,filename) {
@@ -1201,13 +1205,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 console.log(description);
                 let out='';
                 try {
-                    out=new BisParcellation(atlaslist[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,description,internal.baseatlas)+"\n";
+                    out=new BisParcellation(ATLASLIST[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,description,internal.baseatlas)+"\n";
                 } catch(e) {
                     bootbox.alert(e);
                     return;
                 }
                 parseparcellation(out,filename+".parc",true);
-                console.log('In Text\n');
+        
+
                 try {
                     await bisgenericio.write({
                         filename : filename+".parc",
@@ -1257,8 +1262,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return false;
         }
         
-        let truedim = atlaslist[internal.baseatlas]['dimensions'];
-        let truespa = atlaslist[internal.baseatlas]['spacing'];
+        let truedim = ATLASLIST[internal.baseatlas]['dimensions'];
+        let truespa = ATLASLIST[internal.baseatlas]['spacing'];
         let sum=0.0,sumsp=0.0;
         for (let i=0;i<=2;i++) {
             sum=sum+Math.abs(d[i]-truedim[i]);
@@ -1302,7 +1307,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 
                 let out="";
                 try {
-                    out=new BisParcellation(atlaslist[internal.baseatlas]).createParcellationFromImage(vol,atlasimage,description)+"\n";
+                    out=new BisParcellation(ATLASLIST[internal.baseatlas]).createParcellationFromImage(vol,atlasimage,description)+"\n";
                 } catch(e) {
                     bootbox.alert(e);
                     reject(e);
@@ -1310,16 +1315,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 }
                 
                 internal.orthoviewer.setobjectmap(vol,true);
-
+                parseparcellation(out,fname,true);
+                
                 if (save) {
-                    parseparcellation(out,fname,true);
+
                     await bisgenericio.write({
                         filename : fname,
                         title : 'File to save node definition in',
                         filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
                     },out).then( () => { resolve(); }).catch( (e) => { reject(e); });
-                } else {
-                    parseparcellation(out,fname,false);
                 }
 
                 // Check for surfaces
@@ -1347,8 +1351,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             // Hard code parcellation human size
             // ---------------------------------
-            let truedim = atlaslist[internal.baseatlas]['dimensions'];
-            let truespa = atlaslist[internal.baseatlas]['spacing'];
+            let truedim = ATLASLIST[internal.baseatlas]['dimensions'];
+            let truespa = ATLASLIST[internal.baseatlas]['spacing'];
             d[3]=truedim[3];
             s[3]=truespa[3];
             // -------------------------------------
@@ -1774,7 +1778,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // Loads a parcellation from fname (json or txt)
         // @memberof BisGUIConnectivityControl.prototype
         loadparcellationfile : function(fname) {
-            loadparcellation(fname);
+            return loadparcellation(fname);
         },
 
 
@@ -1786,9 +1790,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // @param {number} mousestate - 0=click 1=move 2=release
         //
         updatemousecoordinates : function (mm,plane,mousestate) {
-            if (mousestate<0 || mousestate === undefined || mousestate===2)
+            if (mousestate!==2)
                 return;
 
+            connectvis3d.draw3dcrosshairs(mm);
+            
             let objmap=internal.orthoviewer.getobjectmap();
             if (objmap!==null) {
                 let spa=objmap.getSpacing();
@@ -1799,7 +1805,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 }
 
                 let voxel=c[0]+c[1]*dim[0]+c[2]*dim[0]*dim[1];
-                //console.log('mm=',mm,spa,c,'voxel=',voxel);
                 try {
                     let val=objmap.getImageData()[voxel];
                     if (val>=0) {
@@ -1824,7 +1829,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                                    internal.overlaycontext);
             }
 
-            connectvis3d.draw3dcrosshairs();
             updatetext();
 
         },
@@ -1943,18 +1947,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         about : function() {
-
             webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
         },
 
         importparcellation : function(image,atlasdesc=null,surfacename=null) {
-            cleanmatrixdata();
-            importParcellationImage(image,atlasdesc,surfacename);
+            cleanmatrixdata(false);
+            return importParcellationImage(image,atlasdesc,surfacename);
         },
 
         importparcellationtext : function(filename) {
-            cleanmatrixdata();
-            importParcellationText(filename);
+            internal.orthoviewer.clearobjectmap();
+            cleanmatrixdata(false);
+            return importParcellationText(filename);
+            
         },
 
 
@@ -1975,7 +1980,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.negFileInfo=[ "NONE", 0 ];
 
             if (dt.parcellation)
-                parseparcellation(dt.parcellation.text,dt.parcellation.filename,false,true);
+                parseparcellation(dt.parcellation.text,dt.parcellation.filename,false);
 
 
             if (dt.posmatrix) {
@@ -2101,7 +2106,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                             internal.loadingimage=true;
                             internal.orthoviewer.setimage(image0);
                             internal.loadingimage=false;
-                            /*let center = atlaslist[internal.baseatlas]['center'];
+                            /*let center = ATLASLIST[internal.baseatlas]['center'];
                             setTimeout( () => {
                                 internal.orthoviewer.setcoordinates(center);
                                 resolve();
@@ -2129,6 +2134,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         setParcellation(element) {
 
+            cleanmatrixdata(false);
 
             let name=element['name'];
             let imagename=element['image'];
@@ -2224,32 +2230,48 @@ class ConnectivityControlElement extends HTMLElement {
     /** load parcellation file
      * @param {string} fname - the url or filename or file object or an electron object with members
      */
-    loadparcellationfile(fname) { this.innercontrol.loadparcellationfile(fname); }
+    loadparcellationfile(fname) {
+        return this.innercontrol.loadparcellationfile(fname);
+    }
 
     /** loads a a matrix file
      * @param {string} fname - the url or filename or file object or an electron object with members
      */
-    loadmatrix(index,fname) { this.innercontrol.loadmatrix(index,fname); }
+    loadmatrix(index,fname) {
+        return this.innercontrol.loadmatrix(index,fname);
+    }
 
     /** Loads sample matrices
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    loadsamplematrices(fnames) { this.innercontrol.loadsamplematrices(fnames);  }
+    loadsamplematrices(fnames) {
+        return this.innercontrol.loadsamplematrices(fnames);
+    }
 
     /** clears matrices */
-    clearmatrices() { this.innercontrol.clearmatrices(); }
+    clearmatrices() {
+        this.innercontrol.clearmatrices();
+    }
 
     /* undo last draw operations */
-    undo() { this.innercontrol.undo(); }
+    undo() {
+        this.innercontrol.undo();
+    }
 
     /* redo last draw operations */
-    redo() { this.innercontrol.redo(); }
+    redo() {
+        this.innercontrol.redo();
+    }
 
     /* prints info about current data */
-    info() { this.innercontrol.info(); }
+    info() {
+        this.innercontrol.info();
+    }
 
     /* reset default display parameters */
-    resetdefault() { this.innercontrol.resetdefault(); }
+    resetdefault() {
+        this.innercontrol.resetdefault();
+    }
 
     /* shows a popup dialog listing the most "interesting" nodes */
     viewInteresting() {
@@ -2365,20 +2387,35 @@ class ConnectivityControlElement extends HTMLElement {
     }
 
     /* displays the matrices */
-    showmatrices() { this.innercontrol.showmatrices(); }
+    showmatrices() {
+        this.innercontrol.showmatrices();
+    }
 
     /** Imports a parcellation as text file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellationtext(f) { this.innercontrol.importparcellationtext(f); }
+    importparcellationtext(f) {
+        return this.innercontrol.importparcellationtext(f);
+    }
 
     /** Imports a parcellation as json file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellation(f,desc,surfacename=null) { this.innercontrol.importparcellation(f,desc,surfacename); }
+    importparcellation(f,desc,surfacename=null) {        
+        return new Promise( (resolve,reject) => {
+            this.innercontrol.importparcellation(f,desc,surfacename).then( () => {
+                this.clearmatrices();
+                resolve();
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+    }
 
     /** popups a dialog showing info about this control */
-    about() { this.innercontrol.about(); }
+    about() {
+        this.innercontrol.about();
+    }
 
     /** Set the element state from a dictionary object
         @param {object} state -- the state of the element */

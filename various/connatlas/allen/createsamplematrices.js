@@ -32,12 +32,12 @@ for (let row=0;row<160;row++) {
 
 matr2.setElement(0,2,1);
 matr2.setElement(2,0,1);
-matr2.setElement(0,311,1);
-matr2.setElement(311,0,1);
-matr2.setElement(50,274,1);
-matr2.setElement(274,50,1);
-matr2.setElement(180,282,1);
-matr2.setElement(182,280,1);
+matr2.setElement(0,121,1);
+matr2.setElement(121,0,1);
+matr2.setElement(50,154,1);
+matr2.setElement(154,50,1);
+matr2.setElement(130,132,1);
+matr2.setElement(132,130,1);
 
 
 Promise.all([ matr.save('pos_allen.csv'),
