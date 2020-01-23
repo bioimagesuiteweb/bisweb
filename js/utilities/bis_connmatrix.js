@@ -538,10 +538,7 @@ class ConnMatrix {
                               [ parc.rois[othernode].x,parc.rois[othernode].y, parc.rois[othernode].z ]];
                     var lobe = [ parc.rois[node].attr[0], parc.rois[othernode].attr[0] ];
                     // Offset the point by MNI shift
-
-                    if (index===0) {
-                        console.log('pt=',pt);
-                    }
+                    
                     
                     for (i=0;i<=1;i++) {
                         for (j=0;j<=2;j++) {

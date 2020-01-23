@@ -6,8 +6,8 @@ const $=require('jquery');
 const numeric=require('numeric');
 
 
-let lasttexturehue=-1.0;
-const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
+let lasttexturehue=-100000.0;
+const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ,'Elements'];
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
 const displayimg= $('<img>');
 const transferfunction = {
@@ -15,6 +15,8 @@ const transferfunction = {
     minth : null,
     maxth : null
 };
+
+const MAXCOLORS=16;
 
 const globalParams={
     internal : null
@@ -133,13 +135,16 @@ let createTexture=function(hue) {
     // Colormap texture
     lasttexturehue=hue;
     let canvas = document.createElement( 'canvas' );
-
-
     canvas.width=256;
     canvas.height=1;
     let canvasdata=canvas.getContext("2d").createImageData(256,1);
 
-    if (hue>0.0 && hue<=1.0) { 
+    console.log('Hue=',hue,lasttexturehue);
+    
+
+    if (hue>0.0 && hue<=1.0) {
+
+        console.log('Step=',hue);
         let cmap=util.mapconstanthuecolormap(0.0,255.0,1.0,hue,1.0);
         transferfunction.map=cmap;
         transferfunction.minth=0;
@@ -150,20 +155,41 @@ let createTexture=function(hue) {
         for (let i=0;i<=255;i++)  {
             data[0]=i;
             cmap(data,0,map);
+            if (i<16)
+                console.log('i=',data[0],map);
             for (let j=0;j<=3;j++)
                 canvasdata.data[i*4+j]=map[j];
         }
-    } else {
+    } else if (hue>-2.0) {
+        console.log('Uniform=',hue);
         transferfunction.map=null;
         for (let i=0;i<=255;i++)  {
             for (let j=0;j<=2;j++)
                 canvasdata.data[i*4+j]=224;
             canvasdata.data[i*4+3]=255.0;
         }
+    } else {
+        console.log('Objectmap=',hue);
+        let cmap=util.mapobjectmapfactory(255.0);
+        transferfunction.map=cmap;
+        transferfunction.minth=0;
+        transferfunction.maxth=MAXCOLORS;
+        let map=[0,0,0,0];
+        let data=[0];
+        
+        for (let i=0;i<=255;i++)  {
+            data[0]=Math.floor(i/MAXCOLORS);
+            cmap(data,0,map);
+            if (i===0) 
+                map = [ 128,128,128,255];
+            for (let j=0;j<=3;j++)
+                canvasdata.data[i*4+j]=map[j];
+        }
     }
+
     // Eliminate no opacity color
     canvasdata.data[3]=canvasdata.data[7];
-
+    
     canvas.getContext("2d").putImageData(canvasdata,0,0);
     let outimg=canvas.toDataURL("image/png");
     displayimg.attr('src', outimg);
@@ -204,19 +230,17 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
     const matrix=globalParams.internal.conndata.statMatrix || null;
     let dim=[0,0];
-    if (matrix===null) 
+    if (matrix===null && attributeIndex<4) 
         attributeIndex=-1;
-    else
-        dim=numeric.dim(matrix);
-
+    
     let attributes=new Float32Array(parcels.length);
     let mina=0,maxa=1;
-
     let colorsurface=true;
     if (attributeIndex<0)
         colorsurface=false;
     else if (globalParams.internal.hassurfaceindices===false)
         colorsurface=false;
+    
 
     console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')', parcels.length);
     
@@ -225,8 +249,8 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
             attributes[i]=1;
         }
         attributeIndex=-1;
-    } else {
-
+    } else if (attributeIndex!==4) {
+        // Regular Stuff
         console.log('Parcels=',parcels.length);
         let mdim=numeric.dim(matrix);
         console.log('Mdim=',mdim);
@@ -234,7 +258,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         for (let i=0;i<parcels.length;i++) {
             if (parcels[i]>0) {
                 try { 
-                    attributes[i]=matrix[parcels[i]-1][attributeIndex];
+                    attributes[i]=Math.abs(matrix[parcels[i]-1][attributeIndex]);
                 } catch(e) {
                     console.log('Failed',i,parcels[i]);
                     attributes[i]=0;
@@ -244,18 +268,30 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
             }
         }
 
-        
-        
         mina=matrix[0][attributeIndex];
         maxa=matrix[0][attributeIndex];
-
+        let dim=numeric.dim(matrix);
+        
         for (let i=1;i<dim[0];i++) {
             let a=matrix[i][attributeIndex];
             if (a<mina) mina=a;
             if (a>maxa) maxa=a;
         }
+    } else {
+        // value=parcel number
+        mina=0;
+        maxa=MAXCOLORS;
+        for (let i=0;i<parcels.length;i++) {
+            if (parcels[i]<1)
+                attributes[i]=-1000;
+            else if (parcels[i]===0)
+                attributes[i]=0;
+            else
+                attributes[i]=(parcels[i]-1)%MAXCOLORS+1;
+        }
     }
 
+    
     if (hidecereb) {
         for (let i=globalParams.maxpoint[index];i<parcels.length;i++) {
             attributes[i]=-1000;
@@ -287,8 +323,10 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         color[1]=0.7;
         color[2]=0.7;
         opacity=1.0;
+    } else if (attributeIndex===4) {
+        createTexture(-10.0);
     } else {
-        createTexture(-2.0);
+        createTexture(-1.0);
     }
     
 
@@ -724,7 +762,6 @@ module.exports = {
     parsebrainsurface : parsebrainsurface,
     draw3dcrosshairs : draw3dcrosshairs,
     drawlines3d : drawlines3d,
-    lobeoffset : globalParams.LOBEOFFSET,
     createAndDisplayBrainSurface : createAndDisplayBrainSurface,
     color_modes  : color_modes,
     displayimg : displayimg,
@@ -732,3 +769,4 @@ module.exports = {
     display_modes  : display_modes,
     update3DMeshes :     update3DMeshes,
 };
+ 
