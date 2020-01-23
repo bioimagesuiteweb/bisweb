@@ -19,7 +19,6 @@
 
 const BisWebImage = require('bisweb_image');
 const webutil=require('bis_webutil');
-const $=require('jquery'); 	
 const bootbox=require('bootbox');
 
 const webfileutil = require('bis_webfileutil');
@@ -126,14 +125,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
         const self=this;
         
-        webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
-                                       function(e) {  control.loadparcellationfile(e);},
-                                       { title : 'Node Definition File',
-                                         save : false,
-                                         filters : [ { name: 'JSON formatted Node definition file', extensions: ['parc']}],
-                                         suffix : '.parc',
-                                       });
-        webutil.createMenuItem(fmenu,''); // separator
         
         webfileutil.createFileMenuItem(fmenu,'Load Positive Matrix',
                                        function(f) {  control.loadmatrix(0,f);},
@@ -241,15 +232,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         // ------------------------------------ Advanced Menu ----------------------------
         
         var advmenu=webutil.createTopMenuBarMenu("Advanced",menubar);
-        webfileutil.createFileMenuItem(advmenu,'Import Node Positions Text File (in MNI coordinates)',
-                                       function(f) {  control.importparcellationtext(f);},
-                                       { title : 'Node definitions file',
-                                         save : false,
-                                         filters : [ { name: 'Text or CSV formatted file', extensions: ['txt', 'csv']}],
-                                         suffix : '.txt,.csv',
-                                       });
         
-        webfileutil.createFileMenuItem(advmenu,'Import Node Definition (Parcellation) Image',
+        webfileutil.createFileMenuItem(advmenu,'Import Parcellation Image',
                                        function(f) {
                                            let img=new BisWebImage();
                                            img.load(f,"RAS").then( () => {
@@ -258,10 +242,56 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                                bootbox.alert("Error loading"+ (e || ''));
                                            });
                                        },
-                                       { title : 'Node definitions image',
+                                       { title : 'Load Parcellation image',
                                          suffix : 'NII',
                                          save : false
                                        });
+
+        webfileutil.createFileMenuItem(advmenu, 'Export Parcellation Image',
+                                       function (f) {
+                                           self.saveOverlay(f,0);
+                                       },
+                                       {
+                                           title: 'Save Parcellation Image',
+                                           save: true,
+                                           filters: "NII",
+                                           suffix : "NII",
+                                           initialCallback : () => {
+                                               return self.getSaveOverlayInitialFilename(0);
+                                           }
+                                       });
+        
+        
+        userPreferences.safeGetItem("internal").then( (f) => {
+
+            if (f) {
+                webutil.createMenuItem(advmenu,''); // separator
+                webfileutil.createFileMenuItem(advmenu,'Load Node Definition File',
+                                               function(e) {  control.loadparcellationfile(e);},
+                                               { title : 'Node Definition File',
+                                                 save : false,
+                                                 filters : [ { name: 'JSON formatted Node definition file', extensions: ['parc']}],
+                                                 suffix : '.parc',
+                                               });
+                webutil.createMenuItem(advmenu,'Save Node Definition File', () => {  control.saveParcellation();});
+                
+                
+                
+                
+                webutil.createMenuItem(advmenu,'');
+                webfileutil.createFileMenuItem(advmenu,'Import Node Positions Text File (in MNI coordinates)',
+                                               function(f) {  control.importparcellationtext(f);},
+                                               { title : 'Node definitions file',
+                                                 save : false,
+                                                 filters : [ { name: 'Text or CSV formatted file', extensions: ['txt', 'csv']}],
+                                                 suffix : '.txt,.csv',
+                                               });
+                
+                webutil.createMenuItem(advmenu,'Create Labels for Surface', () => {
+                    control.createSurfaceLabels();
+                });
+            }
+        });
     
         
         // ------------------------------------ Help Menu ----------------------------
@@ -270,7 +300,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             let helpmenu=this.createHelpMenu(menubar);
             webutil.createMenuItem(helpmenu,''); // separator
             //helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
-            webutil.createMenuItem(helpmenu,''); // separator
+            //webutil.createMenuItem(helpmenu,''); // separator
             webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
                 const imagepath=webutil.getWebPageImagePath();
                 control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);

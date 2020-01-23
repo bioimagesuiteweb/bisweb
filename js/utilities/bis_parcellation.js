@@ -994,17 +994,15 @@ class BisParcellation {
 
     /** Create json file
      */
-    serialize() {
+    serialize(description=null) {
         var numpoints=this.rois.length;
         var numattr=this.rois[0].attr.length;
-
-
-        
         var obj={};
         obj.bisformat="Parcellation";
         obj.numpoints=numpoints;
         obj.numattr=numattr;
-        obj.description=this.description;
+        obj.description= description || this.description;
+        obj.baseatlas=this.atlasspec['name'];
         obj.rois=[];
 
         for (var i=0;i<numpoints;i++) {
@@ -1018,7 +1016,7 @@ class BisParcellation {
                 elem.attr[ia]=this.rois[index].attr[ia];
             obj.rois.push(elem);
         }
-        return JSON.stringify(obj);
+        return JSON.stringify(obj,null,4);
     }
 
     /** Create Parcellation from text file

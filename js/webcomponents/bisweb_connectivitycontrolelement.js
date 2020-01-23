@@ -1157,9 +1157,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var get_parcellation_description=function() {
 
         return new Promise( (resolve) => {
+
+            let description=internal.parcellation.description || '';
+            
             bootbox.prompt({
                 title: "Please enter a description of the parcellation definition file",
-                value: "Unknown",
+                value: description,
                 callback: function(result) {
                     if (result !== null) {
                         setTimeout(function() {
@@ -1194,6 +1197,30 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         });
     };
 
+    // Save a parcellation
+    var saveparcellation=async function() {
+        
+        let description='';
+        try {
+            description= await get_parcellation_description();
+        } catch(e) {
+            description='none';
+        }
+
+        internal.parcellationtext.text=internal.parcellation.serialize(description);
+        
+        try {
+            await bisgenericio.write({
+                filename : "parcellation.parc",
+                title : 'File to save node definition in',
+                filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
+            },internal.parcellationtext.text);
+            return true;
+        } catch (e) { 
+            return false;
+        }
+    };
+    
     // Imports Parcellation Text and outputs text file in json format
     // @alias BisGUIConnectivityControls~importParcellationText
     // @param {filename} textfile - file to create node definition from
@@ -1202,39 +1229,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         cleanmatrixdata();
         
         return new Promise( (resolve,reject) => {
-            
-            let loadsuccess =async function(atlasimage,textstring,filename) {
-                let description='';
-                try {
-                    description= await get_parcellation_description();
-                } catch(e) {
-                    description='none';
-                }
-
-                console.log(description);
-                let out='';
-                try {
-                    out=new BisParcellation(ATLASLIST[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,description,internal.baseatlas)+"\n";
-                } catch(e) {
-                    bootbox.alert(e);
-                    return;
-                }
-                parseparcellation(out,filename+".parc",true);
-        
-
-                try {
-                    await bisgenericio.write({
-                        filename : filename+".parc",
-                        title : 'File to save node definition in',
-                        filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-                    },out);
-                    resolve();
-                } catch (e) { 
-                    reject(e);
-                }
-            };
-
-
             bisgenericio.read(textfile).then( (obj) => {
                 
                 let textstring=obj.data;
@@ -1250,7 +1244,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
                 read_ordered_lobes_image().then( (atlasimage) => {
                     internal.hassurfaceindices=false;
-                    loadsuccess(atlasimage,textstring,filename);
+                    let out='';
+                    try {
+                        out=new BisParcellation(ATLASLIST[internal.baseatlas]).createParcellationFromText(textstring,filename,atlasimage,'',internal.baseatlas)+"\n";
+                    } catch(e) {
+                        reject(e);
+                    }
+                    parseparcellation(out,filename+".parc",true);
+                    resolve();
                 }).catch( (e) => {
                     bootbox.alert(e);
                     reject(e);
@@ -1292,10 +1293,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {BisWebImage} image - image to create from
     var importParcellationImage = function(vol,atlasdesc=null,surfacename=null) {
 
-        let save=true;
-        if (atlasdesc)
-            save=false;
-
         return new Promise( (resolve,reject) => {
 
             let createparcellationfromimage = async (atlasimage) => {
@@ -1305,15 +1302,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 if (index>0)
                     fname=fname.slice(0,index)+".parc";
                 
-                let description='';
+                let description=atlasdesc || '';
 
-                if (save) {
-                    // Fix things here ...
-                    // -------------------
-                    console.log('Atlas choice=',internal.baseatlas);
-                    description= await get_parcellation_description();
-                }
-                
                 let out="";
                 try {
                     out=new BisParcellation(ATLASLIST[internal.baseatlas]).createParcellationFromImage(vol,atlasimage,description)+"\n";
@@ -1325,16 +1315,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 
                 internal.orthoviewer.setobjectmap(vol,true);
                 parseparcellation(out,fname,true);
-                
-                if (save) {
-
-                    await bisgenericio.write({
-                        filename : fname,
-                        title : 'File to save node definition in',
-                        filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-                    },out).then( () => { resolve(); }).catch( (e) => { reject(e); });
-                }
-
                 // Check for surfaces
                 loadatlassurface(surfacename).then( () => {
                     resolve();
@@ -1398,7 +1378,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     }).catch( (e) => { reject(e); });
                 }).catch( (e) => { reject(e); });
             } else {
-                read_ordered_lobes_image(save,atlasdesc).then( (atimage) => {
+                read_ordered_lobes_image().then( (atimage) => {
                     createparcellationfromimage(atimage);
                 }).catch( (e) => { reject(e); });
             }
@@ -2189,6 +2169,33 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 }).catch( (e) => { reject(e); });
             });
         },
+
+        createSurfaceLabels() {
+
+            let objmap=internal.orthoviewer.getobjectmap();
+            if (objmap!==null) {
+                console.log('objmap=',objmap.getDescription());
+                connectvis3d.createSurfaceLabels(objmap);
+
+                internal.parameters.opacity=1.0;
+                internal.parameters.mode3d='Elements';
+                internal.parameters.display3d='Both';
+                internal.parameters.hidecereb=false;
+                internal.parameters.resol3d=0;
+                for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                    internal.datgui_controllers[ia].updateDisplay();
+
+                connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                            internal.parameters.mode3d,
+                                            internal.parameters.display3d,
+                                            internal.parameters.resol3d,
+                                            internal.parameters.hidecereb);
+            }
+        },
+
+        saveParcellation() {
+            return saveparcellation();
+        }
     };
 
     internal.updateFn=update;
@@ -2435,6 +2442,9 @@ class ConnectivityControlElement extends HTMLElement {
         return new Promise( (resolve,reject) => {
             this.innercontrol.importparcellation(f,desc,surfacename).then( () => {
                 this.clearmatrices();
+                if (surfacename===null) {
+                    this.innercontrol.createSurfaceLabels();
+                }
                 resolve();
             }).catch( (e) => {
                 reject(e);
@@ -2504,6 +2514,14 @@ class ConnectivityControlElement extends HTMLElement {
             }).catch( (e) => { reject(e); });
         });
 
+    }
+
+    createSurfaceLabels() {
+        return this.innercontrol.createSurfaceLabels();
+    }
+
+    saveParcellation() {
+        return this.innercontrol.saveParcellation();
     }
 
 }

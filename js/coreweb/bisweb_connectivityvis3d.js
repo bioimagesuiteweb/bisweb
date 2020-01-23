@@ -139,12 +139,8 @@ let createTexture=function(hue) {
     canvas.height=1;
     let canvasdata=canvas.getContext("2d").createImageData(256,1);
 
-    console.log('Hue=',hue,lasttexturehue);
-    
-
     if (hue>0.0 && hue<=1.0) {
 
-        console.log('Step=',hue);
         let cmap=util.mapconstanthuecolormap(0.0,255.0,1.0,hue,1.0);
         transferfunction.map=cmap;
         transferfunction.minth=0;
@@ -159,7 +155,6 @@ let createTexture=function(hue) {
                 canvasdata.data[i*4+j]=map[j];
         }
     } else if (hue>-2.0) {
-        console.log('Uniform=',hue);
         transferfunction.map=null;
         for (let i=0;i<=255;i++)  {
             for (let j=0;j<=2;j++)
@@ -167,7 +162,6 @@ let createTexture=function(hue) {
             canvasdata.data[i*4+3]=255.0;
         }
     } else {
-        console.log('Objectmap=',hue);
         let cmap=util.mapobjectmapfactory(255.0);
         transferfunction.map=cmap;
         transferfunction.minth=0;
@@ -230,8 +224,9 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     if (matrix===null && attributeIndex<4) 
         attributeIndex=-1;
 
-    if (!globalParams.internal.hassurfaceindices)
+    if (!globalParams.internal.hassurfaceindices) 
         attributeIndex=-1;
+    
     
     let attributes=new Float32Array(parcels.length);
     let mina=0,maxa=1;
@@ -251,9 +246,9 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         attributeIndex=-1;
     } else if (attributeIndex!==4) {
         // Regular Stuff
-        console.log('Parcels=',parcels.length);
-        let mdim=numeric.dim(matrix);
-        console.log('Mdim=',mdim);
+        //console.log('Parcels=',parcels.length);
+        //let mdim=numeric.dim(matrix);
+        //        console.log('Mdim=',mdim);
         
         for (let i=0;i<parcels.length;i++) {
             if (parcels[i]>0) {
@@ -411,26 +406,20 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
         
         for (let j=0;j<numelements;j++) {
             let arr=new Float32Array(buffer,cursor,numpoints*3);
-            //            if (j===0)
-            //  console.log('Points=',arr[0],arr[1],arr[2],arr[arr.length-3],arr[arr.length-2],arr[arr.length-1]);
+            //if (j===0)
+            //console.log('Mesh=',mesh,'Point 100=',arr[300],arr[301],arr[302]);
 
-            cursor=cursor+arr.byteLength;
-
-            /*            if (j===0)
-                          console.log('Mesh=',mesh, 'Point 0 = ',arr[300],arr[301],arr[302]);*/
-            
             let shiftx=globalParams.LOBEOFFSET;
             if (mesh===0) // left
                 shiftx=-globalParams.LOBEOFFSET;
             for (let p=0;p<arr.length;p+=3)
                 arr[p]+=shiftx;
-
-            /*if (j===0)
-              console.log('Point 0 --> ',arr[300],arr[301],arr[302]);*/
             
-            surfaces[mesh]['vertices'][j]=arr;
-            //console.log('Created points array',j,arr.length,arr.byteLength,' cursor=',cursor);
+            //if (j===0)
+            //  console.log('Shifted Mesh=',mesh,'Point 100=',arr[300],arr[301],arr[302]);
 
+            cursor=cursor+arr.byteLength;
+            surfaces[mesh]['vertices'][j]=arr;
         }
         surfaces[mesh]['indices']=new Uint32Array(buffer,cursor,numtriangles*3);
         cursor=cursor+surfaces[mesh]['indices'].byteLength;
@@ -502,6 +491,9 @@ var create_axis_lines=function() {
         let pbuf=new THREE.BufferGeometry();
         pbuf.setIndex( new THREE.BufferAttribute( p_indices, 1));
         pbuf.addAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
+
+
+        
         globalParams.internal.axisline[axis] = new THREE.Line(pbuf,
                                                               new THREE.LineBasicMaterial( {
                                                                   color: 0xff8800, 
@@ -538,7 +530,6 @@ var parsebrainsurface = function(surfacedata,filename) {
             buf.setIndex( new THREE.BufferAttribute( surfaces[meshindex].indices, 1));
             buf.addAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );
             buf.computeVertexNormals();
-            
             globalParams.braingeom[meshindex]=buf;
             globalParams.brainindices[meshindex]=surfaces[meshindex]['parcels'];
             globalParams.vertexlist[meshindex]=surfaces[meshindex]['vertices'];
@@ -756,6 +747,143 @@ var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both',re
     }
 };
 
+// ---------------------------------------------------------------------------------------------
+
+const computemode=function(array) {
+    if(array.length === 0)
+        return null;
+    if (array.length===1)
+        return array[0];
+    
+    var modeMap = {};
+    var maxEl = array[0], maxCount = 1;
+    for(let i = 0; i < array.length; i++) {
+        let el = array[i];
+        if(modeMap[el] === undefined)
+            modeMap[el] = 1;
+        else
+            modeMap[el]++;      
+        if(modeMap[el] > maxCount) {
+            maxEl = el;
+            maxCount = modeMap[el];
+        }
+    }
+    return maxEl;
+};
+
+
+// ---------------------------------------------------------------------------------------------
+
+var createSurfaceLabels=function(image) {
+
+    console.log('Creating Surface Labels');
+    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
+    
+    let dim=image.getDimensions();
+    let idim= [ dim[0]-1,dim[1]-1,dim[2]-1 ];
+    let slicesize=dim[1]*dim[0];
+    let imagedata=image.getImageData();
+    let spa=image.getSpacing();
+
+    //console.log('Beginning spa=',spa,'dim=',dim,'slicesize=',slicesize,' idim=',idim);
+
+    for (let meshindex=0;meshindex<=1;meshindex++) {
+
+        
+        let points=globalParams.vertexlist[meshindex][0];
+        let numpoints=Math.floor(points.length/3);
+
+        //console.log('Working on Mesh ',meshindex,'numpoints=',numpoints);
+        
+        
+        globalParams.brainindices[meshindex]=new Uint32Array(numpoints);
+
+        let shiftx=globalParams.LOBEOFFSET;
+        if (meshindex===0) // left
+            shiftx=-globalParams.LOBEOFFSET;
+
+        
+        for (let i=0;i<numpoints;i++) {
+            let index=i*3;
+            
+            let pt=[ points[index], points[index+1], points[index+2] ];
+            //            if (i===100)
+            //  console.log('Mesh=',meshindex,'pt=',pt);
+
+            pt[0]=pt[0]-shiftx;
+
+            //            if (i===100)
+            //console.log('Shifted Mesh=',meshindex,'pt=',pt);
+            
+            for (let j=0;j<=2;j++)  {
+                pt[j]=Math.round(pt[j]/spa[j]);
+                if (pt[j]<0)
+                    pt[j]=0;
+                else if (pt[j]>idim[j])
+                    pt[j]=idim[j];
+            }
+
+            
+            //if (i===100)
+            //  console.log('voxel pt=',pt);
+            
+            let voxel=pt[0]+pt[1]*dim[0]+slicesize*pt[2];
+            let val=imagedata[voxel];
+
+            //            if (i===100) {
+                //console.log('Voxel=',voxel,'value=',val);
+            //            }
+            
+            if (val>0) {
+                globalParams.brainindices[meshindex][i]=val;
+            } else {
+                let bestval=[0];
+                let mindist=1000;
+                let shift=1;
+                //let newpts=[];
+                while (bestval[0]===0 && shift<=2) {
+                    for (let ka=-shift;ka<=shift;ka++) {
+                        let newk=util.range(ka+pt[2],0,idim[2])*slicesize;
+                        for (let ja=-shift;ja<=shift;ja++) {
+                            let newj=util.range(ja+pt[1],0,idim[1])*dim[0];
+                            for (let ia=-shift;ia<=shift;ia++) {
+                                let newi=util.range(ia+pt[0],0,idim[0]);
+                                let voxel=newi+newj+newk;
+                                let d=ia*ia+ja*ja+ka*ka;
+
+                                //if (i===100) 
+                                //console.log('Voxel=',voxel,'value=',imagedata[voxel], 'indices=',[ ia,ja,ka ],' dist=',d,' best=',bestval,mindist);
+                                
+                                if (imagedata[voxel]>0)
+                                    if (d<mindist) {
+                                        mindist=d;
+                                        bestval=[imagedata[voxel]];
+                                        //newpts= [ ia+pt[0],ja+pt[1],ka+pt[2]];
+                                    } else if (d===mindist) {
+                                        bestval.push(imagedata[voxel]);
+                                        //newpts.push([ ia+pt[0],ja+pt[1],ka+pt[2]]);
+                                    }
+                            }
+                        }
+                    }
+                    shift=shift+1;
+                }
+
+                //if (i===100)
+                //console.log("Bestval=",bestval,mindist,' newpts=',newpts,' point=',pt);
+                
+                if (bestval.length<2) {
+                    globalParams.brainindices[meshindex][i]=bestval[0];
+                } else {
+                    globalParams.brainindices[meshindex][i]=computemode(bestval);
+                }
+                
+            }
+        }
+    }
+    globalParams.internal.hassurfaceindices=true;
+};
+
 module.exports = {
 
     initialize : initialize,
@@ -768,5 +896,6 @@ module.exports = {
     transferfunction : transferfunction,
     display_modes  : display_modes,
     update3DMeshes :     update3DMeshes,
+    createSurfaceLabels:    createSurfaceLabels,
 };
  
