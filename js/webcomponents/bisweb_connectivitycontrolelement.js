@@ -1968,12 +1968,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             @param {object} state -- the state of the element */
         setElementState : function (dt=null) {
 
-            //            console.log('Cleaning up');
+
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
             togglemode(false);
-
+            cleanmatrixdata();
+            
             internal.posFileInfo=[ "NONE", 0 ];
             internal.negFileInfo=[ "NONE", 0 ];
 
