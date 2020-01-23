@@ -155,8 +155,6 @@ let createTexture=function(hue) {
         for (let i=0;i<=255;i++)  {
             data[0]=i;
             cmap(data,0,map);
-            if (i<16)
-                console.log('i=',data[0],map);
             for (let j=0;j<=3;j++)
                 canvasdata.data[i*4+j]=map[j];
         }
@@ -229,8 +227,10 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         return;
 
     const matrix=globalParams.internal.conndata.statMatrix || null;
-    let dim=[0,0];
     if (matrix===null && attributeIndex<4) 
+        attributeIndex=-1;
+
+    if (!globalParams.internal.hassurfaceindices)
         attributeIndex=-1;
     
     let attributes=new Float32Array(parcels.length);

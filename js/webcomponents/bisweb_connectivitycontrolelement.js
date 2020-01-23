@@ -1106,6 +1106,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                             
                             parseparcellation( obj.data,obj.filename,silent);
                             loadatlassurface(null).then( () => {
+                                internal.hassurfaceindices=false;
                                 resolve();
                             }).catch( (e) => {
                                 reject(e);
@@ -1127,17 +1128,23 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var loadatlassurface = function(surfacename=null) {
 
         //console.log('Surfacename=',surfacename);
+        let default_name=false;
+
         
         return new Promise( (resolve,reject) => {
             if (!surfacename) {
                 let USEATLAS=ATLAS[internal.baseatlas];
                 surfacename=webutil.getWebPageImagePath()+'/'+USEATLAS['parcellations'][0].surface;
                 console.log('Loading default surface=',internal.baseatlas,surfacename);
+                default_name=true;
             }
                 
             bisgenericio.read(surfacename,true).then( (obj) => {
                 connectvis3d.parsebrainsurface(obj.data,obj.filename);
-                internal.hassurfaceindices=true;
+                if (!default_name)
+                    internal.hassurfaceindices=true;
+                else
+                    internal.hassurfaceindices=false;
                 internal.lastsurfacename=obj.filename;
                 resolve();
             }).catch( (e) => {
