@@ -521,6 +521,9 @@ var parsebrainsurface = function(surfacedata,filename) {
 
 // ---------------------------------------------------------------------------------------------
 var draw3dcrosshairs = function (coords=null) {
+
+    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
+    
     if (globalParams.internal.axisline[0]===null)
         return;
 
@@ -569,6 +572,7 @@ var draw3dcrosshairs = function (coords=null) {
 
 var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
 
+    
     try {
         globalParams.internal.subviewers[3].getScene();
     } catch(e) {
@@ -627,8 +631,14 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
                   state.negcolor  ];
 
     //        console.log('Drawing 3D',state.poscolor,state.negcolor);
+
+    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
+    //console.log('Atlas=',globalParams['ATLAS']);
+
     
-    let lparr = globalParams.internal.conndata.draw3DLines(globalParams.internal.parcellation,pos,neg);
+    let lparr = globalParams.internal.conndata.draw3DLines(globalParams.internal.parcellation,
+                                                           pos,neg,2.0,1.0,
+                                                           globalParams['ATLAS']);
     for (let i=0;i<=1;i++) {
         let lp=lparr[i];
         if (lp.indices!==null) {

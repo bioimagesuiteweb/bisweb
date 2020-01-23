@@ -125,6 +125,7 @@ const initializeBaseNameInformation = function(mode='yale',internal=null) {
             internal.networkAttributeIndex=2;
             gui_Modes[2]='Single Network';
         } else {
+            mode='lobes';
             internal.networkAttributeIndex=0;
             index=1;
             gui_Modes[2]='Single Lobe';
@@ -149,6 +150,7 @@ const initializeBaseNameInformation = function(mode='yale',internal=null) {
     internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
     internal.parameters.network=internal.gui_Networks[1];
+    internal.lastguimode=mode;
 };
 
 
@@ -252,13 +254,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // Info for external use
         laststate : null,
         lastsurfacename : '',
-
+        lastguimode : 'yale'
 
     };
 
 
-
-    internal.conndata.offset=connectvis3d.lobeoffset;
 
     connectvis.initialize(internal);
     connectvis3d.initialize(internal);
@@ -1982,12 +1982,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let obj=JSON.parse(dt.parcellation.text);
                 internal.baseatlas=obj.baseatlas || 'humanmni';
                 parseparcellation(dt.parcellation.text,dt.parcellation.filename,false);
-                
+            }
+            
+            let gmode=internal.lastguimode || null;
+            
+            if (gmode===null) {
                 let USEATLAS=ATLAS[internal.baseatlas];
                 let gdef=USEATLAS['groupdefinitions'];
-                let name=gdef[gdef.length-1]['name'];
-                onDemandCreateGUI(name);
+                gmode=gdef[gdef.length-1]['name'];
             }
+            onDemandCreateGUI(gmode);
             
             let prom=Promise.resolve();
             if (dt.hassurfaceindices) {
@@ -2080,6 +2084,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             obj.lastnode=internal.lastnode;
             obj.showlegend=internal.showlegend;
             obj.rendermode=internal.rendermode;
+            obj.lastguimode=internal.lastguimode;
             console.log('Storing Render mode=',obj.rendermode);
             return obj;
         },
