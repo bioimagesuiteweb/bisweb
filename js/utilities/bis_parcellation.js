@@ -105,7 +105,8 @@ class BisParcellation {
         this.thickness=20.0;
         
         this.points = [];
-        this.atlasspec = { 
+        this.atlasspec = {
+            'name' : atlasspec.name || 'humanmni',
             'midlobe' : atlasspec.midlobe || 11,
             'origin'  : atlasspec.origin || [ 90, 126, 72 ],
         };
@@ -949,6 +950,7 @@ class BisParcellation {
         obj.numpoints=numvoi;
         obj.numattr=numattr;
         obj.description=description;
+        obj.baseatlas=this.atlasspec['name'];
         obj.rois=[];
 
         let MNI = this.atlasspec['origin'];
@@ -1105,6 +1107,7 @@ class BisParcellation {
         obj.numpoints=numpoints;
         obj.numattr=numattr;
         obj.description=description;
+        obj.baseatlas=this.atlasspec['name'];
         obj.rois=[];
 
         for (i=0;i<numpoints;i++) {
