@@ -7,7 +7,7 @@ const numeric=require('numeric');
 
 
 let lasttexturehue=-100000.0;
-const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ,'Elements'];
+const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ,'Parcels'];
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
 const displayimg= $('<img>');
 const transferfunction = {
@@ -224,7 +224,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     if (matrix===null && attributeIndex<4) 
         attributeIndex=-1;
 
-    if (!globalParams.internal.hassurfaceindices) 
+    if (!globalParams.internal.hassurfaceindices || globalParams.brainindices[0]===null)
         attributeIndex=-1;
     
     
@@ -370,14 +370,19 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
     let buffer=in_data.buffer;
 
     console.log('Parsing binary file',filename,in_data.length);
+
+    let hasparcels=true;
     
     let cursor=0;
     let header=new Uint32Array(buffer,0,1);
     
-    if (header[0]!==1702) {
+    if (header[0]!==1702 && header[0]!==1703) {
         console.log('Bad Surface Data');
         return [ null,null ];
     }
+
+    if (header[0]===1703)
+        hasparcels=false;
 
     cursor+=4;
     let surfaces=[null,null];
@@ -429,11 +434,15 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
 
         
         //console.log('Indices=',numtriangles*3,'cursor=',cursor);
-        surfaces[mesh]['parcels']=new Uint32Array(buffer,cursor,numpoints);
-        //let iarr=surfaces[mesh]['parcels'];
-        //console.log('Indices=',iarr[0],iarr[1],iarr[2],iarr[25000],iarr[iarr.length-3],iarr[iarr.length-2],iarr[iarr.length-1]);
-        cursor=cursor+surfaces[mesh]['parcels'].byteLength;
-        //console.log('Parcels=',numpoints,'cursor=',cursor);
+        if (hasparcels) {
+            surfaces[mesh]['parcels']=new Uint32Array(buffer,cursor,numpoints);
+            //let iarr=surfaces[mesh]['parcels'];
+            //console.log('Indices=',iarr[0],iarr[1],iarr[2],iarr[25000],iarr[iarr.length-3],iarr[iarr.length-2],iarr[iarr.length-1]);
+            cursor=cursor+surfaces[mesh]['parcels'].byteLength;
+        } else {
+            surfaces[mesh]['parcels']=null;
+            //console.log('Parcels=',numpoints,'cursor=',cursor);
+        }
     }
     return surfaces;
 
@@ -521,7 +530,7 @@ var parsebrainsurface = function(surfacedata,filename) {
     // Remove all
     // Mass cleanup
 
-
+    let createparcels=false;
     
     for (let meshindex=0;meshindex<=1;meshindex++) {
 
@@ -531,7 +540,10 @@ var parsebrainsurface = function(surfacedata,filename) {
             buf.addAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );
             buf.computeVertexNormals();
             globalParams.braingeom[meshindex]=buf;
-            globalParams.brainindices[meshindex]=surfaces[meshindex]['parcels'];
+            if (surfaces[meshindex]['parcels'])
+                globalParams.brainindices[meshindex]=surfaces[meshindex]['parcels'];
+            else
+                createparcels=true;
             globalParams.vertexlist[meshindex]=surfaces[meshindex]['vertices'];
             globalParams.numelements[meshindex]=surfaces[meshindex]['numelements'];
             globalParams.lastresol[meshindex]=0;
@@ -545,7 +557,7 @@ var parsebrainsurface = function(surfacedata,filename) {
         globalParams.internal.setnodeFn(Math.round(globalParams.internal.parameters.node-1));
 
     window.dispatchEvent(new Event('resize'));
-    
+    return createparcels;
 };
 
 // ---------------------------------------------------------------------------------------------

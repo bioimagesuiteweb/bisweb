@@ -25,7 +25,11 @@ const fn=async () => {
         let atlasobj= await bis_genericio.read(filenames.atlas[i]);
 
         let multires=JSON.parse(multiresobj.data);
+        multires.indices = multires.indices || [];
+
+        
         let atlas=JSON.parse(atlasobj.data);
+        atlas.indices = atlas.indices || [];
         console.log('\n-----------------------------\n');
         console.log('Parsed ',filenames.multires[i],filenames.atlas[i],Object.keys(atlas),Object.keys(multires),
                     '\n\t atlaspoints=',
@@ -69,7 +73,7 @@ const fn=async () => {
     let length=4; // 5 int32s
     let out_arr=null,buffer=null;
     let cursor=0;
-
+    let hasindices=true;
     
     for (let pass=0;pass<=1;pass++) {
         
@@ -78,12 +82,19 @@ const fn=async () => {
             let numpoints=Math.floor(pieces[mesh]['points'].length/3);
             let numtriangles=Math.floor(pieces[mesh]['triangles'].length/3);
             let maxpoint= pieces[mesh]['maxpoint'];
+
             if (pass===0) {
                 // compute length
                 length=length+16 + // header
                 numpoints*3*4*numelements + // points
-                numtriangles*3*4+ // triangles //
-                numpoints*4; // indices
+                numtriangles*3*4; // triangles //
+
+                if (hasindices) {
+                    if (pieces[mesh]['indices'].length>0)
+                        length=length+numpoints*4; // indices;
+                    else
+                        hasindices=false;
+                }
                 console.log('Element mesh=',mesh,length, ' numelements=',numelements,' maxpoint=',maxpoint,' numpoints=',numpoints,' numtriangles=',numtriangles);
             } else {
                 console.log('\n Working on Mesh',mesh);
@@ -117,15 +128,17 @@ const fn=async () => {
                     tarr[i]=pieces[mesh]['triangles'][i];
                 }
                 console.log('Triangles=',tarr[0],tarr[1],tarr[2],tarr[tarr.length-3],tarr[tarr.length-2],tarr[tarr.length-1]);
-                
-                let iarr=new Uint32Array(buffer,cursor,numpoints);
-                cursor=cursor+iarr.byteLength;
-                console.log('Created Indices array ',iarr.length,iarr.byteLength,'cursor=',cursor);
 
-                for (let i=0;i<numpoints;i++) {
-                    iarr[i]=pieces[mesh]['indices'][i];
+                if (hasindices) {
+                    let iarr=new Uint32Array(buffer,cursor,numpoints);
+                    cursor=cursor+iarr.byteLength;
+                    console.log('Created Indices array ',iarr.length,iarr.byteLength,'cursor=',cursor);
+                    
+                    for (let i=0;i<numpoints;i++) {
+                        iarr[i]=pieces[mesh]['indices'][i];
+                    }
+                    console.log('Indices=',iarr[0],iarr[1],iarr[2],iarr[25000],iarr[iarr.length-3],iarr[iarr.length-2],iarr[iarr.length-1]);
                 }
-                console.log('Indices=',iarr[0],iarr[1],iarr[2],iarr[25000],iarr[iarr.length-3],iarr[iarr.length-2],iarr[iarr.length-1]);
                 console.log('Done ' ,mesh,' cursor=',cursor,' total=',out_arr.length);
             }
         }
@@ -134,7 +147,10 @@ const fn=async () => {
             out_arr=new Uint8Array(length);
             buffer=out_arr.buffer;
             let header1=new Uint32Array(buffer,0,1);
-            header1[0]=1702;
+            if (hasindices)
+                header1[0]=1702;
+            else
+                header1[0]=1703; // no indices
             cursor=4;
         }
 

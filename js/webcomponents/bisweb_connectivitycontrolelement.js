@@ -1140,8 +1140,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
                 
             bisgenericio.read(surfacename,true).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename);
-                if (!default_name)
+                let createparcels=connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                if (!default_name && !createparcels)
                     internal.hassurfaceindices=true;
                 else
                     internal.hassurfaceindices=false;
@@ -1197,6 +1197,33 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         });
     };
 
+    var createsurfacelabels=function(uniform=true) {
+        let objmap=internal.orthoviewer.getobjectmap();
+        if (objmap!==null) {
+            console.log('objmap=',objmap.getDescription());
+            connectvis3d.createSurfaceLabels(objmap);
+
+            internal.parameters.opacity=1.0;
+            if (uniform)
+                internal.parameters.mode3d='Uniform';
+            else
+                internal.parameters.mode3d='Parcels';
+            internal.parameters.display3d='Both';
+            internal.parameters.hidecereb=false;
+            internal.parameters.resol3d=0;
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                internal.datgui_controllers[ia].updateDisplay();
+            
+            connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                        internal.parameters.mode3d,
+                                        internal.parameters.display3d,
+                                        internal.parameters.resol3d,
+                                        internal.parameters.hidecereb);
+            return true;
+        }
+        return false;
+    };
+        
     // Save a parcellation
     var saveparcellation=async function() {
         
@@ -1987,6 +2014,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
 
             prom.then( () => {
+
+                if (!internal.hassurfaceindices)
+                    createsurfacelabels();
+                
                 if (dt.posmatrix) {
                     let neg=null;
                     let pos=new BisWebMatrix();
@@ -2158,11 +2189,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 this.loadatlas(imagepath+'/'+imagename,element['species']).then( (img) => {
                     if (parcfile) {
                         loadparcellation(imagepath+'/'+parcfile,false,true).then( () => {
-                            loadatlassurface(imagepath+'/'+surfacename);
-                            resolve();
+                            loadatlassurface(imagepath+'/'+surfacename).then( () => {
+                                if (!internal.hassurfaceindices)
+                                    createsurfacelabels();
+                                resolve();
+                            }).catch( (e) => { reject(e); });
                         }).catch( (e) => { reject(e); });
                     } else {
                         importParcellationImage(img,name+' Atlas',imagepath+'/'+surfacename).then( () => {
+                            if (!internal.hassurfaceindices)
+                                createsurfacelabels();
                             resolve();
                         }).catch( (e) => { reject(e); });
                     }
@@ -2171,26 +2207,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         createSurfaceLabels() {
-
-            let objmap=internal.orthoviewer.getobjectmap();
-            if (objmap!==null) {
-                console.log('objmap=',objmap.getDescription());
-                connectvis3d.createSurfaceLabels(objmap);
-
-                internal.parameters.opacity=1.0;
-                internal.parameters.mode3d='Elements';
-                internal.parameters.display3d='Both';
-                internal.parameters.hidecereb=false;
-                internal.parameters.resol3d=0;
-                for (let ia=0;ia<internal.datgui_controllers.length;ia++)
-                    internal.datgui_controllers[ia].updateDisplay();
-
-                connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                            internal.parameters.mode3d,
-                                            internal.parameters.display3d,
-                                            internal.parameters.resol3d,
-                                            internal.parameters.hidecereb);
-            }
+            return createsurfacelabels(false);
         },
 
         saveParcellation() {
@@ -2488,7 +2505,7 @@ class ConnectivityControlElement extends HTMLElement {
     }
 
     setParcellation(element) {
-        return this.innercontrol.setParcellation(element);
+        this.innercontrol.setParcellation(element);
     }
 
     loaddefaultatlas() {
