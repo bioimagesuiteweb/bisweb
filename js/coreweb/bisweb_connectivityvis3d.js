@@ -4,7 +4,7 @@ const util=require('bis_util');
 const bootbox=require('bootbox');
 const $=require('jquery');
 const numeric=require('numeric');
-
+const atlasutils=require('bisweb_atlasutilities');
 
 let lasttexturehue=-100000.0;
 const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ,'Parcels'];
@@ -39,11 +39,6 @@ var reset_global_params=function() {
     globalParams['numelements']= [ 1,1];
     globalParams['lastresol']= [ -1,-1];
     globalParams['maxpoint']= [ 200000,200000 ];
-    globalParams['LOBEOFFSET']= 20.0;
-    globalParams['AXISOFFSET']= [0,5.0,20.0];
-    globalParams['AXISSIZE']= [ 180.0,216.0, 170.0 ];
-    globalParams['AXISSCALE']= [ 1.0,1.0,1.0 ];
-    globalParams['ATLAS']=null;
 };
 
 
@@ -245,8 +240,6 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         colorsurface=false;
     
 
-    console.log('Color surface=',colorsurface,' internal=',globalParams.internal.hassurfaceindices,'(',globalParams.internal.baseatlas, attributeIndex,')', parcels.length);
-    
     if (!colorsurface) {
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=1;
@@ -379,11 +372,12 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
 var parse_multires_binary_surfaces=function(in_data,filename) {
 
+    const ATLASHEADER=atlasutils.getCurrentAtlasHeader();
     globalParams.maxpoint=[ 200000,200000 ];
     
     let buffer=in_data.buffer;
 
-    console.log('Parsing binary file',filename,in_data.length);
+    console.log('.... Parsing binary file',filename,in_data.length);
 
     let hasparcels=true;
     
@@ -428,9 +422,9 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
             //if (j===0)
             //console.log('Mesh=',mesh,'Point 100=',arr[300],arr[301],arr[302]);
 
-            let shiftx=globalParams.LOBEOFFSET;
+            let shiftx=ATLASHEADER['midoffset'];
             if (mesh===0) // left
-                shiftx=-globalParams.LOBEOFFSET;
+                shiftx=-ATLASHEADER['midoffset'];
             for (let p=0;p<arr.length;p+=3)
                 arr[p]+=shiftx;
             
@@ -463,25 +457,13 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
 };
 
 var removesurfacemeshes = function() {
-    /*for (let i=0;i<=1;i++) {
-        if (globalParams.brainmesh[i] !==null) { 
-            globalParams.brainmesh[i].visible=false;
-            globalParams.internal.subviewers[3].getScene().remove(globalParams.brainmesh[i]);
-        }
-        }*/
-
-    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
-    //console.log('Base Atlas=',globalParams['ATLAS']);
-    globalParams.LOBEOFFSET=globalParams['ATLAS']['midoffset'];
-    globalParams.AXISOFFSET=globalParams['ATLAS']['axisoffset'];
-    globalParams.AXISSIZE  =globalParams['ATLAS']['axissize'];
-    globalParams.AXISSCALE =globalParams['ATLAS']['spacing'];
     globalParams.internal.subviewers[3].reset();
-    //reset_global_params();
 };
 
 var create_axis_lines=function() {
 
+    const ATLASHEADER=atlasutils.getCurrentAtlasHeader();
+    
     for (let axis=0;axis<=2;axis++) {
         if (globalParams.internal.axisline[axis]!==null) {
             globalParams.internal.axisline[axis].visible=false;
@@ -490,25 +472,25 @@ var create_axis_lines=function() {
     }
 
 
-    //console.log('Mid Coords=',globalParams.LOBEOFFSET);
+    //console.log('Mid Coords=',ATLASHEADER['midoffset']);
     
     let p_indices = new Uint16Array(2);
     p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
     for (let axis=0;axis<=2;axis++) {
         let p_vertices = new Float32Array(6);
-        p_vertices[0]=-globalParams.AXISOFFSET[0];
-        p_vertices[1]=-globalParams.AXISOFFSET[1];
-        p_vertices[2]=-globalParams.AXISOFFSET[2];
-        p_vertices[3]=-globalParams.AXISOFFSET[0];
-        p_vertices[4]=-globalParams.AXISOFFSET[1];
-        p_vertices[5]=-globalParams.AXISOFFSET[2];
+        p_vertices[0]=-ATLASHEADER['axisoffset'][0];
+        p_vertices[1]=-ATLASHEADER['axisoffset'][1];
+        p_vertices[2]=-ATLASHEADER['axisoffset'][2];
+        p_vertices[3]=-ATLASHEADER['axisoffset'][0];
+        p_vertices[4]=-ATLASHEADER['axisoffset'][1];
+        p_vertices[5]=-ATLASHEADER['axisoffset'][2];
         if (axis===0) {
-            p_vertices[3]=globalParams.AXISSIZE[0]+globalParams.LOBEOFFSET+globalParams.AXISOFFSET[0];
-            p_vertices[0]-=globalParams.LOBEOFFSET;
+            p_vertices[3]=ATLASHEADER['axissize'][0]+ATLASHEADER['midoffset']+ATLASHEADER['axisoffset'][0];
+            p_vertices[0]-=ATLASHEADER['midoffset'];
         } else if (axis===1) {
-            p_vertices[4]=globalParams.AXISSIZE[1]+globalParams.AXISOFFSET[1];
+            p_vertices[4]=ATLASHEADER['axissize'][1]+ATLASHEADER['axisoffset'][1];
         } else {
-            p_vertices[5]=globalParams.AXISSIZE[2];
+            p_vertices[5]=ATLASHEADER['axissize'][2];
         }
         
         let pbuf=new THREE.BufferGeometry();
@@ -530,7 +512,7 @@ var create_axis_lines=function() {
 
 var parsebrainsurface = function(surfacedata,filename) {
 
-    console.log('In parse brainsurface\n',filename,'\n');
+    console.log('.... In parse brainsurface\n',filename,'\n');
     removesurfacemeshes();
     create_axis_lines();
     
@@ -577,8 +559,7 @@ var parsebrainsurface = function(surfacedata,filename) {
 // ---------------------------------------------------------------------------------------------
 var draw3dcrosshairs = function (coords=null) {
 
-    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
-    
+    const ATLASHEADER=atlasutils.getCurrentAtlasHeader();
     if (globalParams.internal.axisline[0]===null)
         return;
 
@@ -590,31 +571,31 @@ var draw3dcrosshairs = function (coords=null) {
     }
 
     if (!inmm) {
-        if (globalParams['ATLAS']['ismni']) {
+        if (ATLASHEADER['ismni']) {
             coords = globalParams.internal.mni2tal.getMMCoordinates(globalParams.internal.mni);
         }
     }
 
-    let shift=globalParams.LOBEOFFSET;
+    let shift=ATLASHEADER['midoffset'];
     if (!inmm) {
-        if (globalParams['ATLAS']['ismni']) {
+        if (ATLASHEADER['ismni']) {
             if (globalParams.internal.mni[0]<0.0)
-                shift-=globalParams.LOBEOFFSET;
+                shift-=ATLASHEADER['midoffset'];
         } else {
-            if (coords[0]<globalParams['ATLAS']['dimensions'][0]/2) 
+            if (coords[0]<ATLASHEADER['dimensions'][0]/2) 
                 shift=-shift;
             for (let i=0;i<=2;i++)
-                coords[i]=coords[i]*globalParams.AXISSCALE[i];
+                coords[i]=coords[i]*ATLASHEADER['spacing'][i];
         }
     } else {
-        if (coords[0]<globalParams['ATLAS']['dimensions'][0]*globalParams['ATLAS']['spacing'][0]/2)
+        if (coords[0]<ATLASHEADER['dimensions'][0]*ATLASHEADER['spacing'][0]/2)
             shift=-shift;
         coords[0]+=shift;
     }
 
-    coords[0]+=globalParams.AXISOFFSET[0];
-    coords[1]+=globalParams.AXISOFFSET[1];
-    coords[2]+=globalParams.AXISOFFSET[2];
+    coords[0]+=ATLASHEADER['axisoffset'][0];
+    coords[1]+=ATLASHEADER['axisoffset'][1];
+    coords[2]+=ATLASHEADER['axisoffset'][2];
     globalParams.internal.axisline[0].position.set(0.0,coords[1],coords[2]);
     globalParams.internal.axisline[1].position.set(coords[0],0.0,coords[2]);
     globalParams.internal.axisline[2].position.set(coords[0],coords[1],0.0);
@@ -647,7 +628,7 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     
 
     if (!doNotUpdateFlagMatrix) {
-        console.log('Updating Flag Matrix\n');
+        console.log('.... Updating Flag Matrix\n');
         let ok=globalParams.internal.conndata.createFlagMatrix(globalParams.internal.parcellation,
                                                   state.mode, // mode
                                                   state.singlevalue, // singlevalue
@@ -687,13 +668,10 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
 
     //        console.log('Drawing 3D',state.poscolor,state.negcolor);
 
-    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
-    //console.log('Atlas=',globalParams['ATLAS']);
-
-    
+    const ATLASHEADER=atlasutils.getCurrentAtlasHeader();
     let lparr = globalParams.internal.conndata.draw3DLines(globalParams.internal.parcellation,
                                                            pos,neg,2.0,1.0,
-                                                           globalParams['ATLAS']);
+                                                           ATLASHEADER);
     for (let i=0;i<=1;i++) {
         let lp=lparr[i];
         if (lp.indices!==null) {
@@ -802,9 +780,8 @@ const computemode=function(array) {
 
 var createSurfaceLabels=function(image) {
 
-    console.log('Creating Surface Labels');
-    globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
-    
+    const ATLASHEADER=atlasutils.getCurrentAtlasHeader();
+    console.log('.... Creating Surface Labels',image.getDescription());
     let dim=image.getDimensions();
     let zerodim = [ 0,0,0];
     let idim= [ dim[0]-1,dim[1]-1,dim[2]-1 ];
@@ -824,10 +801,10 @@ var createSurfaceLabels=function(image) {
         
         
         globalParams.brainindices[meshindex]=new Uint32Array(numpoints);
-
-        let shiftx=globalParams.LOBEOFFSET;
+        
+        let shiftx=ATLASHEADER['midoffset'];
         if (meshindex===0) // left
-            shiftx=-globalParams.LOBEOFFSET;
+            shiftx=-ATLASHEADER['midoffset'];
 
         if (meshindex===0) {
             zerodim[0]=[0];

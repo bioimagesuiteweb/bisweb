@@ -111,8 +111,6 @@ class BisParcellation {
             'origin'  : atlasspec.origin || [ 90, 126, 72 ],
         };
         
-        //        this.midlobe=this.atlasspec['midlobe'];
-
         this.maxlobe=-1;
         this.midpoint=-1;
         this.maxpoint=-1;

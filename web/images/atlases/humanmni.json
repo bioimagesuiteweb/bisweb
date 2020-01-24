@@ -217,17 +217,17 @@
         {
             "name" : "lobes" ,
             "index": 0,
-            "description" : "Yale Network Definitions"
+            "description" : "Lobe Definitions"
         },
         {
             "name" : "washu",
             "index":  2,
-            "description" : "WSHU Network Definitions"
+            "description" : "WASHU Network Definitions"
         },
         {
             "name" : "yale" ,
             "index":  4,
-            "description" : "Lobe Definitions"
+            "description" : "Yale Network Definitions"
         }
     ]
     
