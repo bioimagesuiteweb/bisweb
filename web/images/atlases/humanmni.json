@@ -222,12 +222,14 @@
         {
             "name" : "washu",
             "index":  2,
-            "description" : "WASHU Network Definitions"
+            "description" : "WASHU Network Definitions",
+            "citation" :    "Using Network definitions from Power at al. Neuron 2011."
         },
         {
             "name" : "yale" ,
             "index":  4,
-            "description" : "Yale Network Definitions"
+            "description" : "Yale Network Definitions",
+            "citation" : "Using Yale network definitions from Noble at al 2018."
         }
     ]
     

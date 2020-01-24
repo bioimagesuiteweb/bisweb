@@ -24,6 +24,8 @@ const PARAMETERS = {
 
 var setCurrentAtlasName=function(spname='humanmni')  {
 
+    spname= spname || 'humanmni';
+    
     let keys=Object.keys(ATLASLIST);
     if (keys.indexOf(spname)>=0) {
         PARAMETERS.CurrentAtlasName=spname;
@@ -38,6 +40,8 @@ var getCurrentAtlasName=function()  {
 
 var setCurrentSpeciesName=function(spname='human')  {
 
+    spname= spname || 'human';
+    
     let keys=Object.keys(MAP);
     if (keys.indexOf(spname)>=0) {
         PARAMETERS.CurrentSpeciesName=spname;
@@ -151,6 +155,24 @@ var findAndSetAtlas=function(image) {
     return true;
 };
 
+var getNetworkCitation=function(index) {
+
+    const ATLAS=this.getCurrentAtlas();
+    const gdef=ATLAS['groupdefinitions'];
+    let found=false,i=0;
+    while (found===false && i < gdef.length) {
+        let elem=gdef[i];
+        if (elem.index === index) {
+            found=true;
+            let citation = elem.citation || null;
+            if (citation) {
+                return citation;
+            }
+        }
+        i=i+1;
+    }
+    return null;
+};
 
 // ---------------------------------------------------------------
 
@@ -169,4 +191,6 @@ module.exports = {
     populateAtlasParameters : populateAtlasParameters,
     findAndSetAtlas :     findAndSetAtlas,
     compareDimensions :     compareDimensions,
+    //
+    getNetworkCitation :     getNetworkCitation
 };
