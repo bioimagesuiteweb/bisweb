@@ -13,10 +13,12 @@ const displayimg= $('<img>');
 const transferfunction = {
     map : null,
     minth : null,
-    maxth : null
+    maxth : null,
+    showlabels : true,
 };
 
-const MAXCOLORS=16;
+const COLORSCALE=32;
+
 
 const globalParams={
     internal : null
@@ -145,6 +147,7 @@ let createTexture=function(hue) {
         transferfunction.map=cmap;
         transferfunction.minth=0;
         transferfunction.maxth=1;
+        transferfunction.showlabels=true;
         let map=[0,0,0,0];
         let data=[0];
         
@@ -154,6 +157,7 @@ let createTexture=function(hue) {
             for (let j=0;j<=3;j++)
                 canvasdata.data[i*4+j]=map[j];
         }
+        canvasdata.data[3]=canvasdata.data[7];
     } else if (hue>-2.0) {
         transferfunction.map=null;
         for (let i=0;i<=255;i++)  {
@@ -161,26 +165,30 @@ let createTexture=function(hue) {
                 canvasdata.data[i*4+j]=224;
             canvasdata.data[i*4+3]=255.0;
         }
+        canvasdata.data[3]=canvasdata.data[7];
     } else {
         let cmap=util.mapobjectmapfactory(255.0);
+        transferfunction.showlabels=false;
         transferfunction.map=cmap;
         transferfunction.minth=0;
-        transferfunction.maxth=MAXCOLORS;
+        transferfunction.maxth=COLORSCALE;
         let map=[0,0,0,0];
         let data=[0];
+
+        let colorpiece=256/(COLORSCALE);
         
         for (let i=0;i<=255;i++)  {
-            data[0]=Math.floor(i/MAXCOLORS);
-            cmap(data,0,map);
-            if (i===0) 
-                map = [ 128,128,128,255];
+            if (i<colorpiece) {
+                map = [ 128,128,128,128 ];
+            } else {
+                data[0]=Math.floor((i)/colorpiece);
+                cmap(data,0,map);
+            }
             for (let j=0;j<=3;j++)
                 canvasdata.data[i*4+j]=map[j];
         }
     }
 
-    // Eliminate no opacity color
-    canvasdata.data[3]=canvasdata.data[7];
     
     canvas.getContext("2d").putImageData(canvasdata,0,0);
     let outimg=canvas.toDataURL("image/png");
@@ -275,14 +283,16 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     } else {
         // value=parcel number
         mina=0;
-        maxa=MAXCOLORS;
+        maxa=COLORSCALE;
         for (let i=0;i<parcels.length;i++) {
-            if (parcels[i]<1)
-                attributes[i]=-1000;
-            else if (parcels[i]===0)
+            if (parcels[i]<1) {
                 attributes[i]=0;
-            else
-                attributes[i]=(parcels[i]-1)%MAXCOLORS+1;
+            } else {
+                attributes[i]= ((parcels[i]-1) % COLORSCALE)+1.5;
+                //if (i%107===0) {
+                //                    console.log('parcels=',parcels[i],'--->',attributes[i]);
+                //}
+            }
         }
     }
 
@@ -320,6 +330,10 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         opacity=1.0;
     } else if (attributeIndex===4) {
         createTexture(-10.0);
+        color[0]=0.1;
+        color[1]=0.1;
+        color[2]=0.1;
+        opacity=1.0;
     } else {
         createTexture(-1.0);
     }
@@ -792,6 +806,7 @@ var createSurfaceLabels=function(image) {
     globalParams['ATLAS']=globalParams.internal.ATLASLIST[globalParams.internal.baseatlas];
     
     let dim=image.getDimensions();
+    let zerodim = [ 0,0,0];
     let idim= [ dim[0]-1,dim[1]-1,dim[2]-1 ];
     let slicesize=dim[1]*dim[0];
     let imagedata=image.getImageData();
@@ -814,6 +829,14 @@ var createSurfaceLabels=function(image) {
         if (meshindex===0) // left
             shiftx=-globalParams.LOBEOFFSET;
 
+        if (meshindex===0) {
+            zerodim[0]=[0];
+            idim[0]=Math.floor(dim[0]/2-1);
+        } else {
+            zerodim[0]=Math.floor(dim[0]/2-1)+1;
+            idim[0]=dim[0]-1;
+        }
+        
         
         for (let i=0;i<numpoints;i++) {
             let index=i*3;
@@ -829,8 +852,8 @@ var createSurfaceLabels=function(image) {
             
             for (let j=0;j<=2;j++)  {
                 pt[j]=Math.round(pt[j]/spa[j]);
-                if (pt[j]<0)
-                    pt[j]=0;
+                if (pt[j]<zerodim[j])
+                    pt[j]=zerodim[j];
                 else if (pt[j]>idim[j])
                     pt[j]=idim[j];
             }
@@ -855,11 +878,11 @@ var createSurfaceLabels=function(image) {
                 //let newpts=[];
                 while (bestval[0]===0 && shift<=2) {
                     for (let ka=-shift;ka<=shift;ka++) {
-                        let newk=util.range(ka+pt[2],0,idim[2])*slicesize;
+                        let newk=util.range(ka+pt[2],zerodim[2],idim[2])*slicesize;
                         for (let ja=-shift;ja<=shift;ja++) {
-                            let newj=util.range(ja+pt[1],0,idim[1])*dim[0];
+                            let newj=util.range(ja+pt[1],zerodim[1],idim[1])*dim[0];
                             for (let ia=-shift;ia<=shift;ia++) {
-                                let newi=util.range(ia+pt[0],0,idim[0]);
+                                let newi=util.range(ia+pt[0],zerodim[0],idim[0]);
                                 let voxel=newi+newj+newk;
                                 let d=ia*ia+ja*ja+ka*ka;
 

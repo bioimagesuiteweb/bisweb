@@ -480,13 +480,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if ((internal.parcellation.box[3]-internal.parcellation.box[1])<100)
             return;
 
-
-        let half=10;
-        if (internal.baseatlas === 'allenmri') {
-            half=14;
-        }
-        //console.log('Half=',half,internal.baseatlas);
-            
+        let half=ATLASLIST[internal.baseatlas]['halflobe'];
         
         let cw=internal.context.canvas.width;
         let vp=internal.parcellation.viewport;
@@ -538,9 +532,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             
             for (let i=1;i<=half;i++) {
-                let tot=util.range(internal.parcellation.lobeStats[i][2],0,10000),tot2=0;
-                if (internal.parcellation.lobeStats.length>(i+10))
-                    tot2=util.range(internal.parcellation.lobeStats[i+10][2],0,10000);
+                let arr=internal.parcellation.lobeStats[i] || [0,0,0 ];
+                let arr2=internal.parcellation.lobeStats[i+half] || [0,0,0 ];
+                let tot=util.range(arr[2],0,10000),tot2=0;
+                if (internal.parcellation.lobeStats.length>(i+half))
+                    tot2=util.range(arr2[2],0,10000);
                 if (tot+tot2>0) {
                     internal.overlaycontext.fillStyle=internal.parcellation.getNonSidedLobeColor(i);
                     internal.overlaycontext.fillRect(px,py,pw,1.5*lobegap);
@@ -1533,7 +1529,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             } else {
                 da1.domElement.style.opacity = 1.0;
             }
-            da1.updateDisplay();
+            console.log('Opacity=',data.opacity);
+            setTimeout( () => { da1.updateDisplay(); },100);
             setTimeout( () => { drawColorScale(); },200);
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
@@ -1684,7 +1681,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (dvalue<0.1)
             power=100.0;
 
-
+        
+        
+        
         context.font=fnsize+"px Arial";
         context.textAlign="center";
         context.textBaseline="top";
@@ -1706,24 +1705,26 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         context.lineTo(x0,y0);
         context.stroke();
 
-        context.strokeStyle="#000000";
-        context.lineWidth=2;
-
-        for (let i=0;i<=numsteps;i++) {
-            if (i===0 || i===numsteps || i===numsteps/2) {
-
-
-                context.beginPath();
-                context.moveTo(x0+0.5*(wd-1),y0+0.5*ht);
-                context.lineTo(x0+0.5*(wd-1),y0+1.3*ht);
-                context.stroke();
-                let w0=context.measureText('-').width*-0.5;
-                context.fillStyle = "#000000";
-                let data=i*dv+minv;
-                context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+        if (connectvis3d.transferfunction.showlabels) {
+            context.strokeStyle="#000000";
+            context.lineWidth=2;
+            
+            for (let i=0;i<=numsteps;i++) {
+                if (i===0 || i===numsteps || i===numsteps/2) {
+                    
+                    
+                    context.beginPath();
+                    context.moveTo(x0+0.5*(wd-1),y0+0.5*ht);
+                    context.lineTo(x0+0.5*(wd-1),y0+1.3*ht);
+                    context.stroke();
+                    let w0=context.measureText('-').width*-0.5;
+                    context.fillStyle = "#000000";
+                    let data=i*dv+minv;
+                    context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+                }
+                
+                x0+=wd;
             }
-
-            x0+=wd;
         }
     };
 

@@ -384,7 +384,21 @@ class BisParcellation {
         // This has to do with the number of lobes
         //console.log('Lobestats=',this.lobeStats);
 
-        this.midpoint=this.lobeStats[this.atlasspec['midlobe']-1][1];
+        this.midpoint=0;
+        try {
+            this.midpoint=this.lobeStats[this.atlasspec['midlobe']-1][1];
+        } catch(e) {
+            let found=false;
+            let ia=this.atlasspec['midlobe']-1;
+            while (ia>0 && found===false) {
+                let v=this.lobeStats[ia] || null;
+                if (v) {
+                    found=true;
+                    this.midpoint=this.lobeStats[ia][1];
+                }
+                ia=ia-1;
+            }
+        }
         var count=2;
         while (this.midpoint==-1 && (this.atlasspec['midlobe']-count)>0) {
             this.midpoint=this.lobeStats[this.atlasspec['midlobe']-count][1];
