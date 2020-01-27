@@ -895,8 +895,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.undostack.initialize();
         internal.linestack=[];
         if (dosurfaces) {
-            connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
-            connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+            connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],internal.parameters.opacity,-1);
+            connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],internal.parameters.opacity,-1);
         }
         internal.parameters.mode3d='Uniform';
         if (internal.datgui_controllers) {

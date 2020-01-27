@@ -452,6 +452,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     updatescene(coords, plane,mousestate,force=false) {
 
+
         if (coords.length<4) {
             coords.push(this.getframe());
         }
@@ -464,59 +465,67 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         if (this.internal.slices[0]===null)
             return;
+
+        let mm=coords;
         
-        if (mousestate!==2) {
-
-            if (coords[3]===undefined || coords[3]===null)
-                coords[3]=0;
-            
-            let sl= [ util.range(Math.round(coords[0]/this.internal.imagespa[0]),0,this.internal.imagedim[0]-1),
-                      util.range(Math.round(coords[1]/this.internal.imagespa[1]),0,this.internal.imagedim[1]-1),
-                      util.range(Math.round(coords[2]/this.internal.imagespa[2]),0,this.internal.imagedim[2]-1),
-                      util.range(Math.floor(coords[3]),0,this.internal.maxnumframes-1) ];
-
-            this.internal.slicecoord[3]=sl[3];
-            if (plane>=0 && plane<=2) 
-                sl[plane]=this.internal.slicecoord[plane];
-
-
-            
-            var old=[0,0,0],pl=0;
-            for (pl=0;pl<=2;pl++) {
-                let imgframe=sl[3];
-                if (imgframe>=this.internal.imagedim[3])
-                    imgframe=this.internal.imagedim[3]-1;
-                this.internal.slices[pl].showdecorations(this.internal.showdecorations);
-                old[pl]=this.internal.slicecoord[pl];
-                this.internal.slicecoord[pl]=this.internal.slices[pl].setsliceno(sl[pl],imgframe,
-                                                                                 this.internal.imagetransferfunction);
-                this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].getCamera(),
-                                                          this.internal.maxspa*0.5);
-
-                if (old[pl]!==this.internal.slicecoord[pl]) {
-                    this.internal.slices[3].updatecoordinates(pl);
-                }
-            }
-
-            if (this.internal.slices[3]) {
-                this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.imagetransferfunction);
-                this.internal.slices[3].showdecorations(this.internal.showdecorations);
-                this.internal.slices[3].showimage(this.internal.show3dslices);
-            }
-            if (this.internal.origin)
-                this.internal.origin.visible=this.internal.showdecorations;
-            
+        if (plane !== 3) {
+        
+            if (mousestate!==2) {
                 
+                if (coords[3]===undefined || coords[3]===null)
+                    coords[3]=0;
+                
+                let sl= [ util.range(Math.round(coords[0]/this.internal.imagespa[0]),0,this.internal.imagedim[0]-1),
+                          util.range(Math.round(coords[1]/this.internal.imagespa[1]),0,this.internal.imagedim[1]-1),
+                          util.range(Math.round(coords[2]/this.internal.imagespa[2]),0,this.internal.imagedim[2]-1),
+                          util.range(Math.floor(coords[3]),0,this.internal.maxnumframes-1) ];
+                
+                this.internal.slicecoord[3]=sl[3];
+                if (plane>=0 && plane<=2) 
+                    sl[plane]=this.internal.slicecoord[plane];
+                
+                
+                
+                var old=[0,0,0],pl=0;
+                for (pl=0;pl<=2;pl++) {
+                    let imgframe=sl[3];
+                    if (imgframe>=this.internal.imagedim[3])
+                        imgframe=this.internal.imagedim[3]-1;
+                    this.internal.slices[pl].showdecorations(this.internal.showdecorations);
+                    old[pl]=this.internal.slicecoord[pl];
+                    this.internal.slicecoord[pl]=this.internal.slices[pl].setsliceno(sl[pl],imgframe,
+                                                                                     this.internal.imagetransferfunction);
+                    this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].getCamera(),
+                                                              this.internal.maxspa*0.5);
+                    
+                    if (old[pl]!==this.internal.slicecoord[pl]) {
+                        this.internal.slices[3].updatecoordinates(pl);
+                    }
+                }
+                
+                if (this.internal.slices[3]) {
+                    this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.imagetransferfunction);
+                    this.internal.slices[3].showdecorations(this.internal.showdecorations);
+                    this.internal.slices[3].showimage(this.internal.show3dslices);
+                }
+                if (this.internal.origin)
+                    this.internal.origin.visible=this.internal.showdecorations;
+                
+                
+                
+                this.updateobjectmapdisplay();
+                this.drawcrosshairs();
+            }
+
+            if (mousestate === undefined)
+                mousestate=-1;
             
-            this.updateobjectmapdisplay();
-            this.drawcrosshairs();
+            mm=this.getmmcoordinates();
         }
+
         if (this.internal.mouseobservers.length===0)
             return;
         
-        if (mousestate === undefined)
-            mousestate=-1;
-        var mm=this.getmmcoordinates();
         this.updateMouseObservers(mm,plane,mousestate);
         this.updateFrameChangedObservers();
     }

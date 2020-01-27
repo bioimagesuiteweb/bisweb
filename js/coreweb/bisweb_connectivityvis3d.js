@@ -543,7 +543,7 @@ var parsebrainsurface = function(surfacedata,filename) {
             globalParams.lastresol[meshindex]=0;
             globalParams.maxpoint[meshindex]=surfaces[meshindex]['maxpoint'] || 0;
     
-            createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1,0,false);
+            createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],1.0,-1,0,false);
         }
     }
     

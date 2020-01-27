@@ -120,6 +120,7 @@ class BisWebSubviewer {
         this.opts={};
 
         this.coordinateChangeCallback=null;
+        this.coordinate3DChangeCallback=null;
         this.mouseMovedCallback=null;
         this.callbackIndex=-1;
         this.rotateSpeed= opts.rotateSpeed || 4.0;
@@ -695,7 +696,13 @@ class BisWebSubviewer {
                                               this.plane,
                                               state);
             }
-        }
+        } else if (this.plane===3) {
+            if ( typeof this.coordinateChangeCallback == 'function' ) {
+                this.coordinateChangeCallback(this.lastCoordinates,
+                                              this.plane,
+                                              state);
+            }
+        }   
     }
 
     sendMouseMovedEvent(state) {
@@ -713,8 +720,9 @@ class BisWebSubviewer {
 
         if ( this.internal._state === STATE.NONE ) {
             this.internal._state = event.button;
-            if (!this.noRotate && event.shiftKey)
-                this.internal._state=STATE.CLICK3D;
+            // 3D Clicking
+            //if (!this.noRotate && event.shiftKey)
+            //this.internal._state=STATE.CLICK3D;
         }
 
         let click3d=false;
@@ -733,14 +741,21 @@ class BisWebSubviewer {
             this.internal._panEnd.copy(this.internal._panStart);
 
         } else if (this.internal._state === STATE.CLICK3D) {
-            if (this.rayCaster === null)
+            if (this.rayCaster === null) {
                 this.rayCaster=new THREE.Raycaster();
+                console.log('PRecision=',this.rayCaster.linePrecision);
+                this.rayCaster.linePrecision=this.width*0.05;
+                console.log('PRecision2=',this.rayCaster.linePrecision);
+            }
             
-            this.getMouseOnScreen( event.pageX, event.pageY )
+            this.getMouseOnScreen( event.pageX, event.pageY );
            
             //this._temp.mouseOnScreenVector
 
+            this._temp.mouseOnScreenVector.x=-this._temp.mouseOnScreenVector.x;
+            
             this.rayCaster.setFromCamera(this._temp.mouseOnScreenVector, this.camera);
+
             let intersects = this.rayCaster.intersectObjects(this.scene.children, true);
 
             if (intersects.length > 0) {
@@ -780,15 +795,11 @@ class BisWebSubviewer {
             this.internal._zoomEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
         } else if ( this.internal._state === STATE.PAN && !this.noPan ) {
             this.internal._panEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
-        }  else if (this.internal._state === STATE.CLICK3D) {
-            console.log('Click3d');
-        }
+        }  
 
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
             this.sendCoordinatesChangedEvent(1);
-        }  else if (this.internal._state === STATE.CLICK3D) {
-            //
-        }  else if (this.internal._state !== STATE.ZOOM) {
+        }  else if (this.internal._state !== STATE.ZOOM && this.internal._state !== STATE.CLICK3D)  {
             this.sendMouseMovedEvent(1);
         }
     }
@@ -804,9 +815,7 @@ class BisWebSubviewer {
 
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
             this.sendCoordinatesChangedEvent(2);
-        } else if (this.internal._state === STATE.CLICK3D) {
-            console.log('Done shift click'); 
-        }  else if (this.internal._state !== STATE.ZOOM) {
+        }  else if (this.internal._state !== STATE.ZOOM && this.internal._state !== STATE.CLICK3D)  {
             this.sendMouseMovedEvent(2);
         }
 

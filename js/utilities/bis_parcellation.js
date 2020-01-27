@@ -65,11 +65,14 @@ const computemode=function(array,debug) {
 const comparerois=function(a,b) {
     
     let computeroivalue=function(r) {
+        
         let sum=r.index*0.001; // Add a small bias to existing order
-        for (let i=0;i<r.length;i++)
+        for (let i=0;i<r.attr.length;i++)
             sum+=r.attr[i]*Math.pow(1000,(r.attr.length-i));
         return sum;
     };
+
+
     
     var a1=computeroivalue(a);
     var b1=computeroivalue(b);
