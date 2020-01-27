@@ -78,8 +78,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
 
         this.connectivitycontrol.disableMouseUpdates();
         super.setElementState(dt);
-        this.connectivitycontrol.setElementState(dt['connectivity']);
-        return;
+        return this.connectivitycontrol.setElementState(dt['connectivity']);
     }
 
 
@@ -185,9 +184,21 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         // ------------------------------------ Parcellations Menu ----------------------------
 
         var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
-        
-        userPreferences.safeGetItem('species').then( (species) => {        
 
+        
+        let prom=null;
+
+        if (!this.externalMode) {
+            prom=userPreferences.safeGetItem('species');
+        } else {
+            prom=Promise.resolve('all');
+        }
+            
+
+        prom.then( (species) => {        
+
+            console.log('Species=',species);
+            
             let sp=webutil.getQueryParameter('species') || '';
             if (sp==='mouse')
                 species='mouse';
@@ -330,17 +341,9 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             }
         };
         webutil.createDragAndCropController(HandleFiles);
-        this.applicationInitializedPromiseList.push(control.loaddefaultatlas());
+        this.applicationInitializedPromiseList.push(control.loaddefaultatlas(this.externalMode));
         this.finalizeConnectedEvent();
-        /*
-        Promise.all(this.applicationInitializedPromiseList).then( () => {
-            webfileutil.initializeFromUserPrefs();
-            this.parseQueryParameters();
-            this.fixColors();
-            document.body.style.zoom =  1.0;
-        }).catch( (e) => {
-            console.log('Error ',e);
-        });*/
+
     }
 }
 

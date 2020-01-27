@@ -1028,7 +1028,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
         internal.parcellation=new BisParcellation(ATLASHEADER);
         internal.parcellation.loadrois(text,filename,bootbox.alert);
-        internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
+        if (internal.datgui_nodecontroller)
+            internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
 
         internal.parcellationtext= {
             text : text,
@@ -1947,85 +1948,90 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             @param {object} state -- the state of the element */
         setElementState : function (dt=null) {
 
-
-            internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
-            internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
-            internal.rendermode=dt.rendermode;
-            togglemode(false);
-            cleanmatrixdata();
-            
-            internal.posFileInfo=[ "NONE", 0 ];
-            internal.negFileInfo=[ "NONE", 0 ];
-
-            if (dt.parcellation) {
-
-                let obj=JSON.parse(dt.parcellation.text);
-                atlasutil.setCurrentAtlasName(obj.baseatlas);
-                parseparcellation(dt.parcellation.text,dt.parcellation.filename,false);
-            }
-            
-            let gmode=internal.lastguimode || null;
-            
-            if (gmode===null) {
-                const ATLAS=atlasutil.getCurrentAtlas();
-                let gdef=ATLAS['groupdefinitions'];
-                gmode=gdef[gdef.length-1]['name'];
-            }
-            onDemandCreateGUI(gmode);
-            
-            let prom=Promise.resolve();
-            if (dt.hassurfaceindices) {
-                prom=loadatlassurface(dt.lastsurfacename);
-            }
-
-            prom.then( () => {
-
-                if (!internal.hassurfaceindices)
-                    createsurfacelabels();
+            return new Promise( (resolve,reject) => {
+                internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
+                internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
+                internal.rendermode=dt.rendermode;
+                togglemode(false);
+                cleanmatrixdata();
                 
-                if (dt.posmatrix) {
-                    let neg=null;
-                    let pos=new BisWebMatrix();
-                    pos.parseFromJSON(dt['posmatrix'].matrix);
-                    internal.posFileInfo=dt['posmatrix'].info;
+                internal.posFileInfo=[ "NONE", 0 ];
+                internal.negFileInfo=[ "NONE", 0 ];
+                
+                if (dt.parcellation) {
                     
-                    pos=pos.getNumericMatrix();
+                    let obj=JSON.parse(dt.parcellation.text);
+                    atlasutil.setCurrentAtlasName(obj.baseatlas);
+                    parseparcellation(dt.parcellation.text,dt.parcellation.filename,false);
+                }
+                
+                let gmode=internal.lastguimode || null;
+                
+                if (gmode===null) {
+                    const ATLAS=atlasutil.getCurrentAtlas();
+                    let gdef=ATLAS['groupdefinitions'];
+                    gmode=gdef[gdef.length-1]['name'];
+                }
+                onDemandCreateGUI(gmode);
+                
+                let prom=Promise.resolve();
+                if (dt.hassurfaceindices) {
+                    prom=loadatlassurface(dt.lastsurfacename);
+                }
+                
+                prom.then( () => {
                     
-                    if (dt.negmatrix) {
-                        neg=new BisWebMatrix();
-                        neg.parseFromJSON(dt['negmatrix'].matrix);
-                        neg=neg.getNumericMatrix();
-                        internal.negFileInfo=dt['negmatrix'].info;
+                    if (!internal.hassurfaceindices)
+                        createsurfacelabels();
+                    
+                    if (dt.posmatrix) {
+                        let neg=null;
+                        let pos=new BisWebMatrix();
+                        pos.parseFromJSON(dt['posmatrix'].matrix);
+                        internal.posFileInfo=dt['posmatrix'].info;
+                        
+                        pos=pos.getNumericMatrix();
+                        
+                        if (dt.negmatrix) {
+                            neg=new BisWebMatrix();
+                            neg.parseFromJSON(dt['negmatrix'].matrix);
+                            neg=neg.getNumericMatrix();
+                            internal.negFileInfo=dt['negmatrix'].info;
+                        }
+                        internal.conndata.setMatrices(pos,neg);
                     }
-                    internal.conndata.setMatrices(pos,neg);
-                }
-                
-                for (let attr in dt.parameters) {
-                    if (internal.parameters.hasOwnProperty(attr)) {
-                        internal.parameters[attr] = dt.parameters[attr];
+                    
+                    for (let attr in dt.parameters) {
+                        if (internal.parameters.hasOwnProperty(attr)) {
+                            internal.parameters[attr] = dt.parameters[attr];
+                        }
                     }
-                }
-                
-                for (let ia=0;ia<internal.datgui_controllers.length;ia++)
-                    internal.datgui_controllers[ia].updateDisplay();
-                
-                if (dt.linestack) {
-                    internal.linestack=dt.linestack;
-                    update();
-                }
-                
-                internal.showlegend=!dt.showlegend;
-                toggleshowlegend();
-
-                connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                            internal.parameters.mode3d,
-                                            internal.parameters.display3d,
-                                            internal.parameters.resol3d,
+                    
+                    for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                        internal.datgui_controllers[ia].updateDisplay();
+                    
+                    if (dt.linestack) {
+                        internal.linestack=dt.linestack;
+                        update();
+                    }
+                    
+                    internal.showlegend=!dt.showlegend;
+                    toggleshowlegend();
+                    
+                    connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                                internal.parameters.mode3d,
+                                                internal.parameters.display3d,
+                                                internal.parameters.resol3d,
                                             internal.parameters.hidecereb);
-                internal.inrestorestate=false;
-                setTimeout( () => { drawColorScale();},20);
-            }).catch( (e) => {
-                bootbox.alert('Failed to restore state'+e);
+                    internal.inrestorestate=false;
+                    setTimeout( () => {
+                        drawColorScale();
+                        resolve();
+                    },20);
+                }).catch( (e) => {
+                    bootbox.alert('Failed to restore state'+e);
+                    reject(e);
+                });
             });
         },
 
@@ -2439,7 +2445,7 @@ class ConnectivityControlElement extends HTMLElement {
     /** Set the element state from a dictionary object
         @param {object} state -- the state of the element */
     setElementState(dt=null) {
-        this.innercontrol.setElementState(dt);
+        return this.innercontrol.setElementState(dt);
     }
 
     /** Get State as Object
@@ -2470,17 +2476,32 @@ class ConnectivityControlElement extends HTMLElement {
         this.innercontrol.setParcellation(element);
     }
 
-    loaddefaultatlas() {
+    loaddefaultatlas(externalmode) {
+
         
         return new Promise( (resolve,reject) => {
-            
-            userPreferences.safeGetItem('species').then( (species) => {
 
+            let prom=null;
+            if (!externalmode) {
+                prom=userPreferences.safeGetItem('species');
+            } else {
+                prom=Promise.resolve('human');
+            }
+
+            console.log('Prom');
+            
+            prom.then( (species) => {
+
+                console.log('Load default atlas',species);
+
+                
                 let sp=webutil.getQueryParameter('species') || '';
                 if (sp==='mouse')
                     species='mouse';
                 else
                     species='human';
+
+                console.log('Load default atlas',species);
 
                 setTimeout( () => {
                     if (species==='all')
