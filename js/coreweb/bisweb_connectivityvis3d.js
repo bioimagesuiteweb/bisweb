@@ -456,9 +456,7 @@ var parse_multires_binary_surfaces=function(in_data,filename) {
 
 };
 
-var removesurfacemeshes = function() {
-    globalParams.internal.subviewers[3].reset();
-};
+
 
 var create_axis_lines=function() {
 
@@ -513,7 +511,7 @@ var create_axis_lines=function() {
 var parsebrainsurface = function(surfacedata,filename) {
 
     console.log('.... In parse brainsurface\n',filename,'\n');
-    removesurfacemeshes();
+    //globalParams.internal.subviewers[3].reset();
     create_axis_lines();
     
     let surfaces=parse_multires_binary_surfaces(surfacedata,filename);

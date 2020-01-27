@@ -248,10 +248,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     create3dview(ren,vol,cardslice,width,depth ) {
 
+
         let zoom=1.0;
         if (this.internal.simplemode)
             zoom = 3.0;
 
+
+        console.log('Width=',width,'depth=',depth,'zoom=',zoom);
         
         let subviewer=new BisWebSubViewer(ren,3,this.internal.viewports[1][3],
                                           cardslice,
@@ -268,6 +271,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         cardslice.addtoscene(subviewer.getScene(),ren,subviewer.getCamera());
         
         var wd=this.internal.imagespa[0] * 4;
+
         
         if (!this.internal.simplemode) {
             this.internal.origin=new THREE.Mesh(bisCrossHair.createcrosshair(wd,this.internal.imagespa[0],false), 
@@ -1131,6 +1135,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         let imagesize=volume.getImageSize();
+
         let d=1.0,i=0;
         for (i=0;i<=2;i++) {
             if (imagesize[i]>d)
@@ -1140,11 +1145,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
             if (this.internal.imagespa[i]>this.internal.maxspa)
                 this.internal.maxspa=this.internal.imagespa[i];
         }
+
         if (samesize===false) 
             this.internal.slicecoord[3]=0;
         
         let s_width=Math.round(d*0.667);
         let s_depth=Math.round(d*2.0);
+
         if (samesize===false)
             this.internal.rendermode=0;
 
@@ -1171,6 +1178,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (samesize===false) {
             this.internal.subviewers =  [ null,null,null,null ];
         }
+
+
         
         for (i=0;i<=2;i++) {
             this.internal.slices[i]=bis3dOrthogonalSlice.create2dslice(this.internal.volume,i,2);
@@ -1183,7 +1192,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 this.internal.slices[i].addtoscene(this.internal.subviewers[i].getScene());
             }
         }
-        
+
         let drawimages=true;
         if (this.internal.simplemode)
             drawimages=false;
@@ -1191,10 +1200,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                      this.internal.slices,true,
                                                      false,drawimages);
         if (samesize===false) {
+            let w=s_width+parseFloat(this.extraWidth3D || 0.0);
             this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
                                                           this.internal.volume,
                                                           this.internal.slices[3],
-                                                          s_width+this.extraWidth3D,s_depth);
+                                                          w,s_depth);
         } else {
             this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
         }                
@@ -1521,7 +1531,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
             
             dmode.onChange( (val) => {
                 let ind=this.internal.displaymodes.indexOf(val);
-                //console.log('Val = ',val);
                 self.setrendermodeinternal(ind);
             });
             
