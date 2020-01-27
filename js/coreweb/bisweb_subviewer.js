@@ -64,7 +64,13 @@ const inobounce=require('inobounce.js');
  * @param {Element} domElement - DomElement of underlying ThreeJs renderer (typically renderer.domElement)
  */
 
-const STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
+const STATE = { NONE: -1,
+                ROTATE: 0,
+                ZOOM: 1,
+                PAN: 2,
+                TOUCH_ROTATE: 3,
+                TOUCH_ZOOM_PAN: 4 ,
+                CLICK3D : 5 };
 const EPS = 0.000001;
 const KEYS = [ 65 /*A*/, 83 /*S*/, 68 /*D*/, 72 /*R*/ ];
 /*
@@ -138,6 +144,10 @@ class BisWebSubviewer {
         this.camera = new THREE.OrthographicCamera(-this.width,this.width,
                                                    -this.width,this.width,
                                                    0.01,2.0*this.depth);
+
+        this.rayCaster = null; //new THREE.Raycaster();
+
+        
         this.enabled = true;
         this.initialize();
 
@@ -615,6 +625,7 @@ class BisWebSubviewer {
         } else if ( event.keyCode === 82) {
             this.reset();
         }
+
     }
 
     /** keyup listener */
@@ -702,7 +713,11 @@ class BisWebSubviewer {
 
         if ( this.internal._state === STATE.NONE ) {
             this.internal._state = event.button;
+            if (!this.noRotate && event.shiftKey)
+                this.internal._state=STATE.CLICK3D;
         }
+
+        let click3d=false;
 
         if ( this.internal._state === STATE.ROTATE && !this.noRotate ) {
             let x=this.getMouseProjectionOnBall( -this.lastNormalizedCoordinates[0],this.lastNormalizedCoordinates[1] );
@@ -710,19 +725,39 @@ class BisWebSubviewer {
             this.internal._rotateEnd.copy( this.internal._rotateStart );
 
         } else if ( this.internal._state === STATE.ZOOM && !this.noZoom ) {
-            this.internal._zoomStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+            this.internal._zoomStart.copy(this.getMouseOnScreen( event.pageX, event.pageY ) );
             this.internal._zoomEnd.copy(this.internal._zoomStart);
 
         } else if ( this.internal._state === STATE.PAN && !this.noPan ) {
             this.internal._panStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
             this.internal._panEnd.copy(this.internal._panStart);
 
+        } else if (this.internal._state === STATE.CLICK3D) {
+            if (this.rayCaster === null)
+                this.rayCaster=new THREE.Raycaster();
+            
+            this.getMouseOnScreen( event.pageX, event.pageY )
+           
+            //this._temp.mouseOnScreenVector
+
+            this.rayCaster.setFromCamera(this._temp.mouseOnScreenVector, this.camera);
+            let intersects = this.rayCaster.intersectObjects(this.scene.children, true);
+
+            if (intersects.length > 0) {
+                let pt=intersects[0].point;
+                console.log('Point=',pt);
+                this.lastCoordinates=[ pt.x,pt.y,pt.z];
+                this.plane=3;
+                this.state=0;
+                click3d=true;
+            } 
         }
+
 
         document.addEventListener( 'mousemove', this.eventListeners.mousemove, false );
         document.addEventListener( 'mouseup', this.eventListeners.mouseup, false );
 
-        if ( this.internal._state === STATE.ROTATE && this.noRotate) {
+        if ( click3d === true || (this.internal._state === STATE.ROTATE && this.noRotate)) {
             this.sendCoordinatesChangedEvent(0);
         } else {
             this.sendMouseMovedEvent(1);
@@ -745,11 +780,15 @@ class BisWebSubviewer {
             this.internal._zoomEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
         } else if ( this.internal._state === STATE.PAN && !this.noPan ) {
             this.internal._panEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+        }  else if (this.internal._state === STATE.CLICK3D) {
+            console.log('Click3d');
         }
 
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
             this.sendCoordinatesChangedEvent(1);
-        } else if (this.internal._state !== STATE.ZOOM) {
+        }  else if (this.internal._state === STATE.CLICK3D) {
+            //
+        }  else if (this.internal._state !== STATE.ZOOM) {
             this.sendMouseMovedEvent(1);
         }
     }
@@ -765,7 +804,9 @@ class BisWebSubviewer {
 
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
             this.sendCoordinatesChangedEvent(2);
-        } else if (this.internal._state !== STATE.ZOOM) {
+        } else if (this.internal._state === STATE.CLICK3D) {
+            console.log('Done shift click'); 
+        }  else if (this.internal._state !== STATE.ZOOM) {
             this.sendMouseMovedEvent(2);
         }
 
