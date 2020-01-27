@@ -7,6 +7,8 @@ const saveSvgAsPng=require('save-svg-as-png');
 const filesaver = require('FileSaver');
 const regression = require('regression');
 
+const atlasutils=require('bisweb_atlasutilities');
+
 // -------------------------------
 // Todo ---
 // Which lines pos, neg, both ??
@@ -50,16 +52,7 @@ var initialize=function(internal) {
 
 // Fix gaps in WSHU network indices
 var fixNetworkIndex=function(n) {
-
-    // Yale networks are OK
-    if (globalParams.internal.networkAttributeIndex===4)
-        return n;
-    
-    if (n<=1)
-        return n;
-    if (n<=5)
-        return n-1;
-    return n-2;
+    return atlasutils.fixConnectivityNetworkIndex(n,globalParams.internal.networkAttributeIndex);
 };
 
 
@@ -778,7 +771,6 @@ var createlines = function() {
     let singlevalue=-1,attribcomponent=0;
     if (mode === 1) {
         singlevalue=Math.round(globalParams.internal.parameters.node)-1;
-        //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
     } else if (mode===2 ) {
         if (globalParams.internal.networkAttributeIndex===0) {
             attribcomponent=0;

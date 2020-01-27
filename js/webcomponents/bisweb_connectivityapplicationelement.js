@@ -19,12 +19,14 @@
 
 const BisWebImage = require('bisweb_image');
 const webutil=require('bis_webutil');
-const $=require('jquery'); 	
 const bootbox=require('bootbox');
-const numeric=require('numeric');
-const util=require('bis_util');
+
 const webfileutil = require('bis_webfileutil');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
+const userPreferences = require('bisweb_userpreferences.js');
+const ATLAS = {};
+ATLAS['humanmni']=require('atlases/humanmni.json');
+ATLAS['allenmri']=require('atlases/mouseallenmri.json');
 
 /**
  * A Application Level Element that creates a Connectivity Application
@@ -80,7 +82,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         return;
     }
 
-    
 
     connectedCallback() {
 
@@ -98,62 +99,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             dialogtitle: 0,
         };
         
-        /** Callback to load an image
-         * @alias BisMain_ConnectivityViewer~objectmapread
-         * @param {BisWebImage} vol - the image to load
-         */
-        var objectmapread = function ( vol ) {
-            console.log('+++++ Objectmap :',vol.getDescription());
-            var d=vol.getDimensions();
-            var s=vol.getSpacing();
-            var truedim = [  181,217,181,1 ] ;
-            var truespa = [  1.0,1.0,1.0,1.0 ];
-            d[3]=truedim[3];
-            s[3]=truespa[3];
-            var diff=numeric.norminf(numeric.sub(d,truedim));
-            var diff2=numeric.norminf(numeric.sub(s,truespa));
-            var orient=vol.getOrientation().name;
-            if (diff>0 || diff2>0.01 || orient!=="RAS") {
-                bootbox.alert("Bad Parcellation Image for creating a Parcellation file. Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space)."+
-                              "This image has orientation "+orient+", dimensions="+[d[0],d[1],d[2]]+" voxel size="+
-                              [ util.scaledround(s[0],10),util.scaledround(s[1],10),util.scaledround(s[2],10) ]);
-                return 0;
-            }
-            VIEWER.viewer.setobjectmap(vol,true);
-        };
         
-
-        var loadatlas=function(fname) {
-
-            return new Promise( (resolve,reject) => {
-                let image0 = new BisWebImage();
-                const imagepath=webutil.getWebPageImagePath();
-                image0.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,"RAS")
-                    .then(function() {
-                        VIEWER.viewer.setimage(image0);
-                        VIEWER.viewer.setcoordinates([90,126,72]);
-                        let image1 = new BisWebImage();
-                        image1.load(fname,"RAS").then(function() {
-                            objectmapread(image1);
-                            resolve();
-                        }).catch( (e) => {
-                            myerror(e);
-                            reject(e);
-                        });
-                    }).catch( (e) => {
-                        myerror(e);
-                        reject(e);
-                    });
-            });
-        };
-                                
-        
-        var myerror =function(e) {
-            e= e || "";
-            bootbox.alert("Error loading"+e);
-        };
-
-
         // --------------------------------------------------------------------------------
         // Main Application
         // --------------------------------------------------------------------------------
@@ -179,14 +125,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
         const self=this;
         
-        webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
-                                       function(e) {  control.loadparcellationfile(e);},
-                                       { title : 'Node Definition File',
-                                         save : false,
-                                         filters : [ { name: 'JSON formatted Node definition file', extensions: ['parc']}],
-                                         suffix : '.parc',
-                                       });
-        webutil.createMenuItem(fmenu,''); // separator
         
         webfileutil.createFileMenuItem(fmenu,'Load Positive Matrix',
                                        function(f) {  control.loadmatrix(0,f);},
@@ -243,67 +181,126 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
 
         // ------------------------------------ Parcellations Menu ----------------------------
-        
+
         var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
-        webutil.createMenuItem(imenu,'Use the Shen Atlas',
-                               function() {
-                                   control.clearmatrices();
-                                   const imagepath=webutil.getWebPageImagePath();
-                                   loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
-                               });
-        webutil.createMenuItem(imenu,'Use the AAL Atlas',
-                               function() {
-                                   let img=new BisWebImage();
-                                   const imagepath=webutil.getWebPageImagePath();
-                                   img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
-                                       control.clearmatrices();
-                                       control.importparcellation(img,'AAL Atlas');
-                                   });
-                               });
-        webutil.createMenuItem(imenu,''); // separator
-        webutil.createMenuItem(imenu,'Group nodes using the Yale Network Definitions', function() {
-            control.setnodeGroupOption('yale');
-        });
-        webutil.createMenuItem(imenu,'Group Nodes using the WSHU Network Definitions', function() {
-            control.setnodeGroupOption('wshu');
-        });
-        webutil.createMenuItem(imenu,'Group Nodes using Lobe Definitions', function() {
-            control.setnodeGroupOption('lobes');
-        });
         
+        userPreferences.safeGetItem('species').then( (species) => {        
+
+
+
+            let atnames=Object.keys(ATLAS);
+            //console.log('atnames=',atnames);
+            for (let sp=0;sp<atnames.length;sp++) {
+
+                let spname=ATLAS[atnames[sp]]['species'];
+                //  console.log('Spname=',spname);
+                if (species==='all' || species===spname) {
+                
+                    let atlaslist=ATLAS[atnames[sp]]['parcellations'];
+
+                    for (let i=0;i<atlaslist.length;i++) {
+                        let element=atlaslist[i];
+                        webutil.createMenuItem(imenu,'Use the '+element['name']+' Atlas',
+                                               () => {
+                                                   control.setParcellation(element);
+                                               });
+                    }
+                }
+                if (species==='all' && sp===0)
+                    webutil.createMenuItem(imenu,''); // separator
+            }
+
+            for (let sp=0;sp<atnames.length;sp++) {
+                let spname=ATLAS[atnames[sp]]['species'];
+                
+                if (species==='all' || species===spname) {
+                    let lobedef=ATLAS[atnames[sp]]['groupdefinitions'];
+                    if (lobedef.length>1) {
+                        webutil.createMenuItem(imenu,''); // separator
+                        for (let i=0;i<lobedef.length;i++) {
+                            let elem=lobedef[i];
+                            webutil.createMenuItem(imenu,'Group nodes using the '+elem['description'], () => {
+                                control.setnodeGroupOption(elem['name']);
+                            });
+                        }
+                    }
+                }
+            }
+        });
+
+
         // ------------------------------------ Advanced Menu ----------------------------
         
         var advmenu=webutil.createTopMenuBarMenu("Advanced",menubar);
-        webfileutil.createFileMenuItem(advmenu,'Import Node Positions Text File (in MNI coordinates)',
-                                       function(f) {  control.importparcellationtext(f);},
-                                       { title : 'Node definitions file',
-                                         save : false,
-                                         filters : [ { name: 'Text or CSV formatted file', extensions: ['txt', 'csv']}],
-                                         suffix : '.txt,.csv',
-                                       });
         
-        webfileutil.createFileMenuItem(advmenu,'Import Node Definition (Parcellation) Image',
+        webfileutil.createFileMenuItem(advmenu,'Import Parcellation Image',
                                        function(f) {
                                            let img=new BisWebImage();
-                                           img.load(f,"RAS")
-                                               .then(function() {
-                                                   control.importparcellation(img);
-                                               })
-                                               .catch( (e) => { myerror(e); });
+                                           img.load(f,"RAS").then( () => {
+                                               control.importparcellation(img);
+                                           }).catch( (e) => {
+                                               bootbox.alert("Error loading"+ (e || ''));
+                                           });
                                        },
-                                       { title : 'Node definitions image',
+                                       { title : 'Load Parcellation image',
                                          suffix : 'NII',
                                          save : false
                                        });
+
+        webfileutil.createFileMenuItem(advmenu, 'Export Parcellation Image',
+                                       function (f) {
+                                           self.saveOverlay(f,0);
+                                       },
+                                       {
+                                           title: 'Save Parcellation Image',
+                                           save: true,
+                                           filters: "NII",
+                                           suffix : "NII",
+                                           initialCallback : () => {
+                                               return self.getSaveOverlayInitialFilename(0);
+                                           }
+                                       });
         
+        
+        userPreferences.safeGetItem("internal").then( (f) => {
+
+            if (f) {
+                webutil.createMenuItem(advmenu,''); // separator
+                webfileutil.createFileMenuItem(advmenu,'Load Node Definition File',
+                                               function(e) {  control.loadparcellationfile(e);},
+                                               { title : 'Node Definition File',
+                                                 save : false,
+                                                 filters : [ { name: 'JSON formatted Node definition file', extensions: ['parc']}],
+                                                 suffix : '.parc',
+                                               });
+                webutil.createMenuItem(advmenu,'Save Node Definition File', () => {  control.saveParcellation();});
+                
+                
+                
+                
+                webutil.createMenuItem(advmenu,'');
+                webfileutil.createFileMenuItem(advmenu,'Import Node Positions Text File (in MNI coordinates)',
+                                               function(f) {  control.importparcellationtext(f);},
+                                               { title : 'Node definitions file',
+                                                 save : false,
+                                                 filters : [ { name: 'Text or CSV formatted file', extensions: ['txt', 'csv']}],
+                                                 suffix : '.txt,.csv',
+                                               });
+                
+                webutil.createMenuItem(advmenu,'Create Labels for Surface', () => {
+                    control.createSurfaceLabels();
+                });
+            }
+        });
+    
         
         // ------------------------------------ Help Menu ----------------------------
 
         if (!this.externalMode) {
             let helpmenu=this.createHelpMenu(menubar);
             webutil.createMenuItem(helpmenu,''); // separator
-            helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
-            webutil.createMenuItem(helpmenu,''); // separator
+            //helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
+            //webutil.createMenuItem(helpmenu,''); // separator
             webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
                 const imagepath=webutil.getWebPageImagePath();
                 control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
@@ -327,11 +324,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             }
         };
         webutil.createDragAndCropController(HandleFiles);
-
-        const imagepath=webutil.getWebPageImagePath();
-        this.applicationInitializedPromiseList.push(loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`));
-
-
+        this.applicationInitializedPromiseList.push(control.loaddefaultatlas());
         this.finalizeConnectedEvent();
         /*
         Promise.all(this.applicationInitializedPromiseList).then( () => {

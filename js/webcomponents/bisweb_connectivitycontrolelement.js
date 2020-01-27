@@ -17,7 +17,6 @@
 
 "use strict";
 
-const numeric=require('numeric');
 const UndoStack=require('bis_undostack');
 const bisweb_image = require('bisweb_image');
 const util=require('bis_util');
@@ -32,77 +31,105 @@ const bismni2tal=require('bis_mni2tal');
 const BisWebMatrix=require('bisweb_matrix');
 
 const BisWebPanel = require('bisweb_panel.js');
+const BisWebImage = require('bisweb_image.js');
 const dat = require('bisweb_datgui');
-const humanmni=require('atlases/humanmni.json');
+
+const atlasutil=require('bisweb_atlasutilities');
 const connectvis=require('bisweb_connectivityvis');
 const connectvis3d=require('bisweb_connectivityvis3d');
 
 const userPreferences = require('bisweb_userpreferences.js');
 
+
 // -------------------------------------------------------------------------
 // Parse Data
 // -------------------------------------------------------------------------
 
-const gui_Lobes = humanmni.labels.data[0].labels;
-const gui_BrodLabels = humanmni.labels.data[3].labels;
-const gui_Lobes_Values = [];
-let keys=Object.keys(gui_Lobes);
-for (let i=0;i<keys.length;i++) {
-    gui_Lobes_Values.push(gui_Lobes[keys[i]]);
-}
-
-const gui_Networks_Array = [
-    humanmni.labels.data[2].labels,
-    humanmni.labels.data[4].labels
-];
-
-const gui_Networks_ArrayShort = [
-    humanmni.labels.data[2].shortlabels,
-    humanmni.labels.data[4].shortlabels
-];
-
 // Critical flag for now, eventually make it an option
 
+const guiParameters = {
+    DrawLineOptions  : [ 'Positive', 'Negative', 'Both'],
+    GroupNodeOptions : [ 'All', 'Single Node', 'Group' ],
+    LobeValues : [],
+    Lobes : [],
+    Lobes2 : [],
+    Lobes3 : [],
+    BrodLabels : []
+};
 
+atlasutil.populateAtlasParameters(guiParameters);
 
-const gui_Lines = [ 'Positive', 'Negative', 'Both'];
-const gui_Modes = [ 'All', 'Single Node', 'Group' ];
-
-
-const createNetworkNames = function(mode='yale',internal=null) {
+const initializeBaseNameInformation = function(mode='yale',internal) {
 
     let index=0;
-    //    console.log('mode=',mode);
-    if (mode==='yale') {
-        index=1;
-        internal.networkAttributeIndex=4;
-        gui_Modes[2]='Single Network';
-    } else if ( mode === 'wshu') {
-        index=0;
-        internal.networkAttributeIndex=2;
-        gui_Modes[2]='Single Network';
-    } else {
+    guiParameters.LobeValues = [];
+    //console.log('Mode=',mode,index);
+
+    let currentname=atlasutil.getCurrentAtlasName();
+    
+    if (currentname!=='humanmni') {
+        mode='mouse';
+        internal.gui_Networks_Names=[];
+        internal.gui_Networks_ShortNames=[];
+        atlasutil.setCurrentAtlasName('allenmri');
         internal.networkAttributeIndex=0;
+
+        const ATLAS=atlasutil.getCurrentAtlas();
+        
         index=1;
-        gui_Modes[2]='Single Lobe';
+        guiParameters.GroupNodeOptions[2]='Single Lobe';
+        guiParameters.Lobes = ATLAS.labels.data[0].labels;
+        let keys=Object.keys(guiParameters.Lobes);
+        for (let i=0;i<keys.length;i++) {
+            let k=keys[i];
+            let v=guiParameters.Lobes[k];
+            let ind = v.indexOf(' ');
+            if (ind>=5) {
+                guiParameters.Lobes[k]=v.substr(0,ind);
+            }
+        }
+    } else {
+        const ATLAS=atlasutil.getCurrentAtlas();
+        guiParameters.Lobes = ATLAS.labels.data[0].labels;
+    
+        
+        //    console.log('mode=',mode);
+        if (mode==='yale') {
+            index=1;
+            internal.networkAttributeIndex=4;
+            guiParameters.GroupNodeOptions[2]='Single Network';
+        } else if ( mode === 'washu') {
+            index=0;
+            internal.networkAttributeIndex=2;
+            guiParameters.GroupNodeOptions[2]='Single Network';
+        } else {
+            mode='lobes';
+            internal.networkAttributeIndex=0;
+            index=1;
+            guiParameters.GroupNodeOptions[2]='Single Lobe';
+        }
     }
 
+    let keys=Object.keys(guiParameters.Lobes);
+    for (let i=0;i<keys.length;i++) {
+        guiParameters.LobeValues.push(guiParameters.Lobes[keys[i]]);
+    }
 
-
-    internal.gui_Networks=gui_Networks_Array[index];
-    let keys=Object.keys(internal.gui_Networks);
+    internal.gui_Networks=guiParameters.NetworksArray[index];
+    keys=Object.keys(internal.gui_Networks);
     internal.gui_Networks_Names=[];
     internal.gui_Networks_ShortNames=[];
     for (let i=0;i<keys.length;i++) {
         internal.gui_Networks_Names.push(internal.gui_Networks[keys[i]]);
-        internal.gui_Networks_ShortNames.push(gui_Networks_ArrayShort[index][keys[i]]);
+        internal.gui_Networks_ShortNames.push(guiParameters.NetworksArrayShort[index][keys[i]]);
     }
-    //    console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
 
-    internal.parameters.lobe=gui_Lobes[1];
-    internal.parameters.mode=gui_Modes[1];
+
+    internal.parameters.lobe=guiParameters.Lobes[1];
+    internal.parameters.mode=guiParameters.GroupNodeOptions[1];
     internal.parameters.network=internal.gui_Networks[1];
-    //console.log('mode=',mode,internal.networkAttributeIndex);
+    if (mode!=='mouse') 
+        internal.lastguimode=mode;
 };
 
 
@@ -117,13 +144,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // -------------------------------------------------------------------------
 
 
-
     let internal = {
 
+        hassurfaceindices : false,
+        
         // store here
-        gui_Lines : gui_Lines,
-        gui_Modes : gui_Modes,
-        gui_Lobes : gui_Lobes,
+        gui_Lines : guiParameters.DrawLineOptions,
+        gui_Modes : guiParameters.GroupNodeOptions,
+        gui_Lobes : guiParameters.Lobes,
 
 
         // Network stuff
@@ -160,7 +188,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         parameters : {
             autodrawenabled : true,
             node  : 200,
-            linestodraw : gui_Lines[2],
+            linestodraw : guiParameters.DrawLineOptions[2],
             degreethreshold : 10,
             length : 50,
             thickness : 2,
@@ -195,22 +223,22 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         // state stuff
         inrestorestate : false,
+        loadingimage   : false,
         parcellationtext : null,
         lastnode : 0,
 
         // Info for external use
         laststate : null,
-
+        lastsurfacename : '',
+        lastguimode : 'yale'
 
     };
 
 
 
-    internal.conndata.offset=connectvis3d.lobeoffset;
-
     connectvis.initialize(internal);
     connectvis3d.initialize(internal);
-    //    createNetworkNames(useYaleNetworks,internal);
+    //    initializeBaseNameInformation(useYaleNetworks,internal);
 
     // -------------------------------------------------------------------------
     // Undo Stuff
@@ -428,7 +456,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if ((internal.parcellation.box[3]-internal.parcellation.box[1])<100)
             return;
 
-
+        const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+        
+        let half=ATLASHEADER['halflobe'];
+        
         let cw=internal.context.canvas.width;
         let vp=internal.parcellation.viewport;
         let width  = Math.floor((vp.x1-vp.x0)*cw);
@@ -445,7 +476,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let offset=0;
         let boxheight=internal.parcellation.box[3]-internal.parcellation.box[1];
-        let numgaps=22;
+        let numgaps=half*2+2;
         let dlobe=Math.round(1.5*fnsize);
         let needed=numgaps*dlobe+8;
         if (needed>boxheight) {
@@ -477,16 +508,22 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.overlaycontext.font=fnsize+"px Arial";
             py+=(2*lobegap);
 
-            for (let i=1;i<=10;i++) {
-                let tot=util.range(internal.parcellation.lobeStats[i][2],0,10000),tot2=0;
-                if (internal.parcellation.lobeStats.length>(i+10))
-                    tot2=util.range(internal.parcellation.lobeStats[i+10][2],0,10000);
+            
+            for (let i=1;i<=half;i++) {
+                let arr=internal.parcellation.lobeStats[i] || [0,0,0 ];
+                let arr2=internal.parcellation.lobeStats[i+half] || [0,0,0 ];
+                let tot=util.range(arr[2],0,10000),tot2=0;
+                if (internal.parcellation.lobeStats.length>(i+half))
+                    tot2=util.range(arr2[2],0,10000);
                 if (tot+tot2>0) {
                     internal.overlaycontext.fillStyle=internal.parcellation.getNonSidedLobeColor(i);
                     internal.overlaycontext.fillRect(px,py,pw,1.5*lobegap);
                     internal.overlaycontext.fillStyle=internal.parcellation.getInverseNonSidedLobeColor(i);
-                    let name=gui_Lobes[i];
-                    name=name.slice(2,name.length);
+                    let name=guiParameters.Lobes[i];
+                    let ind = name.indexOf(' ');
+                    if (ind<5)
+                        ind=name.length;
+                    name=name.slice(2,ind);
                     internal.overlaycontext.fillText(name,px+0.5*pw,py+lobegap);
                     py+=(2*lobegap);
                 }
@@ -505,10 +542,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
                 internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
                                                  midx,y0_0);
-                if (internal.networkAttributeIndex===4)
-                    internal.overlaycontext.fillText('Using Yale network definitions from Noble at al 2018.',midx,y0_0+20);
-                else if (internal.networkAttributeIndex===2)
-                    internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
+
+                let citation=atlasutil.getNetworkCitation(internal.networkAttributeIndex);
+                if (citation) 
+                    internal.overlaycontext.fillText(citation,midx,y0_0+20);
             }
 
             internal.overlaycontext.restore();
@@ -695,7 +732,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     };
 
 
-    var setnode = function(node) {
+    var setnode = function(node,updateviewer=true) {
 
         if (internal.parcellation===null)
             return;
@@ -708,14 +745,32 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.mni[1]= internal.parcellation.rois[intnode].y;
         internal.mni[2]= internal.parcellation.rois[intnode].z;
         internal.mni[3]= singlevalue;
-        
+
         if (internal.showlegend) 
             internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
-        let coords = internal.mni2tal.getMMCoordinates(internal.mni);
-        internal.orthoviewer.setcoordinates(coords);
+
+        let coords=[];
+        
+        const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+        
+        if (ATLASHEADER['ismni']) {
+            coords = internal.mni2tal.getMMCoordinates(internal.mni);
+            if (updateviewer)
+                internal.orthoviewer.setcoordinates(coords);
+        } else {
+            coords=[ 0,0,0];
+            for (let i=0;i<=2;i++)
+                coords[i]=internal.mni[i];
+            
+            if (updateviewer)
+                internal.orthoviewer.setcoordinates(coords);
+        }
+        // END
+        
         drawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
-            connectvis3d.draw3dcrosshairs();
+            if (updateviewer)
+                connectvis3d.draw3dcrosshairs(coords);
         } else {
             internal.axisline[0].visible=false;
             internal.axisline[1].visible=false;
@@ -740,41 +795,66 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let nodenumber=internal.mni[3];
 
+        //console.log('Setting:=',internal.mni);
+        //        if (internal.conndata.statMatrix) {
+        //  console.log('Internal=',internal.conndata.statMatrix[0]);
+        //console.log('Internal=',internal.conndata.statMatrix[1]);
+        //        }
+        
         let s_text='MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
         let s_text2="";
 
         if (nodenumber>-1) {
-            let orignode=internal.parcellation.indexmap[nodenumber];
-            let humannumber=nodenumber+1;
 
-            let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
+            let orignode=nodenumber;//internal.parcellation.indexmap[nodenumber];
+
+            //console.log('Nodenumber=',nodenumber,orignode);
+            let displaynumber=nodenumber+1;
+
+            let lobe=guiParameters.Lobes[internal.parcellation.rois[orignode].attr[0]];
             internal.parameters.lobe=lobe;
 
             //
 
-            let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
-            let network=internal.gui_Networks[n];
-            if (network===undefined) {
-                network="unknown";
-            } else {
-                internal.parameters.network=network;
-            }
+            let atlasinfo='';
+            let coordinfo='';
+            if (atlasutil.getCurrentAtlasName() === 'humanmni') {
+                // MIGRATE
+                let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
+                let network=internal.gui_Networks[n];
+                if (network===undefined) {
+                    network="unknown";
+                } else {
+                    internal.parameters.network=network;
+                }
 
-            let brod=gui_BrodLabels[internal.parcellation.rois[orignode].attr[3]];
-            if (brod===undefined) {
-                brod="n/a";
+                
+                
+                let brod=guiParameters.BrodLabels[internal.parcellation.rois[orignode].attr[3]];
+                if (brod===undefined) {
+                    brod="n/a";
+                }
+                atlasinfo=' ( '+lobe+', NTW='+network+', BA='+brod+').';
+                coordinfo=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
+            } else {
+                let lobe2=guiParameters.Lobes2[internal.parcellation.rois[orignode].attr[1]];
+                let lobe3=guiParameters.Lobes3[internal.parcellation.rois[orignode].attr[2]];
+                
+                atlasinfo=' ( '+lobe+', '+lobe2+', ';
+                coordinfo= lobe3+').';
             }
-            s_text='Node:'+humannumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
-            s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
+            
+            s_text='Node:'+displaynumber+atlasinfo;
+            s_text2=coordinfo;
 
             if (internal.conndata.statMatrix!==null) {
                 s_text2+=', (Degree: pos='+internal.conndata.statMatrix[orignode][0]+', ';
                 s_text2+='neg='+internal.conndata.statMatrix[orignode][1]+', ';
                 s_text2+='sum='+internal.conndata.statMatrix[orignode][2]+') ';
             }
-            s_text2+=' (draw orderg ='+(internal.parcellation.indexmap[nodenumber]+1)+')';
+            s_text2+=' (draw order ='+(internal.parcellation.indexmap[nodenumber]+1)+')';
 
-            internal.parameters.node=humannumber;
+            internal.parameters.node=displaynumber;
 
 
             for (let ia=0;ia<internal.datgui_controllers.length;ia++)
@@ -803,21 +883,28 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.overlaycontext.restore();
     };
 
-    var cleanmatrixdata = function() {
+    var cleanmatrixdata = function(dosurfaces=true) {
         internal.conndata.cleanup();
-        if (internal.keynodedlg!==null)
+        if (internal.keynodedlg!==null) {
+            internal.keynodedlg.hide();
             internal.keynodedlg.getWidget().empty();
+        }
         internal.keynodedlg=null;
         internal.posFileInfo=[ "NONE", 0 ];
         internal.negFileInfo=[ "NONE", 0 ];
         internal.undostack.initialize();
         internal.linestack=[];
-        connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
-        connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+        if (dosurfaces) {
+            connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
+            connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+        }
         internal.parameters.mode3d='Uniform';
-        for (let ia=0;ia<internal.datgui_controllers.length;ia++)
-            internal.datgui_controllers[ia].updateDisplay();
-        update();
+        if (internal.datgui_controllers) {
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                internal.datgui_controllers[ia].updateDisplay();
+            update();
+        }
+
     };
 
     // Loads matrix. Called from input=File element
@@ -827,111 +914,119 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {boolean} sample - if sample then no alert
     // @param {boolean} updatemeshes - if true then update surface
     //
-    var loadmatrix = function(index,filename,done,sample,updatemeshes=true) {
+    var loaderror = function(msg) {
+        webutil.createAlert(msg,true);
+    };
+    
+    var loadmatrix = function(index,filename,doupdate=true,sample=false,updatemeshes=true) {
 
-        done= done || null;
-        sample = sample || false;
+        return new Promise( (resolve,reject) => {
 
-        if (internal.parcellation===null) {
-            loaderror('Load parcellation before loading connectivity matrix');
-            return true;
-        }
-
-        let loaderror = function(msg) {
-            webutil.createAlert(msg,true);
-        };
-
-        bisgenericio.read(filename).then( (obj) => {
-
-            let text=obj.data;
-
+            sample = sample || false;
+            
             if (internal.parcellation===null) {
                 loaderror('Load parcellation before loading connectivity matrix');
-                return;
+                reject();
             }
+            
+            bisgenericio.read(filename).then( (obj) => {
 
-            if (index===-1) {
-                if (internal.conndata.posMatrix===null)
-                    index=0;
-                else if (internal.conndata.hasnegMatrix!==false)
-                    index=0;
-                else
-                    index=1;
-            }
-            let n=internal.conndata.parsematrix(text,index,filename,loaderror);
-
-            let np=internal.parcellation.rois.length;
-            if (n>0 && n!==np) {
-                loaderror('Matrix has '+n+' rows, while parcellation has '+np+' nodes. This is a problem!');
-                cleanmatrixdata();
-                return;
-            }
-
-            internal.undostack.initialize();
-            internal.linestack=[];
-
-
-
-            if (n>0) {
-                if (index===0) {
-                    internal.posFileInfo[0]=filename;
-                    internal.posFileInfo[1] =n;
-                    internal.negFileInfo[0] ="NONE";
-                    internal.negFileInfo[1] =0;
-                } else {
-                    internal.negFileInfo[0] =filename;
-                    internal.negFileInfo[1] =n;
+                let text=obj.data;
+                if (internal.parcellation===null) {
+                    loaderror('Load parcellation before loading connectivity matrix');
+                    reject();
                 }
 
-                if (done===null) {
-                    internal.showlegend=true;
-                    if (internal.parameters.degreethreshold>internal.conndata.maxsum)
-                        internal.parameters.degreethreshold=Math.round(internal.conndata.maxsum/2);
-                    internal.datgui_degreethresholdcontroller.min(0.1).max(internal.conndata.maxsum);
-                    internal.datgui_degreethresholdcontroller.updateDisplay();
-                    update();
-                    setnode(internal.conndata.maxsumnode);
-
-
-                    if (updatemeshes) {
-                        connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                                    internal.parameters.mode3d,
-                                                    internal.parameters.display3d,
-                                                    internal.parameters.resol3d,
-                                                    internal.parameters.hidecereb);
-                        setTimeout( () => { drawColorScale(); },1000);
-                    }
-
-                    if (!sample) {
-                        if (filename.name)
-                            filename=filename.name;
-                        if (index===0)
-                            webutil.createAlert('Positive matrix of dimensions '+np+'*'+np+' read from '+filename);
-                        else
-                            webutil.createAlert('Negative matrix of dimensions '+np+'*'+np+' read from '+filename);
-                        window.dispatchEvent(new Event('resize'));
-                    }
-                    setTimeout( () => { autoDrawLines(); },200);
-
-                } else {
-                    done();
+                if (index===-1) {
+                    if (internal.conndata.posMatrix===null)
+                        index=0;
+                    else if (internal.conndata.hasnegMatrix!==false)
+                        index=0;
+                    else
+                        index=1;
                 }
-                if (internal.keynodedlg!==null)
-                    internal.keynodedlg.hide();
-                internal.keynodedlg=null;
-            }
-        }).catch( (e) => { loaderror(e); });
+                let n=internal.conndata.parsematrix(text,index,filename,loaderror);
+                
+                let np=internal.parcellation.rois.length;
+                if (n>0 && n!==np) {
+                    loaderror('Matrix has '+n+' rows, while parcellation has '+np+' nodes. This is a problem!');
+                    cleanmatrixdata();
+                    reject();
+                }
+                
+                internal.undostack.initialize();
+                internal.linestack=[];
+                
+                if (n>0) {
+                    if (index===0) {
+                        internal.posFileInfo[0]=filename;
+                        internal.posFileInfo[1] =n;
+                        internal.negFileInfo[0] ="NONE";
+                        internal.negFileInfo[1] =0;
+                    } else {
+                        internal.negFileInfo[0] =filename;
+                        internal.negFileInfo[1] =n;
+                    }
+                    
+                    if (doupdate) {
+                        internal.showlegend=true;
+                        if (internal.parameters.degreethreshold>internal.conndata.maxsum)
+                            internal.parameters.degreethreshold=Math.round(internal.conndata.maxsum/2);
+                        internal.datgui_degreethresholdcontroller.min(0.1).max(internal.conndata.maxsum);
+                        internal.datgui_degreethresholdcontroller.updateDisplay();
+                        update();
+                        setnode(internal.conndata.maxsumnode);
 
-        return false;
+
+                        if (updatemeshes) {
+                            connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                                        internal.parameters.mode3d,
+                                                        internal.parameters.display3d,
+                                                        internal.parameters.resol3d,
+                                                        internal.parameters.hidecereb);
+                        }
+
+                        if (!sample) {
+                            if (filename.name)
+                                filename=filename.name;
+                            if (index===0)
+                                webutil.createAlert('Positive matrix of dimensions '+np+'*'+np+' read from '+filename);
+                            else
+                                webutil.createAlert('Negative matrix of dimensions '+np+'*'+np+' read from '+filename);
+                            window.dispatchEvent(new Event('resize'));
+                        }
+                        
+                        setTimeout( () => {
+                            if (updatemeshes) 
+                                drawColorScale();
+                            autoDrawLines();
+                            resolve();
+                        },200);
+                    } else {
+                        resolve();
+                    }
+                    
+                    if (internal.keynodedlg!==null)
+                        internal.keynodedlg.hide();
+                    internal.keynodedlg=null;
+                }
+            }).catch( (e) => {
+                loaderror(e);
+                reject(e);
+            });
+        });
     };
 
 
     // Parses Parcellation
     // @param {string} text - parcellation text
     // @param {string} filename - file to load from (either .json or .txt)
-    var parseparcellation = function(text,filename,silent,keepobjectmap=false) {
+    var parseparcellation = function(text,filename,silent) {
+
         silent = silent || false;
-        internal.parcellation=new BisParcellation();
+
+        const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+        internal.parcellation=new BisParcellation(ATLASHEADER);
         internal.parcellation.loadrois(text,filename,bootbox.alert);
         internal.datgui_nodecontroller.min(1).max(internal.parcellation.rois.length);
 
@@ -951,181 +1046,328 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             webutil.createAlert('Connectivity Viewer initialized. The node definition loaded is from '+internal.parcellation.description+'.',
                                 false);
         }
-        if (!keepobjectmap)
-            internal.orthoviewer.clearobjectmap();
-        cleanmatrixdata();
+        internal.hassurfaceindices=false;
     };
     // Loads Parcellation.
     // @param {string} in_filename - file to load from (either .json or .txt)
-    var loadparcellation = function(in_filename) {
+    var loadparcellation = function(in_filename,silent=false) {
 
-        internal.parcellation=null;
-        bisgenericio.read(in_filename).then( (obj) => {
-            parseparcellation( obj.data,obj.filename);
-        }).catch( (msg) => {
-            console.log('msg=',msg,in_filename);
-            bootbox.alert(msg);
+        return new Promise( (resolve,reject) => {
+            internal.parcellation=null;
+            bisgenericio.read(in_filename).then( (obj) => {
+
+                try {
+                    let jsonobj=JSON.parse(obj.data);
+                    let base=jsonobj.baseatlas || 'humanmni';
+                    console.log('____ Loaded parcellation atlas=',base);
+                    if (base !== atlasutil.getCurrentAtlasName()) {
+                        atlasutil.setCurrentAtlasName(base);
+
+                        let ATLAS=atlasutil.getCurrentAtlas();
+                        let gdef=ATLAS['groupdefinitions'];
+                        let name=gdef[gdef.length-1]['name'];
+                        onDemandCreateGUI(name);
+                        let fname=ATLAS.anatomical;
+                        fname=webutil.getWebPageImagePath()+'/'+fname;
+                        let newimg=new BisWebImage();
+                        newimg.load(fname,'RAS').then( () => {
+                            internal.loadingimage=true;
+                            internal.orthoviewer.setimage(newimg);
+                            internal.loadingimage=false;
+
+                            let objmap=new BisWebImage();
+                            objmap.cloneImage(newimg, { 'type' : 'short',
+                                                        'numframes' : 1
+                                                      });
+                            internal.orthoviewer.setobjectmap(objmap,true);
+                            
+                            parseparcellation( obj.data,obj.filename,silent);
+                            loadatlassurface(null).then( () => {
+                                internal.hassurfaceindices=false;
+                                resolve();
+                            }).catch( (e) => {
+                                reject(e);
+                            });
+                        });
+                    }
+                } catch(e) {
+                    console.log('Not JSON ' +e );
+                }
+                parseparcellation( obj.data,obj.filename,silent);
+                resolve();
+            }).catch( (e) => {
+                reject(e);
+            });
         });
+    };
+
+    // Loads the surface atlas files
+    var loadatlassurface = function(surfacename=null) {
+
+        //console.log('Surfacename=',surfacename);
+        let default_name=false;
+
+        
+        return new Promise( (resolve,reject) => {
+            if (!surfacename) {
+                const ATLAS=atlasutil.getCurrentAtlas();
+                surfacename=webutil.getWebPageImagePath()+'/'+ATLAS['parcellations'][0].surface;
+                console.log('____ Loading default surface=',atlasutil.getCurrentAtlasName(),surfacename);
+                default_name=true;
+            }
+                
+            bisgenericio.read(surfacename,true).then( (obj) => {
+                let createparcels=connectvis3d.parsebrainsurface(obj.data,obj.filename);
+                if (!default_name && !createparcels)
+                    internal.hassurfaceindices=true;
+                else
+                    internal.hassurfaceindices=false;
+                internal.lastsurfacename=obj.filename;
+                resolve();
+            }).catch( (e) => {
+                bootbox.alert('Failed to load surfacename'+surfacename);
+                reject(e);
+            });
+        });
+    };
+
+    var get_parcellation_description=function() {
+
+        return new Promise( (resolve) => {
+
+            let description=internal.parcellation.description || '';
+            
+            bootbox.prompt({
+                title: "Please enter a description of the parcellation definition file",
+                value: description,
+                callback: function(result) {
+                    if (result !== null) {
+                        setTimeout(function() {
+                            resolve(result);
+                        },200);
+                    } else {
+                        setTimeout(function() {
+                            resolve('');
+                        },200);
+                    }
+                }
+            });
+        });
+
+    };
+    
+    // Reads BioImage Suite atlas file gets a description and off to callback
+    var read_ordered_lobes_image = function() {
+
+        return new Promise( (resolve,reject) => {
+
+            const img=new bisweb_image();
+            const imagepath=webutil.getWebPageImagePath();
+            const ATLAS=atlasutil.getCurrentAtlas();
+            let fname=imagepath+'/'+ATLAS.labels.filename;
+            console.log('____ Loading image to reorder nodes: ',fname);
+            img.load(fname,'RAS').then( () => {
+                resolve(img);
+            }).catch( (e) => {
+                bootbox.alert('Failed to read internal atlas spec file '+fname+'. Something is wrong here.');
+                reject(e);
+            });
+        });
+    };
+
+    var createsurfacelabels=function(uniform=true) {
+        let objmap=internal.orthoviewer.getobjectmap();
+        if (objmap!==null) {
+            connectvis3d.createSurfaceLabels(objmap);
+
+            internal.parameters.opacity=1.0;
+            if (uniform)
+                internal.parameters.mode3d='Uniform';
+            else
+                internal.parameters.mode3d='Parcels';
+            internal.parameters.display3d='Both';
+            internal.parameters.hidecereb=false;
+            internal.parameters.resol3d=0;
+            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                internal.datgui_controllers[ia].updateDisplay();
+            
+            connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                        internal.parameters.mode3d,
+                                        internal.parameters.display3d,
+                                        internal.parameters.resol3d,
+                                        internal.parameters.hidecereb);
+            return true;
+        }
         return false;
     };
+        
+    // Save a parcellation
+    var saveparcellation=async function() {
+        
+        let description='';
+        try {
+            description= await get_parcellation_description();
+        } catch(e) {
+            description='none';
+        }
 
-
-
-    // Reads BioImage Suite atlas file gets a description and off to callback
-    // @param {callback} callback function with (atlasimage,description)
-    var readatlas = function(callback,save=true,description=null) {
-
-        let atlasimage=null;
-
-        let myerror =  function () {
-            bootbox.alert('Failed to read internal atlas file. Something is wrong here.');
-            return 0;
-        };
-
-        let internalreadatlas = function(atlas,save=true) {
-            atlasimage=atlas;
-            if (save) {
-                bootbox.prompt({
-                    title: "Please enter a description of the node definition file",
-                    value: "Unknown",
-                    callback: function(result) {
-                        if (result !== null) {
-                            setTimeout(function() {
-                                callback(atlasimage,result);
-                            },100);
-                        }
-                    },
-                });
-            } else {
-                callback(atlasimage,description);
-            }
-        };
-        const img=new bisweb_image();
-        const imagepath=webutil.getWebPageImagePath();
-        img.load(`${imagepath}/Reorder_Atlas.nii.gz`,false)
-            .then(function() { internalreadatlas(img,save); })
-            .catch( (e) => { myerror(e) ; });
+        internal.parcellationtext.text=internal.parcellation.serialize(description);
+        
+        try {
+            await bisgenericio.write({
+                filename : "parcellation.parc",
+                title : 'File to save node definition in',
+                filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
+            },internal.parcellationtext.text);
+            return true;
+        } catch (e) { 
+            return false;
+        }
     };
-
+    
     // Imports Parcellation Text and outputs text file in json format
     // @alias BisGUIConnectivityControls~importParcellationText
     // @param {filename} textfile - file to create node definition from
     var importParcellationText = function(textfile) {
 
-        let loaderror = function(msg) {
-            bootbox.alert(msg);
-        };
+        cleanmatrixdata();
+        
+        return new Promise( (resolve,reject) => {
+            bisgenericio.read(textfile).then( (obj) => {
+                
+                let textstring=obj.data;
+                let filename=obj.filename;
+                
+                try {
+                    util.parseMatrix(textstring,filename,false,3);
+                } catch(e) {
+                    bootbox.alert('Failed to parse file '+filename+' it does not have 3 columns or something else is wrong. ('+e+')');
+                    reject(e);
+                    return;
+                }
 
-        let atlasimage=null;
-        let description="";
-        let out="";
-        let loadsuccess = function(textstring,filename) {
-            console.log('++++ textstring of length='+textstring.length+' read from'+filename);
-            try {
-                out=new BisParcellation().createParcellationFromText(textstring,filename,atlasimage,description)+"\n";
-            } catch(e) {
-                bootbox.alert(e);
-                return;
-            }
-            parseparcellation(out,filename+".parc",true);
-            bisgenericio.write({
-                filename : filename+".parc",
-                title : 'File to save node definition in',
-                filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-            },out);
-        };
-
-
-        bisgenericio.read(textfile).then( (obj) => {
-
-            let textstring=obj.data;
-            let filename=obj.filename;
-
-            let loadsuccess1 =function(atlas,result) {
-                atlasimage=atlas;
-                description=result;
-                loadsuccess(textstring,filename);
-            };
-
-            try {
-                util.parseMatrix(textstring,filename,false,3);
-            } catch(e) {
-                bootbox.alert('Failed to parse file '+filename+' it does not have 3 columns or something else is wrong. ('+e+')');
-                return;
-            }
-
-            readatlas(loadsuccess1);
-        }).catch( (e) => {
-            loaderror(e);
+                read_ordered_lobes_image().then( (atlasimage) => {
+                    internal.hassurfaceindices=false;
+                    let out='';
+                    try {
+                        const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+                        out=new BisParcellation(ATLASHEADER).createParcellationFromText(textstring,filename,atlasimage,'')+"\n";
+                    } catch(e) {
+                        reject(e);
+                    }
+                    parseparcellation(out,filename+".parc",true);
+                    resolve();
+                }).catch( (e) => {
+                    bootbox.alert(e);
+                    reject(e);
+                });
+            }).catch( (e)=> {
+                reject(e);
+            });
         });
     };
 
+    var compareLoadedImageWithAtlas=function() {
 
+        let d=[0,0,0],s=[0,0,0];
+        try {
+            d=internal.orthoviewer.getimage().getDimensions();
+            s=internal.orthoviewer.getimage().getSpacing();
+        } catch(e) {
+            return false;
+        }
+        const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+        let truedim = ATLASHEADER['dimensions'];
+        let truespa = ATLASHEADER['spacing'];
+        let sum=0.0,sumsp=0.0;
+        for (let i=0;i<=2;i++) {
+            sum=sum+Math.abs(d[i]-truedim[i]);
+            sumsp=sumsp+Math.abs(s[i]-truespa[i]);
+        }
 
+        if (sum>0 || sumsp>0.01) {
+            return false;
+        }
+
+        return true;
+    };
+    
+    
 
     // Imports Parcellation Image and outputs text file in json format
     // @param {BisWebImage} image - image to create from
-    var importParcellationImage = function(vol,atlasdesc=null) {
+    var importParcellationImage = function(vol,atlasdesc=null,surfacename=null) {
+
+        let oldatlasname=atlasutil.getCurrentAtlasName();        
+        
+        return new Promise( (resolve,reject) => {
+
+            let createparcellationfromimage = async (atlasimage) => {
+                
+                let fname=vol.getFilename();
+                let index=fname.lastIndexOf(".nii.gz");
+                if (index>0)
+                    fname=fname.slice(0,index)+".parc";
+                
+                let description=atlasdesc || '';
+
+                let out="";
+                try {
+                    const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+                    out=new BisParcellation(ATLASHEADER).createParcellationFromImage(vol,atlasimage,description)+"\n";
+                } catch(e) {
+                    console.log('Error=',e);
+                    bootbox.alert(e);
+                    reject(e);
+                    return;
+                }
+                
+                internal.orthoviewer.setobjectmap(vol,true);
+                parseparcellation(out,fname,true);
+                // Check for surfaces
+                loadatlassurface(surfacename).then( () => {
+                    resolve();
+                }).catch( (e) => {
+                    console.log('No surfaces');
+                    reject(e);
+                });
+
+            };
 
 
-        let save=true;
-        if (atlasdesc)
-            save=false;
-
-        let createparcellationfromimage = function(atlasimage,description) {
-
-            let fname=vol.getFilename();
-            let index=fname.lastIndexOf(".nii.gz");
-            if (index>0)
-                fname=fname.slice(0,index)+".parc";
-            let out="";
-            try {
-                out=new BisParcellation().createParcellationFromImage(vol,atlasimage,description)+"\n";
-            } catch(e) {
-                bootbox.alert(e);
+            let isvalid=atlasutil.findAndSetAtlas(vol);
+            if (!isvalid) {
+                const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+                bootbox.alert('Bad image loaded '+vol.getDescription()+'. Must be'+ATLASHEADER['correct']);
+                reject();
                 return;
             }
-            if (save)
-                parseparcellation(out,fname,true);
-            else
-                parseparcellation(out,fname,false);
-            internal.orthoviewer.setobjectmap(vol,true);
 
-            if (save) {
-                bisgenericio.write({
-                    filename : fname,
-                    title : 'File to save node definition in',
-                    filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-                },out);
+            let atlasname=atlasutil.getCurrentAtlasName();
+            onDemandCreateGUI(internal.lastguimode);
+            
+            if (atlasname!==oldatlasname) {
+                console.log('____ Changed base',oldatlasname,'-->',atlasname,'loading anatomical image');
+
+                let base=new BisWebImage();
+                const ATLAS=atlasutil.getCurrentAtlas();
+                let fname=ATLAS.anatomical;
+                fname=webutil.getWebPageImagePath()+'/'+fname;
+                base.load(fname,'RAS').then( () => {
+                    internal.loadingimage=true;
+                    internal.orthoviewer.setimage(base);
+                    internal.loadingimage=false;
+                    read_ordered_lobes_image().then( (atimage) => {
+                        createparcellationfromimage(atimage);
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => { reject(e); });
+            } else {
+                console.log('____ Not changing base',oldatlasname,'=',atlasname);
+                read_ordered_lobes_image().then( (atimage) => {
+                    createparcellationfromimage(atimage);
+                }).catch( (e) => { reject(e); });
             }
-        };
-
-        let d=vol.getDimensions();
-        let s=vol.getSpacing();
-        let truedim = [  181,217,181,1 ] ;
-        let truespa = [  1.0,1.0,1.0,1.0 ];
-        d[3]=truedim[3];
-        s[3]=truespa[3];
-
-
-        let diff=numeric.norminf(numeric.sub(d,truedim));
-
-        console.log(numeric.sub(s,truespa));
-        let diff2=numeric.norminf(numeric.sub(s,truespa));
-        let orient=vol.getOrientation().name;
-
-        console.log([diff,diff2]);
-        if (diff>0 || diff2>0.01 || orient!=="RAS") {
-            bootbox.alert("Bad Parcellation Image for creating a Parcellation file."+
-                          "Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space)."+
-                          "This image has orientation "+orient+", dimensions="+[d[0],d[1],d[2]]+
-                          " voxel size="+
-                          [ util.scaledround(s[0],10),util.scaledround(s[1],10),
-                            util.scaledround(s[2],10) ]);
-            return 0;
-        }
-
-        readatlas(createparcellationfromimage,save,atlasdesc);
+        });
     };
 
     // -------------------------------------------------------------------------------------------
@@ -1147,7 +1389,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var onDemandCreateGUI = function (mode='yale') {
 
 
-        createNetworkNames(mode,internal);
+        initializeBaseNameInformation(mode,internal);
         //console.log('attr=',        internal.networkAttributeIndex,mode);
 
         if (internal.parentDomElement===null)
@@ -1176,7 +1418,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let clist = [];
 
-        let modecnt=coords.add(data,'mode',gui_Modes).name("Mode");
+        let modecnt=coords.add(data,'mode',guiParameters.GroupNodeOptions).name("Mode");
         modecnt.onChange( () => {
             autoDrawLines();
         });
@@ -1194,14 +1436,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let dlist=[];
 
         if (internal.networkAttributeIndex===0)
-            dlist.push(coords.add(data,'lobe',gui_Lobes_Values).name("Lobe"));
+            dlist.push(coords.add(data,'lobe',guiParameters.LobeValues).name("Lobe"));
         else
             dlist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
 
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
         dlist.push(internal.datgui_degreethresholdcontroller);
 
-        dlist.push(coords.add(data,'linestodraw',gui_Lines).name("Lines to Draw"));
+        dlist.push(coords.add(data,'linestodraw',guiParameters.DrawLineOptions).name("Lines to Draw"));
 
         
 
@@ -1225,14 +1467,21 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
         });
 
-        let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-        });
-        clist.push(da15);
-        let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-        });
-        clist.push(da16);
+        const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
+        if (ATLASHEADER['multiressurfaces']) {
+            let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
+                connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+            });
+            clist.push(da15);
+            
+            let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
+                connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+            });
+            clist.push(da16);
+        } else {
+            data['hidecereb']=false;
+            data['smoothness']=0;
+        }
 
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
@@ -1243,7 +1492,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             } else {
                 da1.domElement.style.opacity = 1.0;
             }
-            da1.updateDisplay();
+            setTimeout( () => { da1.updateDisplay(); },100);
             setTimeout( () => { drawColorScale(); },200);
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
@@ -1335,13 +1584,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createbutton({ type : "info",
-                    name : "Graphs",
-                    position : "bottom",
-                    css : { "margin": "5px"},
-                    tooltip : "Click this to display the scatterplot",
-                    parent : bbar3,
-                    callback : connectvis.drawScatterandHisto
-                });
+                                       name : "Graphs",
+                                       position : "bottom",
+                                       css : { "margin": "5px"},
+                                       tooltip : "Click this to display the scatterplot",
+                                       parent : bbar3,
+                                       callback : connectvis.drawScatterandHisto
+                                     });
             }
         });
 
@@ -1394,7 +1643,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (dvalue<0.1)
             power=100.0;
 
-
+        
+        
+        
         context.font=fnsize+"px Arial";
         context.textAlign="center";
         context.textBaseline="top";
@@ -1416,24 +1667,26 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         context.lineTo(x0,y0);
         context.stroke();
 
-        context.strokeStyle="#000000";
-        context.lineWidth=2;
-
-        for (let i=0;i<=numsteps;i++) {
-            if (i===0 || i===numsteps || i===numsteps/2) {
-
-
-                context.beginPath();
-                context.moveTo(x0+0.5*(wd-1),y0+0.5*ht);
-                context.lineTo(x0+0.5*(wd-1),y0+1.3*ht);
-                context.stroke();
-                let w0=context.measureText('-').width*-0.5;
-                context.fillStyle = "#000000";
-                let data=i*dv+minv;
-                context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+        if (connectvis3d.transferfunction.showlabels) {
+            context.strokeStyle="#000000";
+            context.lineWidth=2;
+            
+            for (let i=0;i<=numsteps;i++) {
+                if (i===0 || i===numsteps || i===numsteps/2) {
+                    
+                    
+                    context.beginPath();
+                    context.moveTo(x0+0.5*(wd-1),y0+0.5*ht);
+                    context.lineTo(x0+0.5*(wd-1),y0+1.3*ht);
+                    context.stroke();
+                    let w0=context.measureText('-').width*-0.5;
+                    context.fillStyle = "#000000";
+                    let data=i*dv+minv;
+                    context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+                }
+                
+                x0+=wd;
             }
-
-            x0+=wd;
         }
     };
 
@@ -1448,40 +1701,47 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         setnode : setnode,
 
 
+        loaddefaultatlas(atlasname=null) {
+
+            atlasutil.setCurrentAtlasName(atlasname);
+            const ATLAS=atlasutil.getCurrentAtlas();
+            let gdef=ATLAS['groupdefinitions'];
+            let name=gdef[gdef.length-1]['name'];
+            onDemandCreateGUI(name);
+            return this.setParcellation(ATLAS['parcellations'][0]);
+        },
+
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
         // @param {BisWebSubViewer[]} subviewers - subviewers to place info in
         // @param {BisWebImage} volume - new image (not used)
         initialize : function(subviewers) {
 
+            internal.subviewers=subviewers;
             if (internal.inrestorestate)
                 return;
-
-            internal.subviewers=subviewers;
-            onDemandCreateGUI('yale');
-            const imagepath=webutil.getWebPageImagePath();
-            loadparcellation(`${imagepath}/shen.json`);
-
-            bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename);
-            }).catch( (e) => { console.log(e); });
-
-            bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
-                connectvis3d.parsebrainsurface(obj.data,obj.filename);
-            }).catch( (e) => { console.log(e); });
-
+            
+            if (!internal.loadingimage) {
+                this.loaddefaultatlas();
+            }
+            
             update(false);
             setTimeout(function() {
                 window.dispatchEvent(new Event('resize'));
             },10);
         },
 
+        // autoDrawLines
+        autoDrawLines() {
+            autoDrawLines();
+        },
+        
         // recreate gui
         setnodeGroupOption(flag='yale') {
 
             if (flag === 'yale' && internal.networkAttributeIndex===4)
                 return;
-            if (flag === 'wshu' && internal.networkAttributeIndex===2)
+            if (flag === 'washu' && internal.networkAttributeIndex===2)
                 return;
             if (flag === 'lobes' && internal.networkAttributeIndex===0)
                 return;
@@ -1494,8 +1754,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // Loads a parcellation from fname (json or txt)
         // @memberof BisGUIConnectivityControl.prototype
         loadparcellationfile : function(fname) {
-            console.log('Loading from'+fname);
-            loadparcellation(fname);
+            return loadparcellation(fname);
         },
 
 
@@ -1507,9 +1766,35 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // @param {number} mousestate - 0=click 1=move 2=release
         //
         updatemousecoordinates : function (mm,plane,mousestate) {
-            if (mousestate<0 || mousestate === undefined || mousestate===2)
+            if (mousestate!==2)
                 return;
 
+            connectvis3d.draw3dcrosshairs(mm);
+            
+            let objmap=internal.orthoviewer.getobjectmap();
+            if (objmap!==null) {
+                let spa=objmap.getSpacing();
+                let dim=objmap.getDimensions();
+                let c=[0,0,0];
+                for (let i=0;i<=2;i++) {
+                    c[i]=Math.floor(mm[i]/spa[i]+0.5);
+                }
+
+                let voxel=c[0]+c[1]*dim[0]+c[2]*dim[0]*dim[1];
+                try {
+                    let val=objmap.getImageData()[voxel];
+                    if (val>=0) {
+                        setnode(val-1,false);
+                        autoDrawLines();
+                    }
+                    return;
+                } catch (e) {
+                    console.log('Some error trying old fashioned way',e);
+                }
+            }
+            
+            
+            
             internal.mni=internal.mni2tal.getMNICoordinates(mm);
             internal.mni[3]=-1;
             if (internal.mni===null)
@@ -1520,8 +1805,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                                    internal.overlaycontext);
             }
 
-            connectvis3d.draw3dcrosshairs();
             updatetext();
+
         },
 
         // receive window resize events and redraw
@@ -1541,13 +1826,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         loadsamplematrices : function(filenames) {
 
-            let loadnext = function() {
-                loadmatrix(1,filenames[1],null,true,true);
-                webutil.createAlert('Sample connectivity matrices loaded.');
-                //window.dispatchEvent(new Event('resize'));
-            };
-            loadmatrix(0,filenames[0],loadnext,true,false);
-
+            return new Promise( (resolve,reject) => {
+                loadmatrix(0,filenames[0],false,true,false).then( () => {
+                    loadmatrix(1,filenames[1],true,true,true).then( () => {
+                        webutil.createAlert('Sample connectivity matrices loaded.');
+                        resolve();
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => { reject(e); });
+            });
         },
 
         info : function() {
@@ -1580,7 +1866,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (offset===0)
                 return;
 
-            let domap=(event.shiftKey);
+            let domap=!(event.shiftKey);
 
             let nodenumber=Math.round(internal.parameters.node)-1 || 0;
             let maxnode= internal.parcellation.rois.length-1;
@@ -1604,6 +1890,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 newnode=intnode;
             }
             setnode(newnode);
+            autoDrawLines();
         },
 
         clearmatrices : function() {
@@ -1634,17 +1921,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         about : function() {
-
             webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
         },
 
-        importparcellation : function(image,atlasdesc=null) {
-            console.log('at=',atlasdesc);
-            importParcellationImage(image,atlasdesc);
+        importparcellation : function(image,atlasdesc=null,surfacename=null) {
+            cleanmatrixdata(false);
+            return importParcellationImage(image,atlasdesc,surfacename);
         },
 
         importparcellationtext : function(filename) {
-            importParcellationText(filename);
+            internal.orthoviewer.clearobjectmap();
+            cleanmatrixdata(false);
+            return importParcellationText(filename);
+            
         },
 
 
@@ -1654,62 +1943,86 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             @param {object} state -- the state of the element */
         setElementState : function (dt=null) {
 
-            //            console.log('Cleaning up');
+
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
-            console.log('New Render mode=',dt.rendermode);
             togglemode(false);
-
+            cleanmatrixdata();
+            
             internal.posFileInfo=[ "NONE", 0 ];
             internal.negFileInfo=[ "NONE", 0 ];
 
-            if (dt.parcellation)
-                parseparcellation(dt.parcellation.text,dt.parcellation.filename,false,true);
+            if (dt.parcellation) {
 
+                let obj=JSON.parse(dt.parcellation.text);
+                atlasutil.setCurrentAtlasName(obj.baseatlas);
+                parseparcellation(dt.parcellation.text,dt.parcellation.filename,false);
+            }
+            
+            let gmode=internal.lastguimode || null;
+            
+            if (gmode===null) {
+                const ATLAS=atlasutil.getCurrentAtlas();
+                let gdef=ATLAS['groupdefinitions'];
+                gmode=gdef[gdef.length-1]['name'];
+            }
+            onDemandCreateGUI(gmode);
+            
+            let prom=Promise.resolve();
+            if (dt.hassurfaceindices) {
+                prom=loadatlassurface(dt.lastsurfacename);
+            }
 
-            if (dt.posmatrix) {
-                let neg=null;
-                let pos=new BisWebMatrix();
-                pos.parseFromJSON(dt['posmatrix'].matrix);
-                internal.posFileInfo=dt['posmatrix'].info;
+            prom.then( () => {
 
-                pos=pos.getNumericMatrix();
-
-                if (dt.negmatrix) {
-                    neg=new BisWebMatrix();
-                    neg.parseFromJSON(dt['negmatrix'].matrix);
-                    neg=neg.getNumericMatrix();
-                    internal.negFileInfo=dt['negmatrix'].info;
+                if (!internal.hassurfaceindices)
+                    createsurfacelabels();
+                
+                if (dt.posmatrix) {
+                    let neg=null;
+                    let pos=new BisWebMatrix();
+                    pos.parseFromJSON(dt['posmatrix'].matrix);
+                    internal.posFileInfo=dt['posmatrix'].info;
+                    
+                    pos=pos.getNumericMatrix();
+                    
+                    if (dt.negmatrix) {
+                        neg=new BisWebMatrix();
+                        neg.parseFromJSON(dt['negmatrix'].matrix);
+                        neg=neg.getNumericMatrix();
+                        internal.negFileInfo=dt['negmatrix'].info;
+                    }
+                    internal.conndata.setMatrices(pos,neg);
                 }
-                internal.conndata.setMatrices(pos,neg);
-            }
-
-            for (let attr in dt.parameters) {
-                if (internal.parameters.hasOwnProperty(attr)) {
-                    internal.parameters[attr] = dt.parameters[attr];
+                
+                for (let attr in dt.parameters) {
+                    if (internal.parameters.hasOwnProperty(attr)) {
+                        internal.parameters[attr] = dt.parameters[attr];
+                    }
                 }
-            }
-            //console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
-            //console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++)
-                internal.datgui_controllers[ia].updateDisplay();
+                
+                for (let ia=0;ia<internal.datgui_controllers.length;ia++)
+                    internal.datgui_controllers[ia].updateDisplay();
+                
+                if (dt.linestack) {
+                    internal.linestack=dt.linestack;
+                    update();
+                }
+                
+                internal.showlegend=!dt.showlegend;
+                toggleshowlegend();
 
-            if (dt.linestack) {
-                internal.linestack=dt.linestack;
-                update();
-            }
-
-            internal.showlegend=!dt.showlegend;
-            toggleshowlegend();
-            connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                        internal.parameters.mode3d,
-                                        internal.parameters.display3d,
-                                        internal.parameters.resol3d,
-                                        internal.parameters.hidecereb);
-            internal.inrestorestate=false;
-            setTimeout( () => { drawColorScale();},20);
-
+                connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                            internal.parameters.mode3d,
+                                            internal.parameters.display3d,
+                                            internal.parameters.resol3d,
+                                            internal.parameters.hidecereb);
+                internal.inrestorestate=false;
+                setTimeout( () => { drawColorScale();},20);
+            }).catch( (e) => {
+                bootbox.alert('Failed to restore state'+e);
+            });
         },
 
         /** Get State as Object
@@ -1729,7 +2042,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     nummatrices=nummatrices+1;
                     let newmat=new BisWebMatrix();
                     newmat.setFromNumericMatrix(mat[i]);
-                    console.log('Matrix ',matnames[i],newmat.getDescription());
                     obj[matnames[i]]= {
                         matrix : newmat.serializeToJSON(false),
                         info : info,
@@ -1742,13 +2054,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
 
             obj.parameters=JSON.parse(JSON.stringify(internal.parameters));
-            console.log('storing params=',JSON.stringify(obj.parameters,null,2));
 
+            obj.hassurfaceindices=internal.hassurfaceindices;
+            obj.lastsurfacename=internal.lastsurfacename;
+  
             obj.parcellation = internal.parcellationtext;
             obj.lastnode=internal.lastnode;
             obj.showlegend=internal.showlegend;
             obj.rendermode=internal.rendermode;
-            console.log('Storing Render mode=',obj.rendermode);
+            obj.lastguimode=internal.lastguimode;
             return obj;
         },
 
@@ -1766,9 +2080,100 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         /** get the rendermode externally */
         getRenderMode() {
             return internal.rendermode;
+        },
+
+        setobjectmap( vol ) {
+            internal.orthoviewer.setobjectmap(vol,true);
+        },
+        
+        loadatlas(objname,species=null) {
+
+
+            return new Promise( (resolve,reject) => {
+                
+                const imagepath=webutil.getWebPageImagePath();
+                atlasutil.setCurrentSpeciesName(species);
+                let same=compareLoadedImageWithAtlas();
+                let p=null;
+                if (!same) {
+                    p=new Promise( (resolve,reject) => {
+                        let image0 = new BisWebImage();
+                        const ATLAS=atlasutil.getCurrentAtlas();
+                        let fname=ATLAS.anatomical;
+                        let imgname=`${imagepath}/${fname}`;
+                        console.log('____ Loading new anatomical image',imgname);
+                        image0.load(imgname,"RAS").then( () => {
+                            internal.loadingimage=true;
+                            internal.orthoviewer.setimage(image0);
+                            internal.loadingimage=false;
+                            /*let center = ATLASHEADER['center'];
+                            setTimeout( () => {
+                                internal.orthoviewer.setcoordinates(center);
+                                resolve();
+                                },100);*/
+                            resolve();
+                        }).catch( (e) => { reject(e); });
+                    });
+                } else {
+                    p=Promise.resolve();
+                }
+
+                p.then( () => { 
+                    let image1 = new BisWebImage();
+                    image1.load(objname,"RAS").then( () => { 
+                        this.setobjectmap(image1);
+                        resolve(image1);
+                    }).catch( (e) => {
+                        bootbox.alert("Error loading"+ (e|| ''));
+                        reject(e);
+                    });
+                }).catch( (e) => { reject(e); });
+            });
+        },
+
+
+        setParcellation(element) {
+
+            cleanmatrixdata(false);
+
+            let name=element['name'];
+            let imagename=element['image'];
+            let surfacename=element['surface'];
+            let parcfile=element['parc'] || null;
+            atlasutil.setCurrentSpeciesName(element['species']);
+            const imagepath=webutil.getWebPageImagePath();
+            this.clearmatrices();
+            
+            return new Promise( (resolve,reject) => {
+                this.loadatlas(imagepath+'/'+imagename,element['species']).then( (img) => {
+                    if (parcfile) {
+                        loadparcellation(imagepath+'/'+parcfile,false,true).then( () => {
+                            onDemandCreateGUI(internal.lastguimode);
+                            loadatlassurface(imagepath+'/'+surfacename).then( () => {
+                                if (!internal.hassurfaceindices)
+                                    createsurfacelabels();
+
+                                resolve();
+                            }).catch( (e) => { reject(e); });
+                        }).catch( (e) => { reject(e); });
+                    } else {
+                        importParcellationImage(img,name+' Atlas',imagepath+'/'+surfacename).then( () => {
+                            if (!internal.hassurfaceindices)
+                                createsurfacelabels();
+                            resolve();
+                        }).catch( (e) => { reject(e); });
+                    }
+                }).catch( (e) => { reject(e); });
+            });
+        },
+
+        createSurfaceLabels() {
+            return createsurfacelabels(false);
+        },
+
+        saveParcellation() {
+            return saveparcellation();
         }
-
-
     };
 
     internal.updateFn=update;
@@ -1840,32 +2245,48 @@ class ConnectivityControlElement extends HTMLElement {
     /** load parcellation file
      * @param {string} fname - the url or filename or file object or an electron object with members
      */
-    loadparcellationfile(fname) { this.innercontrol.loadparcellationfile(fname); }
+    loadparcellationfile(fname) {
+        return this.innercontrol.loadparcellationfile(fname);
+    }
 
     /** loads a a matrix file
      * @param {string} fname - the url or filename or file object or an electron object with members
      */
-    loadmatrix(index,fname) { this.innercontrol.loadmatrix(index,fname); }
+    loadmatrix(index,fname) {
+        return this.innercontrol.loadmatrix(index,fname);
+    }
 
     /** Loads sample matrices
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    loadsamplematrices(fnames) { this.innercontrol.loadsamplematrices(fnames);  }
+    loadsamplematrices(fnames) {
+        return this.innercontrol.loadsamplematrices(fnames);
+    }
 
     /** clears matrices */
-    clearmatrices() { this.innercontrol.clearmatrices(); }
+    clearmatrices() {
+        this.innercontrol.clearmatrices();
+    }
 
     /* undo last draw operations */
-    undo() { this.innercontrol.undo(); }
+    undo() {
+        this.innercontrol.undo();
+    }
 
     /* redo last draw operations */
-    redo() { this.innercontrol.redo(); }
+    redo() {
+        this.innercontrol.redo();
+    }
 
     /* prints info about current data */
-    info() { this.innercontrol.info(); }
+    info() {
+        this.innercontrol.info();
+    }
 
     /* reset default display parameters */
-    resetdefault() { this.innercontrol.resetdefault(); }
+    resetdefault() {
+        this.innercontrol.resetdefault();
+    }
 
     /* shows a popup dialog listing the most "interesting" nodes */
     viewInteresting() {
@@ -1878,21 +2299,22 @@ class ConnectivityControlElement extends HTMLElement {
         }
 
         if (internal.keynodedlg!==null) {
-            //                  console.log('Calling show on '+internal.keynodedlg);
             internal.keynodedlg.show();
             return;
         }
 
 
         let c_data=internal.conndata.getSortedNodesByDegree(2);
+
         let numnodes=c_data.length-1;
         let maxnodes=Math.round(0.1*numnodes);
 
-        let ch=internal.context.canvas.height;
-        let cw=internal.context.canvas.width;
-        let vp=internal.parcellation.viewport;
+        
+        //let ch=internal.context.canvas.height;
+        //let cw=internal.context.canvas.width;
+        //let vp=internal.parcellation.viewport;
         let width  = 350;
-        console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
+        //console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
 
         let showdialog=new BisWebPanel(internal.layoutmanager,
                                        {
@@ -1914,6 +2336,13 @@ class ConnectivityControlElement extends HTMLElement {
             let node=buttonnodepairs[id];
             internal.parameters.mode="Single Node";
             this.innercontrol.setnode(node);
+            this.innercontrol.autoDrawLines();
+            /*if (!internal.parameters.autodrawenabled ||
+                internal.conndata.statMatrix===null)
+                return;
+            
+            connectvis.removelines();
+            connectvis.createlines();*/
         };
 
         let thead = stable.find(".bisthead");
@@ -1937,8 +2366,10 @@ class ConnectivityControlElement extends HTMLElement {
 
         for (let i=0;i<maxnodes;i++) {
 
+            // numnodes-i, reverse sort greater to smaller
             let node=c_data[numnodes-i].node;
             let degree=c_data[numnodes-i].degree;
+
             if (degree>0) {
                 let c = [ internal.parcellation.rois[node].x,
                           internal.parcellation.rois[node].y,
@@ -1946,7 +2377,7 @@ class ConnectivityControlElement extends HTMLElement {
 
                 let s0= i+1+".";
                 let s1= node+1;
-                let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
+                let lobe=guiParameters.Lobes[internal.parcellation.rois[node].attr[0]];
 
                 let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
                 let nid=webutil.getuniqueid();
@@ -1969,20 +2400,38 @@ class ConnectivityControlElement extends HTMLElement {
     }
 
     /* displays the matrices */
-    showmatrices() { this.innercontrol.showmatrices(); }
+    showmatrices() {
+        this.innercontrol.showmatrices();
+    }
 
     /** Imports a parcellation as text file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellationtext(f) { this.innercontrol.importparcellationtext(f); }
+    importparcellationtext(f) {
+        return this.innercontrol.importparcellationtext(f);
+    }
 
     /** Imports a parcellation as json file
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellation(f,desc) { this.innercontrol.importparcellation(f,desc); }
+    importparcellation(f,desc,surfacename=null) {        
+        return new Promise( (resolve,reject) => {
+            this.innercontrol.importparcellation(f,desc,surfacename).then( () => {
+                this.clearmatrices();
+                if (surfacename===null) {
+                    this.innercontrol.createSurfaceLabels();
+                }
+                resolve();
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+    }
 
     /** popups a dialog showing info about this control */
-    about() { this.innercontrol.about(); }
+    about() {
+        this.innercontrol.about();
+    }
 
     /** Set the element state from a dictionary object
         @param {object} state -- the state of the element */
@@ -2013,6 +2462,40 @@ class ConnectivityControlElement extends HTMLElement {
     setnodeGroupOption(flag='yale') {
         return this.innercontrol.setnodeGroupOption(flag);
     }
+
+    setParcellation(element) {
+        this.innercontrol.setParcellation(element);
+    }
+
+    loaddefaultatlas() {
+        
+        return new Promise( (resolve,reject) => {
+            
+            userPreferences.safeGetItem('species').then( (species) => {
+                setTimeout( () => {
+                    if (species==='all')
+                        species='human';
+                    atlasutil.setCurrentSpeciesName(species);
+                    if (species === atlasutil.getCurrentSpeciesName()) {
+                        this.innercontrol.loaddefaultatlas(atlasutil.getCurrentAtlasName()).then( () =>{
+                            resolve();
+                        }).catch( (e) => {
+                            reject(e);
+                        });
+                    }
+                },500);
+            }).catch( (e) => { reject(e); });
+        });
+    }
+
+    createSurfaceLabels() {
+        return this.innercontrol.createSurfaceLabels();
+    }
+
+    saveParcellation() {
+        return this.innercontrol.saveParcellation();
+    }
+
 }
 
 

@@ -1,7 +1,8 @@
 {
-   "anatomical": "../m19_ReslicedToAllen_0.1.nii.gz",
-   "labels": {
-      "filename": "../CCFv3_map19_0.1.nii.gz",
+    "anatomical": "m19_ReslicedToAllen_0.1.nii.gz",
+    "species" : "mouse",
+    "labels": {
+      "filename": "CCFv3_map19_0.1.nii.gz",
       "description": "Allen Atlas Mapped to MRI",
       "extra": "Mouse Brain",
       "data": [
@@ -21,10 +22,8 @@
                "10": "R-Pons (P,771)",
                "11": "R-Medulla (MY,354)",
                "12": "R-Cerebellum (CB,512)",
-               "13": "R-fiber tracts (fiber tracts,1009)",
-               "14": "R-ventricular systems (VS,73)",
-               "15": "R-Basic cell groups and regions (grey,8)",
-               "16": "R-root (root,997)",
+               "13": "R-Fiber tracts (fiber tracts,1009)",
+               "14": "R-Ventricular systems (VS,73)",
                "17": "L-Isocortex (Isocortex,315)",
                "18": "L-Olfactory areas (OLF,698)",
                "19": "L-Hippocampal formation (HPF,1089)",
@@ -37,10 +36,8 @@
                "26": "L-Pons (P,771)",
                "27": "L-Medulla (MY,354)",
                "28": "L-Cerebellum (CB,512)",
-               "29": "L-fiber tracts (fiber tracts,1009)",
-               "30": "L-ventricular systems (VS,73)",
-               "31": "L-Basic cell groups and regions (grey,8)",
-               "32": "L-root (root,997)"
+               "29": "L-Fiber tracts (fiber tracts,1009)",
+               "30": "L-Ventricular systems (VS,73)"
             }
          },
          {
@@ -981,6 +978,18 @@
                "756": "L-root (root,997)"
             }
          }
-      ]
-   }
+     ]
+   },
+    "parcellations" : [
+        {
+            "name" : "Yale Allen Mouse",
+            "image" : "allen_parcellation.nii.gz",
+            "surface" : "allen_185_surface_atlas.bin.gz",
+            "species" : "mouse"
+        }
+    ],
+    "groupdefinitions" : [
+        { "lobes" :  0 }
+    ]
+
 }
