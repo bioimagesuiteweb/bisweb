@@ -83,6 +83,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
     }
 
 
+    
+
     connectedCallback() {
 
         // Set external stuff first
@@ -186,14 +188,18 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         userPreferences.safeGetItem('species').then( (species) => {        
 
-
+            let sp=webutil.getQueryParameter('species') || '';
+            if (sp==='mouse')
+                species='mouse';
+            else if (sp==='human')
+                species='human';
+            else if (sp==='all')
+                species='all';
 
             let atnames=Object.keys(ATLAS);
-            //console.log('atnames=',atnames);
             for (let sp=0;sp<atnames.length;sp++) {
 
                 let spname=ATLAS[atnames[sp]]['species'];
-                //  console.log('Spname=',spname);
                 if (species==='all' || species===spname) {
                 
                     let atlaslist=ATLAS[atnames[sp]]['parcellations'];

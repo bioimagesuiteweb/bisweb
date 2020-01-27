@@ -1324,12 +1324,12 @@ class ViewerApplicationElement extends HTMLElement {
                     });
                 }*/
 
-                webutil.createMenuItem(bmenu,'');
-                webutil.createMenuItem(bmenu, 'Repository Panel', () => {
-                    this.repopanel.show();
-                });
-                    
-               
+                if (this.applicationName!=="connviewer") {
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Repository Panel', () => {
+                        this.repopanel.show();
+                    });
+                }
                 
             }
             webutil.createMenuItem(bmenu,'');

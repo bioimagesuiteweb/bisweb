@@ -495,7 +495,6 @@ var aboutApplication=async function() {// jshint ignore:line
         }
     }
 
-    console.log('This far ');
     
     if (dosimple)  {
         let m=getModal();
@@ -561,13 +560,17 @@ var createApplicationSelector=async function(externalobj) {
     for (let i=0;i<max;i++) {
             
         let elem=externalobj[keys[i]];
+
         let title=elem.title;
         let url='';
         
         if (elem.url.indexOf('http')===0) {
             url=elem.url;
         } else {
-            url=internal.scope+elem.url+'.html';
+            if (url.indexOf('.html')<0)
+                url=internal.scope+elem.url;
+            else
+                url=internal.scope+elem.url+'.html';
         }
         
         let description=elem.description;

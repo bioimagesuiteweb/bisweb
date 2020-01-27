@@ -10,13 +10,22 @@
 	},
 	"connviewer" : {
 	    "title" : "Connectivity Viewer",
-	    "url"   : "connviewer",
+	    "url"   : "connviewer.html?species=human",
 	    "description" : "The fMRI connectivity display tool.",
 	    "picture" : "images/connviewer.png",
 	    "width" : "1024",
             "height" : "900"
-
 	},
+        "connviewer_mouse" : {
+	    "title" : "Connectivity Viewer -- Mouse",
+	    "url"   : "connviewer.html?species=mouse",
+	    "description" : "The fMRI connectivity display tool (mouse).",
+	    "picture" : "images/connviewer_mouse.png",
+	    "width" : "1024",
+            "height" : "900",
+            "donotbuild" : true
+	},
+
 	"mni2tal" : {
 	    "title" : "MNI2TAL",
 	    "url"   : "mni2tal",

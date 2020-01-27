@@ -66,7 +66,7 @@ const comparerois=function(a,b) {
     
     let computeroivalue=function(r) {
         let sum=r.index*0.001; // Add a small bias to existing order
-        for (let i=0;i<4;i++)
+        for (let i=0;i<r.length;i++)
             sum+=r.attr[i]*Math.pow(1000,(r.attr.length-i));
         return sum;
     };

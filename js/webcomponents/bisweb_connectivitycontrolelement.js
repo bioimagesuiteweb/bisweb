@@ -1049,50 +1049,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.hassurfaceindices=false;
     };
 
-    // Loads Base MRI Image
-        /*    var loadbasemri=function(newatlasname,createobjmap=false) {
-
-        return new Promise( (resolve,reject) => {
-            
-            if (newatlasname !== atlasutil.getCurrentAtlasName()) {
-
-                atlasutil.setCurrentAtlasName(base);
-                let ATLAS=atlasutil.getCurrentAtlas();
-                let gdef=ATLAS['groupdefinitions'];
-                let name=gdef[gdef.length-1]['name'];
-                onDemandCreateGUI(name);
-                let fname=ATLAS.anatomical;
-                fname=webutil.getWebPageImagePath()+'/'+fname;
-                let newimg=new BisWebImage();
-                newimg.load(fname,'RAS').then( () => {
-                    internal.loadingimage=true;
-                    const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
-                    internal.orthoviewer.extraWidth3D=ATLASHEADER['midoffset']*1.2;
-                    internal.orthoviewer.setimage(newimg);
-                    internal.loadingimage=false;
-
-                    if (createobjmap) {
-                        let objmap=new BisWebImage();
-                        objmap.cloneImage(newimg, { 'type' : 'short',
-                                                    'numframes' : 1
-                                                  });
-                        internal.orthoviewer.setobjectmap(objmap,true);
-                    }
-                    
-                    parseparcellation( obj.data,obj.filename,silent);
-                    loadatlassurface(null).then( () => {
-                        internal.hassurfaceindices=false;
-                        resolve();
-                    }).catch( (e) => {
-                        reject(e);
-                    });
-                });
-            }
-        });
-    };*/
-                            
-
-    
     // Loads Parcellation.
     // @param {string} in_filename - file to load from (either .json or .txt)
     var loadparcellation = function(in_filename,silent=false) {
@@ -1411,7 +1367,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     }).catch( (e) => { reject(e); });
                 }).catch( (e) => { reject(e); });
             } else {
-                console.log('____ Not changing base',oldatlasname,'=',atlasname);
                 read_ordered_lobes_image().then( (atimage) => {
                     createparcellationfromimage(atimage);
                 }).catch( (e) => { reject(e); });
@@ -2520,6 +2475,13 @@ class ConnectivityControlElement extends HTMLElement {
         return new Promise( (resolve,reject) => {
             
             userPreferences.safeGetItem('species').then( (species) => {
+
+                let sp=webutil.getQueryParameter('species') || '';
+                if (sp==='mouse')
+                    species='mouse';
+                else
+                    species='human';
+
                 setTimeout( () => {
                     if (species==='all')
                         species='human';

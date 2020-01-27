@@ -253,9 +253,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.simplemode)
             zoom = 3.0;
 
-
-        console.log('Width=',width,'depth=',depth,'zoom=',zoom);
-        
         let subviewer=new BisWebSubViewer(ren,3,this.internal.viewports[1][3],
                                           cardslice,
                                           {
