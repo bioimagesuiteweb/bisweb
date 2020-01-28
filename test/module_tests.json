@@ -97,18 +97,6 @@
 	    "result"  : true,
 	    "dopython": false
 	},
-	{
-	    "command" : "computeROI -i testdata/ras_avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
-	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
-	    "result"  : false,
-	    "dopython": true
-	},
-        {
-	    "command" : "computeROI -i testdata/MNI_6mm.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
-	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
-	    "result"  : false,
-	    "dopython": true
-	},
         {
 	    "command" : "computeVolume -i testdata/testvol.nii.gz --keepzero false --debug true",
 	    "test"    : "--test_target testdata/testvol.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
@@ -897,7 +885,7 @@
             "result"  : true,
             "skipjs"  : true,
             "noweb"   : true,
-            "dopython" : true
+            "dopython" : false
         },
         {
             "command" : "inflateSurface --input testdata/surface/inp.ply",
@@ -905,7 +893,7 @@
             "result"  : false,
             "skipjs"  : true,
             "noweb"   : true,
-            "dopython" : true
+            "dopython" : false
         },
         {
 
