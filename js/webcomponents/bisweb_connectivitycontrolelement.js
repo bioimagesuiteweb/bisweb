@@ -2488,8 +2488,6 @@ class ConnectivityControlElement extends HTMLElement {
                 prom=Promise.resolve('human');
             }
 
-            console.log('Prom');
-            
             prom.then( (species) => {
 
                 console.log('Load default atlas',species);

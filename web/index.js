@@ -567,7 +567,7 @@ var createApplicationSelector=async function(externalobj) {
         if (elem.url.indexOf('http')===0) {
             url=elem.url;
         } else {
-            if (url.indexOf('.html')<0)
+            if (elem.url.indexOf('.html')>0)
                 url=internal.scope+elem.url;
             else
                 url=internal.scope+elem.url+'.html';
