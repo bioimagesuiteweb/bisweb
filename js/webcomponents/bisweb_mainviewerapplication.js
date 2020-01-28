@@ -1655,7 +1655,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         let fmenu=await this.createFileAndOverlayMenus(menubar,painttoolid);
 
-        this.createApplicationMenu(fmenu);
+        await this.createApplicationMenu(fmenu);
 
         let editmenu=null;
 
