@@ -221,6 +221,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Shift+Scale(+Cast) Image',1, false, modules.getModule('shiftScaleImage'), moduleoptions);
         this.createModule('Reorient Image',1, false, modules.getModule('reorientImage'), moduleoptions);
         this.createModule('Flip Image',1, false, modules.getModule('flipImage'), moduleoptions);
+        this.createModule('Permute Image',1, false, modules.getModule('permuteImage'), moduleoptions);
         this.createModule('Crop Image',1, false, modules.getModule('cropImage'), moduleoptions);
         this.createModule('Blank Image',1, false, modules.getModule('blankImage'), moduleoptions);
         this.createModule('Extract Frame',1, true, modules.getModule('extractFrame'), moduleoptions);

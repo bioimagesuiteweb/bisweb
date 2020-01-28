@@ -929,7 +929,20 @@
 	    "dopython": true,
             "noweb"   : true,
             "skipjs"  : true
-	}
+	},
+        {
+            "command" : "permuteImage --paramfile testdata/permuteImage_2020_01_28.param -i testdata/MNI_6mm.nii.gz",
+            "test"    : "--test_target testdata/MNI_6mm__prm.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "permuteImage --paramfile testdata/permuteImage_2020_01_28_2.param -i testdata/MNI_6mm.nii.gz",
+            "test"    : "--test_target testdata/MNI_6mm__prm_2.nii.gz",
+            "result"  : true,
+            "dopython": false
+        }
+        
     ]
 }
 

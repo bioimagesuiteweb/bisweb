@@ -65,6 +65,7 @@ const moduleImports = {
     displacementfield : require('displacementField.js'),
     inverttransformation : require('invertTransformation.js'),
     resliceimage : require('resliceImage.js'),
+    permuteimage : require('permuteImage.js'),
     motionreslice : require('motionReslice.js'),
     manualregistration : require('manualRegistration.js'),
     linearregistration : require('linearRegistration.js'),
