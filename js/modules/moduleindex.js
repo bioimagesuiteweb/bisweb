@@ -63,6 +63,7 @@ const moduleImports = {
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
     displacementfield : require('displacementField.js'),
+    jacobianimage : require('jacobianImage.js'),
     inverttransformation : require('invertTransformation.js'),
     resliceimage : require('resliceImage.js'),
     permuteimage : require('permuteImage.js'),

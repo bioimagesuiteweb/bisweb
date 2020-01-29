@@ -259,6 +259,7 @@ class ModuleManagerElement extends HTMLElement {
             }
             this.createModule('Project Image',3, false, modules.getModule('projectImage'), moduleoptions);
             this.createModule('Back-Project Image',3, usesgpl, modules.getModule('backProjectImage'), moduleoptions);
+            this.createModule('Jacobian Image',3, false, modules.getModule('jacobianImage'), moduleoptions);
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
             }

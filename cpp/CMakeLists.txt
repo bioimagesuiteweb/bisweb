@@ -91,6 +91,7 @@ SET(KITSRCS
   bisTesting.cpp
   bisvtkMultiThreader.cxx
   bisImageDistanceMatrix.cpp
+  bisImageTransformationJacobian.cpp
   )
 
 # ---------------------------------------------------------------------------------------------
@@ -174,6 +175,7 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
   ${CPP_SOURCE_DIR}/bisTesting.h
   ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
+  ${CPP_SOURCE_DIR}/bisImageTransformationJacobian.h
   )
 
 
