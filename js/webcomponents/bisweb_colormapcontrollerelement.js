@@ -559,8 +559,15 @@ class ColormapControllerElement extends HTMLElement {
         } else {
             this.data['outmode']='Both';
         }
-        this.internal.minobjectmap = folder.add(this.data,'minth',overlayrange[0],overlayrange[1]).name("Min Overlay");
-        this.internal.maxobjectmap = folder.add(this.data,'maxth',overlayrange[0],overlayrange[1]).name("Max Overlay");
+
+        let d=(overlayrange[1]-overlayrange[0]);
+        let st=1;
+        while (st>(d*0.01))
+            st=st*0.1;
+
+        
+        this.internal.minobjectmap = folder.add(this.data,'minth',overlayrange[0],overlayrange[1]).name("Min Overlay").step(st);
+        this.internal.maxobjectmap = folder.add(this.data,'maxth',overlayrange[0],overlayrange[1]).name("Max Overlay").step(st);
         this.internal.checkshowcolorbar = folder.add(this.data,'showcolorbar').name("Show Colorbar");
         this.internal.checkshowcolorbar.onChange( () => {
             console.log('Check color bar changed');
@@ -772,9 +779,16 @@ class ColormapControllerElement extends HTMLElement {
             }
             this.internal.folder[1]= this.internal.basegui.addFolder('Overlay Color Mapping');
 
+
+            let d=(this.internal.imagerange[1]-this.internal.imagerange[0]);
             
-            let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int");
-            let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int");
+            let st=1;
+            while (st>(d*0.01))
+                st=st*0.1;
+            
+            
+            let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int").step(st);
+            let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int").step(st);
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
             let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
             this.internal.anatomicalcontrollers=[a1,a2];

@@ -26,9 +26,18 @@ const BaseModule = require('basemodule.js');
  */
 
 class JacobianImageModule extends BaseModule {
-    constructor() {
+    constructor(md) {
         super();
         this.name = 'jacobianImage';
+
+        this.outputGUIInput = 'image';
+        this.outputGUIViewer = 'viewer2';
+
+        if (md==='overlay' || md==='single') {
+            this.outputGUIInput = 'overlay';
+            this.outputGUIViewer = 'viewer1';
+        }
+
     }
 
     createDescription() {
@@ -37,10 +46,44 @@ class JacobianImageModule extends BaseModule {
             "description": "Calculates the determinant of the jacobian of the transformation for the volume specified by the given image.",
             "author": "Xenios Papademetris",
             "version": "1.0",
-            "outputs":  baseutils.getImageToImageOutputs("Output jacobian image"),
-            "inputs":  baseutils.getImageToImageInputs("Image that defines the input space"),
             "buttonName": "Calculate",
             "shortname" : "jcb",
+            "outputs": [
+                {
+                    'type': 'image',
+                    'name': 'Output Image',
+                    'description': 'Jacobian Output Image',
+                    'varname': 'output',
+                    'shortname' : 'o',
+                    'required': false,
+                    'extension' : '.nii.gz',
+                    'guiviewertype' : this.outputGUIInput,
+                    'guiviewer'     : this.outputGUIViewer,
+                    'colortype'  : 'Orange'
+                }
+            ],
+            "inputs":  [
+                {
+                    'type': 'transformation',
+                    'name': 'Input Transform',
+                    'description': 'The transformation used to compute the Jacobian Image',
+                    'varname': 'xform',
+                    'shortname' : 'x',
+                    'required' : true,
+                    'guiviewer' : 'current',
+                },
+                {
+                    'type': 'image',
+                    'name': 'Base Image ',
+                    'description': 'Image that defines the size of the Jacobian Image',
+                    'varname': 'input',
+                    'shortname' : 'i',
+                    'required' : true,
+                    'guiviewertype' : 'image',
+                    'guiviewer'  : 'viewer1',
+                }
+                
+            ],
             "params": [
                 {
                     "name": "NonLinear Only?",
@@ -57,15 +100,6 @@ class JacobianImageModule extends BaseModule {
             ]
         };
         
-        des.inputs.push({
-            'type': 'transform',
-            'name': 'Transformation',
-            'description': 'Load the transformation to compute the jacobian for',
-            'varname': 'xform',
-            'required' : true,
-            'shortname' : 'x'
-        });
-        
         return des;
     }
 
@@ -74,9 +108,6 @@ class JacobianImageModule extends BaseModule {
         console.log('oooo invoking: jacobianImage', JSON.stringify(vals));
 
         let image = this.inputs['input'] || null;
-        let dimension = image.getDimensions();
-        let spacing = image.getSpacing();
-        
         let xform=this.inputs['xform'] || null;
         
         if (xform === null || image===null) {
@@ -85,14 +116,14 @@ class JacobianImageModule extends BaseModule {
                 
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
+                console.log('Input=',image.getDescription(),xform.getDescription());
                 
-                
-                this.outputs['output'] = biswrap.computeJacobianImageWASM(xform, {
-                    "dimensions" : [ dimension[0], dimension[1], dimension[2] ],
-                    "spacing" : [ spacing[0], spacing[1], spacing[2] ],
+                this.outputs['output'] = biswrap.computeJacobianImageWASM(image,xform, {
                     "nonlinearonly": super.parseBoolean(vals.nonlinearonly),
                 }, super.parseBoolean(vals.debug));
+                
 
+                console.log('Output=',this.outputs['output'].getDescription());
                 resolve(); 
             }).catch( (e) => {
                 console.log(e);

@@ -929,6 +929,12 @@
             "test"    : "--test_target testdata/MNI_6mm__prm_2.nii.gz",
             "result"  : true,
             "dopython": false
+        },
+        {
+            "command" : "jacobianImage --input testdata/MNI_2mm_orig.nii.gz -x testdata/jacobian/zscale.grd --nonlinearonly false --debug true",
+            "test"    : "--test_type image --test_target testdata/jacobian/gold_zjac__blk.nii.gz --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython": false
         }
         
     ]

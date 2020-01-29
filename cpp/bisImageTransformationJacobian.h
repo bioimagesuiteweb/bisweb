@@ -24,13 +24,13 @@ extern "C" {
   /** Computes the jacobian image of the transformation on the space of the image
    * @param xform the transformation to use to compute a displacement field
    * @param jsonstring the parameter string for the algorithm 
-   *   { "dimensions":  [ 8,4,4 ], "spacing": [ 2.0,2.5,2.5 ], "nonlinearonly" : "false" };
+   *   { "nonlinearonly" : "false" };
    *   nonlinearonly is only used if the transformation is a bisComboTransformation
    * @param debug if > 0 print debug messages
    * @returns a pointer to the Jacobian field image (bisSimpleImage<float>)
    */
-  // BIS: { 'computeJacobianImageWASM', 'bisImage', [ 'bisTransformation', 'ParamObj',  'debug' ] }
-  BISEXPORT unsigned char* computeJacobianImageWASM(unsigned char* xform,const char* jsonstring,int debug);
+  // BIS: { 'computeJacobianImageWASM', 'bisImage', [ 'bisImage',bisTransformation', 'ParamObj',  'debug' ] }
+  BISEXPORT unsigned char* computeJacobianImageWASM(unsigned char* input,unsigned char* xform,const char* jsonstring,int debug);
 
 }
 
