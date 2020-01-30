@@ -236,13 +236,20 @@ class ColormapControllerElement extends HTMLElement {
         let dr=this.internal.robustrange[1]-this.internal.robustrange[0];
         let da=this.internal.imagerange[1]-this.internal.imagerange[0];
 
+        if (this.internal.imagerange[0]<0 && this.internal.imagerange[1]>0) {
+            let ratio=-(this.internal.imagerange[0]/this.internal.imagerange[1]);
+            if (ratio>0.25 && ratio<4.0) {
+                this.data.autocontrast=false;
+                this.internal.robustrange=this.internal.imagerange;
+            }
+        }
 
-        
-        if (dr<0.25*da) {
+        if (this.data.autocontrast && dr<0.25*da) {
             this.data.autocontrast=false;
             this.internal.robustrange=this.internal.imagerange;
         }
-        this.setAutoContrast(false);
+        
+        this.setAutoContrast(false); // false=update parameter
         if (this.data.autocontrast) {
             this.updateTransferFunctions(true);
         }

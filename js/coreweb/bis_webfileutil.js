@@ -218,7 +218,7 @@ const webfileutils = {
      */
     electronFileCallback: function (in_fileopts, callback) {
 
-		let fileopts=in_fileopts || {};
+        let fileopts=in_fileopts || {};
         fileopts.save = fileopts.save || false;
         fileopts.title = fileopts.title || 'Specify filename';
         fileopts.defaultpath = fileopts.defaultpath || '';
@@ -232,22 +232,26 @@ const webfileutils = {
         if (suffix === "DIRECTORY")
             fileopts.filters = "DIRECTORY";
 
-		// Clean up filters that begin with a "." as electron does not like that
-		let l=fileopts.filters.length;
-		for (let i=0;i<l;i++) {
-			let elem=fileopts.filters[i];
-			let ext=elem.extensions;
-			let l2=ext.length;
-			let newext=[];
-			for (let j=0;j<l2;j++) {
-				let a=ext[j];
-				if (a.indexOf(".")===0)
-					a=a.substr(1,a.length-1);
-				newext.push(a);
-			}
-			fileopts.filters[i].extensions=newext;
-		}
+        // Clean up filters that begin with a "." as electron does not like that
 
+        if (fileopts.filters !== "DIRECTORY") {
+        
+            let l=fileopts.filters.length || 0;
+            for (let i=0;i<l;i++) {
+                let elem=fileopts.filters[i];
+                let ext=elem.extensions || '';
+                let l2=ext.length;
+                let newext=[];
+                for (let j=0;j<l2;j++) {
+                    let a=ext[j];
+                    if (a.indexOf(".")===0)
+                        a=a.substr(1,a.length-1);
+                    newext.push(a);
+                }
+                fileopts.filters[i].extensions=newext;
+            }
+        }
+        
         if (fileopts.initialCallback)
             fileopts.defaultpath=fileopts.initialCallback() || '';
 
@@ -262,7 +266,6 @@ const webfileutils = {
             ];
 
         let multiple = fileopts.altkeys ? 'multiSelections' : '';
-        //    console.log('multiple', multiple);
         var cmd = window.BISELECTRON.dialog.showSaveDialog;
         if (!fileopts.save)
             cmd = window.BISELECTRON.dialog.showOpenDialog;
@@ -271,11 +274,11 @@ const webfileutils = {
             cmd(null, {
                 title: fileopts.title,
                 defaultPath: fileopts.defaultpath,
-                properties: ["openDirectory", multiple]
-            }, function (filename) {
-                if (filename) {
-                    return callback(filename + '');
-                }
+                properties: ["openDirectory"]
+            }).then( (obj) => {
+                let filename=genericio.getElectronDialogFilename(obj);
+                if (filename)
+                    callback(filename);
             });
         } else {
             cmd(null, {
@@ -283,10 +286,10 @@ const webfileutils = {
                 defaultPath: fileopts.defaultpath,
                 filters: fileopts.filters,
                 properties: [multiple]
-            }, function (filename) {
-                if (filename) {
-                    return callback(filename + '');
-                }
+            }).then( (obj) => {
+                let filename=genericio.getElectronDialogFilename(obj);
+                if (filename)
+                    callback(filename);
             });
         }
     },
