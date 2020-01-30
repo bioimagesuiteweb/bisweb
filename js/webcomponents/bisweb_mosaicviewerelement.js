@@ -507,15 +507,21 @@ class MosaicViewerElement extends BaseViewerElement {
         // CMAP
         const self=this;
         //this.internal.cmapcontroller = bisColormapController(this.internal.volume,updatetransferfunctions);
-        var fn=function(i) { self.updatetransferfunctions(i); };
+        var fn=function(i) {
+
+            if (!self.internal.subviewers) {
+                
+                return;
+            }
+            
+            self.updatetransferfunctions(i);
+
+        };
         
         if (this.internal.cmapcontroller===null) {
             this.internal.cmapcontroller=document.createElement('bisweb-colormapcontrollerelement');
             this.appendChild(this.internal.cmapcontroller);
         }
-        this.internal.cmapcontroller.setimage(this.internal.volume,fn,1.0);
-        
-        
         this.internal.plane=pl;
         
         var imagesize=this.internal.volume.getImageSize();
@@ -548,11 +554,14 @@ class MosaicViewerElement extends BaseViewerElement {
         
         //this.internal.layoutcontroller.setelementdimensions(domparent[0].clientWidth);
         this.drawlabels();
-        
+
+        this.internal.cmapcontroller.setimage(this.internal.volume,fn,1.0);
         this.createdatgui();
         if (this.internal.objectmap!==null) {
             this.setobjectmapplane(this.internal.plane,true);
         }
+
+        
     }
     
     // ------------------------------------------------------------------------
