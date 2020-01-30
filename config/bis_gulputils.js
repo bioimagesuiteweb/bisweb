@@ -369,7 +369,7 @@ var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
               `!${outdir}/images/*~`,
               `!${outdir}/images/*/*~`,
               `!${outdir}/images/*/\#*`,
-             ],
+               ],
              {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
                  outfile=path.resolve(outfile);
                  let mbytes=getFileSize(outfile);
@@ -549,7 +549,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         
         
-        let eversion ="5.0.6";
+        let eversion ="7.1.10";
         let ep=getToolPath('electron-packager');
         
         let cmdline=ep+' '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+

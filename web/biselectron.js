@@ -127,7 +127,7 @@ var getHeightWidth= function(name) {
     while (i<keys.length && found===false) {
         let url=tools[keys[i]].url;
         if (name.indexOf(url)===0) {
-            obj.height= tools[keys[i]].height || 900;
+            obj.height= tools[keys[i]].height || 950;
             obj.width= tools[keys[i]].width || 700;
             obj.height=Math.round(obj.height*scale);
             obj.width=Math.round(obj.width*scale);
