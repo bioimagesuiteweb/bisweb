@@ -20,7 +20,7 @@ const atlasutils=require('bisweb_atlasutilities');
 // -------------------------------
 // Global State
 // -------------------------------
-
+const BADNUMBER=0.000001;
 
 const globalParams = {
     internal : null,
@@ -179,7 +179,7 @@ var saveAsPNG = function() {
             console.log(e,e.stack);
         });
     }
-        
+    
 };
 
 // -----------------------------------------------------
@@ -201,24 +201,23 @@ var createNets=function() {
 };
 
 var countEdgesBetweenNets=function(nets) {
-        
-    const rois=globalParams.internal.parcellation.rois;
-    console.log('Counting edges between network pairs');
+    
+    const rois=globalParams.internal.parcellation.rois;
     let nodesPerNetwork = {};
     
-    for (let i=0;i<rois.length;i++) {
-    
-        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+    for (let i=0;i<rois.length;i++) {
+        
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+        
+        if(nodesPerNetwork[n] !== undefined){
+            nodesPerNetwork[n] = nodesPerNetwork[n]+1;
+        } else {
+            nodesPerNetwork[n] = 1;
+        }
+    }
     
-        if(nodesPerNetwork[n] !== undefined){
-                nodesPerNetwork[n] = nodesPerNetwork[n]+1;
-        } else {
-                nodesPerNetwork[n] = 1;
-        }
-    }
-    
-   let edgesPerNetworkPair = new Array(nets.size);
-   for (let i=0;i<nets.size;i++) {
+    let edgesPerNetworkPair = new Array(nets.size);
+    for (let i=0;i<nets.size;i++) {
         edgesPerNetworkPair[i] = new Array(nets.size);
         for (let j=0;j<nets.size;j++) {
             if(i==j) {
@@ -227,12 +226,12 @@ var countEdgesBetweenNets=function(nets) {
                 edgesPerNetworkPair[i][j]=nodesPerNetwork[i+1]*nodesPerNetwork[j+1];
             }
         }
-   }    
+    }    
     
-    return edgesPerNetworkPair; 
+    return edgesPerNetworkPair; 
 };  
 
-var createMatrix=function(nets,pairs,symm=false) {
+var createMatrix=function(nets,pairs,symm=false,matrixscaling=false) {
 
     const parc=globalParams.internal.parcellation;
     const rois=globalParams.internal.parcellation.rois;
@@ -262,11 +261,23 @@ var createMatrix=function(nets,pairs,symm=false) {
             matrix[network2-1][network1-1]+=1;
     }
 
-    if (symm) {
+    if (matrixscaling) {
+        const scaling=countEdgesBetweenNets(nets);
         for(let i = 0; i < nets.size; i++) {
             for(let j = 0; j < nets.size; j++){
-                if(j>i)
-                    matrix[i][j]=0.01; 
+                matrix[i][j]=matrix[i][j]/scaling[i][j];
+                matrix[i][j]=Math.round(matrix[i][j]*100)/100;
+                if (j>i && symm)
+                    matrix[i][j]=BADNUMBER;
+            }
+        }
+    } else {
+        if (symm) {
+            for(let i = 0; i < nets.size; i++) {
+                for(let j = 0; j < nets.size; j++){
+                    if(j>i)
+                        matrix[i][j]=BADNUMBER;
+                }
             }
         }
     }
@@ -541,7 +552,9 @@ var createCorrMapSVG=function(parentDiv,
     const margin = {top: 50, right: 50, bottom: 50, left: 50};
     const width = 350;
     const height = 350;
-    const data = createMatrix(nets,pairs,true);
+    const data = createMatrix(nets,pairs,true,globalParams.internal.parameters.matrixscaling);
+
+
     const labelsData = globalParams.internal.gui_Networks_ShortNames;
     let startColor = '#ffffff';
     let endColor =  '#ff0000';
@@ -552,17 +565,6 @@ var createCorrMapSVG=function(parentDiv,
         endColor =  '#0044ff';
     }    
 
-    // if specified, scale matrix by network size
-    if (globalParams.internal.parameters.matrixscaling) {
-        const scaling=countEdgesBetweenNets(nets);
-        for (let i=0;i<nets.size;i++) {
-            for (let j=0;j<nets.size;j++) {
-                data[i][j]=data[i][j]/scaling[i][j];
-                data[i][j]=Math.round(data[i][j]*100)/100;
-            }
-        }
-    }
-    
     const widthLegend = 100;
     
     if(!data){
@@ -627,8 +629,8 @@ var createCorrMapSVG=function(parentDiv,
         .attr("x", x.rangeBand() / 2)
         .attr("y", y.rangeBand() / 2)
         .attr("text-anchor", "middle")
-        .style("fill", function(d) {if(d== 0.01) return  'white';return d >= maxValue/2 ? 'white' : 'black'; })
-        .text(function(d) { return d; });
+        .style("fill", function(d) {if(d=== BADNUMBER) return 'white';return d >= maxValue/2 ? 'red' : 'black'; })
+        .text(function(d) { if (d===BADNUMBER) return 0; return d; });
     
     row.selectAll(".cell")
         .data(function(d, i) { return data[i]; })
@@ -777,7 +779,19 @@ var corrmap = function() {
 // ------------------------------------------------------------------------------
 // Regular 2D Lines
 // ------------------------------------------------------------------------------
+var hideDisplayDialog=function() {
 
+    if (globalParams.displayDialog) {
+        let vis=globalParams.displayDialog.isVisible();
+        globalParams.displayDialog.hide();
+        return vis;
+    }
+
+    return false;
+
+
+
+};
 var createlines = function() {
 
     if (globalParams.internal.conndata.statMatrix===null) {
@@ -860,11 +874,11 @@ var drawlines=function(state) {
 
     
     let ok=globalParams.internal.conndata.createFlagMatrix(globalParams.internal.parcellation,
-                                              state.mode, // mode
-                                              state.singlevalue, // singlevalue
-                                              state.attribcomponent, // attribcomponent
-                                              state.degreethreshold, // metric threshold
-                                              state.filter); // sum
+                                                           state.mode, // mode
+                                                           state.singlevalue, // singlevalue
+                                                           state.attribcomponent, // attribcomponent
+                                                           state.degreethreshold, // metric threshold
+                                                           state.filter); // sum
 
     if (ok===0) {
         bootbox.alert('Failed to create flag matrix for connectivity data!');
@@ -880,10 +894,10 @@ var drawlines=function(state) {
         //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
         total+=pos.length;
         globalParams.internal.conndata.drawLines(globalParams.internal.parcellation,pos,
-                                    state.poscolor,
-                                    globalParams.internal.context,
-                                    state.length*globalParams.internal.parcellation.scalefactor,
-                                    state.thickness);
+                                                 state.poscolor,
+                                                 globalParams.internal.context,
+                                                 state.length*globalParams.internal.parcellation.scalefactor,
+                                                 state.thickness);
     }
     if (state.linestodraw == globalParams.internal.gui_Lines[1] ||
         state.linestodraw == globalParams.internal.gui_Lines[2] ) {
@@ -892,10 +906,10 @@ var drawlines=function(state) {
         //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
         total+=neg.length;
         globalParams.internal.conndata.drawLines(globalParams.internal.parcellation,neg,
-                                    state.negcolor,
-                                    globalParams.internal.context,
-                                    state.length*globalParams.internal.parcellation.scalefactor,
-                                    state.thickness);
+                                                 state.negcolor,
+                                                 globalParams.internal.context,
+                                                 state.length*globalParams.internal.parcellation.scalefactor,
+                                                 state.thickness);
     }
 
     globalParams.internal.laststate = state;
@@ -950,87 +964,87 @@ var removelines = function() {
 
 let drawScatterandHisto = function(){
     /*
-    if (globalParams.internal.laststate === null) {
-        bootbox.alert('you need to create the lines before you do anything (Need to fix)');
-        return;
-    }
+      if (globalParams.internal.laststate === null) {
+      bootbox.alert('you need to create the lines before you do anything (Need to fix)');
+      return;
+      }
 
-    //Setup the Display Div
-    let dim = createDisplayDialog("Diagrams");
-    let displayArea = globalParams.displayDialog.getWidgetBase();
-    displayArea.css({'background-color':"#ffffff"});
-    displayArea.append('<div class="bis-chartContainer"></div>');
-    let svgModal = $('.bis-chartContainer');
-    
-    dim[0] = displayArea.innerWidth()-displayArea.css("padding").replace(/[a-zA-Z]/g,"")*2;
+      //Setup the Display Div
+      let dim = createDisplayDialog("Diagrams");
+      let displayArea = globalParams.displayDialog.getWidgetBase();
+      displayArea.css({'background-color':"#ffffff"});
+      displayArea.append('<div class="bis-chartContainer"></div>');
+      let svgModal = $('.bis-chartContainer');
+      
+      dim[0] = displayArea.innerWidth()-displayArea.css("padding").replace(/[a-zA-Z]/g,"")*2;
 
-    globalParams.mode='chord'; //what does this do
+      globalParams.mode='chord'; //what does this do
 
-    addHistoScatterStyles();
-    
-    //Draw the Scatterplot to the svgModal Div
-    createScatter(svgModal, dim);
-    
-    // Draw the Histogram to the svgModal Div
-    createHistogram(svgModal, dim);
-    
-    /*
-    svgModal.bind('drop',(data) =>{
-        const reader = new FileReader();
+      addHistoScatterStyles();
+      
+      //Draw the Scatterplot to the svgModal Div
+      createScatter(svgModal, dim);
+      
+      // Draw the Histogram to the svgModal Div
+      createHistogram(svgModal, dim);
+      
+      /*
+      svgModal.bind('drop',(data) =>{
+      const reader = new FileReader();
 
-        let event = data.originalEvent;
-        event.preventDefault();
-        console.log('DROPPED DATA', event);
-        reader.readAsText(event.dataTransfer.files[0]);
+      let event = data.originalEvent;
+      event.preventDefault();
+      console.log('DROPPED DATA', event);
+      reader.readAsText(event.dataTransfer.files[0]);
 
-        reader.onloadend = (ev)=>{
-            if(ev.target.readyState != 2) return;
-            if(ev.target.error) {
-                alert('Error while reading file');
-                return;
-            }
-    
-            let jsonData = ev.target.result;
-            console.log('----- LOADED FILE -----');
-
-
-            let dataToParse = JSON.parse(jsonData); 
-
-            //Scatterplot Data Construction
-            let scatterData = [];
-
-            for(let i = 0; i < dataToParse.scatterplotData[0].values.length; i++){
-                scatterData.push([
-                    dataToParse.scatterplotData[0].values[i],
-                    dataToParse.scatterplotData[1].values[i]
-                ]);
-            }
-            
-            // Draw the Histogram to the svgModal Div
-            $('.bis-scatterplotChart').trigger('changeData', {scatterData});
-
-            // histogram Data Construction
-            let histoData = {
-                groups: [],
-                data_array: [],
-                data_groups: {}
-            };
-
-            dataToParse.histogramData.forEach((val_group)=>{
-                histoData.groups.push(val_group.name);
-                histoData.data_array.push(val_group.values);
-                histoData.data_groups[val_group.name] = val_group.values;
-            });
+      reader.onloadend = (ev)=>{
+      if(ev.target.readyState != 2) return;
+      if(ev.target.error) {
+      alert('Error while reading file');
+      return;
+      }
+      
+      let jsonData = ev.target.result;
+      console.log('----- LOADED FILE -----');
 
 
-            // Draw the Histogram to the svgModal Div
-            $('.bis-histogramChart').trigger('changeData',{
-                data: histoData,
-                colors: ['#1995e8','#e81818']
-            });
+      let dataToParse = JSON.parse(jsonData); 
 
-        };
-    });
+      //Scatterplot Data Construction
+      let scatterData = [];
+
+      for(let i = 0; i < dataToParse.scatterplotData[0].values.length; i++){
+      scatterData.push([
+      dataToParse.scatterplotData[0].values[i],
+      dataToParse.scatterplotData[1].values[i]
+      ]);
+      }
+      
+      // Draw the Histogram to the svgModal Div
+      $('.bis-scatterplotChart').trigger('changeData', {scatterData});
+
+      // histogram Data Construction
+      let histoData = {
+      groups: [],
+      data_array: [],
+      data_groups: {}
+      };
+
+      dataToParse.histogramData.forEach((val_group)=>{
+      histoData.groups.push(val_group.name);
+      histoData.data_array.push(val_group.values);
+      histoData.data_groups[val_group.name] = val_group.values;
+      });
+
+
+      // Draw the Histogram to the svgModal Div
+      $('.bis-histogramChart').trigger('changeData',{
+      data: histoData,
+      colors: ['#1995e8','#e81818']
+      });
+
+      };
+      });
     */
     globalParams.displayDialog.show();
 };
@@ -1050,86 +1064,86 @@ let createScatter = function(parentDiv, dim){
     
     //Create the svg that will contain the scatter chart
     let scatterChart = d3.select(parentDiv[0]).append("svg").attr("class",'bis-scatterplotChart')
-                        .attr("width", svgDim)
-                        .attr("height", svgDim)
-                        .append("g")
-                        .attr("id", globalParams.Id)
-                        .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
+        .attr("width", svgDim)
+        .attr("height", svgDim)
+        .append("g")
+        .attr("id", globalParams.Id)
+        .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
 
 
     //Setup x-Scale and x-Axis
     let xMax = 1;
     let xMin = 0;
     let xScale = d3.scale.linear()
-                .domain([-1, xMax*1.05])
-                .range([0,innerDim-sizeOffset*1.25]);
+        .domain([-1, xMax*1.05])
+        .range([0,innerDim-sizeOffset*1.25]);
     
     let xAxis = d3.svg.axis()
-                .orient("bottom")
-                .scale(xScale);
+        .orient("bottom")
+        .scale(xScale);
     
-                
+    
     //Setup y-Scale and y-Axis
     let yScale = d3.scale.linear()
-                .domain([0, 1])
-                .range([innerDim-sizeOffset,0]);
+        .domain([0, 1])
+        .range([innerDim-sizeOffset,0]);
 
     let yAxis = d3.svg.axis()
-                    .orient("left")
-                    .scale(yScale);
+        .orient("left")
+        .scale(yScale);
     
     //draw the Axes to the screen
     scatterChart.append("g")
-                .attr("class", "x bis-axis")
-                .attr("transform", `translate(${sizeOffset},${innerDim-sizeOffset})`)
-                .call(xAxis);
+        .attr("class", "x bis-axis")
+        .attr("transform", `translate(${sizeOffset},${innerDim-sizeOffset})`)
+        .call(xAxis);
 
     scatterChart.append("g")
-                .attr("class", "y bis-axis")
-                .attr("transform", `translate(${sizeOffset},0)`)
-                .call(yAxis);
+        .attr("class", "y bis-axis")
+        .attr("transform", `translate(${sizeOffset},0)`)
+        .call(yAxis);
 
     scatterChart.append('text')
-                .text('Predicted')
-                .attr("transform", `translate(${svgDim/2},${innerDim})`)
-                .attr('class','bis-label');
+        .text('Predicted')
+        .attr("transform", `translate(${svgDim/2},${innerDim})`)
+        .attr('class','bis-label');
 
-scatterChart.append('text')
-                .text('Actual')
-                .attr("transform", `translate(0,${innerDim/2})rotate(-90)`)
-                .attr('class','bis-label');
+    scatterChart.append('text')
+        .text('Actual')
+        .attr("transform", `translate(0,${innerDim/2})rotate(-90)`)
+        .attr('class','bis-label');
 
     let genScatter = (points, lobf) =>{
 
-    scatterChart.selectAll('.dot').remove();
-    //Add the dots to the scatterchart
-    let dots = scatterChart.selectAll('circle')
-                .data(points);
-             dots.enter().append('circle')
-                .attr('cx',function(d){
-                    return xScale(d[0])+sizeOffset;
-                })
-                .attr('cy',function(d){
-                    return yScale(d[1]);
-                })
-                .attr('r',0)
-                .attr('class','dot')
-                .attr('fill', "red")
-                .transition()
-                .attr('r', 1);
+        scatterChart.selectAll('.dot').remove();
+        //Add the dots to the scatterchart
+        let dots = scatterChart.selectAll('circle')
+            .data(points);
+        dots.enter().append('circle')
+            .attr('cx',function(d){
+                return xScale(d[0])+sizeOffset;
+            })
+            .attr('cy',function(d){
+                return yScale(d[1]);
+            })
+            .attr('r',0)
+            .attr('class','dot')
+            .attr('fill', "red")
+            .transition()
+            .attr('r', 1);
 
-    dots.exit().remove();
+        dots.exit().remove();
         if(!lobf) return;
         let { m, b } = lobf;
 
         scatterChart.selectAll('.bis-bestFitLine').remove();
         //Draw regression to the screen
         scatterChart.append("line")
-                .attr("x1", xScale(xMin)+sizeOffset)
-                .attr("y1", yScale(b))
-                .attr("x2", xScale(xMax)+sizeOffset)
-                .attr("y2", yScale(m*xMax+b))
-                .attr("class","bis-bestFitLine");
+            .attr("x1", xScale(xMin)+sizeOffset)
+            .attr("y1", yScale(b))
+            .attr("x2", xScale(xMax)+sizeOffset)
+            .attr("y2", yScale(m*xMax+b))
+            .attr("class","bis-bestFitLine");
     };
 
 
@@ -1142,7 +1156,7 @@ scatterChart.append('text')
 
         //Modify X Scale
         xScale.domain([xMin,xMax]);
-    
+        
         xAxis.scale(xScale);
         scatterChart.selectAll('.x.bis-axis').call(xAxis);
 
@@ -1179,17 +1193,17 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
 
     //create the svg Parent and the graphic div that everything will be drawn to
     let histoChart = d3.select(parentDiv[0]).append("svg").attr("class",'bis-histogramChart')
-                        .attr("width", svgWidth)
-                        .attr("height", svgHeight)
-                        .append("g")
-                        .attr("id", globalParams.Id)
-                        .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
+        .attr("width", svgWidth)
+        .attr("height", svgHeight)
+        .append("g")
+        .attr("id", globalParams.Id)
+        .attr("transform", `translate(${sizeOffset},${sizeOffset/2})`);
 
 
     //Create X Scale
     let xScale = d3.scale.linear()
-            .range([0,innerWidth-sizeOffset*1.25])
-            .domain([-1, 1]);
+        .range([0,innerWidth-sizeOffset*1.25])
+        .domain([-1, 1]);
 
     //Get maximum and minimum y value
     let yMax = 1;
@@ -1197,41 +1211,41 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
 
     //Create Y Scale
     var yScale = d3.scale.linear()
-            .range([innerHeight-sizeOffset,0])
-            .domain([0, yMax * 1.025]);
-            
+        .range([innerHeight-sizeOffset,0])
+        .domain([0, yMax * 1.025]);
+    
     
     //Create Axes
     let xAxis = d3.svg.axis()
-                    .orient("bottom")
-                    .scale(xScale);
+        .orient("bottom")
+        .scale(xScale);
 
     let yAxis = d3.svg.axis()
-                    .orient("left")
-                    .scale(yScale);
+        .orient("left")
+        .scale(yScale);
 
     //Add the Axes to the chart
     histoChart.append("g")
-            .attr("class", "x bis-axis")
-            .attr("transform", `translate(${sizeOffset},${innerHeight-sizeOffset})`)
-            .call(xAxis);
+        .attr("class", "x bis-axis")
+        .attr("transform", `translate(${sizeOffset},${innerHeight-sizeOffset})`)
+        .call(xAxis);
 
     histoChart.append("g")
-            .attr("class", "y bis-axis")
-            .attr("transform",`translate(${sizeOffset},0)`)
-            .call(yAxis);
+        .attr("class", "y bis-axis")
+        .attr("transform",`translate(${sizeOffset},0)`)
+        .call(yAxis);
     
     
     //Add labels to the chart
     histoChart.append('text')
-            .text("Correlation (R)")
-            .attr("transform", `translate(${svgWidth/2},${innerHeight})`)
-            .attr('class','bis-label');
+        .text("Correlation (R)")
+        .attr("transform", `translate(${svgWidth/2},${innerHeight})`)
+        .attr('class','bis-label');
 
     histoChart.append('text')
-            .text("Count")
-            .attr("transform", `translate(0,${innerHeight/2})rotate(-90)`)
-            .attr('class','bis-label');
+        .text("Count")
+        .attr("transform", `translate(0,${innerHeight/2})rotate(-90)`)
+        .attr('class','bis-label');
 
     //Add legend group to the histogram
     let legend = histoChart.append('g').attr('class','legend');
@@ -1239,7 +1253,7 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
     //Create infobox for hover data if it doesnt exist
     if(!d3.select('.bis-chartInfoBox')[0][0])
         d3.select("body").append('div')
-            .attr("class","bis-chartInfoBox");
+        .attr("class","bis-chartInfoBox");
     
     //-------------------------------------
     //       Generate graph
@@ -1251,58 +1265,58 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
             let currBar = histoChart.selectAll(`.g${bin.group.replace(/\s/g,"")}.bis-histobar`).data(bin);
             
             currBar.enter().append("rect")
-                    .attr("x", d=>xScale(d.x)+sizeOffset)
-                    .attr("transform", `translate(0,${yScale(0)})`)
-                    .attr("width", (innerWidth-sizeOffset*1.25)/bin.length)
-                    .attr("class", `g${bin.group.replace(/\s/g,"")} bis-histobar`)
-                    .attr("fill", groupColor[bin.group])
-                    .on("mousemove", function(d) {
-                        //Get elements
-                        let target = d3.event.target;
-                        let info = d3.select('.bis-chartInfoBox');
+                .attr("x", d=>xScale(d.x)+sizeOffset)
+                .attr("transform", `translate(0,${yScale(0)})`)
+                .attr("width", (innerWidth-sizeOffset*1.25)/bin.length)
+                .attr("class", `g${bin.group.replace(/\s/g,"")} bis-histobar`)
+                .attr("fill", groupColor[bin.group])
+                .on("mousemove", function(d) {
+                    //Get elements
+                    let target = d3.event.target;
+                    let info = d3.select('.bis-chartInfoBox');
 
-                        //Get height of infobox so that it is above the mouse
-                        let heightOffset = $('.bis-chartInfoBox').height();
+                    //Get height of infobox so that it is above the mouse
+                    let heightOffset = $('.bis-chartInfoBox').height();
 
-                        //Move the infobox to the pointer
-                        info.style('transform',`translate(${d3.event.x}px,${d3.event.y-heightOffset}px)`);
+                    //Move the infobox to the pointer
+                    info.style('transform',`translate(${d3.event.x}px,${d3.event.y-heightOffset}px)`);
 
-                        //If mouse is still on the same element dont update text and style
-                        if(info.attr("data-attatched") == target.id) return;
+                    //If mouse is still on the same element dont update text and style
+                    if(info.attr("data-attatched") == target.id) return;
 
-                        //Set text
-                        info.html(`x:${d.x.toFixed(2)}<br>y:${d.y.toFixed(2)}</br>`);
+                    //Set text
+                    info.html(`x:${d.x.toFixed(2)}<br>y:${d.y.toFixed(2)}</br>`);
 
-                        //get New Height after text insertion
-                        heightOffset = $('.bis-chartInfoBox').height();
+                    //get New Height after text insertion
+                    heightOffset = $('.bis-chartInfoBox').height();
 
-                        //Change some styles
-                        info.style('transform',`translate(${d3.event.x}px,${d3.event.y-heightOffset}px)`);
-                        info.style('display',"block");
-                        info.style('background-color',groupColor[bin.group]);
+                    //Change some styles
+                    info.style('transform',`translate(${d3.event.x}px,${d3.event.y-heightOffset}px)`);
+                    info.style('display',"block");
+                    info.style('background-color',groupColor[bin.group]);
 
-                        //attatch infobox to element
-                        info.attr("data-attatched", target.id);
-                    })
-                    .on("mouseout", function() {		
-                        //hide the box
-                        let info = d3.select('.bis-chartInfoBox');
-                        info.style('display',"none");
+                    //attatch infobox to element
+                    info.attr("data-attatched", target.id);
+                })
+                .on("mouseout", function() {		
+                    //hide the box
+                    let info = d3.select('.bis-chartInfoBox');
+                    info.style('display',"none");
 
-                        //Detatch infobox
-                        info.attr("data-attatched", 0);
-                    }).attr("height",0)
-                    .transition().duration(1000).ease('sin-in-out')
-                    .attr("height", (d) => innerHeight-sizeOffset-yScale(d.y))
-                    .attr("transform", d => `translate(0,${yScale(d.y)})`);
+                    //Detatch infobox
+                    info.attr("data-attatched", 0);
+                }).attr("height",0)
+                .transition().duration(1000).ease('sin-in-out')
+                .attr("height", (d) => innerHeight-sizeOffset-yScale(d.y))
+                .attr("transform", d => `translate(0,${yScale(d.y)})`);
             currBar.exit().remove();
         }
 
         //Sort bars so that smaller ones are in front of the larger ones
         histoChart.selectAll(`.bis-histobar`)
-        .sort((a,b)=>{
-            return b.y-a.y;
-        });
+            .sort((a,b)=>{
+                return b.y-a.y;
+            });
 
         //Add mean lines to the histogram
         histoChart.selectAll('.bis-histoMeanLine').remove();
@@ -1310,12 +1324,12 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
         let meanline = histoChart.selectAll('.bis-histoMeanLine').data(means);
         
         meanline.enter().append('line')
-                .attr("class", d => `g${d.group} bis-histoMeanLine`)
-                .attr("id", d => d.id)
-                .attr("x1", d => xScale(d.value+bins[0][0].dx/2)+sizeOffset)
-                .attr("x2", d => xScale(d.value+bins[0][0].dx/2)+sizeOffset)
-                .attr("y1", yScale(0))
-                .attr("y2", yScale(yMax));
+            .attr("class", d => `g${d.group} bis-histoMeanLine`)
+            .attr("id", d => d.id)
+            .attr("x1", d => xScale(d.value+bins[0][0].dx/2)+sizeOffset)
+            .attr("x2", d => xScale(d.value+bins[0][0].dx/2)+sizeOffset)
+            .attr("y1", yScale(0))
+            .attr("y2", yScale(yMax));
 
         meanline.exit().remove();
 
@@ -1325,10 +1339,10 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
         let meanTag = histoChart.selectAll('.meanTag').data(means);
 
         meanTag.enter().append('text')
-                .text(d => `Mean: ${d.value.toFixed(2)}`)
-                .attr("fill", d => groupColor[d.group])
-                .attr("transform", d => `translate(${xScale(d.value)+sizeOffset},0)`)
-                .attr('class','meanTag');
+            .text(d => `Mean: ${d.value.toFixed(2)}`)
+            .attr("fill", d => groupColor[d.group])
+            .attr("transform", d => `translate(${xScale(d.value)+sizeOffset},0)`)
+            .attr('class','meanTag');
 
         meanTag.exit().remove();
 
@@ -1346,20 +1360,20 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
         //Add a color dot for each group to the legend
         let colorTag = legend.selectAll('.colorTag').data(groupColorArr);
         colorTag.enter().append('circle')
-                .attr('r', 3)
-                .attr('fill', d => d.color)
-                .attr('transform', (d,i) => `translate(${sizeOffset*2},${(i+1)*12})`)
-                .attr('class','colorTag');
+            .attr('r', 3)
+            .attr('fill', d => d.color)
+            .attr('transform', (d,i) => `translate(${sizeOffset*2},${(i+1)*12})`)
+            .attr('class','colorTag');
 
         colorTag.exit().remove();
 
         //Add a name to the legend for each color dot
         let groupTag = legend.selectAll('.groupTag').data(groupColorArr);
         groupTag.enter().append('text')
-                .text(d=>d.name)
-                .attr('transform', (d,i) => `translate(${sizeOffset*2+5},${(i+1)*12+2})`)
-                .attr('class','groupTag');
-                    
+            .text(d=>d.name)
+            .attr('transform', (d,i) => `translate(${sizeOffset*2+5},${(i+1)*12+2})`)
+            .attr('class','groupTag');
+        
         groupTag.exit().remove();
     };
 
@@ -1372,24 +1386,24 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
         let groupColor = {};
         let colorCnt = 0;
         for(let group of data.groups){
-                let color;
-                if(!colors[colorCnt])
-                    color = `rgb(${Math.random() * 256}, ${Math.random() * 256}, ${Math.random() * 256})`; 
-                else
-                    color = colors[colorCnt];
-                colorCnt++;
-                groupColor[group] = color;
+            let color;
+            if(!colors[colorCnt])
+                color = `rgb(${Math.random() * 256}, ${Math.random() * 256}, ${Math.random() * 256})`; 
+            else
+                color = colors[colorCnt];
+            colorCnt++;
+            groupColor[group] = color;
         }
 
         //Modify X Scale
         xScale.domain([Math.min(0, d3.min(data.data_array, d => d3.min(d))),d3.max(data.data_array, d=> d3.max(d))*1.025]);
-    
+        
         xAxis.scale(xScale);
         histoChart.selectAll('.x.bis-axis').call(xAxis);
 
         //Create Histogram Generator
         let hist = d3.layout.histogram()
-                    .bins(xScale.ticks(binCnt));
+            .bins(xScale.ticks(binCnt));
 
         //Create the bins
         let bins = [];
@@ -1409,7 +1423,7 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
         histoChart.selectAll('.y.bis-axis').call(yAxis);
 
 
-    
+        
         //calcuale the mean of each datagroup
         let means = [];
         for(let binGroup in bins){
@@ -1427,7 +1441,7 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
                 id: `avg${cnt}`
             });
         }
-    
+        
         genGraph(bins, groupColor, means);
     });
 };
@@ -1509,5 +1523,6 @@ module.exports = {
     drawScatterandHisto : drawScatterandHisto,
     createScatter : createScatter,
     createHistogram : createHistogram,
-    addHistoScatterStyles : addHistoScatterStyles
+    addHistoScatterStyles : addHistoScatterStyles,
+    hideDisplayDialog : hideDisplayDialog
 };

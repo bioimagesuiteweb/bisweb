@@ -197,7 +197,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
 
         prom.then( (species) => {        
 
-            console.log('Species=',species);
             
             let sp=webutil.getQueryParameter('species') || '';
             if (sp==='mouse')

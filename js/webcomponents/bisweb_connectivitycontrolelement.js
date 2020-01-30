@@ -1468,6 +1468,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         clist.push(adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold'));
         clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                clist.push(adv.add(data,'matrixscaling').name('Matrix Scaling').onChange( () => {
+                    if (connectvis.hideDisplayDialog())
+                        connectvis.corrmap();
+                }));
+            }
+        });
 
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
@@ -1509,13 +1517,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
         da4.onFinishChange( () => {   autoDrawLines();      });
         
-        let da17=disp2.add(data,'matrixscaling').name('Matrix Scaling');
+
 
         clist.push(da4);
         clist.push(da1);
         clist.push(da2);
         clist.push(da3);
-        clist.push(da17);
+
 
         internal.datgui_controllers=clist;
 
@@ -1590,7 +1598,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                    connectvis.corrmap();
                                },
                              });
-        userPreferences.safeGetItem("internal").then( (f) => {
+        /*userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createbutton({ type : "info",
                                        name : "Graphs",
@@ -1601,7 +1609,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                        callback : connectvis.drawScatterandHisto
                                      });
             }
-        });
+        });*/
 
 
 
