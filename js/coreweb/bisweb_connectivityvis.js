@@ -198,12 +198,18 @@ var createNets=function() {
     let nets = new Set();
     const rois=globalParams.internal.parcellation.rois;
     console.log('Creating nets attr=',globalParams.internal.networkAttributeIndex);
+    let netSizes = {};
 
     for (let i=0;i<rois.length;i++) {
         let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+	if(netSizes[n] !== undefined){
+		netSizes[n] = netSizes[n]+1;
+	}else{
+		netSizes[n] = 1;
+	}
         nets.add(fixNetworkIndex(n));
     }
-
+    console.log(netSizes)
     return nets;
 };
 
@@ -231,7 +237,7 @@ var createMatrix=function(nets,pairs,symm=false) {
         let network1=fixNetworkIndex(rois[node].attr[globalParams.internal.networkAttributeIndex]);
         let network2=fixNetworkIndex(rois[othernode].attr[globalParams.internal.networkAttributeIndex]);
 	if(network1 != network2)
-        matrix[network1-1][network2-1]+=1;
+		matrix[network1-1][network2-1]+=1;
         if (symm)
             matrix[network2-1][network1-1]+=1;
     }
@@ -592,7 +598,7 @@ var createCorrMapSVG=function(parentDiv,
         .attr("x", x.rangeBand() / 2)
         .attr("y", y.rangeBand() / 2)
         .attr("text-anchor", "middle")
-        .style("fill", function(d) {if(d== 0.01) return  'white';return d >= maxValue/2 ? 'white' : 'black'; })
+        .style("fill", function(d) {if(d== 0.01) return  'white';return d >= maxValue/2 ? 'black' : 'black'; })
         .text(function(d) { return d; });
     
     row.selectAll(".cell")
