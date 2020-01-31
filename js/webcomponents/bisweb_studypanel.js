@@ -564,8 +564,6 @@ class StudyPanel extends HTMLElement {
                 'serveronly': true,
             });
 
-
-
     }
 
     showDICOMImportModal() {

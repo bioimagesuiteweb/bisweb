@@ -26,7 +26,7 @@ const $=require('jquery');
 const BisWebPanel = require('bisweb_panel.js');
 const BisWebImage = require('bisweb_image.js');
 
-
+const webimagepath=webutil.getWebPageImagePath();
 
 // -------------------------------------------------------------------------
 
@@ -211,8 +211,10 @@ class AtlasControlElement extends HTMLElement {
     /** parse and load atlas */
     initializeAtlas(data) {
 
+        
+        
         let img=new BisWebImage();
-        img.load(this.atlaspath+data.labels.filename,"NONE").then( () => {
+        img.load(webimagepath+'/'+data.labels.filename,"NONE").then( () => {
 
             console.log('.... Atlas loaded ',img.getDescription());
             this.useAtlas=true;
@@ -226,7 +228,7 @@ class AtlasControlElement extends HTMLElement {
             
             this.createGUITable();
         }).catch( (e) => {
-            webutil.createAlert('Could not load atlas image from '+this.atlaspath+data.labels.filename+' '+e,true);
+            webutil.createAlert('Could not load atlas image from '+webimagepath+'/'+data.labels.filename+' '+e,true);
             this.removeAtlas();
         });
     }

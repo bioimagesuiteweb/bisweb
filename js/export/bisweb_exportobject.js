@@ -16,6 +16,11 @@ const BisWebGridTransformation=require('bisweb_gridtransformation');
 const BisWebTransformationCollection=require('bisweb_transformationcollection');
 const userPreferences = require('bisweb_userpreferences.js');
 const biswasmdate=require('biswasmdate.js');
+const basemodule = require('basemodule.js');
+const basemoduleutils = require('baseutils.js');
+
+
+
 
 /**
  * A set of utility functions. <BR>
@@ -72,6 +77,9 @@ module.exports= {
     // Low level code
     bisutil : bisutil,
     genericio : genericio,
+    // Module stuff
+    basemodule : basemodule,
+    basemoduleutils : basemoduleutils,
     // Bisweb info
     userPreferences :     userPreferences,
     // Core Data Structures

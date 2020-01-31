@@ -171,7 +171,7 @@ internal.serveroptions = {
     "root" : path.normalize(__dirname),
     "host" : options.hostname,
     "port" : `${options.portno}`,
-    'directoryListing': true,
+    'directoryListing': false,
 };
 
 if (options.external>0) {
@@ -218,8 +218,14 @@ console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
     let keys=Object.keys(obj);
-    options.inpfilename ='index,'+keys.join(",");
-} 
+    let names=['index'];
+    for (let i=0;i<keys.length;i++) {
+        let donotbuild=obj[keys[i]]['donotbuild'] || false;
+        if (!donotbuild)
+            names.push(keys[i]);
+    }
+    options.inpfilename=names.join(",");
+}
 
 // ------------------------
 // Define webpack jobs
@@ -458,6 +464,7 @@ gulp.task('tools', ( (cb) => {
     promises.push(bis_gutil.createCSSCommon(internal.dependcss2,internal.biscss2,options.outdir));
     
     for (let index=0;index<internal.toolarray.length;index++) {
+        
         let toolname=internal.toolarray[index];
         let gpl=true;
         let maincss=internal.biscss;

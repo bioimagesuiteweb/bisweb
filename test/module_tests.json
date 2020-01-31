@@ -97,17 +97,23 @@
 	    "result"  : true,
 	    "dopython": false
 	},
-	{
-	    "command" : "computeROI -i testdata/ras_avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
-	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
-	    "result"  : false,
-	    "dopython": true
+        {
+	    "command" : "computeVolume -i testdata/testvol.nii.gz --keepzero false --debug true",
+	    "test"    : "--test_target testdata/testvol.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
 	},
         {
-	    "command" : "computeROI -i testdata/MNI_6mm.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
-	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "command" : "computeVolume -i testdata/testvol4d.nii.gz --keepzero false --debug true",
+	    "test"    : "--test_target testdata/testvol4d.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "computeVolume -i testdata/testvol4d.nii.gz --keepzero true --debug true",
+	    "test"    : "--test_target testdata/testvol4d.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : false,
-	    "dopython": true
+	    "dopython": false
 	},
 	{
 	    "command" : "thresholdImage -i testdata/MNI_6mm.nii.gz --low 128.0 --high 1000 --debug 1",
@@ -879,7 +885,7 @@
             "result"  : true,
             "skipjs"  : true,
             "noweb"   : true,
-            "dopython" : true
+            "dopython" : false
         },
         {
             "command" : "inflateSurface --input testdata/surface/inp.ply",
@@ -887,7 +893,7 @@
             "result"  : false,
             "skipjs"  : true,
             "noweb"   : true,
-            "dopython" : true
+            "dopython" : false
         },
         {
 
@@ -911,7 +917,26 @@
 	    "dopython": true,
             "noweb"   : true,
             "skipjs"  : true
-	}
+	},
+        {
+            "command" : "permuteImage --paramfile testdata/permuteImage_2020_01_28.param -i testdata/MNI_6mm.nii.gz",
+            "test"    : "--test_target testdata/MNI_6mm__prm.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "permuteImage --paramfile testdata/permuteImage_2020_01_28_2.param -i testdata/MNI_6mm.nii.gz",
+            "test"    : "--test_target testdata/MNI_6mm__prm_2.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "jacobianImage --input testdata/MNI_2mm_orig.nii.gz -x testdata/jacobian/zscale.grd --nonlinearonly false --debug true",
+            "test"    : "--test_type image --test_target testdata/jacobian/gold_zjac__blk.nii.gz --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython": false
+        }
+        
     ]
 }
 

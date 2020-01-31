@@ -43,6 +43,7 @@ const userPreferences = {
     s3Folders : [],
     internal : false,
     darkmode : true,
+    species  : 'all',
     enables3 : false,
 };
 

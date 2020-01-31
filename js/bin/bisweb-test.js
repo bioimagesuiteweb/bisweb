@@ -131,9 +131,10 @@ console.log('.... Testing module '+toolname+' base='+basedirectory);
 console.log('................................................');
 
 
-commandline.loadParse(args, toolname, basedirectory).then(() => {
+commandline.loadParse(args, toolname, basedirectory,true).then(() => {
     console.log('.... -------------------------------------------------------');
     if (test_type !== "smoketest") {
+        console.log('.....\n.... processing result\n.....');
         commandline.processTestResult(toolname,tempName,
                                       basedirectory+program.test_target,
                                       test_type,

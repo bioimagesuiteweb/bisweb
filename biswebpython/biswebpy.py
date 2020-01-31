@@ -20,7 +20,17 @@ def initialError(extra):
     global modulelist
     print(extra+'\nUsage: biswebpy modulename [ options ]\n');
     print('Type "biswebpy [module name] --help" for more information');
-    print('\tThe list of available modules is :\n\n'+'\n'.join(modulelist));
+    count=0
+    a='';
+    print('\tThe list of available modules is :\n')
+    #+'\n'.join(modulelist));
+    for p in modulelist:
+        a=a+'  {:29s}'.format(p);
+        count=count+1;
+        if (count==3):
+            count=0;
+            a=a+('\n');
+    print(a+'\n')
 
 
 # ----------------------------------------------------------------------------------------
@@ -29,7 +39,7 @@ with open(my_path+os.path.sep+"modules"+os.path.sep+"PythonModuleList.txt", "r")
     mlist = list(fh.read().splitlines())
 modulelist=[];
 modulelistlower=[];
-    
+
 for l in mlist:
     if l.strip():
         l=l.strip();
@@ -73,5 +83,3 @@ sys.argv=newargv;
 # Import command line and execute module
 import biswebpython.core.bis_commandline as bis_commandline;
 sys.exit(bis_commandline.loadParse(mymodule(),sys.argv,False));
-
-

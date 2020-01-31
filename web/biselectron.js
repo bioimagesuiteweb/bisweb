@@ -46,6 +46,10 @@ require('electron-debug')({showDevTools: false,
 const path=require('path');
 const fs=require('fs');
 const app=electron.app;  // Module to control application life.
+
+app.commandLine.appendSwitch('auto-detect', 'false');
+app.commandLine.appendSwitch('no-proxy-server');
+
 const BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
 const ipcMain = electron.ipcMain;
 const shell=electron.shell;
@@ -71,15 +75,9 @@ const state = {
 let v=process.versions.node;
 let s=v.split(".");
 let major=parseInt(s[0]);
-let minor=parseInt(s[1]);
 
-if (major<8 || (major===8 && minor<9)) {
-    console.log(`----\n---- You are using a version of node older than 8.9 (actual version=${v}). You need to update to electron v2.0.\n`);
-    process.exit(1);
-}
-
-if (major===9) {
-    console.log(`----\n---- You are using a version of node that is 9.x (actual version=${v})\n`);
+if (major!==12) {
+    console.log(`----\n---- You are using a version of node older than 12.0 (actual version=${v}). You need to update to electron v2.0.\n`);
     process.exit(1);
 }
 
@@ -96,10 +94,16 @@ if (state.indev) {
 
 
 state.mainfilename=state.mainfilename || "";
+state.queryargs='';
 // Check if filename ends in .html if not add it
 if (state.mainfilename!=='') {
 
-
+    if (state.mainfilename.indexOf('?')>0) {
+        let st=state.mainfilename.split('?');
+        state.mainfilename=st[0];
+        state.queryargs=st[1];
+    }
+        
     let ext=state.mainfilename.split('.').pop();
     if (ext!=='html')  {
         state.toolname=state.mainfilename;
@@ -113,7 +117,7 @@ var getHeightWidth= function(name) {
     let tools=toolfile.tools;
     
     const obj = {
-        height : 1070,
+        height : 1120,
         width : 1024
     };
 
@@ -127,7 +131,7 @@ var getHeightWidth= function(name) {
     while (i<keys.length && found===false) {
         let url=tools[keys[i]].url;
         if (name.indexOf(url)===0) {
-            obj.height= tools[keys[i]].height || 900;
+            obj.height= tools[keys[i]].height || 950;
             obj.width= tools[keys[i]].width || 700;
             obj.height=Math.round(obj.height*scale);
             obj.width=Math.round(obj.width*scale);
@@ -232,8 +236,11 @@ var createWindow=function(index,fullURL) {
         opts.height=state.screensize.height;
     }*/
     
-    
-
+   
+    if (state.queryargs!=='') {
+        fullURL=fullURL+'?'+state.queryargs;
+        state.queryargs='';
+    }
     
     var preload=  path.resolve(__dirname, 'bispreload.js');
     console.log(getTime()+' Creating new window '+fullURL + ', index='+index+' dims='+JSON.stringify(opts));
@@ -250,9 +257,10 @@ var createWindow=function(index,fullURL) {
                                                 preload: preload,
                                                 contextIsolation: false,
                                             },
+                                            autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});
     
-    state.winlist[index].setAutoHideMenuBar(true);
+    //state.winlist[index].setAutoHideMenuBar(true);
     state.winlist[index].setMenuBarVisibility(false);
     if (process.platform === 'darwin') 
         state.winlist[index].setMenu(null);
@@ -431,6 +439,9 @@ app.on('ready', function() {
         }
     }
     console.log(getTime()+' Electron ready ' + state.mainfilename + ' indev='+state.indev);
+    if (state.queryargs.length>0) {
+        console.log(getTime()+' \t Query args= "'+state.queryargs+'"');
+    }
     if (state.commandargs.length>0) {
         console.log(getTime()+' Command args='+state.commandargs);
     }

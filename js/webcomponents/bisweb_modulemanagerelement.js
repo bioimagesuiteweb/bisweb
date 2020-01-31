@@ -203,11 +203,11 @@ class ModuleManagerElement extends HTMLElement {
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
-                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
+//                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
-                this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+//               this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
                 this.createModule('Patch Reformat Image', 1, false, modules.getModule('patchReformatImage'), moduleoptions);
             }
         });
@@ -221,6 +221,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Shift+Scale(+Cast) Image',1, false, modules.getModule('shiftScaleImage'), moduleoptions);
         this.createModule('Reorient Image',1, false, modules.getModule('reorientImage'), moduleoptions);
         this.createModule('Flip Image',1, false, modules.getModule('flipImage'), moduleoptions);
+        this.createModule('Permute Image',1, false, modules.getModule('permuteImage'), moduleoptions);
         this.createModule('Crop Image',1, false, modules.getModule('cropImage'), moduleoptions);
         this.createModule('Blank Image',1, false, modules.getModule('blankImage'), moduleoptions);
         this.createModule('Extract Frame',1, true, modules.getModule('extractFrame'), moduleoptions);
@@ -231,6 +232,8 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
         this.createModule('Drift Correct 4D Image',1, dosep, modules.getModule('driftCorrectImage'), moduleoptions);
         this.createModule('Temporal Filter 4D Image',1, dosep, modules.getModule('butterworthFilterImage'), moduleoptions);
+        this.createModule('Normalize Time Series',1, dosep, modules.getModule('timeseriesnormalizeimage'), moduleoptions);
+        
         this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {
@@ -256,6 +259,7 @@ class ModuleManagerElement extends HTMLElement {
             }
             this.createModule('Project Image',3, false, modules.getModule('projectImage'), moduleoptions);
             this.createModule('Back-Project Image',3, usesgpl, modules.getModule('backProjectImage'), moduleoptions);
+            this.createModule('Jacobian Image',3, false, modules.getModule('jacobianImage'), moduleoptions);
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
             }

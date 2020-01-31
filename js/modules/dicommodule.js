@@ -87,7 +87,7 @@ class DicomModule extends BaseModule {
                     "type": "boolean",
                     "varname": "convertbids",
                     "shortname" : "b",
-                    "default": true,
+                    "default": false,
                 },
                 {
                     "name": "Fix Paths",
@@ -195,7 +195,7 @@ class DicomModule extends BaseModule {
                 console.log(e);
                 return Promise.reject('Failed to create output directory ' + outdir);
             } else {
-                console.log('+++ Directory ',outdir,'exists')
+                console.log('+++ Directory ',outdir,'exists');
             }
         }
 

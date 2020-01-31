@@ -1,12 +1,32 @@
 {
     "humanmni" : {
+        "name" : "humanmni",
         "filename" : "humanmni.json",
         "dimensions" : [ 181,217,181 ],
-        "spacing" : [ 1.0,1.0,1.0 ]
+        "spacing" : [ 1.0,1.0,1.0 ],
+        "midlobe" : 11,
+        "halflobe" : 10,
+        "origin"  : [ 90,126,72 ],
+        "midoffset"  : 20.0,
+        "axisoffset" : [0,5.0,20.0],
+        "axissize" : [ 180.0,216.0, 170.0 ],
+        "ismni"  : true,
+        "correctstr" : "Must be RAS 181x217x181 and 1x1x1 mm (i.e. MNI 1mm space).",
+        "multiressurfaces" : true
     },
     "allenmri" : {
+        "name" : "allenmri",
         "filename" : "mouseallenmri.json",
-        "dimensions" : [ 64,47,75 ],
-        "spacing" : [ 0.2,0.2,0.2 ]
+        "dimensions" : [ 114,80,132 ],
+        "spacing" : [ 0.1,0.1,0.1 ],
+        "midlobe" : 17,
+        "halflobe" : 14,
+        "midoffset"  : 1.0,
+        "axissize" : [ 11.4,8.0,13.2 ],
+        "axisoffset" : [ 0,0.5,1.0 ],
+        "origin"  : [ 0,0,0],
+        "ismni" : false,
+        "correctstr" : "Must be RAS 114x80x132 and 0.1x0.1x0.1 mm",
+        "multiressurfaces" : false
     }
 }

@@ -1,0 +1,15 @@
+{
+    "multires" : [
+        "output/right_allen.json" ,
+        "output/left_allen.json"
+    ],
+    "atlas"   : [
+        "output/right_allen.json" ,
+        "output/left_allen.json"
+    ],
+    "output"  : [
+        "output/lobes_allen_right.json" ,
+        "output/lobes_allen_left.json" ,
+        "output/allen_185_surface_atlas.bin.gz"
+    ]
+}

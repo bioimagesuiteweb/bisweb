@@ -299,9 +299,11 @@ class OldGrapherModule extends HTMLElement {
             d_type = 'line';
         } else {
             let heading = "Volume of each Region";
-            if (showVolume === false)
+            let ylabel = 'Volume (mm^3)';
+            if (showVolume === false) {
                 heading = "Average Intensity in each Region";
-
+                ylabel = 'Intensity';
+            }
             options = {
                 title: {
                     display: true,
@@ -315,7 +317,7 @@ class OldGrapherModule extends HTMLElement {
                     yAxes: [{
                         scaleLabel: {
                             display: true,
-                            labelString: 'Volume (mm^3)',
+                            labelString: ylabel,
                             fontSize: 10
                         }
                     }],

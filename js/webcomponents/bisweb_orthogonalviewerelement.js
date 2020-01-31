@@ -248,11 +248,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     create3dview(ren,vol,cardslice,width,depth ) {
 
+
         let zoom=1.0;
         if (this.internal.simplemode)
             zoom = 3.0;
 
-        
         let subviewer=new BisWebSubViewer(ren,3,this.internal.viewports[1][3],
                                           cardslice,
                                           {
@@ -268,6 +268,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         cardslice.addtoscene(subviewer.getScene(),ren,subviewer.getCamera());
         
         var wd=this.internal.imagespa[0] * 4;
+
         
         if (!this.internal.simplemode) {
             this.internal.origin=new THREE.Mesh(bisCrossHair.createcrosshair(wd,this.internal.imagespa[0],false), 
@@ -451,6 +452,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     updatescene(coords, plane,mousestate,force=false) {
 
+
         if (coords.length<4) {
             coords.push(this.getframe());
         }
@@ -463,59 +465,67 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         if (this.internal.slices[0]===null)
             return;
+
+        let mm=coords;
         
-        if (mousestate!==2) {
-
-            if (coords[3]===undefined || coords[3]===null)
-                coords[3]=0;
-            
-            let sl= [ util.range(Math.round(coords[0]/this.internal.imagespa[0]),0,this.internal.imagedim[0]-1),
-                      util.range(Math.round(coords[1]/this.internal.imagespa[1]),0,this.internal.imagedim[1]-1),
-                      util.range(Math.round(coords[2]/this.internal.imagespa[2]),0,this.internal.imagedim[2]-1),
-                      util.range(Math.floor(coords[3]),0,this.internal.maxnumframes-1) ];
-
-            this.internal.slicecoord[3]=sl[3];
-            if (plane>=0 && plane<=2) 
-                sl[plane]=this.internal.slicecoord[plane];
-
-
-            
-            var old=[0,0,0],pl=0;
-            for (pl=0;pl<=2;pl++) {
-                let imgframe=sl[3];
-                if (imgframe>=this.internal.imagedim[3])
-                    imgframe=this.internal.imagedim[3]-1;
-                this.internal.slices[pl].showdecorations(this.internal.showdecorations);
-                old[pl]=this.internal.slicecoord[pl];
-                this.internal.slicecoord[pl]=this.internal.slices[pl].setsliceno(sl[pl],imgframe,
-                                                                                 this.internal.imagetransferfunction);
-                this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].getCamera(),
-                                                          this.internal.maxspa*0.5);
-
-                if (old[pl]!==this.internal.slicecoord[pl]) {
-                    this.internal.slices[3].updatecoordinates(pl);
-                }
-            }
-
-            if (this.internal.slices[3]) {
-                this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.imagetransferfunction);
-                this.internal.slices[3].showdecorations(this.internal.showdecorations);
-                this.internal.slices[3].showimage(this.internal.show3dslices);
-            }
-            if (this.internal.origin)
-                this.internal.origin.visible=this.internal.showdecorations;
-            
+        if (plane !== 3) {
+        
+            if (mousestate!==2) {
                 
+                if (coords[3]===undefined || coords[3]===null)
+                    coords[3]=0;
+                
+                let sl= [ util.range(Math.round(coords[0]/this.internal.imagespa[0]),0,this.internal.imagedim[0]-1),
+                          util.range(Math.round(coords[1]/this.internal.imagespa[1]),0,this.internal.imagedim[1]-1),
+                          util.range(Math.round(coords[2]/this.internal.imagespa[2]),0,this.internal.imagedim[2]-1),
+                          util.range(Math.floor(coords[3]),0,this.internal.maxnumframes-1) ];
+                
+                this.internal.slicecoord[3]=sl[3];
+                if (plane>=0 && plane<=2) 
+                    sl[plane]=this.internal.slicecoord[plane];
+                
+                
+                
+                var old=[0,0,0],pl=0;
+                for (pl=0;pl<=2;pl++) {
+                    let imgframe=sl[3];
+                    if (imgframe>=this.internal.imagedim[3])
+                        imgframe=this.internal.imagedim[3]-1;
+                    this.internal.slices[pl].showdecorations(this.internal.showdecorations);
+                    old[pl]=this.internal.slicecoord[pl];
+                    this.internal.slicecoord[pl]=this.internal.slices[pl].setsliceno(sl[pl],imgframe,
+                                                                                     this.internal.imagetransferfunction);
+                    this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].getCamera(),
+                                                              this.internal.maxspa*0.5);
+                    
+                    if (old[pl]!==this.internal.slicecoord[pl]) {
+                        this.internal.slices[3].updatecoordinates(pl);
+                    }
+                }
+                
+                if (this.internal.slices[3]) {
+                    this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.imagetransferfunction);
+                    this.internal.slices[3].showdecorations(this.internal.showdecorations);
+                    this.internal.slices[3].showimage(this.internal.show3dslices);
+                }
+                if (this.internal.origin)
+                    this.internal.origin.visible=this.internal.showdecorations;
+                
+                
+                
+                this.updateobjectmapdisplay();
+                this.drawcrosshairs();
+            }
+
+            if (mousestate === undefined)
+                mousestate=-1;
             
-            this.updateobjectmapdisplay();
-            this.drawcrosshairs();
+            mm=this.getmmcoordinates();
         }
+
         if (this.internal.mouseobservers.length===0)
             return;
         
-        if (mousestate === undefined)
-            mousestate=-1;
-        var mm=this.getmmcoordinates();
         this.updateMouseObservers(mm,plane,mousestate);
         this.updateFrameChangedObservers();
     }
@@ -1131,6 +1141,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         let imagesize=volume.getImageSize();
+
         let d=1.0,i=0;
         for (i=0;i<=2;i++) {
             if (imagesize[i]>d)
@@ -1140,11 +1151,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
             if (this.internal.imagespa[i]>this.internal.maxspa)
                 this.internal.maxspa=this.internal.imagespa[i];
         }
+
         if (samesize===false) 
             this.internal.slicecoord[3]=0;
         
         let s_width=Math.round(d*0.667);
         let s_depth=Math.round(d*2.0);
+
         if (samesize===false)
             this.internal.rendermode=0;
 
@@ -1171,6 +1184,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (samesize===false) {
             this.internal.subviewers =  [ null,null,null,null ];
         }
+
+
         
         for (i=0;i<=2;i++) {
             this.internal.slices[i]=bis3dOrthogonalSlice.create2dslice(this.internal.volume,i,2);
@@ -1183,7 +1198,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 this.internal.slices[i].addtoscene(this.internal.subviewers[i].getScene());
             }
         }
-        
+
         let drawimages=true;
         if (this.internal.simplemode)
             drawimages=false;
@@ -1191,10 +1206,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                      this.internal.slices,true,
                                                      false,drawimages);
         if (samesize===false) {
+            let w=s_width+parseFloat(this.extraWidth3D || 0.0);
             this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
                                                           this.internal.volume,
                                                           this.internal.slices[3],
-                                                          s_width+this.extraWidth3D,s_depth);
+                                                          w,s_depth);
         } else {
             this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
         }                
@@ -1521,7 +1537,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
             
             dmode.onChange( (val) => {
                 let ind=this.internal.displaymodes.indexOf(val);
-                //console.log('Val = ',val);
                 self.setrendermodeinternal(ind);
             });
             

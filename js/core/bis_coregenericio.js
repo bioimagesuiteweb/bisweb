@@ -341,6 +341,24 @@ var removeSpacesFromFilenameWin32Electron=function(s) {
 
 };
 
+/** handles payload from electron dialog */
+var getElectronDialogFilename = function(obj) {
+
+    if (obj.canceled)
+        return null;
+
+    if (obj.filePath)
+        return obj.filePath+'';
+
+    let filepaths=obj.filePaths;
+    if (filepaths.length===1) 
+        return filepaths[0] + '';
+
+    return filepaths;
+};
+
+
+
 /** read text data in node.js
  * @alias BisCoreGenericIO~readtextdatanode
  * @param {string} filename - the filename
@@ -849,7 +867,9 @@ var writedataelectron = function (url, data, isbinary, donecallback, errorcallba
             title: url.title,
             defaultPath: url.filename,
             filters: url.filters
-        }, function (filename) {
+        }).then( (obj) => {
+
+            let filename=getElectronDialogFilename(obj);
             if (filename) {
                 return writecommand(filename + '', data, donecallback, errorcallback);
             }
@@ -885,7 +905,8 @@ var readdataelectron = function (url, isbinary, donecallback, errorcallback) {
             title: url.title,
             defaultPath: url.filename,
             filters: url.filters,
-        }, function (filename) {
+        }).then( (obj) => { 
+            let filename=getElectronDialogFilename(obj);
             if (filename) {
                 return readcommand(filename + '', donecallback, errorcallback);
             }
@@ -1110,6 +1131,7 @@ const biscoregenericio = {
     writetextdatanode : writetextdatanode,
     writebinarydatanode : writebinarydatanode,
     getimagepath : getimagepath,
+    getElectronDialogFilename : getElectronDialogFilename
 };
 
 

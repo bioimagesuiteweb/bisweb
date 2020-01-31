@@ -172,21 +172,10 @@
         },
         {
             "base" : "connstate.biswebstate",
-            "state" : "otest10.state",
-            "comparison" : "otest10.png",
-            "result" : true
-        },
-        {
-            "base" : "connstate.biswebstate",
-            "state" : "otest11.state",
-            "comparison" : "otest11.png",
-            "result" : true
-        },
-        {
-            "base" : "connstate.biswebstate",
             "state" : "otest2.state",
             "comparison" : "otest5.png",
             "result" : false
         }
+        
     ]
 }

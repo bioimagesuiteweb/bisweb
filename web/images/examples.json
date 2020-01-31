@@ -7,13 +7,6 @@
             "bright" : true,
             "noinno" : true
 	},
-        "tfjsexample" : {
-	    "title" : "Tensorflow.js Example",
-	    "url"   : "tfjsexample",
-            "bright" : true,
-            "nogpl" : false,
-            "noinno" : true
-	},
         "viewerexample" : {
 	    "title" : "Viewer Example",
 	    "url"   : "viewerexample",

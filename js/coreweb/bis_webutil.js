@@ -834,10 +834,10 @@ const webutil = {
      * @alias WebUtil.createdialog
      * @returns {object} opts - the output collection of JQueryElement's. opts.dialog = main dialog, opts.show -- command to show, opts.hide = command to hide
      */
-    createdialog: function (name, w, h, x, y, zindex,closecallback=null) {
+    createdialog: function (name, w, h, x, y, zindex,closecallback=null,motion=true) {
 
         let dlg = document.createElement('bisweb-dialogelement');
-        dlg.create(name,w,h,x,y,zindex,true,closecallback);
+        dlg.create(name,w,h,x,y,zindex,motion,closecallback);
         return dlg;
     },
 

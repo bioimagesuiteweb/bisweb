@@ -27,6 +27,7 @@ require("bisweb_awsmodule.js");
 require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_studypanel.js");
+require("bisweb_repopanel.js");
 require('bisweb_oldgrapherelement.js');
 require('bisweb_filetreepipeline.js');
 require('bisweb_keylistener.js');

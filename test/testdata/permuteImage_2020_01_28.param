@@ -1,0 +1,10 @@
+{
+    "module": "permuteImage",
+    "params": {
+        "newi": "I",
+        "newj": "mK",
+        "newk": "J",
+        "newt": "T",
+        "debug": false
+    }
+}

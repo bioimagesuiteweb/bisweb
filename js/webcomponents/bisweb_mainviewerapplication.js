@@ -649,7 +649,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
     //  ---------------------------------------------------------------------------
-    createFileAndOverlayMenus(menubar,painttoolid) {
+    async createFileAndOverlayMenus(menubar,painttoolid) {
 
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
@@ -679,7 +679,7 @@ class ViewerApplicationElement extends HTMLElement {
         // Internal Function to eliminate having a loop variable inside callbacks
         // JSHint calls this confusing semantics ... maybe it knows something
         //  ---------------------------------------------------------------------------
-        let internal_create_menu=function(viewerno) {
+        let internal_create_menu=async function(viewerno) {
 
             if (viewerno === 1) {
                 fmenuname = 'Image2';
@@ -722,7 +722,7 @@ class ViewerApplicationElement extends HTMLElement {
                                                    })
                                                });
                 webutil.createMenuItem(fmenu[viewerno], ''); // separator
-                bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
+                await bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
             }
 
 
@@ -785,7 +785,7 @@ class ViewerApplicationElement extends HTMLElement {
                 }
                 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
+                await bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
             }
         };
 
@@ -794,7 +794,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ---------------------------------------------------------------------
         
         for (let viewerno = 0; viewerno < this.num_independent_viewers; viewerno++) {
-            internal_create_menu(viewerno);
+            await internal_create_menu(viewerno);
         }
 
         return fmenu[0];
@@ -917,6 +917,17 @@ class ViewerApplicationElement extends HTMLElement {
     // create the help menu
     // ---------------------------------------------
 
+    restartApplicationQuestion() {
+        setTimeout( () => {
+            bootbox.confirm("Must restart application for changes to take effect. Are you sure? You will lose all unsaved data.",
+                            (e) => {
+                                if (e)
+                                    window.open(this.applicationURL,'_self');
+                            }
+                           );
+        });
+    }
+    
     addOrientationSelectToMenu(hmenu) {
 
         let orientSelect = function () {
@@ -936,7 +947,32 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(hmenu, "Set Image Orientation On Load", orientSelect);
 
     }
-    
+
+    addSpeciesSelectToMenu(hmenu) {
+        
+        let speciesselect = () => {
+            userPreferences.safeGetItem('species').then( (species) => {
+                console.log('Species=',species);
+                webutil.createRadioSelectModalPromise(`<H4>Select atlases to show</H4>`,
+                                                      "Close",
+                                                      species,
+                                                      [{ value: "all", text: "All Atlases" },
+                                                       { value: "human", text: "Human Atlases" },
+                                                       { value: "mouse", text: "Mouse Atlases" }]).then( (m) => {
+                                                           
+                                                           if (m!=='species') {
+                                                               userPreferences.setItem('species',m);
+                                                               userPreferences.storeUserPreferences();
+                                                               this.restartApplicationQuestion();
+                                                           }
+                                                       }).catch( (e) => {
+                                                           console.log('Error ',e);
+                                                       });
+            });
+        };
+        webutil.createMenuItem(hmenu, "Set Atlases to Show", speciesselect);
+    }
+
     createHelpMenu(menubar,extrahtml=null) {
 
         if (extrahtml===null)
@@ -956,6 +992,7 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(hmenu, ''); // separator
 
         this.addOrientationSelectToMenu(hmenu);
+        this.addSpeciesSelectToMenu(hmenu);
 
         if (webutil.inElectronApp()) {
             webutil.createMenuItem(hmenu, ''); // separator
@@ -987,32 +1024,22 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         
+        
         userPreferences.safeGetItem("internal").then( (f) => {
 
             webutil.createMenuItem(hmenu, '');
 
-            let restartf= () => {
-                setTimeout( () => {
-                    bootbox.confirm("Must restart application. Are you sure? You will lose all unsaved data.",
-                                    (e) => {
-                                        if (e)
-                                            window.open(this.applicationURL,'_self');
-                                    }
-                                   );
-                },500);
-            };
-            
             if (f) {
                 webutil.createMenuItem(hmenu, 'Disable Internal Features', 
                                        () => {
                                            userPreferences.setItem('internal',false,true);
-                                           restartf();
+                                           this.restartApplicationQuestion();
                                        });
             } else {
                 webutil.createMenuItem(hmenu, 'Enable Internal Features (At your own risk!)', 
                                        () => {
                                            userPreferences.setItem('internal',true,true);
-                                           restartf();
+                                           this.restartApplicationQuestion();
                                        });
             }
             
@@ -1029,7 +1056,7 @@ class ViewerApplicationElement extends HTMLElement {
             }
         });
                                                     
-
+        
         return hmenu;
     }
 
@@ -1281,9 +1308,10 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
+
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
-                const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                /*const dicomid = this.getAttribute('bis-dicomimportid') || null;
                 if (dicomid) {
                     let dicommodule = document.querySelector(dicomid) || null;
                     webutil.createMenuItem(bmenu,'');
@@ -1294,7 +1322,15 @@ class ViewerApplicationElement extends HTMLElement {
                     webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
                         dicommodule.showDICOMImportModal();
                     });
+                }*/
+
+                if (this.applicationName!=="connviewer") {
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Repository Panel', () => {
+                        this.repopanel.show();
+                    });
                 }
+                
             }
             webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, 'Restart Application', () => {
@@ -1319,6 +1355,16 @@ class ViewerApplicationElement extends HTMLElement {
         let imagename2=webutil.getQueryParameter('image2') || '';
         let overlayname=webutil.getQueryParameter('overlay') || '';
         let overlayname2=webutil.getQueryParameter('overlay2') || '';
+        let repo=webutil.getQueryParameter('repo') || '';
+
+        if (repo.length>0) {
+
+            
+            this.repopanel.show();
+            this.repopanel.openDirectory(repo);
+            return;
+        }
+        
         
         if (load.length>0) {
             this.loadApplicationState(load);
@@ -1555,8 +1601,21 @@ class ViewerApplicationElement extends HTMLElement {
 
 
     }
+
+    createExtraComponents() {
+
+        this.repopanel=document.createElement('bisweb-repopanel');
+        this.repopanel.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
+        if (this.VIEWERS[1])
+            this.repopanel.setAttribute('bis-viewerid2',this.VIEWERS[1].getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
+        this.VIEWERS[0].getLayoutController().appendChild(this.repopanel);
+        
+    }
+
     
-    connectedCallback() {
+    async internalConnectedCallback() {
 
         // Check if we are in external mode and if we have an imagepath
         this.setExternalAndImagePath();
@@ -1576,7 +1635,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         this.findViewers();
-        
+        this.createExtraComponents();
 
 
         let menubar = document.querySelector(menubarid).getMenuBar();
@@ -1594,9 +1653,9 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
         // ----------------------------------------------------------
-        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid);
+        let fmenu=await this.createFileAndOverlayMenus(menubar,painttoolid);
 
-        this.createApplicationMenu(fmenu);
+        await this.createApplicationMenu(fmenu);
 
         let editmenu=null;
 
@@ -1716,6 +1775,12 @@ class ViewerApplicationElement extends HTMLElement {
         // Clean up at the end
         this.finalizeConnectedEvent();
     }
+
+
+    connectedCallback() {
+        this.internalConnectedCallback();
+    }
+        
 }
 
 module.exports = ViewerApplicationElement;

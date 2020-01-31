@@ -78,8 +78,10 @@ class ColormapControllerElement extends HTMLElement {
             
             // Image range
             imagerange : null,
+            imagetype : null,
             imagedim : null,
             objectmaprange : [ 0,1],
+            objectmaptype : null,
             
             // objectmap and clusterinfo
             objectmap : null,
@@ -224,6 +226,7 @@ class ColormapControllerElement extends HTMLElement {
         
         this.internal.update=updatefunction;
         this.internal.imagerange=volume.getIntensityRange();
+        this.internal.imagetype=volume.getDataType();
         if (this.internal.imagerange[1]-this.internal.imagerange[0]>64)
             this.data.minintensity=this.internal.imagerange[0]+1;
         else
@@ -233,13 +236,23 @@ class ColormapControllerElement extends HTMLElement {
         let dr=this.internal.robustrange[1]-this.internal.robustrange[0];
         let da=this.internal.imagerange[1]-this.internal.imagerange[0];
 
+        if (this.internal.imagerange[0]<0 && this.internal.imagerange[1]>0) {
+            let ratio=-(this.internal.imagerange[0]/this.internal.imagerange[1]);
+            if (ratio>0.25 && ratio<4.0) {
+                this.data.autocontrast=false;
+                this.internal.robustrange=this.internal.imagerange;
+            }
+        }
 
-        
-        if (dr<0.25*da) {
+        if (this.data.autocontrast && dr<0.25*da) {
             this.data.autocontrast=false;
             this.internal.robustrange=this.internal.imagerange;
         }
-        this.setAutoContrast(false);
+        
+        this.setAutoContrast(false); // false=update parameter
+        if (this.data.autocontrast) {
+            this.updateTransferFunctions(true);
+        }
     }
 
 
@@ -530,6 +543,32 @@ class ColormapControllerElement extends HTMLElement {
         }
     }
 
+    computeStep(range=[0,255],dt='float') {
+
+        if (!dt=='float' && dt==!'double') {
+            //            console.log('Mapped',range,dt,'outstep=',1);
+            return 1;
+        }
+
+        let d=(range[1]-range[0]);
+        if (d>100) {
+            //console.log('Mapped',range,dt,'d=',d,'outstep=',1);
+            return 1;
+        }
+        
+        let st=0.1;
+        let zeros="0.";
+
+        while (st>(d*0.01)) {
+            st=st*0.1;
+            zeros=zeros+'0';
+        }
+
+        let outstep=parseFloat(zeros+'1');
+        //console.log('Mapped',range,dt,'outstep=',outstep,'st=',st);
+        return outstep;
+    }
+    
     // --------- --------- --------- --------- --------- --------- ---------
     // Add new objectmap
     // --------- --------- --------- --------- --------- --------- ---------
@@ -559,8 +598,11 @@ class ColormapControllerElement extends HTMLElement {
         } else {
             this.data['outmode']='Both';
         }
-        this.internal.minobjectmap = folder.add(this.data,'minth',overlayrange[0],overlayrange[1]).name("Min Overlay");
-        this.internal.maxobjectmap = folder.add(this.data,'maxth',overlayrange[0],overlayrange[1]).name("Max Overlay");
+
+        let st=this.computeStep(overlayrange,this.internal.objectmaptype);
+        
+        this.internal.minobjectmap = folder.add(this.data,'minth',overlayrange[0],overlayrange[1]).name("Min Overlay").step(st);
+        this.internal.maxobjectmap = folder.add(this.data,'maxth',overlayrange[0],overlayrange[1]).name("Max Overlay").step(st);
         this.internal.checkshowcolorbar = folder.add(this.data,'showcolorbar').name("Show Colorbar");
         this.internal.checkshowcolorbar.onChange( () => {
             console.log('Check color bar changed');
@@ -613,8 +655,9 @@ class ColormapControllerElement extends HTMLElement {
         }
         
         if (this.internal.minobjectmap!==null) {
-            this.internal.minobjectmap.min(overlayrange[0]).max(overlayrange[1]);
-            this.internal.maxobjectmap.min(overlayrange[0]).max(overlayrange[1]);
+            let st=this.computeStep(overlayrange,this.internal.objectmaptype);
+            this.internal.minobjectmap.min(overlayrange[0]).max(overlayrange[1]).step(st);
+            this.internal.maxobjectmap.min(overlayrange[0]).max(overlayrange[1]).step(st);
             this.internal.minobjectmap.updateDisplay();
             this.internal.maxobjectmap.updateDisplay();
             if (this.internal.clusterslider!==null)
@@ -700,16 +743,17 @@ class ColormapControllerElement extends HTMLElement {
 
         let dt=objectmap.getDataType();
         this.internal.objectmaprange=objectmap.getIntensityRange();
+        this.internal.objectmaptype=dt;
 
         this.internal.plainmode = plainmode || false;
         if (this.internal.plainmode) {
             colormapmode="Objectmap";
-            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>400 || this.internal.objectmaprange[0]<0) {
+            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>800 || this.internal.objectmaprange[0]<0) {
                 let r= this.internal.objectmaprange[0]+":"+this.internal.objectmaprange[1];
                 webutil.createAlert(`The loaded objectmap does not look like an objectmap type= ${dt} range:${r}.`,true);
             }
         } else if (index <0 ) {
-            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>160 || this.internal.objectmaprange[0]<0) {
+            if (dt=='float' || dt=='double' || this.internal.objectmaprange[1]>800 || this.internal.objectmaprange[0]<0) {
                 if (this.internal.objectmaprange[0]<0.0) {
                     colormapmode="Overlay";
                 } else {
@@ -772,9 +816,10 @@ class ColormapControllerElement extends HTMLElement {
             }
             this.internal.folder[1]= this.internal.basegui.addFolder('Overlay Color Mapping');
 
-            
-            let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int");
-            let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int");
+
+            let st=this.computeStep(this.internal.imagerange,this.internal.imagetype);
+            let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int").step(st);
+            let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int").step(st);
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
             let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
             this.internal.anatomicalcontrollers=[a1,a2];
@@ -828,8 +873,9 @@ class ColormapControllerElement extends HTMLElement {
             let max=2;
             if (volren)
                 max=3;
+            let st=this.computeStep(this.internal.imagerange,this.internal.imagetype);
             for (let i=0;i<max;i++) {
-                this.internal.anatomicalcontrollers[i].min(this.internal.imagerange[0]).max(this.internal.imagerange[1]);
+                this.internal.anatomicalcontrollers[i].min(this.internal.imagerange[0]).max(this.internal.imagerange[1]).step(st);
                 this.internal.anatomicalcontrollers[i].updateDisplay();
             }
 

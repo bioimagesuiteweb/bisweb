@@ -107,7 +107,7 @@ let attachFlags = function (module, cmd) {
  * @param{array} args - the argument array to be parsed
  * @alias CommandLine.loadParse
  */
-let loadParse = function (args, toolname,basedirectory='') {
+let loadParse = function (args, toolname,basedirectory='',testmode=false) {
 
     toolname= toolname || "";
 
@@ -248,9 +248,12 @@ let loadParse = function (args, toolname,basedirectory='') {
                         });
                     }).catch((e) => {
                         slicerupd.end();
-                        console.log('---- Failed to invoke module "'+mod.name+'". '+e);
-                        program.help();
-                        reject('---- Failed to invoke module "'+mod.name+'". '+e);
+                        if (!testmode) {
+                            console.log('---- Failed to invoke module "'+mod.name+'". '+e);
+                            program.help();
+                        } else {
+                            reject('---- testmode: Failed to invoke module "'+mod.name+'". '+e);
+                        }
                     });
                 } else {
                     slicerupd.end();

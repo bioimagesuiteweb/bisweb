@@ -1,0 +1,4 @@
+*.json
+*.vtk
+*.csv
+*.gz
