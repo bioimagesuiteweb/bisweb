@@ -365,10 +365,10 @@ var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
               `!${outdir}/node_modules`,
               `!${outdir}/package.json`,
               `!${outdir}/*.map`,
-              `!${outdir}/images/\#*`,
+              `!${outdir}/images/#*`,
               `!${outdir}/images/*~`,
               `!${outdir}/images/*/*~`,
-              `!${outdir}/images/*/\#*`,
+              `!${outdir}/images/*/#*`,
                ],
              {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
                  outfile=path.resolve(outfile);
