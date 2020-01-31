@@ -20,7 +20,7 @@ const atlasutils=require('bisweb_atlasutilities');
 // -------------------------------
 // Global State
 // -------------------------------
-const BADNUMBER=0.0001;
+const BADNUMBER=0.000000001;
 
 const globalParams = {
     internal : null,
