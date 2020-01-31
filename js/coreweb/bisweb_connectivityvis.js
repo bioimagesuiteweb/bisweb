@@ -195,11 +195,11 @@ var createNets=function() {
     
     for (let i=0;i<rois.length;i++) {
         let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
-	if(netSizes[n] !== undefined){
-		netSizes[n] = netSizes[n]+1;
-	}else{
-		netSizes[n] = 1;
-	}
+        if(netSizes[n] !== undefined){
+            netSizes[n] = netSizes[n]+1;
+        }else{
+            netSizes[n] = 1;
+        }
         nets.add(fixNetworkIndex(n));
     }
     return nets;
@@ -260,8 +260,8 @@ var createMatrix=function(nets,pairs,symm=false,matrixscaling=false) {
 
         let network1=fixNetworkIndex(rois[node].attr[globalParams.internal.networkAttributeIndex]);
         let network2=fixNetworkIndex(rois[othernode].attr[globalParams.internal.networkAttributeIndex]);
-	if(network1 != network2)
-		matrix[network1-1][network2-1]+=1;
+        if(network1 != network2)
+            matrix[network1-1][network2-1]+=1;
         if (symm)
             matrix[network2-1][network1-1]+=1;
     }
@@ -634,8 +634,9 @@ var createCorrMapSVG=function(parentDiv,
         .attr("x", x.rangeBand() / 2)
         .attr("y", y.rangeBand() / 2)
         .attr("text-anchor", "middle")
-        .style("fill", function(d) {if(d== BADNUMBER) return  'white';return d >= maxValue/2 ? 'black' : 'black'; })
-        .text(function(d) { return d; });
+        .style("fill", function(d) {if(d== BADNUMBER) return  'white';return 'black'; })
+        .text(function(d) { if (d===BADNUMBER) return 0; return d; });
+
     
     row.selectAll(".cell")
         .data(function(d, i) { return data[i]; })
@@ -1303,7 +1304,7 @@ let createHistogram=function(parentDiv, dim, binCnt = 30){
                     //attatch infobox to element
                     info.attr("data-attatched", target.id);
                 })
-                .on("mouseout", function() {		
+                .on("mouseout", function() {            
                     //hide the box
                     let info = d3.select('.bis-chartInfoBox');
                     info.style('display',"none");
