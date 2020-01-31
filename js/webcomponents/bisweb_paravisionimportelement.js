@@ -572,7 +572,7 @@ class ParavisionImportElement extends HTMLElement {
 
         
         if (this.internal.lastfilename) {
-            return this.computeAverageImages(bisgenericio.getDirectoryName.dirname(this.internal.lastfilename));
+            return this.computeAverageImages(bisgenericio.getDirectoryName(this.internal.lastfilename));
         }
 
 

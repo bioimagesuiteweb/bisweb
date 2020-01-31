@@ -204,7 +204,7 @@ class MisacTool extends HTMLElement {
             webfileutil.electronFileCallback({
                 filename : obj.getFilename(),
                 title    : 'Select filename to save this to',
-                filters  : self.filters[obj.getObjectType],
+                filters  : self.filters[obj.getObjectType()] || 'NII',
                 save : true,
             },function(f) { self.saveItem(f,key1,key2); });
         }

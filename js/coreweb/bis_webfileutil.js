@@ -223,6 +223,7 @@ const webfileutils = {
         fileopts.title = fileopts.title || 'Specify filename';
         fileopts.defaultpath = fileopts.defaultpath || '';
 
+        
         let suffix = fileopts.suffix || '';
         if (suffix === "NII" || fileopts.filters === "NII")
             fileopts.filters = [
@@ -234,6 +235,8 @@ const webfileutils = {
 
         // Clean up filters that begin with a "." as electron does not like that
 
+        //console.log("IN=",JSON.stringify(fileopts,null,2));
+        
         if (fileopts.filters !== "DIRECTORY") {
         
             let l=fileopts.filters.length || 0;
