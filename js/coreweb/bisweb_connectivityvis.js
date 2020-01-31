@@ -20,7 +20,7 @@ const atlasutils=require('bisweb_atlasutilities');
 // -------------------------------
 // Global State
 // -------------------------------
-const BADNUMBER=0.000001;
+const BADNUMBER=0.0001;
 
 const globalParams = {
     internal : null,
@@ -202,7 +202,6 @@ var createNets=function() {
 	}
         nets.add(fixNetworkIndex(n));
     }
-    console.log(netSizes)
     return nets;
 };
 
@@ -635,7 +634,7 @@ var createCorrMapSVG=function(parentDiv,
         .attr("x", x.rangeBand() / 2)
         .attr("y", y.rangeBand() / 2)
         .attr("text-anchor", "middle")
-        .style("fill", function(d) {if(d== 0.01) return  'white';return d >= maxValue/2 ? 'black' : 'black'; })
+        .style("fill", function(d) {if(d== BADNUMBER) return  'white';return d >= maxValue/2 ? 'black' : 'black'; })
         .text(function(d) { return d; });
     
     row.selectAll(".cell")
