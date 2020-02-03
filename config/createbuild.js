@@ -84,9 +84,9 @@ const main=async function() {
         let cmd=pythonexec+' '+path.normalize(path.join(DIR,'emsdk_portable/emsdk.py'));
         console.log('++++ python emsdk:',cmd);
         
-        await util.executeCommand(`${cmd} update`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        wait util.executeCommand(`${cmd} update`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install fastcomp-clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate fastcomp-clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} install node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} activate node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} install  emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
