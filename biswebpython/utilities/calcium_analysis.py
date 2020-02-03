@@ -39,7 +39,7 @@ def topHatFilter(blueMovie,uvMovie,mask,topHat=300):
     uvMovieFiltered = uvMovieFiltered.reshape(rotatedSize3D)
     return blueMovieFiltered,uvMovieFiltered
 
-def expRegression(blueMovie,uvMovie,mask,debug):
+def expRegression(blueMovie,uvMovie,mask):
 
     # Import bis_objects and drift correction script
     from biswebpython.modules.driftCorrectImage import driftCorrectImage
@@ -48,7 +48,7 @@ def expRegression(blueMovie,uvMovie,mask,debug):
     # Make sure we have a time dimension in the input data
     blueShape = blueMovie.shape
     uvShape = uvMovie.shape
-
+    maskShape = mask.shape
     if (len(blueShape) == 3) and (len(uvShape) == 3):
         print('Both input images are 3D, assuming third dimension is time and reshaping')
         blueMovie=np.reshape(blueMovie,[blueShape[0]*blueShape[1],blueShape[2]])
@@ -65,26 +65,38 @@ def expRegression(blueMovie,uvMovie,mask,debug):
         return a*np.exp(-b*t)+c
 
 
-    meanTsBlue = np.mean(blueMovie,axis=0)
-    meanTsUV = np.mean(uvMovie,axis=0)
+    if len(maskShape) == 2:
+        maskRes=np.reshape(mask,maskShape[0]*maskShape[1])
+    else:
+        raise Exception('Mask array is wrong shape')
 
-    numTps=len(meanTsBlue)
 
-    lintrend=np.linspace(1,-1,numTps)
-    exptrend=np.squeeze(np.exp(lintrend))
+    meanTsBlue = np.mean(blueMovie[maskRes,:],axis=0)
+    meanTsUv = np.mean(uvMovie[maskRes,:],axis=0)
+
+    numTpsBlue=len(meanTsBlue)
+    numTpsUv=len(meanTsUv)
+
+    lintrendBlue=np.linspace(1,-1,numTpsBlue)
+    exptrendBlue=np.squeeze(np.exp(lintrendBlue))
+
+    lintrendUv=np.linspace(1,-1,numTpsUv)
+    exptrendUv=np.squeeze(np.exp(lintrendUv))
 
     # Blue Regress
-    poptBlue,pcovBlue=curve_fit(exponential_func,exptrend,meanTsBlue,p0=(1,1e-6,1),maxfev=10000)
-    yfitBlue=exponential_func(exptrend,*poptBlue)
+    poptBlue,pcovBlue=curve_fit(exponential_func,exptrendBlue,meanTsBlue,p0=(1,1e-6,1),maxfev=10000)
+    yfitBlue=exponential_func(exptrendBlue,*poptBlue)
     yfitBlueMin=yfitBlue/np.min(yfitBlue)
-    blueMovieRegress=blueMovie/yfitBlueMin
+    blueMovieRegress=blueMovie
+    blueMovieRegress[maskRes,:]=blueMovie[maskRes,:]/yfitBlueMin
 
 
     # Blue Regress
-    poptUV,pcovUV=curve_fit(exponential_func,exptrend,meanTsUV,p0=(1,1e-6,1),maxfev=10000)
-    yfitUV=exponential_func(exptrend,*poptUV)
-    yfitUVMin=yfitUV/np.min(yfitUV)
-    uvMovieRegress=uvMovie/yfitUVMin
+    poptUv,pcovUv=curve_fit(exponential_func,exptrendUv,meanTsUv,p0=(1,1e-6,1),maxfev=10000)
+    yfitUv=exponential_func(exptrendUv,*poptUv)
+    yfitUvMin=yfitUv/np.min(yfitUv)
+    uvMovieRegress=uvMovie
+    uvMovieRegress[maskRes,:]=uvMovie[maskRes,:]/yfitUvMin
 
 
     blueMovieRegress=np.reshape(blueMovieRegress,blueShape)
@@ -102,41 +114,67 @@ def twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,
     mask = mask.reshape((mask.shape[0]*mask.shape[1]))
     mask = mask>0
     mask_indices = np.squeeze(np.argwhere(mask))
-    rotatedSize3D = blueMovie.shape
 
-    blueMovie = blueMovie.reshape((blueMovie.shape[0]*blueMovie.shape[1], blueMovie.shape[2]))
-    uvMovie = uvMovie.reshape((uvMovie.shape[0]*uvMovie.shape[1], uvMovie.shape[2]))
-    blueMovieFiltered = blueMovieFiltered.reshape((blueMovieFiltered.shape[0]*blueMovieFiltered.shape[1], blueMovieFiltered.shape[2]))
-    uvMovieFiltered = uvMovieFiltered.reshape((uvMovieFiltered.shape[0]*uvMovieFiltered.shape[1], uvMovieFiltered.shape[2]))
+    blueShape = blueMovie.shape
+    uvShape = uvMovie.shape
+    blueFiltShape = blueMovieFiltered.shape
+    uvFiltShape = uvMovieFiltered.shape
+
+
+    blueMovie = blueMovie.reshape((blueShape[0]*blueShape[1], blueShape[2]))
+    uvMovie = uvMovie.reshape((uvShape[0]*uvShape[1], uvShape[2]))
+    blueMovieFiltered = blueMovieFiltered.reshape((blueFiltShape[0]*blueFiltShape[1], blueFiltShape[2]))
+    uvMovieFiltered = uvMovieFiltered.reshape((uvFiltShape[0]*uvFiltShape[1], uvFiltShape[2]))
 
     blueBase = blueMovie - blueMovieFiltered
     uvBase = uvMovie - uvMovieFiltered
 
-    blueRec = blueMovieFiltered + np.tile(blueBase.mean(axis=1)[:,np.newaxis],(1,rotatedSize3D[2]))
-    uvRec = uvMovieFiltered + np.tile(uvBase.mean(axis=1)[:,np.newaxis],(1,rotatedSize3D[2]))
+    blueRec = blueMovieFiltered + np.tile(blueBase.mean(axis=1)[:,np.newaxis],(1,blueFiltShape[2]))
+    uvRec = uvMovieFiltered + np.tile(uvBase.mean(axis=1)[:,np.newaxis],(1,uvFiltShape[2]))
 
     beta = np.zeros((len(mask_indices)))
     blueReg = np.zeros(blueBase.shape)
+
+
+
+    if uvRec.shape[1] != blueRec.shape[1]:
+        diffUv=uvRec.shape[1] - blueRec.shape[1]
+        if diffUv > 0:
+            uvRec=uvRec[:,:blueRec.shape[1]]
+
+        if diffUv < 0:
+            for i in range(0,abs(diffUv)):
+
+                uvRecAdd = np.expand_dims(uvRec[:,-1], axis=1)
+                uvRec=np.append(uvRec,uvRecAdd,axis=1)
+
+                uvMovieFiltAdd = np.expand_dims(uvMovieFiltered[:,-1], axis=1)
+                uvMovieFiltered = np.append(uvMovieFiltered,uvMovieFiltAdd,axis=1)
+
+
+
 
     for i in range(mask.sum()):
         beta[i] = linalg.lstsq(uvRec[mask_indices[i],:][:,np.newaxis], blueRec[mask_indices[i],:][:,np.newaxis])[0][0][0]
         blueReg[mask_indices[i],:] = blueMovieFiltered[mask_indices[i],:] - beta[i]*uvMovieFiltered[mask_indices[i],:]
     return blueReg
 
-def dFF(blueMovie,uvMovieFiltered,blueReg,mask,topHat=300):
-    rotatedSize3D = blueMovie.shape
+def dFF(blueMovie,uvMovieFiltered,blueReg,mask):
+    blueShape = blueMovie.shape
+    uvShape = uvMovieFiltered.shape
     mask = mask.reshape((mask.shape[0]*mask.shape[1]))
     mask = mask>0
 
-    blueMovie = blueMovie.reshape((blueMovie.shape[0]*blueMovie.shape[1], blueMovie.shape[2]))
-    uvMovieFiltered = uvMovieFiltered.reshape((uvMovieFiltered.shape[0]*uvMovieFiltered.shape[1], uvMovieFiltered.shape[2]))
+    blueMovie = blueMovie.reshape((blueShape[0]*blueShape[1], blueShape[2]))
+    uvMovieFiltered = uvMovieFiltered.reshape((uvShape[0]*uvShape[1], uvShape[2]))
+    blueReg = blueReg.reshape((blueShape[0]*blueShape[1], blueShape[2]))
 
-    blueF = blueMovie[mask,topHat:].mean(axis=1)
+    blueF = blueMovie[mask,:].mean(axis=1)
     blueDFF = np.zeros(blueMovie.shape)
-    blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,rotatedSize3D[2])))
+    blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,blueShape[2])))
 
     #uv
-    uvF = uvMovieFiltered[mask,topHat:].mean(axis=1)
+    uvF = uvMovieFiltered[mask,:].mean(axis=1)
     uvDFF = np.zeros(uvMovieFiltered.shape)
-    uvDFF[mask,:] = np.divide(uvMovieFiltered[mask,:],np.tile(uvF[:,np.newaxis],(1,rotatedSize3D[2])))
+    uvDFF[mask,:] = np.divide(uvMovieFiltered[mask,:],np.tile(uvF[:,np.newaxis],(1,uvShape[2])))
     return blueDFF,uvDFF

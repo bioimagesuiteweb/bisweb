@@ -19,9 +19,9 @@
 
 import sys
 import pdb
+import os
 
-
-sys.path.append('/data15/mri_group/dave_data/bisweb/src/')
+sys.path.append('/ca2data/bisweb/')
 
 try:
     import bisweb_path;
@@ -37,11 +37,6 @@ import biswebpython.utilities.calcium_image as calcium_image;
 import biswebpython.utilities.calcium_analysis as calcium_analysis;
 from biswebpython.modules.linearRegistration import *
 
-
-# from PIL import Image
-
-import pdb
-import sys
 
 class calciumPreprocess(bis_basemodule.baseModule):
 
@@ -75,7 +70,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     "name": "Input Mask",
                     "description": "The mask input",
                     "varname": "mask",
-                    "required": True
+                    "required": False
                 }
             ],
             "outputs": [
@@ -146,6 +141,13 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": False
+                },
+                {
+                    "name": "Working Directory",
+                    "description": "",
+                    "varname": "workdir",
+                    "type": "str",
+                    "default": False
                 }
             ],
         }
@@ -165,7 +167,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
         if (type(regFrame) == str) and (regFrame.lower() == 'mean'):
             targetFrame=np.mean(image,axis=2)
         elif (type(regFrame) == int) and (regFrame <= numFrames-1):
-            targetFrame image[:,:,regFrame]
+            targetFrame=image[:,:,regFrame]
         else:
             message = '''Variable "regFrame" must be "mean" or an integer \n
             less than or equal to the number of frames'''
@@ -247,6 +249,90 @@ class calciumPreprocess(bis_basemodule.baseModule):
         
 
     
+    def MSEDiffImg(self, ipimg, numFramesToUse = 500, medianFilter = 4, dilationIters = 4):
+
+        '''
+        Accepts 3D image, X x Y x Time
+
+        numFramesToUse => How many frames to use in MSE calculation
+
+        medianfilter => cutoff for mask, how many mulitples of the median spatial
+        value in the mean image to use
+
+        dilationIters => How many pixels to add onto the blobs created by the median filter
+        '''
+
+        from scipy.optimize import curve_fit 
+        from scipy.ndimage import morphology
+        from sklearn.linear_model import LinearRegression as LinReg
+        from skimage import feature
+
+
+        # Num frames
+        tslength=ipimg.shape[2]
+
+        # Reshape to space by time
+        imgDataBeforeFlat=np.reshape(ipimg,[512*500,tslength])
+
+        # Shorten image
+        meanTSOrig=imgDataBeforeFlat.mean(axis=0)
+        imgDataBeforeFlat=imgDataBeforeFlat[:,:numFramesToUse]
+
+        # Mean timeseries before MSE   
+        meanTS=imgDataBeforeFlat.mean(axis=0)
+
+        # Spatial mean before MSE
+        meanImg=np.mean(imgDataBeforeFlat,axis=1)
+
+        # Standard deviation of image
+        stdImg=imgDataBeforeFlat.std(axis=1)
+
+        # Median filter based on mean image to remove beads
+        spatialMask=meanImg > np.median(meanImg)*medianFilter
+
+        # Dilate these structures
+        struct1 = morphology.generate_binary_structure(2, 2)
+        spatialMaskSq = np.reshape(spatialMask,[512,500])
+        spatialMaskSq= morphology.binary_dilation(spatialMaskSq,iterations=dilationIters,structure=struct1)
+        spatialMask=spatialMaskSq.flatten()
+
+        # Mask mean image
+        meanImgMask=meanImg*~spatialMask
+
+        # Mask all data
+        spatialMaskRep=np.tile(np.vstack(spatialMask),numFramesToUse)
+        imgDataBeforeFlat=imgDataBeforeFlat*~spatialMaskRep
+
+        # Standard deviation of image
+        stdImgMask=imgDataBeforeFlat.std(axis=1)
+
+        # Create normalized timeseries
+        imgNormTs=(imgDataBeforeFlat-np.vstack(meanImgMask))/np.vstack(stdImgMask)
+        tsmask=np.sum(np.isnan(imgNormTs),axis=1) < 1
+
+        # Mean normalized timeseries
+        meantsNorm=np.mean(imgNormTs,axis=0)
+        meantsNorm=np.mean(imgNormTs[tsmask,:],axis=0)
+
+        # Look at difference between mean normalized timeseries and 
+        # other normalized timeseries
+        imgNormDemean=imgNormTs-meantsNorm
+
+        # Mean square error of those differences
+        imgNormMSE=np.mean(imgNormDemean**2,axis=1)
+
+        # Reshape to "square" image for display
+        meanImgSq=np.reshape(meanImg,[512,500])
+        meanImgMaskSq=np.reshape(meanImgMask,[512,500])
+        imgNormMSESq=np.reshape(imgNormMSE,[512,500])
+        stdImgSq=np.reshape(stdImg,[512,500])
+
+
+        # Automated mask
+        imgMask = imgNormMSESq < 0.6
+
+        return meanImgSq,imgNormMSESq, spatialMaskSq, meanImgMaskSq, stdImgSq, meanTSOrig, imgMask
+
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
@@ -259,6 +345,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
         downsampleRatio = vals['downsample']
         bleachType = vals['bleachtype']
         debug=self.parseBoolean(vals['debug'])
+        workdir=vals['workdir']
         outputEveryStep = debug
 
 
@@ -266,11 +353,14 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(inputMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_movie_all.nii.gz')
+            out.save(os.path.join(workdir,'calcium_movie_all.nii.gz'))
 
+
+        # Check triggers!
 
         blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
-        mask = self.inputs['mask'].get_data()
+        if self.inputs['mask']:
+            mask = self.inputs['mask'].get_data()
 
 
 
@@ -282,15 +372,15 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie.nii.gz')
+            out.save(os.path.join(workdir,'calcium_blue_movie.nii.gz'))
             out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_uv_movie.nii.gz')
+            out.save(os.path.join(workdir,'calcium_uv_movie.nii.gz'))
 
         ###########################
 
 
-        blueMovieMC,blueMovieRef = self.computeMotionCorrection(blueMovie)
-        uvMovieMC,uvMovieRef = self.computeMotionCorrection(uvMovie)
+        blueMovieMC,blueMovieRef = blueMovie,None#self.computeMotionCorrection(blueMovie)
+        uvMovieMC,uvMovieRef = uvMovie,None#self.computeMotionCorrection(uvMovie)
         
 
         ###########################
@@ -298,38 +388,44 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueMovieMC,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie_mc.nii.gz')
+            out.save(os.path.join(workdir,'calcium_blue_movie_mc.nii.gz'))
             out = bis_objects.bisImage().create(uvMovieMC,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_uv_movie_mc.nii.gz')
+            out.save(os.path.join(workdir,'calcium_uv_movie_mc.nii.gz'))
 
-            out = bis_objects.bisImage().create(blueMovieRef,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie_mcRef.nii.gz')
-            out = bis_objects.bisImage().create(uvMovieRef,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_uv_movie_mcRef.nii.gz')
+            #out = bis_objects.bisImage().create(blueMovieRef,[1,1,1,1,1],np.eye(4))
+            #out.save('calcium_blue_movie_mcRef.nii.gz')
+            #out = bis_objects.bisImage().create(uvMovieRef,[1,1,1,1,1],np.eye(4))
+            #out.save('calcium_uv_movie_mcRef.nii.gz')
             #out = bis_objects.bisImage().create(mask,[1,1,1,1,1],np.eye(4))
             #out.save('mask.nii.gz')
 
                 
-        sys.exit()
 
-        # Top Hat filter
-        if bleachType == 'topHat':
-            blueMovieFiltered,uvMovieFiltered = calcium_analysis.topHatFilter(blueMovie,uvMovie,mask)
-        elif bleachType == 'expReg':
-            blueMovieFiltered,uvMovieFiltered = calcium_analysis.expRegression(blueMovie,uvMovie,mask,outputEveryStep)
+
+        # Create Mask
+        meanImgSq,imgNormMSESq, spatialMaskSq, meanImgMaskSq, stdImgSq, meanTSOrig, mask = self.MSEDiffImg(blueMovie, numFramesToUse = 1500, medianFilter = 8, dilationIters = 4)
+
+        # Photobleach correction
+        blueMovieFiltered,uvMovieFiltered = calcium_analysis.expRegression(blueMovie,uvMovie,mask)
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie_mc_filt.nii.gz')
+            out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt.nii.gz'))
             out = bis_objects.bisImage().create(uvMovieFiltered,[1,1,1,1,1],np.eye(4))
-            out.save('calcium_uv_movie_mc_filt.nii.gz')
+            out.save(os.path.join(workdir,'calcium_uv_movie_mc_filt.nii.gz'))
+
+
+            out = bis_objects.bisImage().create(mask.astype('int'),[1,1,1,1,1],np.eye(4))
+            out.save(os.path.join(workdir,'MSEMask.nii.gz'))
+            out = bis_objects.bisImage().create(imgNormMSESq,[1,1,1,1,1],np.eye(4))
+            out.save(os.path.join(workdir,'MSEImage.nii.gz'))
 
         #### Two-wavelength Regression
         blueReg = calcium_analysis.twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,mask)
         
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueReg.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie_mc_filt_regress.nii.gz')
+            out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt_regress.nii.gz'))
 
         #### dF/F
 
@@ -338,9 +434,9 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if outputEveryStep:
             out = bis_objects.bisImage().create(blueDFF.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
-            out.save('calcium_blue_movie_mc_filt_regress_dff.nii.gz')
+            out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt_regress_dff.nii.gz'))
             out = bis_objects.bisImage().create(uvDFF.reshape(uvMovieSize),[1,1,1,1,1],np.eye(4))
-            out.save('calcium_uv_movie_mc_filt_regress_dff.nii.gz')
+            out.save(os.path.join(workdir,'calcium_uv_movie_mc_filt_regress_dff.nii.gz'))
         
         # for memory
         blueMovie = []
