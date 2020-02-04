@@ -535,7 +535,7 @@ class bisGridTransformation(bisBaseObject):
 
             print('++++ Finale Data Array =',self.data_array.shape)
         else:
-            self.data_array=np.zeros([sz*3],dtype=np.float32);
+            self.data_array=np.zeros([sz],dtype=np.float32);
             
         return self;
     
