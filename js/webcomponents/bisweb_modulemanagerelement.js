@@ -120,6 +120,42 @@ class ModuleManagerElement extends HTMLElement {
             webutil.createMenuItem(this.moduleMenu[index],'');
         }
     }
+
+
+    transfer(v1,v2,img1,img2) {
+        v1=parseInt(v1);
+        v2=parseInt(v2);
+        img1=parseInt(img1);
+        img2=parseInt(img2);
+
+        if (v1=== v2 && img1===img2) {
+            return;
+        }
+
+        let source=this.viewers[v1];
+        let target=this.viewers[v2];
+
+        let sourceimg=null;
+        let sourcecolor=0;
+        if (img1===0) {
+            sourceimg=source.getimage();
+        }  else {
+            sourceimg=source.getobjectmap();
+            if (sourceimg)
+                sourcecolor=source.getcolortype();
+        }
+
+        if (!sourceimg)
+            return;
+
+        if (img2===0) {
+            target.setimage(sourceimg);
+            return;
+        }
+
+        target.setobjectmap(sourceimg,false,sourcecolor);
+    }
+
     
     transferImages(v1,v2) {
 

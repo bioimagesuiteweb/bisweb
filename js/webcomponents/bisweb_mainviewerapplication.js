@@ -99,7 +99,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationInitializedPromiseList= [ ];
         this.oldgraphtool=null;
         
-        
+            
     }
 
     // ----------------------------------------------------------------------------
@@ -474,14 +474,14 @@ class ViewerApplicationElement extends HTMLElement {
                                          });
         
         var bbar1=webutil.createbuttonbar({ parent: bbar,
-                                            css : { 'margin-bottom' : '20px','width' : '100%'}
+                                            css : { 'margin-bottom' : '20px', 'margin-left' : '0px' },
                                           });
 
 
         webutil.createbutton({ type : "default",
                                name : "Store State",
                                parent : bbar1,
-                               css : { 'width' : '120px' },
+                               css : { 'width' : '120px', 'margin-left' : '0px' },
                                callback : function() {
                                    self.storeState();
                                }
@@ -504,7 +504,7 @@ class ViewerApplicationElement extends HTMLElement {
 
                 var bbar0=webutil.createbuttonbar({ parent: bbar,
                                                     css : {
-                                                        'margin-bottom' : '10px',
+                                                        'margin-bottom' : '20px',
                                                         'width' : '100%',
                                                     }
                                                   });
@@ -532,7 +532,7 @@ class ViewerApplicationElement extends HTMLElement {
                 
 
                 webutil.createbutton({ type : "success",
-                                       name : "V1 &harr; V2",
+                                       name : "V1 (&harr;) V2",
                                        parent : bbar0,
                                        css : { 'position': 'absolute',
                                                'width' : '80px',
@@ -544,65 +544,106 @@ class ViewerApplicationElement extends HTMLElement {
                                      });
 
 
+                bbar.append('<HR width="90%">');
+                
                 var bbar2=webutil.createbuttonbar({ parent: bbar,
                                                     css : { 'margin-bottom' : '10px',
+                                                            'margin-top' : '0px',
                                                             'width' : '100%' }
                                                   });
-
-                
-                webutil.createbutton({ type : "info",
-                                       name : "V2 Im &rarr; V1 Ov",
-                                       parent : bbar2,
-                                       css : { 'width' : '120px' },
-                                       callback : function() {
-                                           modulemanager.transferImageToOverlay(1,0);
-                                       }
-                                     });
-
-                webutil.createbutton({ type : "info",
-                                       name : "V1 Im &rarr; V2 Ov",
-                                       parent : bbar2,
-                                       css : { 'width' : '120px',
-                                               'left'  : '140px',
-                                               'position' : 'absolute',
-                                             },
-                                       callback : function() {
-                                           modulemanager.transferImageToOverlay(0,1);
-                                       }
-                                     });
-
                 var bbar3=webutil.createbuttonbar({ parent: bbar,
                                                     css : { 'margin-bottom' : '10px',
                                                             'width' : '100%' }
                                                   });
+                
+                var bbar4=webutil.createbuttonbar({ parent: bbar,
+                                                    css : { 'margin-bottom' : '5px',
+                                                            'margin-left' : '0px' ,
+                                                            'width' : '100%' }
+                                                  });
+                bbar.append('<HR width="90%">');
+
+                this.transferElements= {
+                    'sourceviewer' : 0,
+                    'targetviewer' : 1,
+                    'sourceimage' : 0,
+                    'targetimage' : 0
+                };
+                
+
+
+                webutil.createselect({
+                    parent: bbar2,
+                    values: ['V1', 'V2' ],
+                    position: "top",
+                    index: this.transferElements['sourceviewer'],
+                    tooltip: "Source viewer",
+                    css : { 'margin-left' : '10px' },
+                }).change( (e) => {
+                    this.transferElements['sourceviewer']= parseInt(e.target.value);
+                });
+
+                webutil.createselect({
+                    parent: bbar2,
+                    values: ['image', 'overlay' ],
+                    position: "top",
+                    index: this.transferElements['sourceimage'],
+                    tooltip: "Source image",
+                    css : { 'margin-left' : '10px' },
+                }).change( (e) => {
+                    this.transferElements['sourceimage']= parseInt(e.target.value);
+                });
+
+                bbar2.append('<B>&nbsp; &nbsp; &rarr; &nbsp; &nbsp;</B>');
 
                 
-                webutil.createbutton({ type : "info",
-                                       name : "V2 Ov &rarr; V1 Im",
-                                       parent : bbar3,
-                                       css : { 'width' : '120px' },
-                                       callback : function() {
-                                           modulemanager.transferOverlayToImage(1,0);
-                                       }
-                                     });
+                webutil.createselect({
+                    parent: bbar3,
+                    values: ['V1', 'V2' ],
+                    position: "top",
+                    index: this.transferElements['targetviewer'],
+                    css : { 'margin-left' : '80px' },
+                    tooltip: "Target viewer"
+                }).change( (e) => {
+                    this.transferElements['targetviewer']= parseInt(e.target.value);
+                });
+
+                webutil.createselect({
+                    parent: bbar3,
+                    values: ['image', 'overlay' ],
+                    position: "top",
+                    index: this.transferElements['targetimage'],
+                    css : { 'margin-left' : '10px' },
+                    tooltip: "Target image"
+                }).change( (e) => {
+                    this.transferElements['targetimage']= parseInt(e.target.value);
+                });
 
                 webutil.createbutton({ type : "info",
-                                       name : "V1 Ov &rarr; V2 Im",
-                                       parent : bbar3,
-                                       css : { 'width' : '120px',
-                                               'left'  : '140px',
-                                               'position' : 'absolute',
-                                             },
-                                       callback : function() {
-                                           modulemanager.transferOverlayToImage(0,1);
+                                       name : "Copy Image",
+                                       parent : bbar4,
+                                       css : {
+                                           'width' : '120px',
+                                           'margin-left':  '120px',
+                                           'margin-top' : '10px',
+                                           'margin-bottom' : '10px'
+                                       },
+                                       callback : () => {
+                                           modulemanager.transfer(
+                                               this.transferElements['sourceviewer'],
+                                               this.transferElements['targetviewer'],
+                                               this.transferElements['sourceimage'],
+                                               this.transferElements['targetimage']);
                                        }
                                      });
+                                                    
+
 
             } else {
                 webutil.createbutton({ type : "info",
                                        name : "Copy Image &rarr; Overlay",
                                        parent : bbar,
-                                       css : { 'width' : '260px', 'margin-bottom': '10px' },
+                                       css : { 'width' : '200px', 'margin-bottom': '10px' },
                                        callback : function() {
                                            modulemanager.transferImageToOverlay(0,0);
                                        }
@@ -619,7 +660,8 @@ class ViewerApplicationElement extends HTMLElement {
             }
 
             let bottom=webutil.createbuttonbar({ parent: bbar,
-                                                 css : {'margin-top' : '20px',
+                                                 css : {'margin-top' : '10px',
+                                                        'margin-left' : '0px',
                                                         'width' : '100%' }
                                                });
             webutil.createbutton({ type : "danger",
