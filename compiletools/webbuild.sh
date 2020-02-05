@@ -11,6 +11,7 @@ BDIST=${BDIR}/dist
 mkdir -p ${BDIST}
 mkdir -p ${BDIR}/install/zips
 mkdir -p ${BDIR}/web
+mkdir -p ${BDIR}/build/doc
 
 touch ${BDIR}/web/LICENSE
 
