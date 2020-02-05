@@ -735,7 +735,7 @@ var writebinarydatabrowser = function (filename, data, donecallback) {
     var iscomp = iscompressed(filename);
     if (iscomp) {
         var compressed = pako.gzip(data);
-        blob = new Blob([compressed],{ type: "application/gzip" });
+        blob = new Blob([compressed],{ type: "application/octet-stream" });
     } else {
         blob = new Blob([data],{ type: "application/octet-stream" });
     }

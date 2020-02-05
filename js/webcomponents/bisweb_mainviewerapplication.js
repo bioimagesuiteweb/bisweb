@@ -643,7 +643,7 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createbutton({ type : "info",
                                        name : "Copy Image &rarr; Overlay",
                                        parent : bbar,
-                                       css : { 'width' : '200px', 'margin-bottom': '10px' },
+                                       css : { 'width' : '260px', 'margin-bottom': '10px' },
                                        callback : function() {
                                            modulemanager.transferImageToOverlay(0,0);
                                        }

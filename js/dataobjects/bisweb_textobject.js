@@ -42,7 +42,7 @@ class BisWebTextObject extends BisWebDataObject{
         this.extension=".bistxt";
         this.data="";
         this.forcetextsave=false;
-        console.log('Type=',typeof txt);
+
         if (typeof txt === 'string')
             this.setText(txt);
         else

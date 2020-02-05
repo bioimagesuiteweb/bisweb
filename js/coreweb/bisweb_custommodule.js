@@ -668,8 +668,6 @@ class CustomModule {
         txt=txt.replace(/\n/g,'<BR>').replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
         txt=txt.replace(/\\n/g,'<BR>').replace(/\\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
 
-        console.log(obj.getText(),'--->\n',txt);
-        
         const output=`<div style="margin-left:5px; margin-right:5px; margin-top:5px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000;">${txt}</div>`;
 
         
