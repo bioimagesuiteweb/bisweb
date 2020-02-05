@@ -414,9 +414,14 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     getSaveImageInitialFilename(viewerno = 0) {
+        
         let img = this.VIEWERS[viewerno].getimage();
-        if (img)
-            return img.getFilename();
+        console.log('Img=',img);
+        if (img) {
+            let a=img.getFilename();
+            console.log(a);
+            return a;
+        }
         return "none.nii.gz";
     }
     
@@ -430,8 +435,8 @@ class ViewerApplicationElement extends HTMLElement {
             //index=`_${viewerno+1}`;
         }
         let img = this.VIEWERS[viewerno].getobjectmap();
-        //        if (!fname)
-        //  fname = "objectmap" + index +".nii.gz";
+        if (!fname)
+            fname = "overlay" + viewerno +".nii.gz";
         bisweb_apputil.saveImage(img, fname, name);
     }
 
@@ -1085,7 +1090,7 @@ class ViewerApplicationElement extends HTMLElement {
                                        });
             }
             
-            if (f) {
+            /*            if (f) {
                 const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
                 if (filetreepipelineid) {
                     let filetreepipeline = document.querySelector(filetreepipelineid);
@@ -1095,7 +1100,7 @@ class ViewerApplicationElement extends HTMLElement {
                                                filetreepipeline.openPipelineCreationModal();
                                        });
                 }
-            }
+            }*/
         });
                                                     
         
