@@ -1,6 +1,8 @@
+
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const webutil = require('bis_webutil');
+const webfileutil = require('bis_webfileutil');
 const bis_genericio = require('bis_genericio');
 const bisweb_panel = require('bisweb_panel.js');
 const BisWebImage = require('bisweb_image');
@@ -36,6 +38,7 @@ class RepoPanel extends HTMLElement {
         this.currentBottomChoice=null;
         this.plotobj= null;
         this.bottom=null;
+        this.directoryMode=null;
     }
 
     createGUI() {
@@ -53,7 +56,7 @@ class RepoPanel extends HTMLElement {
         this.viewerapplication = document.querySelector('#'+this.viewerappid);
 
         this.panel = new bisweb_panel(this.layoutcontroller, {
-            name: 'Repository Panel',
+            name: 'File Tree Panel',
             permanent: false,
             width: '400',
             dual: false,
@@ -61,21 +64,47 @@ class RepoPanel extends HTMLElement {
             helpButton: true
         });
 
-        this.panel.setHelpModalMessage(`<H3> DataLab.Org</H3><P> This control enables browsing of the <a href="https://datasets.datalad.org" target="_blank" rel="noopener">Repository</a>.</P><P> To access a dataset click "Connect to Repository" and enter the URL of the subject/study (e.g. "https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/") in the dialog box.</P>`);        
+
+        let str='';
+        if (!webutil.inElectronApp) {
+            str=`
+2            <H3> Local Directory </H3>
+            <p>Since you running this appication as a web-application, you will need to:</p> <UL> <LI>  Start an instance of the BioImage Suite Web File Server to allow you to access files from disk directly. </LI><LI> Set this as the file source using the "Set FileSource" option under the "Help" menu</LI></UL>. `;
+        }
+
+        
+        this.panel.setHelpModalMessage(`
+<H2>FIle Tree Panel</H2>
+This repository either connects to a local folder or to a datalab.org folder.
+${str}
+<H3> DataLab.Org</H3><P> This control enables browsing of the <a href="https://datasets.datalad.org" target="_blank" rel="noopener">Repository</a>.</P><P> To access a dataset click "Connect to Repository" and enter the URL of the subject/study (e.g. "https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/") in the dialog box.</P>`);        
         let parent=this.panel.getWidget();
         
         const self=this;
         let top= $(`<div></div>`);
         parent.append(top);
-        
+
+
+        webfileutil.createFileButton({ type : "success",
+                                       name : 'Import Folder',
+                                       parent : top,
+                                       css : { 'width' : '40%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.importFolder(f);
+                                       },
+                                     },{
+                                         title: 'Directory to import data from',
+                                         filters:  'DIRECTORY',
+                                         suffix:  'DIRECTORY',
+                                         save : false,
+                                     });
+
         webutil.createbutton({
-            'name' : 'Connect to Repository',
+            'name' : 'Connect to DataLab',
+            css : { 'width' : '40%' , 'margin' : '3px' },
             'type' : 'danger',
             'parent' : top,
-            'callback' : () => { self.openDirectoryPrompt(); },
-            'css' : {
-                'margin-left' : '5px',
-            }
+            'callback' : () => { self.openDataLabDirectoryPrompt(); },
         });
 
         parent.append($('<HR width="90%">'));
@@ -111,7 +140,7 @@ class RepoPanel extends HTMLElement {
         return '[' + out.join(', ') + ']';
     }
 
-    openDirectoryPrompt() {
+    openDataLabDirectoryPrompt() {
         
         bootbox.prompt("Enter the URL to connect. Blank=Default", (result) => {
             //console.log('result=',result);
@@ -124,8 +153,9 @@ class RepoPanel extends HTMLElement {
             }
             
             if (result==='')
-                result='http://bisweb.yale.edu/data/sub-rid000001';
-            this.openDirectory(result);
+                result='https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/';
+            this.directoryMode==='datalab';
+            this.openDataLabDirectory(result);
         });
     }
 
@@ -264,7 +294,7 @@ class RepoPanel extends HTMLElement {
                                 'link' : fullurl,
                                 'state' : {
                                     'opened'    : true
-                                }
+                                },
                             };
 
                             if (depth<maxdepth) {
@@ -585,7 +615,7 @@ class RepoPanel extends HTMLElement {
         
     }
     
-    async openDirectory(url) {
+    async openDataLabDirectory(url) {
 
         let l=url.length;
         if (url.lastIndexOf('.json')===l-5) {
@@ -626,10 +656,179 @@ class RepoPanel extends HTMLElement {
     }
 
 
-    // ------------------------------------------------------------------------------------------------------
-
+    // ----------------------- Local Folder ----------------------------
     
+    async parseFolder(dname,depth=0,maxdepth=2) { 
 
+        
+        if (depth>maxdepth) {
+            console.log('Depth=',depth,maxdepth);
+            return [];
+        }
+        const SEP=bis_genericio.getPathSeparator();
+
+        let matchstring=dname+SEP+'*';
+        if (dname.lastIndexOf(SEP)===dname.length-1)
+            matchstring=dname+'*';
+
+        let data = [];
+        try {
+            data=await bis_genericio.getMatchingFiles(matchstring);
+        } catch(e) {
+            console.log('Error'+e);
+            return null;
+        }
+
+        let parent=[];
+        const extlist = [ 'json','bval','bvec','txt' ];
+
+        for (let i=0;i<data.length;i++) {
+            
+            let tp='';
+            let link=data[i];
+            let istsv=false;
+            
+            let isdir=await bis_genericio.isDirectory(link);
+            if (isdir) {
+                tp='dir';
+            } else {
+                let lastdot=link.lastIndexOf('.');
+                let extension=link.substr(lastdot+1,1000).toLowerCase();
+
+                if (extlist.indexOf(extension)>=0) {
+                    tp='TXT';
+                } else if (extension==='nii') {
+                    tp='image';
+                } else if (extension==='gz') {
+                    if (link.indexOf('.nii.gz')>0)
+                        tp='image';
+                } 
+                
+                if (extension==='tsv' || extension==='TSV') {
+                    istsv=true;
+                }
+            }
+
+            let linkname='';
+            let index=link.lastIndexOf(SEP);
+            linkname=link.substr(index+1,link.length);
+
+            //console.log('Fname=',data[i],'linkname=',linkname,' tp=',tp,' istsv=',istsv);
+            
+            if (tp==='dir') {
+                
+                let dt={
+                    'text' : '['+linkname+']',
+                    'link' : link,
+                    'state' : {
+                        'opened'    : true
+                    }
+                };
+
+                if (depth<maxdepth) {
+                    dt['type']= 'directory';
+                    try {
+                        dt.children=await this.parseFolder(link,depth+1,maxdepth);
+                        if (dt.children.length>0) {
+                            dt.link='';
+                        } else {
+                            dt['type']='default';
+                        }
+                    } catch(e) {
+                        dt['type']='default';
+                    }
+                } else {
+                    dt['type']='default';
+                }
+                parent.push(dt);
+            }  else if (tp==='TXT') {
+                if (!istsv) {
+                    parent.push({
+                        'type' : 'file',
+                        'text' : linkname,
+                        'attr' : '',
+                        'link' : link,
+                    });
+                } else {
+                    parent.push({
+                        'type' : 'tsv',
+                        'text' : linkname,
+                        'attr' : '',
+                        'link' : link,
+                    });
+                }
+            } else if (tp==='image') {
+
+                let sz=parseInt(await bis_genericio.getFileSize(link));
+                let tp='';
+                if (sz> 1024*1024*1024) {
+                    sz=sz/(1024*1024*1024);
+                    tp='GB';
+                } else if (sz>1024*1024) {
+                    sz=sz/(1024*1024);
+                    tp='MB';
+                } else if (sz>1024) {
+                    sz=sz/(1024);
+                    tp='KB';
+                }
+                sz=Math.round(sz*10)/10;
+                
+                
+                parent.push({
+                    'type' : 'image',
+                    'text' : linkname,
+                    'attr' : ' size='+sz+' '+tp,
+                    'link' : link,
+                    'children' : [],
+                });
+            }
+        }
+        
+        return parent;
+
+
+    }
+
+    async openFolder(folder) {
+    
+        let filelist=await this.parseFolder(folder,0,1);
+        const SEP=bis_genericio.getPathSeparator();
+        let ind=folder.lastIndexOf(SEP);
+        if (ind>0) {
+            let updir=folder.substr(0,ind);
+            if (updir.length>0) {
+                filelist.unshift({
+                    'text' : '['+updir+']',
+                    'link' : updir,
+                    'state' : {
+                        'opened'    : false
+                    },
+                    'type' : 'default'
+                });
+            }
+        }
+
+        
+        //console.log('Flist',JSON.stringify(filelist,null,2));
+        if (filelist!==null) {
+            filelist=this.reorderItems(filelist);
+            this.createTree(filelist);
+        } else {
+            webutil.createAlert('Failed to read '+folder,true);
+        }
+    }
+    
+    async importFolder(dname) {
+
+        let s=webfileutil.candoComplexIO();
+        if (!s)  {
+            console.log('Cannot do ',s);
+            return;
+        }
+
+        this.directoryMode==='local';
+        this.openFolder(dname);
+    }
 
     // -------------------------------------------------------------------------------------------------------
 
@@ -663,7 +862,11 @@ class RepoPanel extends HTMLElement {
     }
 
     openLink(link) {
-        this.openDirectory(link);
+
+        if (this.directoryMode==='datalab')
+            this.openDataLabDirectory(link);
+        else
+            this.openFolder(link);
     }
 
     async displayFile(fname,plot=false) {

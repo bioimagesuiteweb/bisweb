@@ -1373,7 +1373,7 @@ class ViewerApplicationElement extends HTMLElement {
 
                 if (this.applicationName!=="connviewer") {
                     webutil.createMenuItem(bmenu,'');
-                    webutil.createMenuItem(bmenu, 'Repository Panel', () => {
+                    webutil.createMenuItem(bmenu, 'File Tree Panel', () => {
                         this.repopanel.show();
                     });
                 }

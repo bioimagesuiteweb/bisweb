@@ -67,6 +67,7 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
 
         const PARATOOL=document.querySelector(importid);
         this.findViewers();
+        this.createExtraComponents();
         this.VIEWERS[0].finalizeTools();
 
 

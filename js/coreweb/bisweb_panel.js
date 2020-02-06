@@ -192,6 +192,8 @@ class BisWebPanel {
 
         const self=this;
 
+        
+        
         if (this.options.initialstate==="sidebar" || this.options.dual) {
             this.sidebarCloseButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-remove-circle"></span></button>`);
             this.sidebarCloseButton.click( (e) => {
@@ -218,21 +220,17 @@ class BisWebPanel {
             }
         }
 
-        
-        this.dockToggleButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-log-out"></span></button>`);
-        this.dockToggleButton.click( (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            self.remove();
-            self.addToSidebar();
-            self.drawInSidebarWithWidth(this.options.width+15);
-            return false;
-        });
-
-
-        // Dual Stuff
-        
         if (this.options.dual) {
+            this.dockToggleButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-log-out"></span></button>`);
+            this.dockToggleButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.remove();
+                self.addToSidebar();
+                self.drawInSidebarWithWidth(this.options.width+15);
+                return false;
+            });
+            
             this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
             this.sidebarToggleButton.click( (e) => {
                 e.preventDefault();

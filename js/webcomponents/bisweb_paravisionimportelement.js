@@ -185,7 +185,16 @@ class ParavisionImportElement extends HTMLElement {
                                          save : false,
                                          suffix : ".json",
                                      });
-        
+
+        webutil.createbutton({ type : "default",
+                               name : 'Show Current  Job',
+                               parent : basediv0,
+                               css : { 'width' : '90%' , 'margin' : '3px' },
+                               callback : () => {
+                                   if (this.internal.showpanel)
+                                       this.internal.showpanel.show();
+                               },
+                             });
         
         webfileutil.createFileButton({ type : "primary",
                                        name : "Save",
