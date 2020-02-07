@@ -120,8 +120,30 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     console.log('__\n__ Checking for external files in variables');
     for (let variable of pipelineOptions.variables) {
         if (variable.filename) {
+            let dat=null;
             try {
-                let dat=fs.readFileSync(variable.filename, 'utf-8');
+                dat=fs.readFileSync(variable.filename, 'utf-8');
+            } catch(e) {
+                console.log('Failed to read filename '+variable.filename);
+                return null
+            }
+            
+            // Is this a text file
+            if (path.extname(variable.filename)==='.txt' ||
+                path.extname(variable.filename)==='.TXT' ) {
+                    // Text file
+                    let lst= dat.split('\n');
+                    let fnames=[];
+                    for (let i=0;i<lst.length;i++) {
+                        let f=lst[i].trim();
+                        if (f.length>3) {
+                            fnames.push(f);
+                        }
+                    }
+                variable.files=fnames;
+                console.log('____ Read ',fnames.length,'filenames from file', variable.filename, ' for variable', variable.name);
+            } else {
+                // JSON File
                 try {
                     let flist=JSON.parse(dat);
                     let fnames=flist.filenames || [];
@@ -137,12 +159,10 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                     }
                     return null;
                 }
-            } catch(e) {
-                console.log('Failed to read',variable.filename,'error',e);
-                return null;
             }
         }
     }
+
     console.log('__');
 
     // Add more variables from jobs
@@ -240,7 +260,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                         variablesWithDependencies.push({ 'name': variableName, 'index': j });
                     } else {
                         console.log('____ Not Adding variableName as depenency',variableName);
-                        console.log("Files=",pipelineOptions.variables[j].files);
+                        //console.log("Files=",pipelineOptions.variables[j].files);
                         console.log("Expanded=",expandedVariables[variableName]);
                     }
                     j+= pipelineOptions.variables.length + 1;
@@ -509,10 +529,6 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     makefile+= "list : \n\t @echo "+joblist.join(" ")+"\n";
     console.log('__ Added: make list');
     console.log('__');
-
-
-    
-
     return [ makefile, outjson ] ;
 };
 
@@ -560,7 +576,7 @@ class PipelineModule extends BaseModule {
                     'name': 'Results',
                     'description': 'output log file',
                     'varname': 'outlog',
-                    'required': true,
+                    'required': false,
                     'extension': '.json'
                 },
             ],
@@ -661,7 +677,7 @@ class PipelineModule extends BaseModule {
                     let out_arr=makePipeline(dat,vals.odir,vals.debug);
 
                     let out=out_arr[0];
-                    console.log(out_arr[1]);
+                    //console.log(out_arr[1]);
                     
                     if (vals.unixstyle) {
                         out=out.replace(/\\\\/g,'/');
