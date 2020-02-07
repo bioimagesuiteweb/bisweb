@@ -14,10 +14,6 @@ else
     cp ${IDIR}/npm-shrinkwrap-orig.json ${IDIR}/npm-shrinkwrap.json
 fi
 
-
-
-exit
-
 npm install -d
 echo "---------------------------------------"
 echo "2. update python3 dependencies"
