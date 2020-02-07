@@ -85,14 +85,10 @@ const main=async function() {
         console.log('++++ python emsdk:',cmd);
         
         await util.executeCommand(`${cmd} update`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install fastcomp-clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate fastcomp-clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install  emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install node-12.9.1-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate node-12.9.1-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install  1.39.7`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate 1.39.7`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} list`);
     }
     console.log('++++');
