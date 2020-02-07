@@ -26,3 +26,4 @@ docker/binary/bisweb*tar.gz
 docker/binary/bisweb*zip
 docker/binary/bisweb*tgz
 various/vtk/*
+npm-shrinkwrap.json
