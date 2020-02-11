@@ -175,6 +175,14 @@ const dataURLToBlob = function(dataURL) {
  */
 var inIOS = function () {
 
+    if (navigator.platform==='MacIntel') {
+        // Test for Ipad that shows up as Mac
+        let isTouchDevice = 'ontouchstart' in document.documentElement;
+        if (isTouchDevice)
+            return true;
+    }
+    
+    
     try {
         if (/iP(hone|od|ad)/.test(navigator.platform)) {
             return true;

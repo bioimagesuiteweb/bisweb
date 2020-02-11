@@ -998,7 +998,7 @@ const webutil = {
         
 
         let w = $(`
-            <div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alertcount+extraz}">
+            <div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${top}px; left:10px; z-index:${100+internal.alertcount+extraz}">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>

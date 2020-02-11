@@ -125,7 +125,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                 dat=fs.readFileSync(variable.filename, 'utf-8');
             } catch(e) {
                 console.log('Failed to read filename '+variable.filename);
-                return null
+                return null;
             }
             
             // Is this a text file

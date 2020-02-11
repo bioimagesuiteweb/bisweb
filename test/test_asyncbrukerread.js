@@ -71,6 +71,7 @@ describe('Testing BisImage (from bis_asyncreadbruker.js) a class that imports Br
             let initializeServer = function() {
 
                 return new Promise( (resolve,reject) => {
+                    console.log("Creating Server");
                     bisserverutil.createTestingServer().then( (obj) => {
                         client=obj.client;
                         tmpDir=obj.tmpDir;
@@ -83,7 +84,12 @@ describe('Testing BisImage (from bis_asyncreadbruker.js) a class that imports Br
                             path.resolve(tmpDir,'testras')
                         ];
                         resolve();
-                    }).catch( (e)=> { reject(e);});
+                    }).catch( (e)=>
+                              {
+                                  console.log("Failed Server");
+                                  reject(e);
+                              }
+                            );
                 });
             };
 

@@ -783,7 +783,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.midline=cnv;
             cnv.css({ 'position' : 'absolute',
                          'top' : `0px` ,
-                         'z-index' : 650,
+                         'z-index' : 50,
                     });
 
             this.internal.midline2=$(`<div style="cursor:ew-resize"></div>`);

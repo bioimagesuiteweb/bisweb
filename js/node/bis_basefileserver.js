@@ -901,6 +901,7 @@ class BaseFileServer {
         };
 
         console.log('External=',external);
+        // Force external
         external=true;
         
         if (external) {
@@ -961,10 +962,12 @@ class BaseFileServer {
             return;
         }
 
+        console.log('-----------------------------------------------');
         console.log("Executing module");
         
         //flag needed in order to get module.execute to hit the save trigger for outputs
         module.execute({}, moduleparams).then((m) => {
+            console.log('Module done',m);
             module.saveOutputs({ 'output' : moduleparams.output}).then( () => {
                 done(true, m);
             });
