@@ -60,11 +60,11 @@ describe('Testing Checksum (from js/bisweb_checksum.js)\n', function() {
     });
 
     it('checksums a csv file \n', function() {
-
+        const gold='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
         let obj=data[0];
         let hash=util.SHA256(obj.data);
         console.log(`Computed hash for ${obj.filename} = ${hash}`);
-        assert.equal(hash,'418014e3215a54c40db91f17e8b98c5b645a4b58a08effbc5b03eb39b7cc148e');
+        assert.equal(hash,gold);
     });
     
     it('ungzips and checksums a nifti file \n', function() {
