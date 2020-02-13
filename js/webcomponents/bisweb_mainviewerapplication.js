@@ -85,7 +85,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationName=webutil.getWebPageName();
         if (this.applicationName.lastIndexOf("2")===this.applicationName.length-1)
             this.applicationName=this.applicationName.substr(0,this.applicationName.length-1);
-        console.log("+++++ App name=",this.applicationName,this.applicationURL);
+        console.log("++++ App_name="+this.applicationName+' ('+this.applicationURL+')');
 
         // For dual tab apps
         this.tab1name=null;

@@ -106,7 +106,7 @@ let parseUserPreferences=function(obj) {
         userPreferences['showwelcome']=true;
 
     if (externals['environment'] === 'browser')
-        console.log('---- Loaded userPreferences');//,JSON.stringify(userPreferences));
+        console.log('++++ Loaded userPreferences');//,JSON.stringify(userPreferences));
     
     return true;
 };
@@ -271,7 +271,7 @@ expobj.saveUserPreferences=function(fname=null,silent=false) {
 
     try {
         if (!silent)
-            console.log('Saving user preferences in ',fname);
+            console.log('++++ Saving user preferences in ',fname);
         fs.writeFileSync(fname,opt);
     } catch(e) {
         console.log('Error=',e);

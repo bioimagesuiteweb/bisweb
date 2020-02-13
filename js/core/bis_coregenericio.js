@@ -56,7 +56,7 @@ if (!webpack) {
 } else {
     try  {
         filesaver = bisexternals['FileSaver'];
-        console.log("++++ In Browser");
+        console.log("++++ BisWeb I/O Mode=Browser");
     }
     catch(e)  {
 /*        if (typeof ( WorkerGlobalScope ) !== "undefined") {

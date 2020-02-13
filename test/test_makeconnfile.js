@@ -73,7 +73,7 @@ describe('Testing make connectivity .csv file', () => {
                     let a2=cleanString(correctContents[key][key2] || '');
                     console.log('Comparing',key,key2,'*'+a1+'* vs *'+a2+'*');
                     if (a1!==a2)
-                        same=false
+                        same=false;
                 }
             }
             assert(same,true);

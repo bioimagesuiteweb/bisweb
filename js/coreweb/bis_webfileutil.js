@@ -705,7 +705,7 @@ const webfileutils = {
                                let f=lst[0];
                                enableaws=lst[1] || false;
                                f= f || fileMode;
-                               console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
+                               console.log('++++ Initial File Source=',f); //, 's3enabeled=',enableaws);
                                if (enableaws && bisweb_awsmodule===null) {
                                    bisweb_awsmodule = new amazonaws();
                                }
