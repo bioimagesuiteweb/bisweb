@@ -215,7 +215,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 uniforms: uniforms,
                 vertexShader: shader.vertexShader,
                 fragmentShader: shader.fragmentShader,
-                //side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+                side: THREE.BackSide // The volume shader uses the backface as its "reference point"
             } );
             
             // Create Geometry & Mesh
