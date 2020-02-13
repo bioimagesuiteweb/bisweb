@@ -8,6 +8,7 @@ const THREE=require('three');
 function ImageVolumeGeometry( dim, spa ) {
 
     THREE.BufferGeometry.call( this );
+    
 
     this.type = 'ImageVolumeGeometry';
 
@@ -78,9 +79,9 @@ function ImageVolumeGeometry( dim, spa ) {
         }
     }
     this.setIndex( indices );
-    this.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-    this.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-    this.addAttribute( 'uv', new THREE.Float32BufferAttribute( uvs, 2 ) );
+    this.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+    this.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+    this.setAttribute( 'uv', new THREE.Float32BufferAttribute( uvs, 2 ) );
 
     function buildPlane( u, v, w, udir, vdir, width, height, depth, gridX, gridY, materialIndex ) {
 

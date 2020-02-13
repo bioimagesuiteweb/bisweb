@@ -194,7 +194,11 @@ class LandmarkControlElement extends HTMLElement {
         var core=bisCrossHair.createcore(wd,thk,true,wd*0.2);
         var cursorgeom=new THREE.BufferGeometry();
         cursorgeom.setIndex(new THREE.BufferAttribute( core.indices, 1 ) );
-        cursorgeom.addAttribute( 'position', new THREE.BufferAttribute( core.vertices, 3 ) );
+        if (THREE['REVISION']<101) {
+            cursorgeom.addAttribute( 'position', new THREE.BufferAttribute( core.vertices, 3 ) );
+        } else {
+            cursorgeom.setAttribute( 'position', new THREE.BufferAttribute( core.vertices, 3 ) );
+        }
 
         this.internal.cursormesh=new Array(this.internal.subviewers.length);
         //          var gmat=new THREE.MeshBasicMaterial( {color: "#ffffff", wireframe:true});

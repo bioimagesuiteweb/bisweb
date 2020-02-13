@@ -24,6 +24,17 @@ const globalParams={
     internal : null
 };
 
+const createBufferGeometry=function() {
+
+    const g=new THREE.BufferGeometry();
+    
+    if (THREE['REVISION']<101) {
+        g.setAttribute=g.addAttribute;
+        g.deleteAttribute=g.removeAttribute;
+    }
+    return g;
+};
+
 // ---------------------------------------------------------------------------------------------------
 // Shaders
 // ---------------------------------------------------------------------------------------------------
@@ -354,14 +365,14 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
 
     if (resol!== globalParams.lastresol[index]) {
-        globalParams.braingeom[index].removeAttribute( 'position');
-        globalParams.braingeom[index].addAttribute( 'position', new THREE.BufferAttribute( globalParams.vertexlist[index][resol], 3 ) );
+        globalParams.braingeom[index].deleteAttribute( 'position');
+        globalParams.braingeom[index].setAttribute( 'position', new THREE.BufferAttribute( globalParams.vertexlist[index][resol], 3 ) );
         globalParams.braingeom[index].computeVertexNormals();
         globalParams.lastresol[index]=resol;
     }
     
-    globalParams.braingeom[index].removeAttribute( 'parcels');
-    globalParams.braingeom[index].addAttribute( 'parcels', new THREE.BufferAttribute( attributes, 1 ) );
+    globalParams.braingeom[index].deleteAttribute( 'parcels');
+    globalParams.braingeom[index].setAttribute( 'parcels', new THREE.BufferAttribute( attributes, 1 ) );
     
     globalParams.brainmaterial[index]=material;
     globalParams.brainmesh[index] = new THREE.Mesh(globalParams.braingeom[index],material);
@@ -491,9 +502,9 @@ var create_axis_lines=function() {
             p_vertices[5]=ATLASHEADER['axissize'][2];
         }
         
-        let pbuf=new THREE.BufferGeometry();
+        let pbuf=createBufferGeometry();
         pbuf.setIndex( new THREE.BufferAttribute( p_indices, 1));
-        pbuf.addAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
+        pbuf.setAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
 
 
         
@@ -529,9 +540,10 @@ var parsebrainsurface = function(surfacedata,filename) {
     for (let meshindex=0;meshindex<=1;meshindex++) {
 
         if (surfaces[meshindex]!==null) {
-            let buf=new THREE.BufferGeometry();
+            let buf=createBufferGeometry();
+
             buf.setIndex( new THREE.BufferAttribute( surfaces[meshindex].indices, 1));
-            buf.addAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );
+            buf.setAttribute( 'position', new THREE.BufferAttribute( surfaces[meshindex]['vertices'][0], 3 ) );
             buf.computeVertexNormals();
             globalParams.braingeom[meshindex]=buf;
             if (surfaces[meshindex]['parcels'])
@@ -673,9 +685,9 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     for (let i=0;i<=1;i++) {
         let lp=lparr[i];
         if (lp.indices!==null) {
-            let buf=new THREE.BufferGeometry();
+            let buf=createBufferGeometry();
             buf.setIndex(  new THREE.BufferAttribute( lp.indices, 1 ) );
-            buf.addAttribute( 'position', new THREE.BufferAttribute( lp.vertices, 3 ) );
+            buf.setAttribute( 'position', new THREE.BufferAttribute( lp.vertices, 3 ) );
             let linemesh = new THREE.LineSegments(buf,
                                                   new THREE.LineBasicMaterial( {
                                                       color: color[i],

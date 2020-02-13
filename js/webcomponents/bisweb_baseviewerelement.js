@@ -336,7 +336,7 @@ class BaseViewerElement extends HTMLElement {
 
 
         const renderer=this.internal.layoutcontroller.renderer;
-        renderer.context.canvas.style.visibility='hidden';
+        renderer.getContext().canvas.style.visibility='hidden';
         
         if (msg.length>1)
             webutil.createAlert(msg,true);
@@ -347,7 +347,7 @@ class BaseViewerElement extends HTMLElement {
     enable_renderloop(msg='') {
         this.internal.enable_renderloop_flag=true;
         const renderer=this.internal.layoutcontroller.renderer;
-        renderer.context.canvas.style.visibility='visible';
+        renderer.getContext().canvas.style.visibility='visible';
         if (msg.length>1)
             webutil.createAlert(msg);
     }
@@ -361,13 +361,13 @@ class BaseViewerElement extends HTMLElement {
             this.internal.has_context_callbacks=true;
             
             const renderer=self.internal.layoutcontroller.renderer;
-            renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
+            renderer.getContext().canvas.addEventListener("webglcontextlost", function(event) {
                 console.log('Caught');
                 self.internal.webgl_enabled_flag=false;                
                 event.preventDefault();
             }, false);
             
-            renderer.context.canvas.addEventListener("webglcontextrestored", function(event) {
+            renderer.getContext().canvas.addEventListener("webglcontextrestored", function(event) {
                 console.log('Restored');
                 self.internal.webgl_enabled_flag=true;
                 event.preventDefault();

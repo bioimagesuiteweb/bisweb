@@ -21,7 +21,6 @@ const THREE = require('three');
 const $=require('jquery');
 const inobounce=require('inobounce.js');
 
-
 /**
  * @file Browser module. Contains {@link bisweb_subviewer}
  * @author Xenios Papademetris (but derives from original work from  Eberhard Graether / http://egraether.com/, Mark Lundin     / http://mark-lundin.com and Patrick Fuller / http://patrick-fuller.com from Three.JS demo code)
@@ -55,7 +54,7 @@ const inobounce=require('inobounce.js');
 // Viewport
 // Jquery stuff
 
-
+      
 
 /**
  * A class that manages a subviewer
@@ -397,7 +396,8 @@ class BisWebSubviewer {
         let i_vps = [1+vp.old.x0*this.screen.width,
                    1+vp.old.y0*this.screen.height,
                    (vp.old.x1-vp.old.x0)*this.screen.width,
-                   (vp.old.y1-vp.old.y0)*this.screen.height];
+                     (vp.old.y1-vp.old.y0)*this.screen.height];
+
 
         if (i_vp[0]<1 || i_vp[1]<1 || i_vp[2] <1 || i_vp[3] < 1) {
             this.enabled=false;
@@ -434,8 +434,12 @@ class BisWebSubviewer {
         // -- _viewport.set( x, y, width, height )
         // ++ _viewport.set( x, _height - y - height, width, height )
         // Our fix to map this
-        i_vp[1]=this.screen.height-i_vp[1]-i_vp[3];
-        i_vps[1]=this.screen.height-i_vps[1]-i_vps[3];
+
+
+        if (THREE['REVISION']<101) {        
+            i_vp[1]=this.screen.height-i_vp[1]-i_vp[3];
+            i_vps[1]=this.screen.height-i_vps[1]-i_vps[3];
+        }
 
         if (this.plane===3) {
 
@@ -446,10 +450,13 @@ class BisWebSubviewer {
             i_vp[1]=Math.round(i_vp[1]-0.5*(maxi_vp-i_vp[3]));
             i_vp[2]=maxi_vp;
             i_vp[3]=maxi_vp;
+
             this.renderer.setViewport(i_vp[0],i_vp[1],i_vp[2],i_vp[2]);
             this.renderer.setScissor(i_vps[0],i_vps[1],i_vps[2],i_vps[3]);
             this.renderer.setScissorTest(true);
         }  else {
+
+
             this.renderer.setViewport(i_vp[0],i_vp[1],i_vp[2],i_vp[3]);
             this.renderer.setScissorTest(false);
         }

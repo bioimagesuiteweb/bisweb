@@ -221,7 +221,11 @@ var bis3dcreatecrosshairgeometry = {
 
         var buf=new THREE.BufferGeometry();
         buf.setIndex(new THREE.BufferAttribute( comboindices, 1 ));
-        buf.addAttribute( 'position', new THREE.BufferAttribute( combovertices, 3 ) );
+        if (THREE['REVISION']<101) {
+            buf.addAttribute( 'position', new THREE.BufferAttribute( combovertices, 3 ) );
+        } else {
+            buf.setAttribute( 'position', new THREE.BufferAttribute( combovertices, 3 ) );
+        }
         return buf;
     },
 };
