@@ -2502,16 +2502,13 @@ class ConnectivityControlElement extends HTMLElement {
 
             prom.then( (species) => {
 
-                console.log('Load default atlas',species);
-
-                
                 let sp=webutil.getQueryParameter('species') || '';
                 if (sp==='mouse')
                     species='mouse';
                 else
                     species='human';
 
-                console.log('Load default atlas',species);
+                console.log('++++ Load default atlas',species);
 
                 setTimeout( () => {
                     if (species==='all')

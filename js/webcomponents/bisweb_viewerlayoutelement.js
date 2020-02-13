@@ -452,6 +452,7 @@ class ViewerLayoutElement extends HTMLElement {
             let canvas = document.createElement( 'canvas' );
             let context = canvas.getContext( 'webgl2' );
             this.renderer = new THREE.WebGLRenderer( { canvas: canvas, context: context, alpha : true } );
+            console.log('++++ Using WebGL2');
         } else {
             //console.log('Not using webgl2');
             this.renderer = new THREE.WebGLRenderer({alpha:true});
