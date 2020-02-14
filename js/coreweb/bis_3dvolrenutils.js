@@ -87,6 +87,15 @@ void main() {
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;
 }`;
 
+/* test code
+const volume_fragment_shader0=`
+
+      void main() {
+
+         gl_FragColor = vec4( 1.0,0.5,0.2,0.5);
+      }
+`;*/
+
 
 const volume_fragment_shader=`
 // ---------------------------------------------------------------------------------------
