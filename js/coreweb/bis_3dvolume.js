@@ -110,8 +110,8 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             let tp=image.getImageType();
             let maxv=255.0;
 
-            console.log('<B>-------------------</B>');
-            console.log('Beginning ',range,tp,'is overlay',internal.isoverlay);
+//            console.log('<B>-------------------</B>');
+  //          console.log('Beginning ',range,tp,'is overlay',internal.isoverlay);
 
             if (range[0]===0 && range[1]<=maxv && ( tp=='uchar' || tp ==='short' || tp ==='ushort' || tp==='char')) {
                 internal.minintensity=0;
@@ -121,9 +121,10 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 let maxint=range[1];
                 if (Math.abs(range[0])>maxint)
                     maxint=Math.abs(range[0]);
-                console.log('Maxint=',maxint,maxv);
+                maxint=1.01*maxint;
+//                console.log('Maxint=',maxint,maxv);
                 let scale=maxv/(2.0*maxint);
-                console.log('Scale=',scale);
+//                console.log('Scale=',scale);
                 internal.minintensity=-maxint;
                 internal.intensityscale=scale;
                 console.log('Symmetric scaling offset=',internal.minintensity,'scale=',scale);
@@ -145,9 +146,9 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                         let v=data[index];
                         index++;
                         let y=Math.round((v-internal.minintensity)*internal.intensityscale);
-                        if (index % 57575 === 0) {
-                            console.log('V',v,'-->',y);
-                        }
+                        //                      if (index % 57575 === 0) {
+                        //console.log('V',v,'-->',y);
+                        //                        }
                         // flip x -- seems to need this
                         p_data[offset+(dim[0]-1-i)]=y;
                     }
@@ -374,7 +375,10 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 uniforms.u_renderthreshold.value = thr;
             } else {
                 uniforms.u_clim.value.set( 0.0,1.0);
-                uniforms.u_renderstyle.value = 0;
+                if  (internal.minintensity<0.0)
+                    uniforms.u_renderstyle.value = 2;
+                else
+                    uniforms.u_renderstyle.value = 1;
             }
 
             //            console.log('Quality=',volinfo.quality);
@@ -425,9 +429,9 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                         dat[3]=0;
                     for (let j=0;j<=3;j++) 
                         internal.canvasdata.data[index+j]=dat[j];
-                    if (i%32 ===0) { 
-                        console.log('i=',i,'idat=',idat[0], ' color=',dat,' scale=',internal.intensityscale,' min=',internal.minintensity);
-                    }
+                    //if (i%32 ===0) { 
+                    //                        console.log('i=',i,'idat=',idat[0], ' color=',dat,' scale=',internal.intensityscale,' min=',internal.minintensity);
+                    //}
 
                 }
                 
