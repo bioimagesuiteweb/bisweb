@@ -195,9 +195,9 @@ void main() {
     //gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);
     //return;
     
-    if (u_renderstyle < 1)
+    if (u_renderstyle == 0)
         cast_mip(start_loc, step, nsteps, view_ray);
-    else if (u_renderstyle > 1)
+    else if (u_renderstyle == 2)
         cast_symmetric_mip(start_loc, step, nsteps, view_ray);
     else 
         cast_iso(start_loc, step, nsteps, view_ray);
@@ -223,7 +223,7 @@ float sample_3d_texture(vec3 texcoords) {
             if (texcoords.y<=u_boundsmax.y)
               if (texcoords.x<=u_boundsmax.x)
                 return texture(u_data, texcoords.xyz).r;
-  return 0.0;
+  return -1.0;
 }
 
 

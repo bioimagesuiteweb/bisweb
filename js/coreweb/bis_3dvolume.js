@@ -197,7 +197,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 "u_clim": { value: new THREE.Vector2( 0, 1 ) },
                 "u_data": { value: null },
                 "u_cmdata": { value: null },
-                "u_opacity": { value : 0.5 },
+                "u_opacity": { value : 0.8 },
                 "u_stepsize": { value : 1.0 },
                 "u_boundsmin": { value: new THREE.Vector3( 0.0, 0.0, 0.0 ) },
                 "u_boundsmax": { value: new THREE.Vector3( 1.0,1.0,1.0)},
@@ -213,12 +213,22 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             uniforms.u_data.value = internal.texture;
 
             // Create Material
-            internal.material = new THREE.ShaderMaterial( {
-                uniforms: uniforms,
-                vertexShader: shader.vertexShader,
-                fragmentShader: shader.fragmentShader,
-                side: THREE.BackSide // The volume shader uses the backface as its "reference point"
-            } );
+            if (internal.isoverlay) {
+                internal.material = new THREE.ShaderMaterial( {
+                    uniforms: uniforms,
+                    vertexShader: shader.vertexShader,
+                    fragmentShader: shader.fragmentShader,
+                    side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+                } );
+            } else {
+                internal.material = new THREE.ShaderMaterial( {
+                    uniforms: uniforms,
+                    vertexShader: shader.vertexShader,
+                    fragmentShader: shader.fragmentShader,
+                    side: THREE.DoubleSide // The volume shader uses the backface as its "reference point"
+                } );
+
+            }
             
             // Create Geometry & Mesh
             let sz=[ 0,0,0];
@@ -379,9 +389,11 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                     uniforms.u_renderstyle.value = 2;
                 else
                     uniforms.u_renderstyle.value = 1;
+                let dat=[0,0,0,0];
+                transferfunction([255.0/internal.intensityscale+internal.minintensity],0,dat);
+                uniforms.u_opacity.value=dat[3]/255.0;
             }
 
-            //            console.log('Quality=',volinfo.quality);
             let step=1.0;
             if (volinfo.quality<2)
                 step=3.0;

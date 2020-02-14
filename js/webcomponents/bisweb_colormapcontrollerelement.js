@@ -187,7 +187,7 @@ class ColormapControllerElement extends HTMLElement {
         this.data.clustersize=0;
         this.data.mip=false;
         this.data.volquality=2;
-        this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
+        this.data.isothreshold=0.75*this.data.minintensity+0.25*this.data.maxintensity;
         this.internal.imagedim=volume.getDimensions();
 
         this.data.volcropimin=0;
@@ -264,7 +264,7 @@ class ColormapControllerElement extends HTMLElement {
             this.data.maxintensity=this.internal.imagerange[1];
         }
 
-        this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
+        this.data.isothreshold=0.75*this.data.minintensity+0.25*this.data.maxintensity;
         
         if (update) {
             if (this.internal.anatomicalcontrollers) {
