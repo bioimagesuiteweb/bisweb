@@ -22,6 +22,7 @@ import ctypes
 import struct
 import json
 import nibabel as nib
+from copy import deepcopy
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.core.bis_baseutils as bis_baseutils;
 import biswebpython.utilities.plyFileTool as plyutil
@@ -318,6 +319,16 @@ class bisImage(bisBaseObject):
             self.affine=parent.affine
         biswasm.release_pointer(wasm_pointer);
         return 1;
+
+
+    def cloneImage(self):
+        new_img=bisImage()
+        new_img.spacing=deepcopy(self.spacing)
+        new_img.dimensions=deepcopy(self.dimensions)
+        new_img.affine=deepcopy(self.affine)
+        new_img.data_array=deepcopy(self.data_array)
+        return new_img
+
 
     def load(self,fname):
 
