@@ -24,6 +24,7 @@ const webcss = require('bisweb_css');
 const THREE = require('three');
 const volrenutils = require('bis_3dvolrenutils');
 const genericio=require('bis_genericio');
+const userPreferences = require('bisweb_userpreferences.js');
 
 //const WebGLDebugUtils=require('webgl-debug');
 
@@ -343,7 +344,11 @@ class ViewerLayoutElement extends HTMLElement {
         } else if (this.webgl2===true  && webglversion<2) {
             let link=`<a target="_blank" rel="noopener" href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL v2</a>`;
             if (!genericio.inIOS()) {
-                webutil.createAlert(`Your browser does not support ${link}.<BR> If you need to use volume rendering, please switch to Google Chrome or Microsoft Edge.`, true);
+                userPreferences.safeGetItem("internal").then( (f) => {
+                    if (f) {
+                        webutil.createAlert(`Your browser does not support ${link}.<BR> If you need to use volume rendering, please switch to Google Chrome or Microsoft Edge.`, true);
+                    }
+                });
             }
             this.webgl2=false;
         }
