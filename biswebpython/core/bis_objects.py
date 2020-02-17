@@ -154,8 +154,8 @@ class bisMatrix(bisBaseObject):
             return True;
 
         text=file.read()
-        
-        
+
+
         if (ext==".csv"):
             self.data_array = np.genfromtxt(fname, delimiter= ",")
         elif (ext==".matr"):
@@ -167,7 +167,7 @@ class bisMatrix(bisBaseObject):
     def save(self,fname):
 
         ext=os.path.splitext(fname)[1]
-        
+
         if (ext==".binmatr"):
             return self.saveBinary(fname);
 
@@ -207,13 +207,13 @@ class bisMatrix(bisBaseObject):
 
     def loadBinary(self,fname):
 
-        with open(fname, mode='rb') as file: 
+        with open(fname, mode='rb') as file:
             pointer = file.read()
             hd=np.frombuffer(bytes(pointer[0:16]),dtype=np.uint32);
             if (hd[0]!=1700):
                 print('Bad binmatr file');
                 return False;
-            
+
             dims=[ hd[2],hd[3] ];
             tp=hd[1];
             dt=np.int64;
@@ -233,14 +233,14 @@ class bisMatrix(bisBaseObject):
     def saveBinary(self,fname):
 
         sz=self.data_array.shape;
-        
+
         hd=np.zeros([4],dtype=np.int32);
         hd[0]=1700;
         hd[1]=0;
         hd[2]=sz[0];
         hd[3]=sz[1];
 
-        
+
         dat=0;
         tp=str(self.data_array.dtype);
         if (tp=='float32'):
@@ -715,7 +715,7 @@ class bisComboTransformation(bisBaseObject):
             ng=bisGridTransformation();
             numlines=ng.parse(lines,offset);
             if numlines>0:
-                offset=offset+numlines;
+                offset=numlines;
                 self.grids.append(ng);
             else:
                 return False;
@@ -811,7 +811,7 @@ class bisSurface(bisBaseObject):
             except:
                 print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
                 return False;
-            
+
         import json
 
         out=json.dumps(data);
@@ -823,28 +823,28 @@ class bisSurface(bisBaseObject):
         except:
             print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
             return False;
-        
-            
+
+
         return True;
 
 
     def toDictionary(self):
-    
+
         sh=self.vertices.shape;
         th=self.faces.shape;
         dh=self.labels.shape;
         dz=dh[0];
         if (len(dh)>1):
             dz=dh[0]*dh[1];
-            
+
         data={};
-        
+
         data['points']=np.reshape(self.vertices,[ sh[0]*sh[1]]).tolist();
         data['triangles']=np.reshape(self.faces,[ th[0]*th[1]]).tolist();
         data['indices']=np.reshape(self.labels,[ dz ]).tolist();
 
         return data;
-        
+
     def getDescription(self):
 
         a=self.filename+' '
@@ -854,13 +854,13 @@ class bisSurface(bisBaseObject):
 
         if (self.faces is None):
             return a
-        
+
         a=a+' nt='+str(self.faces.shape);
 
         if (self.labels is None):
             return a;
         return a+' nl='+str(self.labels.shape);
-        
+
 
 # --------------------------------------
 # bisCollection
@@ -949,5 +949,3 @@ def loadTransformation(fname):
         return None
 
     return linear;
-
-
