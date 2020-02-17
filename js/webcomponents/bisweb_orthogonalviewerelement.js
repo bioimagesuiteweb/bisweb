@@ -30,7 +30,7 @@ const bootbox=require('bootbox');
 const BaseViewerElement=require('bisweb_baseviewerelement');
 const dat = require('bisweb_datgui');
 const BisWebSubViewer=require('bisweb_subviewer');
-
+const userPreferences = require('bisweb_userpreferences.js');
 
 
 /**
@@ -1736,18 +1736,21 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
     connectedCallback() {
         super.connectedCallbackBase();
-        let volren=this.getAttribute('bis-volumerendering');
+        userPreferences.safeGetItem("internal").then( (f) => {
 
-        if (volren)
-            this.volumeRendering=true;
-        else
-            this.volumeRendering=false;
+            let volren=this.getAttribute('bis-volumerendering');
 
-        webutil.runAfterAllLoaded( () => {
-            if (!this.internal.layoutcontroller.usesWEBGL2())
+            if (volren)
+                this.volumeRendering=true;
+            else
                 this.volumeRendering=false;
-        });
 
+            webutil.runAfterAllLoaded( () => {
+                if (!this.internal.layoutcontroller.usesWEBGL2() || !f)
+                    this.volumeRendering=false;
+
+            });
+        });
     }
 
     

@@ -51,11 +51,12 @@ const volrenutils=require('bis_3dvolrenutils');
  * var new3card=bis3d_OrthogonalSlice.create3dvolume(volume,slices,decorations,transparent);
  */
 module.exports=function(image,in_slices,decorations,transparent,imageplane,isoverlay) {
-    
+
     if (imageplane!==false)
         imageplane=true;
     
     let internal = {
+        showvolume : false,
         slices : in_slices,
         volumebox : null,
         box: [ null,null,null,null,null,null ],
@@ -64,7 +65,6 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
         istransparent : transparent || false,
         texture : null,
         uniforms : null,
-        renderer : null,
         isoverlay : isoverlay,
         minintensity : 0.0,
         intensityscale : 1.0,
@@ -74,8 +74,6 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
     
     let output = {
 
-        count : 0,
-        
         initialize : function() {
             
             let wire=[null,null,null];
@@ -110,30 +108,31 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             let spa=image.getSpacing();
             let range=image.getIntensityRange();
             let tp=image.getImageType();
-            let intoffset=0;
-            let maxv=255;
-            if (internal.overlay) {
-                //maxv=253;
-                //intoffset=2;
-            }
-            
+            let maxv=255.0;
+
+//            console.log('<B>-------------------</B>');
+  //          console.log('Beginning ',range,tp,'is overlay',internal.isoverlay);
+
             if (range[0]===0 && range[1]<=maxv && ( tp=='uchar' || tp ==='short' || tp ==='ushort' || tp==='char')) {
                 internal.minintensity=0;
                 internal.intensityscale=1.0;
-                console.log('Not scaling',intoffset,maxv);
-            } else if ( range[0] < 0 && range[1] > 0 && internal.overlay) {
+                console.log('no scaling=',internal.minintensity,'scale=',internal.intensityscale);
+            } else if ( range[0] < 0 && range[1] > 0 && internal.isoverlay) {
                 let maxint=range[1];
                 if (Math.abs(range[0])>maxint)
                     maxint=Math.abs(range[0]);
-                let scale=maxv/(2*maxint);
+                maxint=1.01*maxint;
+//                console.log('Maxint=',maxint,maxv);
+                let scale=maxv/(2.0*maxint);
+//                console.log('Scale=',scale);
                 internal.minintensity=-maxint;
                 internal.intensityscale=scale;
-                console.log('Symmetric scaling',intoffset,maxv);
+                console.log('Symmetric scaling offset=',internal.minintensity,'scale=',scale);
             } else {
                 let scale=maxv/(range[1]-range[0]);
                 internal.minintensity=range[0];
-                internal.intensityscale=scale;
-                console.log('Normal scaling',internal.minintensity,internal.intensityscale,internal.isoverlay,' max=',maxv,intoffset);
+                internal.intensityscale=0.99*scale;
+                console.log('Normal scaling',internal.minintensity,internal.intensityscale,'isoverlay=',internal.isoverlay);
             }
             
             let data=image.getImageData();
@@ -146,7 +145,10 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                     for (let i=0;i<dim[0];i++) {
                         let v=data[index];
                         index++;
-                        let y=(v-internal.minintensity)*internal.intensityscale+intoffset;
+                        let y=Math.round((v-internal.minintensity)*internal.intensityscale);
+                        //                      if (index % 57575 === 0) {
+                        //console.log('V',v,'-->',y);
+                        //                        }
                         // flip x -- seems to need this
                         p_data[offset+(dim[0]-1-i)]=y;
                     }
@@ -195,7 +197,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 "u_clim": { value: new THREE.Vector2( 0, 1 ) },
                 "u_data": { value: null },
                 "u_cmdata": { value: null },
-                "u_opacity": { value : 0.5 },
+                "u_opacity": { value : 0.8 },
                 "u_stepsize": { value : 1.0 },
                 "u_boundsmin": { value: new THREE.Vector3( 0.0, 0.0, 0.0 ) },
                 "u_boundsmax": { value: new THREE.Vector3( 1.0,1.0,1.0)},
@@ -211,12 +213,22 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             uniforms.u_data.value = internal.texture;
 
             // Create Material
-            internal.material = new THREE.ShaderMaterial( {
-                uniforms: uniforms,
-                vertexShader: shader.vertexShader,
-                fragmentShader: shader.fragmentShader,
-                //side: THREE.BackSide // The volume shader uses the backface as its "reference point"
-            } );
+            if (internal.isoverlay) {
+                internal.material = new THREE.ShaderMaterial( {
+                    uniforms: uniforms,
+                    vertexShader: shader.vertexShader,
+                    fragmentShader: shader.fragmentShader,
+                    side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+                } );
+            } else {
+                internal.material = new THREE.ShaderMaterial( {
+                    uniforms: uniforms,
+                    vertexShader: shader.vertexShader,
+                    fragmentShader: shader.fragmentShader,
+                    side: THREE.DoubleSide // The volume shader uses the backface as its "reference point"
+                } );
+
+            }
             
             // Create Geometry & Mesh
             let sz=[ 0,0,0];
@@ -225,6 +237,8 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             }
             let geometry = new BIS3dImageVolumeGeometry(dim,spa);
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
+            internal.volumebox.visible=internal.showvolume;
+            
             //internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true})));
         },
         
@@ -243,13 +257,12 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
          * @memberof Bis_3DOrthogonalSlice.Bis3DVolume.prototype
          * @param {ThreeJS-Scene} scene - ThreeJS-Scene object
          */
-        addtoscene : function(scene,ren,camera) {
+        addtoscene : function(scene) {
 
-            internal.renderer=ren;
-            internal.camera=camera;
             internal.scene=scene;
             if (internal.volumebox) {
                 scene.add(internal.volumebox);
+                internal.volumebox.visible=false;
             }
             if (internal.hasdecorations) {
                 for (let i=0;i<internal.box.length;i++) {
@@ -329,12 +342,11 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;
             
             internal.texture.needsUpdate = true;
-            if (internal.renderer) {
-                console.log('This must be fixed');
+            /*            if (internal.renderer) {
                 internal.camera.projectionMatrix.elements[0]=-internal.camera.projectionMatrix.elements[0];
                 internal.renderer.render( internal.scene, internal.camera ); // Fix this
                 internal.camera.projectionMatrix.elements[0]=-internal.camera.projectionMatrix.elements[0];
-            }
+            }*/
         },
 
 
@@ -343,8 +355,11 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 mode=true;
             if (mode!==true)
                 mode=false;
+
+            internal.showvolume=mode;
             if (internal.volumebox)
                 internal.volumebox.visible=mode;
+
         },
             
         
@@ -368,9 +383,18 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             
                 let thr=(volinfo.isothreshold-internal.minintensity)*internal.intensityscale/255.0;
                 uniforms.u_renderthreshold.value = thr;
+            } else {
+                uniforms.u_clim.value.set( 0.0,1.0);
+                if  (internal.minintensity<0.0)
+                    uniforms.u_renderstyle.value = 2;
+                else
+                    uniforms.u_renderstyle.value = 1;
+                let dat=[0,0,0,0];
+                transferfunction([255.0/internal.intensityscale+internal.minintensity],0,dat);
+                uniforms.u_opacity.value=dat[3]/255.0;
+                console.log('overlay=',uniforms.u_renderstyle, uniforms.u_opacity);
             }
 
-            //            console.log('Quality=',volinfo.quality);
             let step=1.0;
             if (volinfo.quality<2)
                 step=3.0;
@@ -410,16 +434,18 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 for (let i=0;i<=255;i++) {
                     idat[0]= i/internal.intensityscale+internal.minintensity;
                     transferfunction(idat,0,dat);
-                    if (i===1 || i===2)
-                        console.log(i,'idat=',idat,'-->',dat);
                     let index=i*4;
                     let sum=dat[0]+dat[1]+dat[2];
-                    if (sum>0)
+                    if (sum>10)
                         dat[3]=255;
                     else
                         dat[3]=0;
                     for (let j=0;j<=3;j++) 
                         internal.canvasdata.data[index+j]=dat[j];
+                    //if (i%32 ===0) { 
+                    //                        console.log('i=',i,'idat=',idat[0], ' color=',dat,' scale=',internal.intensityscale,' min=',internal.minintensity);
+                    //}
+
                 }
                 
                 internal.canvas.getContext("2d").putImageData(internal.canvasdata,0,0);

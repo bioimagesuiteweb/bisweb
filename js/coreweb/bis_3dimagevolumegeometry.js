@@ -8,6 +8,9 @@ const THREE=require('three');
 function ImageVolumeGeometry( dim, spa ) {
 
     THREE.BufferGeometry.call( this );
+    if (!this.setAttribute)
+        this.setAttribute=this.addAttribute;
+    
     
 
     this.type = 'ImageVolumeGeometry';

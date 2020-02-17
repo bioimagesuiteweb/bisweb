@@ -59,7 +59,7 @@
         "request": "2.88.0",
         "rimraf": "2.6.2",
         "save-svg-as-png": "1.4.14",
-        "three": "0.100.0",
+        "three": "0.113.0",
         "tmp": "0.0.33",
         "websocket-stream": "5.1.2",
         "ws": "6.1.2"
