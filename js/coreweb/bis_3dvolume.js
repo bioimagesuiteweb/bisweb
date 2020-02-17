@@ -131,7 +131,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             } else {
                 let scale=maxv/(range[1]-range[0]);
                 internal.minintensity=range[0];
-                internal.intensityscale=scale;
+                internal.intensityscale=0.99*scale;
                 console.log('Normal scaling',internal.minintensity,internal.intensityscale,'isoverlay=',internal.isoverlay);
             }
             
@@ -392,6 +392,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 let dat=[0,0,0,0];
                 transferfunction([255.0/internal.intensityscale+internal.minintensity],0,dat);
                 uniforms.u_opacity.value=dat[3]/255.0;
+                console.log('overlay=',uniforms.u_renderstyle, uniforms.u_opacity);
             }
 
             let step=1.0;

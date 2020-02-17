@@ -235,7 +235,7 @@ vec4 apply_colormap(float val) {
 
 void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
     
-    float max_val = -1e6;
+    float max_val = 0.0;
     int max_i = 100;
     vec3 loc = start_loc;
     
@@ -247,22 +247,24 @@ void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
             break;
         // Sample from the 3D texture
         float val = sample_3d_texture(loc);
-        // Apply MIP operation
-        if (val > max_val) {
-            max_val = val;
-            max_i = iter;
+        if (val>0.001 && val<0.999) {
+          // Apply MIP operation
+          if (val > max_val) {
+              max_val = val;
+              max_i = iter;
+          }
+         // Advance location deeper into the volume
+         loc += step;
         }
-        // Advance location deeper into the volume
-        loc += step;
     }
 
-    // Refine location, gives crispier images
-    vec3 iloc = start_loc + step * (float(max_i) - 0.5);
-    vec3 istep = step / float(REFINEMENT_STEPS);
-    for (int i=0; i<REFINEMENT_STEPS; i++) {
-        max_val = max(max_val, sample_3d_texture(iloc));
-        iloc += istep;
-    }
+   // Refine location, gives crispier images
+   //    vec3 iloc = start_loc + step * (float(max_i) - 0.5);
+   //    vec3 istep = step / float(REFINEMENT_STEPS);
+   //  for (int i=0; i<REFINEMENT_STEPS; i++) {
+   //    max_val = max(max_val, sample_3d_texture(iloc));
+   //  iloc += istep;
+   //     }
 
     // Resolve final color
     gl_FragColor = apply_colormap(max_val);
