@@ -505,12 +505,12 @@ class bisGridTransformation(bisBaseObject):
         self.grid_origin=[0,0,0];
         self.grid_usebspline=True;
 
-    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],usebpline=True):
-        if len(dim.shape)==3:
+    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],usebspline=True):
+        if dim.shape[0]==3:
             self.grid_dimensions=dim;
-        if len(spa.shape)==3:
+        if spa.shape[0]==3:
             self.grid_spacing=spa;
-        if len(ori.shape)==3:
+        if ori.shape[0]==3:
             self.grid_origin=ori;
         if usebspline==True or usebspline==1:
             self.grid_usebspline=True;
@@ -519,7 +519,7 @@ class bisGridTransformation(bisBaseObject):
 
         sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2];
 
-        self.data_array=np.zeros([sz,3],dtype=np.float32);
+        self.data_array=np.zeros([sz*3],dtype=np.float32);
         return self;
 
     def serializeWasm(self):
