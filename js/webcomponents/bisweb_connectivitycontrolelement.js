@@ -740,15 +740,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         node = node || 0;
         internal.lastnode=node;
-        let singlevalue=util.range(Math.round(node),0,internal.parcellation.rois.length-1);
-        let intnode=Math.floor(internal.parcellation.indexmap[singlevalue]);
-        internal.mni[0]= internal.parcellation.rois[intnode].x;
-        internal.mni[1]= internal.parcellation.rois[intnode].y;
-        internal.mni[2]= internal.parcellation.rois[intnode].z;
-        internal.mni[3]= singlevalue;
+        let actualnode=util.range(Math.round(node),0,internal.parcellation.rois.length-1);
+        let sortednode=Math.floor(internal.parcellation.indexmap[actualnode]);
+        //console.log('Nodenumber=',actualnode,'sorted order',sortednode);
+        
+        internal.mni[0]= internal.parcellation.rois[sortednode].x;
+        internal.mni[1]= internal.parcellation.rois[sortednode].y;
+        internal.mni[2]= internal.parcellation.rois[sortednode].z;
+        internal.mni[3]= actualnode;
 
         if (internal.showlegend) 
-            internal.parcellation.drawPoint(singlevalue,internal.overlaycontext);
+            internal.parcellation.drawPoint(actualnode,internal.overlaycontext);
 
         let coords=[];
         
@@ -802,17 +804,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //console.log('Internal=',internal.conndata.statMatrix[1]);
         //        }
         
-        let s_text='MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
+        let s_text='MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+' n='+nodenumber+')';
         let s_text2="";
 
         if (nodenumber>-1) {
 
-            let orignode=nodenumber;//internal.parcellation.indexmap[nodenumber];
-
-            //console.log('Nodenumber=',nodenumber,orignode);
+            let sortednode=internal.parcellation.indexmap[nodenumber];
+            
+            //console.log('Nodenumber=',nodenumber,'sortednode',sortednode);
             let displaynumber=nodenumber+1;
 
-            let lobe=guiParameters.Lobes[internal.parcellation.rois[orignode].attr[0]];
+            let lobe=guiParameters.Lobes[internal.parcellation.rois[sortednode].attr[0]];
             internal.parameters.lobe=lobe;
 
             //
@@ -821,7 +823,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let coordinfo='';
             if (atlasutil.getCurrentAtlasName() === 'humanmni') {
                 // MIGRATE
-                let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
+
+
+                
+                let n=internal.parcellation.rois[sortednode].attr[internal.networkAttributeIndex]; // switch to shen network
                 let network=internal.gui_Networks[n];
                 if (network===undefined) {
                     network="unknown";
@@ -831,15 +836,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
                 
                 
-                let brod=guiParameters.BrodLabels[internal.parcellation.rois[orignode].attr[3]];
+                let brod=guiParameters.BrodLabels[internal.parcellation.rois[sortednode].attr[3]];
                 if (brod===undefined) {
                     brod="n/a";
                 }
                 atlasinfo=' ( '+lobe+', NTW='+network+', BA='+brod+').';
                 coordinfo=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
             } else {
-                let lobe2=guiParameters.Lobes2[internal.parcellation.rois[orignode].attr[1]];
-                let lobe3=guiParameters.Lobes3[internal.parcellation.rois[orignode].attr[2]];
+                let lobe2=guiParameters.Lobes2[internal.parcellation.rois[sortednode].attr[1]];
+                let lobe3=guiParameters.Lobes3[internal.parcellation.rois[sortednode].attr[2]];
                 
                 atlasinfo=' ( '+lobe+', '+lobe2+', ';
                 coordinfo= lobe3+').';
@@ -849,9 +854,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             s_text2=coordinfo;
 
             if (internal.conndata.statMatrix!==null) {
-                s_text2+=', (Degree: pos='+internal.conndata.statMatrix[orignode][0]+', ';
-                s_text2+='neg='+internal.conndata.statMatrix[orignode][1]+', ';
-                s_text2+='sum='+internal.conndata.statMatrix[orignode][2]+') ';
+                s_text2+=', (Degree: pos='+internal.conndata.statMatrix[nodenumber][0]+', ';
+                s_text2+='neg='+internal.conndata.statMatrix[nodenumber][1]+', ';
+                s_text2+='sum='+internal.conndata.statMatrix[nodenumber][2]+') ';
             }
             s_text2+=' (draw order ='+(internal.parcellation.indexmap[nodenumber]+1)+')';
 
@@ -1887,25 +1892,29 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             let nodenumber=Math.round(internal.parameters.node)-1 || 0;
             let maxnode= internal.parcellation.rois.length-1;
-            let intnode;
-
-            if (domap) {
-                intnode=internal.parcellation.indexmap[nodenumber]+offset;
-            } else {
-                intnode=nodenumber+offset;
-            }
-
-            if (intnode<0)
-                intnode=maxnode;
-            else if (intnode>maxnode)
-                intnode=0;
-
             let newnode=0;
+
             if (domap) {
-                newnode=internal.parcellation.rois[intnode].index;
+                newnode=internal.parcellation.indexmap[nodenumber]+offset;
             } else {
-                newnode=intnode;
+                newnode=nodenumber+offset;
             }
+
+            if (newnode<0)
+                newnode=maxnode;
+            else if (newnode>maxnode)
+                newnode=0;
+
+            if (domap) {
+                newnode=internal.parcellation.rois[newnode].index;
+            }
+            
+            //            let newnode=0;
+            //            if (domap) {
+            //                newnode=
+            //            } else {
+            //                newnode=sortednode;
+            //            }
             setnode(newnode);
             autoDrawLines();
         },
@@ -2398,7 +2407,8 @@ class ConnectivityControlElement extends HTMLElement {
 
                 let s0= i+1+".";
                 let s1= node+1;
-                let lobe=guiParameters.Lobes[internal.parcellation.rois[node].attr[0]];
+                let sortednode=Math.floor(internal.parcellation.indexmap[node]);
+                let lobe=guiParameters.Lobes[internal.parcellation.rois[sortednode].attr[0]];
 
                 let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
                 let nid=webutil.getuniqueid();

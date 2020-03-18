@@ -537,7 +537,7 @@ class OldGrapherModule extends HTMLElement {
         for (let pass = 0; pass <= 2; pass++) {
 
             if (pass == 1)
-                out += "Volume,";
+                out += "Volume (voxels),";
             if (pass == 2)
                 out += "\nFrame,";
 

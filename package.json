@@ -1,7 +1,7 @@
 {
     "private": true,
     "name": "bioimagesuiteweb",
-    "version": "1.2.0b2",
+    "version": "1.2.0b3",
     "description": "An Implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
     "scripts": {

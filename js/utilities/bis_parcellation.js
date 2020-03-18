@@ -63,12 +63,16 @@ const computemode=function(array,debug) {
     @returns {number} -1,0,1
 */
 const comparerois=function(a,b) {
-    
+
     let computeroivalue=function(r) {
+
+        let v=r.attr.length;
+        if (v>4)
+            v=4;
         
         let sum=r.index*0.001; // Add a small bias to existing order
-        for (let i=0;i<r.attr.length;i++)
-            sum+=r.attr[i]*Math.pow(1000,(r.attr.length-i));
+        for (let i=0;i<v;i++)
+            sum+=r.attr[i]*Math.pow(1000,(v-i));
         return sum;
     };
 
@@ -343,11 +347,16 @@ class BisParcellation {
         var i;
         var numpoints=this.rois.length;
 
+        console.log('Attr length=',this.rois[0].attr);
+        
         this.rois.sort(comparerois);
         this.indexmap = { };
         for (i=0;i<numpoints;i++) {
             var idx=this.rois[i].index;
             this.indexmap[idx]=i;
+            if (i < 10 || i %30 === 0) {
+                console.log('i=',i, 'idx=',idx);
+            }
         }
 
         if (DEBUG) console.log("++++ Node definition mapping to lobes: Number of rois="+this.rois.length);
