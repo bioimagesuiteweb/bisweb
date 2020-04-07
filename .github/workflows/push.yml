@@ -6,5 +6,5 @@ jobs:
     steps:
     - name: Echo (on each push)
       id: echo
-      uses: bioimagesuiteweb/bisweb@devel
+      uses: bioimagesuiteweb/bisweb/actions/push@devel
       working-directory: actions/push
