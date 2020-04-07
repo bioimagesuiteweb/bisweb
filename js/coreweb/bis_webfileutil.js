@@ -233,9 +233,12 @@ const webfileutils = {
         if (suffix === "DIRECTORY")
             fileopts.filters = "DIRECTORY";
 
+        
         // Clean up filters that begin with a "." as electron does not like that
 
         //console.log("IN=",JSON.stringify(fileopts,null,2));
+
+        let foundall=false;
         
         if (fileopts.filters !== "DIRECTORY") {
         
@@ -250,9 +253,19 @@ const webfileutils = {
                     if (a.indexOf(".")===0)
                         a=a.substr(1,a.length-1);
                     newext.push(a);
+                    if (a==='*')
+                        foundall=true;
                 }
                 fileopts.filters[i].extensions=newext;
             }
+        }
+
+        if (!foundall)
+            fileopts.filters.push({ name: 'All Files', extensions: [ "*"]});
+
+        let os=genericio.getosmodule();
+        if (os.platform() === 'darwin') {
+            fileopts.filters=[{ name: 'All Files', extensions: [ "*"]} ];
         }
         
         if (fileopts.initialCallback)
@@ -265,10 +278,10 @@ const webfileutils = {
         if (fileopts.filters === "NII")
             fileopts.filters = [
                 { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
-                { name: 'All Files', extensions: ['*'] },
+                { name: 'All Files', extensions: ['*'] }
             ];
 
-        let multiple = fileopts.altkeys ? 'multiSelections' : '';
+        let multiple = fileopts.altkeys ? ' multiSelections' : '';
         var cmd = window.BISELECTRON.dialog.showSaveDialog;
         if (!fileopts.save)
             cmd = window.BISELECTRON.dialog.showOpenDialog;
@@ -284,11 +297,17 @@ const webfileutils = {
                     callback(filename);
             });
         } else {
+            let properties = [ 'openFile' ];
+            if (multiple !== '')
+                properties.push(multiple);
+                
+            console.log('Filters=',JSON.stringify(fileopts.filters,null,2), fileopts.defaultpath,JSON.stringify(properties));
+            
             cmd(null, {
                 title: fileopts.title,
                 defaultPath: fileopts.defaultpath,
                 filters: fileopts.filters,
-                properties: [multiple]
+                properties: properties
             }).then( (obj) => {
                 let filename=genericio.getElectronDialogFilename(obj);
                 if (filename)
@@ -720,3 +739,4 @@ const webfileutils = {
 };
 
 module.exports=webfileutils;
+

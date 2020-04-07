@@ -588,14 +588,14 @@ var createApplicationSelector=async function(externalobj) {
                 cname=" active";
             
             if (internal.runningAsDesktopPWA) {
-                imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count+2}. ${description}</div></div>`;
                 menustring+=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
                 urllist.push({
                     name : elem.url,
                     url  : url
                 });
             } else {
-                imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count+2}. ${description}</div></div>`;
                 menustring+=`<li><a href="${url}" role="button" target="${target}">${title}</a></li>`;
             }
                 
