@@ -5,6 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     name: A job to say hello on each push
     steps:
-    - name: Hello world action step (on each push)
-      id: hello
-      uses: actions/push.yml@v1
+    - name: Echo (on each push)
+      id: echo
+      uses: actions/push.yml@devel
