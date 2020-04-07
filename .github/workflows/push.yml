@@ -6,4 +6,4 @@ jobs:
     steps:
     - name: Echo (on each push)
       id: echo
-      uses: actions/push/action.yml@devel
+      uses: bioimagesuiteweb/bisweb/actions/push@devel
