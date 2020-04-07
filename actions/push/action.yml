@@ -4,3 +4,4 @@ description: 'Run tests in bisweb'
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  woking-directory : actions/push
