@@ -7,4 +7,4 @@ jobs:
     - name: Echo (on each push)
       id: echo
       uses: bioimagesuiteweb/bisweb@devel
-      working-directory : actions/push
+      working-directory: actions/push
