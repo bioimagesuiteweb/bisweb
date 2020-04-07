@@ -7,4 +7,4 @@ jobs:
     steps:
     - name: Hello world action step (on each push)
       id: hello
-      uses: actions/push.yml
+      uses: actions/push.yml@v1
