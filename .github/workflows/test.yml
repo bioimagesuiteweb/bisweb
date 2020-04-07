@@ -1,3 +1,5 @@
+on: [gollum]
+
 jobs:
   test_job:
     runs-on: ubuntu-latest
