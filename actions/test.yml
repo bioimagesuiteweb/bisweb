@@ -1,0 +1,6 @@
+# test.yml
+name: 'Test YML'
+description: 'Run tests in bisweb'
+runs:
+  using: 'docker'
+  image: 'Dockerfile.test'
