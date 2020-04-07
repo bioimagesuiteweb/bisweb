@@ -3,4 +3,4 @@ name: 'Test YML'
 description: 'Run tests in bisweb'
 runs:
   using: 'docker'
-  image: 'actions/push/Dockerfile.test2'
+  image: 'actions/push/Dockerfile'
