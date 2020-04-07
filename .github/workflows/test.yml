@@ -1,4 +1,4 @@
-on: [gollum]
+on: [push]
 
 jobs:
   test_job:
