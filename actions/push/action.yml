@@ -3,5 +3,5 @@ name: 'Test YML'
 description: 'Run tests in bisweb'
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: './Dockerfile'
   woking-directory : actions/push
