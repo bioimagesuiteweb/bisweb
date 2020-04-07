@@ -1,0 +1,9 @@
+
+jobs:
+    run_test_job:
+    runs-on: ubuntu-latest
+    name: A job to run regression tests in bisweb
+    steps:
+    - name: Regression test
+      id: test
+      uses: bioimagesuiteweb/bisweb/actions/test@devel

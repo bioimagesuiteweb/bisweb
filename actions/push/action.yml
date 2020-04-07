@@ -1,6 +1,6 @@
 # test.yml
-name: 'Test YML'
-description: 'Run tests in bisweb'
+name: 'Push YML'
+description: 'Run push echo job in bisweb'
 runs:
   using: 'docker'
   image: './Dockerfile'
