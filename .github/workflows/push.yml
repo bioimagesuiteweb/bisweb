@@ -1,4 +1,8 @@
-on: [push]
+on: 
+    push:
+        branches:
+            -devel
+
 
 jobs:
   hello_world_job:
@@ -7,4 +11,4 @@ jobs:
     steps:
     - name: Echo (on each push)
       id: echo
-      uses: actions/push.yml@devel
+      uses: actions/push@devel
