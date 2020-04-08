@@ -1,9 +1,9 @@
 on: 
   schedule:
-    - cron: '0 10 * * *'
+    - cron: '2 10 * * *'
 
 jobs:
-  test_job:
+  regression_job:
     runs-on: ubuntu-latest
     name: Regression Test
     steps:
