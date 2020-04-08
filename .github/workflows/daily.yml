@@ -5,7 +5,7 @@ on:
 jobs:
   test_job:
     runs-on: ubuntu-latest
-    name: Daily Regression Test
+    name: Regression Test
     steps:
     - name: Regression
       id: regression
