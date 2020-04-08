@@ -1,0 +1,12 @@
+on: 
+  schedule:
+    - cron: '2 10 * * *'
+
+jobs:
+  regression_job:
+    runs-on: ubuntu-latest
+    name: Regression Test
+    steps:
+    - name: Regression
+      id: regression
+      uses: bioimagesuiteweb/bisweb/actions/test@devel
