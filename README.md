@@ -8,6 +8,10 @@
 
 ---
 
+![.github/workflows/regression.yml](https://github.com/bioimagesuiteweb/bisweb/workflows/.github/workflows/regression.yml/badge.svg?branch=devel)
+
+---
+
 ## Welcome to BioImage Suite Web
 
 BioImage Suite Web (bisweb) is a web-based medical image analysis suite
