@@ -283,6 +283,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
     /** create the 3d element */
     create3DElement(volume,slices,decorations,transparent,drawimages,isoverlay=false) {
 
+
+        
         if (this.volumeRendering===false) {
             return bis3dOrthogonalSlice.create3cardslice(volume,
                                                          slices,
@@ -433,7 +435,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
             if (this.internal.overlayslices[pl]!==null) {
                 this.internal.overlayslices[pl].setsliceinmm(this.internal.slices[pl],objcoord[pl],
                                                              objmapframe,this.internal.objectmaptransferfunction);
-                this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[pl],pl);
+                if (this.internal.overlayslices[3]) {
+                    this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[pl],pl);
+                }
             }
         }
         if (this.internal.overlayslices[3]!==null) {
@@ -499,7 +503,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                               this.internal.maxspa*0.5);
                     
                     if (old[pl]!==this.internal.slicecoord[pl]) {
-                        this.internal.slices[3].updatecoordinates(pl);
+                        if (this.internal.slices[3])
+                            this.internal.slices[3].updatecoordinates(pl);
                     }
                 }
                 
@@ -872,28 +877,32 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
+        let maxpl=2;
+        if (this.internal.subviewers[3])
+            maxpl=3;
+
         
-        for (var pl=0;pl<=3;pl++) {
+        for (var pl=0;pl<=maxpl;pl++) {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
             var vp  =this.internal.subviewers[pl].getNormViewport();
-
+            
             //console.log('Lab=',lab,(vp.x1-vp.x0)*dw,this.minLabelWidth);
             
             if ((vp.x1-vp.x0)*dw>this.minLabelWidth) {
                 if (pl<=2) {
-
+                    
                     let dx=0.25*vp.shiftx*dw;
                     if (dx>120)
                         dx=120;
-
+                    
                     let dy=0.25*vp.shifty*dh;
                     if (dy>50)
                         dy=50;
                     
                     let xshift=[ -(2+dx),dx-(arrowsize+1)];
                     let xshift0=[-(2+dx),(dx+2)];
-
+                    
                     let ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
                     let xmin=vp.x0*dw+xshift0[0];
                     if (xmin<2)
@@ -901,7 +910,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let xmax=vp.x1*dw+xshift0[1];
                     if (xmax>(dw-2))
                         xmax=dw-2;
-
+                    
                     context.textBaseline="middle";
                     context.textAlign="start";   context.fillText(lab[0],xmin,ymid);
                     context.textAlign="end";     context.fillText(lab[1],xmax,ymid);
@@ -913,7 +922,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let ymax=Math.round((1.0-vp.y0)*dh)+dy;
                     if (ymax>0.9*dh)
                         ymax=0.9*dh;
-
+                    
                     if (!this.internal.simplemode) {
                         context.textAlign="center";
                         context.textBaseline="top";
@@ -937,7 +946,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                         if (l[0]<0)
                             l[0]=0;
                         
-
+                        
                         
                         let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
                         
@@ -952,15 +961,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     context.strokeStyle = "#dddddd";
                 else
                     context.strokeStyle = "#222222";
-
-
-
+                
+                
+                
                 context.lineWidth=1;
                 context.beginPath();
                 
                 if (pl===3)
                     vp=this.internal.subviewers[pl].getNormViewport().old;
-
+                
                 
                 context.moveTo(vp.x0*dw,(1-vp.y0)*dh);
                 context.lineTo(vp.x0*dw,(1-vp.y1)*dh);
@@ -974,6 +983,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                         this.internal.arrowbuttons[pl*2+ia].css({'visibility':'hidden'});
             }
         }
+           
 
 
         // Movie Stuff
@@ -1087,7 +1097,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.shiftx=0;
                 vp.ratio=ratio;
             }
-            this.internal.subviewers[pl].setNormViewport(vp,updateviewportsize);
+            if (this.internal.subviewers[pl])
+                this.internal.subviewers[pl].setNormViewport(vp,updateviewportsize);
             //this.internal.subviewers[pl].controls.this.reset();
             // When switching mode force a resize
             //this.internal.subviewers[pl].controls.handleResize();
@@ -1202,18 +1213,26 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let drawimages=true;
         if (this.internal.simplemode)
             drawimages=false;
-        this.internal.slices[3]=this.create3DElement(this.internal.volume,
-                                                     this.internal.slices,true,
-                                                     false,drawimages);
-        if (samesize===false) {
-            let w=s_width+parseFloat(this.extraWidth3D || 0.0);
-            this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
-                                                          this.internal.volume,
-                                                          this.internal.slices[3],
-                                                          w,s_depth);
+
+        let dim=this.internal.volume.getDimensions();
+        if (dim[2]>1) {
+        
+            this.internal.slices[3]=this.create3DElement(this.internal.volume,
+                                                         this.internal.slices,true,
+                                                         false,drawimages);
+            if (samesize===false) {
+                let w=s_width+parseFloat(this.extraWidth3D || 0.0);
+                this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
+                                                              this.internal.volume,
+                                                              this.internal.slices[3],
+                                                              w,s_depth);
+            } else {
+                this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
+            }
         } else {
-            this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
-        }                
+            this.internal.slices[3]=null;
+            this.internal.subviewers[3]=null;
+        }
         
         // Activate renderloop
         this.enable_renderloop();
@@ -1228,7 +1247,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             };
             
             for (let j=0;j<this.internal.subviewers.length;j++)
-                this.internal.subviewers[j].coordinateChangeCallback=mousefn;
+                if (this.internal.subviewers[j])
+                    this.internal.subviewers[j].coordinateChangeCallback=mousefn;
 
             this.setrendermodeinternal(this.internal.rendermode,true,true);
         }
@@ -1326,20 +1346,28 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var drawimages=true;
         if (this.internal.simplemode)
             drawimages=false;
+
+
+        let dim=this.internal.volume.getDimensions();
+        if (dim[2]>1) {
+                    
+            this.internal.overlayslices[3]=this.create3DElement(this.internal.objectmap,
+                                                                this.internal.overlayslices,
+                                                                false,
+                                                                true,
+                                                                drawimages,
+                                                                true);
+            for (i=0;i<=2;i++) {
+                this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[i],i);
+            }
+            
         
-        this.internal.overlayslices[3]=this.create3DElement(this.internal.objectmap,
-                                                            this.internal.overlayslices,
-                                                            false,
-                                                            true,
-                                                            drawimages,
-                                                            true);
-        for (i=0;i<=2;i++) {
-            this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[i],i);
+            this.internal.overlayslices[3].addtoscene(this.internal.subviewers[3].getScene());
+        } else {
+            this.internal.overlayslices[3]=null;
         }
-
         
-        this.internal.overlayslices[3].addtoscene(this.internal.subviewers[3].getScene());
-
+        
         if (this.internal.maxnumframes>this.internal.imagedim[3]) {
             this.createdatgui(false);
             this.drawlabels();
@@ -1533,12 +1561,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     this.internal.play_movie_controller=null;
                 }*/
             }
-            let dmode=this.internal.datgui.coords.add(data,'displaymode', dpname).name("Mode");
-            
-            dmode.onChange( (val) => {
-                let ind=this.internal.displaymodes.indexOf(val);
-                self.setrendermodeinternal(ind);
-            });
+
+            if (this.internal.imagedim[2]>1) {
+                let dmode=this.internal.datgui.coords.add(data,'displaymode', dpname).name("Mode");
+                
+                dmode.onChange( (val) => {
+                    let ind=this.internal.displaymodes.indexOf(val);
+                    self.setrendermodeinternal(ind);
+                });
+            }
             
             let coordchange = function() {
                 let c = [ data.xcoord, data.ycoord, data.zcoord,data.tcoord ];
@@ -1821,10 +1852,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         },100);
     }
 
-    
 }
 
 webutil.defineElement('bisweb-orthogonalviewer', OrthogonalViewerElement);
 export default OrthogonalViewerElement;
-
-
