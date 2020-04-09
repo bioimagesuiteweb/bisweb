@@ -1,6 +1,6 @@
 on: 
   schedule:
-    - cron: '15 9 * * *'
+    - cron: '15 0 * * *'
 
 jobs:
   regression_job:
