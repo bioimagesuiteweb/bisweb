@@ -556,7 +556,9 @@ var createApplicationSelector=async function(externalobj) {
     
     let keys=Object.keys(externalobj);
     let max=keys.length;
-        
+
+    let indexcount=1;
+    
     for (let i=0;i<max;i++) {
             
         let elem=externalobj[keys[i]];
@@ -599,8 +601,9 @@ var createApplicationSelector=async function(externalobj) {
                 menustring+=`<li><a href="${url}" role="button" target="${target}">${title}</a></li>`;
             }
                 
-            let b=`<li data-target="#mycarousel" data-slide-to="${i+2}"></li>\n`;
+            let b=`<li data-target="#mycarousel" data-slide-to="${indexcount}"></li>\n`;
             indstring+=b;
+            indexcount=indexcount+1;
         }
     }
 
