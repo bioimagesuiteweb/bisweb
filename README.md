@@ -8,7 +8,7 @@
 
 ---
 
-![.github/workflows/regression.yml](https://github.com/bioimagesuiteweb/bisweb/workflows/.github/workflows/regression.yml/badge.svg?branch=devel)
+![.github/workflows/test_docker.yml](https://github.com/bioimagesuiteweb/bisweb/workflows/.github/workflows/test_docker.yml/badge.svg)
 
 ---
 
