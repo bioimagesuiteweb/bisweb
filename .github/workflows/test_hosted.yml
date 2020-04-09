@@ -1,6 +1,6 @@
 on: 
   schedule:
-    - cron: '42 21 * * *'
+    - cron: '0 22 * * *'
 
 jobs:
   hosted_build:
