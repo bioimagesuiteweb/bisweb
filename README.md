@@ -7,8 +7,7 @@
 [ [Docker](https://hub.docker.com/r/bisweb/devel)]
 
 ---
-
-![.github/workflows/regression.yml](https://github.com/bioimagesuiteweb/bisweb/workflows/.github/workflows/regression.yml/badge.svg?branch=devel)
+![.github/workflows/test_hosted.yml](https://github.com/bioimagesuiteweb/bisweb/workflows/.github/workflows/test_hosted.yml/badge.svg)
 
 ---
 

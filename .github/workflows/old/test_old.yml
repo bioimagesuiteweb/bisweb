@@ -1,0 +1,20 @@
+on: 
+  schedule:
+    - cron: '45 21 * * *'
+
+jobs:
+  hello_world_job:
+    runs-on: ubuntu-18.04
+    name: Docker tests for bisweb
+    steps:
+    - name: Run
+      id: run      
+      uses: bioimagesuiteweb/bisweb/actions/hosted@devel
+      env:
+        BIS_FIRST_TEST: 1
+        BIS_LAST_TEST: 1000
+    - name: Results
+      run: echo "${{ steps.run.outputs.result}}"
+    - name: Logfile
+      run: echo "${{ steps.run.outputs.logfile}}"
+    
