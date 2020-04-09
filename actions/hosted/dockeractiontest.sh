@@ -124,15 +124,15 @@ REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
 
-echo "------------------------------------" 
-echo "--- Postprocessing Result Step2"
-echo "------------------------------------"
+#echo "------------------------------------" 
+#echo "--- Postprocessing Result Step2"
+#echo "------------------------------------"
 
-echo "Reading full log file"
-LOG="$(cat ${LOGFILE}  ${LOGFILE2})"
-LOG="${LOG//'%'/'%25'}"
-LOG="${LOG//$'\n'/'%0A'}"
-LOG="${LOG//$'\r'/'%0D'}"
-echo "::set-output name=logfile::$LOG"
+#echo "Reading full log file"
+#LOG="$(cat ${LOGFILE}  ${LOGFILE2})"
+#LOG="${LOG//'%'/'%25'}"
+#LOG="${LOG//$'\n'/'%0A'}"
+#LOG="${LOG//$'\r'/'%0D'}"
+#echo "::set-output name=logfile::$LOG"
 
 

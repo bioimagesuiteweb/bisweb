@@ -1,6 +1,7 @@
 on: 
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '15 0 * * *'
+
 
 jobs:
   hosted_build:
@@ -56,6 +57,5 @@ jobs:
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
-    - name: Logfile
-      run: echo "${{ steps.run.outputs.logfile}}"
+    
     
