@@ -51,9 +51,12 @@ else
 fi
 
 BDIR=${BASE}/bisweb/src/build
-LOGFILE=${BDIR}/logjs.txt
-LOGFILE2=${BDIR}/logpy.txt
-RESULTFILE=${BDIR}/result.txt
+LOGDIR=${BDIR}/logs
+mkdir -p ${LOGDIR}
+
+LOGFILE=${LOGDIR}/js_logfile.txt
+LOGFILE2=${LOGDIR}/py_logfile.txt
+RESULTFILE=${LOGDIR}/00_summary_results.txt
 cd ${BDIR}
 
 echo "----------------------------------------------------------"  | tee ${LOGFILE}
@@ -75,7 +78,7 @@ echo "----------------------------------------------------------"   | tee -a ${L
 cd ${BDIR}
 
 echo "------------------------------------" 
-echo "--- Postprocessing Result"
+echo "--- Postprocessing Result storing in ${RESULTFILE}"
 echo "------------------------------------"
 
 echo "...." > ${RESULTFILE}
