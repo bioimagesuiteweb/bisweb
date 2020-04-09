@@ -2,11 +2,10 @@ on:
   schedule:
     - cron: '15 0 * * *'
 
-
 jobs:
-  hello_world_job:
+  test_job:
     runs-on: ubuntu-18.04
-    name: Linux tests for bisweb
+    name: Docker test for bisweb
     steps:
     - name: Run
       id: run      
