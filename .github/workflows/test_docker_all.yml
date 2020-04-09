@@ -1,4 +1,6 @@
-on: [push]
+on: 
+  schedule:
+    - cron: '15 0 * * *'
 
 jobs:
   test_job:
@@ -9,8 +11,8 @@ jobs:
       id: run      
       uses: bioimagesuiteweb/bisweb/actions/test@devel
       env:
-        BIS_FIRST_TEST: 20
-        BIS_LAST_TEST:  23
+        BIS_FIRST_TEST: 1
+        BIS_LAST_TEST: 1000
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
     - name: Logfile
