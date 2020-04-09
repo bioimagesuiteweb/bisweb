@@ -1,4 +1,6 @@
-on: [push]
+on: 
+  schedule:
+    - cron: '0 23 * * *'
 
 jobs:
   hosted_build:
@@ -50,7 +52,7 @@ jobs:
         bash /tmp/bisweb/src/compiletools/fullbuild.sh
         cd /tmp/bisweb/src
     - name : Test
-      run : bash /tmp/bisweb/src/actions/hosted/dockeractiontest.sh /tmp 10 12
+      run : bash /tmp/bisweb/src/actions/hosted/dockeractiontest.sh /tmp 1 1000
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
