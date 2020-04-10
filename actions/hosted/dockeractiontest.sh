@@ -68,12 +68,32 @@ else
     echo "+++ Using BASE=${BASE}"
 fi
 
+# ------ Create output directories
+
 BDIR=${BASE}/bisweb/src/build
-LOGDIR=${BDIR}/logs
+OUTDIR=${BASE}/src/build/output
+
+LOGDIR=${OUTDIR}/logs/${BISWEBOS}
+ELECTRON=${OUTDIR}/electron/${BISWEBOS}
+BINARIES=${OUTDIR}/binaries/${BISWEBOS}
+LIBRARIES=${OUTDIR}/libaries/${BISWEBOS}
+
+mkdir -p ${OUTDIR}
 mkdir -p ${LOGDIR}
-LOGFILE=${LOGDIR}/${BISWEBOS}_js_logfile.txt
-LOGFILE2=${LOGDIR}/${BISWEBOS}_py_logfile.txt
-RESULTFILE=${LOGDIR}/${BISWEBOS}_00_summary_results.txt
+mkdir -p ${ELECTRON}
+mkdir -p ${BINARIES}
+mkdir -p ${LIBRARIES}
+
+echo "-- Temporary directories ${OUTDIR}"
+ls ${OUTDIR}
+
+
+# ------ Create testing files
+
+RESULTFILE=${LOGDIR}/0_summary_results.txt
+LOGFILE=${LOGDIR}/1_js_logfile.txt
+LOGFILE2=${LOGDIR}/2_py_logfile.txt
+
 
 cd ${BDIR}
 
@@ -133,8 +153,8 @@ echo "::set-output name=result::$REPORT"
 # Now binaries
 # First copy node.js and python packages
 #
-BINARIES=${LOGDIR}/binaries_${BISWEBOS}
-mkdir -p ${BINARIES}
+
+
 cp ${BDIR}/install/zips/*tgz ${BINARIES}
 
 # Web and Electron Installer now
@@ -153,19 +173,17 @@ gulp package
 
 if  [  ${BISWEBOS} == "Darwin" ] ; then
     echo "On MacOS"
-    mv ${BDIR}/dist/*dmg ${BINARIES}
-    cp ${BDIR}/native/*dylib ${BINARIES}
+    mv ${BDIR}/dist/*dmg ${ELECTRON}
+    cp ${BDIR}/native/*dylib ${LIBRARIES}
 else
     echo "On Linux"
-    mv ${BDIR}/dist/*zip ${BINARIES}
-    cp ${BDIR}/native/*so ${BINARIES}
+    mv ${BDIR}/dist/*zip ${ELECTRON}
+    cp ${BDIR}/native/*so ${LIBRARIES}
 fi
-
-BINF=`ls $BINARIES`
 
 echo "____________________________________________________________________________________"
 echo "___"
 echo "___ Output files stored are ${LOGFILE}, ${LOGFILE2} and ${RESULTFILE}"
-echo "___   and binaries in ${BINARIES}"
+echo "___   and binaries in ${BINARIES}, ${ELECTRON} and ${LIBRARIES}"
 echo "___"
 echo "____________________________________________________________________________________"

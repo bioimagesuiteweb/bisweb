@@ -14,7 +14,7 @@ jobs:
         sudo python3 -m pip install --upgrade pip setuptools
         sudo python3 -m pip install numpy nibabel
         export BISWEBOS=`uname`
-        if [ [  ${BISWEBOS} == "Darwin" ] ]; then
+        if  [  ${BISWEBOS} == "Darwin" ] ; then
            sudo npm install -g appdmg
         fi   
         sudo npm install -g electron-packager
@@ -65,5 +65,15 @@ jobs:
       with:
           name: logs
           path: /tmp/bisweb/src/build/logs
+    - name: Store Electron
+      uses: actions/upload-artifact@v1
+      with:
+          name: electron
+          path: /tmp/bisweb/src/build/electron
+    - name: Store Binaries
+      uses: actions/upload-artifact@v1
+      with:
+          name: binaries
+          path: /tmp/bisweb/src/build/binaries
 
     
