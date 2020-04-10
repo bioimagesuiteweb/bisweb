@@ -130,7 +130,7 @@ REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
 
-BINARIES=${LOGDIR}/binaries
+BINARIES=${LOGDIR}/binaries_${BISWEBOS}
 mkdir -p ${BINARIES}
 cp ${BDIR}/install/zips/* ${BINARIES}
 BINF=`ls $BINARIES`
@@ -139,6 +139,6 @@ BINF=`ls $BINARIES`
 echo "____________________________________________________________________________________"
 echo "___"
 echo "___ Output files stored are ${LOGFILE}, ${LOGFILE2} and ${RESULTFILE}"
-echo "___   and binaries ${BINF}"
+echo "___   and binaries in ${BINARIES}"
 echo "___"
 echo "____________________________________________________________________________________"
