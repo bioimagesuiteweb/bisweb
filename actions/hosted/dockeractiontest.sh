@@ -81,7 +81,7 @@ echo "----------------------------------------------------------"  | tee ${LOGFI
 echo "--- Regression testing JS" | tee -a ${LOGFILE}
 echo "---" | tee -a ${LOGFILE}
 cd wasm; 
-ctest -I ${FIRST},${LAST} -V | tee  -a ${LOGFILE}
+ctest -j2 -I ${FIRST},${LAST} -V | tee  -a ${LOGFILE}
 
 
 echo "----------------------------------------------------------"  | tee ${LOGFILE2}
@@ -89,7 +89,7 @@ echo "--- Regression testing Python" | tee -a ${LOGFILE2}
 echo "---"  | tee -a ${LOGFILE2}
 cd ../native
 
-ctest -I ${FIRST},${LAST} -V | tee  -a  ${LOGFILE2}
+ctest -j2 -I ${FIRST},${LAST} -V | tee  -a  ${LOGFILE2}
 
 echo "----------------------------------------------------------"   | tee -a ${LOGFILE2}
 
@@ -130,4 +130,15 @@ REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
 
-echo "Output files stored are ${LOGFILE}, ${LOGFILE2} and ${RESULTFILE}"
+BINARIES=${LOGDIR}/binaries
+mkdir -p ${BINARIES}
+cp ${BDIR}/install/zips/* ${BINARIES}
+BINF=`ls $BINARIES`
+
+
+echo "____________________________________________________________________________________"
+echo "___"
+echo "___ Output files stored are ${LOGFILE}, ${LOGFILE2} and ${RESULTFILE}"
+echo "___   and binaries ${BINF}"
+echo "___"
+echo "____________________________________________________________________________________"
