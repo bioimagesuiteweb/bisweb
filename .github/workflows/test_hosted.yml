@@ -5,7 +5,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [  ubuntu-18.04]
+        os: [ macos-latest]
     name: bisweb-test
     steps:
     - name: Global Prereqs
