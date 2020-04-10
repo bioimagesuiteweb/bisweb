@@ -10,17 +10,15 @@ jobs:
     steps:
     - name: Global Prereqs
       run: |
-
-        mkdir /tmp/npm-global
-        export PATH=/tmp/npm-global/bin:$PATH
-        export NPM_CONFIG_PREFIX=/tmp/npm-global
+        if  [  ${BISWEBOS} == "Darwin" ] ; then
+            sudo chown -R 755 /Users/runner/Library/Caches
+            sudo npm install -g appdmg
+        fi   
         sudo npm install -g gulp mocha rimraf
         sudo python3 -m pip install --upgrade pip setuptools
         sudo python3 -m pip install numpy nibabel
         export BISWEBOS=`uname`
-        if  [  ${BISWEBOS} == "Darwin" ] ; then
-           sudo npm install -g appdmg
-        fi   
+       
         sudo npm install -g electron-packager
         
     - name: Clone
@@ -46,7 +44,6 @@ jobs:
     - name : JS Prereqs
       run: |
         cd /tmp/bisweb/src
-        export PATH=/tmp/npm-global/bin:$PATH
         npm install -d
         node config/createbuild.js
     - name : Build
@@ -58,7 +55,6 @@ jobs:
         echo "-------------------------------------------------"
         echo "Beginning build"
         echo "-------------------------------------------------"
-        export PATH=/tmp/npm-global/bin:$PATH
         bash /tmp/bisweb/src/compiletools/fullbuild.sh
         cd /tmp/bisweb/src
     - name : Test

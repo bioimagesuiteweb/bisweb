@@ -17,7 +17,6 @@ BASE=$1
 FIRST=$2
 LAST=$3
 BISWEBOS=`uname`
-export PATH=/tmp/npm-global/bin:$PATH
 
 
 # Defaults basically all tests
