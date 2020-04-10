@@ -16,9 +16,8 @@ echo "----------------------------------------------------------"
 BASE=$1
 FIRST=$2
 LAST=$3
+BISWEBOS=`uname`
 
-echo "BASE=${BASE}, FIRST=${FIRST} LAST=${LAST}"
-sleep 1
 
 # Defaults basically all tests
 
@@ -39,7 +38,7 @@ if [ -z ${LAST} ]; then
 fi
 
 echo "----------------------------------------------------------"
-echo "+++ Running regression tests ${FIRST}:${LAST} (Inputs were ${BIS_FIRST_TEST}:${BIS_LAST_TEST})"
+echo "+++ Running ${BISWEBOS} regression tests ${FIRST}:${LAST} (Inputs were ${BIS_FIRST_TEST}:${BIS_LAST_TEST})"
 echo "----------------------------------------------------------"   
 echo ""
 sleep 1
@@ -70,13 +69,11 @@ else
 fi
 
 BDIR=${BASE}/bisweb/src/build
-
-BDIR=${BASE}/bisweb/src/build
 LOGDIR=${BDIR}/logs
 mkdir -p ${LOGDIR}
-LOGFILE=${LOGDIR}/js_logfile.txt
-LOGFILE2=${LOGDIR}/py_logfile.txt
-RESULTFILE=${LOGDIR}/00_summary_results.txt
+LOGFILE=${LOGDIR}/${BISWEBOS}_js_logfile.txt
+LOGFILE2=${LOGDIR}/${BISWEBOS}_py_logfile.txt
+RESULTFILE=${LOGDIR}/${BISWEBOS}_00_summary_results.txt
 
 cd ${BDIR}
 
@@ -133,3 +130,4 @@ REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
 
+echo "Output files stored are ${LOGFILE}, ${LOGFILE2} and ${RESULTFILE}"
