@@ -5,7 +5,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-latest]
+        os: [ macos-latest, ubuntu-18.04]
     name: bisweb-test
     steps:
     - name: Global Prereqs
@@ -64,11 +64,11 @@ jobs:
       with:
         name: logs
         path: /tmp/bisweb/src/build/output/logs
-    - name: Store Electron
-      uses: actions/upload-artifact@v1
-      with:
-        name: electron
-        path: /tmp/bisweb/src/build/output/electron
+#    - name: Store Electron
+#      uses: actions/upload-artifact@v1
+#      with:
+#        name: electron
+#        path: /tmp/bisweb/src/build/output/electron
     - name: Store Binaries
       uses: actions/upload-artifact@v1
       with:

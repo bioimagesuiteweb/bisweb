@@ -77,7 +77,7 @@ mkdir -p ${OUTDIR}
 LOGDIR=${OUTDIR}/logs/${BISWEBOS}
 ELECTRON=${OUTDIR}/electron/${BISWEBOS}
 BINARIES=${OUTDIR}/binaries/${BISWEBOS}
-LIBRARIES=${OUTDIR}/libaries/${BISWEBOS}
+LIBRARIES=${OUTDIR}/libraries/${BISWEBOS}
 
 mkdir -p ${OUTDIR}
 mkdir -p ${LOGDIR}
