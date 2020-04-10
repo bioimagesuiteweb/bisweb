@@ -14,10 +14,9 @@ jobs:
         if  [  ${BISWEBOS} == "Darwin" ] ; then
             sudo npm install -g appdmg --unsafe-perm=true --allow-root 
         fi   
-        sudo npm install -g gulp mocha rimraf
+        sudo npm install -g gulp mocha rimraf --unsafe-perm=true --allow-root
         sudo python3 -m pip install --upgrade pip setuptools
-        sudo python3 -m pip install numpy nibabel
-        sudo npm install -g electron-packager
+        sudo npm install -g electron-packager --unsafe-perm=true --allow-root
         
     - name: Clone
       run: |
@@ -56,24 +55,27 @@ jobs:
         bash /tmp/bisweb/src/compiletools/fullbuild.sh
         cd /tmp/bisweb/src
     - name : Test
-      run : bash /tmp/bisweb/src/actions/hosted/dockeractiontest.sh /tmp 8 20
+      run : bash /tmp/bisweb/src/actions/hosted/dockeractiontest.sh /tmp 8 12
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
     - name: Store Results
       uses: actions/upload-artifact@v1
       with:
-          name: logs
-          path: /tmp/bisweb/src/build/logs
+        name: logs
+        path: /tmp/bisweb/src/build/output/logs
     - name: Store Electron
       uses: actions/upload-artifact@v1
       with:
-          name: electron
-          path: /tmp/bisweb/src/build/electron
+        name: electron
+        path: /tmp/bisweb/src/build/output/electron
     - name: Store Binaries
       uses: actions/upload-artifact@v1
       with:
-          name: binaries
-          path: /tmp/bisweb/src/build/binaries
-
-    
+        name: binaries
+        path: /tmp/bisweb/src/build/output/binaries
+    - name: Store Libraries
+      uses: actions/upload-artifact@v1
+      with:
+        name: libraries
+        path: /tmp/bisweb/src/build/output/libraries
