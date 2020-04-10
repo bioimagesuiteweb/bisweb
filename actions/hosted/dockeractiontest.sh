@@ -130,11 +130,38 @@ REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
 
+# Now binaries
+# First copy node.js and python packages
+#
 BINARIES=${LOGDIR}/binaries_${BISWEBOS}
 mkdir -p ${BINARIES}
-cp ${BDIR}/install/zips/* ${BINARIES}
-BINF=`ls $BINARIES`
+cp ${BDIR}/install/zips/*tgz ${BINARIES}
 
+# Web and Electron Installer now
+# ----------------------
+cd ${BDIR}/..
+gulp build -m
+
+if  [  ${BISWEBOS} == "Linux" ] ; then
+    # Web distribution from linux
+    gulp zip
+    mv ${BDIR}/dist/*zip ${BINARIES}
+fi
+
+# package for electron
+gulp package
+
+if  [  ${BISWEBOS} == "Darwin" ] ; then
+    echo "On MacOS"
+    mv ${BDIR}/dist/*dmg ${BINARIES}
+    cp ${BDIR}/native/*dylib ${BINARIES}
+else
+    echo "On Linux"
+    mv ${BDIR}/dist/*zip ${BINARIES}
+    cp ${BDIR}/native/*so ${BINARIES}
+fi
+
+BINF=`ls $BINARIES`
 
 echo "____________________________________________________________________________________"
 echo "___"

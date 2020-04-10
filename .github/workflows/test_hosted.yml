@@ -13,6 +13,12 @@ jobs:
         sudo npm install -g gulp mocha rimraf
         sudo python3 -m pip install --upgrade pip setuptools
         sudo python3 -m pip install numpy nibabel
+        export BISWEBOS=`uname`
+        if [ [  ${BISWEBOS} == "Darwin" ] ]; then
+           sudo npm install -g appdmg
+        fi   
+        sudo npm install -g electron-packager
+        
     - name: Clone
       run: |
         mkdir -p /tmp/bisweb/src
@@ -50,7 +56,7 @@ jobs:
         bash /tmp/bisweb/src/compiletools/fullbuild.sh
         cd /tmp/bisweb/src
     - name : Test
-      run : bash /tmp/bisweb/src/actions/hosted/dockeractiontest.sh /tmp 4 12
+      run : bash /tmp/bisweb/src/actions/hosted/dockeractiontest.sh /tmp 8 20
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
