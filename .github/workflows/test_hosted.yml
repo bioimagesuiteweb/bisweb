@@ -69,11 +69,11 @@ jobs:
 #      with:
 #        name: electron
 #        path: /tmp/bisweb/src/build/output/electron
-    - name: Store Binaries
-      uses: actions/upload-artifact@v1
-      with:
-        name: binaries
-        path: /tmp/bisweb/src/build/output/binaries
+#    - name: Store Binaries
+#      uses: actions/upload-artifact@v1
+#      with:
+#        name: binaries
+#        path: /tmp/bisweb/src/build/output/binaries
     - name: Store Libraries
       uses: actions/upload-artifact@v1
       with:

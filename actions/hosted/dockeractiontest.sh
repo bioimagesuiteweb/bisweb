@@ -85,9 +85,9 @@ mkdir -p ${ELECTRON}
 mkdir -p ${BINARIES}
 mkdir -p ${LIBRARIES}
 
+
 echo "-- Temporary directories ${OUTDIR}"
 ls ${OUTDIR}
-
 
 # ------ Create testing files
 
@@ -181,6 +181,10 @@ else
     mv ${BDIR}/dist/*zip ${ELECTRON}
     cp ${BDIR}/native/*so ${LIBRARIES}
 fi
+
+#JS Build artifacts
+cp ${BDIR}/wasm/*.js ${LIBRARIES}
+cp ${BDIR}/wasm/*.wasm ${LIBRARIES}
 
 echo "____________________________________________________________________________________"
 echo "___"
