@@ -70,9 +70,14 @@ else
 fi
 
 BDIR=${BASE}/bisweb/src/build
-LOGFILE=${BDIR}/logjs.txt
-LOGFILE2=${BDIR}/logpy.txt
-RESULTFILE=${BDIR}/result.txt
+
+BDIR=${BASE}/bisweb/src/build
+LOGDIR=${BDIR}/logs
+mkdir -p ${LOGDIR}
+LOGFILE=${LOGDIR}/js_logfile.txt
+LOGFILE2=${LOGDIR}/py_logfile.txt
+RESULTFILE=${LOGDIR}/00_summary_results.txt
+
 cd ${BDIR}
 
 echo "----------------------------------------------------------"  | tee ${LOGFILE}
@@ -123,16 +128,4 @@ REPORT="${REPORT//$'\n'/'%0A'}"
 REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
-
-#echo "------------------------------------" 
-#echo "--- Postprocessing Result Step2"
-#echo "------------------------------------"
-
-#echo "Reading full log file"
-#LOG="$(cat ${LOGFILE}  ${LOGFILE2})"
-#LOG="${LOG//'%'/'%25'}"
-#LOG="${LOG//$'\n'/'%0A'}"
-#LOG="${LOG//$'\r'/'%0D'}"
-#echo "::set-output name=logfile::$LOG"
-
 

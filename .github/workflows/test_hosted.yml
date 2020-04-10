@@ -1,7 +1,4 @@
-on: 
-  schedule:
-    - cron: '30 21 * * *'
-
+on: [push]
 
 jobs:
   hosted_build:
@@ -57,5 +54,10 @@ jobs:
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
+    - name: Store Results
+      uses: actions/upload-artifact@v1
+      with:
+          name: logs
+          path: /tmp/bisweb/src/build/logs
 
     

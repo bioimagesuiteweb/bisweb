@@ -1,6 +1,6 @@
 on: 
   schedule:
-    - cron: '15 0 * * *'
+    - cron: '12 2 * * *'
 
 
 jobs:
@@ -57,5 +57,8 @@ jobs:
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
-    
-    
+    - name: Store Results
+      uses: actions/upload-artifact@v1
+      with:
+          name: logs
+          path: /tmp/bisweb/src/build/logs

@@ -1,4 +1,7 @@
-on: [push]
+on: 
+    schedule:
+      - cron: '12 7 * * *'
+  
 
 jobs:
   test_job:
@@ -13,8 +16,4 @@ jobs:
         BIS_LAST_TEST: 20
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
-    - name: Upload results
-      uses: actions/upload-artifact@v1
-      with:
-        name: Logs
-        path: /basedir/bisweb/src/build/logs
+    
