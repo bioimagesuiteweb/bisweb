@@ -10,15 +10,13 @@ jobs:
     steps:
     - name: Global Prereqs
       run: |
+        export BISWEBOS=`uname`
         if  [  ${BISWEBOS} == "Darwin" ] ; then
-            sudo chown -R 755 /Users/runner/Library/Caches
-            sudo npm install -g appdmg
+            sudo npm install -g appdmg --unsafe-perm=true --allow-root 
         fi   
         sudo npm install -g gulp mocha rimraf
         sudo python3 -m pip install --upgrade pip setuptools
         sudo python3 -m pip install numpy nibabel
-        export BISWEBOS=`uname`
-       
         sudo npm install -g electron-packager
         
     - name: Clone
