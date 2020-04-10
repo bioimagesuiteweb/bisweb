@@ -71,7 +71,8 @@ fi
 # ------ Create output directories
 
 BDIR=${BASE}/bisweb/src/build
-OUTDIR=${BASE}/src/build/output
+OUTDIR=${BDIR}/output
+mkdir -p ${OUTDIR}
 
 LOGDIR=${OUTDIR}/logs/${BISWEBOS}
 ELECTRON=${OUTDIR}/electron/${BISWEBOS}
