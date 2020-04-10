@@ -5,11 +5,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-latest, ubuntu-18.04]
+        os: [  ubuntu-18.04]
     name: bisweb-test
     steps:
     - name: Global Prereqs
       run: |
+
+        mkdir /tmp/npm-global
+        export PATH=/tmp/npm-global/bin:$PATH
+        export NPM_CONFIG_PREFIX=/tmp/npm-global
         sudo npm install -g gulp mocha rimraf
         sudo python3 -m pip install --upgrade pip setuptools
         sudo python3 -m pip install numpy nibabel
@@ -42,6 +46,7 @@ jobs:
     - name : JS Prereqs
       run: |
         cd /tmp/bisweb/src
+        export PATH=/tmp/npm-global/bin:$PATH
         npm install -d
         node config/createbuild.js
     - name : Build
@@ -53,6 +58,7 @@ jobs:
         echo "-------------------------------------------------"
         echo "Beginning build"
         echo "-------------------------------------------------"
+        export PATH=/tmp/npm-global/bin:$PATH
         bash /tmp/bisweb/src/compiletools/fullbuild.sh
         cd /tmp/bisweb/src
     - name : Test
