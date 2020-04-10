@@ -107,6 +107,8 @@ echo "...." > ${RESULTFILE}
 echo "...." >> ${RESULTFILE}
 echo ".... Javascript tests" >> ${RESULTFILE}
 echo "...." >> ${RESULTFILE}
+grep "Test   #" ${LOGFILE} >> ${RESULTFILE}
+grep "Test  #" ${LOGFILE} >> ${RESULTFILE}
 grep "Test #" ${LOGFILE} >> ${RESULTFILE}
 grep "passed" ${LOGFILE} | grep "failed" >> ${RESULTFILE}
 grep "Total Test time" ${LOGFILE} >> ${RESULTFILE}
@@ -115,6 +117,8 @@ echo "...." >> ${RESULTFILE}
 echo "...." >> ${RESULTFILE}
 echo ".... Python tests" >> ${RESULTFILE}
 echo "...." >> ${RESULTFILE}
+grep "Test   #" ${LOGFILE2} >> ${RESULTFILE}
+grep "Test  #" ${LOGFILE2} >> ${RESULTFILE}
 grep "Test #" ${LOGFILE2} >> ${RESULTFILE}
 grep "passed" ${LOGFILE2} | grep "failed" >> ${RESULTFILE}
 grep "Total Test time" ${LOGFILE2} >> ${RESULTFILE}

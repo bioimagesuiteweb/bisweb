@@ -51,6 +51,7 @@ SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
 SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
+SET (MODULE_LIST_CREATOR ${TOOLS_DIR}/bis_createjsmodulestotestlist.js)
 SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 
 #Python
@@ -463,33 +464,35 @@ IF (BIS_A_EMSCRIPTEN)
   ENDIF()
   
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
-    # ------------------ module tests ---------------------------
-    IF(BIS_MODULETEST)
-      SET (COUNT 0)
-      FOREACH (item ${JSMODULES})
-	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
-	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${TLIST})
-      MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")
-    ENDIF(BIS_MODULETEST)
 
-    # ------------------ unit tests ---------------------------
-    IF(BIS_UNITTEST)
-      SET (COUNT 0)
-      FILE(GLOB TLIST ${TEST_DIR}/test*.js)
-      list(REMOVE_ITEM TLIST ${TEST_DIR}/test_module.js)
-      list(LENGTH TLIST N)
-      FOREACH (item ${TLIST})
-	GET_FILENAME_COMPONENT(TNAME ${item} NAME)
-	GET_FILENAME_COMPONENT(DNAME ${item} DIRECTORY)
-	GET_FILENAME_COMPONENT(DNAME ${DNAME} ABSOLUTE)
-	add_test(NAME "js-unit-${TNAME}" COMMAND mocha ${TNAME} WORKING_DIRECTORY ${DNAME})
-	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${TLIST})
-      MESSAGE("~~~~~ Added ${COUNT} javascript/mocha unit tests")
-    ENDIF(BIS_UNITTEST)
-  
-
+  # ------------------ unit tests ---------------------------
+  IF(BIS_UNITTEST)
+    SET (COUNT 0)
+    FILE(GLOB TLIST ${TEST_DIR}/test*.js)
+    list(REMOVE_ITEM TLIST ${TEST_DIR}/test_module.js)
+    list(LENGTH TLIST N)
+    FOREACH (item ${TLIST})
+      GET_FILENAME_COMPONENT(TNAME ${item} NAME)
+      GET_FILENAME_COMPONENT(DNAME ${item} DIRECTORY)
+      GET_FILENAME_COMPONENT(DNAME ${DNAME} ABSOLUTE)
+      add_test(NAME "js-unit-${TNAME}" COMMAND mocha ${TNAME} WORKING_DIRECTORY ${DNAME})
+      MATH (EXPR COUNT "${COUNT}+1")
+    ENDFOREACH (item ${TLIST})
+    MESSAGE("~~~~~ Added ${COUNT} javascript/mocha unit tests")
+  ENDIF(BIS_UNITTEST)
+  # ------------------ module tests ---------------------------
+  IF(BIS_MODULETEST)
+    SET(JS_MODULE_LIST_FILENAME "${LIBRARY_OUTPUT_PATH}/JSModules.txt")
+    MESSAGE("Creating Module List in ${JS_MODULE_LIST_FILENAME}")
+    execute_process(COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_LIST_CREATOR} -o ${JS_MODULE_LIST_FILENAME})
+    FILE (STRINGS ${JS_MODULE_LIST_FILENAME} JSMODULES)
+    SET (COUNT 0)
+    FOREACH (item ${JSMODULES})
+      add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
+      MATH (EXPR COUNT "${COUNT}+1")
+    ENDFOREACH (item ${TLIST})
+    MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")
+  ENDIF(BIS_MODULETEST)
   # ---------------------------------------------------------------------------------------------
 
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
@@ -654,17 +657,6 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION biswebpython)
     install (FILES ${BISWEBPYTHON_MODULE_LIST_FILENAME} DESTINATION biswebpython/modules)
     
-    # ------------------ module tests ---------------------------
-    IF(BIS_MODULETEST)
-      SET (COUNT 0)
-      FOREACH (item ${PYTHONMODULES})
-	add_test(NAME "py-module-${item}" COMMAND ${PYTHON_EXECUTABLE} test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
-	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${PYTHONMODULES})
-      MESSAGE("~~~~~ Added ${COUNT} python module tests")
-    
-    ENDIF(BIS_MODULETEST)
-
     # ------------------ unit tests ---------------------------
     IF(BIS_UNITTEST)
       FILE(GLOB TLIST ${TEST_DIR}/test*.py)
@@ -679,6 +671,18 @@ ELSE(BIS_A_EMSCRIPTEN)
       ENDFOREACH (item ${TLIST})
       MESSAGE("~~~~~ Added ${COUNT} python/unittest tests")
     ENDIF(BIS_UNITTEST)
+
+    # ------------------ module tests ---------------------------
+    IF(BIS_MODULETEST)
+      SET (COUNT 0)
+      FOREACH (item ${PYTHONMODULES})
+	add_test(NAME "py-module-${item}" COMMAND ${PYTHON_EXECUTABLE} test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
+	MATH (EXPR COUNT "${COUNT}+1")
+      ENDFOREACH (item ${PYTHONMODULES})
+      MESSAGE("~~~~~ Added ${COUNT} python module tests")
+    
+    ENDIF(BIS_MODULETEST)
+
 
     # Do not install this just yet
     install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython)
