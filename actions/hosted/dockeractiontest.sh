@@ -68,12 +68,33 @@ else
     echo "+++ Using BASE=${BASE}"
 fi
 
+# ------ Create output directories
+
 BDIR=${BASE}/bisweb/src/build
-LOGDIR=${BDIR}/logs
+OUTDIR=${BDIR}/output
+mkdir -p ${OUTDIR}
+
+LOGDIR=${OUTDIR}/logs/${BISWEBOS}
+ELECTRON=${OUTDIR}/electron/${BISWEBOS}
+BINARIES=${OUTDIR}/binaries/${BISWEBOS}
+LIBRARIES=${OUTDIR}/libraries/${BISWEBOS}
+
+mkdir -p ${OUTDIR}
 mkdir -p ${LOGDIR}
-LOGFILE=${LOGDIR}/${BISWEBOS}_js_logfile.txt
-LOGFILE2=${LOGDIR}/${BISWEBOS}_py_logfile.txt
-RESULTFILE=${LOGDIR}/${BISWEBOS}_00_summary_results.txt
+mkdir -p ${ELECTRON}
+mkdir -p ${BINARIES}
+mkdir -p ${LIBRARIES}
+
+
+echo "-- Temporary directories ${OUTDIR}"
+ls ${OUTDIR}
+
+# ------ Create testing files
+
+RESULTFILE=${LOGDIR}/0_summary_results.txt
+LOGFILE=${LOGDIR}/1_js_logfile.txt
+LOGFILE2=${LOGDIR}/2_py_logfile.txt
+
 
 cd ${BDIR}
 
@@ -130,15 +151,44 @@ REPORT="${REPORT//$'\r'/'%0D'}"
 
 echo "::set-output name=result::$REPORT"
 
-BINARIES=${LOGDIR}/binaries
-mkdir -p ${BINARIES}
-cp ${BDIR}/install/zips/* ${BINARIES}
-BINF=`ls $BINARIES`
+# Now binaries
+# First copy node.js and python packages
+#
 
+
+cp ${BDIR}/install/zips/*tgz ${BINARIES}
+
+# Web and Electron Installer now
+# ----------------------
+cd ${BDIR}/..
+gulp build -m
+
+if  [  ${BISWEBOS} == "Linux" ] ; then
+    # Web distribution from linux
+    gulp zip
+    mv ${BDIR}/dist/*zip ${BINARIES}
+fi
+
+# package for electron
+gulp package
+
+if  [  ${BISWEBOS} == "Darwin" ] ; then
+    echo "On MacOS"
+    mv ${BDIR}/dist/*dmg ${ELECTRON}
+    cp ${BDIR}/native/*dylib ${LIBRARIES}
+else
+    echo "On Linux"
+    mv ${BDIR}/dist/*zip ${ELECTRON}
+    cp ${BDIR}/native/*so ${LIBRARIES}
+fi
+
+#JS Build artifacts
+cp ${BDIR}/wasm/*.js ${LIBRARIES}
+cp ${BDIR}/wasm/*.wasm ${LIBRARIES}
 
 echo "____________________________________________________________________________________"
 echo "___"
 echo "___ Output files stored are ${LOGFILE}, ${LOGFILE2} and ${RESULTFILE}"
-echo "___   and binaries ${BINF}"
+echo "___   and binaries in ${BINARIES}, ${ELECTRON} and ${LIBRARIES}"
 echo "___"
 echo "____________________________________________________________________________________"

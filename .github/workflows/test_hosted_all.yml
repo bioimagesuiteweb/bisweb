@@ -60,5 +60,20 @@ jobs:
     - name: Store Results
       uses: actions/upload-artifact@v1
       with:
-          name: logs
-          path: /tmp/bisweb/src/build/logs
+        name: logs
+        path: /tmp/bisweb/src/build/output/logs
+#    - name: Store Electron
+#      uses: actions/upload-artifact@v1
+#      with:
+#        name: electron
+#        path: /tmp/bisweb/src/build/output/electron
+#    - name: Store Binaries
+#      uses: actions/upload-artifact@v1
+#      with:
+#        name: binaries
+#        path: /tmp/bisweb/src/build/output/binaries
+    - name: Store Libraries
+      uses: actions/upload-artifact@v1
+      with:
+        name: libraries
+        path: /tmp/bisweb/src/build/output/libraries
