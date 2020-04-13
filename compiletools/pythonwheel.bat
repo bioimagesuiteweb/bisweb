@@ -2,7 +2,7 @@
 SET IDIR0=%~dp0..
 for %%i in ("%IDIR0%") do SET "IDIR=%%~fi"
 
-SET BDIR0=%IDIR%\buildwin
+SET BDIR0=%IDIR%\build
 for %%i in ("%BDIR0%") do SET "BDIR=%%~fi"
 
 SET SRCDIR0=%BDIR%\..
@@ -20,19 +20,23 @@ SET WHEEL=%BDIR%\install\wheel
 del %WHEEL%\biswebpython /Q
 
 
+echo ORIG=%ORIG%
+echo WHEEL=%WHEEL%
+xcopy  %ORIG% %WHEEL% /E /Y /Q
 
-echo %ORIG%
-echo %WHEEL%
-
-xcopy  %ORIG% %WHEEL% /E
 del %WHEEL%\biswebpython\__pycache__ /Q
 del %WHEEL%\biswebpython\*\__pycache__ /Q
 del %WHEEL%\biswebpython\setpaths* /Q
 
-cd %WHEEL%
-python setup.py sdist bdist_wheel
+echo -----------------------------------------------------------------------
+echo Packaging
+echo -----------------------------------------------------------------------
 
-echo "-----------------------------------------------------------------------"
+cd %WHEEL%
+dir
+python setup.py sdist
+
+echo -----------------------------------------------------------------------
 cd %BDIR%\install\zips
 del bisweb*any.whl /Q
 del bisweb*.tar.gz /Q
@@ -40,7 +44,6 @@ copy %BDIR%\install\wheel\dist\* .
 cd
 dir
 
-
-echo "-----------------------------------------------------------------------"
-echo " Done with Python Wheel stuff"
-echo "-----------------------------------------------------------------------"
+echo -----------------------------------------------------------------------
+echo  Done with Python Wheel stuff
+echo -----------------------------------------------------------------------

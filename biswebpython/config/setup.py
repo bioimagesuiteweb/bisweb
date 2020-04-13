@@ -1,10 +1,17 @@
 import setuptools
+import os
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+if (os.path.sep == '/'):
+  with open("README.md", "r") as fh:
+     long_description = fh.read()
+  with open("biswebpython/requirements.txt", "r") as fh:
+     install_requires = list(fh.read().splitlines())
+else:
+  with open("README.md", "r") as fh:
+     long_description = fh.read()
+  with open("requirements.txt", "r") as fh:
+     install_requires = list(fh.read().splitlines())
 
-with open("biswebpython/requirements.txt", "r") as fh:
-    install_requires = list(fh.read().splitlines())
     
 setuptools.setup(
     name="biswebpython",
