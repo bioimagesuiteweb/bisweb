@@ -10,9 +10,15 @@ jobs:
     steps:
     - name: Clone
       run: |
-        mkdir c:\bisweb
-        mkdir c:\bisweb\src
-        cd c:\bisweb\bisweb
+        echo %PATH%
+        python --version
+        git --version
+        node --version
+        cmake --version
+        mkdir \bisweb
+        mkdir \bisweb\src
+        cd \bisweb\bisweb
+        echo "git"
         git clone https://github.com/bioimagesuiteweb/bisweb src
         cd src
         git checkout devel
@@ -20,30 +26,30 @@ jobs:
         copy npm-shrinkwrap-orig.json npm-shrinkwrap.json
     - name: Clone Plugin
       run: |
-        cd c:\bisweb
-        mkdir c:\bisweb\gpl
+        cd \bisweb
+        mkdir \bisweb\gpl
         git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
         cd gpl
         git pull
     - name : Python Prereqs
       run: |
-        cd c:\bisweb\src
+        cd \bisweb\src
         python3 -m pip install --user -r biswebpython/config/requirements.txt
     - name : JS Prereqs
       run: |
-        cd c:\bisweb\src
+        cd \bisweb\src
         npm install -d
         node config\createbuild.js
     - name : Build
       run: |
-        cd c:\bisweb\src\build
+        cd \bisweb\src\build
         echo "-------------------------------------------------"
         echo "Beginning build"
         echo "-------------------------------------------------"
-        bash c:\bisweb\src\compiletools\fullbuild.bat
-        cd c:\bisweb\src
+        bash \bisweb\src\compiletools\fullbuild.bat
+        cd \bisweb\src
     - name : Test
-      run : bash c:\bisweb\src\actions\hosted\dockeractiontest.bat 
+      run : bash \bisweb\src\actions\hosted\dockeractiontest.bat 
       id: run    
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
@@ -51,19 +57,19 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: logs
-        path: c:\bisweb\src\build\output\logs
+        path: \bisweb\src\build\output\logs
 #    - name: Store Electron
 #      uses: actions/upload-artifact@v1
 #      with:
 #        name: electron
-#        path: c:\bisweb\src\build\output\electron
+#        path: \bisweb\src\build\output\electron
 #    - name: Store Binaries
 #      uses: actions/upload-artifact@v1
 #      with:
 #        name: binaries
-#        path: c:\bisweb\src\build\output\binaries
+#        path: \bisweb\src\build\output\binaries
     - name: Store Libraries
       uses: actions/upload-artifact@v1
       with:
         name: libraries
-        path: c:\bisweb\src\build\output\libraries
+        path: \bisweb\src\build\output\libraries
