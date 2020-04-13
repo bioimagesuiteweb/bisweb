@@ -10,9 +10,7 @@ jobs:
     steps:
     - name: Global Prereqs
       run: |
-        npm install -g gulp mocha rimraf --unsafe-perm=true --allow-root --force
         python3 -m pip install --upgrade pip setuptools 
-        npm install -g electron-packager --unsafe-perm=true --allow-root --force
         
     - name: Clone
       run: |
