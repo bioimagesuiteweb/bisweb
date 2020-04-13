@@ -8,10 +8,6 @@ jobs:
         os: [ windows-latest]
     name: bisweb-test
     steps:
-    - name: Global Prereqs
-      run: |
-        python3 -m pip install --upgrade pip setuptools 
-        
     - name: Clone
       run: |
         mkdir c:\bisweb
