@@ -19,7 +19,7 @@ let bextra='build';
 let inwindows=false;
 if (path.sep ==='\\') {
     inwindows=true;
-    bextra='build'
+    bextra='build';
 }
     
 
