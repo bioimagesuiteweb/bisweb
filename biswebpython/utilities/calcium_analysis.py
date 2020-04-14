@@ -49,6 +49,7 @@ def expRegression(blueMovie,uvMovie,mask):
     blueShape = blueMovie.shape
     uvShape = uvMovie.shape
     maskShape = mask.shape
+
     if (len(blueShape) == 3) and (len(uvShape) == 3):
         print('Both input images are 3D, assuming third dimension is time and reshaping')
         blueMovie=np.reshape(blueMovie,[blueShape[0]*blueShape[1],blueShape[2]])
@@ -128,19 +129,24 @@ def twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,
 
     blueBase = blueMovie - blueMovieFiltered
     uvBase = uvMovie - uvMovieFiltered
+   
+    del blueMovie
+    del uvMovie
 
     blueRec = blueMovieFiltered + np.tile(blueBase.mean(axis=1)[:,np.newaxis],(1,blueFiltShape[2]))
     uvRec = uvMovieFiltered + np.tile(uvBase.mean(axis=1)[:,np.newaxis],(1,uvFiltShape[2]))
 
     beta = np.zeros((len(mask_indices)))
-    blueReg = np.zeros(blueBase.shape)
+    blueReg = np.zeros(blueBase.shape,dtype = np.float32)
 
-
+    del blueBase
+    del uvBase
 
     if uvRec.shape[1] != blueRec.shape[1]:
         diffUv=uvRec.shape[1] - blueRec.shape[1]
         if diffUv > 0:
             uvRec=uvRec[:,:blueRec.shape[1]]
+            uvMovieFiltered = uvMovieFiltered[:,:blueRec.shape[1]]
 
         if diffUv < 0:
             for i in range(0,abs(diffUv)):
@@ -151,12 +157,10 @@ def twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,
                 uvMovieFiltAdd = np.expand_dims(uvMovieFiltered[:,-1], axis=1)
                 uvMovieFiltered = np.append(uvMovieFiltered,uvMovieFiltAdd,axis=1)
 
-
-
-
     for i in range(mask.sum()):
         beta[i] = linalg.lstsq(uvRec[mask_indices[i],:][:,np.newaxis], blueRec[mask_indices[i],:][:,np.newaxis])[0][0][0]
         blueReg[mask_indices[i],:] = blueMovieFiltered[mask_indices[i],:] - beta[i]*uvMovieFiltered[mask_indices[i],:]
+
     return blueReg
 
 def dFF(blueMovie,uvMovieFiltered,blueReg,mask):
@@ -170,11 +174,11 @@ def dFF(blueMovie,uvMovieFiltered,blueReg,mask):
     blueReg = blueReg.reshape((blueShape[0]*blueShape[1], blueShape[2]))
 
     blueF = blueMovie[mask,:].mean(axis=1)
-    blueDFF = np.zeros(blueMovie.shape)
+    blueDFF = np.zeros(blueMovie.shape,dtype = np.float32)
     blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,blueShape[2])))
 
     #uv
     uvF = uvMovieFiltered[mask,:].mean(axis=1)
-    uvDFF = np.zeros(uvMovieFiltered.shape)
+    uvDFF = np.zeros(uvMovieFiltered.shape,dtype = np.float32)
     uvDFF[mask,:] = np.divide(uvMovieFiltered[mask,:],np.tile(uvF[:,np.newaxis],(1,uvShape[2])))
     return blueDFF,uvDFF
