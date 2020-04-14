@@ -421,6 +421,7 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./node_modules/d3/d3.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),

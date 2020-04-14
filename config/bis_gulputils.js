@@ -197,9 +197,9 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
         if (libjs!=='') {
             if (toolname!=="index") {
                 if (gpl) 
-                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'd3.min.js' , 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
                 else
-                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
+                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'd3.min.js',  'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
             } else {
                 alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             }
@@ -709,6 +709,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/build/web/webcomponents-lite.js`,
                    `${indir}/build/web/jquery.min.js`,
                    `${indir}/build/web/three.min.js`,
+                   `${indir}/build/web/d3.min.js`,
                    `${indir}/build/web/bootstrap.min.js`,
                    `${indir}/build/web/bislib.css`,
                    `${indir}/build/web/bislib_bright.css`,
