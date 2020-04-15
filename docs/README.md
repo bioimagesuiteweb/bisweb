@@ -149,7 +149,7 @@ are already on your system)
 
 Then install the following 2 python packages (if you are interested in python)
 
-    sudo pip3 install numpy nibabel
+    sudo python3 -m pip install --update pip setuptools
 
 Then install the following npm dependencies:
 
@@ -165,6 +165,28 @@ described above.
 We suggest using the
 [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10). Install
 the Ubuntu VM and follow the same steps as for Linux/Ubuntu above.
+
+If you really want to use MS-Windows Native tools
+
+1. Install Microsoft Visual Studio Community Edition (2019). Make sure you
+   enable C++ development. Do not install Python development.
+2. Install CMake and make sure it is added to your path.
+3. Install Node.js v12 and make sure it is added to your path. Also install
+   the windows build essentials (there is an option in the node installer)
+   which will include Python 3.8.x. Go to c:\python38 and copy python.exe to
+   python3.exe (some build tools look for python3)
+4. Install git for windows and make sure it is in your path.
+
+
+Next Install Prerequisites: Open a command line and type
+
+    python3 -m pip install --update pip setuptools
+    npm install -g gulp mocha rimraf
+    npm install -g electron --unsafe-perm=true --allow-root
+    npm install -g electron-packager
+    
+
+
 
 ## Option 3. MacOS 10.14
 
@@ -277,6 +299,12 @@ Then you can perform a full initial build using
     cd build
     ./fullbuild.sh
     
+__Note:__ If building natively on MS-Windows: Open the _x64 Native Tools
+Command Prompt for VS 2019_ command shell:
+
+    cd bisweb
+    compiletools/fullbuild.bat
+    
 
 ### Open the Web Applications
 
@@ -321,6 +349,8 @@ The `fullbuild.sh` script calls 4 container scripts
 If you simply want to rebuild one of these components, just run the individual
 script (e.g. `webbuild.sh` to rebuild the web application)
 
+
+_Note_: On MS-Windows replace .sh with .bat in the names above.
 
 ## Configuring and Building -- The Manual Way
 

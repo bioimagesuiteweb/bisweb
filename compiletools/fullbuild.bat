@@ -33,7 +33,7 @@ SET QPATH=%PATH%
 cmd /c %CDIR%\wasmbuild.bat
 cd %CDIR%
 SET PATH=%QPATH%
-REM cmd /c %CDIR%\webbuild.bat
+cmd /c %CDIR%\webbuild.bat
 cd %CDIR%
 cmd /c %CDIR%\nativebuild.bat
 cd %CDIR%

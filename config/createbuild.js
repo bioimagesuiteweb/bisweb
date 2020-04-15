@@ -102,8 +102,6 @@ const main=async function() {
         console.log('++++ python emsdk:',cmd);
         
         await util.executeCommand(`${cmd} update`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install node-12.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate node-12.9.1-64bit`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} install  1.39.7`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} activate 1.39.7`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} list`);

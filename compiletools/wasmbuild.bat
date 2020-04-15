@@ -48,8 +48,6 @@ cmake -G "NMake Makefiles" -DCMAKE_TOOLCHAIN_FILE="%BDIR%\emsdk_portable\upstrea
       -DBIS_USECPM=ON ^
       %SRCDIR%\cpp
 
-exit /b
-
 nmake 
 nmake install
 
