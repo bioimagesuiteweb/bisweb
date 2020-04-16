@@ -1,20 +1,36 @@
 #!/bin/bash
 
-BISMAKEJ="-j8"
+BISMAKEJ="-j4"
+MAKE=`which make`
+GENERATOR="Unix Makefiles"
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
+BISWEBOS=`uname | cut -f1 -d_`
+echo $OS
+if  [  ${BISWEBOS} == "MINGW64" ] ; then
+      BISMAKEJ=" "
+      MAKE=`which nmake`
+     GENERATOR="NMake Makefiles"
+fi
+
+
 echo "-----------------------------------------------------------------------"
 echo "SRCDIR=${SRCDIR}, BDIR=${BDIR}"
+echo "OS=${BISWEBOS}, ${MAKEJ} ${BISWEBMAKEJ} ${GENERATOR}"
 echo "-----------------------------------------------------------------------"
 
 cd ${BDIR}
 echo "${BDIR}/emsdk_portable/emsdk_env.sh"
 
+
 source ${BDIR}/emsdk_portable/emsdk_env.sh
 echo $PATH
+
+echo "CMAKE = `which cmake`"
+
 
 
 mkdir -p ${BDIR}/doc/doxgen
@@ -33,7 +49,8 @@ mkdir -p ${BDIR}/install/bisweb
 cd ${BDIR}/wasm
 touch CMakeCache.txt
 rm CMakeCache.txt
-cmake -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+cmake -G "${GENERATOR}" \
+       -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_CXX_FLAGS="-o2 -s WASM=1 -s TOTAL_MEMORY=512MB -Wint-in-bool-context" \
       -DCMAKE_EXE_LINKER_FLAGS="--pre-js ${SRCDIR}/cpp/libbiswasm_pre.js --post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
@@ -46,9 +63,10 @@ cmake -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Mo
       ${SRCDIR}/cpp
 
 
-make ${BISMAKEJ} 
+
+"${MAKE}" ${BISMAKEJ} 
 rm -rf ${BDIR}/install/bisweb
-make install
+"${MAKE}" install
 
 cd ${BDIR}/install/bisweb/
 npm pack

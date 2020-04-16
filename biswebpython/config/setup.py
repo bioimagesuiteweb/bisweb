@@ -1,15 +1,19 @@
 import setuptools
 import os
 
-if (os.path.sep == '/'):
+print('OS=',os.name);
+
+if (os.name == 'nt'):
+  print('In Windows');
   with open("README.md", "r") as fh:
      long_description = fh.read()
   with open("biswebpython/requirements.txt", "r") as fh:
      install_requires = list(fh.read().splitlines())
 else:
+  print('In UNIX');
   with open("README.md", "r") as fh:
      long_description = fh.read()
-  with open("requirements.txt", "r") as fh:
+  with open("biswebpython/requirements.txt", "r") as fh:
      install_requires = list(fh.read().splitlines())
 
     

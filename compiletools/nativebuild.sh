@@ -1,6 +1,8 @@
 #!/bin/bash
 
-BISMAKEJ="-j8"
+BISMAKEJ="-j4"
+MAKE=`which make`
+GENERATOR="Unix Makefiles"
 
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -8,7 +10,22 @@ BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 CDIR="$( cd ${IDIR}/../compiletools && pwd )"
 
+
+BISWEBOS=`uname | cut -f1 -d_`
+echo $OS
+if  [  ${BISWEBOS} == "MINGW64" ] ; then
+      BISMAKEJ=" "
+      MAKE=`which nmake`
+     GENERATOR="NMake Makefiles"
+fi
+
+
 echo "-----------------------------------------------------------------------"
+echo "SRCDIR=${SRCDIR}, BDIR=${BDIR} CDIR=${CDIR}"
+echo "OS=${BISWEBOS}, ${MAKEJ} ${BISWEBMAKEJ} ${GENERATOR}"
+echo "-----------------------------------------------------------------------"
+
+
 
 mkdir -p ${BDIR}/doc/doxgen
 mkdir -p ${BDIR}/install
@@ -29,7 +46,9 @@ cd ${BDIR}/native
 touch CMakeCache.txt
 rm CMakeCache.txt
 
-cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
+cmake -G "${GENERATOR}" \
+      -DBIS_A_EMSCRIPTEN=OFF \
+      -DPYTHON_EXECUTABLE=`which python3` \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
       -DBIS_A_MATLAB=ON \
@@ -38,7 +57,7 @@ cmake -DBIS_A_EMSCRIPTEN=OFF -DPYTHON_EXECUTABLE=`which python3` \
       -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
       ${SRCDIR}/cpp
 
-make ${BISMAKEJ} install
+"${MAKE}" ${BISMAKEJ} install
 
 echo "-----------------------------------------------------------------------"
 bash ${CDIR}/pythonwheel.sh
