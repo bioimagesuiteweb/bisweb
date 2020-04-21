@@ -26,12 +26,12 @@ rm -rf ${WHEEL}/biswebpython/*/__pycache__
 rm -rf ${WHEEL}/biswebpython/setpaths*
 
 cd ${WHEEL}
-python3 setup.py sdist bdist_wheel
+python3 setup.py sdist
 
 echo "-----------------------------------------------------------------------"
 cd ${BDIR}/install/zips
-rm bisweb*any.whl
-rm bisweb*.tar.gz
+rm -rf bisweb*any.whl
+rm -rf bisweb*.tar.gz
 cp ${BDIR}/install/wheel/dist/* .
 pwd
 ls -lrt 

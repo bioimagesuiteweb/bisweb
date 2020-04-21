@@ -19,7 +19,7 @@ fi
 
 echo "-----------------------------------------------------------------------"
 echo "SRCDIR=${SRCDIR}, BDIR=${BDIR}"
-echo "OS=${BISWEBOS}, ${MAKEJ} ${BISWEBMAKEJ} ${GENERATOR}"
+echo "OS=${BISWEBOS}, ${MAKE} ${BISMAKEJ} ${GENERATOR}"
 echo "-----------------------------------------------------------------------"
 
 cd ${BDIR}

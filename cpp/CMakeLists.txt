@@ -93,6 +93,7 @@ SET(KITSRCS
   bisvtkMultiThreader.cxx
   bisImageDistanceMatrix.cpp
   bisImageTransformationJacobian.cpp
+  bisPointLocator.cpp
   )
 
 # ---------------------------------------------------------------------------------------------
