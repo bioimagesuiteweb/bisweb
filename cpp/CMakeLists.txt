@@ -94,6 +94,7 @@ SET(KITSRCS
   bisImageDistanceMatrix.cpp
   bisImageTransformationJacobian.cpp
   bisPointLocator.cpp
+  bisPointRegistrationUtils.cpp
   )
 
 # ---------------------------------------------------------------------------------------------
@@ -178,6 +179,7 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisTesting.h
   ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
   ${CPP_SOURCE_DIR}/bisImageTransformationJacobian.h
+  ${CPP_SOURCE_DIR}/bisPointRegistrationUtils.h
   )
 
 
