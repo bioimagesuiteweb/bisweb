@@ -373,7 +373,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
   
   # ---- create library for command line  -----------
-  FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/*.js)
+  FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/[a-zA-z]*.js)
 
   # bioimagesuiteweblib.js
   SET (BISWEBLIBFILE bioimagesuiteweblib.js)
@@ -619,7 +619,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     FILE (STRINGS ${BISWEBPYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
-    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
+    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/[a-zA-Z]*.js)
 
     IF (WIN32)
       add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
@@ -638,10 +638,10 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
 
-    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/*.py)
-    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
-    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
-    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
+    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/[a-zA-Z]*.py)
+    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/[a-zA-Z]*.py)
+    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/[a-zA-Z]*.py)
+    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/[a-zA-Z]*.py)
     
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
     install (FILES ${PYLIST0} DESTINATION  biswebpython
@@ -732,11 +732,11 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/example.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
-    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.m)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/[a-zA-Z]*.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
-    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/tests/*.m)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/tests/[a-zA-Z]*.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab/tests)
 
     # Install replacement bispath

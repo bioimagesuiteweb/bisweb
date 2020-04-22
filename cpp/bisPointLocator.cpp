@@ -83,7 +83,7 @@ int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_poin
   this->indices.clear();
   
   for (int i=0;i<numbins;i++) {
-    std::vector<int> a={};
+    std::vector<int> a;
     this->indices.push_back(a);
   }
 
@@ -207,7 +207,7 @@ int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vect
 
   }
 
-  int numbins=this->indices.size();
+
   float radius2=radius*radius;
   pointlist.clear();
   int strides[3] = { 1, this->dimensions[0], this->dimensions[0]*this->dimensions[1] };
@@ -215,7 +215,6 @@ int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vect
   for (int k=minlattice[2];k<=maxlattice[2];k++) {
     for (int j=minlattice[1];j<=maxlattice[1];j++) {
       for (int i=minlattice[0];i<=maxlattice[0];i++) {
-        float corner[3];
         int lat[3] = { i,j,k };
         float dist2=this->getClosestBoundaryPointDistance(input,lat);
         if (dist2<=radius2)
@@ -248,8 +247,6 @@ int bisPointLocator::getNearestPoint(float input[3],float output[3]) {
   
   float mindist2=0.0;
   int bestpoint=-1;
-
-  int done=0;
 
   while (stack.size()<1) { 
     
