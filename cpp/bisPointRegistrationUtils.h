@@ -43,13 +43,20 @@ extern "C" {
   /** Computes best fit Landmark Transformation (see VTK/VTKLandmarkTransform.cxx) given two sets of points
    * @param RawSourceLandmarks the source points (Nx3)
    * @param RawTargetLandmarks the target points (Nx3)
-   * @param mode 0=rigid,1=similarity,2=affine
+   * @param jsonstring { mode 0=rigid,1=similarity,2=affine }
    * @param Output the output Matrix Transformation
-   * @return 1 if success 0 if failed
    */
   // BIS: { 'computeLandmarkTransformWASM', 'bisLinearTransformation', [ 'Matrix', 'Matrix', 'ParamObj', 'debug' ] }
   BISEXPORT unsigned char* computeLandmarkTransformWASM(unsigned char* source, unsigned char* target,const char* jsonstring,int debug);
 
+  
+/** Test Point Locator
+ * @param RawPoints the source points (Nx3)
+ * @param paramobj { mode 0=nearest,1=threshold, threshold = 5.0, x,y,z = point }
+ * @param Output the output points
+ */
+// BIS: { 'testPointLocatorWASM', 'Matrix', [ 'Matrix', 'ParamObj', 'debug' ] }
+  BISEXPORT unsigned char* testPointLocatorWASM(unsigned char* source_ptr,const char* jsonstring,int debug);
 }
 
 #endif

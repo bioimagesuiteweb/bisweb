@@ -42,7 +42,7 @@ public:
    * @param length the length of each octtree box
    * @returns 1 if successful, 0 otherwise
    */
-  int initialize(std::shared_ptr<bisSimpleMatrix<float> > points,float length=5.0);
+  int initialize(std::shared_ptr<bisSimpleMatrix<float> > points,float length=5.0,int debug=0);
   
   /**
    * Get Nearest Point
@@ -50,7 +50,7 @@ public:
    * @param output the coordinates of the nearest point
    * @returns the index of the nearest point (-1 if no points)
    */
-  int getNearestPoint(float input[3],float output[3]);
+  int getNearestPoint(float input[3],float output[3],int debug=0);
 
   /**
    * Get Nearest N Points
@@ -59,7 +59,7 @@ public:
    * @param pointlist the indices of the points
    * @returns number of points returned or 0 if failed
    */
-  int getPointsWithinRadius(float input[3],float radius,std::vector<int> pointlist);
+  int getPointsWithinRadius(float input[3],float radius,std::vector<int> pointlist,int debug=0);
 
 
 protected:
@@ -80,13 +80,13 @@ protected:
   int dimensions[3];
   
   /** find the nearest point in the bin bin */
-  int findNearestPointInBin(float input[3],float* pts,int bin,float& mindist2);
+  int findNearestPointInBin(float input[3],float* pts,int bin,float& mindist2,int debug=0);
   
   /** find points in bin of distance < T and add to pointlist */
-  int addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int> pointlist);
+  int addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int> pointlist,int debug=0);
 
   /** get closed boundary boing in a bin with lattice coordinates = lattice, return squared distance */
-  float getClosestBoundaryPointDistance(float input[3],int lattice[3]);
+  float getClosestBoundaryPointDistance(float input[3],int lattice[3],int debug=0);
   
 private:
 

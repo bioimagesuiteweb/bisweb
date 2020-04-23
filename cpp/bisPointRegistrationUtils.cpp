@@ -18,6 +18,8 @@
 #include "bisPointRegistrationUtils.h"
 #include "bisJSONParameterList.h"
 #include "bisEigenUtil.h"
+#include "bisPointLocator.h"
+#include <vector>
 #include <Eigen/Dense>
 
 
@@ -309,5 +311,72 @@ unsigned char* computeLandmarkTransformWASM(unsigned char* source_ptr, unsigned 
 
   std::unique_ptr<bisSimpleMatrix<float> > matrix=output->getSimpleMatrix("outmatrix");
   return matrix->releaseAndReturnRawArray();
+
+}
+
+
+
+/** Test Point Locator
+ * @param RawPoints the source points (Nx3)
+ * @param paramobj { mode 0=nearest,1=threshold, threshold = 5.0, x,y,z = point, l=length }
+ * @param Output the output points
+ */
+// BIS: { 'testPointLocatorWASM', 'Matrix', [ 'Matrix', 'ParamObj', 'debug' ] }
+unsigned char* testPointLocatorWASM(unsigned char* source_ptr,const char* jsonstring,int debug) {
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  if (!params->parseJSONString(jsonstring))
+    return 0;
+
+  int mode=params->getIntValue("mode",0);
+  float threshold=params->getFloatValue("threshold",5.0);
+  float x[3];
+  x[0]=params->getFloatValue("x",0.0);
+  x[1]=params->getFloatValue("y",0.0);
+  x[2]=params->getFloatValue("z",0.0);
+
+  float length=params->getFloatValue("length",10.0);
+  if (debug)
+    std::cout << "mode=" << mode << ", threshold=" << threshold << " target=(" << x[0] << "," << x[1] << "," << x[2] << ")" << " length=" << length <<  std::endl;
+
+  
+  std::shared_ptr<bisSimpleMatrix<float> > source(new bisSimpleMatrix<float>("source_points_json"));
+  if (!source->linkIntoPointer(source_ptr))
+    return 0;
+
+  std::unique_ptr<bisSimpleMatrix<float> > output_points(new bisSimpleMatrix<float>("output_points"));
+
+  bisPointLocator* locator=new bisPointLocator();
+  locator->initialize(source,length,0);
+  
+  if (mode<1) {
+    float y[3];
+    if (debug)
+      std::cout << "Looking for nearest point to " << x[0] << "," << x[1] << "," << x[2] << std::endl;
+    int ok=locator->getNearestPoint(x,y,debug);
+    output_points->zero(1,3);
+    float* out=output_points->getData();
+    out[0]=y[0];
+    out[1]=y[1];
+    out[2]=y[2];
+  } else {
+    std::vector<int> plist;
+    int np=locator->getPointsWithinRadius(x,threshold,plist);
+    
+    if (np>0) {
+      output_points->zero(np,3);
+      float* inp=source->getData();
+      float* out=output_points->getData();
+      for (int i=0;i<np;i++) {
+        int index=plist[i];
+        for (int ia=0;ia<=2;ia++) 
+          out[i*3+ia]=inp[index*3+ia];
+      }
+    } else {
+      output_points->zero(1,1);
+    }
+  }
+  delete locator;
+  return output_points->releaseAndReturnRawArray();
 
 }

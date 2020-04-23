@@ -37,7 +37,7 @@ bisPointLocator::~bisPointLocator(){
 
 // ---------------------------------------------------------------------------------------------------
 // Initialize Locator
-int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_points,float length) {
+int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_points,float length,int debug) {
 
   int cols=in_points->getNumCols();
   int rows=in_points->getNumRows();
@@ -49,6 +49,9 @@ int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_poin
   this->points=in_points;
   int numberofpoints=rows;
 
+  if (debug)
+    std::cout << std::endl << "___ Building Locator. NumPoints=" << numberofpoints << std::endl;
+  
   float minc[3],maxc[3];
   float* pts=this->points->getData();
 
@@ -68,19 +71,30 @@ int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_poin
     }
   }
 
+  if (debug) {
+    std::cout << "___ Bounds = " << minc[0] << ":" << maxc[0] << std::endl;
+    std::cout << "           = " << minc[1] << ":" << maxc[1] << std::endl;
+    std::cout << "           = " << minc[2] << ":" << maxc[2] << std::endl;
+  }
+  
   for (int ia=0;ia<=2;ia++) {
     
     float l=maxc[ia]-minc[ia];
     
     this->dimensions[ia]=int( l/length)+1;
     this->spacing[ia]=1.01*(maxc[ia]-minc[ia])/float(this->dimensions[ia]);
-    this->origin[ia]=minc[ia];
+    this->origin[ia]=minc[ia]-0.005*this->spacing[ia];
     float upper=this->origin[ia]+this->dimensions[ia]*this->spacing[ia];
-    std::cout << "+++ Axis = " << ia << " origin=" << this->origin[ia] << " spacing=" << this->spacing[ia] << " dims=" << this->dimensions[ia] << " upper=" << upper << std::endl;
+    if (debug) {
+      std::cout << "___ Axis = " << ia << " origin=" << this->origin[ia] << " spacing=" << this->spacing[ia] << " dims=" << this->dimensions[ia] << " upper=" << upper << std::endl;
+    }
   }
 
   int numbins=this->dimensions[0]*this->dimensions[1]*this->dimensions[2];
   this->indices.clear();
+
+  if (debug) 
+    std::cout << "___ numbins = " << numbins << std::endl;
   
   for (int i=0;i<numbins;i++) {
     std::vector<int> a;
@@ -88,18 +102,31 @@ int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_poin
   }
 
   int strides[3] = { 1, this->dimensions[0], this->dimensions[0]*this->dimensions[1] };
+
+  int step=numberofpoints/3;
   
   for (int index=0;index<numberofpoints;index++) {
 
     float pt[3];
     int bin=0;
+
+    if (debug && index % step ==0 ) 
+      std::cout << "___\n___ adding point " << index << "/" << numberofpoints << std::endl << "___    ";
+    
     for (int ia=0;ia<=2;ia++)
+      
       {
         pt[ia]=pts[index*3+ia];
         int lattice=bisUtil::irange(int( (pt[ia]-origin[ia])/spacing[ia]),0,this->dimensions[ia]-1);
         bin=bin+lattice*strides[ia];
+        if (debug && index % step ==0 ) {
+          std::cout << "ia=" << ia << " p=" << pt[ia] << "-->" << lattice << ",   ";
+        }
       }
     this->indices[bin].push_back(index);
+    if (debug && index % step ==0 ) {
+      std::cout << std::endl << "___    bin=" << bin << std::endl;
+    }
   }
 
   return 1;
@@ -107,13 +134,27 @@ int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_poin
 
 // -------------------------------------------------------------------------------------------------------------------
 // Find the nearest point to input in bin=bin
-int bisPointLocator::findNearestPointInBin(float input[3],float* pts,int bin,float& mindist2) {
+int bisPointLocator::findNearestPointInBin(float input[3],
+                                           float* pts,int bin,
+                                           float& mindist2,int debug) {
 
   std::vector<int> bin_indices=this->indices[bin];
   mindist2=0.0f;
   int bestpoint=-1;
 
+  if (debug) {
+    std::cout << "____ Looking for point = " << input[0] << "," << input[1] << "," << input[2] << " in bin " << bin << " numpoints=" << bin_indices.size() << std::endl;
+    if (bin_indices.size()<20 && bin_indices.size()>0) {
+      std::cout << "\t\t :";
+      for (int i=0;i<bin_indices.size();i++) 
+        std::cout << bin_indices[i] << " ";
+      std::cout << std::endl;
+    }
+  }
+  
   if (bin_indices.size()<1) {
+    if (debug)
+      std::cout << "____ Empty, returning -1" << std::endl;
     return -1;
   }
   
@@ -134,13 +175,21 @@ int bisPointLocator::findNearestPointInBin(float input[3],float* pts,int bin,flo
     }
   }
 
+  if (debug) {
+    float p[3];
+    for (int ia=0;ia<=2;ia++) {
+      p[ia]=pts[bestpoint*3+ia];
+    }
+    
+    std::cout << "_____ returning bestpoint=" << bestpoint << "(" << p[0] << "," << p[1] << "," << p[2] << "), mindist2=" << mindist2 << std::endl;
+  }
   return bestpoint;
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 // add all points in bin=bin that are closer than T to input to pointlist
 //
-int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int> pointlist) {
+int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int> pointlist,int debug) {
 
   std::vector<int> bin_indices=this->indices[bin];
   int added=0;
@@ -169,7 +218,7 @@ int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin
 // -------------------------------------------------------------------------------------------------------------------
 // Find nearest point in bin boundary to input -- essentially project to corner or plane
 // return distance
-float bisPointLocator::getClosestBoundaryPointDistance(float input[3],int lattice[3]) {
+float bisPointLocator::getClosestBoundaryPointDistance(float input[3],int lattice[3],int debug) {
 
   float dist2=0.0;
   
@@ -192,7 +241,7 @@ float bisPointLocator::getClosestBoundaryPointDistance(float input[3],int lattic
 // -------------------------------------------------------------------------------------------------------------------
 // find all points with distance < radius to input
 //
-int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vector<int> pointlist)
+int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vector<int> pointlist,int debug)
 {
   pointlist.clear();
   if (this->dimensions[0]<1)
@@ -228,71 +277,93 @@ int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vect
 // -------------------------------------------------------------------------------------------------------------------
 // find the nearest point
 //
-int bisPointLocator::getNearestPoint(float input[3],float output[3]) {
+int bisPointLocator::getNearestPoint(float input[3],float output[3],int debug) {
   if (this->dimensions[0]<1)
     return -1;
   
 
   int strides[3] = { 1, this->dimensions[0], this->dimensions[0]*this->dimensions[1] };
-  float* pts=this->points->getData();
-  
   int lattice[3];
   for (int ia=0;ia<=2;ia++)  {
-    lattice[ia]=bisUtil::irange(int( (input[ia]-origin[ia])/spacing[ia]),0,this->dimensions[ia]-1);
+    lattice[ia]=bisUtil::irange(int( (input[ia]-this->origin[ia])/this->spacing[ia]),0,this->dimensions[ia]-1);
   }
-
+  int latticeindex=lattice[0]+lattice[1]*strides[1]+lattice[2]*strides[2];
+  if (debug) {
+    std::cout << "__ Point= " << input[0] << "," << input[1] << "," << input[2] << std::endl;
+    std::cout << "__ Lattice= " << lattice[0] << "," << lattice[1] << "," << lattice[2] << std::endl;
+    std::cout << "__ Lattice Index=" << latticeindex << std::endl;
+  }
+    
+  
   std::stack<int>  stack;
-  stack.push(lattice[0]+lattice[1]*strides[1]+lattice[2]*strides[2]);
-  std::vector<int> visted(this->dimensions[0]*this->dimensions[1]*this->dimensions[2],0);
+  stack.push(latticeindex);
+  std::vector<int> visited(this->dimensions[0]*this->dimensions[1]*this->dimensions[2],0);
   
   float mindist2=0.0;
   int bestpoint=-1;
+  float* pts=this->points->getData();
 
-  while (stack.size()<1) { 
+  if (debug)
+    std::cout << "Stack Size=" << stack.size() << std::endl;
+
+  int numvisits=0;
+  
+  while (stack.size()>0) {
+
+    ++numvisits;
     
-    int found=0;
     int currentbin=stack.top();
-    stack.pop();
+    if (debug) 
+      std::cout << std::endl << "_____ Stack=" << stack.size() << " looking at bin=" << currentbin << std::endl;
 
+    stack.pop();
+    int lattice[3];
+    lattice[2]=int(currentbin/ strides[2]);
+    int tmp=currentbin % strides[2];
+    lattice[1]=int( tmp / strides[1]);
+    lattice[0]=tmp % strides[1];
+
+    if (debug) 
+      std::cout << "___ Lattice = " << lattice[0] << "," << lattice[1] << "," << lattice[2] << " --> " << currentbin << std::endl;
+        
+    
     float dist2=0.0;
-    int nearest=this->findNearestPointInBin(input,pts,currentbin,dist2);
+    int nearest=this->findNearestPointInBin(input,pts,currentbin,dist2,debug);
+    visited[currentbin]=1;
     if (nearest>=0 && (dist2< mindist2 || bestpoint==-1)) {
       mindist2=dist2;
       bestpoint=nearest;
-      found=1;
     }
-    
-    if (found==1 || bestpoint<0) {
 
-      int lattice[3];
-      lattice[2]=int(currentbin/ strides[2]);
-      int tmp=currentbin % strides[2];
-      lattice[1]=int( tmp / strides[1]);
-      lattice[0]=tmp % strides[1];
-      
-      // check neighbors and add them
-      for (int axis=0;axis<=2;axis++)
-        {
-          
-          for (int shift=-1;shift<=1;shift+=2)
-            {
-              
-              int newlat[3] = { lattice[0],lattice[1],lattice[2] };
-              newlat[axis]=lattice[axis]+shift;
-              if (newlat[axis]>=0 && newlat[axis] < this->dimensions[axis])
-                {
-                  if (bestpoint==0) {
+    if (debug)
+      std::cout << "__ Checking neighbors mind2=" << mindist2 << " bestpoint=" << bestpoint << std::endl;
+    
+    // check neighbors and add them
+    for (int axis=0;axis<=2;axis++)
+      {
+        for (int shift=-1;shift<=1;shift+=2)
+          {
+            int newlat[3] = { lattice[0],lattice[1],lattice[2] };
+            newlat[axis]=lattice[axis]+shift;
+            if (newlat[axis]>=0 && newlat[axis] < this->dimensions[axis])
+              {
+                int latindex=newlat[0]+newlat[1]*strides[1]+newlat[2]*strides[2];
+                if (debug)
+                  std::cout << "____ Checking lattice = " << newlat[0] << "," << newlat[1] << "," << newlat[2] << "-->" << latindex << ", visited=" << visited[latindex] << std::endl;
+                if (visited[latindex]==0) {
+                  float d2=this->getClosestBoundaryPointDistance(input,newlat);
+                  if (d2<mindist2 || bestpoint<0)  {
+                    if (debug)
+                      std::cout << "____     ADDING lattice = " << newlat[0] << "," << newlat[1] << "," << newlat[2] << ", mindistance= " << d2 << std::endl;
                     stack.push(newlat[0]+newlat[1]*strides[1]+newlat[2]*strides[2]);
-                  } else {
-                    float d2=this->getClosestBoundaryPointDistance(input,newlat);
-                    if (d2<mindist2) 
-                      stack.push(newlat[0]+newlat[1]*strides[1]+newlat[2]*strides[2]);
+                  } else if (debug) {
+                    std::cout << "____      NOT adding lattice = " << newlat[0] << "," << newlat[1] << "," << newlat[2] << ", mindistance= " << d2 << std::endl;
+                    
                   }
                 }
-            }
-        }
-    }
-
+              }
+          }
+      }
   }
 
   if (bestpoint>=0) {
@@ -302,6 +373,10 @@ int bisPointLocator::getNearestPoint(float input[3],float output[3]) {
 
   }
 
+  if (debug) {
+    std::cout << "____ numvisits=" << numvisits << std::endl;
+  }
+  
   return bestpoint;
 }
 
