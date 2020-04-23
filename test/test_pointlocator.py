@@ -33,17 +33,25 @@ import biswebpython.core.bis_baseutils as bis_baseutils;
 libbis=bis_baseutils.getDynamicLibraryWrapper();
 
 
-fname0=my_path+'/../test/testdata/pointlocator/brain.json';
-fname1=my_path+'/../test/testdata/pointlocator/result.json';
+fname1=my_path+'/../test/testdata/pointlocator/brain.json';
+fname2=my_path+'/../test/testdata/pointlocator/result.json';
+fname3=my_path+'/../test/testdata/pointlocator/result2.json';
+fname4=my_path+'/../test/testdata/pointlocator/result3.json';
 
-print('fname0=',fname0);
-print('fname1=',fname1);
+
 print('____________________________________________________');
-file1=open(fname0); text1=file1.read(); brain=json.loads(text1);
-file2=open(fname1); text2=file2.read(); results=json.loads(text2); 
+file1=open(fname1); text1=file1.read(); brain=json.loads(text1);
+file2=open(fname2); text2=file2.read(); results1=json.loads(text2);
+file3=open(fname3); text3=file3.read(); results2=json.loads(text3);
+file4=open(fname4); text4=file4.read(); results3=json.loads(text4); 
 
+all_results=[results1,results2,results3 ];
 
-print(results);
+print('');
+print(all_results[0]);
+print('');
+print(all_results[1]);
+print('');
 
 arr=np.asarray(brain['points'],dtype=np.float32);
 print(arr.shape);
@@ -52,11 +60,12 @@ rows=int(l/3);
 cols=3
 
 points=np.reshape(arr,[ rows,cols ]);
-
+print('____________________________________________________');
+print('Num points= ',rows, ' file=',fname1);
 print("Points 0 & 2 = ",points[0,:], points[2,:])
 print('____________________________________________________');
 
-numtestpoints=len(results['points']);
+
 
 
 
@@ -64,9 +73,10 @@ class TestPointLocator(unittest.TestCase):
 
     def test_nearest(self):
 
+        results=results1;
         passed=0;
         tested=0;
-        
+        numtestpoints=len(results['points']);        
         for i in range(0,numtestpoints):
             print('____________________________________________________');
             print('\n');
@@ -88,75 +98,93 @@ class TestPointLocator(unittest.TestCase):
                 sum=sum+abs(gold[ia]-out[0][ia]);
             
             print('\t output=',out,' gold=',gold,' diff=',sum);
+            tested=tested+1;
+            
             if (sum<0.01):
                 passed=passed+1;
-            tested=tested+1;
+                print('_____ P A S S E D ____\n');
+            else:
+                print('_____ F A I L E D ____\n');
+
             
         self.assertEqual(passed,tested);
 
     def test_radius(self):
 
+
         passed=0;
         tested=0;
-        
-        for i in range(0,numtestpoints):
+
+        for tp in range(0,3):
+            results=all_results[tp];
+            numtestpoints=len(results['points']);        
             print('____________________________________________________');
-            print('\n');
-            print('Point '+str(i+1)+' (location) = ', results['points'][i]['location']);
-            print('\t (nearest) ', results['points'][i]['nearest']);
-            print('\t (numneighbors) ', results['points'][i]['numneighbors']);
-            print('\t (neighbors) ', results['points'][i]['neighbors']);
+            print(' Test ',tp, 'threshold=',results['threshold'], ' numtestpoints=',numtestpoints)
+        
+            for i in range(0,numtestpoints):
+                print('____________________________________________________');
+                print('\n');
+                print('Point '+str(i+1)+' (location) = ', results['points'][i]['location']);
+                print('\t (nearest) ', results['points'][i]['nearest']);
+                print('\t (numneighbors) ', results['points'][i]['numneighbors']);
+                print('\t (neighbors) ', results['points'][i]['neighbors']);
+                
+                outpoints = libbis.testPointLocatorWASM(points,
+                                                        {
+                                                            "mode" : 1,
+                                                            "x" : results['points'][i]['location'][0],
+                                                            "y" : results['points'][i]['location'][1],
+                                                            "z" : results['points'][i]['location'][2],
+                                                            "length" : 20.0,
+                                                            "threshold" : results['threshold']
+                                                        },0);
+                outindices = libbis.testPointLocatorWASM(points,
+                                                         {
+                                                             "mode" : 2,
+                                                             "x" : results['points'][i]['location'][0],
+                                                             "y" : results['points'][i]['location'][1],
+                                                             "z" : results['points'][i]['location'][2],
+                                                             "length" : 20.0,
+                                                             "threshold" : results['threshold']
+                                                         },0);
+                
+                gold = results['points'][i]['neighbors'];
+                tested=tested+1;
+                
+                if (results['points'][i]['numneighbors']>0):
             
-            outpoints = libbis.testPointLocatorWASM(points,
-                                              {
-                                                  "mode" : 1,
-                                                  "x" : results['points'][i]['location'][0],
-                                                  "y" : results['points'][i]['location'][1],
-                                                  "z" : results['points'][i]['location'][2],
-                                                  "length" : 20.0,
-                                                  "threshold" : results['threshold']
-                                              },0);
-            outindices = libbis.testPointLocatorWASM(points,
-                                                  {
-                                                      "mode" : 2,
-                                                      "x" : results['points'][i]['location'][0],
-                                                      "y" : results['points'][i]['location'][1],
-                                                      "z" : results['points'][i]['location'][2],
-                                                      "length" : 20.0,
-                                                      "threshold" : results['threshold']
-                                                  },0);
-
-            gold = results['points'][i]['neighbors'];
-
-            if (results['points'][i]['numneighbors']>0):
-            
-                output=np.concatenate([ outpoints.astype(np.float64),
-                                        outindices.astype(np.float64) ],axis=1);
-                
-                gold=np.reshape(np.asarray(gold,dtype=np.float64),output.shape);
-                
-                
-                output=output[np.argsort(output[:, 3])];
-                gold=gold[np.argsort(output[:, 3])];
-                
-                
-                print('Output=',output);
-                print('Gold=',gold);
-                
-                
-                dl=output.flatten()-gold.flatten();
-                diff=max(np.amax(dl),-np.amin(dl));
-                if (diff<0.001):
-                    passed=passed+1;
-                    print('Difference',diff);
-            else:
-                if (outindices[0][0]==-1):
-                    passed=passed+1;
-                    print('No Neighbors found',outindices)
-
-
+                    output=np.concatenate([ outpoints.astype(np.float64),
+                                            outindices.astype(np.float64) ],axis=1);
                     
-            tested=tested+1;
+                    gold=np.reshape(np.asarray(gold,dtype=np.float64),output.shape);
+                    
+                    
+                    output=output[np.argsort(output[:, 3])];
+                    gold=gold[np.argsort(gold[:, 3])];
+                    
+                    
+                    print('Output=',output);
+                    print('Gold=',gold);
+                    
+                    
+                    dl=output.flatten()-gold.flatten();
+                    
+                    diff=max(np.amax(dl),-np.amin(dl));
+                    print('Difference',diff);
+                    if (diff<0.001):
+                        print('_____ P A S S E D ____\n');
+                        passed=passed+1;
+                    else:
+                        print('_____ F A I L E D ____\n');
+                else:
+                    if (outindices[0][0]==-1):
+                        passed=passed+1;
+                        print('No Neighbors found',outindices)
+                        print('_____ P A S S E D ____\n');
+                    else:
+                        print('_____ F A I L E D ____\n');
+
+                
             
         self.assertEqual(passed,tested);
         
