@@ -103,7 +103,7 @@ const print_matrices=function(matrices,threshold,names=['','' ]) {
 
 };
 
-describe('Testing linear transformation (bis_transformationutil.js) and image resampling/reslicing (bis_imagesmoothresample.js)\n', function() {
+describe('Testing landmark transformation creation\n', function() {
 
     this.timeout(50000);    
     let image = new BisWebImage();
@@ -172,26 +172,19 @@ describe('Testing linear transformation (bis_transformationutil.js) and image re
             print_matrices([ tr_js.getMatrix() ],1e-4, [ `original_${md}` ]);
             
             const targ_pts=transform_points(source_pts,tr_js);
-            let tmp=libbiswasm.computeLandmarkTransformWASM(source_pts,targ_pts,{ 'mode' : mode },0);
-            console.log('_________________________________________________');
-            const land_tr=new BisWebLinearTransformation();
-            const t=util.zero(4,4);
-            for (let i=0;i<=3;i++) {
-                for (let j=0;j<=3;j++) {
-                    t[i][j]=tmp.getDataArray()[i*4+j];
-                }
-            }
+            let output_js=libbiswasm.computeLandmarkTransformWASM(source_pts,targ_pts,{ 'mode' : mode },1);
+
 
             maxd[mode]=0.0;
             for (let i=0;i<=3;i++) {
                 for (let j=0;j<=3;j++) {
-                    let v=Math.abs(t[i][j]-tr_js.getMatrix()[i][j]);
+                    let v=Math.abs(output_js.getMatrix()[i][j]-tr_js.getMatrix()[i][j]);
                     if (maxd[mode]<v)
                         maxd[mode]=v;
                 }
             }
             
-            const matrices= [  tr_js.getMatrix(), t ];
+            const matrices= [  tr_js.getMatrix(), output_js.getMatrix() ];
             print_matrices(matrices,1e-4, [ 'original','estimated' ]);
             console.log('___ Maximum difference = ',maxd[mode]);
         }

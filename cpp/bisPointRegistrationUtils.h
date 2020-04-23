@@ -35,7 +35,7 @@ namespace bisPointRegistrationUtils {
   int computeLandmarkTransformation(bisSimpleMatrix<float>* RawSourceLandmarks,
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
-                                    bisMatrixTransformation* Output);
+                                    bisMatrixTransformation* Output,int debug=0);
 
 }
 
@@ -50,12 +50,12 @@ extern "C" {
   BISEXPORT unsigned char* computeLandmarkTransformWASM(unsigned char* source, unsigned char* target,const char* jsonstring,int debug);
 
   
-/** Test Point Locator
- * @param RawPoints the source points (Nx3)
- * @param paramobj { mode 0=nearest,1=threshold, threshold = 5.0, x,y,z = point }
- * @param Output the output points
- */
-// BIS: { 'testPointLocatorWASM', 'Matrix', [ 'Matrix', 'ParamObj', 'debug' ] }
+  /** Test Point Locator
+   * @param RawPoints the source points (Nx3)
+   * @param paramobj { mode 0=nearest,1=threshold, threshold = 5.0, x,y,z = point }
+   * @param Output the output points
+   */
+  // BIS: { 'testPointLocatorWASM', 'Matrix', [ 'Matrix', 'ParamObj', 'debug' ] }
   BISEXPORT unsigned char* testPointLocatorWASM(unsigned char* source_ptr,const char* jsonstring,int debug);
 }
 

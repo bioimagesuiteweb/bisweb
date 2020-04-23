@@ -29,10 +29,10 @@ namespace bisPointRegistrationUtils {
   int computeLandmarkTransformation(bisSimpleMatrix<float>* RawSourceLandmarks,
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
-                                    bisMatrixTransformation* Output)
+                                    bisMatrixTransformation* OutputTransformation,int debug)
     
   {
-    Output->identity();
+    OutputTransformation->identity();
 
     if (!RawSourceLandmarks  || !RawTargetLandmarks) 
       return 0;
@@ -46,9 +46,14 @@ namespace bisPointRegistrationUtils {
       std::cerr << "Update: Source and Target Landmarks contain a different number of points or not enough points (" << N_PTS << "," << N_COLS <<")" << std::endl;
       return 0;
     }
+
+    if (debug) {
+      std::cout << "___ Compute Landmark Transform: Source and Target Landmarks have the same number of points  (" << N_PTS << "," << N_COLS <<")" << std::endl;
+      std::cout << "___ Mode = " << mode << std::endl;
+    }
   
-    Eigen::Matrix4f Source=bisEigenUtil::mapToEigenMatrix(RawSourceLandmarks);
-    Eigen::Matrix4f Target=bisEigenUtil::mapToEigenMatrix(RawTargetLandmarks);
+    Eigen::MatrixXf Source=bisEigenUtil::mapToEigenMatrix(RawSourceLandmarks);
+    Eigen::MatrixXf Target=bisEigenUtil::mapToEigenMatrix(RawTargetLandmarks);
   
     // --- compute the necessary transform to match the two sets of landmarks ---
 
@@ -80,16 +85,22 @@ namespace bisPointRegistrationUtils {
     target_centroid[1] /= N_PTS;
     target_centroid[2] /= N_PTS;
 
+    if (debug) {
+      std::cout << "___ Source Centroid = " << source_centroid[0] << "," << source_centroid[1] << "," << source_centroid[2] << std::endl;
+      std::cout << "___ Target Centroid = " << target_centroid[0] << "," << target_centroid[1] << "," << target_centroid[2] << std::endl;
+    }
+    
     // -- build the 3x3 matrix M --
   
-    Eigen::Matrix4f M=Eigen::Matrix4f::Zero(3,3);
-    Eigen::Matrix4f AAT=Eigen::Matrix4f::Zero(3,3);
 
-    for (int i = 0; i < 3; i++) {
-      AAT(i,0) = M(i,0) = 0.0F; // fill M with zeros
-      AAT(i,1) = M(i,1) = 0.0F;
-      AAT(i,2) = M(i,2) = 0.0F;
+    float M[3][3];
+    float AAT[3][3];
+    for (int i = 0; i < 3; i++)  {
+      AAT[i][0] = M[i][0] = 0.0F; // fill M with zeros
+      AAT[i][1] = M[i][1] = 0.0F;
+      AAT[i][2] = M[i][2] = 0.0F;
     }
+    
     float a[3], b[3];
     float sa = 0.0F, sb = 0.0F;
     for (int pt = 0; pt < N_PTS; pt++) {
@@ -107,27 +118,26 @@ namespace bisPointRegistrationUtils {
       b[2] -= target_centroid[2];
       // accumulate the products a*T(b) into the matrix M
       for (int i = 0; i < 3; i++) {
-        M(i,0) += a[i] * b[0];
-        M(i,1) += a[i] * b[1];
-        M(i,2) += a[i] * b[2];
-      
+        M[i][0] += a[i] * b[0];
+        M[i][1] += a[i] * b[1];
+        M[i][2] += a[i] * b[2];
+        
         // for the affine transform, compute ((a.a^t)^-1 . a.b^t)^t.
         // a.b^t is already in M.  here we put a.a^t in AAT.
-        if (mode == 2) {
-          AAT(i,0) += a[i] * a[0];
-          AAT(i,1) += a[i] * a[1];
-          AAT(i,2) += a[i] * a[2];
+        if (mode == 2 ) { 
+          AAT[i][0] += a[i] * a[0];
+          AAT[i][1] += a[i] * a[1];
+          AAT[i][2] += a[i] * a[2];
         }
       }
-      // accumulate scale factors (if desired)
+    // accumulate scale factors (if desired)
       sa += a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
       sb += b[0] * b[0] + b[1] * b[1] + b[2] * b[2];
     }
-  
+
     // if source or destination is degenerate then only report
     // translation
     if (sa == 0.0 || sb == 0.0) {
-
       bisUtil::mat44 Mat44;
       for (int i=0;i<=3;i++) {
         for (int j=0;j<=3;j++) {
@@ -141,63 +151,95 @@ namespace bisPointRegistrationUtils {
       Mat44[0][3] = target_centroid[0] - source_centroid[0];
       Mat44[1][3] = target_centroid[1] - source_centroid[1];
       Mat44[2][3] = target_centroid[2] - source_centroid[2];
-      Output->setMatrix(Mat44);
+      OutputTransformation->setMatrix(Mat44);
 
       return 1;
     }
 
-    Eigen::Matrix4f Matrix=Eigen::Matrix4f::Zero(4,4);
-    Matrix(3,3)=1;
+    Eigen::MatrixXf E_M=Eigen::MatrixXf(3,3);
+    Eigen::MatrixXf E_AAT=Eigen::MatrixXf(3,3);
+    for (int i=0;i<=2;i++) {
+      for (int j=0;j<=2;j++) {
+        E_M(i,j)=M[i][j];
+        E_AAT(i,j)=AAT[i][j];
+      }
+    }
+    
+    Eigen::MatrixXf OutputMatrix(4,4);
+    OutputMatrix(3,3)=1;
     
   
     if (mode == 2)
       {
-        M=AAT.inverse()*M;
-        // AAT = (a.a^t)^-1
-        //vtkMath::Invert3x3(AAT, AAT);
-      
-        // M = (a.a^t)^-1 . a.b^t
-        //vtkMath::Multiply3x3(AAT, M, M);
-      
+        E_M=E_AAT.inverse()*E_M;
         // Matrix = M^t
         for (int i = 0; i < 3; ++i)
           for (int j = 0; j < 3; ++j)
-            Matrix(i,j) = M(j,i);
+            OutputMatrix(i,j) = E_M(j,i);
       }
     else
       {
         // compute required scaling factor (if desired)
         float scale = (float)sqrt(sb / sa);
-        Eigen::Matrix4f N=Eigen::Matrix4f::Zero(4,4);
-        // -- build the 4x4 matrix N --
-
+        std::cout << "___ Scale=" << scale << std::endl;
+        
+        float N[4][4];
+        for (int i = 0; i < 4; i++) {
+          N[i][0] = 0.0F; // fill N with zeros
+          N[i][1] = 0.0F;
+          N[i][2] = 0.0F;
+          N[i][3] = 0.0F;
+        }
         // on-diagonal elements
-        N(0,0) = M(0,0) + M(1,1) + M(2,2);
-        N(1,1) = M(0,0) - M(1,1) - M(2,2);
-        N(2,2) = -M(0,0) + M(1,1) - M(2,2);
-        N(3,3) = -M(0,0) - M(1,1) + M(2,2);
+        N[0][0] = M[0][0] + M[1][1] + M[2][2];
+        N[1][1] = M[0][0] - M[1][1] - M[2][2];
+        N[2][2] = -M[0][0] + M[1][1] - M[2][2];
+        N[3][3] = -M[0][0] - M[1][1] + M[2][2];
         // off-diagonal elements
-        N(0,1) = N(1,0) = M(1,2) - M(2,1);
-        N(0,2) = N(2,0) = M(2,0) - M(0,2);
-        N(0,3) = N(3,0) = M(0,1) - M(1,0);
+        N[0][1] = N[1][0] = M[1][2] - M[2][1];
+        N[0][2] = N[2][0] = M[2][0] - M[0][2];
+        N[0][3] = N[3][0] = M[0][1] - M[1][0];
+        
+        N[1][2] = N[2][1] = M[0][1] + M[1][0];
+        N[1][3] = N[3][1] = M[2][0] + M[0][2];
+        N[2][3] = N[3][2] = M[1][2] + M[2][1];
+        
+        // -- build the 4x4 matrix N --
+        Eigen::MatrixXf NMat(4,4);
+        for (int i=0;i<=3;i++)
+          for (int j=0;j<=3;j++)
+            NMat(i,j)=N[i][j];
+          
       
-        N(1,2) = N(2,1) = M(0,1) + M(1,0);
-        N(1,3) = N(3,1) = M(2,0) + M(0,2);
-        N(2,3) = N(3,2) = M(1,2) + M(2,1);
-      
-        // -- eigen-decompose N (is symmetric) --
-      
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix4f> eigensolver(N);
-        Eigen::Matrix4f eigenvectors=eigensolver.eigenvectors();
-        Eigen::Vector4f eigenvalus=eigensolver.eigenvalues();
-      
+        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> eigensolver(NMat);
+        Eigen::MatrixXf eigenvectors=eigensolver.eigenvectors();
+        Eigen::VectorXf eigenvalues=eigensolver.eigenvalues();
+
+        if (debug) { 
+          std::cout << "___ Eigenvalues=" << eigenvalues << std::endl << std::endl;
+          std::cout << "___ Eigenvectors=" << eigenvectors << std::endl;
+        }
+
+        float maxeigen=eigenvalues(0);
+        int maxindex=0;
+        for (int i=1;i<=3;i++) {
+          if (eigenvalues(i)>maxeigen) {
+            maxeigen=eigenvalues(i);
+            maxindex=i;
+          }
+        }
+
+        if (debug) 
+          std::cout << "___ Max Eigen value=" << maxeigen << "( at index=" << maxindex << ")" << std::endl;
+        
+        
         // the eigenvector with the largest eigenvalue is the quaternion we want
         // (they are sorted in decreasing order for us by JacobiN)
         // Find largest eigenvalue
-        float w = eigenvectors(0,0);
-        float x = eigenvectors(1,0);
-        float y = eigenvectors(2,0);
-        float z = eigenvectors(3,0);
+        float w = eigenvectors(0,maxindex);
+        float x = eigenvectors(1,maxindex);
+        float y = eigenvectors(2,maxindex);
+        float z = eigenvectors(3,maxindex);
       
         // convert quaternion to a rotation matrix
       
@@ -214,53 +256,55 @@ namespace bisPointRegistrationUtils {
         float xz = x * z;
         float yz = y * z;
       
-        Matrix(0,0) = ww + xx - yy - zz;
-        Matrix(1,0) = 2.0 * (wz + xy);
-        Matrix(2,0) = 2.0 * (-wy + xz);
+        OutputMatrix(0,0) = ww + xx - yy - zz;
+        OutputMatrix(1,0) = 2.0 * (wz + xy);
+        OutputMatrix(2,0) = 2.0 * (-wy + xz);
       
-        Matrix(0,1) = 2.0 * (-wz + xy);
-        Matrix(1,1) = ww - xx + yy - zz;
-        Matrix(2,1) = 2.0 * (wx + yz);
+        OutputMatrix(0,1) = 2.0 * (-wz + xy);
+        OutputMatrix(1,1) = ww - xx + yy - zz;
+        OutputMatrix(2,1) = 2.0 * (wx + yz);
       
-        Matrix(0,2) = 2.0 * (wy + xz);
-        Matrix(1,2) = 2.0 * (-wx + yz);
-        Matrix(2,2) = ww - xx - yy + zz;
-      
+        OutputMatrix(0,2) = 2.0 * (wy + xz);
+        OutputMatrix(1,2) = 2.0 * (-wx + yz);
+        OutputMatrix(2,2) = ww - xx - yy + zz;
+
         if (mode != 0) {
+          std::cout << "___ Adding Scale=" << scale << std::endl;
           // add in the scale factor (if desired)
           for (int i = 0; i < 3; i++)
             {
-              Matrix(i,0) *= scale;
-              Matrix(i,1) *= scale;
-              Matrix(i,2) *= scale;
+              OutputMatrix(i,0) *= scale;
+              OutputMatrix(i,1) *= scale;
+              OutputMatrix(i,2) *= scale;
             }
         }
       }
   
     // the translation is given by the difference in the transformed source
     // centroid and the target centroid
-    float sx, sy, sz;
+    float sx = OutputMatrix(0,0) * source_centroid[0] +    OutputMatrix(0,1) * source_centroid[1] +    OutputMatrix(0,2) * source_centroid[2];
+    float sy = OutputMatrix(1,0) * source_centroid[0] +    OutputMatrix(1,1) * source_centroid[1] +    OutputMatrix(1,2) * source_centroid[2];
+    float sz = OutputMatrix(2,0) * source_centroid[0] +    OutputMatrix(2,1) * source_centroid[1] +    OutputMatrix(2,2) * source_centroid[2];
   
-    sx = Matrix(0,0) * source_centroid[0] +    Matrix(0,1) * source_centroid[1] +    Matrix(0,2) * source_centroid[2];
-    sy = Matrix(1,0) * source_centroid[0] +    Matrix(1,1) * source_centroid[1] +    Matrix(1,2) * source_centroid[2];
-    sz = Matrix(2,0) * source_centroid[0] +    Matrix(2,1) * source_centroid[1] +    Matrix(2,2) * source_centroid[2];
-  
-    Matrix(0,3) = target_centroid[0] - sx;
-    Matrix(1,3) = target_centroid[1] - sy;
-    Matrix(2,3) = target_centroid[2] - sz;
-  
-    // fill the bottom row of the 4x4 matrix
-    Matrix(3,0) = 0.0;
-    Matrix(3,1) = 0.0;
-    Matrix(3,2) = 0.0;
-    Matrix(3,3) = 1.0;
+    OutputMatrix(0,3) = target_centroid[0] - sx;
+    OutputMatrix(1,3) = target_centroid[1] - sy;
+    OutputMatrix(2,3) = target_centroid[2] - sz;
 
+    // fill the bottom row of the 4x4 matrix
+    OutputMatrix(3,0) = 0.0;
+    OutputMatrix(3,1) = 0.0;
+    OutputMatrix(3,2) = 0.0;
+    OutputMatrix(3,3) = 1.0;
+
+    if (debug)
+      std::cout << "___ Output = " << OutputMatrix << std::endl;
+    
     bisUtil::mat44 Mat44;
     for (int i=0;i<=3;i++)
       for (int j=0;j<=3;j++)
-        Mat44[i][j]=Matrix(i,j);
+        Mat44[i][j]=OutputMatrix(i,j);
   
-    Output->setMatrix(Mat44);
+    OutputTransformation->setMatrix(Mat44);
     return 1;
   }
 
@@ -283,16 +327,22 @@ unsigned char* computeLandmarkTransformWASM(unsigned char* source_ptr, unsigned 
 
   int mode=params->getIntValue("mode",2);
   if (debug)
-    std::cout << "mode=" << mode << std::endl;
+    std::cout << "___ mode=" << mode << std::endl;
 
   
   std::unique_ptr<bisSimpleMatrix<float> > source(new bisSimpleMatrix<float>("source_points_json"));
   if (!source->linkIntoPointer(source_ptr))
     return 0;
 
+  if (debug)
+    std::cout << "___ Ref Allocated = " << source->getNumRows() << "*" << source->getNumCols() << std::endl;
+  
   std::unique_ptr<bisSimpleMatrix<float> > target(new bisSimpleMatrix<float>("target_points_json"));
   if (!target->linkIntoPointer(target_ptr))
     return 0;
+
+  if (debug) 
+    std::cout << "___ Target Allocated = " << target->getNumRows() << "*" << target->getNumCols() << std::endl;
 
   std::unique_ptr<bisMatrixTransformation> output(new bisMatrixTransformation("output_matrix"));
 
@@ -300,17 +350,18 @@ unsigned char* computeLandmarkTransformWASM(unsigned char* source_ptr, unsigned 
   int result=bisPointRegistrationUtils::computeLandmarkTransformation(source.get(),
                                                                       target.get(),
                                                                       mode,
-                                                                      output.get());
+                                                                      output.get(),debug);
 
   if (debug)
-    std::cout << "Computed ok=" << result << std::endl;
+    std::cout << "___ Computed ok=" << result << std::endl;
   
   if (result==0) {
     return 0;
   }
 
-  std::unique_ptr<bisSimpleMatrix<float> > matrix=output->getSimpleMatrix("outmatrix");
-  return matrix->releaseAndReturnRawArray();
+
+  std::unique_ptr< bisSimpleMatrix<float> > raw_output (output->getSimpleMatrix());
+  return raw_output->releaseAndReturnRawArray();
 
 }
 
@@ -355,7 +406,8 @@ unsigned char* testPointLocatorWASM(unsigned char* source_ptr,const char* jsonst
       float y[3];
       if (debug)
         std::cout << "Looking for nearest point to " << x[0] << "," << x[1] << "," << x[2] << std::endl;
-      int ok=locator->getNearestPoint(x,y,debug);
+
+      locator->getNearestPoint(x,y,debug);
       output_points->zero(1,3);
       float* out=output_points->getData();
       out[0]=y[0];
