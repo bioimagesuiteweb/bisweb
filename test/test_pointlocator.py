@@ -94,3 +94,69 @@ class TestPointLocator(unittest.TestCase):
             
         self.assertEqual(passed,tested);
 
+    def test_radius(self):
+
+        passed=0;
+        tested=0;
+        
+        for i in range(0,numtestpoints):
+            print('____________________________________________________');
+            print('\n');
+            print('Point '+str(i+1)+' (location) = ', results['points'][i]['location']);
+            print('\t (nearest) ', results['points'][i]['nearest']);
+            print('\t (numneighbors) ', results['points'][i]['numneighbors']);
+            print('\t (neighbors) ', results['points'][i]['neighbors']);
+            
+            outpoints = libbis.testPointLocatorWASM(points,
+                                              {
+                                                  "mode" : 1,
+                                                  "x" : results['points'][i]['location'][0],
+                                                  "y" : results['points'][i]['location'][1],
+                                                  "z" : results['points'][i]['location'][2],
+                                                  "length" : 20.0,
+                                                  "threshold" : results['threshold']
+                                              },0);
+            outindices = libbis.testPointLocatorWASM(points,
+                                                  {
+                                                      "mode" : 2,
+                                                      "x" : results['points'][i]['location'][0],
+                                                      "y" : results['points'][i]['location'][1],
+                                                      "z" : results['points'][i]['location'][2],
+                                                      "length" : 20.0,
+                                                      "threshold" : results['threshold']
+                                                  },0);
+
+            gold = results['points'][i]['neighbors'];
+
+            if (results['points'][i]['numneighbors']>0):
+            
+                output=np.concatenate([ outpoints.astype(np.float64),
+                                        outindices.astype(np.float64) ],axis=1);
+                
+                gold=np.reshape(np.asarray(gold,dtype=np.float64),output.shape);
+                
+                
+                output=output[np.argsort(output[:, 3])];
+                gold=gold[np.argsort(output[:, 3])];
+                
+                
+                print('Output=',output);
+                print('Gold=',gold);
+                
+                
+                dl=output.flatten()-gold.flatten();
+                diff=max(np.amax(dl),-np.amin(dl));
+                if (diff<0.001):
+                    passed=passed+1;
+                    print('Difference',diff);
+            else:
+                if (outindices[0][0]==-1):
+                    passed=passed+1;
+                    print('No Neighbors found',outindices)
+
+
+                    
+            tested=tested+1;
+            
+        self.assertEqual(passed,tested);
+        

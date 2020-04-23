@@ -189,11 +189,10 @@ int bisPointLocator::findNearestPointInBin(float input[3],
 // -------------------------------------------------------------------------------------------------------------------
 // add all points in bin=bin that are closer than T to input to pointlist
 //
-int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int> pointlist,int debug) {
+int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T2,std::vector<int>& pointlist,int debug) {
 
   std::vector<int> bin_indices=this->indices[bin];
   int added=0;
-  float T2=T*T;
   
   for (int i=0;i<bin_indices.size();i++) {
     
@@ -205,12 +204,15 @@ int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin
       point[ia]=pts[index*3+ia];
       dist2+=pow(point[ia]-input[ia],2.0f);
     }
-
+    
     if (dist2<=T2) {
+      if (debug)
+        std::cout << "___ Adding "  << point[0] << "," << point[1] << "," << point[2] << " dist2=" << dist2 << " < " << T2 << std::endl;
       pointlist.push_back(index);
       ++added;
     }
   }
+
     
   return added;
 }
@@ -241,7 +243,7 @@ float bisPointLocator::getClosestBoundaryPointDistance(float input[3],int lattic
 // -------------------------------------------------------------------------------------------------------------------
 // find all points with distance < radius to input
 //
-int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vector<int> pointlist,int debug)
+int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vector<int>& pointlist,int debug)
 {
   pointlist.clear();
   if (this->dimensions[0]<1)
@@ -253,9 +255,21 @@ int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vect
     lattice[ia]=bisUtil::irange(int( (input[ia]-origin[ia])/spacing[ia]),0,this->dimensions[ia]-1);
     minlattice[ia]=bisUtil::irange(int( ( (input[ia]-radius)-origin[ia])/spacing[ia]),0,this->dimensions[ia]-1);
     maxlattice[ia]=bisUtil::irange(int( ( (input[ia]+radius)-origin[ia])/spacing[ia]),0,this->dimensions[ia]-1);
-
   }
 
+  if (debug) {
+    std::cout << "__ Point= " << input[0] << "," << input[1] << "," << input[2] << std::endl;
+    std::cout << "__ Lattice= " << lattice[0] << "," << lattice[1] << "," << lattice[2] << std::endl;
+    int p1[3],p2[3];
+    for (int ia=0;ia<=2;ia++) {
+      p1[ia]=this->origin[ia]+this->spacing[ia]*minlattice[ia];
+      p2[ia]=this->origin[ia]+this->spacing[ia]*(1+maxlattice[ia]);
+    }
+    std::cout << "__ Min Lattice " << minlattice[0] << "," << minlattice[1] << "," << minlattice[2] << "(" << p1[0] << "," << p1[1] << "," << p1[2] << ")" << std::endl;
+    std::cout << "__ Max Lattice " << maxlattice[0] << "," << maxlattice[1] << "," << maxlattice[2] << "(" << p2[0] << "," << p2[1] << "," << p2[2] << ")" << std::endl;
+  }
+
+  
 
   float radius2=radius*radius;
   pointlist.clear();
@@ -265,13 +279,20 @@ int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vect
     for (int j=minlattice[1];j<=maxlattice[1];j++) {
       for (int i=minlattice[0];i<=maxlattice[0];i++) {
         int lat[3] = { i,j,k };
-        float dist2=this->getClosestBoundaryPointDistance(input,lat);
-        if (dist2<=radius2)
-          this->addPointsInBinCloserThanT(input,pts,i+j*strides[1]+k*strides[2],radius,pointlist);
+        //float dist2=this->getClosestBoundaryPointDistance(input,lat,debug);
+        //if (dist2<=radius2) {
+        if (debug) 
+          std::cout << "___ Testing lattice = " << lat[0] << "," << lat[1] << "," << lat[2] << std::endl;
+        this->addPointsInBinCloserThanT(input,pts,i+j*strides[1]+k*strides[2],radius2,pointlist);
+        if (debug)
+          std::cout << "___ numpoints so far =" << pointlist.size() << std::endl;
+        /* } else if (debug)  {
+           std::cout << "___ NOT Adding lattice = " << lat[0] << "," << lat[1] << "," << lat[2] << " closest=" << dist2 << " < " << radius2 << std::endl;
+           }*/
       }
     }
   }
-
+  
   return pointlist.size();
 }
 // -------------------------------------------------------------------------------------------------------------------

@@ -59,7 +59,7 @@ public:
    * @param pointlist the indices of the points
    * @returns number of points returned or 0 if failed
    */
-  int getPointsWithinRadius(float input[3],float radius,std::vector<int> pointlist,int debug=0);
+  int getPointsWithinRadius(float input[3],float radius,std::vector<int>& pointlist,int debug=0);
 
 
 protected:
@@ -83,7 +83,7 @@ protected:
   int findNearestPointInBin(float input[3],float* pts,int bin,float& mindist2,int debug=0);
   
   /** find points in bin of distance < T and add to pointlist */
-  int addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int> pointlist,int debug=0);
+  int addPointsInBinCloserThanT(float input[3],float* pts,int bin,float T,std::vector<int>& pointlist,int debug=0);
 
   /** get closed boundary boing in a bin with lattice coordinates = lattice, return squared distance */
   float getClosestBoundaryPointDistance(float input[3],int lattice[3],int debug=0);

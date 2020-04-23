@@ -344,39 +344,62 @@ unsigned char* testPointLocatorWASM(unsigned char* source_ptr,const char* jsonst
   if (!source->linkIntoPointer(source_ptr))
     return 0;
 
-  std::unique_ptr<bisSimpleMatrix<float> > output_points(new bisSimpleMatrix<float>("output_points"));
+
 
   bisPointLocator* locator=new bisPointLocator();
-  locator->initialize(source,length,0);
+  locator->initialize(source,length);
   
-  if (mode<1) {
-    float y[3];
-    if (debug)
-      std::cout << "Looking for nearest point to " << x[0] << "," << x[1] << "," << x[2] << std::endl;
-    int ok=locator->getNearestPoint(x,y,debug);
-    output_points->zero(1,3);
-    float* out=output_points->getData();
-    out[0]=y[0];
-    out[1]=y[1];
-    out[2]=y[2];
-  } else {
-    std::vector<int> plist;
-    int np=locator->getPointsWithinRadius(x,threshold,plist);
-    
-    if (np>0) {
-      output_points->zero(np,3);
-      float* inp=source->getData();
+  if (mode<1)
+    {
+      std::unique_ptr<bisSimpleMatrix<float> > output_points(new bisSimpleMatrix<float>("output_points"));
+      float y[3];
+      if (debug)
+        std::cout << "Looking for nearest point to " << x[0] << "," << x[1] << "," << x[2] << std::endl;
+      int ok=locator->getNearestPoint(x,y,debug);
+      output_points->zero(1,3);
       float* out=output_points->getData();
-      for (int i=0;i<np;i++) {
-        int index=plist[i];
-        for (int ia=0;ia<=2;ia++) 
-          out[i*3+ia]=inp[index*3+ia];
-      }
-    } else {
-      output_points->zero(1,1);
+      out[0]=y[0];
+      out[1]=y[1];
+      out[2]=y[2];
+      delete locator;
+      return output_points->releaseAndReturnRawArray();
     }
+  
+  std::vector<int> plist;
+  if (debug)
+    std::cout << "Looking for point closer than " << threshold << " to " << x[0] << "," << x[1] << "," << x[2] << std::endl;
+  
+  int np=locator->getPointsWithinRadius(x,threshold,plist,debug);
+  if (mode==1)
+    {
+      std::unique_ptr<bisSimpleMatrix<float> > output_points(new bisSimpleMatrix<float>("output_points"));
+      if (np>0) {
+        output_points->zero(np,3);
+        float* inp=source->getData();
+        float* out=output_points->getData();
+        for (int i=0;i<np;i++) {
+          int index=plist[i];
+          for (int ia=0;ia<=2;ia++) 
+            out[i*3+ia]=inp[index*3+ia];
+        }
+      } else {
+        output_points->zero(1,1);
+      }
+      delete locator;
+      return output_points->releaseAndReturnRawArray();
+    }
+  
+  std::unique_ptr<bisSimpleMatrix<int> > output_indices(new bisSimpleMatrix<int>("output_indices"));
+  if (np>0) {
+    output_indices->zero(np,1);
+    int* out=output_indices->getData();
+    for (int i=0;i<np;i++) 
+      out[i]=plist[i];
+  } else {
+    output_indices->zero(1,1);
+    int* out=output_indices->getData();
+    out[0]=-1;
   }
   delete locator;
-  return output_points->releaseAndReturnRawArray();
-
+  return output_indices->releaseAndReturnRawArray();
 }
