@@ -58,33 +58,18 @@ print("MPoints 0 & 2 = ",m_points[0,:], m_points[2,:])
 print('____________________________________________________');
 
 
-matrix_list = [
-    [ [  0.9400000000000001,  0.342,  0 , -21.511 ],
-      [  -0.342,  0.9400000000000001,  0,  37.295 ],
-      [  0 , 0,  1,  0 ],
-      [  0 , 0,  0,  1 ]
-    ],
-    [ [  1.034,  0.376,  0,  -33.662 ],
-      [  -0.376,  1.034,  0,  30.225 ],
-      [  0 , 0,  1.1,  -9 ],
-      [  0  ,0,  0,  1 ]
-    ],
-    [ [  0.9380000000000001,  0.38,  0,  -25.44 ],
-      [  -0.34600000000000003,  1.032,  0,  27.6 ],
-      [  0,  0,  1,  0 ],
-      [  0,  0,  0,  1 ]
-    ]
+in_matrix = [
+    [  0.9380000000000001,  0.38,  0,  -25.44 ],
+    [  -0.34600000000000003,  1.032,  0,  27.6 ],
+    [  0,  0,  1,  0 ],
+    [  0,  0,  0,  1 ]
 ]
 
-matrices= [ np.zeros([4,4],dtype=np.float32),
-            np.zeros([4,4],dtype=np.float32),
-            np.zeros([4,4],dtype=np.float32) ];
-
-for i in range(0,3):
-    for row in range(0,4):
-        for col in range(0,4):
-            matrices[i][row][col]=matrix_list[i][row][col];
-    print('Matrix ',i+1,'=',matrices[i]);
+matrix= np.zeros([4,4],dtype=np.float32)
+for row in range(0,4):
+    for col in range(0,4):
+        matrix[row][col]=in_matrix[row][col];
+print('Matrix ',matrix)
         
 print('____________________________________________________');
 
@@ -95,39 +80,24 @@ class TestPointLocator(unittest.TestCase):
 
     def test_fit(self):
 
-        passed=0;
-        tested=0;
-        numtests=3
-
-        for i in range(0,numtests):
-
-            print('Matrices=',matrices[i].shape,t_points.shape);
+        print('Matrices=',matrix.shape,t_points.shape);
             
-            warped=np.transpose(np.matmul(matrices[i],t_points))[:,0:3]
+        warped=np.transpose(np.matmul(matrix,t_points))[:,0:3]
 
-            print('In points=', points[0][:], points[4][:]);
-            print('In points=', warped[0][:], warped[4][:]);
+        print('In points=', points[0][:], points[4][:]);
+        print('In points=', warped[0][:], warped[4][:]);
 
-            out=libbis.computeLandmarkTransformWASM(points,warped,
-                                                    { 'mode' : i },0);
+        d=points-warped;     d=d*d;       e=np.sum(d,axis=1);   e=np.sum(np.sqrt(e))/rows
+        print('___ Initial Error=',e);
 
-            print('Input=\n',matrices[i]);
-            print('Output=\n',out);
-            print('Difference=\n',abs(matrices[i]-out))
-            
-            dl=out.flatten()-matrices[i].flatten();
-            diff=max(np.amax(dl),-np.amin(dl));
-            print('Difference',diff);
-            tested+=1
-            if (diff<0.1):
-                print('_____ P A S S E D ____\n');
-                passed=passed+1;
-            else:
-                print('_____ F A I L E D ____\n');
-                
-            
-            print('____________________________________________________');
-
-
-        self.assertEqual(passed,tested);
+        out=libbis.test_landmarkApproximationWASM(points,warped,
+                                                  {
+                                                      'steps' : 4,
+                                                      'stepsize' : 1.0,
+                                                      'spacing' : 10
+                                                  },1);
+        
+        print('Output=\n',out);
+        self.assertEqual(True,True);
+        
         

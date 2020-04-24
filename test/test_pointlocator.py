@@ -40,10 +40,10 @@ fname4=my_path+'/../test/testdata/pointlocator/result3.json';
 
 
 print('____________________________________________________');
-file1=open(fname1); text1=file1.read(); brain=json.loads(text1);
-file2=open(fname2); text2=file2.read(); results1=json.loads(text2);
-file3=open(fname3); text3=file3.read(); results2=json.loads(text3);
-file4=open(fname4); text4=file4.read(); results3=json.loads(text4); 
+file1=open(fname1); text1=file1.read(); brain=json.loads(text1); file1.close();
+file2=open(fname2); text2=file2.read(); results1=json.loads(text2); file2.close();
+file3=open(fname3); text3=file3.read(); results2=json.loads(text3); file3.close();
+file4=open(fname4); text4=file4.read(); results3=json.loads(text4); file4.close();
 
 all_results=[results1,results2,results3 ];
 
