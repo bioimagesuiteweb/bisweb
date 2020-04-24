@@ -89,7 +89,7 @@ class TestPointLocator(unittest.TestCase):
                                                   "x" : results['points'][i]['location'][0],
                                                   "y" : results['points'][i]['location'][1],
                                                   "z" : results['points'][i]['location'][2],
-                                                  "length" : 20.0
+                                                  "length" : 0.2
                                               },0);
 
             gold = results['points'][i]['nearest'];
@@ -135,7 +135,7 @@ class TestPointLocator(unittest.TestCase):
                                                             "x" : results['points'][i]['location'][0],
                                                             "y" : results['points'][i]['location'][1],
                                                             "z" : results['points'][i]['location'][2],
-                                                            "length" : 20.0,
+                                                            "length" : 0.2,
                                                             "threshold" : results['threshold']
                                                         },0);
                 outindices = libbis.testPointLocatorWASM(points,
@@ -144,7 +144,7 @@ class TestPointLocator(unittest.TestCase):
                                                              "x" : results['points'][i]['location'][0],
                                                              "y" : results['points'][i]['location'][1],
                                                              "z" : results['points'][i]['location'][2],
-                                                             "length" : 20.0,
+                                                             "length" : 0.2,
                                                              "threshold" : results['threshold']
                                                          },0);
                 

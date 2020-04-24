@@ -115,8 +115,8 @@ describe('Testing point locator\n', function() {
                 "x" : x,
                 "y" : y,
                 "z" : z,
-                "length" : 20.0
-            },0).getDataArray();
+                "length" : 0.2
+            },1).getDataArray();
             
             let gold = results['points'][i]['nearest'];
             let sum=0.0;
@@ -165,7 +165,7 @@ describe('Testing point locator\n', function() {
                     "x" : x,
                     "y" : y,
                     "z" : z,
-                    "length" : 20.0,
+                    "length" : 0.2,
                     "threshold" : results['threshold']
                 },0).getDataArray();
 
@@ -174,7 +174,7 @@ describe('Testing point locator\n', function() {
                     "x" : x,
                     "y" : y,
                     "z" : z,
-                    "length" : 20.0,
+                    "length" : 0.2,
                     "threshold" : results['threshold']
                 },0).getDataArray();
 
