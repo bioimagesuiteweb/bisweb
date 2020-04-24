@@ -102,7 +102,6 @@ class TestPointLocator(unittest.TestCase):
         for i in range(0,numtests):
 
             print('Matrices=',matrices[i].shape,t_points.shape);
-            
             warped=np.transpose(np.matmul(matrices[i],t_points))[:,0:3]
 
             print('In points=', points[0][:], points[4][:]);
@@ -131,3 +130,33 @@ class TestPointLocator(unittest.TestCase):
 
         self.assertEqual(passed,tested);
         
+
+    def test_rpmcorrespodence(self):
+
+        print('Matrices=',matrices[2].shape,t_points.shape);
+        warped=np.transpose(np.matmul(matrices[2],t_points))[:,0:3]
+
+        small_pts=points[0:20,:]
+        small_wrp=warped[0:23,: ]
+        
+        print('In points=', small_pts[0][:], small_pts[4][:]);
+        print('In points=', small_wrp[0][:], small_wrp[4][:]);
+
+        out=libbis.test_rpmCorrespondenceEstimatorWASM(small_pts,small_wrp,
+                                                       { 'mode' : 0 },1);
+        print(out[7:10,:]);
+
+        out2=libbis.test_rpmCorrespondenceEstimatorWASM(small_pts,small_wrp,
+                                                       { 'mode' : 1,
+                                                         'temperature' : 6.0,
+                                                       },0);
+        print(out2[7:10,:]);
+
+        out3=libbis.test_rpmCorrespondenceEstimatorWASM(small_pts,small_wrp,
+                                                       { 'mode' : 2,
+                                                         'temperature' : 6.0,
+                                                       },0);
+        print(out3[7:10,:]);
+        
+        self.assertEqual(True,True);
+

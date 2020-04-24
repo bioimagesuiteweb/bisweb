@@ -110,8 +110,6 @@ class TestPointLocator(unittest.TestCase):
         self.assertEqual(passed,tested);
 
     def test_radius(self):
-
-
         passed=0;
         tested=0;
 
@@ -185,6 +183,8 @@ class TestPointLocator(unittest.TestCase):
                         print('_____ F A I L E D ____\n');
 
                 
-            
-        self.assertEqual(passed,tested);
+                        
+            self.assertEqual(passed,tested);
         
+
+            

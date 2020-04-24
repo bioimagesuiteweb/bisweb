@@ -271,6 +271,8 @@ int bisPointLocator::getPointsWithinRadius(float input[3],float radius,std::vect
   
 
   float radius2=radius*radius;
+  if (debug)
+    std::cout << "Looking for points closer than radius2=" << radius2 << std::endl;
   pointlist.clear();
   int strides[3] = { 1, this->dimensions[0], this->dimensions[0]*this->dimensions[1] };
   
