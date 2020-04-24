@@ -76,12 +76,11 @@ int bisPointLocator::initialize(std::shared_ptr<bisSimpleMatrix<float> > in_poin
     std::cout << "           = " << minc[1] << ":" << maxc[1] << std::endl;
     std::cout << "           = " << minc[2] << ":" << maxc[2] << std::endl;
   }
+
+  length=bisUtil::frange(length,0.05,0.5);
   
   for (int ia=0;ia<=2;ia++) {
-    
-    float l=maxc[ia]-minc[ia];
-    
-    this->dimensions[ia]=int( l/length)+1;
+    this->dimensions[ia]=int(1.0/length)+1;
     this->spacing[ia]=1.01*(maxc[ia]-minc[ia])/float(this->dimensions[ia]);
     this->origin[ia]=minc[ia]-0.005*this->spacing[ia];
     float upper=this->origin[ia]+this->dimensions[ia]*this->spacing[ia];
@@ -146,7 +145,7 @@ int bisPointLocator::findNearestPointInBin(float input[3],
     std::cout << "____ Looking for point = " << input[0] << "," << input[1] << "," << input[2] << " in bin " << bin << " numpoints=" << bin_indices.size() << std::endl;
     if (bin_indices.size()<20 && bin_indices.size()>0) {
       std::cout << "\t\t :";
-      for (int i=0;i<bin_indices.size();i++) 
+      for (unsigned int i=0;i<bin_indices.size();i++) 
         std::cout << bin_indices[i] << " ";
       std::cout << std::endl;
     }
@@ -158,7 +157,7 @@ int bisPointLocator::findNearestPointInBin(float input[3],
     return -1;
   }
   
-  for (int i=0;i<bin_indices.size();i++) {
+  for (unsigned int i=0;i<bin_indices.size();i++) {
 
     float point[3];
     float dist2=0.0;
@@ -194,7 +193,7 @@ int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin
   std::vector<int> bin_indices=this->indices[bin];
   int added=0;
   
-  for (int i=0;i<bin_indices.size();i++) {
+  for (unsigned int i=0;i<bin_indices.size();i++) {
     
     float point[3];
     float dist2=0.0;

@@ -39,10 +39,10 @@ public:
   
   /** Initialize Locator 
    * @param points an Nx3 matrix containing the points
-   * @param length the length of each octtree box
+   * @param length the length of each octtree box (fraction of range)
    * @returns 1 if successful, 0 otherwise
    */
-  int initialize(std::shared_ptr<bisSimpleMatrix<float> > points,float length=5.0,int debug=0);
+  int initialize(std::shared_ptr<bisSimpleMatrix<float> > points,float length=0.1,int debug=0);
   
   /**
    * Get Nearest Point
