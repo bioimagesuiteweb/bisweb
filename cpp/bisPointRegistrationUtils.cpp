@@ -398,7 +398,7 @@ unsigned char* testPointLocatorWASM(unsigned char* source_ptr,const char* jsonst
 
 
   bisPointLocator* locator=new bisPointLocator();
-  locator->initialize(source,length);
+  locator->initialize(source,length,debug);
   
   if (mode<1)
     {
