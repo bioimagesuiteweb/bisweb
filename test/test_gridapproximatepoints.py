@@ -87,17 +87,26 @@ class TestPointLocator(unittest.TestCase):
         print('In points=', points[0][:], points[4][:]);
         print('In points=', warped[0][:], warped[4][:]);
 
-        d=points-warped;     d=d*d;       e=np.sum(d,axis=1);   e=np.sum(np.sqrt(e))/rows
-        print('___ Initial Error=',e);
+        d=points-warped;     d=d*d;       e1=np.sum(d,axis=1);   e1=np.sum(np.sqrt(e1))/rows
+        print('___ Initial Error=',e1);
 
         out=libbis.test_landmarkApproximationWASM(points,warped,
                                                   {
                                                       'steps' : 4,
                                                       'stepsize' : 1.0,
-                                                      'spacing' : 10
+                                                      'spacing' : 10,
+                                                      'lambda' : 0.1                                                      
                                                   },1);
+
         
-        print('Output=\n',out);
-        self.assertEqual(True,True);
+        d=out-warped;     d=d*d;       e2=np.sum(d,axis=1);   e2=np.sum(np.sqrt(e2))/rows
+        print('___ Final Error=',e2, ' vs initial=',e1);
+
+        passed=False;
+        if (e2<0.1*e1):
+            passed=True;
+        
+        
+        self.assertEqual(passed,True);
         
         
