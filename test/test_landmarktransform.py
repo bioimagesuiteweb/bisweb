@@ -160,3 +160,70 @@ class TestPointLocator(unittest.TestCase):
         
         self.assertEqual(True,True);
 
+    def test_rpmsampling(self):
+
+        print('___________ test rpm sampling ');
+
+        points=np.zeros([ 1000,3],dtype=np.float32);
+        labels=np.zeros([ 1000],dtype=np.int32);
+
+        for i in range (0,1000):
+            if (i<950):
+                points[i]=[ i,2*i,0.1*i ]
+                labels[i]=0
+            else:
+                points[i]=[ i,2*i,1000+0.1*i ]
+                labels[i]=1
+        
+                #print('points=',points[940:960,:]);
+                #print('labels=',labels[940:960]);
+
+        self.assertEqual(True,True);
+
+
+        # Hardcode numpoints=54, max=980
+        numpoints=54
+        step=int(1000/numpoints)
+        print('step=',step)
+        
+        gold=points[0:980:step];
+        
+        outpts=libbis.test_rpmSamplingWASM(points,labels,{ 'returnlabels' : 0,
+                                                           'numpoints' : numpoints,
+                                                           'prefsampling' : 1
+                                                           },1);
+
+        print('gold=',gold.shape,'\n',gold[0::6]);
+        print('outpts=',outpts.shape,'\n',outpts[0::6]);
+
+        dl=gold.flatten()-outpts.flatten();
+        diff=max(np.amax(dl),-np.amin(dl));
+        print('Difference = ', diff);
+
+
+        steps=[17,4]
+        p1=points[0:930:17];
+        p2=points[950:998:4];
+        print('p1=',p1.shape,'p2=',p2.shape);
+        goldp=np.concatenate([ p1,p2],axis=0);
+        print('goldp=',goldp.shape);
+        
+        outpts2=libbis.test_rpmSamplingWASM(points,labels,{ 'returnlabels' : 0,
+                                                            'numpoints' : 64,
+                                                            'prefsampling' : 4, },1);
+        
+        
+
+        print('goldp=',goldp.shape,'\n',goldp[0::6]);
+        print('outpts2=',outpts2.shape,'\n',outpts2[0::6]);
+
+        dl=goldp.flatten()-outpts2.flatten();
+        diff2=max(np.amax(dl),-np.amin(dl));
+        print('Difference2 = ', diff2);
+
+        self.assertEqual(True,(diff<0.01 and diff2 <0.01));
+            
+        
+        #print('outpts2=',outpts2.shape,outpts2);
+        
+        
