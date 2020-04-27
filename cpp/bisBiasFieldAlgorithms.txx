@@ -22,8 +22,6 @@
 
 namespace bisBiasFieldAlgorithms {
 
-  
-
   static inline int meanFit(std::vector<float>& x,std::vector<float>& y,int ndata,float& a,float& b)
   {
     float sx=0.0,sy=0.0,sxy=0.0,sxx=0.0;
@@ -113,7 +111,12 @@ namespace bisBiasFieldAlgorithms {
     //    weightImage->getRange(range);
     //    std::cout << "valley range=" << range[0] << ":" << range[1] << std::endl;
     
+
+#ifdef BISWEB_STD_MOVE
+    return weightImage;
+#else
     return std::move(weightImage);
+#endif
   }
 
   template<class TT> int computeWeightedImageRatio(TT* data1,TT* data2,float* wgt1, float* wgt2,
@@ -179,9 +182,12 @@ namespace bisBiasFieldAlgorithms {
     if (dim[axis]<2)
       {
 	biasField->fill(100.0);
+#ifdef BISWEB_STD_MOVE
+	return biasField;
+#else
 	return std::move(biasField);
+#endif
       }
-
     
     std::unique_ptr<bisSimpleImage<float> > weight_image(createWeightImage(input));
 
@@ -370,7 +376,11 @@ namespace bisBiasFieldAlgorithms {
 	bias[vx]=float(b);
       }
 
+#ifdef BISWEB_STD_MOVE
+    return biasField;
+#else
     return std::move(biasField);
+#endif
   }
 
   template<class TT> std::unique_ptr<bisSimpleImage<float> > biasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<float>* biasField)
@@ -386,7 +396,12 @@ namespace bisBiasFieldAlgorithms {
       {
 	std::cerr << "Can not perform bias field correction, dimensions do not match " << std::endl;
 	std::unique_ptr< bisSimpleImage<float> > tmp( (bisSimpleImage<float>*)(0));
+#ifdef BISWEB_STD_MOVE
+	return tmp;
+#else
 	return std::move(tmp);
+#endif
+
       }
     
     std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>());
@@ -426,7 +441,12 @@ namespace bisBiasFieldAlgorithms {
 
     std::cout << "Done computing bias field correction " << std::endl;
     
-    return std::move(output);
+#ifdef BISWEB_STD_MOVE
+	return output;
+#else
+	return std::move(output);
+#endif
+
   }
 
 
@@ -453,7 +473,11 @@ namespace bisBiasFieldAlgorithms {
 	else
 	  bdata[i]=100.0f;
       }
+#ifdef BISWEB_STD_MOVE
+    return bias_z;
+#else
     return std::move(bias_z);
+#endif
   }
    
 

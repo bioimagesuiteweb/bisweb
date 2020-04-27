@@ -222,6 +222,8 @@ int bisPointLocator::addPointsInBinCloserThanT(float input[3],float* pts,int bin
 float bisPointLocator::getClosestBoundaryPointDistance(float input[3],int lattice[3],int debug) {
 
   float dist2=0.0;
+  if (debug)
+    std::cout << "Finding closest boundary distance " << input[0] << "," << input[1] << "," << input[2] << " in lat=" << lattice[0] << "," << lattice[1] << "," << lattice[2] << std::endl;
   
   for (int ia=0;ia<=2;ia++) {
     float p0=this->origin[ia]+lattice[ia]*this->spacing[ia];

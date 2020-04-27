@@ -119,7 +119,12 @@ namespace bisImageDistanceMatrix {
     double r1[2];
     temp->getRange(r1);
     //std::cout << "++++ ImageDistanceMatrix: Index Map range=(" << r1[0] << ":" << r1[1] << ")" << std::endl;
+#ifdef BISWEB_STD_MOVE
+    return temp;
+#else
     return std::move(temp);
+#endif
+
   }
 
 

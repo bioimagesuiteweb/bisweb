@@ -182,7 +182,12 @@ namespace bisImageTransformationJacobian {
         }
       }
     }
+#ifdef BISWEB_STD_MOVE
+    return out;
+#else
     return std::move(out);
+#endif
+
   }
 
 }

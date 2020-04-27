@@ -95,7 +95,13 @@ std::unique_ptr<bisSimpleMatrix<float> > bisMatrixTransformation::getSimpleMatri
   std::unique_ptr<bisSimpleMatrix<float> > simple(new bisSimpleMatrix<float>(name));
   simple->allocate(4,4);
   simple->importMatrix(mat);
+
+#ifdef BISWEB_STD_MOVE
+  return simple;
+#else
   return std::move(simple);
+#endif
+
 }
 
 int bisMatrixTransformation::setSimpleMatrix(bisSimpleMatrix<float>* simple)

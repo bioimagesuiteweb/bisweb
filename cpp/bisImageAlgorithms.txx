@@ -530,7 +530,11 @@ namespace bisImageAlgorithms {
     std::unique_ptr< bisSimpleImage<short> > output(new bisSimpleImage<short>(name));
     output->allocate(dim,spa);
     imageNormalize(input,output.get(),perlow,perhigh,outmaxvalue,outdata);
+#ifdef BISWEB_STD_MOVE
+    return output;
+#else
     return std::move(output);
+#endif
   }
 
 
@@ -1335,7 +1339,11 @@ namespace bisImageAlgorithms {
 	else
 	  odata[i]=0;
       }
+#ifdef BISWEB_STD_MOVE
+    return output;
+#else
     return std::move(output);
+#endif
   }
 
   template<class IT,class OT> std::unique_ptr<bisSimpleImage<OT> >  thresholdImage(bisSimpleImage<IT>* input,float thresholds[2],int replace[2],OT replacevalue[2])
@@ -2009,7 +2017,11 @@ namespace bisImageAlgorithms {
       
       std::cout  << " robust 1:99 %, info=" << odata[0] << "," << odata[1] << " numbins=" << numbins << std::endl;
     }
+#ifdef BISWEB_STD_MOVE
+    return out;
+#else
     return std::move(out);
+#endif
   }
 
   // ---------------------- -------------------
@@ -2066,7 +2078,12 @@ namespace bisImageAlgorithms {
       
       std::cout  << " robust 1:99 %, info=" << odata[0] << "," << odata[1] << " numbins=" << numbins << std::endl;
     }
+    #ifdef BISWEB_STD_MOVE
+    return out;
+#else
     return std::move(out);
+#endif
+
   }
 
   /** median normalize an image -- set values so that median = 0 and interquartile range = 1
@@ -2122,7 +2139,11 @@ namespace bisImageAlgorithms {
     for (int i=0;i<datasize;i++) 
       odata[i]=(idata[i]-m)/range;
     
+#ifdef BISWEB_STD_MOVE
+    return output;
+#else
     return std::move(output);
+#endif
   }
 
 

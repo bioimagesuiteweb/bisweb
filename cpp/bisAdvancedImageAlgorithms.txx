@@ -64,7 +64,11 @@ namespace bisAdvancedImageAlgorithms {
               odata[index]=(unsigned char)((idata[index]-range[0])*scale);
             ++index;
           }
+#ifdef BISWEB_STD_MOVE
+    return output;
+#else
     return std::move(output);
+#endif
   }
 
 

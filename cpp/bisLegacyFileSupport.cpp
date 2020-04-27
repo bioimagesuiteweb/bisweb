@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-
+#include "bisUtil.h"
 #include "bisLegacyFileSupport.h"
 #include "bisEigenUtil.h"
 #include <Eigen/Dense>
@@ -53,7 +53,11 @@ namespace bisLegacyFileSupport {
     
     char* outdata=outvect->getData();
     strcpy(outdata,outstring);
+#ifdef BISWEB_STD_MOVE
+    return outvect;
+#else
     return std::move(outvect);
+#endif
   }
 
   /** return a matrix from a .matr file (either octave style or straight up 4x4 matrix)

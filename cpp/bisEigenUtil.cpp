@@ -146,7 +146,11 @@ namespace bisEigenUtil {
 		  }
       }
 
+#ifdef BISWEB_STD_MOVE
+    return out;
+#else
     return std::move(out);
+#endif
   }
 
 
@@ -161,7 +165,11 @@ namespace bisEigenUtil {
     for (int row=0;row<inp.rows();row++)
       odata[row]=inp(row);
 
+#ifdef BISWEB_STD_MOVE
+    return out;
+#else
     return std::move(out);
+#endif
   }
 
   // ---------------------------------------------------------

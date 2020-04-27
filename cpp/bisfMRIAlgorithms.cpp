@@ -40,7 +40,11 @@ namespace bisfMRIAlgorithms {
       {
 	std::cerr << "Bad Regressor Matrix " << numrows << "*" << numcols << " Need " << nc << "rows and at least " << num_tasks << " columns" << std::endl;
 	std::unique_ptr<bisSimpleImage<float> > tmp;
+#ifdef BISWEB_STD_MOVE
+        return tmp;
+#else
 	return std::move(tmp);
+#endif
       }
 
 
@@ -97,7 +101,11 @@ namespace bisfMRIAlgorithms {
               outdata[task*volsize+voxel]=b[task+task_offset];
 	  }
       }
+#ifdef BISWEB_STD_MOVE
+    return output;
+#else
     return std::move(output);
+#endif
   }
 
   // ---------------------------------------------------------------------------------------

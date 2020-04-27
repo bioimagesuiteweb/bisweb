@@ -370,6 +370,11 @@ std::unique_ptr<bisSimpleMatrix<float> > bisJointHistogram::exportHistogram(std:
   for (int i=0;i<this->numbinsx*this->numbinsy;i++)
     output->getData()[i]=this->bins[i];
 
+#ifdef BISWEB_STD_MOVE
+  return output;
+#else
   return std::move(output);
+#endif
+
 }
 
