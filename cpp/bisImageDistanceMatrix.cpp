@@ -86,22 +86,20 @@ namespace bisImageDistanceMatrix {
 
   // ------------------------------------------------------------------------------------------------
 
-  float selectKthLargest(unsigned long k0offset, unsigned long n, float* arr0offset)
-  {
-
+  float selectKthLargest(unsigned long k0offset, unsigned long n, float* arr0offset) {
     std::nth_element(arr0offset,arr0offset+k0offset,arr0offset+n);
     return arr0offset[k0offset];
   }
 
-  std::unique_ptr<bisSimpleImage<int> > createIndexMap(bisSimpleImage<short>* objectmap) {
+  bisSimpleImage<int>* createIndexMap(bisSimpleImage<short>* objectmap) {
 
-    std::unique_ptr<bisSimpleImage<int> > temp(new bisSimpleImage<int>("indexmap"));
+    bisSimpleImage<int>* temp=new bisSimpleImage<int>("indexmap");
 
     int dim2[5]; objectmap->getDimensions(dim2);
     float spa[5];objectmap->getSpacing(spa);
 
     dim2[3]=1; dim2[4]=1;
-    temp->allocateIfDifferent(dim2,spa);
+    temp->allocate(dim2,spa);
     temp->fill(0);
     int index=1;
     int nt=temp->getLength();
@@ -116,15 +114,10 @@ namespace bisImageDistanceMatrix {
           }
       }
 
-    double r1[2];
-    temp->getRange(r1);
+    //    double r1[2];
+    //temp->getRange(r1);
     //std::cout << "++++ ImageDistanceMatrix: Index Map range=(" << r1[0] << ":" << r1[1] << ")" << std::endl;
-#ifdef BISWEB_STD_MOVE
     return temp;
-#else
-    return std::move(temp);
-#endif
-
   }
 
 

@@ -173,7 +173,7 @@ unsigned char*  test_create_4x4matrix(unsigned char* image1_ptr,
   if (debug)
     xform->printSelf();
 
-  std::unique_ptr<bisSimpleMatrix<float> > matrix=xform->getSimpleMatrix("outmatrix");
+  std::unique_ptr<bisSimpleMatrix<float> > matrix(xform->getSimpleMatrix("outmatrix"));
   return matrix->releaseAndReturnRawArray();
 }
 
@@ -625,6 +625,6 @@ unsigned char*  test_compute_histo_metric(unsigned char* image1_ptr,
       return results->releaseAndReturnRawArray();
     }
 
-  std::unique_ptr<bisSimpleMatrix<float> > outmat=histo->exportHistogram("histo_matrix");
+  std::unique_ptr<bisSimpleMatrix<float> > outmat(histo->exportHistogram("histo_matrix"));
   return outmat->releaseAndReturnRawArray();
 }

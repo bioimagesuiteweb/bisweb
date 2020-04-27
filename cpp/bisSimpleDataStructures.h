@@ -30,8 +30,6 @@
 #include <iostream>
 #include <memory>
 
-#define BISWEB_STD_MOVE 1
-
 /** @file bisSimpleDataStructures.h
  *
  * This code provides functionality for serializing/deserializing and manipulating

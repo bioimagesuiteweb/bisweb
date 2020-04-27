@@ -53,10 +53,7 @@ namespace bisImageTransformationJacobian {
     return d;
   }
     
-  std::unique_ptr<bisSimpleImage<float> > computeJacobian(bisAbstractTransformation* transformation, int dim[3],float spa[3],int nonlinearonly=0,int enabledebug=0) {
-
-
-
+  bisSimpleImage<float>* computeJacobian(bisAbstractTransformation* transformation, int dim[3],float spa[3],int nonlinearonly=0,int enabledebug=0) {
 
     // If Combo then set linear component to identity --> nonlinearonly!
     bisUtil::mat44 linear;
@@ -96,7 +93,7 @@ namespace bisImageTransformationJacobian {
     int o_dim[5] = { dim[0],dim[1],dim[2],1,1};
     float o_spa[5] = { spa[0],spa[1],spa[2],1.0,1.0};
     std::string n1="jacobian";
-    std::unique_ptr<bisSimpleImage<float > > out(new bisSimpleImage<float>(n1));
+    bisSimpleImage<float >* out=new bisSimpleImage<float>(n1);
     out->allocate(o_dim,o_spa);
     out->fill(0.0);
     
@@ -182,12 +179,8 @@ namespace bisImageTransformationJacobian {
         }
       }
     }
-#ifdef BISWEB_STD_MOVE
-    return out;
-#else
-    return std::move(out);
-#endif
 
+    return out;
   }
 
 }

@@ -91,7 +91,7 @@ public:
    * @returns 1 if success, 0 if failure
    */
 
- virtual std::unique_ptr<bisSimpleImage <float> > computeDisplacementField(int dim[3],float spa[3]);
+  virtual bisSimpleImage <float>* computeDisplacementField(int dim[3],float spa[3]);
 
 
   /** Gets the raw size in bytes for this structure */

@@ -37,6 +37,16 @@ namespace bisPointRegistrationUtils {
                                     int mode,
                                     bisMatrixTransformation* Output,int debug=0);
 
+  /** Transform Points
+   * @param Points the input points
+   * @param Transformation the transformation to map points with
+   * @param debug print diagnostic messages
+   * @param Output the output mapped points
+   */
+  bisSimpleMatrix<float>* transformPoints(bisSimpleMatrix<float>* Points,
+                                          bisAbstractTransformation* Transformation,
+                                          int debug=0);
+
 }
 
 extern "C" {

@@ -39,7 +39,7 @@ namespace bisfMRIAlgorithms {
    * @param num_tasks Number of Tasks (last N columns of regressor matrix, first columns are drift, nuisance terms);
    * @returns the 4D beta map image
    */
-  std::unique_ptr<bisSimpleImage<float> > computeGLM(bisSimpleImage<float>* input,bisSimpleImage<unsigned char>* mask,bisSimpleMatrix<float>* regressorMatrix,int num_tasks);
+  bisSimpleImage<float>* computeGLM(bisSimpleImage<float>* input,bisSimpleImage<unsigned char>* mask,bisSimpleMatrix<float>* regressorMatrix,int num_tasks);
 
   /** Computes legendre polynomial of order in range 0 to 6.
    * @param t the input value

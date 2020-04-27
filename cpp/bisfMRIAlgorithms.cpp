@@ -23,7 +23,7 @@
 
 namespace bisfMRIAlgorithms {
 
-  std::unique_ptr<bisSimpleImage<float> > computeGLM(bisSimpleImage<float>* input,bisSimpleImage<unsigned char>* mask,bisSimpleMatrix<float>* regressorMatrix,int num_tasks)
+  bisSimpleImage<float>* computeGLM(bisSimpleImage<float>* input,bisSimpleImage<unsigned char>* mask,bisSimpleMatrix<float>* regressorMatrix,int num_tasks)
   {
     int dim[5]; input->getDimensions(dim);
 
@@ -39,12 +39,7 @@ namespace bisfMRIAlgorithms {
     if (numrows!=nc || numcols<num_tasks)
       {
 	std::cerr << "Bad Regressor Matrix " << numrows << "*" << numcols << " Need " << nc << "rows and at least " << num_tasks << " columns" << std::endl;
-	std::unique_ptr<bisSimpleImage<float> > tmp;
-#ifdef BISWEB_STD_MOVE
-        return tmp;
-#else
-	return std::move(tmp);
-#endif
+        return NULL;
       }
 
 
@@ -68,7 +63,7 @@ namespace bisfMRIAlgorithms {
 	  }
       }
 
-    std::unique_ptr<bisSimpleImage<float> >output(new bisSimpleImage<float>("beta_image"));
+    bisSimpleImage<float>* output=new bisSimpleImage<float>("beta_image");
     int outdim[5] = { dim[0],dim[1],dim[2],num_tasks,1};
     float spa[5]; input->getSpacing(spa);
     output->allocate(outdim,spa);
@@ -101,11 +96,8 @@ namespace bisfMRIAlgorithms {
               outdata[task*volsize+voxel]=b[task+task_offset];
 	  }
       }
-#ifdef BISWEB_STD_MOVE
+
     return output;
-#else
-    return std::move(output);
-#endif
   }
 
   // ---------------------------------------------------------------------------------------

@@ -33,7 +33,7 @@ namespace bisAdvancedImageAlgorithms {
    * @param value - the fractional intensity of the lines (1.0=same as max intensity of the image)
    * @returns the projected image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<unsigned char> >  addGridToImage(bisSimpleImage<T>* input,int gap,float value) {
+  template<class T> bisSimpleImage<unsigned char>*  addGridToImage(bisSimpleImage<T>* input,int gap,float value) {
 
     double range[2];
     input->getRange(range);
@@ -47,7 +47,7 @@ namespace bisAdvancedImageAlgorithms {
 
     
     dim[3]=1; dim[4]=1;
-    std::unique_ptr<bisSimpleImage<unsigned char> >output(new bisSimpleImage<unsigned char>("grid_result"));
+    bisSimpleImage<unsigned char>* output=new bisSimpleImage<unsigned char>("grid_result");
     output->allocate(dim,spa);
     
     unsigned char* odata=output->getData();
@@ -64,11 +64,7 @@ namespace bisAdvancedImageAlgorithms {
               odata[index]=(unsigned char)((idata[index]-range[0])*scale);
             ++index;
           }
-#ifdef BISWEB_STD_MOVE
     return output;
-#else
-    return std::move(output);
-#endif
   }
 
 
@@ -202,9 +198,9 @@ namespace bisAdvancedImageAlgorithms {
   }
   
 
-  template<class T> std::unique_ptr<bisSimpleImage<T> >  projectImage(bisSimpleImage<T>* original_input,
-                                                                      int domip,int axis,int flip,int lps,
-                                                                      float sigma,float threshold,float gradsigma,int windowsize) {
+  template<class T> bisSimpleImage<T>*  projectImage(bisSimpleImage<T>* original_input,
+                                                     int domip,int axis,int flip,int lps,
+                                                     float sigma,float threshold,float gradsigma,int windowsize) {
     
     // Smooth image 
     float sigmas[3],gradsigmas[3],outsigmas[3];
@@ -232,7 +228,7 @@ namespace bisAdvancedImageAlgorithms {
       ospa[ia]=ispa[outaxis[ia]];
 
     // This is a 2D+t+c image so set third dimension to 1 and copy 
-    std::unique_ptr<bisSimpleImage<T> > output(new bisSimpleImage<T>());
+    bisSimpleImage<T>* output=new bisSimpleImage<T>();
     for (int ia=0;ia<=1;ia++) {
       odim[ia]=idim[outaxis[ia]];
       ospa[ia]=ispa[outaxis[ia]];
@@ -295,7 +291,7 @@ namespace bisAdvancedImageAlgorithms {
                   }
               }
           }
-        return std::move(output);
+        return output;
       }
 
 
@@ -419,14 +415,14 @@ namespace bisAdvancedImageAlgorithms {
             index=index+1;
           }
       }
-    return std::move(output);
+    return output;
   }
 
 
-  template<class T> std::unique_ptr<bisSimpleImage<T> >  backProjectImage(bisSimpleImage<T>* threed_input,
-                                                                          bisSimpleImage<T>* twod_input,
-                                                                          int axis,int flipthird,int flipsecond,
-                                                                          float threshold,int windowsize) {
+  template<class T> bisSimpleImage<T>* backProjectImage(bisSimpleImage<T>* threed_input,
+                                                        bisSimpleImage<T>* twod_input,
+                                                        int axis,int flipthird,int flipsecond,
+                                                        float threshold,int windowsize) {
 
     // ----------- Original_input should be done at this point
     int idim[5];   threed_input->getDimensions(idim);
@@ -464,11 +460,11 @@ namespace bisAdvancedImageAlgorithms {
           }
       }
 
-    std::unique_ptr<bisSimpleImage<T> > output(new bisSimpleImage<T>());
+    bisSimpleImage<T>* output=new bisSimpleImage<T>();
     
     if (same==0) {
       std::cerr << "\n\n\n Mismatched dimensions" << std::endl;
-      return std::move(output);
+      return output;
     }
 
     // Create new output
@@ -550,7 +546,7 @@ namespace bisAdvancedImageAlgorithms {
             index=index+1;
           }
       }
-    return std::move(output);
+    return output;
   }
   // ---------------------- -------------------
 

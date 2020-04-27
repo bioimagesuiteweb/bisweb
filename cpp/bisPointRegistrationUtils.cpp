@@ -308,9 +308,46 @@ namespace bisPointRegistrationUtils {
     return 1;
   }
 
+
+  bisSimpleMatrix<float>* transformPoints(bisSimpleMatrix<float>* Input,
+                                          bisAbstractTransformation* Transformation,
+                                          int debug) {
+    
+    if (Input==NULL || Transformation == NULL) {
+      std::cerr << "NULL Inputs to transformPoints " << std::endl;
+      return NULL;
+    }
+    
+    int N_PTS = Input->getNumRows();
+    int N_COLS= Input->getNumCols();
+    if (N_PTS < 1 ||    N_COLS !=3  ) {
+      std::cerr << "Update: Bad Input Points Matrix" << std::endl;
+      return 0;
+    }
+    
+    if (debug) 
+      std::cout << "___ Transforming " << N_PTS << " points with " << Transformation->getClassName() << std::endl;
+    
+    
+    bisSimpleMatrix<float>* Output=new bisSimpleMatrix<float>();
+    
+    float* inp=Input->getData();
+    float* out=Output->getData();
+    
+    Output->zero(N_PTS,3);
+    for (int pt=0;pt<N_PTS;pt++) {
+      float x[3],y[3];
+      for (int ia=0;ia<=2;ia++)
+        x[ia]=inp[pt*3]+ia;
+      Transformation->transformPoint(x,y);
+      for (int ia=0;ia<=2;ia++)
+        out[pt*3+ia]=y[ia];
+    }
+    
+    return Output;
+    
+  }
 }
-
-
 /** Computes best fit Landmark Transformation (see VTK/VTKLandmarkTransform.cxx) given two sets of points
  * @param RawSourceLandmarks the source points (Nx3)
  * @param RawTargetLandmarks the target points (Nx3)

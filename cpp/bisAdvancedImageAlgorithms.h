@@ -45,7 +45,7 @@ namespace bisAdvancedImageAlgorithms {
    * @param windowsize - how many voxels to average
    * @returns the projected image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<T> >  projectImage(bisSimpleImage<T>* input,
+  template<class T> bisSimpleImage<T>* projectImage(bisSimpleImage<T>* input,
                                                                       int domip=0,int axis=-1,int flip=0,int lps=0,float sigma=1.0,
                                                                       float threshold=0.05,float gradsigma=1.0,int windowsize=3);
 
@@ -55,7 +55,7 @@ namespace bisAdvancedImageAlgorithms {
    * @param value - the fractional intensity of the lines (1.0=same as max intensity of the image)
    * @returns the projected image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<unsigned char> >  addGridToImage(bisSimpleImage<T>* input,int gap=8,float value=1.0);
+  template<class T> bisSimpleImage<unsigned char>*  addGridToImage(bisSimpleImage<T>* input,int gap=8,float value=1.0);
 
     /** compute 2d->3d back projection
    * @param threed_input the 3d input image
@@ -66,11 +66,11 @@ namespace bisAdvancedImageAlgorithms {
    * @param windowsize - how many voxels to smear to
    * @returns the back-projected image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<T> >  backProjectImage(bisSimpleImage<T>* threed_input,
-                                                                          bisSimpleImage<T>* twod_input,
-                                                                          int axis,int flip,
-                                                                          float threshold,int windowsize);
-
+  template<class T> bisSimpleImage<T>* backProjectImage(bisSimpleImage<T>* threed_input,
+                                                        bisSimpleImage<T>* twod_input,
+                                                        int axis,int flip,
+                                                        float threshold,int windowsize);
+  
 
   /** compute  shading-color 2d projection of an image (possibly) functional image with a mask to specify boundaries
    * @param input - the input image

@@ -91,7 +91,7 @@ namespace bisEigenUtil {
    * @param name is use to set the name of the output matrix
    * @returns a n_e_w bisSimpleMatrix<float>
    */
-  std::unique_ptr<bisSimpleMatrix< float> > createSimpleMatrix(Eigen::MatrixXf inp,std::string name="eigenm");
+  bisSimpleMatrix< float>* createSimpleMatrix(Eigen::MatrixXf inp,std::string name="eigenm");
   
   
   /** Create Simple Vector from an Eigen Vector
@@ -99,7 +99,7 @@ namespace bisEigenUtil {
    * @param name is use to set the name of the output vector
    * @returns a n_e_w bisSimpleVector<float>
    */
-  std::unique_ptr<bisSimpleVector< float> > createSimpleVector(Eigen::VectorXf inp,std::string name="eigenv");
+  bisSimpleVector< float>* createSimpleVector(Eigen::VectorXf inp,std::string name="eigenv");
   
   
   /** returns matrix dimensions 

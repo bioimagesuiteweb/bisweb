@@ -494,8 +494,8 @@ template <class BIS_TT> unsigned char* normalizeImageTemplate(unsigned char* inp
   }
 
   double outdata[2];
-  std::unique_ptr<bisSimpleImage<short> > out_image=bisImageAlgorithms::imageNormalize(inp_image.get(),
-										       perlow,perhigh,outmaxvalue,outdata);
+  std::unique_ptr<bisSimpleImage<short> > out_image(bisImageAlgorithms::imageNormalize(inp_image.get(),
+										       perlow,perhigh,outmaxvalue,outdata));
 
   if (debug)
     std::cout << "\t Normalizing Image Done : " << outdata[0] << "," << outdata[1] << std::endl;
@@ -541,11 +541,11 @@ template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsig
   int frame=params->getIntValue("frame",0);
   
   std::string name="external";
-  std::unique_ptr<bisSimpleImage<short> > out_image=bisImageAlgorithms::prepareImageForRegistration(inp_image.get(),
+  std::unique_ptr<bisSimpleImage<short> > out_image(bisImageAlgorithms::prepareImageForRegistration(inp_image.get(),
 												    numbins,normalize,
 												    res,sigma,intscale,frame,
                                                                                                     name,
-                                                                                                    debug);
+                                                                                                    debug));
   
 
   return out_image->releaseAndReturnRawArray();
@@ -777,7 +777,7 @@ unsigned char* computeGLMWASM(unsigned char* input_ptr,unsigned char* mask_ptr,u
       mask->fill(100);
     }
       
-  std::unique_ptr<bisSimpleImage<float > > output=bisfMRIAlgorithms::computeGLM(timeseries.get(),mask.get(),glm.get(),numtasks);
+  std::unique_ptr<bisSimpleImage<float > > output(bisfMRIAlgorithms::computeGLM(timeseries.get(),mask.get(),glm.get(),numtasks));
   return output->releaseAndReturnRawArray();
 }
 
@@ -1498,7 +1498,7 @@ unsigned char* blankImageWASM(unsigned char* input,
   }
 
   
-  std::unique_ptr<bisSimpleImage<unsigned char> > out_image=bisSimpleImageSegmentationAlgorithms::doBinaryMorphology(input_image.get(),mode,radius,do3d);
+  std::unique_ptr<bisSimpleImage<unsigned char> > out_image(bisSimpleImageSegmentationAlgorithms::doBinaryMorphology(input_image.get(),mode,radius,do3d));
   if (debug)
     std::cout << std::endl << "..... Morphology Operation " << operation  << "(" << mode << ") done." << std::endl;
   return out_image->releaseAndReturnRawArray();
@@ -1533,7 +1533,7 @@ unsigned char* seedConnectivityWASM(unsigned char* input,const char* jsonstring,
     std::cout << "-----------------------------------" << std::endl;
   }
 
-  std::unique_ptr<bisSimpleImage<unsigned char> > out_image=bisSimpleImageSegmentationAlgorithms::seedConnectivityAlgorithm(input_image.get(),seed,1);
+  std::unique_ptr<bisSimpleImage<unsigned char> > out_image(bisSimpleImageSegmentationAlgorithms::seedConnectivityAlgorithm(input_image.get(),seed,1));
   
   if (debug)
     std::cout << std::endl << "..... Seed Connectivity done " << std::endl;
@@ -1623,7 +1623,7 @@ template <class BIS_TT> unsigned char* medianNormalizeImageTemplate(unsigned cha
   if (!inp_image->linkIntoPointer(input))
     return 0;
 
-  std::unique_ptr<bisSimpleImage<float> > out_image=bisImageAlgorithms::medianNormalizeImage<BIS_TT>(inp_image.get(),debug);
+  std::unique_ptr<bisSimpleImage<float> > out_image(bisImageAlgorithms::medianNormalizeImage<BIS_TT>(inp_image.get(),debug));
   
   if (debug)
     std::cout << "MedianNormalizing Done" << std::endl;
