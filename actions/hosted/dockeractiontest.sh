@@ -180,6 +180,7 @@ else
     echo "On Linux"
     mv ${BDIR}/dist/*zip ${ELECTRON}
     cp ${BDIR}/native/*so ${LIBRARIES}
+    cp ${BDIR}/native/*.dll ${LIBRARIES}
 fi
 
 #JS Build artifacts
