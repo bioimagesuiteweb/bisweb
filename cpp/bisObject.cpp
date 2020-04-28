@@ -50,7 +50,7 @@ void bisObject::register_object_memory()
   bisObjectMemory::memory_list.push_back(this);
     
   if (bisMemoryManagement::debugMemory())
-    std::cout << "ooooo (OBJECT MEMORY ALLOC) " << this->getName() << " (loc=" << long(this) << ")" << std::endl;
+    std::cout << "ooooo (OBJECT MEMORY ALLOC) " << this->getName() << " (loc=" << BISLONG(this) << ")" << std::endl;
 }
 
 void bisObject::release_object_memory()
@@ -60,7 +60,7 @@ void bisObject::release_object_memory()
   if (bisMemoryManagement::debugMemory())
     {
       std::cout << "ooooo (OBJECT MEMORY DEL) " << this->getName() << " (cl="
-		<< this->getClassName() << ")  (loc=" << (long)this << ") " << std::endl;
+		<< this->getClassName() << ")  (loc=" << (BISLONG)this << ") " << std::endl;
     }
 }
 
@@ -72,7 +72,7 @@ void bisObject::print_memory_map()
   for ( it = bisObjectMemory::memory_list.begin(); it != bisObjectMemory::memory_list.end(); it++ )
     {
       bisObject* obj=*it;
-      std::cout << "O " << (long)obj  // string (key)
+      std::cout << "O " << (BISLONG)obj  // string (key)
 		<< " : "
 		<< obj->getName()   // string's value
 		<< " (" << obj->getClassName() << ") " << std::endl;

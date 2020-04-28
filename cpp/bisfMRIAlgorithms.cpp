@@ -757,15 +757,17 @@ namespace bisfMRIAlgorithms {
         }
       double mean=sum*scale;
       double sigma=sqrt(sum2*scale-mean*mean);
+      double scale=0.0;
       if (sigma>0.0)
+        scale=1.0/sigma;
+      for (int frame=0;frame<numframes;frame++)
         {
-          for (int frame=0;frame<numframes;frame++)
-            {
-              int index=voxel+frame*volumesize;
-              float v=idata[index];
-              odata[index]=(v-mean)/sigma;
-            }
+          int index=voxel+frame*volumesize;
+          float v=idata[index];
+          odata[index]=(v-mean)*scale;
         }
+
+        
     }
     return 1;
   }

@@ -30,6 +30,7 @@
 #include "bisLegacyFileSupport.h"
 #include "bisDataObjectFactory.h"
 #include "bisSimpleImageSegmentationAlgorithms.h"
+#include "bisMemoryManagement.h"
 #include <memory>
 
 
@@ -976,7 +977,7 @@ unsigned char* weightedRegressOutWASM(unsigned char* input_ptr,unsigned char* re
 {
 
   if (debug)
-    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (long)weights_ptr << std::endl;
+    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (BISLONG)weights_ptr << std::endl;
   
   Eigen::MatrixXf input;
   std::unique_ptr<bisSimpleMatrix<float> > s_matrix(new bisSimpleMatrix<float>("matrix"));
@@ -1033,7 +1034,7 @@ unsigned char* weightedRegressGlobalSignalWASM(unsigned char* input_ptr,unsigned
 {
 
   if (debug)
-    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (long)weights_ptr << std::endl;
+    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (BISLONG)weights_ptr << std::endl;
 
   Eigen::MatrixXf input;
   std::unique_ptr<bisSimpleMatrix<float> > s_matrix(new bisSimpleMatrix<float>("matrix"));
@@ -1649,7 +1650,7 @@ unsigned char* medianNormalizeImageWASM(unsigned char* input,int debug)
 unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug)
 {
   if (debug)
-    std::cout << std::endl << "______ in weighted RegressOutImage  weights=" << (long)weights_ptr << std::endl;
+    std::cout << std::endl << "______ in weighted RegressOutImage  weights=" << (BISLONG)weights_ptr << std::endl;
   
   std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input"));
   if (!in_image->linkIntoPointer(input_ptr))
