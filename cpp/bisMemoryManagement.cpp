@@ -23,12 +23,6 @@
 #include <string.h>
 #include "bisObject.h"
 
-#ifdef BISWASM
-  #define BISLONG long
-#else
-  #define BISLONG unsigned long long
-#endif
-
 namespace bisMemoryManagement {
 
   int debug_memory=0;

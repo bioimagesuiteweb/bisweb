@@ -23,10 +23,16 @@
 #include "bisDataTypes.h"
 #include "bisObject.h"
 
-#ifdef BISWASM
-  #define BISLONG long
-#else
-  #define BISLONG unsigned long long
+ #ifndef BISLONG
+  #ifdef BISWASM
+    #define BISLONG long
+  #else
+    #ifdef _WINDOWS
+       #define BISLONG long long
+    #else
+       #define BISLONG int64_t
+    #endif
+  #endif
 #endif
 
 // --------------------- bisMemoryManagement -------------------------------------
