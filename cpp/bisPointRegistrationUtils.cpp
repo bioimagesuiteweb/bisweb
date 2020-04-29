@@ -120,7 +120,7 @@ namespace bisPointRegistrationUtils {
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
                                     bisMatrixTransformation* OutputTransformation,
-                                    bisSimpleMatrix<float>* RawWeights,
+                                    bisSimpleVector<float>* RawWeights,
                                     int debug)
     
   {
@@ -140,10 +140,9 @@ namespace bisPointRegistrationUtils {
     }
 
     if (RawWeights) {
-      if (!isPointSetValue(RawWeights,N_PTS,1,debug)) {
+      if (RawWeights->getLength()!=N_PTS)
         std::cerr << "Bad Weights specified " << std::endl;
-        return 0;
-      }
+      return 0;
     }
     
     if (debug) {
@@ -155,7 +154,16 @@ namespace bisPointRegistrationUtils {
   
     Eigen::MatrixXf Source=bisEigenUtil::mapToEigenMatrix(RawSourceLandmarks);
     Eigen::MatrixXf Target=bisEigenUtil::mapToEigenMatrix(RawTargetLandmarks);
-  
+    Eigen::VectorXf Weights;
+    if (RawWeights) {
+      Weights=bisEigenUtil::mapToEigenVector(RawWeights);
+    } else {
+      Weights=Eigen::VectorXf::Zero(N_PTS);
+      for (int i=0;i<N_PTS;i++)
+        Weights(i)=1.0;
+      std::cout << "___ Setting all weights to 1.0" << std::endl;
+    }
+      
     // --- compute the necessary transform to match the two sets of landmarks ---
 
     /*
@@ -170,26 +178,27 @@ namespace bisPointRegistrationUtils {
 
     float source_centroid[3] = { 0, 0, 0 };
     float target_centroid[3] = { 0, 0, 0 };
+    float sumw=0.0;
     for (int i = 0; i < N_PTS; i++) {
-      source_centroid[0] += Source(i,0);
-      source_centroid[1] += Source(i,1);
-      source_centroid[2] += Source(i,2);
-      target_centroid[0] += Target(i,0);
-      target_centroid[1] += Target(i,1);
-      target_centroid[2] += Target(i,2);
+      float w=Weights(i);
+      for (int ia=0;ia<=2;ia++) {
+        source_centroid[ia] += Source(i,ia)*w;
+        target_centroid[ia] += Target(i,ia)*w;
+      }
+      sumw+=w;
     }
-  
-    source_centroid[0] /= N_PTS;
-    source_centroid[1] /= N_PTS;
-    source_centroid[2] /= N_PTS;
-    target_centroid[0] /= N_PTS;
-    target_centroid[1] /= N_PTS;
-    target_centroid[2] /= N_PTS;
 
-    if (debug) {
+    for (int ia=0;ia<=2;ia++) {
+      source_centroid[ia] = source_centroid[ia]/ sumw;
+      target_centroid[ia] = target_centroid[ia]/ sumw;
+    }
+
+
+    //    if (debug) {
       std::cout << "___ Source Centroid = " << source_centroid[0] << "," << source_centroid[1] << "," << source_centroid[2] << std::endl;
       std::cout << "___ Target Centroid = " << target_centroid[0] << "," << target_centroid[1] << "," << target_centroid[2] << std::endl;
-    }
+      std::cout << "___ sumw = " << sumw << " N_PTS = " << N_PTS << std::endl;
+      //    }
     
     // -- build the 3x3 matrix M --
   
@@ -205,6 +214,9 @@ namespace bisPointRegistrationUtils {
     float a[3], b[3];
     float sa = 0.0F, sb = 0.0F;
     for (int pt = 0; pt < N_PTS; pt++) {
+
+      float wgt=Weights(pt);
+      
       // get the origin-centred point (a) in the source set
       for (int ia=0;ia<=2;ia++) {
         a[ia]=Source(pt,ia);
@@ -219,21 +231,21 @@ namespace bisPointRegistrationUtils {
       b[2] -= target_centroid[2];
       // accumulate the products a*T(b) into the matrix M
       for (int i = 0; i < 3; i++) {
-        M[i][0] += a[i] * b[0];
-        M[i][1] += a[i] * b[1];
-        M[i][2] += a[i] * b[2];
+        M[i][0] += wgt * a[i] * b[0];
+        M[i][1] += wgt * a[i] * b[1];
+        M[i][2] += wgt * a[i] * b[2];
         
         // for the affine transform, compute ((a.a^t)^-1 . a.b^t)^t.
         // a.b^t is already in M.  here we put a.a^t in AAT.
         if (mode == 2 ) { 
-          AAT[i][0] += a[i] * a[0];
-          AAT[i][1] += a[i] * a[1];
-          AAT[i][2] += a[i] * a[2];
+          AAT[i][0] += wgt * a[i] * a[0];
+          AAT[i][1] += wgt * a[i] * a[1];
+          AAT[i][2] += wgt * a[i] * a[2];
         }
       }
     // accumulate scale factors (if desired)
-      sa += a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
-      sb += b[0] * b[0] + b[1] * b[1] + b[2] * b[2];
+      sa += wgt*(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+      sb += wgt*(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
     }
 
     // if source or destination is degenerate then only report

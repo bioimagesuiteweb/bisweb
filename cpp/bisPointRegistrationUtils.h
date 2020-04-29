@@ -59,7 +59,7 @@ namespace bisPointRegistrationUtils {
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
                                     bisMatrixTransformation* Output,
-                                    bisSimpleMatrix<float>* Weights=NULL,
+                                    bisSimpleVector<float>* RawWeights,
                                     int debug=0);
 
   /** Transform Points
