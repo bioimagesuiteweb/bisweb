@@ -545,20 +545,16 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1 /EHsc" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    if(UNIX AND NOT APPLE)
-      SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat -Wno-int-in-bool-context")
-    ELSE(UNIX AND NOT APPLE)
-      SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat")
-    ENDIF(UNIX AND NOT APPLE)
+    SET( COMPILE_FLAGS "-Wall -Wextra -Wpedantic -Wformat")
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 " CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
   
   # ---------------------------
 
-  include_directories ( ${EIGEN3_INCLUDE_DIRS} )
+  include_directories (SYSTEM ${EIGEN3_INCLUDE_DIRS} )
   IF (BIS_USEINDIV)
-    include_directories ( ${IGL_INCLUDE_DIRS} )
+    include_directories (SYSTEM ${IGL_INCLUDE_DIRS} )
   ENDIF (BIS_USEINDIV)
 
   IF (BIS_USECPM)
