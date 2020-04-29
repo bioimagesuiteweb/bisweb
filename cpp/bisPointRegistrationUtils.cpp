@@ -34,7 +34,7 @@ namespace bisPointRegistrationUtils {
     
     if (Points==NULL) {
       if (debug)
-        std::cerr << "__ NULL input point set " << std::endl;
+        std::cerr << "__ NULL input matrix set " << std::endl;
       return 0;
     }
     
@@ -42,7 +42,7 @@ namespace bisPointRegistrationUtils {
     int N_COLS= Points->getNumCols();
     if (N_PTS < minrows ||    N_COLS != numcols  ) {
       if (debug) 
-        std::cerr << "Update: Points Matrix " << N_PTS << "*" << N_COLS << std::endl;
+        std::cerr << "Update: Matrix not valid " << N_PTS << "*" << N_COLS << std::endl;
       return 0;
     }
     
@@ -119,14 +119,16 @@ namespace bisPointRegistrationUtils {
   int computeLandmarkTransformation(bisSimpleMatrix<float>* RawSourceLandmarks,
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
-                                    bisMatrixTransformation* OutputTransformation,int debug)
+                                    bisMatrixTransformation* OutputTransformation,
+                                    bisSimpleMatrix<float>* RawWeights,
+                                    int debug)
     
   {
     OutputTransformation->identity();
 
     if (!RawSourceLandmarks  || !RawTargetLandmarks) 
       return 0;
-  
+
     int N_PTS = RawSourceLandmarks->getNumRows();
     int N_COLS= RawSourceLandmarks->getNumCols();
     if (N_PTS != RawTargetLandmarks->getNumRows() ||
@@ -137,9 +139,18 @@ namespace bisPointRegistrationUtils {
       return 0;
     }
 
+    if (RawWeights) {
+      if (!isPointSetValue(RawWeights,N_PTS,1,debug)) {
+        std::cerr << "Bad Weights specified " << std::endl;
+        return 0;
+      }
+    }
+    
     if (debug) {
       std::cout << "___ Compute Landmark Transform: Source and Target Landmarks have the same number of points  (" << N_PTS << "," << N_COLS <<")" << std::endl;
       std::cout << "___ Mode = " << mode << std::endl;
+      if (RawWeights)
+        std::cout << "___ Using Weights " << std::endl;
     }
   
     Eigen::MatrixXf Source=bisEigenUtil::mapToEigenMatrix(RawSourceLandmarks);
@@ -441,7 +452,9 @@ unsigned char* computeLandmarkTransformWASM(unsigned char* source_ptr, unsigned 
   int result=bisPointRegistrationUtils::computeLandmarkTransformation(source.get(),
                                                                       target.get(),
                                                                       mode,
-                                                                      output.get(),debug);
+                                                                      output.get(),
+                                                                      NULL,
+                                                                      debug);
 
   if (debug)
     std::cout << "___ Computed ok=" << result << std::endl;

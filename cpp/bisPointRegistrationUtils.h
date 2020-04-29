@@ -58,7 +58,9 @@ namespace bisPointRegistrationUtils {
   int computeLandmarkTransformation(bisSimpleMatrix<float>* RawSourceLandmarks,
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
-                                    bisMatrixTransformation* Output,int debug=0);
+                                    bisMatrixTransformation* Output,
+                                    bisSimpleMatrix<float>* Weights=NULL,
+                                    int debug=0);
 
   /** Transform Points
    * @param Points the input points
