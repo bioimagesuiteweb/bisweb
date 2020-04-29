@@ -194,11 +194,11 @@ namespace bisPointRegistrationUtils {
     }
 
 
-    //    if (debug) {
+    if (debug) {
       std::cout << "___ Source Centroid = " << source_centroid[0] << "," << source_centroid[1] << "," << source_centroid[2] << std::endl;
       std::cout << "___ Target Centroid = " << target_centroid[0] << "," << target_centroid[1] << "," << target_centroid[2] << std::endl;
       std::cout << "___ sumw = " << sumw << " N_PTS = " << N_PTS << std::endl;
-      //    }
+    }
     
     // -- build the 3x3 matrix M --
   
