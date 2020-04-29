@@ -220,6 +220,6 @@ class TestPointLocator(unittest.TestCase):
         self.assertEqual(True,(diff<0.01 and diff2 <0.01));
             
         
-        #print('outpts2=',outpts2.shape,outpts2);
+
         
         

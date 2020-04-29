@@ -50,7 +50,7 @@ let printmatrix=function(mat) {
     return out;
 };
 
-describe('Testing CPM Code', function() {
+describe('Testing CPM Code', () => {
 
 
     let matrices = [ new BisWebMatrix(),new BisWebMatrix(),new BisWebMatrix(),
@@ -63,25 +63,20 @@ describe('Testing CPM Code', function() {
     for (let i=0;i<=5;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/cpm/'+names[i]);
 
-    before(function(done){
-        let p=[ matrices[0].load(fullnames[0]),
-                matrices[1].load(fullnames[1]),
-                matrices[2].load(fullnames[2]),
-                matrices[3].load(fullnames[3]),
-                matrices[4].load(fullnames[4]),
-                matrices[5].load(fullnames[5]),
-                
-                libbiswasm.initialize()  ];
-        Promise.all(p).then( () => {
-            console.log('Small Conenctome=',printmatrix(matrices[0]));
-            console.log('Small Phenotype=',printmatrix(matrices[1]));
-            console.log('Small Expected Result=',printmatrix(matrices[2]));
-            done();
-        });
+    before( async () => {
+
+        await libbiswasm.initialize();
+        for (let i=0;i<=5;i++) 
+            await matrices[i].load(fullnames[i]);
+
+        console.log('Small Conenctome=',printmatrix(matrices[0]));
+        console.log('Small Phenotype=',printmatrix(matrices[1]));
+        console.log('Small Expected Result=',printmatrix(matrices[2]));
+        return Promise.resolve('done');
     });
     
 
-    it ('check loading',function() {
+    it ('check loading',() => {
         let diff=0;
         
         for (let i=0;i<=1;i++) {
@@ -93,7 +88,7 @@ describe('Testing CPM Code', function() {
     });
 
 
-    it ('check cpm',function() {
+    it ('check cpm',() => {
         console.log('___________________________________');
         console.log('        Invoking CPM C++ Code      ');
         console.log('___________________________________');
@@ -112,7 +107,7 @@ describe('Testing CPM Code', function() {
         assert.equal(res.testresult,true);
     });
 
-    it ('check cpm large',function() {
+    it ('check cpm large',() => {
         console.log('___________________________________');
         console.log('        Invoking CPM C++ Code      ');
         console.log('___________________________________');

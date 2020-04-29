@@ -54,7 +54,7 @@ const main=async function() {
         }
     }
 
-    util.initialize(DIR,doexit);
+    //util.initialize(DIR,doexit);
 
     
     console.log("++++");

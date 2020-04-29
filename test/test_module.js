@@ -222,7 +222,7 @@ let list_modules_and_exit=function(testlist) {
 // -----------------------------------------------------------
 describe(getTime()+` Beginning module tests `,function() {
 
-    this.timeout(500000);
+    this.timeout(5000000);
     
     before(function() {
         
@@ -240,7 +240,7 @@ describe(getTime()+` Beginning module tests `,function() {
             console.log(getTime()+'\t Running tests:',bounds.begin,':',bounds.end,' out a total of=',testlist.length,'tests. Filter name='+(testnamelist || ['all']).join(" "));
             describe('',function() {
 
-                this.timeout(50000);
+                this.timeout(500000);
                 for (let i=bounds.begin;i<=bounds.end;i++) {
                     let tname=testlist[i].command.split(" ")[0].toLowerCase();
                     let skipjs=testlist[i].skipjs || false;
@@ -250,25 +250,28 @@ describe(getTime()+` Beginning module tests `,function() {
                     }
                     
                     if (proceed && skipjs===false) {
-                        it('Test '+i,function(done2) {
+                        let command=testlist[i].command+" "+testlist[i].test;
+                        describe(colors.magenta('Finished test for module '+testlist[i].command+' ('+command+')'),function() {
+                            it('Test '+i,function(done2) {
 
-                            let command=testlist[i].command+" "+testlist[i].test;
-                            
-                            let expected_result=testlist[i].result;
-                            command=command+' --test_base_directory '+pathspec.basedirectory;
-                            console.log(colors.green('\n'+getTime()+' -------------------- test',i,'-----------------------------------------\n'));
-                            bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
-                                let success= (parseInt(exitcode) ===0);
-                                console.log('___________________________________________________________________________________');
-                                console.log('\t Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
-                                console.log('___________________________________________________________________________________');
-                                if (completed===false)
-                                    success=false;
+
                                 
-                                assert.equal(success,expected_result);
-                                console.log(colors.blue('\n'+getTime()+' ------------------------------------------------------------------\n'));
-                                done2();
-                            }));
+                                let expected_result=testlist[i].result;
+                                command=command+' --test_base_directory '+pathspec.basedirectory;
+                                console.log(colors.green('\n'+getTime()+' -------------------- test',i,'-----------------------------------------\n'));
+                                bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
+                                    let success= (parseInt(exitcode) ===0);
+                                    console.log('___________________________________________________________________________________');
+                                    console.log('\t Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
+                                    console.log('___________________________________________________________________________________');
+                                    if (completed===false)
+                                        success=false;
+                                    
+                                    assert.equal(success,expected_result);
+                                    console.log(colors.blue('\n'+getTime()+' ------------------------------------------------------------------\n'));
+                                    done2();
+                                }));
+                            });
                         });
                     }
                 }
@@ -285,6 +288,5 @@ describe(getTime()+` Beginning module tests `,function() {
 
     // Dummy Task
     it(getTime()+'\t This is a required placeholder to allow before() to work', function () { });
-
 
 });

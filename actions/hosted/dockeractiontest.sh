@@ -102,7 +102,7 @@ echo "----------------------------------------------------------"  | tee ${LOGFI
 echo "--- Regression testing JS" | tee -a ${LOGFILE}
 echo "---" | tee -a ${LOGFILE}
 cd wasm; 
-ctest -j2 -I ${FIRST},${LAST} -V | tee  -a ${LOGFILE}
+ctest -I ${FIRST},${LAST} -V | tee  -a ${LOGFILE}
 
 
 echo "----------------------------------------------------------"  | tee ${LOGFILE2}
