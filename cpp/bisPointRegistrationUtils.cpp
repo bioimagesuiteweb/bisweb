@@ -26,6 +26,96 @@
 
 namespace bisPointRegistrationUtils {
 
+
+  int isPointSetValid(bisSimpleMatrix<float>* Points,
+                      int minrows,
+                      int numcols,
+                      int debug) {
+    
+    if (Points==NULL) {
+      if (debug)
+        std::cerr << "__ NULL input point set " << std::endl;
+      return 0;
+    }
+    
+    int N_PTS = Points->getNumRows();
+    int N_COLS= Points->getNumCols();
+    if (N_PTS < minrows ||    N_COLS != numcols  ) {
+      if (debug) 
+        std::cerr << "Update: Points Matrix " << N_PTS << "*" << N_COLS << std::endl;
+      return 0;
+    }
+    
+    return N_PTS;
+  }
+  
+  int computeCentroid(bisSimpleMatrix<float>* Points,
+                      float centroid[3],
+                      int debug) {
+    
+
+    for (int ia=0;ia<=2;ia++)
+      centroid[ia]=0.0;
+    
+    int N_PTS=isPointSetValid(Points,2,3,debug);
+    if (N_PTS<1)
+      return 0;
+
+    float* inp=Points->getData();
+    for (int pt=0;pt<N_PTS;pt++) {
+      for (int ia=0;ia<=2;ia++)
+        centroid[ia]=centroid[ia]+inp[pt*3+ia];
+    }
+
+    for (int ia=0;ia<=2;ia++)
+      centroid[ia]/=float(N_PTS);
+    
+    return 1;
+  }
+
+
+  // ----------------------------------------------------------------------------------------------------
+  // transform Points by transformation
+  // ----------------------------------------------------------------------------------------------------
+  bisSimpleMatrix<float>* transformPoints(bisSimpleMatrix<float>* Input,
+                                          bisAbstractTransformation* Transformation,
+                                          int debug) {
+    
+    if (Transformation == NULL) {
+      std::cerr << "NULL transformation in transformPoints " << std::endl;
+      return NULL;
+    }
+
+    int N_PTS=isPointSetValid(Input);
+    if (N_PTS==0)
+      return NULL;
+    
+    if (debug) 
+      std::cout << "___ Transforming " << N_PTS << " points with " << Transformation->getClassName() << std::endl;
+    
+    bisSimpleMatrix<float>* Output=new bisSimpleMatrix<float>();
+    
+    float* inp=Input->getData();
+    float* out=Output->getData();
+    
+    Output->zero(N_PTS,3);
+    for (int pt=0;pt<N_PTS;pt++) {
+      float x[3],y[3];
+      for (int ia=0;ia<=2;ia++)
+        x[ia]=inp[pt*3+ia];
+      Transformation->transformPoint(x,y);
+      for (int ia=0;ia<=2;ia++)
+        out[pt*3+ia]=y[ia];
+    }
+    
+    return Output;
+    
+  }
+
+  
+  // ----------------------------------------------------------------------------------------------------
+  // Compute Lnadmark Transform
+  // ----------------------------------------------------------------------------------------------------
   int computeLandmarkTransformation(bisSimpleMatrix<float>* RawSourceLandmarks,
                                     bisSimpleMatrix<float>* RawTargetLandmarks,
                                     int mode,
@@ -309,44 +399,8 @@ namespace bisPointRegistrationUtils {
   }
 
 
-  bisSimpleMatrix<float>* transformPoints(bisSimpleMatrix<float>* Input,
-                                          bisAbstractTransformation* Transformation,
-                                          int debug) {
-    
-    if (Input==NULL || Transformation == NULL) {
-      std::cerr << "NULL Inputs to transformPoints " << std::endl;
-      return NULL;
-    }
-    
-    int N_PTS = Input->getNumRows();
-    int N_COLS= Input->getNumCols();
-    if (N_PTS < 1 ||    N_COLS !=3  ) {
-      std::cerr << "Update: Bad Input Points Matrix" << std::endl;
-      return 0;
-    }
-    
-    if (debug) 
-      std::cout << "___ Transforming " << N_PTS << " points with " << Transformation->getClassName() << std::endl;
-    
-    
-    bisSimpleMatrix<float>* Output=new bisSimpleMatrix<float>();
-    
-    float* inp=Input->getData();
-    float* out=Output->getData();
-    
-    Output->zero(N_PTS,3);
-    for (int pt=0;pt<N_PTS;pt++) {
-      float x[3],y[3];
-      for (int ia=0;ia<=2;ia++)
-        x[ia]=inp[pt*3]+ia;
-      Transformation->transformPoint(x,y);
-      for (int ia=0;ia<=2;ia++)
-        out[pt*3+ia]=y[ia];
-    }
-    
-    return Output;
-    
-  }
+
+
 }
 /** Computes best fit Landmark Transformation (see VTK/VTKLandmarkTransform.cxx) given two sets of points
  * @param RawSourceLandmarks the source points (Nx3)

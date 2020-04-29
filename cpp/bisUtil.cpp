@@ -333,6 +333,28 @@ namespace bisUtil {
     return gValue;
   }
 
+
+  void makeIdentityMatrix(mat44 m) {
+    for (int ia=0;ia<=3;ia++) {
+      for (int ib=0;ib<=3;ib++) {
+        if (ia==ib)
+          m[ia][ib]=1.0;
+        else
+          m[ia][ib]=0.0;
+      }
+    }
+  }
+
+  /** fill matrix
+   * @param matrix the matrix to fill
+   */
+  void fillMatrix(mat44 m,float value) {
+    for (int ia=0;ia<=3;ia++) 
+      for (int ib=0;ib<=3;ib++) 
+        m[ia][ib]=value;
+  }
+  
+
 }
 
 

@@ -25,6 +25,29 @@
 
 namespace bisPointRegistrationUtils {
 
+  /** Is Valid Point Set 
+   * @param Points  the points matrix
+   * @param minrows minimum number of rows (default=2)
+   * @param numcols (default=3)
+   * @param debug if >0 print messages
+   * @returns number of points or zero if failure
+   */
+  int isPointSetValid(bisSimpleMatrix<float>* Points,
+                      int minrows=2,
+                      int numcols=3,
+                      int debug=0);
+
+  /** Compute Points Centroid
+   * @param Points the input points
+   * @param centroid the centroid
+   * @param debug print diagnostic messages
+   * @param returns 1 if success, 0 if failure
+   */
+  int computeCentroid(bisSimpleMatrix<float>* Points,
+                      float centroid[3],
+                      int debug=0);
+
+
   /** Computes best fit Landmark Transformation (see VTK/VTKLandmarkTransform.cxx) given two sets of points
    * @param RawSourceLandmarks the source points (Nx3)
    * @param RawTargetLandmarks the target points (Nx3)
@@ -47,6 +70,7 @@ namespace bisPointRegistrationUtils {
                                           bisAbstractTransformation* Transformation,
                                           int debug=0);
 
+  
 }
 
 extern "C" {
