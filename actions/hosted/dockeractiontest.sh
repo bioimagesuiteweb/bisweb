@@ -177,7 +177,7 @@ if  [  ${BISWEBOS} == "Darwin" ] ; then
     mv ${BDIR}/dist/*dmg ${ELECTRON}
     cp ${BDIR}/native/*dylib ${LIBRARIES}
 else
-    echo "On Linux"
+    echo "On Linux or windows"
     mv ${BDIR}/dist/*zip ${ELECTRON}
     cp ${BDIR}/native/*so ${LIBRARIES}
     cp ${BDIR}/native/*.dll ${LIBRARIES}

@@ -175,13 +175,9 @@ class TestPointLocator(unittest.TestCase):
                 points[i]=[ i,2*i,1000+0.1*i ]
                 labels[i]=1
         
-                #print('points=',points[940:960,:]);
-                #print('labels=',labels[940:960]);
-
-        self.assertEqual(True,True);
-
 
         # Hardcode numpoints=54, max=980
+        print('---------------------- UnWeighted Sampling ---------------')
         numpoints=54
         step=int(1000/numpoints)
         print('step=',step)
@@ -200,7 +196,7 @@ class TestPointLocator(unittest.TestCase):
         diff=max(np.amax(dl),-np.amin(dl));
         print('Difference = ', diff);
 
-
+        print('---------------------- Weighted Sampling ---------------')
         steps=[17,4]
         p1=points[0:930:17];
         p2=points[950:998:4];

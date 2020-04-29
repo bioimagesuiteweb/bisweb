@@ -48,6 +48,7 @@ rm CMakeCache.txt
 
 cmake -G "${GENERATOR}" \
       -DBIS_A_EMSCRIPTEN=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
       -DPYTHON_EXECUTABLE=`which python3` \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \

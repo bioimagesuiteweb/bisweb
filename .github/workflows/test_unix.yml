@@ -4,7 +4,7 @@ on:
 
 
 jobs:
-  hosted_build:
+  unix_test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -62,16 +62,6 @@ jobs:
       with:
         name: logs
         path: /tmp/bisweb/src/build/output/logs
-#    - name: Store Electron
-#      uses: actions/upload-artifact@v1
-#      with:
-#        name: electron
-#        path: /tmp/bisweb/src/build/output/electron
-#    - name: Store Binaries
-#      uses: actions/upload-artifact@v1
-#      with:
-#        name: binaries
-#        path: /tmp/bisweb/src/build/output/binaries
     - name: Store Libraries
       uses: actions/upload-artifact@v1
       with:
