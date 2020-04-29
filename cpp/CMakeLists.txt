@@ -34,7 +34,8 @@ MESSAGE("-- Building BISWEB ${BISWEB_VERSION} major=${BISWEB_VERSION_MAJOR} mino
 MESSAGE("----------------------------------------------------")
 
 FIND_PROGRAM(NODE_JS_EXECUTABLE node REQUIRED)
-
+SET(MOCHA_EXECUTABLE "${MOCHA}")
+MESSAGE("MOCHA=${MOCHA_EXECUTABLE}")
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -478,7 +479,7 @@ IF (BIS_A_EMSCRIPTEN)
       GET_FILENAME_COMPONENT(TNAME ${item} NAME)
       GET_FILENAME_COMPONENT(DNAME ${item} DIRECTORY)
       GET_FILENAME_COMPONENT(DNAME ${DNAME} ABSOLUTE)
-      add_test(NAME "js-unit-${TNAME}" COMMAND mocha ${TNAME} WORKING_DIRECTORY ${DNAME})
+      add_test(NAME "js-unit-${TNAME}" COMMAND ${MOCHA_EXECUTABLE} ${TNAME} WORKING_DIRECTORY ${DNAME})
       MATH (EXPR COUNT "${COUNT}+1")
     ENDFOREACH (item ${TLIST})
     MESSAGE("~~~~~ Added ${COUNT} javascript/mocha unit tests")
@@ -491,7 +492,7 @@ IF (BIS_A_EMSCRIPTEN)
     FILE (STRINGS ${JS_MODULE_LIST_FILENAME} JSMODULES)
     SET (COUNT 0)
     FOREACH (item ${JSMODULES})
-      add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
+      add_test(NAME "js-module-${item}" COMMAND ${MOCHA_EXECUTABLE} test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
       MATH (EXPR COUNT "${COUNT}+1")
     ENDFOREACH (item ${TLIST})
     MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")

@@ -9,17 +9,21 @@ BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
 BISWEBOS=`uname | cut -f1 -d_`
+MOCHA=`which mocha`
+
 echo $OS
 if  [  ${BISWEBOS} == "MINGW64" ] ; then
       BISMAKEJ=" "
       MAKE=`which nmake`
-     GENERATOR="NMake Makefiles"
+      MOCHA="${MOCHA}.cmd"
+      GENERATOR="NMake Makefiles"
 fi
 
 
 echo "-----------------------------------------------------------------------"
 echo "SRCDIR=${SRCDIR}, BDIR=${BDIR}"
 echo "OS=${BISWEBOS}, ${MAKE} ${BISMAKEJ} ${GENERATOR}"
+echo "MOCHA = ${MOCHA}"
 echo "-----------------------------------------------------------------------"
 
 cd ${BDIR}
@@ -50,8 +54,9 @@ cd ${BDIR}/wasm
 touch CMakeCache.txt
 rm CMakeCache.txt
 cmake -G "${GENERATOR}" \
-       -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+      -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
+      -DMOCHA=${MOCHA} \
       -DCMAKE_CXX_FLAGS="-o2 -s WASM=1 -s TOTAL_MEMORY=512MB -Wint-in-bool-context" \
       -DCMAKE_EXE_LINKER_FLAGS="--pre-js ${SRCDIR}/cpp/libbiswasm_pre.js --post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \

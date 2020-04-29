@@ -1,10 +1,9 @@
 on: 
     schedule:
       - cron: '12 7 * * *'
-  
 
 jobs:
-  test_job:
+  docker_test:
     runs-on: ubuntu-18.04
     name: Docker test for bisweb
     steps:
@@ -12,8 +11,8 @@ jobs:
       id: run      
       uses: bioimagesuiteweb/bisweb/actions/docker@devel
       env:
-        BIS_FIRST_TEST: 12
-        BIS_LAST_TEST: 20
+        BIS_FIRST_TEST: 1
+        BIS_LAST_TEST: 1000
     - name: Results
       run: echo "${{ steps.run.outputs.result}}"
-    
+
