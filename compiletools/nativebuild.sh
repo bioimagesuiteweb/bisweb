@@ -35,9 +35,24 @@ echo "___ Make command=${MAKE} ${BISMAKEJ}"
 echo "___ Generator=${GENERATOR}"
 echo "___"
 
-# Fake JS build
-mkdir -p ${BDIR}/wasm
-touch ${BDIR}/wasm/libbiswasm_wrapper.js
+
+F=${BDIR}/wasm/libbiswasm_wrapper.js
+G=${BDIR}/wasm/biswasmdate.js
+
+if [[ -f $F && -f $G ]]; then
+    echo "___ Found core files ${F}"
+    echo "___              and ${G}"
+else
+    echo "___ "
+    echo "___ file ${F}"
+    echo "___   or ${G} not found"
+    echo "___ faking a wasm build to enable wrapper scripts to run for native build"
+    echo "___ "
+    touch ${F}
+    cp ${SRCDIR}/various/wasm/biswasmdate.js ${BDIR}/wasm
+    ls -l ${BDIR}/wasm/*.js
+fi
+
 
 # Build NATIVE
 mkdir -p ${BDIR}/native

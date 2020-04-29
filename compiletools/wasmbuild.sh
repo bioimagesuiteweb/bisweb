@@ -104,7 +104,8 @@ echo "___ "
 echo "___ Invoking ${MAKE}"
 echo "___ "
 
-
+# Ensure wrappers are up to date
+rm ${F} ${G}
 "${MAKE}" ${BISMAKEJ}
 
 if [ ${DOINSTALL} == "true" ]; then

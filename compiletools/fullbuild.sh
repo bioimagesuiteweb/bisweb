@@ -17,7 +17,7 @@ bash ${CDIR}/wasmbuild.sh install
 echo ""
 echo "*******************************************************"
 echo ""
-bash ${CDIR}/webbuild.sh
+bash ${CDIR}/webbuild.sh -m
 echo ""
 echo "*******************************************************"
 echo ""

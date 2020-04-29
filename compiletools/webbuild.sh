@@ -1,6 +1,11 @@
 #!/bin/bash
 
-EXTRA="$@"
+if [ "*${1}*" == "**" ]; then
+    EXTRA=""
+else
+    EXTRA="-m"
+fi
+
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BDIR="$( cd ${IDIR}/../build && pwd )"
@@ -19,7 +24,7 @@ echo "___"
 mkdir -p ${BDIST}
 mkdir -p ${BDIR}/install/zips
 mkdir -p ${BDIR}/web
-mkdir -p ${BDIR}/build/doc
+mkdir -p ${BDIR}/doc
 touch ${BDIR}/web/LICENSE
 
 # Create server zip file
@@ -29,36 +34,51 @@ rm ${BDIST}/*zip
 
 echo "_______________________________________________________________________"
 echo "___"
-echo "___ Invoking gulp"
+echo "___ Invoking gulp build ${EXTRA}"
 echo "___"
 
+gulp build ${EXTRA}
 
-gulp build ${EXTRA} 
-gulp zip
-mv ${BDIST}/*zip ${BDIR}/install/zips
+if [ "*${EXTRA}*" == "*-m*" ]; then
 
-echo "_______________________________________________________________________"
-echo "___"
-echo "___ Invoking npm pack"
-echo "___"
+    echo "_______________________________________________________________________"
+    echo "___"
+    echo "___ Invoking gulp zip"
+    echo "___"
+    
+    gulp zip
+    mv ${BDIST}/*zip ${BDIR}/install/zips
+    
+    echo "_______________________________________________________________________"
+    echo "___"
+    echo "___ Invoking npm pack"
+    echo "___"
 
-cd ${SRCDIR}
-gulp npmpack
-cd ${BDIST}/biswebbrowser
-npm pack
-cp *tgz ${BDIR}/install/zips
-cd ${BDIR}/install/zips
 
-
-echo "_______________________________________________________________________"
-echo "___"
-echo "___ Listing files"
-echo "___"
-pwd
-ls -lrt 
-
-echo "_______________________________________________________________________"
-echo "___"
-echo "___ Done with Web distribution"
-echo "___"
-echo "_______________________________________________________________________"
+    cd ${SRCDIR}
+    gulp npmpack
+    cd ${BDIST}/biswebbrowser
+    npm pack
+    cp *tgz ${BDIR}/install/zips
+    cd ${BDIR}/install/zips
+    
+    
+    echo "_______________________________________________________________________"
+    echo "___"
+    echo "___ Listing files"
+    echo "___"
+    pwd
+    ls -lrt 
+    
+    echo "_______________________________________________________________________"
+    echo "___"
+    echo "___ Done with web distribution"
+    echo "___"
+    echo "_______________________________________________________________________"
+else
+    echo "_______________________________________________________________________"
+    echo "___"
+    echo "___ Done with simple web build"
+    echo "___"
+    echo "_______________________________________________________________________"
+fi
