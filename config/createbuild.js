@@ -55,7 +55,7 @@ const main=async function() {
     }
 
     //util.initialize(DIR,doexit);
-    util.makeDir(DIR,exit);
+    util.makeDir(DIR,doexit);
     
     console.log("++++");
     console.log("++++ Creating scripts");
