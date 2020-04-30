@@ -136,6 +136,33 @@ module.exports = {
         ];
     },
 
+    getSurfaceToSurfaceInputs: function (desc=null) {
+        return [
+            {
+                'type': 'surface',
+                'name': 'Surface',
+                'description': desc || 'The input data (surface) to process..',
+                'varname': 'input',
+                'shortname': 'i',
+                'required': true,
+            }
+        ];
+    },
+
+    getSurfaceToSurfaceOutputs: function (desc = null) {
+        return [
+            {
+                'type': 'surface',
+                'name': 'Output Surface',
+                'description': desc || 'The output surface',
+                'varname': 'output',
+                'shortname': 'o',
+                'required': true,
+                'extension' : '.vtk'
+            }
+        ];
+    },
+
 
     getRegistrationInputs: function (includematrix=true) {
         let inp= [

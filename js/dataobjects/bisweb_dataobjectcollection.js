@@ -27,6 +27,7 @@
 const BisWebDataObject = require('bisweb_dataobject');
 const genericio = require('bis_genericio');
 const BisWebImage = require('bisweb_image.js');
+const BisWebSurface = require('bisweb_surface.js');
 const BisWebMatrix = require('bisweb_matrix.js');
 const BisWebTextObject = require('bisweb_textobject.js');
 const bistransforms = require('bis_transformationutil.js');
@@ -268,9 +269,9 @@ class BisWebDataObjectCollection extends BisWebDataObject {
             obj= new BisWebDataObjectCollection();
         } else if (objecttype === "text" || objecttype === "textobject") {
             obj= new BisWebTextObject();
+        } else if (objecttype === "surface") {
+            obj= new BisWebSurface();
         }
-
-
         
         if (obj===null) {
             console.log('Error unknown ',objecttype,' =null');
