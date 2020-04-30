@@ -1,6 +1,6 @@
 on: 
     schedule:
-      - cron: '12 7 * * *'
+      - cron: '53 13 * * *'
 
 jobs:
   docker_test:
