@@ -158,7 +158,7 @@ module.exports = {
                 'varname': 'output',
                 'shortname': 'o',
                 'required': true,
-                'extension' : '.vtk'
+                'extension' : '.surjson'
             }
         ];
     },
@@ -201,6 +201,38 @@ module.exports = {
         return inp;
     },
 
+    getSurfaceRegistrationInputs: function (includematrix=true) {
+        let inp= [
+            {
+                'type': 'surface',
+                'name': 'Reference Surface',
+                'description': 'The reference surface',
+                'varname': 'reference',
+                'shortname': 'r',
+                'required': true
+            },
+            {
+                'type': 'surface',
+                'name': 'Target Surface',
+                'description': 'The surface to register',
+                'varname': 'target',
+                'shortname': 't',
+                'required': true,
+
+            }
+        ];
+        if (includematrix)
+            inp.push({
+                'type': 'transformation',
+                'name': 'Initial Xform',
+                'description': 'The initial transformation (optional)',
+                'varname': 'initial',
+                'required': false,
+                'guiviewer' : 'identity',
+            });
+        return inp;
+    },
+
     getRegistrationOutputs: function () {
         return [
             {
@@ -217,6 +249,31 @@ module.exports = {
                 'name': 'Resliced Image',
                 'description': 'The resliced image',
                 'varname': 'resliced',
+                'required': false,
+                'extension' : '.nii.gz',
+                'guiviewertype' : 'overlay',
+                'guiviewer'  : 'viewer1',
+                'colortype'  : 'Orange'
+            }
+        ];
+    },
+
+    getSurfaceRegistrationOutputs: function () {
+        return [
+            {
+                'type': 'transformation',
+                'name': 'Output Transformation',
+                'description': 'The output transformation',
+                'varname': 'output',
+                'shortname': 'o',
+                'required': true,
+                'extension' : '.json',
+            },
+            {
+                'type': 'surface',
+                'name': 'Warped Surface',
+                'description': 'The warped surface',
+                'varname': 'warped',
                 'required': false,
                 'extension' : '.nii.gz',
                 'guiviewertype' : 'overlay',

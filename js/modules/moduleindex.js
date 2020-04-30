@@ -70,6 +70,7 @@ const moduleImports = {
     motionreslice : require('motionReslice.js'),
     manualregistration : require('manualRegistration.js'),
     linearregistration : require('linearRegistration.js'),
+    linearpointregistration : require('linearPointRegistration.js'),
     nonlinearregistration : require('nonlinearRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
     skullstrip:require('skullStrip.js'),

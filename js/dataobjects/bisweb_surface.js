@@ -20,7 +20,7 @@
 const biswasm = require('bis_wasmutils');
 const BisWebDataObject=require('bisweb_dataobject');
 const BisWebMatrix=require('bisweb_matrix');
-
+const genericio=require('bis_genericio');
 
 /** A class to model a combo transfomration which is a linear transformations and a list of grid transformations. */
 
@@ -288,6 +288,74 @@ class BisWebSurface extends BisWebDataObject {
                 dat[i]=triangleData[i];
         }
         
+    }
+
+    /** load and save */
+    // ---- Load and Save, Serialize and Deserialize to JSON -------------------------------------------------
+    /**
+     * Load an surface from a filename or file object
+     * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
+     * @return {Promise} a promise that is fuilfilled when the image is loaded
+     */
+    load(fobj) {
+        return new Promise((resolve, reject) => {
+            
+            genericio.read(fobj, false).then((contents) => {
+
+                
+                try {
+                    let obj=JSON.parse(contents.data);
+                    let b=obj.bisformat || null;
+
+
+                    if (b!==null) {
+                        if (this.parseFromJSON(contents.data)) {
+                            this.filename=contents.filename;
+                            resolve('loaded from '+contents.filename);
+                            return;
+                        }
+                    }
+
+                    if (obj.points && obj.triangles) {
+                        this.setFromRawArrays(obj.points,
+                                             obj.triangles,
+                                             obj.pointData || [],
+                                             obj.triangleData || []);
+                        this.filename=contents.filename;
+                        resolve('loaded from (legacy) '+contents.filename);
+                        return;
+                    } else {
+                        reject('failed to load from (legacy) '+contents.filename);
+                        return;
+                    }
+                } catch(e) {
+                    reject(e);
+                }
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * save an surface from a filename or file object
+     * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
+     * @return {Promise} a promise that is fuilfilled when the image is loaded
+     */
+    save(filename) { 
+        let txt=this.serializeToJSON();
+        
+        let fname=filename;
+        if (fname.name) 
+            fname=fname.name;
+
+        return new Promise( (resolve,reject) => {
+            genericio.write(fname,txt).then( (f) => {
+                console.log('++++\t Saved Binary Matrix in '+fname);
+                this.filename=fname;
+                resolve(f);
+            }).catch( (e) => { reject(e);});
+        });
     }
 }
 

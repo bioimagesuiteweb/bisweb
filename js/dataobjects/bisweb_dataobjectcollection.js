@@ -260,7 +260,6 @@ class BisWebDataObjectCollection extends BisWebDataObject {
         }
 
         let obj=null;
-        
         if (objecttype === 'matrix' || objecttype==='vector')  {
             obj= new BisWebMatrix(objecttype);
         } else  if (objecttype==="image") {
@@ -269,7 +268,7 @@ class BisWebDataObjectCollection extends BisWebDataObject {
             obj= new BisWebDataObjectCollection();
         } else if (objecttype === "text" || objecttype === "textobject") {
             obj= new BisWebTextObject();
-        } else if (objecttype === "surface") {
+        } else if (objecttype === "surface" || objecttype === "Surface") {
             obj= new BisWebSurface();
         }
         
@@ -319,6 +318,15 @@ class BisWebDataObjectCollection extends BisWebDataObject {
 
         if (objecttype === 'collection') {
             let obj=new BisWebDataObjectCollection();
+            return new Promise( (resolve,reject) => {
+                obj.load(filename).then( () => {
+                    resolve(obj);
+                }).catch( (e) => {reject(e);});
+            });
+        }
+
+        if (objecttype === 'surface') {
+            let obj=new BisWebSurface();
             return new Promise( (resolve,reject) => {
                 obj.load(filename).then( () => {
                     resolve(obj);
