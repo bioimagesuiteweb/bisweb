@@ -60,15 +60,25 @@ describe('Testing BisWebSurface (from bisweb_surface.js) a class that reads Surf
         assert.equal(0,0);
     });
 
-    it('test surface 2', () => {
+    it('test surface WASM', () => {
         let Module=libbiswasm.get_module(); 
         let sur2=new BisWebSurface();
         let wasmarr=surface.serializeWasm(Module);
         sur2.deserializeWasmAndDelete(Module,wasmarr);
         console.log('new sur=',sur2.getDescription());
         let tst=surface.compareWithOther(sur2);
-        console.log(tst);
+        assert.equal(true,tst.testresult);
     });
+
+    it('test surface JSON', () => {
+        let sur2=new BisWebSurface();
+        let txt=surface.serializeToJSON();
+        let ok=sur2.parseFromJSON(txt);
+        console.log('new sur=',sur2.getDescription(),ok);
+        let tst=surface.compareWithOther(sur2);
+        assert.equal(true,tst.testresult);
+    });
+
 });
 
 

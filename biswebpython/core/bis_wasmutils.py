@@ -112,6 +112,10 @@ def getComboTransformMagicCode():
 def getCollectionMagicCode():
     return Module().getCollectionMagicCode();
 
+def getSurfaceMagicCode():
+    return Module().getSurfaceMagicCode();
+
+
 def getNameFromMagicCode(magic_code):
 
     if magic_code==getVectorMagicCode():
@@ -131,7 +135,10 @@ def getNameFromMagicCode(magic_code):
 
     if magic_code==getCollectionMagicCode():
         return 'bisCollection';
-    
+
+    if magic_code==getSurfaceMagicCode():
+        return 'bisSurface';
+
 
 # --------------------------------------------
 # Type Mapping
@@ -431,6 +438,11 @@ def deserialize_object(ptr,datatype='',offset=0,first_input=0):
         output.deserializeWasm(ptr,offset);
         return output.get_data();
 
+    if datatype == 'bisSurface':
+        output=bis.bisSurface();
+        output.deserializeWasm(ptr,offset);
+        return output;
+    
     if datatype != 'bisImage':
         raise ValueError('Unknown datatype ',datatype);
 

@@ -797,24 +797,74 @@ class bisSurface(bisBaseObject):
 
     def __init__(self):
         super().__init__();
-        self.vertices=None;
-        self.faces=None;
-        self.labels=None;
+        self.creatematrixlists();
 
-    def create(self,vertices,faces,labels):
-        self.vertices=vertices;
-        self.faces=faces;
-        self.labels=labels;
+    def creatematrixlists(self):
+        self.matrices= {
+            'points' : None,
+            'triangles' : None,
+            'pointData' : None,
+            'triangleData' : None,
+        };
+        self.matrixnames=[ 'points','triangles','pointData','triangleData' ];
 
-    def getRawSize():
-        raise Exception('----- Not Implemented');
-
+    def create(self,points=None,triangles=None,pointData=None,triangleData=None):
+        self.matrices['points']=points;
+        self.matrices['triangles']=triangles;
+        self.matrices['pointData']=pointData;
+        self.matrices['triangleData']=triangleData;
+        
+    def getRawSize(self):
+        l=32;
+        for i in range(0,len(self.matrixnames)):
+            #print('Begin', i,'=',l);
+            nm=self.matrixnames[i];
+            if (self.matrices[nm] is not None):
+                shp=self.matrices[nm].shape;
+                l=l+24+self.matrices[nm].dtype.itemsize*shp[0]*shp[1];
+        return l;
+    
     def serializeWasm(self):
-        raise Exception('----- Not Implemented');
+        
+        raw=self.getRawSize();
+        #print('Raw=',raw);
+        top_header=np.zeros([8],dtype=np.int32);
+        top_header[0]=biswasm.getSurfaceMagicCode();
+        top_header[1]=biswasm.get_nifti_code(np.float32);
+        top_header[2]=32;
+        top_header[3]=raw-32;
 
-
+        out=None;
+        for i in range(0,len(self.matrixnames)):
+            nm=self.matrixnames[i];
+            if (self.matrices[nm] is not None):
+                if (out==None):
+                    out=biswasm.serialize_simpledataobject(self.matrices[nm]);
+                else:
+                    out+=biswasm.serialize_simpledataobject(self.matrices[nm]);
+                if (i<2):
+                    top_header[i+4]=self.matrices[nm].shape[0];
+                else:
+                    top_header[i+4]=self.matrices[nm].shape[1];
+                    #       print('Added ',nm,len(out));
+        
+        hd=top_header.tobytes();
+        #print('Adding header=',top_header,len(hd));
+        return hd+out;
+    
     def deserializeWasm(self,wasm_pointer,offset=0):
-        raise Exception('----- Not Implemented');
+
+        self.create();
+        header=struct.unpack('iiiiiiii',bytes(wasm_pointer[offset:offset+32]));
+        offset=offset+32;
+        for i in range(0,len(self.matrixnames)):
+            nm=self.matrixnames[i];
+            if (header[i+4]>0):
+                out=biswasm.deserialize_simpledataobject(wasm_pointer,offset);
+                self.matrices[nm]=out['data'];
+                shp=self.matrices[nm].shape;
+                offset=offset+24+(self.matrices[nm].dtype).itemsize*shp[0]*shp[1];
+        return True;
 
     def getString(self):
         raise Exception('----- Not Implemented');
@@ -826,8 +876,8 @@ class bisSurface(bisBaseObject):
         fileExtension = filename.split('.')[-1];
         if fileExtension=='ply' or fileExtension == 'PLY':
             try:
-                vertices, triangles, labels = plyutil.readPlyFile(filename);
-                self.create(vertices,triangles, labels);
+                points, triangles, pointData = plyutil.readPlyFile(filename);
+                self.create(points,triangles, pointData);
                 self.filename=filename;
                 print('+++ Surface loaded ',self.getDescription());
                 return True;
@@ -835,8 +885,8 @@ class bisSurface(bisBaseObject):
                 return False;
 
         try:
-            vertices, triangles, labels = jsonutil.readJsonFile(filename);
-            self.create(vertices,triangles,labels);
+            points, triangles, pointData = jsonutil.readJsonFile(filename);
+            self.create(points,triangles,pointData);
             self.filename=filename;
             print('+++ Surface loaded ',self.getDescription());
             return True;
@@ -850,29 +900,21 @@ class bisSurface(bisBaseObject):
         print('fileExt=',fileExtension);
         if fileExtension=='ply' or fileExtension == 'PLY':
             try:
-                if bool(self.labels.any()):
-                    plyutil.writePlyFileWithLabels(self.vertices, self.faces, self.labels, filename);
+                if bool(self.matrices['pointData'].any()):
+                    plyutil.writePlyFileWithLabels(self.matrices['points'], self.matrices['triangles'], self.matrices['pointData'], filename);
                     self.filename=filename;
-                    print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+                    print('++++ Saved surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
                 else:
-                    plyutil.writePlyFile(self.vertices, self.faces, filename);
+                    plyutil.writePlyFile(self.matrices['points'], self.matrices['triangles'], filename);
                     self.filename=filename;
-                    print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+                    print('++++ Saved surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
+                return True
             except:
-                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
+                print('---- Failed to save surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
                 return False;
             
-        import json
-
-        out=json.dumps(data);
-        try:
-            with open(filename, 'w') as fp:
-                fp.write(out);
-                print('++++\t saved in ',filename,len(out));
-                return True
-        except:
-            print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
-            return False;
+        print('---- Failed to save surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
+        return False;
         
             
         return True;
@@ -880,36 +922,40 @@ class bisSurface(bisBaseObject):
 
     def toDictionary(self):
     
-        sh=self.vertices.shape;
-        th=self.faces.shape;
-        dh=self.labels.shape;
+        sh=self.matrices['points'].shape;
+        th=self.matrices['triangles'].shape;
+        dh=self.matrices['pointData'].shape;
         dz=dh[0];
         if (len(dh)>1):
             dz=dh[0]*dh[1];
             
         data={};
         
-        data['points']=np.reshape(self.vertices,[ sh[0]*sh[1]]).tolist();
-        data['triangles']=np.reshape(self.faces,[ th[0]*th[1]]).tolist();
-        data['indices']=np.reshape(self.labels,[ dz ]).tolist();
+        data['points']=np.reshape(self.matrices['points'],[ sh[0]*sh[1]]).tolist();
+        data['triangles']=np.reshape(self.matrices['triangles'],[ th[0]*th[1]]).tolist();
+        if (data['pointData']!=None):
+            data['pointData']=np.reshape(self.matrices['pointData'],[ dz ]).tolist();
+        if (data['triangleData']!=None):
+            data['triangleData']=np.reshape(self.matrices['triangleData'],[ dz ]).tolist();
 
         return data;
         
     def getDescription(self):
 
         a=self.filename+' '
-        if (self.vertices is None):
-            return a;
-        a=a+'np:'+str(self.vertices.shape);
+        if (self.matrices['points'] is not None):
+            a=a+'np:'+str(self.matrices['points'].shape)+' '+str(self.matrices['points'].dtype);
 
-        if (self.faces is None):
-            return a
-        
-        a=a+' nt='+str(self.faces.shape);
+        if (self.matrices['triangles'] is not None):
+            a=a+' nt='+str(self.matrices['triangles'].shape)+' '+str(self.matrices['triangles'].dtype);
 
-        if (self.labels is None):
-            return a;
-        return a+' nl='+str(self.labels.shape);
+        if (self.matrices['pointData'] is not None):
+            a=a+' pointData='+str(self.matrices['pointData'].shape)+' '+str(self.matrices['pointData'].dtype);
+
+        if (self.matrices['triangleData'] is not None):
+            a=a+' triangleData='+str(self.matrices['triangleData'].shape)+' '+str(self.matrices['triangleData'].dtype);
+
+        return a;
         
 
 # --------------------------------------

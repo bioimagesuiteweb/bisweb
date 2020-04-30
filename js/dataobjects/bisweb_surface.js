@@ -81,7 +81,13 @@ class BisWebSurface extends BisWebDataObject {
     serializeToDictionary() {
 
         let obj= super.serializeToDictionary();
-        obj['matrices']=this.matrices;
+        obj.matrices={};
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let mat=this.matrices[this.matrixnames[i]];
+            if (mat.getDimensions()[0] > 0) {
+                obj['matrices'][this.matrixnames[i]]=mat.serializeToDictionary();
+            }
+        }
         return obj;
     }
     
@@ -90,11 +96,14 @@ class BisWebSurface extends BisWebDataObject {
      * @returns {Boolean} true if OK
      */
     parseFromDictionary(b) {
-
-        for (let i = 0; i < this.matrixnames; i++)  {
-            let nm=this.matrixnames[i];
-            this.matrices[nm].parseFromDictionary(b[nm]);
+        let keys=Object.keys(b.matrices);
+        this.initialize();
+        for (let i = 0; i < keys.length; i++)  {
+            let mat=b['matrices'][keys[i]];
+            let nm=keys[i];
+            this.matrices[nm].parseFromDictionary(mat);
         }
+
         super.parseFromDictionary(b);
         return true;
     }
