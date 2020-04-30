@@ -84,6 +84,7 @@ SET(KITSRCS
   bisLinearTransformation.cpp
   bisGridTransformation.cpp
   bisComboTransformation.cpp
+  bisSurface.cpp
   bisDataObjectFactory.cpp
   bisSimpleImageSegmentationAlgorithms.cpp
   bisfMRIAlgorithms.cpp

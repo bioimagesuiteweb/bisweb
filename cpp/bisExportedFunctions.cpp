@@ -76,6 +76,7 @@ int getImageMagicCode() { return bisDataTypes::s_image;   }
 int getGridTransformMagicCode() { return bisDataTypes::s_gridtransform; }
 int getComboTransformMagicCode() { return bisDataTypes::s_combotransform; }
 int getCollectionMagicCode() { return bisDataTypes::s_collection; }
+int getSurfaceMagicCode() { return bisDataTypes::s_surface; }
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------

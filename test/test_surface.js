@@ -21,55 +21,53 @@
 
 require('../config/bisweb_pathconfig.js');
 const assert = require("assert");
-const BisWebSurface=require('bisweb_image');
+const BisWebSurface=require('bisweb_surface');
+const genericio=require('bis_genericio');
 const path=require('path');
 const os=require('os');
-const tempfs = require('temp').track();
+const libbiswasm=require('libbiswasm_wrapper');
+//const tempfs = require('temp').track();
 console.log('tmp=',os.tmpdir());
 
 
-const tmpDirPath=tempfs.mkdirSync('test_image');
-const tmpFname=path.resolve(tmpDirPath,'save2.nii.gz');
+//const tmpDirPath=tempfs.mkdirSync('test_image');
+//const tmpFname=path.resolve(tmpDirPath,'save2.nii.gz');
 
 
 describe('Testing BisWebSurface (from bisweb_surface.js) a class that reads Surfaces\n', function() {
 
     this.timeout(50000);
 
-    let initial_fname=path.resolve(__dirname, 'testdata/rpm/brain_pure.json');
+    let surfacename=path.resolve(__dirname, 'testdata/rpm/brain_pure.json');
     let surface=new BisWebSurface();
 
-
     before( async () => { 
-
+        await libbiswasm.initialize();
+        let obj=await genericio.read(surfacename);
+        let tempobj={};
+        tempobj.points=JSON.parse(obj.data)['points'];
+        tempobj.triangles=JSON.parse(obj.data)['triangles'];
+        console.log('Read from surfacename',tempobj.points.length,tempobj.triangles.length);
         
-        
-            shortimage.load(gold_fname).then( ()=> { done();});
-        });
-        
-        it('check it has correct dimensions '+gold_dim,function() {
-            let dim=shortimage.getDimensions();
-            console.log('dim=',dim);
-            let dim_error=0;
-            for (let i=0;i<=3;i++) {
-                dim_error+=Math.abs(gold_dim[i]-dim[i]);
-            }
-            console.log('_____ actual dim=',dim,' dim_error=',dim_error);
-            
-            
-            assert.equal(0,dim_error);
-        });
+        surface.setFromRawArrays(tempobj.points,tempobj.triangles);        
+    });
 
+    it('test surface proper', () => { 
+        console.log('Sur=',surface.getDescription());
+        console.log('Hash=',surface.computeHash());
+        console.log('Mem=',surface.getMemorySize());
+        console.log('Bytes=',surface.getWASMNumberOfBytes());
+        assert.equal(0,0);
+    });
 
-        it('check if it read correct intensities at '+gold_loc+' = '+ gold_intensity,function() {
-            let imgdata=shortimage.getImageData();
-            let dim=shortimage.getDimensions();
-            let act_intensity=imgdata[gold_loc[0] + gold_loc[1]*dim[0]+ gold_loc[2]*dim[0]*dim[1]];
-            console.log('_____ actual intensity=',act_intensity);
-            assert.equal(0,act_intensity-gold_intensity);
-        });
-
-
+    it('test surface 2', () => {
+        let Module=libbiswasm.get_module(); 
+        let sur2=new BisWebSurface();
+        let wasmarr=surface.serializeWasm(Module);
+        sur2.deserializeWasmAndDelete(Module,wasmarr);
+        console.log('new sur=',sur2.getDescription());
+        let tst=surface.compareWithOther(sur2);
+        console.log(tst);
     });
 });
 

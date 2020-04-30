@@ -77,7 +77,9 @@ class BisWebMatrix extends BisWebDataObject{
      * @returns {String} - hash string identifying the object
      */
     computeHash() {
-        return util.SHA256(this.data);
+        if (this.data)
+            return util.SHA256(this.data);
+        return '*None*';
     }
 
     /** returns the memory used in bytes by this object 
@@ -191,10 +193,26 @@ class BisWebMatrix extends BisWebDataObject{
      * @returns {Pointer}  -- pointer biswasm serialized array
      */
     serializeWasm(Module) {
-
         if (this.wasmtype==='vector'  && this.dimensions[1]===1)
             return wasmutil.packStructure(Module,this.data, [ this.dimensions[0] ]);
         return wasmutil.packStructure(Module,this.data, this.dimensions);
+    }
+
+    /** serializes an object to a WASM array
+     * @param {EmscriptenModule} Module - the emscripten Module object
+     * @returns {Pointer}  -- pointer biswasm serialized array
+     */
+    serializeWasmInPlace(Module,inDataPtr) {
+        
+        if (this.wasmtype==='vector'  && this.dimensions[1]===1)
+            return wasmutil.packStructureInPlace(Module,inDataPtr,this.data, [ this.dimensions[0] ]);
+        
+        return wasmutil.packStructureInPlace(Module,inDataPtr,this.data, this.dimensions);
+    }
+
+    getWASMNumberOfBytes() {
+        // 16 = main header, 8=my header, 4*Rows*Cols
+        return 16+8+4*this.dimensions[0]*this.dimensions[1];
     }
 
     /** deserializes an object from WASM array (with an optional second input to help with header stuff)
@@ -244,33 +262,48 @@ class BisWebMatrix extends BisWebDataObject{
             console.log('different constructors');
             return out;
         }
-        let idat=this.data;
-        let odat=other.getDataArray();
+        let idat=this.data || null;
+        let odat=other.getDataArray() || null;
 
-        if (idat.length!==odat.length)  {
-            console.log('different lengths');
-            return out;
-        }
-
-        console.log('....\t comparing matrices:',this.getDimensions(),other.getDimensions(),method,this.datatype,other.datatype);
-        if (method==='ssd') {
-            let sum=0.0;
-            for (let i=0;i<idat.length;i++) {
-                let v=(idat[i]-odat[i]);
-                sum+=v*v;
+        if (idat && odat) {
+            if (idat.length!==odat.length)  {
+                console.log('different lengths');
+                return out;
             }
-            out.value=Math.sqrt(sum);
-            out.metric='ssd';
+            
+            console.log('....\t comparing matrices:',this.getDimensions(),other.getDimensions(),method,this.datatype,other.datatype);
+            if (method==='ssd') {
+                let sum=0.0;
+                for (let i=0;i<idat.length;i++) {
+                    let v=(idat[i]-odat[i]);
+                    sum+=v*v;
+                }
+                out.value=Math.sqrt(sum);
+                out.metric='ssd';
+            } else {
+                let maxv=0.0;
+                for (let i=0;i<idat.length;i++) {
+                    maxv=Math.max(Math.abs(idat[i]-odat[i]));
+                }
+                out.value=maxv;
+            }
+
+            if (out.value < threshold)
+                out.testresult=true;
         } else {
-            let maxv=0.0;
-            for (let i=0;i<idat.length;i++) {
-                maxv=Math.max(Math.abs(idat[i]-odat[i]));
+            let l1=0,l2=0;
+            if (idat)
+                l1=idat.length;
+            if (odat)
+                l2=odat.length;
+            if (l1!==l2) {
+                console.log('different lengths');
+                return out;
+            } else {
+                out.value=0.0;
+                out.testresult=true;
             }
-            out.value=maxv;
         }
-        
-        if (out.value < threshold)
-            out.testresult=true;
 
         return out;
     }
@@ -280,10 +313,11 @@ class BisWebMatrix extends BisWebDataObject{
      * @param {number} numrows  - number of rows
      * @param {number} numcols  - number of cols
      * @param {number} value    - value to fill =0
+     * @param {String} dtype    - matrix dtpe
      */
-    allocate(numrows,numcolumns,value=0,type='float') {
+    allocate(numrows,numcolumns,value=0,dtype='float') {
         this.dimensions=[numrows,numcolumns];
-        let fn=wasmutil.getTypeFromName(type);
+        let fn=wasmutil.getTypeFromName(dtype);
         this.data=new fn(numrows*numcolumns);
         this.datatype=wasmutil.getNameFromType(this.data);
         for (let i=0;i<numrows*numcolumns;i++)

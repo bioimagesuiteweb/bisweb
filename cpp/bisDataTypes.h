@@ -62,6 +62,8 @@ namespace bisDataTypes {
   const int s_combotransform=20005;
   /** Magic number for collection object=20006 for serialization */
   const int s_collection=20006;
+  /** Magic number for collection object=20006 for serialization */
+  const int s_surface=20007;
 
   /** Return the code of a given type 
    * @param a dummy variable specificying the type

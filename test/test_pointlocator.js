@@ -23,11 +23,7 @@ require('../config/bisweb_pathconfig.js');
 require('bisweb_userpreferences.js').setImageOrientationOnLoad('None');
 const assert = require("assert");
 const genericio=require('bis_genericio');
-const util=require('bis_util');
-const BisWebImage=require('bisweb_image');
 const BisWebMatrix=require('bisweb_matrix');
-const BisWebLinearTransformation=require('bisweb_lineartransformation');
-const bistransforms=require('bis_transformationutil');
 const path=require('path');
 const numeric=require('numeric');
 const libbiswasm=require('libbiswasm_wrapper');
@@ -215,7 +211,7 @@ describe('Testing point locator\n', function() {
                 } else {
                     if (outindices[0]==-1) {
                         passed=passed+1;
-                        console.log('No Neighbors found',outindices)
+                        console.log('No Neighbors found',outindices);
                         console.log('_____ P A S S E D ____\n');
                     } else {
                         console.log('_____ F A I L E D ____\n');

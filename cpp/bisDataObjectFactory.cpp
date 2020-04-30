@@ -23,6 +23,7 @@
 #include "bisComboTransformation.h"
 #include "bisTransformationCollection.h"
 #include "bisSimpleDataStructures.h"
+#include "bisSurface.h"
 
 namespace bisDataObjectFactory {
 
@@ -82,6 +83,13 @@ namespace bisDataObjectFactory {
 	  return obj;
       }
 
+    if (magic_type==bisDataTypes::s_surface)
+      {
+	std::shared_ptr<bisSurface> obj(new bisSurface(name));
+	if (obj->deSerialize(pointer))
+	  return obj;
+      }
+
 
     std::shared_ptr<bisDataObject> tmp(0);
     return tmp;
@@ -97,7 +105,8 @@ std::shared_ptr<bisDataObject> deserializeObject(unsigned char* pointer,std::str
 
     if (magic_type==bisDataTypes::s_vector ||
 	magic_type==bisDataTypes::s_matrix ||
-	magic_type==bisDataTypes::s_image)
+	magic_type==bisDataTypes::s_image ||
+        magic_type==bisDataTypes::s_surface)
       {
 	switch (data_type)
 	  {

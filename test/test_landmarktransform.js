@@ -23,11 +23,9 @@ require('../config/bisweb_pathconfig.js');
 require('bisweb_userpreferences.js').setImageOrientationOnLoad('None');
 const assert = require("assert");
 const genericio=require('bis_genericio');
-const util=require('bis_util');
 const BisWebImage=require('bisweb_image');
 const BisWebMatrix=require('bisweb_matrix');
 const BisWebLinearTransformation=require('bisweb_lineartransformation');
-const bistransforms=require('bis_transformationutil');
 const path=require('path');
 const numeric=require('numeric');
 const libbiswasm=require('libbiswasm_wrapper');
@@ -158,7 +156,7 @@ describe('Testing landmark transformation creation\n', function() {
             if (md==2)
                 md=3;
             
-            console.log('__________________________________________________________')
+            console.log('__________________________________________________________');
             console.log('____ Beginning mode=',md);
         
             const tr_js=new BisWebLinearTransformation(3);

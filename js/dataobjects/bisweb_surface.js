@@ -17,12 +17,9 @@
 
 "use strict";
 
-
-const util = require('bis_util');
 const biswasm = require('bis_wasmutils');
 const BisWebDataObject=require('bisweb_dataobject');
 const BisWebMatrix=require('bisweb_matrix');
-const BisWebGridTransformation=require("bisweb_gridtransformation");
 
 
 /** A class to model a combo transfomration which is a linear transformations and a list of grid transformations. */
@@ -33,41 +30,26 @@ class BisWebSurface extends BisWebDataObject {
         
         super();
         this.jsonformatname='BisSurface';
+        this.matrices={};
+        this.matrixnames=[ "points", "triangles", "pointData", "triangleData" ];        
         this.initialize();
-            
         this.legacyextension="vtk";
-        
+
     }
 
-    /** Return list of structures */
-    getInternalList() {
-        return [ this.internal.points,
-                 internal.triangles,
-                 internal.pointData,
-                 internal.triangleData ]
-    }
-
-    /** Return list of structure names */
-    getInternalNames() {
-        return [ "Points", "Triangles", "PointData", "TriangleData" ];
-    }
-        
-    
     /** returns a textual description of the object for GUIs etc.
      * @returns {string} description
      */
     getDescription(pretty=false) {
-        let s="Combo:\n";
+        let s="Surface:\n";
         let t="  ";
         if (pretty) {
             s="";
             t="";
         }
-        let lst=this.getInternalList();
-        let nms=this.getInternalNames();
-
-        for (let i=0;i<=3;i++) {
-            s+=t+nms[i]+":"+lst[i].getDescription(pretty)+"\n";
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let name=this.matrixnames[i];
+            s+=t+name+":"+this.matrices[name].getDescription(pretty)+"\n";
         }
         return s;
     }
@@ -77,9 +59,9 @@ class BisWebSurface extends BisWebDataObject {
      */
     computeHash() {
         let s='';
-        let lst=this.getInternalList();
-        for (let i=0;i<=3;i++) 
-            s += lst[i].computeHash();
+        for (let i=0;i<this.matrixnames.length;i++) {
+            s += this.matrices[this.matrixnames[i]].computeHash();
+        }
         return s;
     }
 
@@ -88,9 +70,8 @@ class BisWebSurface extends BisWebDataObject {
      */
     getMemorySize() {
         let sz=0;
-        let lst=this.getInternalList();
-        for (let i=0;i<=3;i++) 
-            sz += lst[i].getMemorySize();
+        for (let i=0;i<this.matrixnames.length;i++) 
+            sz += this.matrices[this.matrixnames[i]].getMemorySize();
         return sz;
     }
     
@@ -100,11 +81,7 @@ class BisWebSurface extends BisWebDataObject {
     serializeToDictionary() {
 
         let obj= super.serializeToDictionary();
-        let lst=this.getInternalList();
-        let nms=this.getInternalNames();
-        
-        for (let i = 0; i < lst.length; i++) 
-            obj[nms[i]]=lst[i];
+        obj['matrices']=this.matrices;
         return obj;
     }
     
@@ -114,10 +91,10 @@ class BisWebSurface extends BisWebDataObject {
      */
     parseFromDictionary(b) {
 
-        let lst=this.getInternalList();
-        let nms=this.getInternalNames();
-        for (let i = 0; i < lst.length; i++) 
-            lst[i].parseFromDictionary(b[nms[i]]);
+        for (let i = 0; i < this.matrixnames; i++)  {
+            let nm=this.matrixnames[i];
+            this.matrices[nm].parseFromDictionary(b[nm]);
+        }
         super.parseFromDictionary(b);
         return true;
     }
@@ -129,28 +106,25 @@ class BisWebSurface extends BisWebDataObject {
     /** deserializes an object from WASM array (with an optional second input to help with header stuff)
      * @param {EmscriptenModule} Module - the emscripten Module object
      * @param {Pointer} dataptr - the unsined char wasm object
-     * @param {BisWebDataObject} extra - the extra ``information'' or ``reference'' image (optional)
      */
-    deserializeWasm(Module,dataptr,extra=0) {
+    deserializeWasm(Module,dataptr) {
 
         let intheader = biswasm.get_array_view(Module, Int32Array, dataptr, 8);
         const magic_type = intheader[0];
         if (magic_type !== biswasm.get_surface_magic_code(Module)) {
-            console.log('Bad wasmobj, can not deserialize surface',extra);
+            console.log('Bad wasmobj, can not deserialize surface');
             return 0;
         }
-
-        let lst=this.getInternalList();
-        let nms=this.getInternalNames();
-        let offset=32;
         
-        for (let i=0;i<=3;i++) {
+        let offset=32;
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let mat=this.matrices[this.matrixnames[i]];
             let num=intheader[4+i];
             if (num>0) {
-                lst[i].deserializeWasm(Module, dataptr + offset);
-                offset += lst[i].getWASMNumberOfBytes();
+                mat.deserializeWasm(Module, dataptr + offset);
+                offset += mat.getWASMNumberOfBytes();
             } else {
-                lst[i].zero(0,0);
+                mat.zero(0,0);
             }
         }
         return 1;
@@ -162,17 +136,29 @@ class BisWebSurface extends BisWebDataObject {
     getWASMNumberOfBytes() {
 
         let numbytes = 0;
-        let lst=this.getInternalList();
         
-        for (let i = 0; i < lst.length;i++) {
-            if (lst[i].getDimensions()[0] > 0) {
-                numbytes += lst[i].getWASMNumberOfBytes();
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let mat=this.matrices[this.matrixnames[i]];
+            if (mat.getDimensions()[0] > 0) {
+                numbytes += mat.getWASMNumberOfBytes();
             }
         }
         return 32 + numbytes;
     }
 
     // ---- Interface to Web Assembly Code ----------------------------------------------------
+    /** serializes an object to a WASM array. Internall calls serializeWasmInPlace
+     * @param {EmscriptenModule} Module - the emscripten Module object
+     * @returns {Pointer}  -- pointer biswasm serialized array
+     */
+    serializeWasm(Module) {
+        let totalbytes = this.getWASMNumberOfBytes();
+        let inDataPtr=biswasm.allocate_memory(Module,totalbytes);
+        this.serializeWasmInPlace(Module,inDataPtr);
+        let output = biswasm.get_array_view(Module, Uint8Array, inDataPtr, totalbytes);
+        return output.byteOffset;
+    }
+
     /** serializes an object to a WASM array
      * @param {EmscriptenModule} Module - the emscripten Module object
      * @returns {Pointer}  -- pointer biswasm serialized array
@@ -187,19 +173,19 @@ class BisWebSurface extends BisWebDataObject {
         header[3]=totalbytes-32;
 
         let offset = 32;
-        let lst=this.getInternalList();
-        for (let i = 0; i < lst.length;i++) {
-            if (lst[i].getDimensions()[0] > 0) {
-                offset += lst[i].serializeWasmInPlace(Module, inDataPtr + offset);
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let mat=this.matrices[this.matrixnames[i]];
+            if (mat.getDimensions()[0] > 0) {
+                let dt= mat.serializeWasmInPlace(Module, inDataPtr + offset);
+                offset+=dt;
                 if (i<2)
-                    header[4+i]=lst[i].getDimensions()[0];
+                    header[4+i]=mat.getDimensions()[0];
                 else
-                    header[4+i]=lst[i].getDimensions()[1];
+                    header[4+i]=mat.getDimensions()[1];
             } else {
                 header[4+i]=0;
             }
         }
-        
         return totalbytes;
     }
 
@@ -220,14 +206,13 @@ class BisWebSurface extends BisWebDataObject {
 
         if (other.constructor.name !== this.constructor.name) 
             return out;
-
-        let lst=this.getInternalList();
-        let olist=other.getInternalList();
         
-        for (let i = 0; i < list.length; i++) {
-            let mat= lst[i].compareWithOther(list[i],method,threshold);
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let name=this.matrixnames[i];
+            let mat= this.matrices[name].compareWithOther(other.matrices[name],method,threshold);
             out.value=out.value+mat.value;
             out.metric=mat.metric;
+
         }
 
         if (out.value < threshold) 
@@ -237,16 +222,52 @@ class BisWebSurface extends BisWebDataObject {
     }
 
     /** This is to reinitialize the surface to all nulls   */
-    initialize() { 
-        this.internal = {
-            points : new BisWebMatrix(),
-            triangles : new BisWebMatrix(),
-            pointData : new BisWebMatrix(),
-            triangleData : new BisWebMatrix(),
-        };
-
+    initialize() {
+        for (let i=0;i<this.matrixnames.length;i++) {
+            let name=this.matrixnames[i];
+            this.matrices[name]=new BisWebMatrix();
+        }
+        this.filename='';
     }
 
+    /** set from raw arrays */
+    setFromRawArrays(points,triangles=[],pointData=[],triangleData=[]) {
+        let np=0,nt=0;
+        
+        this.initialize();
+        if (points.length>0) {
+            np=Math.round(points.length/3);
+            this.matrices['points'].zero(np,3);
+            let dat=this.matrices['points'].getDataArray();
+            for (let i=0;i<np*3;i++)
+                dat[i]=points[i];
+        }
+
+        if (triangles.length>0) {
+            nt=Math.round(triangles.length/3);
+            this.matrices['triangles'].allocate(nt,3,0,'uint');
+            let dat=this.matrices['triangles'].getDataArray();
+            for (let i=0;i<nt*3;i++)
+                dat[i]=triangles[i];
+        }
+
+        if (pointData.length>0) {
+            let numc=Math.round(pointData.length/np);
+            this.matrices['pointData'].zero(np,numc);
+            let dat=this.matrices['pointData'].getDataArray();
+            for (let i=0;i<np*numc;i++)
+                dat[i]=pointData[i];
+        }
+
+        if (triangleData.length>0) {
+            let numc=Math.round(triangleData.length/nt);
+            this.matrices['triangleData'].zero(nt,numc);
+            let dat=this.matrices['triangleData'].getDataArray();
+            for (let i=0;i<nt*numc;i++)
+                dat[i]=triangleData[i];
+        }
+        
+    }
 }
 
 module.exports = BisWebSurface;

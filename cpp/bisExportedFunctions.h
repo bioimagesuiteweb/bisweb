@@ -91,6 +91,9 @@ extern "C" {
   /** @returns Magic Code for Serialized Object Collection */
   BISEXPORT int getCollectionMagicCode();
 
+  /** @returns Magic Code for Serialized Object Collection */
+  BISEXPORT int getSurfaceMagicCode();
+
   // -----------------------------------
   // Functions
   // -----------------------------------
