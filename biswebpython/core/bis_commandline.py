@@ -285,10 +285,10 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
                 diff = 0;
                 print(gold);
                 try:
-                    diff=computeNorm2(out.vertices,gold.vertices);
+                    diff=computeNorm2(out.matrices['points'],gold.matrices['points']);
                     return printResult(diff,threshold,toolname,test_type);
                 except:
-                    print('---- Failed to compare gold=',(gold.vertices.shape[0]),' vs out=', (out.vertices.shape[0]));
+                    print('---- Failed to compare gold=',(gold.matrices['points'].shape[0]),' vs out=', (out.matrices['points'].shape[0]));
                     return False;
             else:
                 print('---- Failed to load gold standard surface');

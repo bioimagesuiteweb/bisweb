@@ -533,7 +533,7 @@ class bisGridTransformation(bisBaseObject):
             else:
                 raise Exception('Bad data array dimensions',s,' needed', self.grid_dimensions,'*',3)
 
-            print('++++ Finale Data Array =',self.data_array.shape)
+            print('++++ Final Data Array =',self.data_array.shape)
         else:
             self.data_array=np.zeros([sz],dtype=np.float32);
             
@@ -807,6 +807,18 @@ class bisSurface(bisBaseObject):
             'triangleData' : None,
         };
         self.matrixnames=[ 'points','triangles','pointData','triangleData' ];
+
+    def getPoints(self):
+        return self.matrices['points'];
+
+    def getTriangles(self):
+        return self.matrices['triangles'];
+
+    def getPointData(self):
+        return self.matrices['pointData'];
+
+    def getTriangleData(self):
+        return self.matrices['triangleData'];
 
     def create(self,points=None,triangles=None,pointData=None,triangleData=None):
         self.matrices['points']=points;

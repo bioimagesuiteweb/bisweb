@@ -67,12 +67,38 @@ class TestPointLocator(unittest.TestCase):
         print('______________________');
         print('WASM');
         
-        bt=sur.serializeWasm();
-        print('Size=',len(bt));
         
-        sur2=bisSurface();
-        sur2.deserializeWasm(bt,0);
-        print('Description=',sur2.getDescription());
+        print('____________________________________________________________');
+        print('___ Calling WASM');
+        out=libbis.test_shiftSurfaceWASM(sur,{
+            'shiftpoints' : -1.5,
+            'shiftindices' : -2
+        },1);
+        print('____________________________________________________________');
 
-        print('______________________');
-        self.assertEqual(True,True);
+        in_pts=sur.getPoints();
+        in_tri=sur.getTriangles();
+        
+        out_pts=out.getPoints();
+        out_tri=out.getTriangles();
+        
+        print('Point Shapes=',in_pts.shape,out_pts.shape);
+        print('Triangle Shapes=',in_tri.shape,out_tri.shape);
+        
+        print((in_pts-out_pts)[0:2,:]);
+        print((in_tri-out_tri)[0:2,:]);
+
+        a=np.amax( in_pts-out_pts,axis=0);
+        b=np.amax( in_tri-out_tri,axis=0);
+        print('a=',a,'b=',b);
+
+        a=np.amax( a-[1.5,0.5,-0.5 ]);
+        b=np.amax( b-[2,1,0 ]);
+        ok=False;
+        if (abs(a)<0.01 and abs(b)<0.01):
+            ok=True;
+        print('Differences=',a,b,' ok=',ok);
+
+        self.assertEqual(True,ok);
+        
+

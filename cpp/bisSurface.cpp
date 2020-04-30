@@ -99,8 +99,8 @@ int bisSurface::deSerialize(unsigned char* pointer)
   int incoming_magic_type=begin_int[0];
   int header_size=begin_int[2];
   int data_size=begin_int[3];
-  
-  if (incoming_magic_type!=this->magic_type ||  header_size!=16 || data_size <1  )
+
+  if (incoming_magic_type!=this->magic_type ||  header_size!=32 || data_size <1  )
     {
       std::cerr << "Bad Magic Type or  bad header size. Can not deserialize pointer as bisSurface " << std::endl;
       return 0;
@@ -108,6 +108,7 @@ int bisSurface::deSerialize(unsigned char* pointer)
 
   int* i_head=(int*)(pointer+16);
   int offset=32;
+  
   if (i_head[0]) {
     std::unique_ptr< bisSimpleMatrix<float> > tmp(new bisSimpleMatrix<float>());
     this->points=std::move(tmp);
@@ -117,11 +118,30 @@ int bisSurface::deSerialize(unsigned char* pointer)
     this->points=0;
   }
 
+  //  std::cout << "  offset=" << offset << std::endl;
+  
+
   if (i_head[1]) {
+    
+    /*int* rc=(int*)(pointer+offset+16);
+    int* idat=(int*)(pointer+offset+24);
+    /std::cout << "Raw Triangle Dim=" << rc[0] << "*" << rc[1] << ":";
+    for (int ia=0;ia<rc[0]*rc[1];ia++)
+      std::cout << idat[ia] << " ";
+      std::cout << std::endl;*/
     std::unique_ptr< bisSimpleMatrix<int> > tmp(new bisSimpleMatrix<int>());
     this->triangles=std::move(tmp);
     this->triangles->deSerialize(pointer+offset);
     offset=offset+this->triangles->getRawSize();
+    /*int rawsize=this->triangles->getRawSize();
+    std::cout << "Raw size=" << rawsize << std::endl;
+    int rows=this->triangles->getNumRows();
+    int cols=this->triangles->getNumCols();
+    int* tri=this->triangles->getData();
+    for (int ia=0;ia<rows;ia++)
+    std::cout << "tri=" << ia << "="<< tri[ia*3+0] << "," << tri[ia*3+1] << "," << tri[ia*3+2] << std::endl;
+    std::cout << "SIze=" << rows << "," << cols << std::endl;*/
+    
   } else {
     this->triangles=0;
   }

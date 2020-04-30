@@ -253,7 +253,7 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
 
       
       output_pointer=bisMemoryManagement::allocate_memory(16+sz,this->raw_array_name,"copying",this);
-      bisMemoryManagement::copy_memory(output_pointer,pointer,sz);
+      bisMemoryManagement::copy_memory(output_pointer,pointer,sz+16);
       this->owns_pointer=1;
       this->used_to_own_pointer=0;
     }
@@ -364,10 +364,10 @@ template<class T> int bisSimpleMatrix<T>::linkIntoPointer(unsigned char* pointer
       int* i_head=(int*)(this->header);
       this->numrows=i_head[0];
       this->numcols=i_head[1];
-      /*      std::cout << "Matrix dims=" << this->numrows << "," << this->numcols << std::endl;
+      /*      std::cout << "Linked: ";
       for (int i=0;i<this->numrows*this->numcols;i++)
 	std::cout << this->data[i] << " ";
-	std::cout << std::endl;*/
+        std::cout << std::endl;*/
   }
   return ok;
 }

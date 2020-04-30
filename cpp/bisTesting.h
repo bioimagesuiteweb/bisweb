@@ -142,6 +142,16 @@ extern "C" {
 						     int return_histogram,
 						     int debug);
 
+  
+  /** test Surface parsing
+   * @param input the input surface
+   * @param jsonstring { shiftpoints : 2.0 , shiftindices : 3 }
+   * @param debug if >0 print debug messages
+   * @returns the recreated surface
+   */
+  // BIS: { 'test_shiftSurfaceWASM', 'bisSurface', [ 'bisSurface', 'ParamObj', 'debug'] }
+  BISEXPORT unsigned char* test_shiftSurfaceWASM(unsigned char* input,const char* jsonstring,int debug);
+
 #ifdef __cplusplus
 }
 #endif

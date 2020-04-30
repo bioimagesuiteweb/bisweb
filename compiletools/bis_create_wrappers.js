@@ -31,6 +31,7 @@ const js_types = {
     'bisImage' : [ 'image', 'number' ,true,false],
     'Matrix' : [ 'matrix' ,'number', true,false],
     'Vector' : [ 'vector' , 'number' ,true,false],
+    'bisSurface'  : [ 'surface' ,'number',true,false],
     'bisTransformation' : [ 'transformation' ,'number', true,false],
     'bisLinearTransformation' : [ 'linearxform' ,'number',true,false],
     'bisGridTransformation'   : [ 'gridxform' ,'number',true,false],
@@ -48,6 +49,7 @@ const python_types = {
     'bisImage' : [ 'image', 'ctypes.c_void_p' ,true,false],
     'Matrix' : [ 'matrix' ,'ctypes.c_void_p', true,false],
     'Vector' : [ 'vector' , 'ctypes.c_void_p' ,true,false],
+    'bisSurface'  : [ 'surface' ,'ctypes.c_void_p',true,false],
     'bisTransformation' : [ 'transformation' ,'ctypes.c_void_p', true,false],
     'bisLinearTransformation' : [ 'linearxform' ,'ctypes.c_void_p',true,false],
     'bisGridTransformation'   : [ 'gridxform' ,'ctypes.c_void_p',true,false],
@@ -371,7 +373,7 @@ var parse_function_argument_list=function(lst,var_types,wrapper_mode) {
                 shortname=lst[j].substr(0,ind);
                 opt=true;
             }
-            
+
             let varname=var_types[shortname][0] || false;
             if (varname===false) {
                 console.log('Unknown '+shortname);

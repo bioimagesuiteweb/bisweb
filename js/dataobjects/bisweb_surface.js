@@ -54,6 +54,18 @@ class BisWebSurface extends BisWebDataObject {
         return s;
     }
 
+    /** return points */
+    getPoints() { return this.matrices['points'];}
+
+    /** return triangles */
+    getTriangles() { return this.matrices['triangles'];}
+
+    /** return pointData */
+    getPointData() { return this.matrices['pointData'];}
+
+    /** return triangleData */
+    getTriangleData() { return this.matrices['triangleData'];}
+    
     /** compute hash 
      * @returns {String} - hash string identifying the object
      */
@@ -178,7 +190,7 @@ class BisWebSurface extends BisWebDataObject {
         let header = biswasm.get_array_view(Module,Int32Array,inDataPtr,8);
         header[0]=biswasm.get_surface_magic_code(Module);
         header[1]=16; 
-        header[2]=4;
+        header[2]=32;
         header[3]=totalbytes-32;
 
         let offset = 32;
