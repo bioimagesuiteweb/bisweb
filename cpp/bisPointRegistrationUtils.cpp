@@ -34,7 +34,7 @@ namespace bisPointRegistrationUtils {
     
     if (Points==NULL) {
       if (debug)
-        std::cerr << "__ NULL input matrix set " << std::endl;
+        std::cout << "__ NULL input matrix set " << std::endl;
       return 0;
     }
     
@@ -42,7 +42,7 @@ namespace bisPointRegistrationUtils {
     int N_COLS= Points->getNumCols();
     if (N_PTS < minrows ||    N_COLS != numcols  ) {
       if (debug) 
-        std::cerr << "Update: Matrix not valid " << N_PTS << "*" << N_COLS << std::endl;
+        std::cout << "Update: Matrix not valid " << N_PTS << "*" << N_COLS << std::endl;
       return 0;
     }
     
@@ -82,7 +82,7 @@ namespace bisPointRegistrationUtils {
                                           int debug) {
     
     if (Transformation == NULL) {
-      std::cerr << "NULL transformation in transformPoints " << std::endl;
+      std::cout << "NULL transformation in transformPoints " << std::endl;
       return NULL;
     }
 
@@ -126,24 +126,30 @@ namespace bisPointRegistrationUtils {
   {
     OutputTransformation->identity();
 
-    if (!RawSourceLandmarks  || !RawTargetLandmarks) 
+    if (!RawSourceLandmarks  || !RawTargetLandmarks) {
+      std::cout << "Bad Inputs " << std::endl;
       return 0;
+    }
 
     int N_PTS = RawSourceLandmarks->getNumRows();
     int N_COLS= RawSourceLandmarks->getNumCols();
+
     if (N_PTS != RawTargetLandmarks->getNumRows() ||
         N_COLS != RawTargetLandmarks->getNumCols() ||
         N_COLS !=3 ||
         N_PTS < 4) {
-      std::cerr << "Update: Source and Target Landmarks contain a different number of points or not enough points (" << N_PTS << "," << N_COLS <<")" << std::endl;
+      std::cout << "Update: Source and Target Landmarks contain a different number of points or not enough points (" << N_PTS << "," << N_COLS <<")" << std::endl;
       return 0;
     }
 
     if (RawWeights) {
-      if (RawWeights->getLength()!=N_PTS)
-        std::cerr << "Bad Weights specified " << std::endl;
-      return 0;
+      if (RawWeights->getLength()!=N_PTS) {
+        std::cout << "Bad Weights specified " << std::endl;
+        return 0;
+      }
     }
+
+    std::cout << "Computing Landmark Transform " << debug << std::endl;
     
     if (debug) {
       std::cout << "___ Compute Landmark Transform: Source and Target Landmarks have the same number of points  (" << N_PTS << "," << N_COLS <<")" << std::endl;
@@ -421,7 +427,67 @@ namespace bisPointRegistrationUtils {
     return 1;
   }
 
+  // ----------------------------------------------------------------------------------------------------------------
+  // Print Utilities
 
+  void printTwoPoints(bisSimpleMatrix<float>* pts,std::string name) {
+    int rows=pts->getNumRows();
+    int cols=pts->getNumCols();
+    float* data=pts->getData();
+    int index=3*(rows/2);
+    std::cout << "Set = " << name << " " << rows << "*" << cols << std::endl;
+    if (cols==3) {
+      int ia=0;
+      std::cout << "       Point " << int(ia) << "=" << data[3*ia] << "," << data[3*ia+1] << "," << data[3*ia+2] << std::endl;
+      ia=rows/2;
+      std::cout << "       Point " << int(ia) << "=" << data[3*ia] << "," << data[3*ia+1] << "," << data[3*ia+2] << std::endl;
+    } else {
+      std::cout << "       Point 0=" << data[0] << std::endl;
+      std::cout << "       Point " << int(rows/2) << "=" << data[index] << std::endl;
+    }
+    std::cout << std::endl;
+  }
+
+  void printJointPoints(bisSimpleMatrix<float>* pts,bisSimpleMatrix<float>* pts2,bisSimpleVector<float>* wv,std::string name,int incr) {
+    int rows=pts->getNumRows();
+    int cols=pts->getNumCols();
+    float* data=pts->getData();
+    float* data2=pts2->getData();
+    float* w=wv->getData();
+  
+    std::cout << "Set = " << name << " " << rows << "*" << cols << std::endl;
+    if (cols==3) {
+      for (int ia=0;ia<rows;ia+=incr) {
+        std::cout << "       Point " << int(ia) << "=" << data[3*ia] << "," << data[3*ia+1] << "," << data[3*ia+2];
+        std::cout << "  --> "<< data2[3*ia] << "," << data2[3*ia+1] << "," << data2[3*ia+2] << " (w=" << w[ia] << ")" << std::endl;
+      }
+    }
+    std::cout << std::endl;
+  } 
+  
+  void printTwoElements(bisSimpleVector<float>* pts,std::string name) {
+    int rows=pts->getLength();
+    float* data=pts->getData();
+    std::cout << "Set = " << name << " " << rows << std::endl;
+    std::cout << "       Point 0=" << data[0] << std::endl;
+    std::cout << "       Point " << int(rows/2) << "=" << data[rows/2] << std::endl;
+    std::cout << std::endl;
+  }
+
+
+  void printMatrix(bisMatrixTransformation* xform, std::string name) {
+    bisUtil::mat44 m;
+    std::cout << " " << name << " = ";
+    xform->getMatrix(m);
+    for (int ia=0;ia<=3;ia++) {
+      std::cout << "[ " ;
+      for (int ib=0;ib<=3;ib++) {
+        std::cout << m[ia][ib] << " ";
+      }
+      std::cout << "]" << std::endl << "  ";
+    }
+    std::cout << std::endl;
+  }
 
 
 }

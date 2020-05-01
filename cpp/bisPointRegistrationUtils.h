@@ -72,7 +72,12 @@ namespace bisPointRegistrationUtils {
                                           bisAbstractTransformation* Transformation,
                                           int debug=0);
 
-  
+
+  // Print Utilities
+  void printTwoPoints(bisSimpleMatrix<float>* pts,std::string name="Points");
+  void printJointPoints(bisSimpleMatrix<float>* pts,bisSimpleMatrix<float>* pts2,bisSimpleVector<float>* wv,std::string name="map",int incr=10);
+  void printTwoElements(bisSimpleVector<float>* pts,std::string name="vec");
+  void printMatrix(bisMatrixTransformation* xform, std::string name="mapping");
 }
 
 extern "C" {
