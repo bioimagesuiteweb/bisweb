@@ -75,9 +75,9 @@ class RepoPanel extends HTMLElement {
         
         this.panel.setHelpModalMessage(`
 <H2>FIle Tree Panel</H2>
-This repository either connects to a local folder or to a datalab.org folder.
+This repository either connects to a local folder or to a datalad.org folder.
 ${str}
-<H3> DataLab.Org</H3><P> This control enables browsing of the <a href="https://datasets.datalad.org" target="_blank" rel="noopener">Repository</a>.</P><P> To access a dataset click "Connect to Repository" and enter the URL of the subject/study (e.g. "https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/") in the dialog box.</P>`);        
+<H3> DataLad.Org</H3><P> This control enables browsing of the <a href="https://datasets.datalad.org" target="_blank" rel="noopener">Repository</a>.</P><P> To access a dataset click "Connect to Repository" and enter the URL of the subject/study (e.g. "https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/") in the dialog box.</P>`);        
         let parent=this.panel.getWidget();
         
         const self=this;
@@ -100,11 +100,11 @@ ${str}
                                      });
 
         webutil.createbutton({
-            'name' : 'Connect to DataLab',
+            'name' : 'Connect to DataLad',
             css : { 'width' : '40%' , 'margin' : '3px' },
             'type' : 'danger',
             'parent' : top,
-            'callback' : () => { self.openDataLabDirectoryPrompt(); },
+            'callback' : () => { self.openDataLadDirectoryPrompt(); },
         });
 
         parent.append($('<HR width="90%">'));
@@ -140,7 +140,7 @@ ${str}
         return '[' + out.join(', ') + ']';
     }
 
-    openDataLabDirectoryPrompt() {
+    openDataLadDirectoryPrompt() {
         
         bootbox.prompt("Enter the URL to connect. Blank=Default", (result) => {
             //console.log('result=',result);
@@ -154,8 +154,8 @@ ${str}
             
             if (result==='')
                 result='https://datasets.datalad.org/labs/haxby/attention/sub-rid000001/';
-            this.directoryMode==='datalab';
-            this.openDataLabDirectory(result);
+            this.directoryMode==='datalad';
+            this.openDataLadDirectory(result);
         });
     }
 
@@ -615,7 +615,7 @@ ${str}
         
     }
     
-    async openDataLabDirectory(url) {
+    async openDataLadDirectory(url) {
 
         let l=url.length;
         if (url.lastIndexOf('.json')===l-5) {
@@ -863,8 +863,8 @@ ${str}
 
     openLink(link) {
 
-        if (this.directoryMode==='datalab')
-            this.openDataLabDirectory(link);
+        if (this.directoryMode==='datalad')
+            this.openDataLadDirectory(link);
         else
             this.openFolder(link);
     }
