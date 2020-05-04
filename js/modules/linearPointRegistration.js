@@ -93,6 +93,19 @@ class LinearRegistrationModule extends  BaseModule {
                     "step" : 0.1,
                 },
                 {
+                    "name": "IterPerTemp",
+                    "description": "Number of Iterations at Each Temperature",
+                    "priority": 200,
+                    "advanced": true,
+                    "type": "int",
+                    "gui": "slider",
+                    "varname": "iterpertemp",
+                    "default": 5,
+                    "low":  1,
+                    "high": 10,
+                    "step" : 1,
+                },
+                {
                     "name": "Anneal Rate",
                     "description": "Anneal Rate",
                     "priority": 101,
@@ -165,10 +178,16 @@ class LinearRegistrationModule extends  BaseModule {
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then( () => {
                 
-                let matr = biswrap.runLinearRPMRegistrationWASM(reference.getPoints(), target.getPoints(), initial, 0,0, {
+                let matr = biswrap.runLinearRPMRegistrationWASM(reference.getPoints(),
+                                                                target.getPoints(),
+                                                                initial,
+                                                                reference.getPointData() || 0,
+                                                                target.getPointData() || 0,
+                                                                {
                     'numLandmarks' : parseInt(vals.numlandmarks),
                     'initialTemperature' : parseFloat(vals.initialtemp),
                     'finalTemperature' : parseFloat(vals.finaltemp),
+                    'iterPerTemp': parseInt(vals.iterpertemp),
                     'annealRate' : parseFloat(vals.annealrate),
                     'prefSampling' : 1,
                     'transformMode' : transmode,

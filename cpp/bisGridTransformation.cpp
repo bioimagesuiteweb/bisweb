@@ -26,6 +26,11 @@ bisGridTransformation::bisGridTransformation(std::string n) : bisAbstractTransfo
   this->grid_dimensions[0]=0;
   this->grid_dimensions[1]=0;
   this->grid_dimensions[2]=0;
+  this->grid_spacing[0]=0.0;
+  this->grid_spacing[1]=0.0;
+  this->grid_spacing[2]=0.0;
+
+  
   this->dobspline_interpolation=1;
   this->magic_type=bisDataTypes::s_gridtransform;
   this->grid_vol_size=0;

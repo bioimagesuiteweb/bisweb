@@ -37,6 +37,13 @@ class BisWebSurface extends BisWebDataObject {
 
     }
 
+    /** Returns the type of the object as a string
+     * @returns{String} - the type of the object (e.g. image,matrix ...)
+     */
+    getObjectType() {
+        return "surface"
+    }
+
     /** returns a textual description of the object for GUIs etc.
      * @returns {string} description
      */
@@ -49,7 +56,8 @@ class BisWebSurface extends BisWebDataObject {
         }
         for (let i=0;i<this.matrixnames.length;i++) {
             let name=this.matrixnames[i];
-            s+=t+name+":"+this.matrices[name].getDescription(pretty)+"\n";
+            if (this.matrices[name])
+                s+=t+name+":"+this.matrices[name].getDescription(pretty)+"\n";
         }
         return s;
     }
@@ -72,7 +80,9 @@ class BisWebSurface extends BisWebDataObject {
     computeHash() {
         let s='';
         for (let i=0;i<this.matrixnames.length;i++) {
-            s += this.matrices[this.matrixnames[i]].computeHash();
+            if (this.matrices[this.matrixnames[i]]) {
+                s += this.matrices[this.matrixnames[i]].computeHash();
+            }
         }
         return s;
     }
@@ -82,8 +92,11 @@ class BisWebSurface extends BisWebDataObject {
      */
     getMemorySize() {
         let sz=0;
-        for (let i=0;i<this.matrixnames.length;i++) 
-            sz += this.matrices[this.matrixnames[i]].getMemorySize();
+        for (let i=0;i<this.matrixnames.length;i++) {
+            if (this.matrices[this.matrixnames[i]]) {
+                sz += this.matrices[this.matrixnames[i]].getMemorySize();
+            }
+        }
         return sz;
     }
     
@@ -96,7 +109,7 @@ class BisWebSurface extends BisWebDataObject {
         obj.matrices={};
         for (let i=0;i<this.matrixnames.length;i++) {
             let mat=this.matrices[this.matrixnames[i]];
-            if (mat.getDimensions()[0] > 0) {
+            if (mat) { 
                 obj['matrices'][this.matrixnames[i]]=mat.serializeToDictionary();
             }
         }
@@ -113,6 +126,7 @@ class BisWebSurface extends BisWebDataObject {
         for (let i = 0; i < keys.length; i++)  {
             let mat=b['matrices'][keys[i]];
             let nm=keys[i];
+            this.matrices[nm]=new BisWebMatrix();
             this.matrices[nm].parseFromDictionary(mat);
         }
 
@@ -136,16 +150,17 @@ class BisWebSurface extends BisWebDataObject {
             console.log('Bad wasmobj, can not deserialize surface');
             return 0;
         }
+
+        this.initialize();
         
         let offset=32;
         for (let i=0;i<this.matrixnames.length;i++) {
-            let mat=this.matrices[this.matrixnames[i]];
+            let mat=new BisWebMatrix();
             let num=intheader[4+i];
             if (num>0) {
                 mat.deserializeWasm(Module, dataptr + offset);
                 offset += mat.getWASMNumberOfBytes();
-            } else {
-                mat.zero(0,0);
+                this.matrices[this.matrixnames[i]]=mat;
             }
         }
         return 1;
@@ -160,7 +175,7 @@ class BisWebSurface extends BisWebDataObject {
         
         for (let i=0;i<this.matrixnames.length;i++) {
             let mat=this.matrices[this.matrixnames[i]];
-            if (mat.getDimensions()[0] > 0) {
+            if (mat) {
                 numbytes += mat.getWASMNumberOfBytes();
             }
         }
@@ -196,7 +211,7 @@ class BisWebSurface extends BisWebDataObject {
         let offset = 32;
         for (let i=0;i<this.matrixnames.length;i++) {
             let mat=this.matrices[this.matrixnames[i]];
-            if (mat.getDimensions()[0] > 0) {
+            if (mat) {
                 let dt= mat.serializeWasmInPlace(Module, inDataPtr + offset);
                 offset+=dt;
                 if (i<2)
@@ -229,11 +244,20 @@ class BisWebSurface extends BisWebDataObject {
             return out;
         
         for (let i=0;i<this.matrixnames.length;i++) {
-            let name=this.matrixnames[i];
-            let mat= this.matrices[name].compareWithOther(other.matrices[name],method,threshold);
-            out.value=out.value+mat.value;
-            out.metric=mat.metric;
 
+            let name=this.matrixnames[i];
+            
+            if ( (this.matrices[name] === null && other.matrices[name] !== null)  ||
+                 (this.matrices[name] !== null && other.matrices[name] === null) ) {
+                return out;
+            }
+            
+
+            if (this.matrices[name] && other.matrices[name]) {
+                mat= this.matrices[name].compareWithOther(other.matrices[name],method,threshold);
+                out.value=out.value+mat.value;
+                out.metric=mat.metric;
+            }
         }
 
         if (out.value < threshold) 
@@ -246,42 +270,46 @@ class BisWebSurface extends BisWebDataObject {
     initialize() {
         for (let i=0;i<this.matrixnames.length;i++) {
             let name=this.matrixnames[i];
-            this.matrices[name]=new BisWebMatrix();
+            this.matrices[name]=0;
         }
         this.filename='';
     }
 
     /** set from raw arrays */
-    setFromRawArrays(points,triangles=[],pointData=[],triangleData=[]) {
+    setFromRawArrays(points,triangles=null,pointData=null,triangleData=null) {
         let np=0,nt=0;
         
         this.initialize();
         if (points.length>0) {
             np=Math.round(points.length/3);
+            this.matrices['points']=new BisWebMatrix();
             this.matrices['points'].zero(np,3);
             let dat=this.matrices['points'].getDataArray();
             for (let i=0;i<np*3;i++)
                 dat[i]=points[i];
         }
 
-        if (triangles.length>0) {
+        if (triangles) {
             nt=Math.round(triangles.length/3);
+            this.matrices['triangles']=new BisWebMatrix();
             this.matrices['triangles'].allocate(nt,3,0,'uint');
             let dat=this.matrices['triangles'].getDataArray();
             for (let i=0;i<nt*3;i++)
                 dat[i]=triangles[i];
         }
 
-        if (pointData.length>0) {
+        if (pointData) {
             let numc=Math.round(pointData.length/np);
+            this.matrices['pointData']=new BisWebMatrix();
             this.matrices['pointData'].zero(np,numc);
             let dat=this.matrices['pointData'].getDataArray();
             for (let i=0;i<np*numc;i++)
                 dat[i]=pointData[i];
         }
 
-        if (triangleData.length>0) {
+        if (triangleData) {
             let numc=Math.round(triangleData.length/nt);
+            this.matrices['triangleData']=new BisWebMatrix();
             this.matrices['triangleData'].zero(nt,numc);
             let dat=this.matrices['triangleData'].getDataArray();
             for (let i=0;i<nt*numc;i++)
@@ -319,8 +347,8 @@ class BisWebSurface extends BisWebDataObject {
                     if (obj.points && obj.triangles) {
                         this.setFromRawArrays(obj.points,
                                              obj.triangles,
-                                             obj.pointData || [],
-                                             obj.triangleData || []);
+                                             obj.pointData || null,
+                                             obj.triangleData || null);
                         this.filename=contents.filename;
                         resolve('loaded from (legacy) '+contents.filename);
                         return;
