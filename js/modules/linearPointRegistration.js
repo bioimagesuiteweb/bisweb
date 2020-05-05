@@ -196,11 +196,11 @@ class LinearRegistrationModule extends  BaseModule {
                 }, super.parseBoolean(vals.debug));
                 this.outputs['output'] = matr;
                 
-                if (vals.warp)  {
-                    console.log('Do something');
-                    this.outputs['resliced']=null;
+                if (super.parseBoolean(vals.dowarp)) {
+                    this.outputs['warped']=biswrap.transformSurfaceWASM(reference,matr);
+                    console.log('Warped=',this.outputs['warped'].getDescription());
                 } else {
-                    this.outputs['resliced']=null;
+                    this.outputs['warped']=null;
                 }
                 resolve();
             }).catch( (e) => {

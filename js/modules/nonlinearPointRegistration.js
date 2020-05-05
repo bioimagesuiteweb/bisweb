@@ -276,11 +276,11 @@ class nonLinearRegistrationModule extends  BaseModule {
                                                                          }, super.parseBoolean(vals.debug));
         
                 
-        if (vals.warp)  {
-            console.log('Do something');
-            this.outputs['resliced']=null;
+        if (super.parseBoolean(vals.dowarp)) {
+            this.outputs['warped']=biswrap.transformSurfaceWASM(reference,this.outputs['output']);
+            console.log('Warped=',this.outputs['warped'].getDescription());
         } else {
-            this.outputs['resliced']=null;
+            this.outputs['warped']=null;
         }
 
         return Promise.resolve('Done with nonlinear point registration');

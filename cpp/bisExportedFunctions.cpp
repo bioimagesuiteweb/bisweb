@@ -30,6 +30,8 @@
 #include "bisLegacyFileSupport.h"
 #include "bisDataObjectFactory.h"
 #include "bisSimpleImageSegmentationAlgorithms.h"
+#include "bisSurface.h"
+#include "bisPointRegistrationUtils.h"
 #include "bisMemoryManagement.h"
 #include <memory>
 
@@ -1794,4 +1796,39 @@ unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug) {
     std::cout << "timeSeriesNormalizeImage done " << ok << std::endl;
   
   return out_image->releaseAndReturnRawArray();
+}
+
+/**
+ * Transform Surface
+ */
+unsigned char* transformSurfaceWASM(unsigned char* input,unsigned char* xform,int debug) {
+  std::unique_ptr<bisSurface > surface(new bisSurface("surface"));
+  if (!surface->deSerialize(input))
+    {
+      std::cerr << "Failed to deserialize surface" << std::endl;
+      return 0;
+    }
+
+  std::shared_ptr<bisAbstractTransformation> warpXform=bisDataObjectFactory::deserializeTransformation(xform,"warpxform");
+  if (warpXform.get()==0) {
+    std::cerr << "Failed to deserialize transformation " << std::endl;
+    return 0;
+  }
+
+  std::unique_ptr<bisSurface> output(new bisSurface("output"));
+  if (surface->getTriangles())
+    output->setTriangles(surface->getTriangles());
+  if (surface->getTriangleData())
+    output->setTriangleData(surface->getTriangleData());
+  if (surface->getPointData())
+    output->setPointData(surface->getPointData());
+
+  if (surface->getPoints()) {
+    std::shared_ptr<bisSimpleMatrix<float> > newpoints(bisPointRegistrationUtils::transformPoints(surface->getPoints().get(),
+                                                                                                  warpXform.get(),debug));
+    output->setPoints(newpoints);
+  }
+
+  unsigned char* outstr=surface->serialize();
+  return outstr;
 }

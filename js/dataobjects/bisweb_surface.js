@@ -379,7 +379,7 @@ class BisWebSurface extends BisWebDataObject {
 
         return new Promise( (resolve,reject) => {
             genericio.write(fname,txt).then( (f) => {
-                console.log('++++\t Saved Binary Matrix in '+fname);
+                console.log('++++\t Saved Surface in '+fname);
                 this.filename=fname;
                 resolve(f);
             }).catch( (e) => { reject(e);});

@@ -28,6 +28,42 @@ bisSurface::~bisSurface() {
 }
 
 
+void bisSurface::copy(bisSurface* other) {
+
+  if (other->getPoints()) {
+    std::shared_ptr< bisSimpleMatrix<float> > tmp(new bisSimpleMatrix<float>());
+    tmp->deSerialize(other->getPoints()->serialize());
+    this->points=std::move(tmp);
+  } else {
+    this->points=0;
+  }
+
+  if (other->getTriangles()) {
+    std::shared_ptr< bisSimpleMatrix<int> > tmp(new bisSimpleMatrix<int>());
+    tmp->deSerialize(other->getTriangles()->serialize());
+    this->triangles=std::move(tmp);
+  } else {
+    this->triangles=0;
+  }
+
+  if (other->getPointData()) {
+    std::shared_ptr< bisSimpleMatrix<float> > tmp(new bisSimpleMatrix<float>());
+    tmp->deSerialize(other->getPointData()->serialize());
+    this->pointData=std::move(tmp);
+  } else {
+    this->pointData=0;
+  }
+
+  if (other->getTriangleData()) {
+    std::shared_ptr< bisSimpleMatrix<float> > tmp(new bisSimpleMatrix<float>());
+    tmp->deSerialize(other->getTriangleData()->serialize());
+    this->triangleData=std::move(tmp);
+  } else {
+    this->triangleData=0;
+  }  
+}
+
+
 // -------------------------------------------------------------------
 long bisSurface::getRawSize()
 {

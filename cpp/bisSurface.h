@@ -58,9 +58,20 @@ class bisSurface : public bisDataObject {
    * @returns a shared pointer to Points
    */
   std::shared_ptr<bisSimpleMatrix<float> > getPoints() { return this->points; }
+  void setPoints(std::shared_ptr<bisSimpleMatrix<float> > pts) {  this->points=pts;  }
+
   std::shared_ptr<bisSimpleMatrix<int> > getTriangles() { return this->triangles;}
+  void setTriangles(std::shared_ptr<bisSimpleMatrix<int> > tri) { this->triangles=tri;}
+
   std::shared_ptr<bisSimpleMatrix<float> > getPointData() { return this->pointData; }
+  void setPointData(std::shared_ptr<bisSimpleMatrix<float> > pts) {  this->pointData=pts;  }
+  
   std::shared_ptr<bisSimpleMatrix<float> > getTriangleData() { return this->triangleData; }
+  void setTriangleData(std::shared_ptr<bisSimpleMatrix<float> > pts) {  this->triangleData=pts;  }
+
+  /** Copy other surface */
+  void copy(bisSurface* other);
+
   
   
 protected:

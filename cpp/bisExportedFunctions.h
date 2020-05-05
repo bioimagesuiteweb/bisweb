@@ -440,7 +440,17 @@ extern "C" {
   // BIS: { 'timeSeriesNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ] } 
   BISEXPORT unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug);
 
-    
+  /** Transform a surface using a transformation
+   * @param input surface
+   * @param xform the transformation
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a (unsigned char) serialized surface
+   */
+  // BIS: { 'transformSurfaceWASM', 'bisSurface', [ 'bisSurface', 'bisTransformation', 'debug'] }
+  BISEXPORT unsigned char* transformSurfaceWASM(unsigned char* input,unsigned char* xform,int debug);
+
+
+  
 #ifdef __cplusplus
 }
 #endif
