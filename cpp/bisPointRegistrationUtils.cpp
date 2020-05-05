@@ -142,7 +142,7 @@ namespace bisPointRegistrationUtils {
     
     if (Transformation == NULL) {
       std::cout << "NULL transformation in transformPoints " << std::endl;
-      return NULL;
+      return -1.0;
     }
 
     int N_PTS=isPointSetValid(Input);
