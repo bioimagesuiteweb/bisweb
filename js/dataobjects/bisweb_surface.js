@@ -41,7 +41,7 @@ class BisWebSurface extends BisWebDataObject {
      * @returns{String} - the type of the object (e.g. image,matrix ...)
      */
     getObjectType() {
-        return "surface"
+        return "surface";
     }
 
     /** returns a textual description of the object for GUIs etc.
@@ -254,9 +254,9 @@ class BisWebSurface extends BisWebDataObject {
             
 
             if (this.matrices[name] && other.matrices[name]) {
-                mat= this.matrices[name].compareWithOther(other.matrices[name],method,threshold);
-                out.value=out.value+mat.value;
-                out.metric=mat.metric;
+                let merr= this.matrices[name].compareWithOther(other.matrices[name],method,threshold);
+                out.value=out.value+merr.value;
+                out.metric=merr.metric;
             }
         }
 
