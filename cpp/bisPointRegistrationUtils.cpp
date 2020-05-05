@@ -80,36 +80,48 @@ namespace bisPointRegistrationUtils {
   bisSimpleMatrix<float>* transformPoints(bisSimpleMatrix<float>* Input,
                                           bisAbstractTransformation* Transformation,
                                           int debug) {
-    
+
     if (Transformation == NULL) {
       std::cout << "NULL transformation in transformPoints " << std::endl;
+        return NULL;
+      }
+    
+    int N_PTS=isPointSetValid(Input);
+    if (N_PTS==0) {
+      std::cout << "Bad points =" << N_PTS << std::endl;
       return NULL;
     }
-
-    int N_PTS=isPointSetValid(Input);
-    if (N_PTS==0)
-      return NULL;
     
-    if (debug) 
+    if (debug) {
       std::cout << "___ Transforming " << N_PTS << " points with " << Transformation->getClassName() << std::endl;
+      std::cout << "___ Transforming " << N_PTS << " points with " << Input->getNumRows() << "*" << Input->getNumCols() << std::endl;
+    }
     
     bisSimpleMatrix<float>* Output=new bisSimpleMatrix<float>();
-    
+    Output->zero(N_PTS,3);
     float* inp=Input->getData();
     float* out=Output->getData();
-    
-    Output->zero(N_PTS,3);
-    for (int pt=0;pt<N_PTS;pt++) {
-      float x[3],y[3];
-      for (int ia=0;ia<=2;ia++)
-        x[ia]=inp[pt*3+ia];
-      Transformation->transformPoint(x,y);
-      for (int ia=0;ia<=2;ia++)
-        out[pt*3+ia]=y[ia];
-    }
+
+    for (int pt=0;pt<N_PTS;pt++)
+      {
+        int index=pt*3;
+        float x[3],y[3];
+        for (int ia=0;ia<=2;ia++)
+          x[ia]=inp[index+ia];
+        //if (pt>930)
+        //std::cout << "pt=" << pt << " x=" << x[0] << "," << x[1] << "," << x[2] << " " << std::endl;
+        Transformation->transformPoint(x,y);
+        //if (pt>930) {
+        //          std::cout << "--> y=" << y[0] << "," << y[1] << "," << y[2] << std::endl;
+        //          std::cout << std::endl;
+        //        }
+        for (int ia=0;ia<=2;ia++)
+          out[index+ia]=y[ia];
+      }
+
+    std::cout << "___ Transforming " << N_PTS << " points with " << Transformation->getClassName() << " done." << std::endl;
     
     return Output;
-    
   }
 
   // ----------------------------------------------------------------------------------------------------

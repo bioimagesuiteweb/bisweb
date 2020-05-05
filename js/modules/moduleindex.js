@@ -72,6 +72,7 @@ const moduleImports = {
     linearregistration : require('linearRegistration.js'),
     linearpointregistration : require('linearPointRegistration.js'),
     nonlinearregistration : require('nonlinearRegistration.js'),
+    nonlinearpointregistration : require('nonlinearPointRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
     skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),

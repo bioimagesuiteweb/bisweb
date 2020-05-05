@@ -150,7 +150,7 @@ class LinearRegistrationModule extends  BaseModule {
 
     directInvokeAlgorithm(vals) {
 
-        console.log('oooo invoking: linearRegistration', JSON.stringify(vals),'\noooo'); 
+        console.log('oooo invoking: linearPointRegistration', JSON.stringify(vals),'\noooo'); 
         let target = this.inputs['target'];
         let reference = this.inputs['reference'];
         let initial = this.inputs['initial'] || 0;
