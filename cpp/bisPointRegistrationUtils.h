@@ -48,6 +48,25 @@ namespace bisPointRegistrationUtils {
                       int debug=0);
 
 
+  /** computes squared distance between points 
+   * @param x point 1
+   * @param y point 2
+   * @returns squared distance
+   */
+  float distance2(float x[3],float y[3]);
+  
+  /** computes mapping error i.e. | Output - Transformation(Input)|^2
+   * @param Input input point set
+   * @param Target target point set
+   * @param Transformation the transformation to apply
+   * @param debug if > 0 print diagnostics
+   * @returns RMS distance
+   */
+  float computeMappingError(bisSimpleMatrix<float>* Input,
+                            bisSimpleMatrix<float>* Target,
+                            bisAbstractTransformation* Transformation,
+                            int debug=0);
+
   /** Computes best fit Landmark Transformation (see VTK/VTKLandmarkTransform.cxx) given two sets of points
    * @param RawSourceLandmarks the source points (Nx3)
    * @param RawTargetLandmarks the target points (Nx3)

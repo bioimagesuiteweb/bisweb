@@ -112,7 +112,60 @@ namespace bisPointRegistrationUtils {
     
   }
 
+  // ----------------------------------------------------------------------------------------------------
+  float distance2(float x[3],float y[3]) {
+
+    return powf(x[0]-y[0],2.0)+
+      powf(x[1]-y[1],2.0)+
+      powf(x[2]-y[2],2.0);
+  }
   
+    // ----------------------------------------------------------------------------------------------------
+  // transform Points by transformation
+  // ----------------------------------------------------------------------------------------------------
+  float computeMappingError(bisSimpleMatrix<float>* Input,
+                            bisSimpleMatrix<float>* Output,
+                            bisAbstractTransformation* Transformation,
+                            int debug) {
+    
+    if (Transformation == NULL) {
+      std::cout << "NULL transformation in transformPoints " << std::endl;
+      return NULL;
+    }
+
+    int N_PTS=isPointSetValid(Input);
+    if (N_PTS==0) {
+       std::cerr << "Bad input point set" << std::endl;
+       return -1.0;
+    }
+    
+    if (!isPointSetValid(Output,N_PTS,3,0)) {
+      std::cerr << "Bad target point set" << std::endl;
+      return -1.0;
+    }
+    
+    
+    if (debug) 
+      std::cout << "___ Transforming " << N_PTS << " points with " << Transformation->getClassName() << std::endl;
+    
+    float* inp=Input->getData();
+    float* out=Output->getData();
+    float sumdist2=0.0;
+    
+    for (int pt=0;pt<N_PTS;pt++) {
+      float x[3],tx[3],y[3];
+      for (int ia=0;ia<=2;ia++) {
+        x[ia]=inp[pt*3+ia];
+        y[ia]=out[pt*3+ia];
+      }
+      Transformation->transformPoint(x,tx);
+      sumdist2+=distance2(tx,y);
+    }
+
+    return sqrt(sumdist2/float(N_PTS));
+  }
+
+
   // ----------------------------------------------------------------------------------------------------
   // Compute Lnadmark Transform
   // ----------------------------------------------------------------------------------------------------
@@ -148,8 +201,6 @@ namespace bisPointRegistrationUtils {
         return 0;
       }
     }
-
-    std::cout << "Computing Landmark Transform " << debug << std::endl;
     
     if (debug) {
       std::cout << "___ Compute Landmark Transform: Source and Target Landmarks have the same number of points  (" << N_PTS << "," << N_COLS <<")" << std::endl;
@@ -300,7 +351,8 @@ namespace bisPointRegistrationUtils {
       {
         // compute required scaling factor (if desired)
         float scale = (float)sqrt(sb / sa);
-        std::cout << "___ Scale=" << scale << std::endl;
+        if (debug)
+          std::cout << "___ Scale=" << scale << std::endl;
         
         float N[4][4];
         for (int i = 0; i < 4; i++) {
