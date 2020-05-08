@@ -30,7 +30,7 @@ const dat = require('bisweb_datgui');
 
 
 
-const MAXSETS=1;
+const MAXSETS=2;
 
 // -------------------------------------------------------------------------
 
@@ -70,26 +70,19 @@ class SurfaceControlElement extends HTMLElement {
             currentsurfaceindex : 0,
             surfaces : [ ],
             meshsets : [ ],
-            meshcustomvisible : [] ,
             meshvisible : [] ,
             // gui stuff
             surfacelabelelement : null,
             folders : null,
             surfacepropertiesgui : null,
-            allshowmodes : [ "Current", "All", "None", "Custom" ],
             allnames : [ ],
         };
 
         this.internal.data= {
-            showmode : "Current",
-            customshow : true,
-            currentname : "No Surfaces in Memory",
-            description : "",
             color : "#ff0000",
             uniform : true,
             hue : 0.02,
             opacity : 0.8,
-            dummy : false,
             visible : true
         };
         
@@ -139,8 +132,7 @@ class SurfaceControlElement extends HTMLElement {
                                                   null,
                                                   null,
                                                   null,
-                                                  0);
-        this.internal.meshsets[index].showMeshes(this.internal.meshvisible[index]);
+                                                   0);
     }
 
     updatesurfacemesh(index=null,hue=null,color=null,opacity=null,uniformColor=null) {
@@ -152,8 +144,10 @@ class SurfaceControlElement extends HTMLElement {
         if (color===null)  color=this.internal.data.color;
         let cl=util.hexToRgb(color);
         let rgb= [ cl.r/255.0, cl.g/255.0, cl.b/255.0 ];
-        console.log('Color=',color,'cl=',cl, 'rgb=',rgb,' index=',index);
+        console.log('Color=',color,'cl=',cl, 'rgb=',rgb,' index=',index,'uniform=',uniformColor);
         this.internal.meshsets[index].updateDisplayMode(hue,rgb,opacity,uniformColor);
+        console.log('Setting visible=',this.internal.meshvisible[index]);
+        this.internal.meshsets[index].showMeshes(this.internal.meshvisible[index]);
     }
     
     // -------------------------------
@@ -165,16 +159,12 @@ class SurfaceControlElement extends HTMLElement {
     updategui(nocurrentname=false) {
         
         // Set values of this.internal.data
-        let cur_surface=this.internal.surfaces[this.internal.currentsurfaceindex];
         let cur_surfacemesh=this.internal.meshsets[this.internal.currentsurfaceindex];
         let cl=[ Math.floor(cur_surfacemesh.color[0]*255.0),
                  Math.floor(cur_surfacemesh.color[1]*255.0),
                  Math.floor(cur_surfacemesh.color[2]*255.0) ];
 
         let color=util.rgbToHex(cl[0],cl[1],cl[2]);
-        this.internal.data.customshow=this.internal.meshcustomvisible[this.internal.currentsurfaceindex];
-        this.internal.data.description=cur_surface.getDescription();
-        this.internal.data.fixeddescription=this.internal.data.description;
         this.internal.data.color=color;
         this.internal.data.hue=cur_surfacemesh.hue;
         this.internal.data.opacity=cur_surfacemesh.opacity;
@@ -230,7 +220,7 @@ class SurfaceControlElement extends HTMLElement {
     /** delete all points -- pops up dialog first to make sure. No undo possible. */
     clearsurface() {
 
-        bootbox.confirm("Are you sure you want to delete all points?", (c) => {
+        bootbox.confirm("Are you sure you want to delete surface from memory?", (c) => {
 
             if (c) {
                 this.internal.surfaces[this.internal.currentsurfaceindex].initialize();
@@ -249,6 +239,7 @@ class SurfaceControlElement extends HTMLElement {
             webutil.createAlert('Surfaces='+this.internal.surfaces[this.internal.currentsurfaceindex].getDescription());
             this.createsurfacemesh();
             this.updatesurfacemesh();
+            this.showhidemeshes();
         });
         /*.catch( (e) => {
             console.log(e);
@@ -267,31 +258,14 @@ class SurfaceControlElement extends HTMLElement {
             return;
         
         this.internal.currentsurfaceindex=ind;
-        this.showhidemeshes(true);
+        this.showhidemeshes();
         this.updategui();
-        this.updatesurfaceselector();
     }
     
     /** Sets the visibility of the various meshes depending on GUI state */
     showhidemeshes() {
-
-        for (let st=0;st<this.internal.meshsets.length;st++) {
-
-            let doshow=this.internal.meshcustomvisible[st];
-            if (this.internal.data.showmode === "All" )  {
-                doshow=true;
-            } else if (this.internal.data.showmode === "None" ) {
-                doshow=false;
-            } else if (this.internal.data.showmode === "Current") {
-                if (st===this.internal.currentsurfaceindex)
-                    doshow=true;
-                else
-                    doshow=false;
-            }
-            
-            this.internal.meshvisible[st]=doshow;
-            this.internal.meshsets[st].showMeshes(doshow);
-        }
+        for (let st=0;st<this.internal.meshsets.length;st++) 
+            this.internal.meshsets[st].showMeshes(this.internal.meshvisible[st]);
     }
 
     // -------------------------------------------------------------------------------------------
@@ -317,34 +291,35 @@ class SurfaceControlElement extends HTMLElement {
         this.internal.parentDomElement=this.panel.getWidget();
         var basediv=$("<div>This will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
-        this.show();
         this.createMeshes();
     }
 
     createMeshes() {
         this.internal.surfaces=new Array(MAXSETS);
         this.internal.meshsets=new Array(MAXSETS);
-        this.internal.meshcustomvisible=new Array(MAXSETS);
         this.internal.meshvisible=new Array(MAXSETS);
         this.internal.allnames=new Array(MAXSETS);
 
 
-        const triangles= [ 0,1,2];
-        const points=[ 5.0,5.0,10.0, 5.0,100.0,15.0, 100.0,100.0,40.0 ];
+        //const triangles= [ 0,2,1 ];
+
         
         for (let i=0;i<MAXSETS;i++) {
+            //const points=[ 5.0,5.0,10.0+20*i, 5.0,100.0,15.0+20*i, 100.0,100.0,40.0+20*i ];
             let cl=util.objectmapcolormap[i+1];
             for (let i=0;i<=3;i++)
                 cl[i]=cl[i]/255.0;
             this.internal.surfaces[i]=new BisWebSurface();
 
-            this.internal.surfaces[i].setFromRawArrays(points,triangles);
+            //this.internal.surfaces[i].setFromRawArrays(points,triangles);
             
             this.internal.surfaces[i].filename="Surface"+(i+1)+".surjson";
             this.internal.meshsets[i]=new BisWebSurfaceMeshSet();
             this.internal.meshsets[i].color=cl;
-            this.internal.meshcustomvisible[i]=true;
-            this.internal.meshvisible[i]=(i===0);
+            if (i===0)
+                this.internal.meshvisible[i]=true;
+            else
+                this.internal.meshvisible[i]=false;
             this.internal.allnames[i]="Surface "+(i+1);
         }
          
@@ -371,62 +346,29 @@ class SurfaceControlElement extends HTMLElement {
             let ind=this.internal.allnames.indexOf(e);
             this.setcurrentsurface(ind);
         });
-
-        f1.add(this.internal.data,'showmode',this.internal.allshowmodes).name("Surfaces to Display").onChange( () => {
-            this.showhidemeshes();
-            this.updategui(true);
-        });
-        webutil.removedatclose(f1);
-
-        // --------------------------------------------
-        let ldiv=$("<H4></H4>").css({ 'margin':'15px'});
-        basediv.append(ldiv);
-
-        this.internal.surfacelabelelement=webutil.createlabel( { type : "success",
-                                                                 name : "Current Surface Properties",
-                                                                 parent : ldiv,
-                                                               });
-        
-        // ----------- Surface specific stuff
-
-        let f2 = new dat.GUI({autoPlace: false});
-        basediv.append(f2.domElement);
-        f2.add(this.internal.data, 'visible').name("Visible").onChange( () => {
+        f1.add(this.internal.data, 'visible').name("Visible").onChange( () => {
             this.internal.meshvisible[this.internal.currentsurfaceindex]=this.internal.data.visible;
             this.showhidemeshes();
         });
-        f2.add(this.internal.data, 'uniform').name("Uniform Color").onChange( () => { this.updatesurfacemesh(); });
-        f2.addColor(this.internal.data, 'color').name("Color").onChange(() => { this.updatesurfacemesh(); });
-        f2.add(this.internal.data, 'hue',0.0,1.0).name("Hue").step(0.01).onChange(()  => { this.updatesurfacemesh(); });
-        f2.add(this.internal.data, 'opacity',0.0,1.0).name("Opacity").step(0.1).onChange(() => { this.updatesurfacemesh(); });
-        f2.add(this.internal.data, 'customshow').name("Show in Custom Mode").onChange(() => {
-            this.internal.meshcustomvisible[this.internal.currentsurfaceindex]=this.internal.data.customshow;
-            this.showhidemeshes();
-        });
+        let w1=f1.addColor(this.internal.data, 'color').name("Color").onChange(() => { this.updatesurfacemesh(); });
+        $(w1.domElement.children).css( { 'height' : '16px' });
+        f1.add(this.internal.data, 'opacity',0.0,1.0).name("Opacity").step(0.1).onChange(() => { this.updatesurfacemesh(); });
+        f1.add(this.internal.data, 'uniform').name("Uniform Color").onChange( () => { this.updatesurfacemesh(); });
+        f1.add(this.internal.data, 'hue',0.0,1.0).name("Hue").step(0.01).onChange(()  => { this.updatesurfacemesh(); });
 
 
-        webutil.removedatclose(f2);
-        this.internal.folders=[f1, f2];
+        webutil.removedatclose(f1);
+        this.internal.folders=[f1];
 
         // ---------------
         // rest of gui 
         // ---------------
 
         let bbar0=webutil.createbuttonbar({ parent: basediv,
-                                            css : {'margin-top': '20px','margin-bottom': '10px'}});
+                                            css : {'margin-top': '10px','margin-bottom': '10px'}});
 
-        let clear_cb=() => { this.clearsurface();};
+
         
-        webutil.createbutton({ type : "danger",
-                               name : "Delete Surface",
-                               position : "right",
-                               tooltip : "Click this to delete the current surface",
-                               parent : bbar0,
-                               callback : clear_cb,
-                             });
-
-
-
         let load_cb=(f) => { this.loadsurface(f); };
         webfileutil.createFileButton({ type : "warning",
                                        name : "Load",
@@ -434,7 +376,7 @@ class SurfaceControlElement extends HTMLElement {
                                        tooltip : "Click this to load surface",
                                        parent : bbar0,
                                        callback : load_cb,
-                                       css : { 'margin-left' : '20px' },
+                                       css : { 'margin-left' : '0px' },
                                      },{
                                          filename : '',
                                          title    : 'Select file to load current surface set from',
@@ -455,7 +397,7 @@ class SurfaceControlElement extends HTMLElement {
                                        tooltip : "Click this to save points to a .surjson file",
                                        parent : bbar0,
                                        callback : save_cb,
-                                       css : { 'margin-left' : '10px' },
+                                       css : { 'margin-left' : '3px' },
                                      },
                                      {
                                          filename : '',
@@ -465,7 +407,30 @@ class SurfaceControlElement extends HTMLElement {
                                          suffix : ".surjson,.vtk",
                                          initialCallback : () => { return this.getInitialSaveFilename(); },
                                      });
+
+
+        webutil.createbutton({ name : '?',
+                               tooltip : 'Info about surface',
+                               type : "info",
+                               css : { 'margin-left' : '3px' },
+                               position : "left",
+                               parent : bbar0 }).click( () =>{
+                                   webutil.createAlert(this.internal.surfaces[this.internal.currentsurfaceindex].getDescription());
+                               });
         
+        
+        webutil.createbutton({ type : "danger",
+                               name : "Delete`",
+                               position : "right",
+                               tooltip : "Click this to delete the current surface",
+                               parent : bbar0,
+                               callback : () => { this.clearsurface();},
+                               css : { 'margin-left' : '25px' },
+                             });
+
+
+
+
         webutil.tooltip(this.internal.parentDomElement);
         this.updategui();
 
@@ -499,7 +464,8 @@ class SurfaceControlElement extends HTMLElement {
                                                    null,
                                                    null,
                                                    0);
-        
+
+        this.showhidemeshes();
     }
         
     /** Store State in to an Object

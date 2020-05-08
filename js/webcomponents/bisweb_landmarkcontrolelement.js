@@ -834,9 +834,10 @@ class LandmarkControlElement extends HTMLElement {
             self.updatedisplay();
         });
         
-        f2.addColor(self.internal.data, 'color').name("Landmark Color").onChange(function() {  
+        let w1=f2.addColor(self.internal.data, 'color').name("Landmark Color").onChange(function() {  
             self.updatecolors();
         });
+        $(w1.domElement.children).css( { 'height' : '16px' });
 
         webutil.removedatclose(f2);
         self.internal.folders=[f1, f2];

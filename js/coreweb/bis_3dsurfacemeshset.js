@@ -139,8 +139,8 @@ class bisweb3DSurfaceMeshSet {
         if (this.meshes) {
             for (let i=0;i<this.meshes.length;i++) {
                 if (this.meshes[i]) {
-                    this.meshes[i].visible=true;//doshow;
-                    console.log('Setting ',this.count,' i=',i,' visibility to',doshow);
+                    //console.log('Setting visible',this.count,i,'=',doshow);
+                    this.meshes[i].visible=doshow;
                 }
             }
         }
@@ -169,7 +169,9 @@ class bisweb3DSurfaceMeshSet {
 
     updateDisplayMode(in_hue=0.02,in_color=[1.0,1.0,1.0],in_opacity=0.8,in_uniformColor=false) {
 
-        console.log('In Update Display Mode',this.count);
+        console.log('In Update Display Mode',this.count,in_hue,in_color,in_opacity,in_uniformColor);
+        if (!this.attributes)
+            in_uniformColor=true;
         
         if (in_color!==null)
             this.color=in_color;
@@ -211,8 +213,6 @@ class bisweb3DSurfaceMeshSet {
     
     createMeshes(subviewers,surfaceobj,in_hue=0.02,in_color=[1.0,1.0,1.0 ],in_opacity=0.8,in_uniformColor=false,attributeIndex=0) {
 
-        console.log('In Create Meshes',this.count);
-        
         if (in_color!==null)
             this.color=in_color;
         
@@ -228,7 +228,6 @@ class bisweb3DSurfaceMeshSet {
         this.remove();
         let points=surfaceobj.getPoints();
         if (!points) {
-            console.log('No points');
             return;
         }
         points=points.getDataArray();
@@ -276,12 +275,11 @@ class bisweb3DSurfaceMeshSet {
 
     addMeshesToScene(cl=[1.0,1.0,1.0],opacity=0.8,surfaceobj=null) {
 
-        console.log('In Add Meshes to Scene',this.count,' numviewers=',this.subviewers.length,' sur=',surfaceobj);
-
-        
+        //console.log('Add meshes to scene');
         
         this.materials=new Array(this.subviewers.length);
         if (surfaceobj) {
+            //console.log('Creating new geometrie');
             this.geometries=new Array(this.subviewers.length);
             for (let i=0;i<this.subviewers.length;i++)
                 this.geometries[i]=null;
@@ -292,7 +290,7 @@ class bisweb3DSurfaceMeshSet {
         for (let i=0;i<this.subviewers.length;i++)
             this.materials[i]=null;
 
-        let minsub=3;
+        let minsub=0;
         let maxsub=this.subviewers.length;
         
         for (let index=minsub;index<maxsub;index++) {
@@ -301,7 +299,7 @@ class bisweb3DSurfaceMeshSet {
                 this.geometries[index]=new THREE.BufferGeometry();
                 let pdata=surfaceobj.getPoints().getDataArray();
                 let tdata=surfaceobj.getTriangles().getDataArray();
-                console.log('pdata=',pdata.constructor.name,pdata.length,tdata.constructor.name,tdata.length);
+                //console.log('pdata=',pdata.constructor.name,pdata.length,tdata.constructor.name,tdata.length);
 
                 this.geometries[index].setIndex( new THREE.BufferAttribute( tdata,1));
                 this.geometries[index].setAttribute( 'position', new THREE.BufferAttribute( pdata,3));
@@ -315,10 +313,9 @@ class bisweb3DSurfaceMeshSet {
                 return 0;
             }
             
-            if (index === this.subviewers.length) {
+            if (index === this.subviewers.length-1) {
 
                 if (this.uniformColor) {
-                    console.log('Creating uniform color shader');
                     this.materials[index] = new THREE.ShaderMaterial({
                         transparent : true,
                         "uniforms": {
@@ -333,7 +330,6 @@ class bisweb3DSurfaceMeshSet {
                         fragmentShader : fragmentshader_text_uniform,
                     });
                 } else {
-                    console.log('Creating non-uniform color shader');
                     this.materials[index] = new THREE.ShaderMaterial({
                         transparent : true,
                         "uniforms": {
@@ -353,7 +349,6 @@ class bisweb3DSurfaceMeshSet {
                     });
                 }
             } else {
-                console.log('Creating wireframe material');
                 this.materials[index]=new THREE.MeshBasicMaterial( {color: util.rgbToHex(Math.floor(cl[0]*255),
                                                                                          Math.floor(cl[1]*255),
                                                                                          Math.floor(cl[2]*255)),
@@ -361,8 +356,7 @@ class bisweb3DSurfaceMeshSet {
             }
 
             this.meshes[index] = new THREE.Mesh(this.geometries[index],this.materials[index]);
-            this.meshes[index].visible=true;
-            console.log('Adding mesh to',index, ' (COUNT=',this.count,')',this.meshes[index]);
+            this.meshes[index].visible=false;
             this.subviewers[index].getScene().add(this.meshes[index]);
         }
     }

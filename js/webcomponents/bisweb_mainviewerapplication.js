@@ -1191,6 +1191,19 @@ class ViewerApplicationElement extends HTMLElement {
         } else {
             webutil.createMenuItem(gmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
         }
+
+        
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f &&  self.VIEWERS.length ===1 ) {
+                let tcont=new SurfaceControlElement();
+                tcont.setAttribute('bis-viewerid','#'+this.VIEWERS[0].getAttribute('id'));
+                tcont.setAttribute('bis-layoutwidgetid','#'+this.VIEWERS[0].getLayoutController().getAttribute('id'));
+                this.VIEWERS[0].getLayoutController().appendChild(tcont);
+                webutil.createMenuItem(gmenu,'');
+                webutil.createMenuItem(gmenu, 'Surface Tool', function () { tcont.show(); });
+            }
+        });
+                
         
 
         
@@ -1507,17 +1520,6 @@ class ViewerApplicationElement extends HTMLElement {
                         this.toggleColorMode(false);
                 });
 
-                userPreferences.safeGetItem("internal").then( (f) => {
-                    console.log('F=',f);
-                    if (f) {
-                        let tcont=new SurfaceControlElement();
-                        tcont.setAttribute('bis-viewerid','#'+this.VIEWERS[0].getAttribute('id'));
-                        tcont.setAttribute('bis-layoutwidgetid','#'+this.VIEWERS[0].getLayoutController().getAttribute('id'));
-                        console.log('tcont=',tcont);
-                        this.VIEWERS[0].getLayoutController().appendChild(tcont);
-                    }
-                });
-                
             }).catch( (e) => {
                 console.log('Error ',e);
             });
