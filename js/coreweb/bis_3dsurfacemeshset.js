@@ -116,7 +116,7 @@ const fragmentshader_text=`
 
 class bisweb3DSurfaceMeshSet {
 
-    constructor() {
+    constructor(defaultcolor) {
         this.texture=null;
         this.meshes=[];
         this.geometries=[];
@@ -125,7 +125,10 @@ class bisweb3DSurfaceMeshSet {
         this.minattr=0.0;
         this.maxattr=0.0;
         this.attributes=null;
-        this.colorsurface=null;
+        this.uniformColor=true;
+        this.color=defaultcolor || [ 1.0,1.0,1.0 ];
+        this.hue=0.02;
+        this.opacity=0.8;
     }
 
 
@@ -133,7 +136,7 @@ class bisweb3DSurfaceMeshSet {
 
         if (this.meshes) {
             for (let i=0;i<this.meshes.length;i++) {
-                if (show)
+                if (doshow)
                     this.meshes[i].visible=doshow;
             }
         }
@@ -160,8 +163,20 @@ class bisweb3DSurfaceMeshSet {
         }
     }
 
-    switchColorMode(hue=0.02,color=[1.0,1.0,1.0],opacity=0.8,uniformColor=false) {
-
+    updateDisplayMode(in_hue=0.02,in_color=[1.0,1.0,1.0],in_opacity=0.8,in_uniformColor=false) {
+        
+        if (in_color!==null)
+            this.color=in_color;
+        
+        if (in_hue!==null) 
+            this.hue=util.range(in_hue,0.0,1.0);
+        
+        if (in_opacity!==null)
+            this.opacity=util.range(in_opacity,0.0,1.0);
+        
+        if (in_uniformColor!==null)
+            this.uniformColor=in_uniformColor;
+        
         let hadtexture=false;
         if (this.texture)
             hadtexture=true;
@@ -175,43 +190,47 @@ class bisweb3DSurfaceMeshSet {
             console.log('Bad surface');
             return 0;
         }
-
+        
         this.remove(false);
         
         if (hadtexture) {
-            this.texture=createColorLookupTableTexture(hue);
+            this.texture=createColorLookupTableTexture(this.hue);
         } else {
             this.texture=null;
         }
 
-        if (uniformColor)
-            this.colorsurface=0;
-        else
-            this.colorsurface=1;
-
-        this.addMeshesToScene(color,opacity,null);
+        this.addMeshesToScene(this.color,this.opacity,null);
     }
 
     
-    createMeshes(subviewers,surfaceobj,hue=0.02,color=[1.0,1.0,1.0 ],opacity=0.8,uniformColor=false,attributeIndex=0) {
+    createMeshes(subviewers,surfaceobj,in_hue=0.02,in_color=[1.0,1.0,1.0 ],in_opacity=0.8,in_uniformColor=false,attributeIndex=0) {
+
+        if (in_color!==null)
+            this.color=in_color;
+        
+        if (in_hue!==null) 
+            this.hue=util.range(in_hue,0.0,1.0);
+        
+        if (in_opacity!==null)
+            this.opacity=util.range(in_opacity,0.0,1.0);
+        
+        if (in_uniformColor!==null)
+            this.uniformColor=in_uniformColor;
 
         this.remove();
-
         let points=surfaceobj.getPoints();
         let pointData=surfaceobj.getPointData();
         this.attributes=new Float32Array(points.length);
-        if (!uniformColor) {
-            this.colorsurface=1;
+        
+        if (!this.uniformColor) {
             if (attributeIndex<0)
-                this.colorsurface=0;
+                this.uniformColor=true;
             else if (!pointData)
-                this.colorsurface=0;
-        } else {
-            this.colorsurface=0;
-        }
+                this.uniformColor=true;
+        } 
 
         
-        if (!this.colorsurface) {
+        if (this.uniformColor) {
             for (let i=0;i<this.attributes.length;i++) {
                 this.attributes[i]=1;
             }
@@ -235,10 +254,10 @@ class bisweb3DSurfaceMeshSet {
                 }
                 this.attributes[i]=v;
             }
-            this.texture=createColorLookupTableTexture(hue);
+            this.texture=createColorLookupTableTexture(this.hue);
         }
         this.subviewers=subviewers;
-        this.addMeshesToScene(color,opacity,surfaceobj);
+        this.addMeshesToScene(this.color,this.opacity,this.surfaceobj);
     }
 
     addMeshesToScene(cl=[1.0,1.0,1.0],opacity=0.8,surfaceobj=null) {
@@ -257,6 +276,9 @@ class bisweb3DSurfaceMeshSet {
             }
 
             if (index === this.subviewers.length-1) {
+                let unf=0;
+                if (this.uniformColor)
+                    unf=1;
                 this.materials[index] = new THREE.ShaderMaterial({
                     transparent : true,
                     "uniforms": {
@@ -269,7 +291,7 @@ class bisweb3DSurfaceMeshSet {
                                        "b":cl[2]}
                                    },
                         "opacity": {"type":"f","value":opacity},
-                        "uniformColor" : 1-this.colorsurface,
+                        "uniformColor" : unf,
                     },
                     vertexShader : vertexshader_text,
                     fragmentShader : fragmentshader_text,
@@ -279,7 +301,7 @@ class bisweb3DSurfaceMeshSet {
             }
         
             this.meshes[index] = new THREE.Mesh(this.geometries[index],this.materials[index]);
-            this.meshes[index].visible=true;
+            this.meshes[index].visible=false;
             this.subviewers[index].getScene().add(this.meshes[index]);
         }
     }

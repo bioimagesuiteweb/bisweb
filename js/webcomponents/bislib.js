@@ -67,6 +67,7 @@ const Elements = {
     ParavisionImportElement: require("bisweb_paravisionimportelement.js"),
     MNI2TalElement : require("bisweb_mni2talelement.js"),
     ParavisionApplicationElement : require("bisweb_paravisionapplicationelement.js"),
+    SurfaceControlElement: require('bisweb_surfacecontrolelement.js'),
     MainViewerApplicationElement : require("bisweb_mainviewerapplication.js"),
     ConnectivityApplicationElement : require("bisweb_connectivityapplicationelement.js"),
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),

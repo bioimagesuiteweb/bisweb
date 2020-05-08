@@ -1,0 +1,552 @@
+/*  LICENSE
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
+
+"use strict";
+
+const util=require('bis_util');
+const BisWebSurface=require('bisweb_surface');
+const BisWebSurfaceMeshSet=require('bis_3dsurfacemeshset');
+const webutil=require('bis_webutil');
+const bisgenericio=require('bis_genericio');
+const $=require('jquery');
+const bootbox=require('bootbox');
+const webfileutil = require('bis_webfileutil');
+const BisWebPanel = require('bisweb_panel.js');
+const dat = require('bisweb_datgui');
+
+
+
+const MAXSETS=5;
+// -------------------------------------------------------------------------
+
+/** 
+ * A web element to create and manage a GUI for a Surface Control
+ * that draws surfaces in an {@link OrthogonalViewer} viewer.
+ *  The GUI for this appears inside a {@link ViewerLayoutElement}.
+ *
+ *
+ *
+ * @example
+ *  <bisweb-surfacecontrolelement
+ *      bis-layoutwidgetid="#viewer_layout"
+ *      bis-viewerid="#viewer">
+ *  </bisweb-surfacecontrolelement>
+ *
+ * Attributes:
+ *      bis-viewerid : the orthogonal viewer to draw in 
+ *      bis-layoutwidgetid :  the layout widget to create the GUI in
+ */
+class SurfaceControlElement extends HTMLElement {
+
+    constructor() {
+
+        super();
+
+        this.internal = {
+            // global stuff
+            this : null,
+            subviewers : null,
+            parentDomElement : null,
+            domElement : null,
+            orthoviewer : null,
+            
+            // surfaces and index to current one
+            currentsurfaceindex : 0,
+            surfaces : [ ],
+            meshsets : [ ],
+            meshcustomvisible : [] ,
+            meshvisible : [] ,
+            // gui stuff
+            surfacelabelelement : null,
+            folders : null,
+            surfacepropertiesgui : null,
+            allshowmodes : [ "Current", "All", "None", "Custom" ],
+            allnames : [ ],
+        };
+
+        this.internal.data= {
+            showmode : "Current",
+            customshow : true,
+            currentname : "No Surfaces in Memory",
+            description : "",
+            color : "#ff0000",
+            uniform : true,
+            hue : 0.02,
+            opacity : 0.8,
+            dummy : false,
+            visible : true
+        };
+        
+        this.panel=null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Cleanup display elements
+    // -------------------------------------------------------------------------
+
+    /** Clean up meshes currently displayed
+     * @param {boolean} currentonly - (default false). If true delete only current surface mesh (for all viewers) instead of all.
+     */
+    cleanupdisplayelements(currentonly=false) {
+
+        if (this.internal.subviewers===null || this.internal.mesh===null)
+            return;
+
+        let mini=0,maxi=this.internal.meshsets.length;
+        if (currentonly) {
+            mini=this.internal.currentpointselect;
+            maxi=mini+1;
+        }
+        
+        for (let i=mini;i<maxi;i++) {
+            if (this.internal.mesheets[i]) {
+                this.internal.meshsets[i].remove(true);
+                this.internal.mesheets[i]=null;
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Create basic geometries of cursor and surfacess 
+    // -------------------------------------------------------------------------
+    /** create a mesh for surface set of index=index. Stores this.internally
+     * @param {number} index - index of surface set to use
+     */
+    createsurfacemesh(index=null) {
+
+        if (index===null)
+            index=this.internal.currentsurfaceindex;
+        
+        this.internal.meshset[index].createMeshes(this.internal.subviewers,
+                                         this.internal.surfaces[index],
+                                         null,
+                                         null,
+                                         null,
+                                         null,
+                                         0);
+        this.internal.meshset[index].showMeshes(this.internal.meshvisible[index]);
+    }
+
+    updatesurfacemesh(index=null,hue=null,color=null,opacity=null,uniformColor=null) {
+
+        if (index===null) index=this.internal.currentsurfaceindex;
+        if (hue===null) hue=this.internal.data.hue;
+        if (opacity===null) opacity=this.internal.data.opacity;
+        if (uniformColor===null) uniformColor=this.internal.data.uniform;
+        if (color===null)  color=this.internal.data.color;
+        let cl=util.hexToRgb(color);
+        let rgb= [ cl.r/255.0, cl.g/255.0, cl.b/255.0 ];
+        console.log('Color=',color,'cl=',cl, 'rgb=',rgb,' index=',index);
+        this.internal.meshsets[index].updateDisplayMode(hue,rgb,opacity,uniformColor);
+    }
+    
+    // -------------------------------
+    // update gui once changes are made
+    // -------------------------------
+    /** updates gui based on this.internal changes
+     * @param {boolean} nocurrentname - if false (default) also updates the name of the current surface.
+     */
+    updategui(nocurrentname=false) {
+        
+        // Set values of this.internal.data
+        let cur_surface=this.internal.surfaces[this.internal.currentsurfaceindex];
+        let cur_surfacemesh=this.internal.meshsets[this.internal.currentsurfaceindex];
+        console.log('Cur=',cur_surfacemesh, this.internal.currentsurfaceindex);
+        
+        let cl=[ Math.floor(cur_surfacemesh.color[0]*255.0),
+                 Math.floor(cur_surfacemesh.color[1]*255.0),
+                 Math.floor(cur_surfacemesh.color[2]*255.0) ];
+
+        console.log('Cl=',cl);
+        
+        let color=util.rgbToHex(cl[0],cl[1],cl[2]);
+        this.internal.data.customshow=this.internal.meshcustomvisible[this.internal.currentsurfaceindex];
+        this.internal.data.description=cur_surface.getDescription();
+        this.internal.data.fixeddescription=this.internal.data.description;
+        this.internal.data.color=color;
+        this.internal.data.hue=cur_surfacemesh.hue;
+        this.internal.data.opacity=cur_surfacemesh.opacity;
+        this.internal.data.uniformColor=cur_surfacemesh.uniformColor;
+        this.internal.data.visible=this.internal.meshvisible[this.internal.currentsurfaceindex];
+        
+        if (!nocurrentname) {
+            this.internal.data.currentname=this.internal.allnames[this.internal.currentsurfaceindex];
+        }
+
+        // Update controllers
+        if (this.internal.folders!==null) {
+            for (var ib=0;ib<this.internal.folders.length;ib++) {
+                for (var ia=0;ia<this.internal.folders[ib].__controllers.length;ia++) {
+                    this.internal.folders[ib].__controllers[ia].updateDisplay();
+                }
+            }
+        }
+
+    }
+
+    // ------------------------------------------------------------------------
+    // GUI Options for whole set
+    // ------------------------------------------------------------------------
+
+    getInitialSaveFilename() {
+        return this.internal.surfaces[this.internal.currentsurfaceindex].filename;
+    }
+    
+    /** Export surfaces to a .land file.  */
+    exportsurfaces(fobj) {
+        this.picksurface(false);
+        let fname=bisgenericio.getFixedSaveFileName(fobj,this.internal.surfaces[this.internal.currentsurfaceindex].filename);
+        let index=fname.lastIndexOf('.');
+        let newname=fname.substr(0,index-1)+".surjson";
+        this.internal.surfaces[this.internal.currentsurfaceindex].save(newname);
+        return false;
+    }
+
+    
+    /** Save surfaces to a .ljson file. */
+    savesurface(fobj) {
+        // rework this!!!
+        // webutil.createAlert('Surfaces loaded from ' +filename+' numpoints='+surface.getnumpoints());
+        
+        this.picksurface(false);
+        var a=this.internal.surfaces[this.internal.currentsurfaceindex].serialize();
+        fobj=bisgenericio.getFixedSaveFileName(fobj,this.internal.surfaces[this.internal.currentsurfaceindex].filename);
+        bisgenericio.write(fobj,a);
+        return false;
+    }
+
+    /** delete all points -- pops up dialog first to make sure. No undo possible. */
+    clearsurface() {
+
+        bootbox.confirm("Are you sure you want to delete all points?", (c) => {
+
+            if (c) {
+                this.internal.surfaces[this.internal.currentsurfaceindex].initialize();
+                this.internal.meshsets[this.internal.currentsurfaceindex].remove();
+            }
+        });
+        return false;
+    }
+    
+    /** Load surfaces. Called from input=File element 
+     * @param {string} filename - filename
+     */
+    loadsurface(filename) {
+
+        this.internal.surfaces[this.internal.currentsurfaceindex].load(filename).then( () => {
+            webutil.createAlert('Surfaces='+this.internal.surfaces[this.internal.currentsurfaceindex].getDescription());
+            this.createsurfacemesh();
+            this.updatesurfacemesh();
+        }).catch( (e) => {
+            webutil.createAlert(e,true);
+        });
+        return false;
+    }
+
+    /** Set Current surface set.
+     * @param {number} ind - index of set to use as current
+     */
+    setcurrentsurface(ind) {
+        
+        ind=util.range(ind||0,0,MAXSETS-1);
+        if (ind==this.internal.currentsurfaceindex)
+            return;
+        
+        this.internal.currentsurfaceindex=ind;
+        this.showhidemeshes(true);
+        this.updategui();
+        this.updatesurfaceselector();
+    }
+    
+    /** Sets the visibility of the various meshes depending on GUI state */
+    showhidemeshes() {
+
+        for (let st=0;st<this.internal.meshsets.length;st++) {
+
+            let doshow=this.internal.meshcustomvisible[st];
+            if (this.internal.data.showmode === "All" )  {
+                doshow=true;
+            } else if (this.internal.data.showmode === "None" ) {
+                doshow=false;
+            } else if (this.internal.data.showmode === "Current") {
+                if (st===this.internal.currentsurfaceindex)
+                    doshow=true;
+                else
+                    doshow=false;
+            }
+            
+            this.internal.meshvisible[st]=doshow;
+            this.internal.meshsets[st].showMeshes(doshow);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // create GUI
+    // -------------------------------------------------------------------------------------------
+    /* Connected callback */
+    connectedCallback() {
+        let viewerid=this.getAttribute('bis-viewerid');
+        let layoutid=this.getAttribute('bis-layoutwidgetid');
+        this.internal.orthoviewer=document.querySelector(viewerid);
+
+        let layoutcontroller=document.querySelector(layoutid);
+        let viewer=document.querySelector(viewerid);
+        
+        this.panel=new BisWebPanel(layoutcontroller,
+                                    {  name  : 'Surface Editor',
+                                       permanent : false,
+                                       width : '290',
+                                       dual : false,
+                                    });
+        this.internal.parentDomElement=this.panel.getWidget();
+        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
+        this.internal.domElement=basediv;
+        
+        let f1 = new dat.GUI({autoPlace: false});
+        basediv.append(f1.domElement);
+
+        f1.add(this.internal.data,'currentname',this.internal.allnames).name("CurrentSurface").onChange( (e) => {
+            let ind=this.internal.allnames.indexOf(e);
+            this.setcurrentsurface(ind);
+        });
+
+        f1.add(this.internal.data,'showmode',this.internal.allshowmodes).name("Surfaces to Display").onChange( () => {
+            this.showhidemeshes();
+            this.updategui(true);
+        });
+        webutil.removedatclose(f1);
+
+        console.log('se;f=',JSON.stringify(this.internal.data,null,2));
+
+        
+        // --------------------------------------------
+        let ldiv=$("<H4></H4>").css({ 'margin':'15px'});
+        basediv.append(ldiv);
+
+        this.internal.surfacelabelelement=webutil.createlabel( { type : "success",
+                                                                 name : "Current Surface Properties",
+                                                                 parent : ldiv,
+                                                               });
+        
+        // ----------- Surface specific stuff
+
+        let f2 = new dat.GUI({autoPlace: false});
+        basediv.append(f2.domElement);
+        f2.add(this.internal.data, 'visible').name("Visible").onChange( () => {
+            this.internal.meshvisible[this.internal.currentsurfaceindex]=this.internal.data.visible;
+            this.showhidemeshes();
+        });
+        f2.add(this.internal.data, 'uniform').name("Uniform Color").onChange( () => { this.updatesurfacemesh(); });
+        f2.addColor(this.internal.data, 'color').name("Color").onChange(() => { this.updatesurfacemesh(); });
+        f2.add(this.internal.data, 'hue',0.0,1.0).name("Hue").step(0.01).onChange(()  => { this.updatesurfacemesh(); });
+        f2.add(this.internal.data, 'opacity',0.0,1.0).name("Opacity").step(0.1).onChange(() => { this.updatesurfacemesh(); });
+        f2.add(this.internal.data, 'customshow').name("Show in Custom Mode").onChange(() => {
+            this.internal.meshcustomvisible[this.internal.currentsurfaceindex]=this.internal.data.customshow;
+            this.showhidemeshes();
+        });
+
+
+        webutil.removedatclose(f2);
+        this.internal.folders=[f1, f2];
+
+        // ---------------
+        // rest of gui 
+        // ---------------
+
+        let bbar0=webutil.createbuttonbar({ parent: basediv,
+                                            css : {'margin-top': '20px','margin-bottom': '10px'}});
+
+        let clear_cb=() => { this.clearsurface();};
+        
+        webutil.createbutton({ type : "danger",
+                               name : "Delete Surface",
+                               position : "right",
+                               tooltip : "Click this to delete the current surface",
+                               parent : bbar0,
+                               callback : clear_cb,
+                             });
+
+
+
+        let load_cb=(f) => { this.loadsurface(f); };
+        webfileutil.createFileButton({ type : "warning",
+                                       name : "Load",
+                                       position : "bottom",
+                                       tooltip : "Click this to load surface",
+                                       parent : bbar0,
+                                       callback : load_cb,
+                                       css : { 'margin-left' : '20px' },
+                                     },{
+                                         filename : '',
+                                         title    : 'Select file to load current surface set from',
+                                         filters  : [ { name: 'Surface Files', extensions: ['surjson','json' ]}],
+                                         save : false,
+                                         suffix : ".surjson,.json",
+                                     });
+
+        let save_cb=(f) => {
+            f=f || 'surfaces.surson';
+            return this.savesurfaces(f);
+        };
+
+        
+        webfileutil.createFileButton({ type : "primary",
+                                       name : "Save",
+                                       position : "bottom",
+                                       tooltip : "Click this to save points to a .surjson file",
+                                       parent : bbar0,
+                                       callback : save_cb,
+                                       css : { 'margin-left' : '10px' },
+                                     },
+                                     {
+                                         filename : '',
+                                         title    : 'Select file to load current surface set from',
+                                         filters  : [ { name: 'Surface Files', extensions: ['surjson','vtk' ]}],
+                                         save : true,
+                                         suffix : ".surjson,.vtk",
+                                         initialCallback : () => { return this.getInitialSaveFilename(); },
+                                     });
+        
+        webutil.tooltip(this.internal.parentDomElement);
+        let subviewers=viewer.internal.subviewers;
+        console.log('Subv=',subviewers);
+        
+        this.internal.surfaces=new Array(MAXSETS);
+        this.internal.meshsets=new Array(MAXSETS);
+        this.internal.meshcustomvisible=new Array(MAXSETS);
+        this.internal.meshvisible=new Array(MAXSETS);
+        this.internal.allnames=new Array(MAXSETS);
+
+
+        const triangles= [ 0,1,2];
+        
+        for (let i=0;i<MAXSETS;i++) {
+            let cl=util.objectmapcolormap[i+1];
+            for (let i=0;i<=3;i++)
+                cl[i]=cl[i]/255.0;
+            console.log('Cl=',cl);
+            this.internal.surfaces[i]=new BisWebSurface();
+            const points=[ 5.0,5.0,0.1*i, 5.0,100.0,0.1*i, 100.0,100.0,0.1*i ];
+            this.internal.surfaces[i].setFromRawArrays(points,triangles);
+            console.log(this.internal.surfaces[i].serializeToJSON());
+            
+            this.internal.surfaces[i].filename="Surface"+(i+1)+".surjson";
+            this.internal.meshsets[i]=new BisWebSurfaceMeshSet();
+            this.internal.meshsets[i].color=cl;
+            this.internal.meshcustomvisible[i]=true;
+            this.internal.meshvisible[i]=(i===0);
+            this.internal.allnames[i]="Surface "+(i+1);
+            this.internal.meshsets[i].createMeshes(this.internal.subviewers,
+                                                   this.internal.surfaces[i],
+                                                   null,
+                                                   null,
+                                                   null,
+                                                   null,
+                                                   0);
+            
+        }
+        
+        this.internal.currentsurfaceindex=0;
+        this.internal.data.currentname=this.internal.allnames[0];
+        this.internal.subviewers=subviewers;
+        this.updategui();
+        this.show();
+    }
+
+    show() {
+        this.panel.show();
+    }
+
+        
+    /** Store State in to an Object
+     * @returns{Object} -- state dictionary
+     */
+    getElementState() {
+
+        
+        let obj = { };
+        obj.data = this.internal.data;
+        obj.currentsurface=this.internal.currentsurfaceindex;
+        let surfaces=[];
+        for (let i=0;i<this.internal.surfaces.length;i++) {
+            surfaces.push(this.internal.surfaces[i].serializeToJSON());
+        }
+        let props=[];
+        for (let i=0;i<this.internal.surfaces.length;i++) {
+            props[i] = {
+                'hue' : this.internal.meshset[i].hue,
+                'opacity' : this.internal.meshset[i].opacity,
+                'color' : this.internal.meshset[i].color,
+                'uniformColor' : this.internal.meshset[i].uniformColor,
+            };
+        }
+        obj.meshvisible=this.internal.meshvisible;
+        obj.surfaces=surfaces;
+        obj.props=props;
+        obj.isopen=this.panel.isOpen();
+        
+        return obj;
+    }
+
+    /** Get State from Object
+     * @param{Object} dt -- state dictionary
+     */
+    setElementState(dt) {
+        if (!dt)
+            return;
+
+        let surfaces=dt.surfaces || [];
+        for (let i=0;i<surfaces.length;i++) {
+            let str=surfaces[i];
+            let surface=this.internal.surfaces[i];
+            let fname=surface.filename;
+            if (fname.length<2)
+                fname=`points_${i+1}.ljson`;
+            surface.parseFromJSON(str);
+        }
+
+        dt.meshvisible=dt.meshvisible || null;
+        
+        let props=dt.props || [];
+        for (let i=0;i<props.length;i++) {
+            this.internal.meshset[i]['hue']=props[i]['hue'];
+            this.internal.meshset[i]['color']=props[i]['color'];
+            this.internal.meshset[i]['opacity']=props[i]['opacity'];
+            this.internal.meshset[i]['uniformColor']=props[i]['uniformColor'];
+
+            if (dt.meshvisible) {
+                this.internal.meshvisible[i]=dt.meshvisible[i] || false;
+            }
+        }
+
+        this.internal.data.showmode=dt.data.showmode;
+        this.showhidemeshes();
+        
+        this.setcurrentsurface(dt.currentsurface || 0);
+        if (dt.isopen) {
+            this.panel.show();
+        } else {
+            this.panel.hide();
+        }
+    }
+
+}
+
+
+webutil.defineElement('bisweb-surfacecontrolelement', SurfaceControlElement);
+module.exports=SurfaceControlElement;
+

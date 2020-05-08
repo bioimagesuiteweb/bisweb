@@ -99,8 +99,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "rotatei",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -179.0,
+                    "high": 179.0,
                     "step" : 0.1,
                 },
                 {
@@ -112,8 +112,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "rotatej",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -179.0,
+                    "high": 179.0,
                     "step" : 0.1,
                 },
                 {
@@ -125,8 +125,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "rotatek",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -179.0,
+                    "high": 179.0,
                     "step" : 0.1,
                 },
                 {

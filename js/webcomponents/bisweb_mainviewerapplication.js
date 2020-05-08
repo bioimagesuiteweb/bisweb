@@ -35,7 +35,7 @@ const idb=require('idb-keyval');
 const localforage=require('localforage');
 const biscustom = require('bisweb_custommodule.js');
 const moduleindex = require('moduleindex.js');
-
+const SurfaceControlElement=require('bisweb_surfacecontrolelement');
 
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
@@ -1376,8 +1376,10 @@ class ViewerApplicationElement extends HTMLElement {
                     webutil.createMenuItem(bmenu, 'File Tree Panel', () => {
                         this.repopanel.show();
                     });
+
+                    
+                    
                 }
-                
             }
             webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, 'Restart Application', () => {
@@ -1503,6 +1505,17 @@ class ViewerApplicationElement extends HTMLElement {
                     let s=webcss.isDark();
                     if (m!==s) 
                         this.toggleColorMode(false);
+                });
+
+                userPreferences.safeGetItem("internal").then( (f) => {
+                    console.log('F=',f);
+                    if (f) {
+                        let tcont=new SurfaceControlElement();
+                        tcont.setAttribute('bis-viewerid','#'+this.VIEWERS[0].getAttribute('id'));
+                        tcont.setAttribute('bis-layoutwidgetid','#'+this.VIEWERS[0].getLayoutController().getAttribute('id'));
+                        console.log('tcont=',tcont);
+                        this.VIEWERS[0].getLayoutController().appendChild(tcont);
+                    }
                 });
                 
             }).catch( (e) => {
@@ -1829,6 +1842,6 @@ class ViewerApplicationElement extends HTMLElement {
     }
         
 }
-
-module.exports = ViewerApplicationElement;
 webutil.defineElement('bisweb-viewerapplication', ViewerApplicationElement);
+module.exports=ViewerApplicationElement;
+
