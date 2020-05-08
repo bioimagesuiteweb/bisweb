@@ -30,7 +30,8 @@ const dat = require('bisweb_datgui');
 
 
 
-const MAXSETS=5;
+const MAXSETS=2;
+
 // -------------------------------------------------------------------------
 
 /** 
@@ -59,6 +60,7 @@ class SurfaceControlElement extends HTMLElement {
         this.internal = {
             // global stuff
             this : null,
+            initialized : false,
             subviewers : null,
             parentDomElement : null,
             domElement : null,
@@ -131,14 +133,14 @@ class SurfaceControlElement extends HTMLElement {
         if (index===null)
             index=this.internal.currentsurfaceindex;
         
-        this.internal.meshset[index].createMeshes(this.internal.subviewers,
-                                         this.internal.surfaces[index],
-                                         null,
-                                         null,
-                                         null,
-                                         null,
-                                         0);
-        this.internal.meshset[index].showMeshes(this.internal.meshvisible[index]);
+        this.internal.meshsets[index].createMeshes(this.internal.subviewers,
+                                                  this.internal.surfaces[index],
+                                                  null,
+                                                  null,
+                                                  null,
+                                                  null,
+                                                  0);
+        this.internal.meshsets[index].showMeshes(this.internal.meshvisible[index]);
     }
 
     updatesurfacemesh(index=null,hue=null,color=null,opacity=null,uniformColor=null) {
@@ -251,9 +253,11 @@ class SurfaceControlElement extends HTMLElement {
             webutil.createAlert('Surfaces='+this.internal.surfaces[this.internal.currentsurfaceindex].getDescription());
             this.createsurfacemesh();
             this.updatesurfacemesh();
-        }).catch( (e) => {
-            webutil.createAlert(e,true);
         });
+        /*.catch( (e) => {
+            console.log(e);
+            webutil.createAlert(e,true);
+        });*/
         return false;
     }
 
@@ -302,9 +306,10 @@ class SurfaceControlElement extends HTMLElement {
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         this.internal.orthoviewer=document.querySelector(viewerid);
-
+        
         let layoutcontroller=document.querySelector(layoutid);
         let viewer=document.querySelector(viewerid);
+        viewer.addMouseObserver(this);
         
         this.panel=new BisWebPanel(layoutcontroller,
                                     {  name  : 'Surface Editor',
@@ -312,7 +317,22 @@ class SurfaceControlElement extends HTMLElement {
                                        width : '290',
                                        dual : false,
                                     });
+        this.initialized=false;
         this.internal.parentDomElement=this.panel.getWidget();
+        var basediv=$("<div>This will appear once an image is loaded.</div>");
+        this.internal.parentDomElement.append(basediv);
+        this.show();
+
+    }
+
+
+    createGUI() {
+
+        if (this.initialized)
+            return;
+
+        this.initialized=true;
+        this.internal.parentDomElement.empty();
         let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
         this.internal.domElement=basediv;
         
@@ -422,9 +442,6 @@ class SurfaceControlElement extends HTMLElement {
                                      });
         
         webutil.tooltip(this.internal.parentDomElement);
-        let subviewers=viewer.internal.subviewers;
-        console.log('Subv=',subviewers);
-        
         this.internal.surfaces=new Array(MAXSETS);
         this.internal.meshsets=new Array(MAXSETS);
         this.internal.meshcustomvisible=new Array(MAXSETS);
@@ -438,11 +455,11 @@ class SurfaceControlElement extends HTMLElement {
             let cl=util.objectmapcolormap[i+1];
             for (let i=0;i<=3;i++)
                 cl[i]=cl[i]/255.0;
-            console.log('Cl=',cl);
+            //console.log('Cl=',cl);
             this.internal.surfaces[i]=new BisWebSurface();
             const points=[ 5.0,5.0,0.1*i, 5.0,100.0,0.1*i, 100.0,100.0,0.1*i ];
             this.internal.surfaces[i].setFromRawArrays(points,triangles);
-            console.log(this.internal.surfaces[i].serializeToJSON());
+            //console.log(this.internal.surfaces[i].serializeToJSON());
             
             this.internal.surfaces[i].filename="Surface"+(i+1)+".surjson";
             this.internal.meshsets[i]=new BisWebSurfaceMeshSet();
@@ -450,6 +467,36 @@ class SurfaceControlElement extends HTMLElement {
             this.internal.meshcustomvisible[i]=true;
             this.internal.meshvisible[i]=(i===0);
             this.internal.allnames[i]="Surface "+(i+1);
+        }
+         
+        this.internal.currentsurfaceindex=0;
+        this.internal.data.currentname=this.internal.allnames[0];
+        this.updategui();
+
+    }
+
+    show() {
+        this.panel.show();
+    }
+
+    updatemousecoordinates() {
+        // nothing to do
+    }
+    
+    /** mouse observer initialize */
+    initialize(subviewers) {
+
+        console.log('Initializing=',this.internal.meshsets);
+        if (this.internal.subviewers) {
+
+            // First cleanup
+            for (let i=0;i<MAXSETS;i++)
+                this.internal.meshsets[i].remove();
+        }
+
+        this.internal.subviewers=subviewers;
+        this.createGUI();
+        for (let i=0;i<MAXSETS;i++)
             this.internal.meshsets[i].createMeshes(this.internal.subviewers,
                                                    this.internal.surfaces[i],
                                                    null,
@@ -457,20 +504,8 @@ class SurfaceControlElement extends HTMLElement {
                                                    null,
                                                    null,
                                                    0);
-            
-        }
         
-        this.internal.currentsurfaceindex=0;
-        this.internal.data.currentname=this.internal.allnames[0];
-        this.internal.subviewers=subviewers;
-        this.updategui();
-        this.show();
     }
-
-    show() {
-        this.panel.show();
-    }
-
         
     /** Store State in to an Object
      * @returns{Object} -- state dictionary
@@ -488,10 +523,10 @@ class SurfaceControlElement extends HTMLElement {
         let props=[];
         for (let i=0;i<this.internal.surfaces.length;i++) {
             props[i] = {
-                'hue' : this.internal.meshset[i].hue,
-                'opacity' : this.internal.meshset[i].opacity,
-                'color' : this.internal.meshset[i].color,
-                'uniformColor' : this.internal.meshset[i].uniformColor,
+                'hue' : this.internal.meshsets[i].hue,
+                'opacity' : this.internal.meshsets[i].opacity,
+                'color' : this.internal.meshsets[i].color,
+                'uniformColor' : this.internal.meshsets[i].uniformColor,
             };
         }
         obj.meshvisible=this.internal.meshvisible;
@@ -523,10 +558,10 @@ class SurfaceControlElement extends HTMLElement {
         
         let props=dt.props || [];
         for (let i=0;i<props.length;i++) {
-            this.internal.meshset[i]['hue']=props[i]['hue'];
-            this.internal.meshset[i]['color']=props[i]['color'];
-            this.internal.meshset[i]['opacity']=props[i]['opacity'];
-            this.internal.meshset[i]['uniformColor']=props[i]['uniformColor'];
+            this.internal.meshsets[i]['hue']=props[i]['hue'];
+            this.internal.meshsets[i]['color']=props[i]['color'];
+            this.internal.meshsets[i]['opacity']=props[i]['opacity'];
+            this.internal.meshsets[i]['uniformColor']=props[i]['uniformColor'];
 
             if (dt.meshvisible) {
                 this.internal.meshvisible[i]=dt.meshvisible[i] || false;

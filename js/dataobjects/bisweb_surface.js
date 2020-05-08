@@ -252,7 +252,6 @@ class BisWebSurface extends BisWebDataObject {
                 return out;
             }
             
-
             if (this.matrices[name] && other.matrices[name]) {
                 let merr= this.matrices[name].compareWithOther(other.matrices[name],method,threshold);
                 out.value=out.value+merr.value;
@@ -282,6 +281,7 @@ class BisWebSurface extends BisWebDataObject {
         this.initialize();
         if (points.length>0) {
             np=Math.round(points.length/3);
+            console.log('Np=',np);
             this.matrices['points']=new BisWebMatrix();
             this.matrices['points'].zero(np,3);
             let dat=this.matrices['points'].getDataArray();
@@ -291,6 +291,7 @@ class BisWebSurface extends BisWebDataObject {
 
         if (triangles) {
             nt=Math.round(triangles.length/3);
+            console.log('Nt=',nt);
             this.matrices['triangles']=new BisWebMatrix();
             this.matrices['triangles'].allocate(nt,3,0,'uint');
             let dat=this.matrices['triangles'].getDataArray();
@@ -315,6 +316,8 @@ class BisWebSurface extends BisWebDataObject {
             for (let i=0;i<nt*numc;i++)
                 dat[i]=triangleData[i];
         }
+
+        console.log('Legacy parsing=',this.getDescription());
         
     }
 
@@ -334,7 +337,7 @@ class BisWebSurface extends BisWebDataObject {
                 try {
                     let obj=JSON.parse(contents.data);
                     let b=obj.bisformat || null;
-
+                    console.log('Keys=',Object.keys(obj),contents.filename,' b=',b);
 
                     if (b!==null) {
                         if (this.parseFromJSON(contents.data)) {
@@ -345,21 +348,25 @@ class BisWebSurface extends BisWebDataObject {
                     }
 
                     if (obj.points && obj.triangles) {
+                        console.log('Setting from raw');
                         this.setFromRawArrays(obj.points,
-                                             obj.triangles,
-                                             obj.pointData || null,
-                                             obj.triangleData || null);
+                                              obj.triangles,
+                                              obj.pointData || null,
+                                              obj.triangleData || null);
                         this.filename=contents.filename;
                         resolve('loaded from (legacy) '+contents.filename);
                         return;
                     } else {
+                        console.log('failed to load from (legacy) '+contents.filename);
                         reject('failed to load from (legacy) '+contents.filename);
                         return;
                     }
                 } catch(e) {
+                    console.log('failed to load from '+contents.filename);
                     reject(e);
                 }
             }).catch( (e) => {
+                console.log('failed to load (Outer) from '+e);
                 reject(e);
             });
         });

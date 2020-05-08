@@ -4,6 +4,8 @@ const $=require('jquery');
 // ---------------------------------------------------------------------------------------------------
 // Utility functions
 
+let count=1;
+
 const createBufferGeometry=function() {
 
     const g=new THREE.BufferGeometry();
@@ -85,13 +87,12 @@ const fragmentshader_text=`
       uniform vec3 diffuse;
       varying vec3 vNormal;
       varying vec4 vColor;
-      uniform float opacity;
       uniform int uniformColor;
 
       void main() {
 
 
-         if (uniformColor) {
+         if (uniformColor>0) {
              float v=max(0.0,vNormal.z);
              gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );
              return;
@@ -117,6 +118,10 @@ const fragmentshader_text=`
 class bisweb3DSurfaceMeshSet {
 
     constructor(defaultcolor) {
+
+        this.count=count;
+        count=count+1;
+        
         this.texture=null;
         this.meshes=[];
         this.geometries=[];
@@ -136,8 +141,10 @@ class bisweb3DSurfaceMeshSet {
 
         if (this.meshes) {
             for (let i=0;i<this.meshes.length;i++) {
-                if (doshow)
+                if (this.meshes[i]) {
                     this.meshes[i].visible=doshow;
+                    console.log('Setting ',this.count,' i=',i,' visibility to',doshow);
+                }
             }
         }
     }
@@ -148,7 +155,7 @@ class bisweb3DSurfaceMeshSet {
             for (let i=0;i<this.subviewers.length;i++) {
 
                 if (this.meshes[i]) {
-                    this.subviewer.getScene().remove(this.meshes[i]);
+                    this.subviewers[i].getScene().remove(this.meshes[i]);
                     if (doGeometries)
                         this.geometries[i]=null;
                     this.meshes[i]=null;
@@ -164,6 +171,8 @@ class bisweb3DSurfaceMeshSet {
     }
 
     updateDisplayMode(in_hue=0.02,in_color=[1.0,1.0,1.0],in_opacity=0.8,in_uniformColor=false) {
+
+        console.log('In Update Display Mode',this.count);
         
         if (in_color!==null)
             this.color=in_color;
@@ -205,6 +214,8 @@ class bisweb3DSurfaceMeshSet {
     
     createMeshes(subviewers,surfaceobj,in_hue=0.02,in_color=[1.0,1.0,1.0 ],in_opacity=0.8,in_uniformColor=false,attributeIndex=0) {
 
+        console.log('In Create Meshes',this.count);
+        
         if (in_color!==null)
             this.color=in_color;
         
@@ -262,6 +273,8 @@ class bisweb3DSurfaceMeshSet {
 
     addMeshesToScene(cl=[1.0,1.0,1.0],opacity=0.8,surfaceobj=null) {
 
+        console.log('In Add Meshes to Scene',this.count,' numviewers=',this.subviewers.length);
+        
         for (let index=0;index<this.subviewers.length;index++) {
             
             if (surfaceobj) {
@@ -297,11 +310,15 @@ class bisweb3DSurfaceMeshSet {
                     fragmentShader : fragmentshader_text,
                 });
             } else {
-                this.materials[index]=new THREE.MeshBasicMaterial( {color: util.rgbToHex(cl[0]*256,cl[1]*256,cl[2]*256), wireframe:true});
+                this.materials[index]=new THREE.MeshBasicMaterial( {color: util.rgbToHex(Math.floor(cl[0]*255),
+                                                                                         Math.floor(cl[1]*255),
+                                                                                         Math.floor(cl[2]*255)),
+                                                                    wireframe:true});
             }
-        
+
             this.meshes[index] = new THREE.Mesh(this.geometries[index],this.materials[index]);
-            this.meshes[index].visible=false;
+            this.meshes[index].visible=true;
+            console.log('Adding mesh to',index, ' (COUNT=',this.count,')');
             this.subviewers[index].getScene().add(this.meshes[index]);
         }
     }
