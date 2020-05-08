@@ -281,7 +281,6 @@ class BisWebSurface extends BisWebDataObject {
         this.initialize();
         if (points.length>0) {
             np=Math.round(points.length/3);
-            console.log('Np=',np);
             this.matrices['points']=new BisWebMatrix();
             this.matrices['points'].zero(np,3);
             let dat=this.matrices['points'].getDataArray();
@@ -291,7 +290,6 @@ class BisWebSurface extends BisWebDataObject {
 
         if (triangles) {
             nt=Math.round(triangles.length/3);
-            console.log('Nt=',nt);
             this.matrices['triangles']=new BisWebMatrix();
             this.matrices['triangles'].allocate(nt,3,0,'uint');
             let dat=this.matrices['triangles'].getDataArray();

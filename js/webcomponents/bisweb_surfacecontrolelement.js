@@ -30,7 +30,7 @@ const dat = require('bisweb_datgui');
 
 
 
-const MAXSETS=2;
+const MAXSETS=1;
 
 // -------------------------------------------------------------------------
 
@@ -167,14 +167,10 @@ class SurfaceControlElement extends HTMLElement {
         // Set values of this.internal.data
         let cur_surface=this.internal.surfaces[this.internal.currentsurfaceindex];
         let cur_surfacemesh=this.internal.meshsets[this.internal.currentsurfaceindex];
-        console.log('Cur=',cur_surfacemesh, this.internal.currentsurfaceindex);
-        
         let cl=[ Math.floor(cur_surfacemesh.color[0]*255.0),
                  Math.floor(cur_surfacemesh.color[1]*255.0),
                  Math.floor(cur_surfacemesh.color[2]*255.0) ];
 
-        console.log('Cl=',cl);
-        
         let color=util.rgbToHex(cl[0],cl[1],cl[2]);
         this.internal.data.customshow=this.internal.meshcustomvisible[this.internal.currentsurfaceindex];
         this.internal.data.description=cur_surface.getDescription();
@@ -322,10 +318,40 @@ class SurfaceControlElement extends HTMLElement {
         var basediv=$("<div>This will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
         this.show();
-
+        this.createMeshes();
     }
 
+    createMeshes() {
+        this.internal.surfaces=new Array(MAXSETS);
+        this.internal.meshsets=new Array(MAXSETS);
+        this.internal.meshcustomvisible=new Array(MAXSETS);
+        this.internal.meshvisible=new Array(MAXSETS);
+        this.internal.allnames=new Array(MAXSETS);
 
+
+        const triangles= [ 0,1,2];
+        const points=[ 5.0,5.0,10.0, 5.0,100.0,15.0, 100.0,100.0,40.0 ];
+        
+        for (let i=0;i<MAXSETS;i++) {
+            let cl=util.objectmapcolormap[i+1];
+            for (let i=0;i<=3;i++)
+                cl[i]=cl[i]/255.0;
+            this.internal.surfaces[i]=new BisWebSurface();
+
+            this.internal.surfaces[i].setFromRawArrays(points,triangles);
+            
+            this.internal.surfaces[i].filename="Surface"+(i+1)+".surjson";
+            this.internal.meshsets[i]=new BisWebSurfaceMeshSet();
+            this.internal.meshsets[i].color=cl;
+            this.internal.meshcustomvisible[i]=true;
+            this.internal.meshvisible[i]=(i===0);
+            this.internal.allnames[i]="Surface "+(i+1);
+        }
+         
+        this.internal.currentsurfaceindex=0;
+        this.internal.data.currentname=this.internal.allnames[0];
+    }
+    
     createGUI() {
 
         if (this.initialized)
@@ -339,6 +365,8 @@ class SurfaceControlElement extends HTMLElement {
         let f1 = new dat.GUI({autoPlace: false});
         basediv.append(f1.domElement);
 
+        
+        
         f1.add(this.internal.data,'currentname',this.internal.allnames).name("CurrentSurface").onChange( (e) => {
             let ind=this.internal.allnames.indexOf(e);
             this.setcurrentsurface(ind);
@@ -350,9 +378,6 @@ class SurfaceControlElement extends HTMLElement {
         });
         webutil.removedatclose(f1);
 
-        console.log('se;f=',JSON.stringify(this.internal.data,null,2));
-
-        
         // --------------------------------------------
         let ldiv=$("<H4></H4>").css({ 'margin':'15px'});
         basediv.append(ldiv);
@@ -442,35 +467,6 @@ class SurfaceControlElement extends HTMLElement {
                                      });
         
         webutil.tooltip(this.internal.parentDomElement);
-        this.internal.surfaces=new Array(MAXSETS);
-        this.internal.meshsets=new Array(MAXSETS);
-        this.internal.meshcustomvisible=new Array(MAXSETS);
-        this.internal.meshvisible=new Array(MAXSETS);
-        this.internal.allnames=new Array(MAXSETS);
-
-
-        const triangles= [ 0,1,2];
-        
-        for (let i=0;i<MAXSETS;i++) {
-            let cl=util.objectmapcolormap[i+1];
-            for (let i=0;i<=3;i++)
-                cl[i]=cl[i]/255.0;
-            //console.log('Cl=',cl);
-            this.internal.surfaces[i]=new BisWebSurface();
-            const points=[ 5.0,5.0,0.1*i, 5.0,100.0,0.1*i, 100.0,100.0,0.1*i ];
-            this.internal.surfaces[i].setFromRawArrays(points,triangles);
-            //console.log(this.internal.surfaces[i].serializeToJSON());
-            
-            this.internal.surfaces[i].filename="Surface"+(i+1)+".surjson";
-            this.internal.meshsets[i]=new BisWebSurfaceMeshSet();
-            this.internal.meshsets[i].color=cl;
-            this.internal.meshcustomvisible[i]=true;
-            this.internal.meshvisible[i]=(i===0);
-            this.internal.allnames[i]="Surface "+(i+1);
-        }
-         
-        this.internal.currentsurfaceindex=0;
-        this.internal.data.currentname=this.internal.allnames[0];
         this.updategui();
 
     }
@@ -486,7 +482,6 @@ class SurfaceControlElement extends HTMLElement {
     /** mouse observer initialize */
     initialize(subviewers) {
 
-        console.log('Initializing=',this.internal.meshsets);
         if (this.internal.subviewers) {
 
             // First cleanup
