@@ -203,10 +203,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             display3d : 'Both',
             resol3d : 0,
             hidecereb : false,
+            saturate3d : false,
+            maximum3d : 1000.0,
+            customhue : false,
+            huevalue : 0.2,
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
+        datgui_maximumcontroller : null,
         datgui_degreethresholdcontroller : null,
+        datgui_opacitycontroller : null,
+        datgui_customhuecontroller : null,
         linestack : [],
         // Canvas mode
         undostack : new UndoStack(50),
@@ -923,6 +930,63 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var loaderror = function(msg) {
         webutil.createAlert(msg,true);
     };
+
+    var updateMeshesDisplay =  function(drawcolorscale=false) {
+
+        //console.log(JSON.stringify(internal.parameters,null,2));
+        
+        connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                    internal.parameters.mode3d,
+                                    internal.parameters.display3d,
+                                    internal.parameters.resol3d,
+                                    internal.parameters.hidecereb,
+                                    internal.parameters.saturate3d,
+                                    internal.parameters.maximum3d,
+                                    internal.parameters.customhue,
+                                    internal.parameters.huevalue);
+
+        
+        let da1=internal.datgui_opacitycontroller;        
+        if (internal.parameters.mode3d!=='Uniform') {
+            internal.parameters.opacity=1.0;
+            da1.domElement.style.opacity = 0.1;
+        } else {
+            da1.domElement.style.opacity = 1.0;
+        }
+        setTimeout( () => { da1.updateDisplay(); },100);
+
+        if (internal.datgui_maximumcontroller) {
+            let controllers = [ internal.datgui_maximumcontroller,
+                                internal.datgui_customhuecontroller ];
+            let values = [ internal.parameters.saturate3d,
+                           internal.parameters.customhue ];
+            for (let i=0;i<=1;i++) {
+                if (values[i]) {
+                    controllers[i].domElement.style.opacity=1.0;
+                } else {
+                    controllers[i].domElement.style.opacity=0.10;
+                }
+                
+                if (i==0) {
+                    if (connectvis3d.transferfunction.maxth>2.0 &&  !internal.parameters.saturate3d) {
+                        internal.parameters['maximum3d']=connectvis3d.transferfunction.maxth;
+                    }
+                } else {
+                    if (connectvis3d.transferfunction.hue>=0.0 &&
+                        connectvis3d.transferfunction.hue<=1.0 &&
+                        !internal.parameters.customhue) {
+                        internal.parameters['huevalue']=connectvis3d.transferfunction.hue;
+                    }
+                }
+                setTimeout( () => { controllers[i].updateDisplay(); },100);
+            }
+        }
+
+        if (drawcolorscale) {
+            setTimeout( () => { drawColorScale(); },200);
+        }
+    };
+
     
     var loadmatrix = function(index,filename,doupdate=true,sample=false,updatemeshes=true) {
 
@@ -976,20 +1040,26 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     
                     if (doupdate) {
                         internal.showlegend=true;
-                        if (internal.parameters.degreethreshold>internal.conndata.maxsum)
+                        if (internal.parameters.degreethreshold>internal.conndata.maxsum) 
                             internal.parameters.degreethreshold=Math.round(internal.conndata.maxsum/2);
+                        if (internal.parameters.maximum3d>internal.conndata.maxsum)
+                            internal.parameters.maximum3d=Math.round(internal.conndata.maxsum);
+                            
                         internal.datgui_degreethresholdcontroller.min(0.1).max(internal.conndata.maxsum);
                         internal.datgui_degreethresholdcontroller.updateDisplay();
+                        if (internal.datgui_maximumcontroller) { 
+                            let a=internal.conndata.maxsum;
+                            if (a<200)
+                                a=200;
+                            internal.datgui_maximumcontroller.max(a);
+                        }
+                        
                         update();
                         setnode(internal.conndata.maxsumnode);
 
 
                         if (updatemeshes) {
-                            connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                                        internal.parameters.mode3d,
-                                                        internal.parameters.display3d,
-                                                        internal.parameters.resol3d,
-                                                        internal.parameters.hidecereb);
+                            updateMeshesDisplay();
                         }
 
                         if (!sample) {
@@ -1201,11 +1271,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             for (let ia=0;ia<internal.datgui_controllers.length;ia++)
                 internal.datgui_controllers[ia].updateDisplay();
             
-            connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                        internal.parameters.mode3d,
-                                        internal.parameters.display3d,
-                                        internal.parameters.resol3d,
-                                        internal.parameters.hidecereb);
+            updateMeshesDisplay();
             return true;
         }
         return false;
@@ -1483,18 +1549,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         });
 
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+            updateMeshesDisplay();
         });
+        internal.datgui_opacitycontroller=da1;
 
         const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
         if (ATLASHEADER['multiressurfaces']) {
             let da15=disp2.add(data,'resol3d',0,3).name('Smoothness').step(1).onFinishChange( () => {
-                connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+                updateMeshesDisplay();
             });
             clist.push(da15);
             
             let da16=disp2.add(data,'hidecereb',0,3).name('Hide Cereb').onChange( () => {
-                connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+                updateMeshesDisplay();
             });
             clist.push(da16);
         } else {
@@ -1504,23 +1571,47 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
-            if (data.mode3d!=='Uniform') {
-                data.opacity=1.0;
-                da1.domElement.style.opacity = 0.1;
-            } else {
-                da1.domElement.style.opacity = 1.0;
-            }
-            setTimeout( () => { da1.updateDisplay(); },100);
-            setTimeout( () => { drawColorScale(); },200);
+            updateMeshesDisplay(true);
         });
+
+
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                let disp3 = gui.addFolder('Advanced (Display 3D)');
+                disp3.add(data,'saturate3d').name("Force Maximum").onChange( () => {
+                    updateMeshesDisplay(true);
+                });
+                
+                internal.datgui_maximumcontroller=disp3.add(data,'maximum3d',0.0,2000)
+                    .name("Max Value for 3D Surface (3D)").
+                    step(1.0).onFinishChange( () => {
+                        if (data['saturate3d']) {
+                            updateMeshesDisplay(true);
+                        }
+                    });
+                
+                disp3.add(data,'customhue').name("Custom Hue").onChange( () => {
+                    updateMeshesDisplay(true);
+                    
+                });
+                internal.datgui_customhuecontroller=disp3.add(data,'huevalue',0.01,0.99).name("Hue").step(0.01).onFinishChange( () => {
+                    if (data['customhue']) {
+                        updateMeshesDisplay(true);
+                    }
+                });
+            }
+        });
+
+                                                                              
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
-            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d,data.resol3d,data.hidecereb);
+            updateMeshesDisplay();
         });
 
         let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
         da4.onFinishChange( () => {   autoDrawLines();      });
+
+
         
 
 
@@ -1643,14 +1734,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (dw<1700)
             fnsize=Math.round((dw/1000)*fnsize);
 
-        let minv=connectvis3d.transferfunction.minth;
-        let maxv=connectvis3d.transferfunction.maxth;
         let numsteps=14;
 
         let wd=(0.25*dw)/(numsteps+1);
-        let dvalue=maxv-minv;
-        let dv=dvalue/numsteps;
-
         let x0=0.7*dw;
         x0=x0+internal.orthoviewer.cleararea[0]*fullwidth;
 
@@ -1659,26 +1745,28 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (ht>wd)
             ht=wd;
 
-        let power=10.0;
-        if (dvalue>100)
-            power=1.0;
-        if (dvalue<0.1)
-            power=100.0;
-
-        
-        
-        
-        context.font=fnsize+"px Arial";
-        context.textAlign="center";
-        context.textBaseline="top";
 
         context.fillStyle="#ffffff";
         context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,3.0*ht);
 
         if (connectvis3d.transferfunction.map===null)
             return;
-        context.drawImage(connectvis3d.displayimg[0],x0,y0,wd*15,ht);
 
+        let minv=connectvis3d.transferfunction.minth;
+        let maxv=connectvis3d.transferfunction.maxth;
+        let dvalue=maxv-minv;
+        let dv=dvalue/numsteps;
+
+        let power=10.0;
+        if (dvalue>100)
+            power=1.0;
+        if (dvalue<0.1)
+            power=100.0;
+
+        context.font=fnsize+"px Arial";
+        context.textAlign="center";
+        context.textBaseline="top";
+        context.drawImage(connectvis3d.displayimg[0],x0,y0,wd*15,ht);
         context.strokeStyle="#888888";
         context.lineWidth=1;
         context.beginPath();
@@ -1704,7 +1792,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     let w0=context.measureText('-').width*-0.5;
                     context.fillStyle = "#000000";
                     let data=i*dv+minv;
-                    context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+                    context.fillText(util.scaledround(data,power)+'  ',x0+w0+0.5*(wd-1),y0+1.5*ht);
                 }
                 
                 x0+=wd;
@@ -2038,12 +2126,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     
                     internal.showlegend=!dt.showlegend;
                     toggleshowlegend();
-                    
-                    connectvis3d.update3DMeshes(internal.parameters.opacity,
-                                                internal.parameters.mode3d,
-                                                internal.parameters.display3d,
-                                                internal.parameters.resol3d,
-                                            internal.parameters.hidecereb);
+                    updateMeshesDisplay();
                     internal.inrestorestate=false;
                     setTimeout( () => {
                         drawColorScale();

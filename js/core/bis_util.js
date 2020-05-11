@@ -645,8 +645,6 @@ const util = {
         };
 
 
-        console.log('Params=',params);
-        
         var internalmapfunction = function(data,index,map) {
 
             if (index<0)

@@ -354,7 +354,7 @@ class BisParcellation {
         for (i=0;i<numpoints;i++) {
             var idx=this.rois[i].index;
             this.indexmap[idx]=i;
-            if (i < 10 || i %30 === 0) {
+            if (i < 2 || i %80 === 0) {
                 console.log('i=',i, 'idx=',idx);
             }
         }

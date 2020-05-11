@@ -14,6 +14,7 @@ const transferfunction = {
     map : null,
     minth : null,
     maxth : null,
+    hue : null,
     showlabels : true,
 };
 
@@ -70,6 +71,8 @@ const brain_vertexshader_text = `
               vColor=vec4(0,0,0,0);
            } else {
               float c=(parcels)/maxValue;           
+              if (c>=0.999)
+                 c=0.999;
               vColor= texture2D(cmTexture, vec2(c, 0));
            }
            vNormal = normalize( normalMatrix * normal );
@@ -147,6 +150,8 @@ let createTexture=function(hue) {
     canvas.height=1;
     let canvasdata=canvas.getContext("2d").createImageData(256,1);
 
+    transferfunction.hue=hue;
+
     if (hue>0.0 && hue<=1.0) {
 
         let cmap=util.mapconstanthuecolormap(0.0,255.0,1.0,hue,1.0);
@@ -220,15 +225,21 @@ let createTexture=function(hue) {
 // @param {Number} attributeindex -- the attribute used to color
 // @param {Number} resol -- the resolution level to use
 // @param {Number} hidecereb -- if true hide part of brain
+// @param {Boolean} useAttributeMax -- if true saturate value
+// @param {Number} attributeMax -- if useAttributeMax true use this to set the maximum value
+// @param {Boolean} customHue -- if true use custom hue
+// @param {Number} hueValue -- if CustomHue is true use hueValue
 
-var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2,resol=0,hidecereb=false) {
+
+var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2,resol=0,hidecereb=false,
+                                          useAttributeMax=false,attributeMax=100.0,
+                                          customHue=false,hueValue=0.2) {
 
     if (globalParams.brainmesh[index] !==null) { 
         globalParams.brainmesh[index].visible=false;
         globalParams.internal.subviewers[3].getScene().remove(globalParams.brainmesh[index]);
 
     }
-
 
     let parcels=globalParams.brainindices[index];
     if (parcels===null)
@@ -273,16 +284,22 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
             } else {
                 attributes[i]=0;
             }
+
         }
 
-        mina=matrix[0][attributeIndex];
-        maxa=matrix[0][attributeIndex];
-        let dim=numeric.dim(matrix);
-        
-        for (let i=1;i<dim[0];i++) {
-            let a=matrix[i][attributeIndex];
-            if (a<mina) mina=a;
-            if (a>maxa) maxa=a;
+        if (useAttributeMax) {
+            maxa=attributeMax;
+            mina=0;
+        } else {
+            mina=matrix[0][attributeIndex];
+            maxa=matrix[0][attributeIndex];
+            let dim=numeric.dim(matrix);
+            
+            for (let i=1;i<dim[0];i++) {
+                let a=matrix[i][attributeIndex];
+                if (a<mina) mina=a;
+                if (a>maxa) maxa=a;
+            }
         }
     } else {
         // value=parcel number
@@ -307,27 +324,38 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         }
     }
 
-        
     if (attributeIndex===0) {
-        createTexture(0.02);
+        let hue=0.02;
+        if (customHue)
+            hue=hueValue;
+        createTexture(hue);
         color[0]=1.0;
         color[1]=0.3;
         color[2]=0.3;
         opacity=1.0;
     } else if (attributeIndex===1) {
-        createTexture(0.58);
+        let hue=0.58;
+        if (customHue)
+            hue=hueValue;
+        createTexture(hue);
         color[0]=0.3;
         color[1]=0.6;
         color[2]=1.0;
         opacity=1.0;
     } else if (attributeIndex===2) {
-        createTexture(0.07);
+        let hue=0.07;
+        if (customHue)
+            hue=hueValue;
+        createTexture(hue);
         color[0]=1.0;
         color[1]=0.6;
         color[2]=0.3;
         opacity=1.0;
     } else if (attributeIndex===3) {
-        createTexture(0.3);
+        let hue=0.3;
+        if (customHue)
+            hue=hueValue;
+        createTexture(hue);
         color[0]=0.3;
         color[1]=0.7;
         color[2]=0.7;
@@ -342,7 +370,6 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         createTexture(-1.0);
     }
     
-
     transferfunction.minth=0;
     transferfunction.maxth=maxa;
 
@@ -743,13 +770,23 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     return total;
 };
 // ---------------------------------------------------------------------------------------------
-var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both',resol=0,hidecereb=false) {
+// @param {Boolean} useAttributeMax -- if true saturate value
+// @param {Number} attributeMax -- if useAttributeMax true use this to set the maximum value
+// @param {Boolean} customHue -- if true use custom hue
+// @param {Number} hueValue -- if CustomHue is true use hueValue
 
+var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both',resol=0,hidecereb=false,
+                            useAttributeMax=false,attributeMax=100.0,customHue=false,hueValue=0.02) {
+
+    //    console.log('CustomHue=',useAttributeMax,attributeMax,' hue=',customHue,hueValue);
+    
     let mode=color_modes.indexOf(modename)-1;
     let dmode=display_modes.indexOf(displaymode);
 
-    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode,resol,hidecereb);
-    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode,resol,hidecereb);
+    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode,resol,hidecereb,
+                                 useAttributeMax,attributeMax,customHue,hueValue);
+    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode,resol,hidecereb,
+                                 useAttributeMax,attributeMax,customHue,hueValue);
 
     let show=[true,true];
     if (dmode<=0) 
