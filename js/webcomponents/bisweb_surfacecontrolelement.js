@@ -30,7 +30,7 @@ const dat = require('bisweb_datgui');
 
 
 
-const MAXSETS=2;
+const MAXSETS=4;
 
 // -------------------------------------------------------------------------
 

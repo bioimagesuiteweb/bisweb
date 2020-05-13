@@ -97,6 +97,9 @@ else if (test_type==="registration")
     tempName=dirname+'/out.json';
 else if (test_type==="text")
     tempName=dirname+'/makefile.txt';
+else if (test_type==="surfaceregistration")
+    tempName=dirname+'/out.json';
+
 if (test_type !== "smoketest") {
     args.push('--output', tempName);
 }
@@ -106,6 +109,13 @@ if (test_type==="registration") {
     args.push("--doreslice", true);
     args.push("--resliced", tempName);
     test_type="image";
+}
+
+if (test_type==="surfaceregistration") {
+    tempName=dirname+"/out_warped.json";
+    args.push("--dowarp", true);
+    args.push("--warped", tempName);
+    test_type="surface";
 }
 
 if (test_type==="smoketest") {

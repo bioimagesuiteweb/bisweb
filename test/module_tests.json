@@ -935,7 +935,26 @@
             "test"    : "--test_type image --test_target testdata/jacobian/gold_zjac__blk.nii.gz --test_comparison ssd --test_threshold 0.1",
             "result"  : true,
             "dopython": false
+        },
+        {
+            "command" :"linearPointRegistration -r testdata/rpm/brain1.json -t testdata/rpm/brain1_rot.json --initialtemp 10.0 --finaltemp 2.0 --matchmode RPM --dowarp true --mode Rigid",
+            "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated.json --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython" : false
+        },
+        {
+            "command" :"linearPointRegistration -r testdata/rpm/brain1.json -t testdata/rpm/brain1_rot.json --initialtemp 10.0 --finaltemp 2.0 --matchmode ICP --dowarp true --mode Rigid",
+            "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated_icp.json --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython" : false
+        },
+        {
+            "command" :"linearPointRegistration -r testdata/rpm/brain1.json -t testdata/rpm/brain1_rot.json --initialtemp 10.0 --finaltemp 2.0 --matchmode RPM --dowarp true --mode Rigid",
+            "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated_icp.json --test_comparison ssd --test_threshold 0.1",
+            "result"  : false,
+            "dopython" : false
         }
+
         
     ]
 }

@@ -157,7 +157,6 @@ class LinearRegistrationModule extends  BaseModule {
 
         if (genericio.getenvironment()!=='node') {
             vals.dowarp=true;
-            vals.debug=true;
         }
 
         let transmode=2;
@@ -197,7 +196,7 @@ class LinearRegistrationModule extends  BaseModule {
                 this.outputs['output'] = matr;
                 
                 if (super.parseBoolean(vals.dowarp)) {
-                    this.outputs['warped']=biswrap.transformSurfaceWASM(reference,matr);
+                    this.outputs['warped']=biswrap.transformSurfaceWASM(reference,this.outputs['output']);
                     console.log('Warped=',this.outputs['warped'].getDescription());
                 } else {
                     this.outputs['warped']=null;

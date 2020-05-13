@@ -1829,6 +1829,6 @@ unsigned char* transformSurfaceWASM(unsigned char* input,unsigned char* xform,in
     output->setPoints(newpoints);
   }
 
-  unsigned char* outstr=surface->serialize();
+  unsigned char* outstr=output->serialize();
   return outstr;
 }

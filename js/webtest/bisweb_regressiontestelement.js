@@ -264,6 +264,10 @@ var execute_test=function(test,usethread=false) {
         if (test_type==='registration')
             params['doreslice']=true;
 
+        if (test_type==='surfaceregistration')
+            params['dowarp']=true;
+
+        
         loadparamfile(paramfile,module.name,params).then( () => {
 
             console.log('oooo usethread=',usethread);
@@ -375,6 +379,10 @@ const execute_compare=function(module,test) {
             test_type="transform";
         }
 
+        if (test_type==='surfaceregistration')
+            test_type="surface";
+        
+
         console.log('Loading :',testDataRootDirectory+test_target);
         
         BisWebDataObjectCollection.loadObject(testDataRootDirectory+test_target,test_type).then( (obj) => {
@@ -384,6 +392,10 @@ const execute_compare=function(module,test) {
                 resultObject=module.getOutputObject('resliced');
                 console.log('.... using resliced output for test');
             }
+            if (orig_test_type==='surfaceregistration') {
+                resultObject=module.getOutputObject('warped');
+            }
+
             if (orig_test_type==='gridtransform') {
                 obj=obj.getGridTransformation(0);
                 console.log('.... extracting grid transformation from loaded result for test');
