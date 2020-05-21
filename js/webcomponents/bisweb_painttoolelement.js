@@ -40,6 +40,7 @@ const NUMFIRST   = [ 0, 5 ];
 const SHIFTS = [ [ 1,0,0], [-1,0,0], [0,1,0], [0,-1,0] , [ 0,0,1],[0,0,-1]];
 
 
+
 /**
  * A web element to create and manage a GUI for a Paint Tool (interactive segmentation)
  * that draws landmarks in an {@link OrthogonalViewer} viewer.
@@ -134,6 +135,7 @@ class PaintToolElement extends HTMLElement {
     }
 
     connectedCallback() {
+
 
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
@@ -822,8 +824,6 @@ class PaintToolElement extends HTMLElement {
         webutil.removedatclose(f1);
 
 
-        var cmap=util.objectmapcolormap;
-
         var modal=webutil.createmodal("Select Object/Color");
         this.internal.selectcolormodal=modal.dialog;
 
@@ -832,12 +832,11 @@ class PaintToolElement extends HTMLElement {
             self.colorbuttonpressed(e);
         };
 
-
         for (var pass=0;pass<=1;pass++) {
 
             var min=NUMFIRST[pass];
             for (var i=min;i<NUMBUTTONS[pass]+min;i++) {
-                var cl = [ cmap[i][0], cmap[i][1],cmap[i][2] ];
+                var cl = util.getobjectmapcolor(i);
                 var hexcolor = util.rgbToHex(cl[0],cl[1],cl[2]);
                 for (var k=0;k<=2;k++) {
                     if (cl[k]<128)
@@ -846,6 +845,7 @@ class PaintToolElement extends HTMLElement {
                         cl[k]=0;
                 }
                 var hexcolor2 = util.rgbToHex(cl[0],cl[1],cl[2]);
+                
                 var name= ""+i;
                 var epar=elem1;
                 var attr=i;

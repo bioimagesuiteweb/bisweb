@@ -468,7 +468,7 @@ class StudyTaskManager {
         for (let i=0;i<taskNames.length;i++) {
             let y= this.htaskbase+this.htask*(i+1)+OFFSET;
             let x=Math.round(canvas.width-this.legendMargin+OFFSET/2);
-            let cl=util.objectmapcolormap[i+1];
+            let cl=util.getobjectmapcolor(i+1);
             context.fillStyle=`rgba(${cl[0]},${cl[1]},${cl[2]},${OPACITY})`;
             context.fillRect(x,y,this.textWidth,1.25*texth);
             context.fillStyle="#000000";
@@ -530,7 +530,7 @@ class StudyTaskManager {
             context.stroke();
             context.restore();
             context.save();
-            let cl=util.objectmapcolormap[i+1];
+            let cl=util.getobjectmapcolor(i+1);
             for (let i=0;i<runpairs.length;i++) {
                 let limits=[ runpairs[i][0], runpairs[i][1] ];
 

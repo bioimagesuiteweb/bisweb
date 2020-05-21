@@ -481,7 +481,7 @@ class BisParcellation {
     getNonSidedLobeColor(lobe) {
         if (lobe>=this.atlasspec['midlobe'])
             lobe=lobe-this.atlasspec['midlobe']+1;
-        var c=util.objectmapcolormap[lobe];
+        var c=util.getobjectmapcolor(lobe);
         return 'rgb(' + Math.floor(c[0])+ ',' + Math.floor(c[1])+ ',' + Math.floor(c[2])+")";
     }
 

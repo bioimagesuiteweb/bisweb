@@ -1002,7 +1002,7 @@ class LandmarkControlElement extends HTMLElement {
             if (this.internal.landmarkset===null) {
                 this.internal.landmarkset=new Array(MAXSETS);
                 for (let i=0;i<MAXSETS;i++) {
-                    var cl=util.objectmapcolormap[i+1];
+                    var cl=util.getobjectmapcolor(i+1);
                     this.internal.landmarkset[i]=new LandmarkSet(20);
                     this.internal.landmarkset[i].filename="PointSet"+(i+1)+".ljson";
                     this.internal.landmarkset[i].color=util.rgbToHex(cl[0],cl[1],cl[2]);

@@ -306,7 +306,7 @@ class SurfaceControlElement extends HTMLElement {
         
         for (let i=0;i<MAXSETS;i++) {
             //const points=[ 5.0,5.0,10.0+20*i, 5.0,100.0,15.0+20*i, 100.0,100.0,40.0+20*i ];
-            let cl=util.objectmapcolormap[i+1];
+            let cl=util.getobjectmapcolor(i+1);
             for (let i=0;i<=3;i++)
                 cl[i]=cl[i]/255.0;
             this.internal.surfaces[i]=new BisWebSurface();

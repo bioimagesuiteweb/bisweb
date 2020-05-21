@@ -389,7 +389,7 @@ class OldGrapherModule extends HTMLElement {
      */
     formatChartData(x, y, numVoxels, showVolume) {
 
-        let mx = util.objectmapcolormap.length;
+        let mx = util.getobjectmapcolormaplength();
         let dim = numeric.dim(y);
         let numframes = dim[1];
         let labels = [];
@@ -401,7 +401,7 @@ class OldGrapherModule extends HTMLElement {
                     let index = i + 1;
                     while (index >= mx) { index = index - mx; }
 
-                    let cl = util.objectmapcolormap[index];
+                    let cl = util.getobjectmapcolor(index);
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
                     parsedDataSets[i] = {
@@ -438,7 +438,7 @@ class OldGrapherModule extends HTMLElement {
                     let colorindex = index;
                     while (colorindex >= mx) { colorindex = (colorindex - 1) - (mx - 1) + 1; }
 
-                    let cl = util.objectmapcolormap[colorindex];
+                    let cl = util.getobjectmapcolor(colorindex);
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
                     backgroundColor.push(cl);
                     let out = 'R' + index;
