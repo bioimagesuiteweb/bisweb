@@ -1173,8 +1173,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.rendermode=0;
 
         let imagerange=volume.getIntensityRange();
-        this.internal.imagetransferfunction=util.mapstepcolormapfactory(imagerange[0],imagerange[1],255);
-        
+
+        if (this.internal.cmapcontroller) {
+            if (!this.internal.cmapcontroller.getLockColormap()) {
+                this.internal.imagetransferfunction=util.mapstepcolormapfactory(imagerange[0],imagerange[1],255);
+            } 
+        } else {
+            this.internal.imagetransferfunction=util.mapstepcolormapfactory(imagerange[0],imagerange[1],255);
+        }
         
         // Create scenes
         let opacity=0.8;
@@ -1187,7 +1193,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.cmapcontroller=document.createElement('bisweb-colormapcontrollerelement');
             this.appendChild(this.internal.cmapcontroller);
         }
-        
+
         this.internal.cmapcontroller.setimage(this.internal.volume,fn,opacity);
         
         this.internal.slices =  [ null,null,null,null ];

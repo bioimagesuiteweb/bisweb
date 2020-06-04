@@ -117,8 +117,18 @@ class ColormapControllerElement extends HTMLElement {
         // This needs to be here
         this.data={
             interpolate : true,
-            autocontrast : true
+            autocontrast : true,
+            lockcolormap : false,
+            lockobjcolormap : false,
         };
+    }
+
+    getLockColormap() {
+        return this.data.lockcolormap;
+    }
+
+    getLockObjectmapColormap() {
+        return this.data.lockobjcolormap;
     }
 
 
@@ -175,10 +185,13 @@ class ColormapControllerElement extends HTMLElement {
                     this.internal.folder[1];*/
         // Right now this happens on the viewer end
         // this.internal.layoutcontroller.getcorecontrols().empty();
+
+        if (!this.getLockColormap()) {
+            this.data.minintensity=0;
+            this.data.maxintensity=255;
+        } 
         
         this.data.opacity=defaultopacity;
-        this.data.minintensity=0;
-        this.data.maxintensity=255;
         this.data.funcmode="Objectmap";
         this.data.outmode="Both";
         this.data.minth=1.0;
@@ -189,7 +202,7 @@ class ColormapControllerElement extends HTMLElement {
         this.data.volquality=2;
         this.data.isothreshold=0.75*this.data.minintensity+0.25*this.data.maxintensity;
         this.internal.imagedim=volume.getDimensions();
-
+        
         this.data.volcropimin=0;
         this.data.volcropimax=this.internal.imagedim[0]-1;
         this.data.volcropjmin=0;
@@ -204,7 +217,6 @@ class ColormapControllerElement extends HTMLElement {
 
 
         // Reset values
-        this.internal.imagerange=null;
         this.internal.objectmaprange=[ 0,1];
         
         // objectmap and clusterinfo
@@ -225,12 +237,15 @@ class ColormapControllerElement extends HTMLElement {
 
         
         this.internal.update=updatefunction;
-        this.internal.imagerange=volume.getIntensityRange();
-        this.internal.imagetype=volume.getDataType();
-        if (this.internal.imagerange[1]-this.internal.imagerange[0]>64)
-            this.data.minintensity=this.internal.imagerange[0]+1;
-        else
-            this.data.minintensity=this.internal.imagerange[0];
+        if (!this.getLockColormap()) {
+            this.internal.imagerange=volume.getIntensityRange();
+            this.internal.imagetype=volume.getDataType();
+
+            if (this.internal.imagerange[1]-this.internal.imagerange[0]>64)
+                this.data.minintensity=this.internal.imagerange[0]+1;
+            else
+                this.data.minintensity=this.internal.imagerange[0];
+        } 
 
         this.internal.robustrange=smoothreslice.arrayRobustRange(volume.getImageData(),0.01,0.99);
         let dr=this.internal.robustrange[1]-this.internal.robustrange[0];
@@ -257,11 +272,13 @@ class ColormapControllerElement extends HTMLElement {
 
 
     setAutoContrast(update=true) {
-        
-        if (this.data.autocontrast) {
-            this.data.maxintensity=this.internal.robustrange[1];
-        } else {
-            this.data.maxintensity=this.internal.imagerange[1];
+
+        if (!this.getLockColormap()) {
+            if (this.data.autocontrast) {
+                this.data.maxintensity=this.internal.robustrange[1];
+            } else {
+                this.data.maxintensity=this.internal.imagerange[1];
+            }
         }
 
         this.data.isothreshold=0.75*this.data.minintensity+0.25*this.data.maxintensity;
@@ -303,7 +320,7 @@ class ColormapControllerElement extends HTMLElement {
             let opacity=255;
             if (this.internal.objectmap!==null)
                 opacity=240;
-            
+
             output.image=util.mapstepcolormapfactory(this.data.minintensity,
                                                      this.data.maxintensity,
                                                      opacity);
@@ -603,6 +620,7 @@ class ColormapControllerElement extends HTMLElement {
         
         this.internal.minobjectmap = folder.add(this.data,'minth',overlayrange[0],overlayrange[1]).name("Min Overlay").step(st);
         this.internal.maxobjectmap = folder.add(this.data,'maxth',overlayrange[0],overlayrange[1]).name("Max Overlay").step(st);
+        folder.add(this.data,'lockobjcolormap').name('Lock Colormap');
         this.internal.checkshowcolorbar = folder.add(this.data,'showcolorbar').name("Show Colorbar");
         this.internal.checkshowcolorbar.onChange( () => {
             console.log('Check color bar changed');
@@ -742,8 +760,11 @@ class ColormapControllerElement extends HTMLElement {
         this.internal.objectmap = objectmap;
 
         let dt=objectmap.getDataType();
-        this.internal.objectmaprange=objectmap.getIntensityRange();
-        this.internal.objectmaptype=dt;
+
+        if (!this.getLockObjectmapColormap()) {
+            this.internal.objectmaprange=objectmap.getIntensityRange();
+            this.internal.objectmaptype=dt;
+        }
 
         this.internal.plainmode = plainmode || false;
         if (this.internal.plainmode) {
@@ -818,10 +839,12 @@ class ColormapControllerElement extends HTMLElement {
 
 
             let st=this.computeStep(this.internal.imagerange,this.internal.imagetype);
+            
             let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int").step(st);
             let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int").step(st);
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
             let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
+            f2.add(this.data,'lockcolormap').name('Lock Colormap');
             this.internal.anatomicalcontrollers=[a1,a2];
 
             let clb=function() {  self.updateTransferFunctionsInternal(false); };
