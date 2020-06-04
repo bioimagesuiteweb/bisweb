@@ -134,7 +134,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         this.internal.viewports = this.internal.origviewports;
-        
+        this.internal.imagescale=100;
+        this.internal.objectmapscale=100;
         this.internal.slicecoord=[ 0,0,0,0];
         this.internal.objectmapshift=[ 0,0,0 ];
         
@@ -335,7 +336,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                        
 
         
-        let value=util.scaledround(this.internal.volume.getVoxel(imagecoord),100);
+        let value=util.scaledround(this.internal.volume.getVoxel(imagecoord),this.internal.imagescale);
         if (this.internal.objectmap!==null) {
             let newc=this.getobjectmapcoordinates();
             let coord=[ 0,0,0,0];
@@ -346,8 +347,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             coord[3]=objmapframe;
             for (let i=0;i<=2;i++)
                 coord[i]=Math.floor(newc[i]/this.internal.objectmapspa[i]);
-            let v2=util.scaledround(this.internal.objectmap.getVoxel(coord),100);
-
+            let v2=util.scaledround(this.internal.objectmap.getVoxel(coord),this.internal.objectmapscale);
+            
             let sum=0.0;
             for (let i=0;i<=3;i++)
                 sum+=Math.abs(imagecoord[i]-coord[i]);
@@ -380,8 +381,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         let l=800/40; 
         let l2=dw/s.length;
-        let r=(l2/l);
-        
+        let r=Math.round(l2/l);
         if (r<1.0)
             fnsize=Math.round(r*fnsize);
         
@@ -1173,7 +1173,17 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.rendermode=0;
 
         let imagerange=volume.getIntensityRange();
+        this.internal.imagescale=100.0;
+        
+        let tmp=Math.max(Math.abs(imagerange[0]),Math.abs(imagerange[1]));
+        if (tmp>0.0) {
+            let l=Math.round(Math.log10(100.0/tmp))+2;
+            this.internal.imagescale=Math.pow(10.0,l);
+        }
+        if (this.internal.imagescale<100.0)
+            this.internal.imagescale=100.0;
 
+        
         if (this.internal.cmapcontroller) {
             if (!this.internal.cmapcontroller.getLockColormap()) {
                 this.internal.imagetransferfunction=util.mapstepcolormapfactory(imagerange[0],imagerange[1],255);
@@ -1325,7 +1335,18 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         this.internal.objectmapspa=this.internal.objectmap.getSpacing();
         var odim=this.internal.objectmap.getDimensions();
+        
+        let objrange=this.internal.objectmap.getIntensityRange();
+        this.internal.objectmapscale=100.0;
+        let tmp=Math.max(Math.abs(objrange[0]),Math.abs(objrange[1]));
+        if (tmp>0.0) {
+            let l=Math.round(Math.log10(100.0/tmp))+2;
+            this.internal.objectmapscale=Math.pow(10.0,l);
+        }
+        if (this.internal.objectmapscale<100.0)
+            this.internal.objectmapscale=100.0;
 
+        
         // TODO: One day do proper 5D
         this.remapDimensionsTo4D(odim);
         this.internal.objectmapnumframes=odim[3];
