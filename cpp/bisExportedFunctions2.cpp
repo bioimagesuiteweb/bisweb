@@ -161,8 +161,10 @@ unsigned char*  projectImageWASM(unsigned char* input,unsigned char* funcinput,c
 // BIS: { 'backProjectImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
 unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* input2d_ptr,const char* jsonstring,int debug) {
 
+  debug=1;
+  
   if (debug)
-    std::cout << "_____ Beginning backProjectImageWASM" << std::endl;
+    std::cout << "_____ Beginning backProjectImageWASM" << jsonstring << std::endl;
   
   std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
   if (!params->parseJSONString(jsonstring)) {
@@ -246,13 +248,13 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
 
   std::unique_ptr<bisSimpleMatrix<float> > out_matrix(new bisSimpleMatrix<float>());
   
-  int np=bisAdvancedImageAlgorithms::computeBackProjectAndProjectPointPairs(threed.get(),
-                                                                            warpXform.get(),
-                                                                            out_matrix.get(),
-                                                                            sampling,
-                                                                            axis,flipz,flipy,threshold,depth);
+  bisAdvancedImageAlgorithms::computeBackProjectAndProjectPointPairs(threed.get(),
+                                                                     warpXform.get(),
+                                                                     out_matrix.get(),
+                                                                     sampling,
+                                                                     axis,flipz,flipy,threshold,depth);
 if (debug)
-    std::cout << "Back Projecting Done" << std::endl;
+    std::cout << "Back Projecting Pair Done" << std::endl;
   
   return out_matrix->releaseAndReturnRawArray();
 

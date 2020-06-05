@@ -40,12 +40,12 @@ describe('Testing Image Registration with pre-serialized images\n', function() {
     const imgnames = [ 'MNI_2mm_orig.nii.gz', 'MNI_2mm_resliced.nii.gz' ,
                        'MNI_T1_1mm_resampled.nii.gz','MNI_T1_1mm_resampled_MNI_T1_1mm_resampled_shifted15_5_0.nii.gz' ];
 
-    const gold_matrix = [[0.968,0.232,0.002,-31.799],
-                         [-0.247,0.902,0.089,26.579],
-                         [0.020,-0.081,1.000,7.064],
-                         [0.000,0.000,0.000,1.000]];
+    const gold_matrix =  [[     0.965,     0.228,  -5.61e-4,     -30.9],
+                          [    -0.238,     0.917,    0.0793,        25],
+                          [    0.0195,   -0.0719,         1,      5.79],
+                          [         0,         0,         0,         1]];
 
-    
+
     const fullnames = [ '','','',''   ];
     for (let i=0;i<=3;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/'+imgnames[i]);

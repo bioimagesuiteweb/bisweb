@@ -60,13 +60,14 @@ extern "C" {
 
   /** creates a set of corresponding 2D points as a result of  2d->3d back projection --> transformation -> 3D->2D projection
    * @param input serialized 3D input as unsigned char array   (3D image)
+   * @param xform  the transformation
    * @param jsonstring the parameter string for the algorithm 
-   * { "axis" : -1, "flipsecond" : 0,  'flipthird' : 0, 'threshold' : 0.05,  'depth': 2, 'sampling' 4 }
+   * { "axis" : -1, "flip" : 0,  'flipy' : 0, 'threshold' : 0.05,  'depth': 2, 'sampling' 4 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
-  // BIS: { 'backProjectImageWASM', 'Matrix', [ 'bisImage',  'ParamObj', 'debug' ] } 
-  BISEXPORT unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input,const char* jsonstring,int debug);
+  // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation',  'ParamObj', 'debug' ] } 
+  BISEXPORT unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input,unsigned char* xform,const char* jsonstring,int debug);
 
 
   

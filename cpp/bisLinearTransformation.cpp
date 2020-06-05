@@ -301,24 +301,33 @@ void bisLinearTransformation:: setParameterVector(std::vector<float>& values,int
 {
   int n=this->getOutputLength(this->getNumberOfDOF(),values.size(),rigidOnly);
   this->identity();
+  
+  /*  std::cout << "[ ";
+  for (int i=0;i<n;i++) 
+    std::cout << values[i] << " ";
+    std::cout << "]" << std::endl;*/
 
   if (this->mode>3) {
     for (int i=0;i<n;i++)  {
-      this->parameters[LINEAR_LOOKUP_2D[i]]=values[i];
+      int index=LINEAR_LOOKUP_2D[i];
+      this->parameters[index]=values[i];
+      if (doscale && index>=6 && index<=8) {
+        this->parameters[index]=this->parameters[index]/100.0f;
+      }
     }
   } else {
     for (int i=0;i<n;i++)  {
       this->parameters[i]=values[i];
+      if (doscale && i>=6 && i<=8) {
+        this->parameters[i]=this->parameters[i]/100.0f;
+      }
     }
   }
-  
-  // Check scale
-  
-  if (doscale && n>6)
-    {
-      for (int i=6;i<n;i++) 
-        this->parameters[i]=this->parameters[i]/100.0f;
-    }
+
+  /*std::cout << "[ ";
+  for (int i=0;i<12;i++) 
+    std::cout << this->parameters[i] << " ";
+    std::cout << "]" << std::endl;*/
 
   this->updateInternalMatrix();
 }
@@ -329,19 +338,17 @@ void bisLinearTransformation:: storeParameterVector(std::vector<float>& out,int 
 
   if (this->mode>3) {
     for (int i=0;i<l;i++)  {
-      out[i]=this->parameters[LINEAR_LOOKUP_2D[i]];
+      int index=LINEAR_LOOKUP_2D[i];
+      out[i]=this->parameters[index];
+      if (doscale && index>=6 && index<=8)
+        out[i]=out[i]*100.0f;
     }
   } else {
-    for (int i=0;i<l;i++) 
+    for (int i=0;i<l;i++) {
       out[i]=this->parameters[i];
-  }
 		
-  if (doscale) {
-    int maxi=9;
-    if (maxi>l)
-      maxi=l;
-    for (int i=6;i<maxi;i++) {
-      out[i]=this->parameters[i]*100.0f;
+      if (doscale && i>=6 && i<=8)
+        out[i]=out[i]*100.0f;
     }
   }
 }
