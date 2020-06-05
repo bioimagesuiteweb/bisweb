@@ -88,6 +88,27 @@ namespace bisAdvancedImageAlgorithms {
                                              bisSimpleImage<float>* output,
                                              int axis=-1,int flip=0,int lps=0,
                                              float gradsigma=1.0,int windowsize=3);
+
+  /** creates a set of corresponding 2D points as a result of  2d->3d back projection --> transformation -> 3D->2D projection
+   * @param 3d_reference the 3d reference input image (atlas)
+   * @param transformation the mapping from 3D atlas space to 3D target space
+   * @param point_pairs an Nx4 matrix containing the 2D point pairs
+   * @param sampling an integer sampling parameter to speed things up (e.g. 2 use every second voxel)
+   * @param twod_input the 2d input image
+   * @param axis - the axis to integrate/project along
+   * @param flipsecond - flip secondaxis
+   * @param flipthird - flip thirdaxis
+   * @param threshold - the threshold for 2d integration
+   * @param depth - the offset from the surface to use
+   * @returns number of points sampled
+   */
+  int computeBackProjectAndProjectPointPairs(bisSimpleImage<float>* threed_reference,
+                                             bisAbstractTransformation* transformation,
+                                             bisSimpleMatrix<float>* point_pairs,
+                                             int sampling=4,
+                                             int axis=2,int flipthird=0,int flipsecond=0,
+                                             float threshold=0.5,int depth=0.0);
+
 }
 
 

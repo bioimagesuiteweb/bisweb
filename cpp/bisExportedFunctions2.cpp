@@ -203,3 +203,57 @@ unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* inp
   return out_image->releaseAndReturnRawArray();
 
 }
+
+
+
+  // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation',  'ParamObj', 'debug' ] } 
+unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_ptr,unsigned char* xform_ptr,const char* jsonstring,int debug) {
+
+  if (debug)
+    std::cout << "_____ Beginning computeBackProjectAndProjectPointPairsWASM" << std::endl;
+  
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  if (!params->parseJSONString(jsonstring)) {
+    std::cout << "_____ Failed to parse parameters in computeBackProjectAndProjectPointPairsWASM" << std::endl;
+    return 0;
+  }
+  
+  if(debug)
+    params->print("from computeBackProjectAndProjectPointPairsWASM","_____");
+
+  std::unique_ptr<bisSimpleImage<float> > threed(new bisSimpleImage<float>("threed"));
+
+  if (!threed->linkIntoPointer(input_ptr)) {
+    std::cout << "_____ Failed to link into input_ptr in computeBackProjectAndProjectPointPairsWASM" << std::endl;
+    return 0;
+  }
+
+  std::shared_ptr<bisAbstractTransformation> warpXform=bisDataObjectFactory::deserializeTransformation(xform_ptr,"warpxform");
+  if (warpXform.get()==0) {
+    std::cerr << "Failed to deserialize transformation " << std::endl;
+    return 0;
+  }
+
+  int flipz=params->getBooleanValue("flip",0);
+  int flipy=params->getBooleanValue("flipy",0);
+  int axis=params->getIntValue("axis",1);
+  float threshold=params->getFloatValue("threshold",0.05);
+  int sampling=params->getIntValue("sampling",4);
+  int depth=params->getIntValue("depth",2);
+  if (debug) {
+    std::cout << "Beginning actual Image Back Pair Making" << std::endl;
+  }
+
+  std::unique_ptr<bisSimpleMatrix<float> > out_matrix(new bisSimpleMatrix<float>());
+  
+  int np=bisAdvancedImageAlgorithms::computeBackProjectAndProjectPointPairs(threed.get(),
+                                                                            warpXform.get(),
+                                                                            out_matrix.get(),
+                                                                            sampling,
+                                                                            axis,flipz,flipy,threshold,depth);
+if (debug)
+    std::cout << "Back Projecting Done" << std::endl;
+  
+  return out_matrix->releaseAndReturnRawArray();
+
+}

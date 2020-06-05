@@ -550,8 +550,6 @@ namespace bisAdvancedImageAlgorithms {
   }
   // ---------------------- -------------------
 
-
-  
   template<class T> int projectImageWithMask(bisSimpleImage<T>* input,
                                              bisSimpleImage<T>* mask,
                                              bisSimpleImage<float>* output,
@@ -656,10 +654,11 @@ namespace bisAdvancedImageAlgorithms {
         bisImageAlgorithms::gradientImage<float>(float_mask.get(),grad_image.get(),gradsigmas,outsigmas,0,2.0);
         grad_data=grad_image->getData();
       }
-    
+
     int winradius=windowsize-1;
     if (winradius<1)
       winradius=1;
+        
 
     std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
     std::cout << "Beginning " << odim[0] << "*" << odim[1] << "," << idim[axis] << std::endl;
@@ -727,10 +726,85 @@ namespace bisAdvancedImageAlgorithms {
     return 1;
   }
   // namespace end
+
+
+
+
+  int computeBackProjectAndProjectPointPairs(bisSimpleImage<float>* threed_reference,
+                                             bisAbstractTransformation* transformation,
+                                             bisSimpleMatrix<float>* point_pairs,
+                                             int sampling,
+                                             int axis,int flipthird,int flipsecond,
+                                             float threshold,int depth) {
+
+
+    // ----------- Original_input should be done at this point
+    int idim[5];   threed_reference->getDimensions(idim);
+    float ispa[5];  threed_reference->getSpacing(ispa);
+    
+    int offset[2],outaxis[2],increment;
+    processInfo(idim,axis,increment,offset,outaxis);
+    int odim[2];
+
+    for (unsigned int ia=0;ia<=1;ia++) 
+      odim[ia]=idim[outaxis[ia]];
+
+    
+    // ----------------------------
+    // Get the pointers and set off
+    // ----------------------------
+
+    float* input_data=threed_reference->getImageData();
+    int endsecond=odim[1];
+    
+    std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
+    std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
+    std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+
+    std::vector<float> newset; // 1-d vector 6 components (x,y,z) of point plus 
+    
+    for (int second=0;second<odim[1];second+=sampling)
+      {
+        for (int first=0;first<odim[0];first+=sampling)
+          {
+            
+            // For each pixel in the image
+            int v_offset=second*offset[1]+first*offset[0];
+            if (flipsecond)
+              v_offset=(endsecond-1-second)*offset[1]+first*offset[0];
+            // Again this should be the average frame;
+            double intensity=0.0;
+            int third=find_third<float>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity)+depth;
+            if (third>=0)
+              {
+                // new coordinates in pixels         (first,second,third)
+                float x[3],y[3],X[2],Y[2];
+                // Scale to mm
+                x[outaxis[0]]=first*ispa[outaxis[0]];
+                x[outaxis[1]]=second*ispa[outaxis[1]];
+                x[outaxis[2]]=third*ispa[outaxis[2]];
+                X[0]=first*ispa[0];
+                X[1]=second*ispa[0];
+                // transform
+                transformation->transformPoint(x,y);
+                // back to pixels
+                Y[0]=y[outaxis[0]];
+                Y[1]=y[outaxis[1]];
+                newset.push_back(X[0]);
+                newset.push_back(X[1]);
+                newset.push_back(Y[0]);
+                newset.push_back(Y[1]);
+              }
+          }
+      }
+
+    int l=newset.size();
+    point_pairs->zero(l,4);
+    float *odata=point_pairs->getData();
+    for (int i=0;i<l;i++)
+      odata[i]=newset[i];
+    
+    return l;
+  }
 }
 #endif
-
-
-
-
-
