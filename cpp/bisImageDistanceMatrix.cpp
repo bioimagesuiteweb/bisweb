@@ -776,7 +776,7 @@ namespace bisImageDistanceMatrix {
     ds->numframes=numframes;
 
     bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&reformatThreadFunction,ds,"Reformat Image",NumberOfThreads);
-
+    delete ds;
     return numframes;
   }
 

@@ -650,7 +650,7 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
     if (NumberOfThreads>1)
       {
 #ifndef _WIN32
-        std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. " << msg << std::endl << "++++" << std::endl;
+        //std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. " << msg << std::endl << "++++" << std::endl;
 #endif
         vtkMultiThreader* threader=new vtkMultiThreader();
         threader->SetSingleMethod(func,ds);
@@ -661,7 +661,7 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
     else
       {
 #ifndef _WIN32
-        std::cout << "++++ \n++++ Running in Single Threaded Mode." << msg << std::endl << "++++" << std::endl;
+        //std::cout << "++++ \n++++ Running in Single Threaded Mode." << msg << std::endl << "++++" << std::endl;
 #endif
         vtkMultiThreader::ThreadInfo data;
         data.UserData=(void*)ds;

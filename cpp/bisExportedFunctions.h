@@ -227,7 +227,7 @@ extern "C" {
   /** Reslice image using \link bisImageAlgorithms::resliceImage \endlink
    * @param input serialized input as unsigned char array 
    * @param transformation serialized transformation as unsigned char array 
-   * @param jsonstring the parameter string for the algorithm  { int interpolation=3, 1 or 0, float backgroundValue=0.0; int ouddim[3], int outspa[3], int bounds[6] = None -- use out image size }
+   * @param jsonstring the parameter string for the algorithm  { int interpolation=3, 1 or 0, float backgroundValue=0.0; int ouddim[3], int outspa[3], int bounds[6] = None, int numthreads=2 -- use out image size }
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */

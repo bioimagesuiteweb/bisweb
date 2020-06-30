@@ -207,8 +207,14 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
   }
 
   int interpolation=params->getIntValue("interpolation",1);
+  int numthreads=params->getIntValue("numthreads",1);
   if (interpolation!=3 && interpolation!=0)
     interpolation=1;
+
+  if (numthreads<1)
+    numthreads=1;
+  else if (numthreads>4)
+    numthreads=4;
 
   //Create a hodgepodge output image
   // Image spacing and dimensions come from parameters but
@@ -262,17 +268,19 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
       std::cout << "-----------------------------------" << std::endl;
     }
 
-  if (sum>0)
+  if (sum>0) {
+    if (debug) std::cout << "___ Reslice with bounds " << std::endl;
     bisImageAlgorithms::resliceImageWithBounds(inp_image.get(),
                                                out_image.get(),
                                                resliceXform.get(),
                                                bounds,interpolation,backgroundValue);
-  else
+  } else {
+    if (debug) std::cout << "___ Reslice normal " << std::endl;
     bisImageAlgorithms::resliceImage(inp_image.get(),
                                      out_image.get(),
                                      resliceXform.get(),
-                                     interpolation,backgroundValue);
-  
+                                     interpolation,backgroundValue,numthreads);
+  }
   
   return out_image->releaseAndReturnRawArray();
 }
