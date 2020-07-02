@@ -424,7 +424,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.updateDatGUIControllers();
         }
         this.drawtext();
-        this.drawcolorscale();
+        //this.drawcolorscale();
     }
 
     /** update the display of the overlay/objectmap to current coordinates and
