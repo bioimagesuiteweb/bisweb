@@ -340,24 +340,29 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.objectmap!==null) {
             let newc=this.getobjectmapcoordinates();
             let coord=[ 0,0,0,0];
-
-
+            
             if (objmapframe>=this.internal.objectmapnumframes)
                 objmapframe=this.internal.objectmapnumframes-1;
+            
             coord[3]=objmapframe;
+
             for (let i=0;i<=2;i++)
-                coord[i]=Math.floor(newc[i]/this.internal.objectmapspa[i]);
+                coord[i]=Math.round(newc[i]/this.internal.objectmapspa[i]);
             let v2=util.scaledround(this.internal.objectmap.getVoxel(coord),this.internal.objectmapscale);
             
             let sum=0.0;
-            for (let i=0;i<=3;i++)
+            for (let i=0;i<=2;i++)
                 sum+=Math.abs(imagecoord[i]-coord[i]);
-            sum+=Math.abs(this.internal.objectmapnumframes-this.internal.imagedim[3]);
+            let nf=0;
+            nf=Math.abs(this.internal.objectmapnumframes-this.internal.imagedim[3]);
 
+            
             if (sum>0) {
                 if (this.internal.objectmapnumframes<2 && this.maxnumframes<2)
                     coord.splice(3,1);
                 value=value+', Ovr: ('+coord.join(',')+')='+v2;
+            } else  if (nf>0) {
+                value=value+', Ovr: ( fr='+objmapframe+')='+v2;
             } else {
                 value=value+', Ovr:'+v2;
             }
@@ -374,18 +379,19 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         var dh=this.internal.layoutcontroller.getviewerheight();
-        var y0=0.95*dh;
+        var y0=0.97*dh;
         
         var context=this.internal.layoutcontroller.context;
         var fnsize=webutil.getfontsize(context.canvas);
 
-        let l=800/40; 
-        let l2=dw/s.length;
-        let r=Math.round(l2/l);
-        if (r<1.0)
-            fnsize=Math.round(r*fnsize);
-        
         context.font=fnsize+"px Arial";
+        let m=context.measureText(s).width;
+
+        while (m>0.45*dw) {
+            fnsize=Math.round(0.9*fnsize);
+            context.font=fnsize+"px Arial";
+            m=context.measureText(s).width;
+        }
         if (this.internal.layoutcontroller.isCanvasDark())
             context.fillStyle = "#dddddd";
         else
@@ -418,6 +424,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.updateDatGUIControllers();
         }
         this.drawtext();
+        this.drawcolorscale();
     }
 
     /** update the display of the overlay/objectmap to current coordinates and
@@ -1356,6 +1363,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             var co=(odim[i])*0.5*this.internal.objectmapspa[i];
             this.internal.objectmapshift[i]=co-ci;
         }
+
+        //console.log('Shift=',this.internal.objectmapshift);
         
         // Create scene
         this.internal.overlayslices =  [ null,null,null,null ];

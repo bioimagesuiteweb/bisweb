@@ -548,7 +548,7 @@ namespace bisImageDistanceMatrix {
 
 
     std::stringstream strss;  strss <<  "Numgoodvox=" << ds->numgoodvox << ", expected total size=" << ds->numgoodvox*ds->numbest;
-    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&sparseThreadFunction,ds,strss.str(),NumberOfThreads);
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&sparseThreadFunction,ds,strss.str(),NumberOfThreads,1);
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
     std::cout << "++++ Sparse matrix done. Final density: num_rows=" << ds->numgoodvox << " density=" << density << "% (components=" << Output->getNumCols() << ")" << std::endl;
@@ -611,7 +611,7 @@ namespace bisImageDistanceMatrix {
     std::cout << "++++ Normalization=" << ds->normalization << " Mean spacing=" << meanspa << std::endl;
 
     std::stringstream strss;  strss <<  "Numgoodvox=" << ds->numgoodvox << ", expected total size=" << ds->numgoodvox*ds->numbest;
-    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&radiusThreadFunction,ds,strss.str(),NumberOfThreads);
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&radiusThreadFunction,ds,strss.str(),NumberOfThreads,1);
 
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     double density=100.0*Output->getNumRows()/(double(ds->numgoodvox*ds->numgoodvox));
@@ -654,7 +654,7 @@ namespace bisImageDistanceMatrix {
       }
 
     std::stringstream strss;  strss <<  "Numbest=" << ds->numbest << ", expected total size=" << ds->numframes*ds->numbest;
-    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&temporalSparseThreadFunction,ds,strss.str(),NumberOfThreads);
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&temporalSparseThreadFunction,ds,strss.str(),NumberOfThreads,1);
     combineVectorsToCreateSparseMatrix(Output,ds->output_array,ds->numcols,NumberOfThreads);
     std::cout << "Total Rows=" << Output->getNumRows() << " frames=" << ds->numframes << std::endl;
     double density=100.0*Output->getNumRows()/(double(ds->numframes*ds->numframes));

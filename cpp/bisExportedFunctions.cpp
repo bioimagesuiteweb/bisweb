@@ -279,7 +279,7 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
     bisImageAlgorithms::resliceImage(inp_image.get(),
                                      out_image.get(),
                                      resliceXform.get(),
-                                     interpolation,backgroundValue,numthreads);
+                                     interpolation,backgroundValue,numthreads,debug);
   }
   
   return out_image->releaseAndReturnRawArray();

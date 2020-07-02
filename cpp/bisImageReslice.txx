@@ -40,6 +40,7 @@ namespace bisImageAlgorithms {
     double backgroundValue;
     int bounds[6];
     int threed;
+    int debug;
   };
   
   // ------------------------------------------------- Resample/Reslice ---------------------------------
@@ -455,9 +456,11 @@ namespace bisImageAlgorithms {
     for (int ia=0;ia<=5;ia++)
       bounds[ia]=ds->bounds[ia];
 
-    /*std::cout << "Bounds=" << ds->bounds[0] << ":" << ds->bounds[1] << ", "
-      << ds->bounds[2] << ":" << ds->bounds[3] << ", "
-      << ds->bounds[4] << ":" << ds->bounds[5] << std::endl;*/
+    /*if (ds->debug) {
+      std::cout << "Bounds=" << ds->bounds[0] << ":" << ds->bounds[1] << ", "
+                << ds->bounds[2] << ":" << ds->bounds[3] << ", "
+                << ds->bounds[4] << ":" << ds->bounds[5] << std::endl;
+    }*/
       
     if (!ds->threed) {
       // 2D
@@ -467,7 +470,8 @@ namespace bisImageAlgorithms {
         bounds[3]=ds->bounds[3];
       else
         bounds[3]=bounds[2]+step-1;
-      //std::cout << "+++ Reslice Thread (2D)=" << thread+1 << "/" << numthreads << " bounds=" << bounds[2] << ":" << bounds[3] << std::endl;
+      if (ds->debug)
+        std::cout << "+++ Reslice Thread (2D)=" << thread+1 << "/" << numthreads << " bounds=" << bounds[2] << ":" << bounds[3] << std::endl;
       
       resliceImageWithBounds2D(ds->input,ds->output,ds->xform,bounds,ds->interpolation,ds->backgroundValue);
     } else {
@@ -480,7 +484,9 @@ namespace bisImageAlgorithms {
         bounds[5]=ds->bounds[5];
       else
         bounds[5]=bounds[4]+step-1;
-      //std::cout << "+++ Reslice Thread (3D)=" << thread+1 << "/" << numthreads << " step=" << step << ", bounds=" << bounds[4] << ":" << bounds[5] << std::endl;
+
+      if (ds->debug)
+        std::cout << "+++ Reslice Thread (3D)=" << thread+1 << "/" << numthreads << " step=" << step << ", bounds=" << bounds[4] << ":" << bounds[5] << std::endl;
       resliceImageWithBounds(ds->input,ds->output,ds->xform,bounds,ds->interpolation,ds->backgroundValue);
     }
   }
@@ -488,7 +494,7 @@ namespace bisImageAlgorithms {
   // ---------------------- -------------------
   // _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-y
 
-  template<class T> void resliceImage(bisSimpleImage<T>* input,bisSimpleImage<T>* output,bisAbstractTransformation* xform,int interpolation,double backgroundValue,int numthreads) {
+  template<class T> void resliceImage(bisSimpleImage<T>* input,bisSimpleImage<T>* output,bisAbstractTransformation* xform,int interpolation,double backgroundValue,int numthreads,int debug) {
 
     int bounds[6];
     int dim[5]; output->getDimensions(dim);
@@ -515,8 +521,9 @@ namespace bisImageAlgorithms {
 
     if (numthreads>maxthreads)
       numthreads=maxthreads;
-    
-    //std::cout << "____ Spawning " << numthreads << " threads." << std::endl;
+
+    if (debug)
+      std::cout << "____ Spawning " << numthreads << " threads." << std::endl;
     
     
     ds->input=input;
@@ -526,9 +533,9 @@ namespace bisImageAlgorithms {
       ds->bounds[ia]=bounds[ia];
     ds->interpolation=interpolation;
     ds->backgroundValue=backgroundValue;
-    
+    ds->debug=(debug>0);
 
-    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&resliceThreadFunction<T>,ds,"Reslice Image",numthreads);
+    bisvtkMultiThreader::runMultiThreader((bisvtkMultiThreader::vtkThreadFunctionType)&resliceThreadFunction<T>,ds,"Reslice Image",numthreads,ds->debug);
     delete ds;
     
   }

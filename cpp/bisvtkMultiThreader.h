@@ -238,7 +238,7 @@ protected:
 
 
 
-  void runMultiThreader(vtkThreadFunctionType func, void *data,std::string msg,int numberofthreads=1);
+  void runMultiThreader(vtkThreadFunctionType func, void *data,std::string msg,int numberofthreads=1,int debug=0);
 }
 
 

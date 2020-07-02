@@ -79,7 +79,7 @@ namespace bisImageAlgorithms {
    */
 
   template<class T> void resliceImage(bisSimpleImage<T>* input,bisSimpleImage<T>* output,bisAbstractTransformation* xform,
-                                      int interpolation=1,double backgroundValue=0,int numthreads=4);
+                                      int interpolation=1,double backgroundValue=0,int numthreads=4,int debug=0);
 
 
   /** Reslices part of a 2D image given a transformation and bounds. This is called from resliceImageWithBounds if image is 2D.
