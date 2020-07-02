@@ -1,19 +1,19 @@
 /*  LICENSE
  
-    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
-    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
  
-    - you may not use this software except in compliance with the License.
-    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
  
-    __Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.__
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
  
-    ENDLICENSE */
+ ENDLICENSE */
 
 #ifndef _bis_Image_Algorithms_cpp
 #define _bis_Image_Algorithms_cpp
@@ -49,10 +49,10 @@ namespace bisImageAlgorithms {
       sum+=abs(dim1[i]-dim2[i]);
     if (sum>0)
       {
-        std::cerr << "Cannot process images that have different dimensions " << std::endl;
-        return 0;
+	std::cerr << "Cannot process images that have different dimensions " << std::endl;
+	return 0;
       }
-                
+			    
 
     float spa1[5]; image1->getSpacing(spa1);
     float spa2[5]; image2->getSpacing(spa2);
@@ -62,11 +62,11 @@ namespace bisImageAlgorithms {
       sumf+=fabs(spa1[i]-spa2[i]);
     if (sumf>0.01) 
       {
-        std::cerr << "Cannot process images that have different spacing " << std::endl;
-        return 0;
+	std::cerr << "Cannot process images that have different spacing " << std::endl;
+	return 0;
       }
-    
-                
+	
+			    
     return 1;
   }
 
@@ -102,50 +102,50 @@ namespace bisImageAlgorithms {
 
   struct internal { 
     static std::vector<float> generateSmoothingKernel(float sigma,int radius)
-    {
-      int len=radius*2+1;
-      if (len<3)
-        len=3;
-      std::vector<float> kernel(len);
-      float sum=0.0;
-      if (sigma>0.01)
-        {
-          for (int i=0;i<len;i++) {
-            kernel[i]=(float)exp((-0.5*pow(float(i-radius),2.0))/pow(sigma,2.0));
-            sum=sum+kernel[i];
-          }
-          for (int i=0;i<len;i++)
-            kernel[i]=kernel[i]/sum;
-        }
-      else
-        {
-          for (int i=0;i<len;i++) 
-            kernel[i]=0.0f;
-          kernel[radius]=1.0f;
-        }
-    
-      return kernel;
-    }
+      {
+	int len=radius*2+1;
+	if (len<3)
+	  len=3;
+	std::vector<float> kernel(len);
+	float sum=0.0;
+	if (sigma>0.01)
+	  {
+	    for (int i=0;i<len;i++) {
+	      kernel[i]=(float)exp((-0.5*pow(float(i-radius),2.0))/pow(sigma,2.0));
+	      sum=sum+kernel[i];
+	    }
+	    for (int i=0;i<len;i++)
+	      kernel[i]=kernel[i]/sum;
+	  }
+	else
+	  {
+	    for (int i=0;i<len;i++) 
+	      kernel[i]=0.0f;
+	    kernel[radius]=1.0f;
+	  }
+	
+	return kernel;
+      }
 
     static std::vector<float> generateGradientKernel(float sigma,int radius)
-    {
-      int len=radius*2+1;
-      if (len<3)
-        len=3;
-      std::vector<float> kernel(len);
-      float sum=0.0;
-      if (sigma<0.1)
-        sigma=0.1;
-      for (int i=0;i<len;i++)
-        { 
-          float x=i-radius;
-          kernel[i]=-x*exp(- ( x*x)/(2.0*sigma*sigma));
-          sum=sum+fabs(kernel[i]);
-        }
-      for (int i=0;i<len;i++) 
-        kernel[i]=kernel[i]/sum;
-      return kernel;
-    }
+      {
+	int len=radius*2+1;
+	if (len<3)
+	  len=3;
+	std::vector<float> kernel(len);
+	float sum=0.0;
+        if (sigma<0.1)
+          sigma=0.1;
+        for (int i=0;i<len;i++)
+          { 
+            float x=i-radius;
+            kernel[i]=-x*exp(- ( x*x)/(2.0*sigma*sigma));
+            sum=sum+fabs(kernel[i]);
+          }
+        for (int i=0;i<len;i++) 
+          kernel[i]=kernel[i]/sum;
+	return kernel;
+      }
   };
   
 
@@ -160,14 +160,14 @@ namespace bisImageAlgorithms {
     int axes[3] = { 0,1,2 };
     if (axis==1)
       {
-        axes[0]=1;
-        axes[1]=0;
+	axes[0]=1;
+	axes[1]=0;
       }
     else if (axis==2)
       {
-        axes[0]=2;
-        axes[1]=0;
-        axes[2]=1;
+	axes[0]=2;
+	axes[1]=0;
+	axes[2]=1;
       }
 
     int outdim[3] = { 0,0,0};
@@ -189,34 +189,34 @@ namespace bisImageAlgorithms {
     
     for (int compframe=0;compframe<numcompframes;compframe++) {
       for (int ic=0;ic<outdim[2];ic++) {
-        for (int ib=0;ib<outdim[1];ib++) {
-          int index=ic*outoffsets[2]+ib*outoffsets[1]+compframe*volsize;
-            
-          for (int ia=0;ia<outdim[0];ia++)
-            {
-              double sum=0.0;
+	for (int ib=0;ib<outdim[1];ib++) {
+	  int index=ic*outoffsets[2]+ib*outoffsets[1]+compframe*volsize;
+		    
+	  for (int ia=0;ia<outdim[0];ia++)
+	    {
+	      double sum=0.0;
 
-              if (ia>=radius && ia<maxia) {
-                for (int tau=-radius;tau<=radius;tau++) {
-                  sum+=kernel[tau+radius]*imagedata_in[index+tau*outoffsets[0]];
-                }
-              } else if (vtkboundary==0) {
-                for (int tau=-radius;tau<=radius;tau++) {
-                  int coord=tau+ia;
-                  int fixedtau=tau;
+	      if (ia>=radius && ia<maxia) {
+		for (int tau=-radius;tau<=radius;tau++) {
+		  sum+=kernel[tau+radius]*imagedata_in[index+tau*outoffsets[0]];
+		}
+	      } else if (vtkboundary==0) {
+		for (int tau=-radius;tau<=radius;tau++) {
+		  int coord=tau+ia;
+		  int fixedtau=tau;
                   
-                  if (coord<0) 
-                    fixedtau=-ia;
-                  else if (coord>outdim0minus) 
-                    fixedtau=outdim0minus-ia;
+		  if (coord<0) 
+		    fixedtau=-ia;
+		  else if (coord>outdim0minus) 
+		    fixedtau=outdim0minus-ia;
                   
                   sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*outoffsets[0]];
-                }
-              } else {
+		}
+	      } else {
                 
                 double sumw=0.0;
                 for (int tau=-radius;tau<=radius;tau++) {
-                  int coord=tau+ia;
+		  int coord=tau+ia;
                   if (coord>=0 && coord<=outdim0minus)  {
                     int fixedtau=tau;
                     sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*outoffsets[0]];
@@ -226,10 +226,10 @@ namespace bisImageAlgorithms {
                 if (sumw>0.0)
                   sum=sum/sumw;
               }
-              imagedata_out[index]=(T)sum;
-              index=index+outoffsets[0];
-            }
-        }
+	      imagedata_out[index]=(T)sum;
+	      index=index+outoffsets[0];
+	    }
+	}
       }
     }
   }
@@ -263,17 +263,17 @@ namespace bisImageAlgorithms {
 
     for(int ia=0;ia<=2;ia++)
       {
-        if (inmm) 
-          outsigmas[ia]=sigmas[ia]/spa[ia];
-        else
-          outsigmas[ia]=sigmas[ia];
+	if (inmm) 
+	  outsigmas[ia]=sigmas[ia]/spa[ia];
+	else
+	  outsigmas[ia]=sigmas[ia];
       }
 
     int radii[3] = { 1,1,1 };
     for (int i=0;i<=2;i++) {
       radii[i]=int(outsigmas[i]*radiusfactor);
       if (radii[i]<1)
-        radii[i]=1;
+	radii[i]=1;
     }
 
     std::vector<float> kernelx=internal::generateSmoothingKernel(outsigmas[0],radii[0]);
@@ -284,18 +284,18 @@ namespace bisImageAlgorithms {
 
     if (dim[2]>1)
       {
-        std::vector<float> kernelz=internal::generateSmoothingKernel(outsigmas[2],radii[2]);
-        int len=input->getLength();
-        for(int j=0;j<len;j++)
-          temp_data[j]=output_data[j];
-        oneDConvolution(temp_data,output_data,dim,kernelz,2,vtkboundary);
+	std::vector<float> kernelz=internal::generateSmoothingKernel(outsigmas[2],radii[2]);
+	int len=input->getLength();
+	for(int j=0;j<len;j++)
+	  temp_data[j]=output_data[j];
+	oneDConvolution(temp_data,output_data,dim,kernelz,2,vtkboundary);
       }
 
   }
 
 
   template<class T> void simpleGradientImage(bisSimpleImage<T>* original_input,
-                                             bisSimpleImage<float>* output,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor)
+                                       bisSimpleImage<float>* output,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor)
   {
     T* orig=original_input->getImageData();
 
@@ -319,17 +319,17 @@ namespace bisImageAlgorithms {
 
     for(int ia=0;ia<=2;ia++)
       {
-        if (inmm) 
-          outsigmas[ia]=sigmas[ia]/spa[ia];
-        else
-          outsigmas[ia]=sigmas[ia];
+	if (inmm) 
+	  outsigmas[ia]=sigmas[ia]/spa[ia];
+	else
+	  outsigmas[ia]=sigmas[ia];
       }
 
     int radii[3] = { 1,1,1 };
     for (int i=0;i<=2;i++) {
       radii[i]=int(outsigmas[i]*radiusfactor);
       if (radii[i]<1)
-        radii[i]=1;
+	radii[i]=1;
     }
 
     std::vector<float> kernel_dx=internal::generateGradientKernel(outsigmas[0],radii[0]);
@@ -382,17 +382,17 @@ namespace bisImageAlgorithms {
 
     for(int ia=0;ia<=2;ia++)
       {
-        if (inmm) 
-          outsigmas[ia]=sigmas[ia]/spa[ia];
-        else
-          outsigmas[ia]=sigmas[ia];
+	if (inmm) 
+	  outsigmas[ia]=sigmas[ia]/spa[ia];
+	else
+	  outsigmas[ia]=sigmas[ia];
       }
 
     int radii[3] = { 1,1,1 };
     for (int i=0;i<=2;i++) {
       radii[i]=int(outsigmas[i]*radiusfactor);
       if (radii[i]<1)
-        radii[i]=1;
+	radii[i]=1;
     }
 
     std::vector<float> kernel_x=internal::generateSmoothingKernel(outsigmas[0],radii[0]);
@@ -455,25 +455,25 @@ namespace bisImageAlgorithms {
     
     double min=arr[0],max=arr[0];
     double total = (double) image->getLength();
-    
+	
     for (int i=0;i<image->getLength();i++)
       {
-        if (min>arr[i])
-          min=arr[i];
-        else if (max<arr[i])
-          max=arr[i];
+	if (min>arr[i])
+	  min=arr[i];
+	else if (max<arr[i])
+	  max=arr[i];
       }
 
     //std::cout << "in_range=(" << min << "," << max << ") ";
 
     if (perlow <0.0001 && perhigh>0.9999)
       {
-        outdata[0]=min;
-        outdata[1]=max;
-        //  std::cout << "Returning" << std::endl;
-        return;
+	outdata[0]=min;
+	outdata[1]=max;
+	//	std::cout << "Returning" << std::endl;
+	return;
       }
-    
+	
     int numbins = 256;
     double diff=max-min;
     if (diff<0.001)
@@ -495,25 +495,25 @@ namespace bisImageAlgorithms {
     int foundperlow=0,foundperhigh=0;
     double tlow=min,thigh=max;
     double cumulative=0;
-    
+	
     for (int i=0;i<numbins;i++)
       {
-        cumulative=cumulative+bins[i];
-        double v=cumulative/total;
-        if (foundperlow==0) {
-          if (v > perlow) {
-            foundperlow=true;
-            tlow=double(i)/scale+min;
-          }
-        }
-    
-        if (foundperhigh==0) {
-          if (v > perhigh) {
-            foundperhigh=1;
-            thigh=double(i)/scale+min;
-            i=numbins;
-          }
-        }
+	cumulative=cumulative+bins[i];
+	double v=cumulative/total;
+	if (foundperlow==0) {
+	  if (v > perlow) {
+	    foundperlow=true;
+	    tlow=double(i)/scale+min;
+	  }
+	}
+	
+	if (foundperhigh==0) {
+	  if (v > perhigh) {
+	    foundperhigh=1;
+	    thigh=double(i)/scale+min;
+	    i=numbins;
+	  }
+	}
       }
 
     outdata[0]=tlow;
@@ -551,16 +551,433 @@ namespace bisImageAlgorithms {
     
     for (int i=0;i<output->getLength();i++)
       {
-        double v=data[i]-outdata[0];
-        if (v>outthigh)
-          v=outthigh;
-        else if (v<0.0)
-          v=0.0;
-        outarr[i] = short(v*scale+0.5);
+	double v=data[i]-outdata[0];
+	if (v>outthigh)
+	  v=outthigh;
+	else if (v<0.0)
+	  v=0.0;
+	outarr[i] = short(v*scale+0.5);
       }
   }
 
 
+  // ------------------------------------------------- Resample/Reslice ---------------------------------
+  template<class T> double linearInterpolationFunction(T* data,float TX[3],int minusdim[3],int dim0,int slicesize,int offset ) {
+
+    double W[3][2];
+    int   B[3][2];
+
+    for (int ia=0;ia<=2;ia++)
+      {
+	B[ia][0]=int(TX[ia]);
+	B[ia][1]=B[ia][0]+1;
+	if (B[ia][1]>minusdim[ia])
+	  B[ia][1]=minusdim[ia];
+	W[ia][0]=B[ia][1]-TX[ia];
+	W[ia][1]=1.0-W[ia][0];
+      }
+
+
+    B[1][0]*=dim0;
+    B[1][1]*=dim0;
+    
+    B[2][0]=B[2][0]*slicesize+offset;
+    B[2][1]=B[2][1]*slicesize+offset;
+
+    double sum=0.0;
+    for (int i=0;i<=1;i++)
+      for (int j=0;j<=1;j++)
+	for (int k=0;k<=1;k++)
+	  {
+	    sum+=W[2][k]*W[1][j]*W[0][i]*data[ B[2][k]+B[1][j]+B[0][i]];
+	  }
+    return sum;
+    
+  }
+
+  template<class T>  double nearestInterpolationFunction(T* data,float TX[3],int*,int dim0,int slicesize,int offset ) {
+    return data[int(TX[2]+0.5)*slicesize+
+		int(TX[1]+0.5)*dim0+
+		int(TX[0]+0.5)+offset];
+    
+  }
+
+
+  template<class T> double cubicInterpolationFunction(T* data,float TX[3],int minusdim[3],int dim0,int slicesize,int offset ) {
+
+    int B[3][4];
+    float W[3][4];
+    
+    for (int ia=0;ia<=2;ia++)
+      {
+	B[ia][1]=int(TX[ia]);
+	B[ia][0]=B[ia][1]-1;
+	    
+	if (B[ia][0]<0)
+	  B[ia][0]=0;
+	    
+	B[ia][2]=B[ia][1]+1;
+	B[ia][3]=B[ia][1]+2;
+	if (B[ia][2]>minusdim[ia]) {
+	  B[ia][2]=minusdim[ia];
+	  B[ia][3]=minusdim[ia];
+	} else if (B[ia][3]>minusdim[ia]) {
+	  B[ia][3]=minusdim[ia];
+	}
+
+	// cubic interpolation from VTK
+	float f=TX[ia]-B[ia][1];
+	float fm1 = f - 1.0f;
+	float fd2 = f*0.5f;
+	float ft3 = f*3.0f;
+	W[ia][0] = -fd2*fm1*fm1;
+	W[ia][1] = ((ft3 - 2)*fd2 - 1)*fm1;
+	W[ia][2] = -((ft3 - 4)*f - 1)*fd2;
+	W[ia][3] = f*fd2*fm1;
+      }
+
+    B[1][0]*=dim0;	B[1][1]*=dim0;
+    B[1][2]*=dim0;	B[1][3]*=dim0;
+    B[2][0]*=slicesize;	B[2][1]*=slicesize;
+    B[2][2]*=slicesize;	B[2][3]*=slicesize;
+
+    double sum=0.0;
+    for (int ka=0;ka<=3;ka++) 
+      for (int ja=0;ja<=3;ja++) 
+	for (int ia=0;ia<=3;ia++) 
+	  sum+=W[2][ka]*W[1][ja]*W[0][ia]*data[offset+B[2][ka]+B[1][ja]+B[0][ia]];
+    
+    return sum;
+
+
+
+  }
+
+
+    // _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_2D Versions_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
+  
+  
+  template<class T> double linearInterpolationFunction2D(T* data,float TX[3],int minusdim[2],int dim0,int offset ) {
+
+    double W[2][2];
+    int   B[2][2];
+
+    for (int ia=0;ia<=1;ia++)
+      {
+	B[ia][0]=int(TX[ia]);
+	B[ia][1]=B[ia][0]+1;
+	if (B[ia][1]>minusdim[ia])
+	  B[ia][1]=minusdim[ia];
+	W[ia][0]=B[ia][1]-TX[ia];
+	W[ia][1]=1.0-W[ia][0];
+      }
+
+    B[1][0]*=dim0;
+    B[1][1]*=dim0;
+    
+    double sum=0.0;
+    for (int i=0;i<=1;i++)
+      for (int j=0;j<=1;j++)
+	sum+=W[1][j]*W[0][i]*data[offset+ B[1][j]+B[0][i]];
+
+    return sum;
+  }
+
+  template<class T>  double nearestInterpolationFunction2D(T* data,float TX[3],int*,int dim0 ,int offset ) {
+    return data[int(TX[1]+0.5)*dim0+
+		int(TX[0]+0.5)+offset];
+  }
+
+
+  template<class T> double cubicInterpolationFunction2D(T* data,float TX[3],int minusdim[2],int dim0 ,int offset ) {
+
+    int B[2][4];
+    float W[2][4];
+    
+    for (int ia=0;ia<=1;ia++)
+      {
+	B[ia][1]=int(TX[ia]);
+	B[ia][0]=B[ia][1]-1;
+	    
+	if (B[ia][0]<0)
+	  B[ia][0]=0;
+	    
+	B[ia][2]=B[ia][1]+1;
+	B[ia][3]=B[ia][1]+2;
+	if (B[ia][2]>minusdim[ia]) {
+	  B[ia][2]=minusdim[ia];
+	  B[ia][3]=minusdim[ia];
+	} else if (B[ia][3]>minusdim[ia]) {
+	  B[ia][3]=minusdim[ia];
+	}
+
+	// cubic interpolation from VTK
+	float f=TX[ia]-B[ia][1];
+	float fm1 = f - 1.0f;
+	float fd2 = f*0.5f;
+	float ft3 = f*3.0f;
+	W[ia][0] = -fd2*fm1*fm1;
+	W[ia][1] = ((ft3 - 2)*fd2 - 1)*fm1;
+	W[ia][2] = -((ft3 - 4)*f - 1)*fd2;
+	W[ia][3] = f*fd2*fm1;
+      }
+
+    B[1][0]*=dim0;	B[1][1]*=dim0;
+    B[1][2]*=dim0;	B[1][3]*=dim0;
+
+    double sum=0.0;
+    for (int ja=0;ja<=3;ja++) 
+	for (int ia=0;ia<=3;ia++) 
+	  sum+=W[1][ja]*W[0][ia]*data[offset+B[1][ja]+B[0][ia]];
+    
+    return sum;
+
+
+
+  }
+
+
+  // _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-y
+
+    // _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-y
+
+  template<class T> void resliceImage(bisSimpleImage<T>* input,bisSimpleImage<T>* output,bisAbstractTransformation* xform,int interpolation,double backgroundValue) {
+    int bounds[6];
+    int dim[5]; output->getDimensions(dim);
+    for (int ia=0;ia<=2;ia++) {
+      bounds[2*ia]=0;
+      bounds[2*ia+1]=dim[ia]-1;
+    }
+
+    resliceImageWithBounds(input,output,xform,bounds,interpolation,backgroundValue);
+  }
+
+
+
+  // ----------- 2D -------------------------------------
+  template<class T> void resliceImageWithBounds2D(bisSimpleImage<T>* input,bisSimpleImage<T>* output,bisAbstractTransformation* xform,
+						  int bounds[6],int interpolation,double backgroundValue)
+  {
+    int dim[5];  input->getDimensions(dim);
+    float spa[3]; input->getImageSpacing(spa);
+
+    int dim0=dim[0];
+    
+    int outdim[5]; output->getDimensions(outdim);
+    int outvolsize = outdim[0]*outdim[1]*outdim[2];
+    float outspa[3]; output->getImageSpacing(outspa);
+
+    T* input_data = input->getImageData();
+    T* output_data = output->getImageData();
+    int minusdim[2] = { dim[0]-1,dim[1]-1 };
+    int volsize=dim[0]*dim[1]*dim[2];
+
+    float X[3],TX[3];
+
+    
+    // Check for valid bounds and frames
+    // Make sure we are only reslicing the frames that are common
+    int numcompframes=dim[3]*dim[4];
+    int in_numcompframes=outdim[3]*outdim[4];
+    if (numcompframes>in_numcompframes)
+      numcompframes=in_numcompframes;
+    for (int ia=0;ia<=1;ia++)
+      {
+	bounds[2*ia]=bisUtil::irange(bounds[2*ia],0,outdim[ia]-1);
+	bounds[2*ia+1]=bisUtil::irange(bounds[2*ia+1],bounds[2*ia],outdim[ia]-1);
+      }
+
+    double (*interpFun2D)(T* data,float TX[3],int minusdim[2], int dim0,int offset);
+    interpFun2D=linearInterpolationFunction2D;
+    if (interpolation==0)
+      interpFun2D=nearestInterpolationFunction2D;
+    else if (interpolation==3)
+      interpFun2D=cubicInterpolationFunction2D;
+
+    int numgood=0,numbad=0,numsaved=0;
+    //    int found=0;
+
+    double intensity_offset=0.0;
+    T tmp=0;
+    int tcode=bisDataTypes::getTypeCode(tmp);
+    if (tcode==bisDataTypes::b_float32 || tcode==bisDataTypes::b_float64)
+      intensity_offset=0.0;
+    else
+      intensity_offset=0.5;
+
+    //    std::cout << "Intensity Offset=" << intensity_offset << " code=" << tcode << std::endl;
+    
+    for (int j=bounds[2];j<=bounds[3];j++)
+      {
+	X[1]=j*outspa[1];
+	int outindex=j*outdim[0];
+	for (int i=bounds[0];i<=bounds[1];i++)
+	  {
+	    X[0]=i*outspa[0];
+	    xform->transformPointToVoxel(X,TX,spa);
+	    
+	    if (TX[1]>=0.000 && TX[1] <= minusdim[1] &&
+		TX[0]>=0.000 && TX[0] <= minusdim[0])
+	      {
+		for (int framecomp=0;framecomp<numcompframes;framecomp++)
+		  {
+		    int offset=volsize*framecomp;
+		    double v=interpFun2D(input_data,TX,minusdim,dim0,offset);
+		    output_data[outindex+framecomp*outvolsize]=(T)(v+intensity_offset);
+		  }
+		++numgood;
+	      }
+	    else if (TX[1]>=-0.5 && TX[1] <= (minusdim[1]+0.5) &&
+		     TX[0]>=-0.5 && TX[0] <= (minusdim[0]+0.5))
+	      {
+		for (int ia=0;ia<=1;ia++)
+		  TX[ia]=bisUtil::frange(TX[ia],0.0,minusdim[ia]);
+		
+		for (int framecomp=0;framecomp<numcompframes;framecomp++)
+		  {
+		    int offset=volsize*framecomp;
+		    double v=interpFun2D(input_data,TX,minusdim,dim0,offset);
+		    output_data[outindex+framecomp*outvolsize]=(T)(v+intensity_offset);
+		  }
+		++numsaved;
+	      }
+	    else
+	      {
+		for (int framecomp=0;framecomp<numcompframes;framecomp++)
+		  {
+		    //int offset=volsize*framecomp;
+		    output_data[outindex+framecomp*outvolsize]=(T)backgroundValue;
+		  }
+		++numbad;
+	      }
+	    outindex++;
+	  }
+      }
+    return;
+  }
+  // ----------- 3D ------
+  
+  template<class T> void resliceImageWithBounds(bisSimpleImage<T>* input,bisSimpleImage<T>* output,bisAbstractTransformation* xform,
+						int bounds[6],int interpolation,double backgroundValue)
+  {
+    int dim[5];  input->getDimensions(dim);
+    if (dim[2]<2)
+      {
+	resliceImageWithBounds2D(input,output,xform,bounds,interpolation,backgroundValue);
+	return;
+      }
+    
+    float spa[3]; input->getImageSpacing(spa);
+    int slicesize= dim[0]*dim[1];
+    int dim0=dim[0];
+    
+    int outdim[5]; output->getDimensions(outdim);
+    int outslicesize = outdim[0]*outdim[1];
+    int outvolsize = outdim[0]*outdim[1]*outdim[2];
+    float outspa[3]; output->getImageSpacing(outspa);
+
+    T* input_data = input->getImageData();
+    T* output_data = output->getImageData();
+    int minusdim[3] = { dim[0]-1,dim[1]-1,dim[2]-1 };
+    //    float insidedim[3] = { dim[0]-1.05f,dim[1]-1.05f,dim[2]-1.05f };
+    //float outsidedim[3] = { dim[0]-0.95f,dim[1]-0.95f,dim[2]-0.95f };
+    int volsize=dim[0]*dim[1]*dim[2];
+
+    float X[3],TX[3];
+
+
+
+    // Check for valid bounds and frames
+    // Make sure we are only reslicing the frames that are common
+    int numcompframes=dim[3]*dim[4];
+    int in_numcompframes=outdim[3]*outdim[4];
+    if (numcompframes>in_numcompframes)
+      numcompframes=in_numcompframes;
+    for (int ia=0;ia<=2;ia++)
+      {
+	bounds[2*ia]=bisUtil::irange(bounds[2*ia],0,outdim[ia]-1);
+	bounds[2*ia+1]=bisUtil::irange(bounds[2*ia+1],bounds[2*ia],outdim[ia]-1);
+      }
+
+
+
+    double (*interpFun)(T* data,float TX[3],int minusdim[3], int dim0,int slicesize,int offset);
+    interpFun=linearInterpolationFunction;
+    if (interpolation==0)
+      interpFun=nearestInterpolationFunction;
+    else if (interpolation==3)
+      interpFun=cubicInterpolationFunction;
+
+    int numgood=0,numbad=0,numsaved=0;
+    //    int found=0;
+
+    double intensity_offset=0.0;
+    T tmp=0;
+    int tcode=bisDataTypes::getTypeCode(tmp);
+    if (tcode==bisDataTypes::b_float32 || tcode==bisDataTypes::b_float64)
+      intensity_offset=0.0;
+    else
+      intensity_offset=0.5;
+
+    //    std::cout << "Intensity Offset=" << intensity_offset << " code=" << tcode << std::endl;
+    
+    for (int k=bounds[4];k<=bounds[5];k++)
+      {
+	X[2]=k*outspa[2];
+	int outbase=k*outslicesize+bounds[0];
+	for (int j=bounds[2];j<=bounds[3];j++)
+	  {
+	    X[1]=j*outspa[1];
+	    int outindex=j*outdim[0]+outbase;
+	    for (int i=bounds[0];i<=bounds[1];i++)
+	      {
+		X[0]=i*outspa[0];
+		xform->transformPointToVoxel(X,TX,spa);
+
+		if (TX[2]>=0.000 && TX[2] <= minusdim[2] &&
+		    TX[1]>=0.000 && TX[1] <= minusdim[1] &&
+		    TX[0]>=0.000 && TX[0] <= minusdim[0])
+		  {
+		    for (int framecomp=0;framecomp<numcompframes;framecomp++)
+		      {
+			int offset=volsize*framecomp;
+			double v=interpFun(input_data,TX,minusdim,dim0,slicesize,offset);
+			output_data[outindex+framecomp*outvolsize]=(T)(v+intensity_offset);
+		      }
+		    ++numgood;
+		  }
+		else if (TX[2]>=-0.5 && TX[2] <= (minusdim[2]+0.5) &&
+			 TX[1]>=-0.5 && TX[1] <= (minusdim[1]+0.5) &&
+			 TX[0]>=-0.5 && TX[0] <= (minusdim[0]+0.5))
+		  {
+		    for (int ia=0;ia<=2;ia++)
+		      TX[ia]=bisUtil::frange(TX[ia],0.0,minusdim[ia]);
+		    
+		    for (int framecomp=0;framecomp<numcompframes;framecomp++)
+		      {
+			int offset=volsize*framecomp;
+			double v=interpFun(input_data,TX,minusdim,dim0,slicesize,offset);
+			output_data[outindex+framecomp*outvolsize]=(T)(v+intensity_offset);
+		      }
+		    ++numsaved;
+		  }
+		else
+		  {
+		    for (int framecomp=0;framecomp<numcompframes;framecomp++)
+		      {
+			//int offset=volsize*framecomp;
+			output_data[outindex+framecomp*outvolsize]=(T)backgroundValue;
+		      }
+		    ++numbad;
+		  }
+		outindex++;
+	      }
+	  }
+      }
+    //    std::cout << "numgood=" << numgood << "\t numbad=" << numbad << "\t numsaved=" << numsaved << std::endl;
+    
+    return;
+  }
 
   template<class T> std::unique_ptr< bisSimpleImage<T> > resampleImage(bisSimpleImage<T>* input, float outspa[3],int interpolation,double backgroundValue,bisAbstractTransformation* xform) {
 
@@ -579,13 +996,13 @@ namespace bisImageAlgorithms {
 
     if (xform==0)
       {
-        // Xenios this needs to account for subvoxel shift ... (maybe)
-        std::unique_ptr<bisIdentityTransformation> ident(new bisIdentityTransformation());
+	// Xenios this needs to account for subvoxel shift ... (maybe)
+	std::unique_ptr<bisIdentityTransformation> ident(new bisIdentityTransformation());
         resliceImage(input,output.get(),ident.get(),interpolation,backgroundValue);
       }
     else
       {
-        resliceImage(input,output.get(),xform,interpolation,backgroundValue);
+	resliceImage(input,output.get(),xform,interpolation,backgroundValue);
       }
  
     return std::move(output);
@@ -599,39 +1016,39 @@ namespace bisImageAlgorithms {
     struct internal {
       static int getSliceSize(int i_plane,int i_dim[5],float i_spa[5],int o_dim[5],float o_spa[5])
       {
-        int plane=bisUtil::irange(i_plane,0,2);
+	int plane=bisUtil::irange(i_plane,0,2);
 
-        switch (plane)
-          {
-          case 2:
-            o_dim[0] = i_dim[0];
-            o_dim[1] = i_dim[1];
-            o_dim[2] = 1;
-            o_spa[0]=i_spa[0];o_spa[1]=i_spa[1];o_spa[2]=i_spa[2];
-            break;
-          case 1:
-            o_dim[0] = i_dim[0];
-            o_dim[1] = i_dim[2];
-            o_dim[2] = 1;
-            o_spa[0]=i_spa[0];o_spa[1]=i_spa[2];o_spa[2]=i_spa[1];
-            break;
-          case 0:
-            o_dim[0] = i_dim[1];
-            o_dim[1] = i_dim[2];
-            o_dim[2] = 1;
-            o_spa[0]=i_spa[1];o_spa[1]=i_spa[2];o_spa[2]=i_spa[0];
-            break;
-          }
-    
-        for (int ia=3;ia<=4;ia++)
-          {
-            o_dim[ia]=i_dim[ia];
-            o_spa[ia]=i_spa[ia];
-          }
+	switch (plane)
+	  {
+	  case 2:
+	    o_dim[0] = i_dim[0];
+	    o_dim[1] = i_dim[1];
+	    o_dim[2] = 1;
+	    o_spa[0]=i_spa[0];o_spa[1]=i_spa[1];o_spa[2]=i_spa[2];
+	    break;
+	  case 1:
+	    o_dim[0] = i_dim[0];
+	    o_dim[1] = i_dim[2];
+	    o_dim[2] = 1;
+	    o_spa[0]=i_spa[0];o_spa[1]=i_spa[2];o_spa[2]=i_spa[1];
+	    break;
+	  case 0:
+	    o_dim[0] = i_dim[1];
+	    o_dim[1] = i_dim[2];
+	    o_dim[2] = 1;
+	    o_spa[0]=i_spa[1];o_spa[1]=i_spa[2];o_spa[2]=i_spa[0];
+	    break;
+	  }
+	
+	for (int ia=3;ia<=4;ia++)
+	  {
+	    o_dim[ia]=i_dim[ia];
+	    o_spa[ia]=i_spa[ia];
+	  }
 
-        //  std::cout << "plane=" << plane << " o_dim=" << o_dim[0] << "," << o_dim[1] << "," << o_dim[2] << std::endl;
+	//	std::cout << "plane=" << plane << " o_dim=" << o_dim[0] << "," << o_dim[1] << "," << o_dim[2] << std::endl;
 
-        return plane;
+	return plane;
       }
     };
     
@@ -668,56 +1085,56 @@ namespace bisImageAlgorithms {
 
     if (plane==2)
       {
-        int index=currentslice*imagedim[0]*imagedim[1]+voloffset;
-        for (int j=0;j<sourceHeight;j++)
-          {
-            for (int i=0;i<sourceWidth;i++)
-              {
-                outputslice[outindex]=imagedata[index];
-                ++index;
-                ++outindex;
-              }
-          }
+	int index=currentslice*imagedim[0]*imagedim[1]+voloffset;
+	for (int j=0;j<sourceHeight;j++)
+	  {
+	    for (int i=0;i<sourceWidth;i++)
+	      {
+		outputslice[outindex]=imagedata[index];
+		++index;
+		++outindex;
+	      }
+	  }
       }
     else if (plane==1)
       {
-        for (int j=0;j<sourceDepth;j++)
-          {
-            int sliceoffset= voloffset+j*sourceWidth*sourceHeight+currentslice*sourceWidth;
-            for (int i=0;i<sourceWidth;i++)
-              {
-                outputslice[outindex]=imagedata[sliceoffset+i];
-                outindex+=1;
-              }
-          }
+	for (int j=0;j<sourceDepth;j++)
+	  {
+	    int sliceoffset= voloffset+j*sourceWidth*sourceHeight+currentslice*sourceWidth;
+	    for (int i=0;i<sourceWidth;i++)
+	      {
+		outputslice[outindex]=imagedata[sliceoffset+i];
+		outindex+=1;
+	      }
+	  }
       }
     else
       {
-        for (int j=0;j<sourceDepth;j++)
-          {
-            int sliceoffset=j*sourceWidth*sourceHeight+currentslice+voloffset;
-            for (int i=0;i<sourceHeight;i++)
-              {
-                outputslice[outindex]=imagedata[sliceoffset+i*sourceWidth];
-                outindex+=1;
-              }
-          }
+	for (int j=0;j<sourceDepth;j++)
+	  {
+	    int sliceoffset=j*sourceWidth*sourceHeight+currentslice+voloffset;
+	    for (int i=0;i<sourceHeight;i++)
+	      {
+		outputslice[outindex]=imagedata[sliceoffset+i*sourceWidth];
+		outindex+=1;
+	      }
+	  }
       }
     
     return 1;
   }
 
 
-  static inline float   computeDisplacementFieldRoundTripError(bisSimpleImage<float>* forward,bisSimpleImage<float>* reverse,int bounds[6],int debug)
+  static inline float	computeDisplacementFieldRoundTripError(bisSimpleImage<float>* forward,bisSimpleImage<float>* reverse,int bounds[6],int debug)
   {
     int dim[5]; forward->getDimensions(dim);
     int reverse_dim[5]; reverse->getDimensions(reverse_dim);
     
-    
+	
     if (dim[3]!=3 || reverse_dim[3]!=3)
       {
-        std::cout << "Fields must have dimension = 3" << std::endl;
-        return -1.0;
+	std::cout << "Fields must have dimension = 3" << std::endl;
+	return -1.0;
       }
     
     int rev_minusdim[3] = { reverse_dim[0]-1,reverse_dim[1]-1,reverse_dim[2]-1 };
@@ -734,8 +1151,8 @@ namespace bisImageAlgorithms {
     
     for (int ia=0;ia<=2;ia++)
       {
-        bounds[2*ia]=bisUtil::irange(bounds[2*ia],0,dim[ia]-1);
-        bounds[2*ia+1]=bisUtil::irange(bounds[2*ia+1],bounds[2*ia],dim[ia]-1);
+	bounds[2*ia]=bisUtil::irange(bounds[2*ia],0,dim[ia]-1);
+	bounds[2*ia+1]=bisUtil::irange(bounds[2*ia+1],bounds[2*ia],dim[ia]-1);
       }
     
     int numgood=0;
@@ -748,57 +1165,57 @@ namespace bisImageAlgorithms {
 
     if (debug)
       std::cout << std::endl << "------------------  mid=" << midi << "," << midj << "," << midk << std::endl;
-                     
+				     
     
     for (int k=bounds[4];k<=bounds[5];k++)
       {
-        X[2]=k*spa[2];
-        for (int j=bounds[2];j<=bounds[3];j++)
-          {
-            X[1]=j*spa[1];
-            int index=j*dim[0]+k*slicesize+bounds[0];
-            for (int i=bounds[0];i<=bounds[1];i++)
-              {
-                X[0]=i*spa[0];
-                for (int axis=0;axis<=2;axis++)
-                  {
-                    disp[axis]=fordata[index+axis*volsize];
-                    Y[axis]=disp[axis]+X[axis];
-                    TX[axis]=(Y[axis]/reverse_spa[axis]);
-                  }
+	X[2]=k*spa[2];
+	for (int j=bounds[2];j<=bounds[3];j++)
+	  {
+	    X[1]=j*spa[1];
+	    int index=j*dim[0]+k*slicesize+bounds[0];
+	    for (int i=bounds[0];i<=bounds[1];i++)
+	      {
+		X[0]=i*spa[0];
+		for (int axis=0;axis<=2;axis++)
+		  {
+		    disp[axis]=fordata[index+axis*volsize];
+		    Y[axis]=disp[axis]+X[axis];
+		    TX[axis]=(Y[axis]/reverse_spa[axis]);
+		  }
 
-        
-                if (debug>0 && i==midi && j==midj && k==midk)
-                  {
-                    std::cout << std::endl << "ijk=" << i << "," << "," << j << "," << k << "index=" << index << std::endl;
-                    std::cout << " X=" << X[0] << "," << X[1] << "," << X[2] << std::endl;
-                    std::cout << " Y=" << Y[0] << "," << Y[1] << "," << Y[2] << std::endl;
-                    std::cout << " TX=" << TX[0] << "," << TX[1] << "," << TX[2] << std::endl;
-                    std::cout << " disp=" << disp[0] << "," << disp[1] << "," << disp[2] << std::endl;
-                  }
-        
-        
-                if (TX[2]>=0 && TX[2] < rev_minusdim[2] &&
-                    TX[1]>=0 && TX[1] < rev_minusdim[1] &&
-                    TX[0]>=0 && TX[0] < rev_minusdim[0]) {
-          
-          
-          
-                  float sum=0.0;
-                  numgood++;
-                  for (int axis=0;axis<=2;axis++)
-                    {
-                      int offset=rev_volsize*axis;
-                      float d=(float)linearInterpolationFunction<float>(revdata,TX,rev_minusdim,reverse_dim[0],rev_slicesize,offset);
-                      sum+=powf( disp[axis]+d,2.0f);
-                      if (debug && i==midi && j==midj && k==midk)
-                        std::cout << "axis= " << axis << " d=" << d << " offset=" << offset << std::endl;
-                    }
-                  error+=sum;
-                }
-                index++;
-              }
-          }
+		
+		if (debug>0 && i==midi && j==midj && k==midk)
+		  {
+		    std::cout << std::endl << "ijk=" << i << "," << "," << j << "," << k << "index=" << index << std::endl;
+		    std::cout << " X=" << X[0] << "," << X[1] << "," << X[2] << std::endl;
+		    std::cout << " Y=" << Y[0] << "," << Y[1] << "," << Y[2] << std::endl;
+		    std::cout << " TX=" << TX[0] << "," << TX[1] << "," << TX[2] << std::endl;
+		    std::cout << " disp=" << disp[0] << "," << disp[1] << "," << disp[2] << std::endl;
+		  }
+		
+		
+		if (TX[2]>=0 && TX[2] < rev_minusdim[2] &&
+		    TX[1]>=0 && TX[1] < rev_minusdim[1] &&
+		    TX[0]>=0 && TX[0] < rev_minusdim[0]) {
+		  
+		  
+		  
+		  float sum=0.0;
+		  numgood++;
+		  for (int axis=0;axis<=2;axis++)
+		    {
+		      int offset=rev_volsize*axis;
+		      float d=(float)linearInterpolationFunction<float>(revdata,TX,rev_minusdim,reverse_dim[0],rev_slicesize,offset);
+		      sum+=powf( disp[axis]+d,2.0f);
+		      if (debug && i==midi && j==midj && k==midk)
+			std::cout << "axis= " << axis << " d=" << d << " offset=" << offset << std::endl;
+		    }
+		  error+=sum;
+		}
+		index++;
+	      }
+	  }
       }
     
     float v=(float)sqrt(error/float(numgood));
@@ -808,7 +1225,7 @@ namespace bisImageAlgorithms {
   }
 
 
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
   // Compute ROI Mean
   // ---------------------------------------------------------------------------
   template<class T> int computeROIMean(bisSimpleImage<T>* input,bisSimpleImage<short>* roi,Eigen::MatrixXf& output,int storecentroids)
@@ -820,8 +1237,8 @@ namespace bisImageAlgorithms {
     double r[2]; roi->getRange(r);
     if (r[1]>9999 || r[0]<-3)
       {
-        std::cerr << "Bad ROI Image. It has largest value > 999 (max=" << r[1] << ") or min value <-3 ( min="<< r[0] << ")" << std::endl;
-        return 0;
+	std::cerr << "Bad ROI Image. It has largest value > 999 (max=" << r[1] << ") or min value <-3 ( min="<< r[0] << ")" << std::endl;
+	return 0;
       }
 
     int dim[5]; input->getDimensions(dim);
@@ -872,7 +1289,7 @@ namespace bisImageAlgorithms {
     for (int region=0;region<numrois;region++) {
       if (num[region]>0) {
         for (int frame=0;frame<numframes;frame++) 
-          output(frame,region)=output(frame,region)/float(num[region]);
+	  output(frame,region)=output(frame,region)/float(num[region]);
         if (extra>0) {
           for (int frame=numframes+2; frame<numframes+extra;frame++)
             output(frame,region)=output(frame,region)/float(num[region]);
@@ -901,8 +1318,8 @@ namespace bisImageAlgorithms {
     double thr=threshold;
     if (absolute==0)
       {
-        float t=bisUtil::frange(threshold,0.0,1.0);
-        thr=range[0]+t*(range[1]-range[0]);
+	float t=bisUtil::frange(threshold,0.0,1.0);
+	thr=range[0]+t*(range[1]-range[0]);
       }
 
     unsigned char* odata=output->getData();
@@ -913,10 +1330,10 @@ namespace bisImageAlgorithms {
     
     for (int i=0;i<input->getLength();i++)
       {
-        if (idata[i]>=thr)
-          odata[i]=good;
-        else
-          odata[i]=0;
+	if (idata[i]>=thr)
+	  odata[i]=good;
+	else
+	  odata[i]=0;
       }
     return output;
   }
@@ -935,36 +1352,36 @@ namespace bisImageAlgorithms {
     output->fill(replacevalue[0]);
     for (int i=0;i<input->getLength();i++)
       {
-        double v=idata[i];
+	double v=idata[i];
 
-        if (v>= thresholds[0] && v<=thresholds[1])
-          {
-            if (replace[1])
-              odata[i]=replacevalue[1];
-            else
-              odata[i]=(OT)v;
-          }
-        else
-          {
-            if (replace[0])
-              odata[i]=replacevalue[0];
-            else
-              odata[i]=(OT)v;
-          }
+	if (v>= thresholds[0] && v<=thresholds[1])
+	  {
+	    if (replace[1])
+	      odata[i]=replacevalue[1];
+	    else
+	      odata[i]=(OT)v;
+	  }
+	else
+	  {
+	    if (replace[0])
+	      odata[i]=replacevalue[0];
+	    else
+	      odata[i]=(OT)v;
+	  }
       }
 
     if (!replace[0] && !replace[1]) {
       double sum=0.0;
       for (int i=0;i<input->getLength();i++)
-        {
-          sum+=fabs(odata[i]-idata[i]);
-          if (i<10)
-            std::cout << "Values (WASM) " << i << ":" << idata[i] << " vs " << odata[i] << std::endl;
-        }
+	{
+	  sum+=fabs(odata[i]-idata[i]);
+	  if (i<10)
+	    std::cout << "Values (WASM) " << i << ":" << idata[i] << " vs " << odata[i] << std::endl;
+	}
       
       std::cout << "Difference post threshold=" << sum << std::endl;
     }
-        
+		
     
     return std::move(output);
   }
@@ -985,7 +1402,7 @@ namespace bisImageAlgorithms {
     
     for (int i=0;i<input->getLength();i++)
       {
-        double inp=idata[i];
+	double inp=idata[i];
         double out=(inp+shift)*scale;
         odata[i]=(OT)out;
       }
@@ -994,14 +1411,14 @@ namespace bisImageAlgorithms {
 
 
   
-  /** 
-   * This function performs image clustering. The output is an object containing an image (with values = cluster numbers) and an array containing the volme of each cluster
-   * @alias BisImageAlgorithms.createClusterNumberImage
-   * @param {BisImage} volume - the input image
-   * @param {number} threshold - the value (absolute value thresholding) above which a voxel is counted as good.
-   * @param {boolean} oneconnected - whether to use oneconnected (6 neighbors) or corner connected (26 neighbors) connectivity (default =fa
-   * @returns {object} out - out.maxsize = size of biggest cluster, out.clusterimage (BisImage) image output where each voxel has its cluster number (or 0), clusterhist (array) containing volume of clusters (e.g. clusterhist[4] is volume of cluster 4. 
-   */
+    /** 
+     * This function performs image clustering. The output is an object containing an image (with values = cluster numbers) and an array containing the volme of each cluster
+     * @alias BisImageAlgorithms.createClusterNumberImage
+     * @param {BisImage} volume - the input image
+     * @param {number} threshold - the value (absolute value thresholding) above which a voxel is counted as good.
+     * @param {boolean} oneconnected - whether to use oneconnected (6 neighbors) or corner connected (26 neighbors) connectivity (default =fa
+     * @returns {object} out - out.maxsize = size of biggest cluster, out.clusterimage (BisImage) image output where each voxel has its cluster number (or 0), clusterhist (array) containing volume of clusters (e.g. clusterhist[4] is volume of cluster 4. 
+     */
 
   class clusterElement {
     
@@ -1018,8 +1435,8 @@ namespace bisImageAlgorithms {
   
   template<class T> int createClusterNumberImage(bisSimpleImage<T>* input,float threshold,int oneconnected,
                                                  int clustersizethreshold,
-                                                 bisSimpleImage<short>* cluster_number_output,
-                                                 std::vector<int>& clusters,int frame,int component)
+						 bisSimpleImage<short>* cluster_number_output,
+						 std::vector<int>& clusters,int frame,int component)
   {
 
     
@@ -1057,12 +1474,12 @@ namespace bisImageAlgorithms {
     
     for (int ic=-maxc;ic<=maxc;ic++) {
       for (int ib=-1;ib<=1;ib++) {
-        for (int ia=-1;ia<=1;ia++) {
-          int sh=ic*slicesize+ib*dim[0]+ia;
-          int diff=abs(ia)+abs(ib)+abs(ic);
-          if (diff==1 || (oneconnected==0 && diff!=0))
-            shifts.push_back(clusterElement(ia,ib,ic,sh));
-        }
+	for (int ia=-1;ia<=1;ia++) {
+	  int sh=ic*slicesize+ib*dim[0]+ia;
+	  int diff=abs(ia)+abs(ib)+abs(ic);
+	  if (diff==1 || (oneconnected==0 && diff!=0))
+	    shifts.push_back(clusterElement(ia,ib,ic,sh));
+	}
       }
     }
 
@@ -1075,97 +1492,97 @@ namespace bisImageAlgorithms {
     
     for (int idZ = 0; idZ < dim[2]; idZ++)
       {
-        for (int idY = 0; idY < dim[1]; idY++)
-          {
-            for (int idX = 0; idX < dim[0]; idX++)
-              {
-        
-                int otval = clustdata[voxelindex];
-        
-                if (otval == UNVISITEDVOXEL) {
+	for (int idY = 0; idY < dim[1]; idY++)
+	  {
+	    for (int idX = 0; idX < dim[0]; idX++)
+	      {
+		
+		int otval = clustdata[voxelindex];
+		
+		if (otval == UNVISITEDVOXEL) {
 
-                  // Only Use First Component
-                  double value = (double) inpdata[voxelindex+offset];
-                  float voxelsign=1.0;
-                  if (value<0.0)
-                    voxelsign=-1.0;
-                  value=fabs(value);
-          
-                  if(value >= threshold)
-                    {
-                      CurrentCluster=CurrentCluster+1;
-                      std::stack<clusterElement>  currentStack;
-                      currentStack.push(clusterElement(idX,idY,idZ,voxelindex));;
-                      int nClusterVoxels=1;
-                      clustdata[voxelindex]=CurrentCluster;
-                      clusterseeds.push_back(clusterElement(idX,idY,idZ));
-              
-                      while(currentStack.size()>0)
-                        {
-                          // ----------------------------------------------------------------------------------------
-                          // Work trhough currentStack -- starts with seed but will grow!
-              
-                          // ----------------------------------------------------------------------------------------
-                          clusterElement CP=currentStack.top();
-                          currentStack.pop();
-              
-                          for (int nb=0;nb<maxshift;nb++)
-                            {
-                              int i1=CP.data[0]+shifts[nb].data[0];
-                              int i2=CP.data[1]+shifts[nb].data[1];
-                              int i3=CP.data[2]+shifts[nb].data[2];
-                  
-                              if (i1>=0 && i1<dim[0] && i2>=0 && i2<dim[1] && i3>=0 && i3<dim[2])
-                                {
-                  
-                                  int tmpindex=CP.data[3]+shifts[nb].data[3]+offset;
-                                  short ot=clustdata[tmpindex];
-                                  double it=voxelsign*inpdata[tmpindex];
-                  
-                                  // If not yet visitied
-                                  if ( ot == UNVISITEDVOXEL)
-                                    {
-                                      if (it >= threshold)
-                                        {
-                                          // Mark it as part of this cluster and add to currentStack
-                                          //                      CurrentCluster=clusters.size();
-                                          clustdata[tmpindex]=CurrentCluster;
-                                          currentStack.push(clusterElement(i1,i2,i3,tmpindex));
-                                          nClusterVoxels++;
-                                        }
-                                      else
-                                        {
-                                          clustdata[tmpindex]=VOXELVISITED;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                      clusters.push_back(nClusterVoxels);
-                    }
-                  else
-                    {
-                      clustdata[voxelindex]=VOXELVISITED;
-                    }
-                } 
-                ++voxelindex;
-              }
-          }
+		  // Only Use First Component
+		  double value = (double) inpdata[voxelindex+offset];
+		  float voxelsign=1.0;
+		  if (value<0.0)
+		    voxelsign=-1.0;
+		  value=fabs(value);
+		  
+		  if(value >= threshold)
+		    {
+		      CurrentCluster=CurrentCluster+1;
+		      std::stack<clusterElement>  currentStack;
+		      currentStack.push(clusterElement(idX,idY,idZ,voxelindex));;
+		      int nClusterVoxels=1;
+		      clustdata[voxelindex]=CurrentCluster;
+		      clusterseeds.push_back(clusterElement(idX,idY,idZ));
+		      
+		      while(currentStack.size()>0)
+			{
+			  // ----------------------------------------------------------------------------------------
+			  // Work trhough currentStack -- starts with seed but will grow!
+			  
+			  // ----------------------------------------------------------------------------------------
+			  clusterElement CP=currentStack.top();
+			  currentStack.pop();
+			  
+			  for (int nb=0;nb<maxshift;nb++)
+			    {
+			      int i1=CP.data[0]+shifts[nb].data[0];
+			      int i2=CP.data[1]+shifts[nb].data[1];
+			      int i3=CP.data[2]+shifts[nb].data[2];
+			      
+			      if (i1>=0 && i1<dim[0] && i2>=0 && i2<dim[1] && i3>=0 && i3<dim[2])
+				{
+				  
+				  int tmpindex=CP.data[3]+shifts[nb].data[3]+offset;
+				  short ot=clustdata[tmpindex];
+				  double it=voxelsign*inpdata[tmpindex];
+				  
+				  // If not yet visitied
+				  if ( ot == UNVISITEDVOXEL)
+				    {
+				      if (it >= threshold)
+					{
+					  // Mark it as part of this cluster and add to currentStack
+					  //					  CurrentCluster=clusters.size();
+					  clustdata[tmpindex]=CurrentCluster;
+					  currentStack.push(clusterElement(i1,i2,i3,tmpindex));
+					  nClusterVoxels++;
+					}
+				      else
+					{
+					  clustdata[tmpindex]=VOXELVISITED;
+					}
+				    }
+				}
+			    }
+			}
+		      clusters.push_back(nClusterVoxels);
+		    }
+		  else
+		    {
+		      clustdata[voxelindex]=VOXELVISITED;
+		    }
+		} 
+		++voxelindex;
+	      }
+	  }
       }
 
     for (unsigned int i=0;i<volsize;i++)
       {
-        if (clustdata[i]<=0)
-          clustdata[i]=0;
+	if (clustdata[i]<=0)
+	  clustdata[i]=0;
       }
     
     int sumc=0,maxsize=0;
     clusters[0]=0;
     for (unsigned int i=0;i<clusters.size();i++)
       {
-        if (clusters[i]>maxsize)
-          maxsize=clusters[i];
-        sumc+=clusters[i];
+	if (clusters[i]>maxsize)
+	  maxsize=clusters[i];
+	sumc+=clusters[i];
       }
 
     if (clustersizethreshold<1)
@@ -1224,7 +1641,7 @@ namespace bisImageAlgorithms {
     
     std::vector<int> clusters;
     int maxsize=createClusterNumberImage(input,threshold,oneconnected,0,
-                                         clusterImage.get(),clusters,frame,component);
+					 clusterImage.get(),clusters,frame,component);
 
 
     if (clustersizethreshold<0)
@@ -1243,15 +1660,15 @@ namespace bisImageAlgorithms {
 
     for (int i=0;i<volsize;i++)
       {
-        int clusterno=clustdata[i];
-        if (clusterno>0) {
-          if (clusters[clusterno]>=clustersizethreshold)
-            {
-              numpass=numpass+1;
+	int clusterno=clustdata[i];
+	if (clusterno>0) {
+	  if (clusters[clusterno]>=clustersizethreshold)
+	    {
+	      numpass=numpass+1;
               for (int c=0;c<numcomp;c++)
                 odata[i+c*volsize]=idata[i+c*volsize];
             }
-        }
+	}
       }
 
     std::cout << "+ +  cluster size masking biggest_cluster=" << maxsize << " threshold=" << clustersizethreshold << " numpass=" << numpass << std::endl;
@@ -1278,24 +1695,24 @@ namespace bisImageAlgorithms {
       //      std::cout << "\n Processing axis " << i << " bounds=" << mina << ":" << maxa << std::endl;
       
       if (i!=3)
-        {
-          if (mina<-100)
-            mina=-100;
-          if (maxa>dim[i]+100)
-            maxa=dim[i]+100;
-        }
+	{
+	  if (mina<-100)
+	    mina=-100;
+	  if (maxa>dim[i]+100)
+	    maxa=dim[i]+100;
+	}
       else
-        {
-          if (mina<0)
-            mina=0;
-          if (maxa>dim[3])
-            maxa=dim[3];
-        }
+	{
+	  if (mina<0)
+	    mina=0;
+	  if (maxa>dim[3])
+	    maxa=dim[3];
+	}
 
       if (incr[i]<1)
-        incr[i]=1;
+	incr[i]=1;
       else if (incr[i]>dim[i])
-        incr[i]=dim[i];
+	incr[i]=dim[i];
 
     
       //      std::cout << "i=" << i << ", min=" << mina << "," << maxa << " " << incr[i] << std::endl;
@@ -1308,8 +1725,8 @@ namespace bisImageAlgorithms {
     }
 
     /*    std::cout << "Out dim = " << outdim[0] << "," << outdim[1] << "," << outdim[2] << "," << outdim[3] << std::endl;
-          std::cout << "Out shift = " << shift[0] << "," << shift[1] << "," << shift[2] << "," << shift[3] << std::endl;
-          std::cout << "Out spa = " << outspa[0] << "," << outspa[1] << "," << outspa[2] << "," << outspa[3] << std::endl;*/
+	  std::cout << "Out shift = " << shift[0] << "," << shift[1] << "," << shift[2] << "," << shift[3] << std::endl;
+	  std::cout << "Out spa = " << outspa[0] << "," << outspa[1] << "," << outspa[2] << "," << outspa[3] << std::endl;*/
 
     int in_slicesize=dim[0]*dim[1];
     int in_volsize=in_slicesize*dim[2];
@@ -1332,40 +1749,40 @@ namespace bisImageAlgorithms {
     // Mapping  (i*incr+shift)
     for (int c=0;c<dim[4];c++)
       {
-        for (int f=0;f<outdim[3];f++)
-          {
-            int newf=(f*incr[3]+shift[3]);
-            if (newf>=0 && newf<dim[3])
-              {
-                int in_offset=c*in_csize+newf*in_volsize;
-                int out_offset=c*out_csize+f*out_volsize;
-                for (int k=0;k<outdim[2];k++)
-                  {
-                    int newk=(k*incr[2]+shift[2]);
-                    if (newk>=0 && newk<dim[2])
-                      {
-                        int in_k=newk*in_slicesize;
-                        int out_k=k*out_slicesize;
-                        for (int j=0;j<outdim[1];j++)
-                          {
-                            int newj=(j*incr[1]+shift[1]);
-                            if (newj>=0 && newj<dim[1])
-                              {
-                                int in_j=newj*dim[0];
-                                int out_j=j*outdim[0];
-                
-                                for (int i=0;i<outdim[0];i++)
-                                  {
-                                    int newi=(i*incr[0]+shift[0]);
-                                    if (newi>=0 && newi<dim[0])
-                                      odata[out_offset+out_k+out_j+i]=idata[in_offset+in_k+in_j+newi];
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
+	for (int f=0;f<outdim[3];f++)
+	  {
+	    int newf=(f*incr[3]+shift[3]);
+	    if (newf>=0 && newf<dim[3])
+	      {
+	    	int in_offset=c*in_csize+newf*in_volsize;
+		int out_offset=c*out_csize+f*out_volsize;
+		for (int k=0;k<outdim[2];k++)
+		  {
+		    int newk=(k*incr[2]+shift[2]);
+		    if (newk>=0 && newk<dim[2])
+		      {
+			int in_k=newk*in_slicesize;
+			int out_k=k*out_slicesize;
+			for (int j=0;j<outdim[1];j++)
+			  {
+			    int newj=(j*incr[1]+shift[1]);
+			    if (newj>=0 && newj<dim[1])
+			      {
+				int in_j=newj*dim[0];
+				int out_j=j*outdim[0];
+				
+				for (int i=0;i<outdim[0];i++)
+				  {
+				    int newi=(i*incr[0]+shift[0]);
+				    if (newi>=0 && newi<dim[0])
+				      odata[out_offset+out_k+out_j+i]=idata[in_offset+in_k+in_j+newi];
+				  }
+			      }
+			  }
+		      }
+		  }
+	      }
+	  }
       }
 
     return std::move(output);
@@ -1397,35 +1814,35 @@ namespace bisImageAlgorithms {
     int in_index=0;
     for (int c=0;c<dim[3]*dim[4];c++)
       {
-        int offset=c*volsize;
-        for (int k=0;k<dim[2];k++)
-          {
-            int flipk=k;
-            if (flips[2])
-              flipk=maxdim[2]-k;
-            for (int j=0;j<dim[1];j++)
-              {
-                int flipj=j;
-                if (flips[1])
-                  flipj=maxdim[1]-j;
-                for (int i=0;i<dim[0];i++)
-                  {
-                    int flipi=i;
-                    if (flips[0])
-                      flipi=maxdim[0]-i;
+	int offset=c*volsize;
+	for (int k=0;k<dim[2];k++)
+	  {
+	    int flipk=k;
+	    if (flips[2])
+	      flipk=maxdim[2]-k;
+	    for (int j=0;j<dim[1];j++)
+	      {
+		int flipj=j;
+		if (flips[1])
+		  flipj=maxdim[1]-j;
+		for (int i=0;i<dim[0];i++)
+		  {
+		    int flipi=i;
+		    if (flips[0])
+		      flipi=maxdim[0]-i;
 
-                    int out_index=offset+flipk*slicesize+flipj*dim[0]+flipi;
-                    odata[out_index]=idata[in_index];
-                    in_index=in_index+1;
-                  }
-              }
-          }
+		    int out_index=offset+flipk*slicesize+flipj*dim[0]+flipi;
+		    odata[out_index]=idata[in_index];
+		    in_index=in_index+1;
+		  }
+	      }
+	  }
       }
 
     return std::move(output);
   }
 
-  // ---------------------- -------------------
+    // ---------------------- -------------------
   template<class T> std::unique_ptr<bisSimpleImage<T> >  blankImage(bisSimpleImage<T>* input,int bounds[6])
   {
     int dim[5]; input->getDimensions(dim);
@@ -1517,9 +1934,9 @@ namespace bisImageAlgorithms {
       std::cout << "+ +  \t Smoothing (" << sigmas[0] << "," << sigmas[1] << "," << sigmas[2] << ") -->";
     std::unique_ptr<bisSimpleImage<T> > smoothed=gaussianSmoothImage(singleFrame.get(),sigmas,outsigmas,1);
     if (doprint) {
-      smoothed->getImageDimensions(i_dim);  smoothed->getImageSpacing(i_spa);     smoothed->getRange(range);
-      print_image(i_dim,i_spa,range);
-      std::cout << " vx-sigmas=(" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << ")" << std::endl;
+          smoothed->getImageDimensions(i_dim);  smoothed->getImageSpacing(i_spa);     smoothed->getRange(range);
+	  print_image(i_dim,i_spa,range);
+	  std::cout << " vx-sigmas=(" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << ")" << std::endl;
     }
 
     return std::move(smoothed);
@@ -1536,7 +1953,7 @@ namespace bisImageAlgorithms {
     float r=in_spa[0];
     for (int i=1;i<=2;i++) {
       if (in_spa[i]<r)
-        r=in_spa[i];
+	r=in_spa[i];
     }
 
     r=r*resolution_factor;
@@ -1550,7 +1967,7 @@ namespace bisImageAlgorithms {
 
     if (smoothing>0.02) {
       for (int ia=0;ia<=2;ia++)
-        sigmas[ia]=r*0.4247f*smoothing;
+	sigmas[ia]=r*0.4247f*smoothing;
     } 
 
 
@@ -1608,7 +2025,7 @@ namespace bisImageAlgorithms {
     float sigmas[3]={0,0,0};
     if (smoothing>0.02) {
       for (int ia=0;ia<=2;ia++)
-        sigmas[ia]=refspa[ia]*0.4247f*smoothing;
+	sigmas[ia]=refspa[ia]*0.4247f*smoothing;
     } 
     
     int i_dim[5]; float i_spa[5]; double range[2];
@@ -1680,10 +2097,10 @@ namespace bisImageAlgorithms {
     int threequarter=(volsize*3/4);
 
     /*        
-              if (debug>1) {
-              std::cout << "Image Size = " << volsize << " indices="<< quarter << ":" << middle << ":" << threequarter << std::endl;
-              std::cout << "Image Values = " << idata[quarter] << ":" << idata[middle] << ":" << idata[threequarter] << std::endl;
-              }*/
+    if (debug>1) {
+      std::cout << "Image Size = " << volsize << " indices="<< quarter << ":" << middle << ":" << threequarter << std::endl;
+      std::cout << "Image Values = " << idata[quarter] << ":" << idata[middle] << ":" << idata[threequarter] << std::endl;
+      }*/
 
     std::nth_element(odata,odata+quarter,odata+volsize);
     float s1=odata[quarter];
@@ -1708,7 +2125,7 @@ namespace bisImageAlgorithms {
   }
 
 
-  // ---------------------- -------------------
+    // ---------------------- -------------------
 
   // namespace end
 }

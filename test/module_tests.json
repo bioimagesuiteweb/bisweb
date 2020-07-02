@@ -274,7 +274,7 @@
 	},
 	{
 	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --imagesmoothing 1.0 --optimization ConjugateGradient --stepsize 0.25 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
-	    "test"    : "--test_target testdata/newtests/linear.matr --test_type matrixtransform ",
+	    "test"    : "--test_target testdata/newtests/linear2.matr --test_type matrixtransform ",
 	    "result"  : true,
 	    "dopython": true
 	},
