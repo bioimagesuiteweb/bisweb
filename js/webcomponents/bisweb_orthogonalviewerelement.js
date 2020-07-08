@@ -1152,7 +1152,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.imagespa=volume.getSpacing();
             this.internal.maxspa=this.internal.imagespa[2];
             // TODO: One day do proper 5D
-            this.remapDimensionsTo4D(this.internal.imagedim);
+            this.remapDimensionsTo4D(this.internal.imagedim,volume);
         }
 
         this.internal.maxnumframes=this.internal.imagedim[3];

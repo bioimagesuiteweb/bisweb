@@ -1203,9 +1203,14 @@ class BaseViewerElement extends HTMLElement {
     /** remap dimensions to 4D 
      * @param{Array} idim -- input/output 5 dimensional array
      */
-    remapDimensionsTo4D(dim) {
+    remapDimensionsTo4D(dim,volume) {
         // TODO: One day do proper 5D
         // Force everything to 4D for now ...
+        if (volume) {
+            if (dim[4]===3 && volume.getDataType()==='uchar')
+                return;
+        }
+        
         if (dim[4]>1) {
             dim[3]=dim[3]*dim[4];
             dim[4]=1;

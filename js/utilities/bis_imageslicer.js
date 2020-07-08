@@ -50,7 +50,7 @@ class BisImageSlicer {
             imagespa : null,
             imageorientinvaxis : [ 0,1,2],
             imageorientinvflip : [ 0,0,0],
-            
+            iscolor : false,
             // Parameters
             plane : 0 ,
             currentslice : -1,
@@ -140,11 +140,18 @@ class BisImageSlicer {
         
         this.internal.imagedata=bisimage.getImageData();
         this.internal.imagedim=bisimage.getDimensions();
+
         if (this.internal.imagedim[4]>1) {
-            // TODO: One day do proper 5D
-            // Force everything to 4D for now ...
-            this.internal.imagedim[3]=this.internal.imagedim[3]*this.internal.imagedim[4];
-            this.internal.imagedim[4]=1;
+            if (this.internal.imagedim[4]===3 && this.internal.imagedata.constructor.name==='Uint8Array') {
+                this.internal.iscolor=true;
+                console.log('Color!!!!');
+            } else {
+                // TODO: One day do proper 5D
+                // Force everything to 4D for now ...
+                
+                this.internal.imagedim[3]=this.internal.imagedim[3]*this.internal.imagedim[4];
+                this.internal.imagedim[4]=1;
+            }
         }
         
         this.internal.plane=util.range(opts.plane,0,2);
@@ -248,6 +255,9 @@ class BisImageSlicer {
      */
     getslice(slice,frame,mapfunction) { 
 
+        if (this.internal.iscolor)
+            return this.getColorSlice(slice,frame);
+        
         frame = frame || 0;
         mapfunction = mapfunction || this.internal.mapfunction;
         this.internal.outofrange=false;
@@ -258,6 +268,8 @@ class BisImageSlicer {
         this.internal.nexttimeforce=false;
         this.internal.currentslice=slice;
         this.internal.currentframe=frame;
+
+        
         
         let sourceWidth=this.internal.imagedim[0];
         let sourceHeight=this.internal.imagedim[1];
@@ -335,7 +347,95 @@ class BisImageSlicer {
         
         return this.internal.outputslice;
     }
-    
+
+
+    getColorSlice(slice,frame) { 
+
+        frame = frame || 0;
+        this.internal.outofrange=false;
+        
+        if (this.internal.canvas!==null)
+            this.prepareCanvas();
+
+        this.internal.nexttimeforce=false;
+        this.internal.currentslice=slice;
+        this.internal.currentframe=frame;
+
+        
+        
+        let sourceWidth=this.internal.imagedim[0];
+        let sourceHeight=this.internal.imagedim[1];
+        let sourceDepth=this.internal.imagedim[2];
+        let voloffset=(sourceWidth*sourceHeight*sourceDepth)*this.internal.currentframe;
+        let coloffset=(sourceWidth*sourceHeight*sourceDepth*this.internal.imagedim[3]);
+
+        if (this.internal.outputslice===null)
+            this.internal.outputslice=new Uint8Array(this.internal.slicedim[0]*this.internal.slicedim[1]*4);
+
+        if (this.internal.plane==2) {
+            if (this.internal.currentslice<0 || this.internal.currentslice>=sourceDepth) {
+                for (let ij=0;ij<sourceHeight*sourceWidth*4;ij++) 
+                    this.internal.outputslice[ij]=0;
+                this.internal.outofrange=true;
+            } else {
+                let offset=this.internal.currentslice*this.internal.imagedim[0]*this.internal.imagedim[1]+voloffset;
+                let outindex=0;
+                let index=0;
+                for (let j=0;j<sourceHeight;j++) {
+                    for (let i=0;i<sourceWidth;i++) {
+                        for (let k=0;k<=2;k++) {
+                            this.internal.outputslice[outindex+k]= this.internal.imagedata[offset+index+k*coloffset];
+                        }
+                        this.internal.outputslice[outindex+3]=255;
+                        ++index; outindex+=4;
+                    }
+                }
+            }
+        } else if (this.internal.plane===1) {
+            if (this.internal.currentslice<0 || this.internal.currentslice>=sourceHeight) {
+                for (let ij=0;ij<sourceDepth*sourceWidth*4;ij++) 
+                    this.internal.outputslice[ij]=0;
+                this.internal.outofrange=true;
+            } else {
+                let outindex=0;
+                for (let j=0;j<sourceDepth;j++) {
+                    let sliceoffset= voloffset+j*sourceWidth*sourceHeight+this.internal.currentslice*sourceWidth;
+                    for (let i=0;i<sourceWidth;i++) {
+                        for (let k=0;k<=2;k++) {
+                            this.internal.outputslice[outindex+k]= this.internal.imagedata[sliceoffset+i+k*coloffset];
+                        }
+                        this.internal.outputslice[outindex+3]=255;
+                        outindex+=4;
+                    }
+                }
+            }
+        } else {
+            if (this.internal.currentslice<0 || this.internal.currentslice>=sourceWidth) {
+                for (let ij=0;ij<sourceDepth*sourceHeight*4;ij++) 
+                    this.internal.outputslice[ij]=0;
+                this.internal.outofrange=true;
+            } else {
+                let outindex=0;
+                for (let j=0;j<sourceDepth;j++) {
+                    let sliceoffset=j*sourceWidth*sourceHeight+this.internal.currentslice+voloffset;
+                    for (let i=0;i<sourceHeight;i++) {
+                        for (let k=0;k<=2;k++) 
+                            this.internal.outputslice[outindex+k]=this.internal.imagedata[sliceoffset+i*sourceWidth+k*coloffset];
+                        this.internal.outputslice[outindex+3]=255;
+                        outindex+=4;
+                    }
+                }
+            }
+        }
+
+        if (this.internal.canvas!==null) {
+            this.internal.canvas.getContext("2d").putImageData(this.internal.canvasdata,0,0);
+            return this.internal.canvas;
+        }
+        
+        return this.internal.outputslice;
+    }
+
 
     /** Get the last slice and frame used to create slice by {@link BisImageSlicer.getslice}.
      * @returns {array } - [ lastslice,lastframe ]

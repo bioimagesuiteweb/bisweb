@@ -30,6 +30,7 @@ const util=require('bis_util');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisgenericio=require("bis_genericio");
 const tiff=require('tiff2');
+const geotiff=require('geotiff');
 const bisheader = require("bis_header.js");
 const simplemat=require('bis_simplemat');
 const numeric=require('numeric');
@@ -132,7 +133,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. If "LAS" force to LAS (.nii.gz only).  Else do nothing
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
-    load(fobj,forceorient) {
+    async load(fobj,forceorient) {
 
 
         forceorient = userPreferences.sanitizeOrientationOnLoad(forceorient ||  userPreferences.getImageOrientationOnLoad());
@@ -141,52 +142,57 @@ class BisWebImage extends BisWebDataObject {
         }
         const self=this;
 
-        return new Promise( (resolve,reject) => {
-            bisgenericio.read(fobj,true).then( function(obj) {
-                self.initialize();
+        let obj=null;
 
-                let ext=obj.filename.split('.').pop().toLowerCase();
-                if (ext==="tif" || ext==="tiff")  {
-                    if (obj.data.constructor.name === "Uint8Array")
-                        self.parseTIFF(obj.data.buffer,obj.filename,forceorient);
-                    else
-                        self.parseTIFF(obj.data,obj.filename,forceorient);
+        try {
+            obj=await bisgenericio.read(fobj,true);
+        } catch(e) {
+            return Promise.reject(e);
+        }
+        
+        self.initialize();
+        
+        let ext=obj.filename.split('.').pop().toLowerCase();
+        if (ext==="tif" || ext==="tiff")  {
+            try {
+                if (obj.data.constructor.name === "Uint8Array")
+                    await self.parseTIFF(obj.data.buffer,obj.filename,forceorient);
+                else
+                    await self.parseTIFF(obj.data,obj.filename,forceorient);
+            } catch(e) {
+                return Promise.reject(e);
+            }
+            
+            self.commentlist.push({ 'Import' : 'read from tiff '+obj.filename });
+            self.internal.header.setExtensionsFromArray(self.commentlist);
+        } else if (ext==="nrrd") {
+            //console.log("Name=",obj.data.constructor.name);
+            if (obj.data.constructor.name === "Uint8Array")
+                self.parseNRRD(obj.data.buffer,obj.filename,forceorient);
+            else
+                self.parseNRRD(obj.data,obj.filename,forceorient);
+            
+            self.commentlist.push({'Import' : '... read from nrrd '+obj.filename});
+            self.internal.header.setExtensionsFromArray(self.commentlist);
+        }else {
+            try {
+                self.parseNIIModular(obj.data.buffer,forceorient);
+            } catch(e) {
+                return Promise.reject('Failed to load from '+fobj + '('+e+')');
+            }
+        }
+        
+		let newfname=obj.filename;
+        self.setFilename(bisgenericio.getFixedLoadFileName(newfname));
+        
+        console.log('++++\t loaded image from '+newfname+'. Dim=',self.getDimensions(),self.getOrientationName()+' spa='+self.getSpacing() + ' type='+self.getDataType());
+        if (self.internal.forcedorientationchange) {
+            console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
+            self.commentlist.push({ "Operation" : "On Load from "+newfname+" reoriented to "+self.internal.orient.name+" to match user preferences."});
+            self.internal.header.setExtensionsFromArray(self.commentlist);
+        }
+        
 
-                    self.commentlist.push({ 'Import' : 'read from tiff '+obj.filename });
-                    self.internal.header.setExtensionsFromArray(self.commentlist);
-                } else if (ext==="nrrd") {
-                    //console.log("Name=",obj.data.constructor.name);
-                    if (obj.data.constructor.name === "Uint8Array")
-                        self.parseNRRD(obj.data.buffer,obj.filename,forceorient);
-                    else
-                        self.parseNRRD(obj.data,obj.filename,forceorient);
-
-                    self.commentlist.push({'Import' : '... read from nrrd '+obj.filename});
-                    self.internal.header.setExtensionsFromArray(self.commentlist);
-                }else {
-                    try {
-                        self.parseNIIModular(obj.data.buffer,forceorient);
-                    } catch(e) {
-                        reject('Failed to load from '+fobj + '('+e+')');
-                        reject(e);
-                    }
-                }
-
-				let newfname=obj.filename;
-                self.setFilename(bisgenericio.getFixedLoadFileName(newfname));
-
-                console.log('++++\t loaded image from '+newfname+'. Dim=',self.getDimensions(),self.getOrientationName()+' spa='+self.getSpacing() + ' type='+self.getDataType());
-                if (self.internal.forcedorientationchange) {
-                    console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
-                    self.commentlist.push({ "Operation" : "On Load from "+newfname+" reoriented to "+self.internal.orient.name+" to match user preferences."});
-                    self.internal.header.setExtensionsFromArray(self.commentlist);
-                } /*else {
-                    console.log('++++ \t\t maintained original orientation ');
-                }*/
-
-                resolve();
-            }).catch( (e)=> { reject(e); });
-        });
     }
 
     /** saves an image to a filename. This is a messy function depending on whether one is in
@@ -1129,7 +1135,7 @@ class BisWebImage extends BisWebDataObject {
         this.setFilename(fname);
         this.commentlist= [ 'loaded from '+ fname +' forceorient='+forceorient ];
         this.computeIntensityRange();
-        return;
+        return Promise.resolve('done');
     }
 
 
@@ -1138,7 +1144,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {String} filename -- the original filename
      * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
      */
-    parseTIFF(inputbuffer,filename,forceorient) {
+    async parseTIFF(inputbuffer,filename,forceorient) {
 
         this.debug=1;
         const internal=this.internal;
@@ -1146,8 +1152,7 @@ class BisWebImage extends BisWebDataObject {
         let numframes=tiff.pageCount(input_rawdata);
 
         if (numframes===1) {
-            this.parseSingleFrameTIFF(input_rawdata,filename,forceorient);
-            return;
+            return this.parseSingleFrameTIFF(input_rawdata,filename,forceorient);
         }
 
         let orient='LPS';
@@ -1161,6 +1166,13 @@ class BisWebImage extends BisWebDataObject {
         let decoder=tiff.newobject(input_rawdata);
         decoder.decodeHeader();
 
+        let origFrame=decoder.decodeIFD({ignoreImageData: false});
+
+        if (origFrame.components>1) {
+            // Color image
+            return this.parseColorTIFFStack(inputbuffer,filename,forceorient);
+        }
+        
         let numpieces=500;
         if (numpieces>numframes)
             numpieces=numframes;
@@ -1174,8 +1186,9 @@ class BisWebImage extends BisWebDataObject {
         for (let f=0;f<numframes;f++) {
 
             //let readoffset=decoder.nextIFD;
-
-            let frame=decoder.decodeIFD({ignoreImageData: false});
+            let frame=origFrame;
+            if (f>0)
+                frame=decoder.decodeIFD({ignoreImageData: false});
 
 
 
@@ -1296,8 +1309,82 @@ class BisWebImage extends BisWebDataObject {
 
         this.computeIntensityRange();
         this.setFilename(filename);
+        return Promise.resolve('done');
     }
 
+
+
+
+    /** parse color multipage tiff file -- parses multipage tiff document
+     * @param {Uint8Array} input_rawdata -- the raw data
+     * @param {String} filename -- the original filename
+     * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
+     * @returns Promise
+     */
+    async parseColorTIFFStack(rawdata,fname,forceorient) {
+
+        console.log('Data=',rawdata.constructor.name);
+        const tiff = await geotiff.fromArrayBuffer(rawdata);
+        const count=await tiff.getImageCount();
+        console.log('Tiff=',Object.keys(tiff),count);
+
+        const origImage=await tiff.getImage(0);
+        const height=origImage.getHeight();
+        const width=origImage.getWidth();
+        //        const res=origImage.getResolution();
+        const numbytes=origImage.getBytesPerPixel();
+        const samples=origImage.getSamplesPerPixel();
+
+        console.log('height=',height,width,'r=',samples,numbytes);
+        
+
+        this.createImage( { dimensions : [ width,height,count],
+                            numframes :  1,
+                            numcomponents : samples,
+                            spacing : [ 1.0,1.0,1.0 ],
+                            type : 'uchar',
+                            orientation : 'RAS',
+                          });
+        console.log("Desc=",this.getDescription());
+        let data=this.getImageData();
+        //let offset=0;
+        let numpixels=width*height;
+        let volsize=width*height*count;
+        for (let page=0;page<count;page++) {
+            
+            let frame=origImage;
+            if (page>0) {
+                frame=await tiff.getImage(page);
+            }
+            const components=await frame.readRasters();
+            let offset=page*numpixels;
+            for (let c=0;c<samples;c++) {
+                for (let pixel=0;pixel<numpixels;pixel++) {
+                    data[offset+pixel]=components[c][pixel];
+                }
+                offset=offset+volsize;
+            }
+        }
+        // Eliminate Nan's
+        for (let i=0;i<data.length;i++) {
+            if (data[i]!==data[i])
+                data[i]=0;
+        }
+
+
+        if (fname.name)
+            fname=fname.name;
+        this.setFilename(fname);
+        this.commentlist= [ 'loaded color tiff from '+ fname ];
+        this.computeIntensityRange();
+        return Promise.resolve('Done');
+    }
+
+
+    
+    
+
+    
     /** Legacy Debug Print Function */
     printinfo(comment) {
         const internal=this.internal;
@@ -2081,6 +2168,7 @@ class BisWebImage extends BisWebDataObject {
         return Promise.resolve(this.tmpheaderinfo);
     }
 
+    
 
 }
 

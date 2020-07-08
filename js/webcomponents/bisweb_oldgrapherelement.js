@@ -533,12 +533,11 @@ class OldGrapherModule extends HTMLElement {
         let numrows = dim[1];
         let numcols = dim[0];
 
-        let out = " ,";
+        let out = "Values,";
         for (let pass = 0; pass <= 2; pass++) {
-
-            if (pass == 1)
+            if (pass === 1)
                 out += "Volume (voxels),";
-            if (pass == 2)
+            else if (pass === 2)
                 out += "\nFrame,";
 
             for (let col = 0; col < numcols; col++) {
@@ -547,6 +546,13 @@ class OldGrapherModule extends HTMLElement {
                         out += `Region ${col + 1}`;
                     else
                         out += `${this.lastdata.numvoxels[col]}`;
+                    if (col < numcols - 1)
+                        out += ',';
+                } else {
+                    if (pass === 0 || pass === 2)
+                        out += `Region ${col + 1}`;
+                    else
+                        out += '0.0';
                     if (col < numcols - 1)
                         out += ',';
                 }
@@ -560,6 +566,10 @@ class OldGrapherModule extends HTMLElement {
             for (let col = 0; col < numcols; col++) {
                 if (this.lastdata.numvoxels[col]>0) {
                     line += `${this.lastdata.y[col][row]}`;
+                    if (col < numcols - 1)
+                        line += ',';
+                } else {
+                    line += '0.0';
                     if (col < numcols - 1)
                         line += ',';
                 }
