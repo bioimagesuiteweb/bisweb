@@ -330,6 +330,7 @@ class bisImage(bisBaseObject):
             if fileExtension == 'tif' or fileExtension == 'tiff':
 
                 from PIL import Image, ImageSequence #for TIFF support
+                import pdb
                 img = Image.open(fname)
                 imgl = []
                 for page in ImageSequence.Iterator(img):
@@ -365,7 +366,8 @@ class bisImage(bisBaseObject):
 
 
         try:
-            out_image = nib.Nifti1Image(self.data_array, self.affine);
+            out_image = nib.Nifti1Image(self.data_array, self.affine)
+            out_image.header.set_zooms(self.spacing)
             nib.save(out_image, fname)
             self.filename=fname;
             print('++++\t saved image in ',fname);
