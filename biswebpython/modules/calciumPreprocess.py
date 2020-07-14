@@ -302,21 +302,31 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         return opImg,targetFrame,opTransform
 
-    def applyMotionCorrection(self,image,transform):
+    def applyMotionCorrection(self,image,transform,ref=None):
         '''
         Expects an image in the form of an np array of size X x Y x T
         '''
 
         ipImageShape=image.shape
-        numFrames=ipImageShape[2]
-        opImg=np.zeros(ipImageShape,dtype='int16')
+        xDim,yDim,numFrames=ipImageShape
+        #xDimRes = round(xDim/2)
+        #yDimRes = round(yDim/2)
+        if type(ref) == np.ndarray:
+            xDimRes,yDimRes = ref.shape
+            opImg=np.zeros([xDimRes,yDimRes,numFrames],dtype='int16')
+            ref = bis_objects.bisImage().create(ref,[2,2,2,1,1],np.eye(4))
+        else:
+            opImg=np.zeros([xDim,yDim,numFrames],dtype='int16')
+
 
         for frame in range(0,numFrames):
             extractedFrame= image[:,:,frame]
             frameXfm = transform[:,:,frame]
             ipImg = bis_objects.bisImage().create(extractedFrame,[1,1,1,1,1],np.eye(4))
             doReslice=resliceImage()
+            #params = {"dimensions": [xDimRes,yDimRes,1],"spacing": [2.0,2.0,2.0],"interpolation":1}
             fileSpec={'input' :  ipImg,
+                    'reference': ref,
                     'xform':frameXfm}
             doReslice.execute(fileSpec)
             opImgObj=doReslice.getOutputObject('output')
@@ -408,10 +418,14 @@ class calciumPreprocess(bis_basemodule.baseModule):
         from skimage import feature
 
         # Num frames
-        tslength=ipimg.shape[2]
+        dimx,dimy,tslength=ipimg.shape
+        
+        if numFramesToUse > tslength:
+            numFramesToUse = tslength
+
 
         # Reshape to space by time
-        imgDataBeforeFlat=np.reshape(ipimg,[512*500,tslength])
+        imgDataBeforeFlat=np.reshape(ipimg,[dimx*dimy,tslength])
 
         # Shorten image
         meanTSOrig=imgDataBeforeFlat.mean(axis=0)
@@ -431,7 +445,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         # Dilate these structures
         struct1 = morphology.generate_binary_structure(2, 2)
-        spatialMaskSq = np.reshape(spatialMask,[512,500])
+        spatialMaskSq = np.reshape(spatialMask,[dimx,dimy])
         spatialMaskSq= morphology.binary_dilation(spatialMaskSq,iterations=dilationIters,structure=struct1)
         spatialMask=spatialMaskSq.flatten()
 
@@ -461,10 +475,10 @@ class calciumPreprocess(bis_basemodule.baseModule):
         imgNormMSE=np.mean(imgNormDemean**2,axis=1)
 
         # Reshape to "square" image for display
-        meanImgSq=np.reshape(meanImg,[512,500])
-        meanImgMaskSq=np.reshape(meanImgMask,[512,500])
-        imgNormMSESq=np.reshape(imgNormMSE,[512,500])
-        stdImgSq=np.reshape(stdImg,[512,500])
+        meanImgSq=np.reshape(meanImg,[dimx,dimy])
+        meanImgMaskSq=np.reshape(meanImgMask,[dimx,dimy])
+        imgNormMSESq=np.reshape(imgNormMSE,[dimx,dimy])
+        stdImgSq=np.reshape(stdImg,[dimx,dimy])
 
 
         # Automated mask
@@ -486,6 +500,23 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         return opImg
 
+    def writeNiiImg(self,opArr, opname, opDims, opAffine, reshape4D = False):
+        
+        imgShape = opArr.shape
+
+        if len(imgShape) == 3:
+            imgX,imgY,imgT = imgShape
+
+            if reshape4D:
+                opArr = np.reshape(opArr,[imgX,imgY,1,imgT])
+
+        elif len(imgShape) == 4:
+            imgX,imgY,_,imgT = imgShape      
+        else:
+            raise Exception('Images to be saved should be 3 or 4D')      
+
+        out = bis_objects.bisImage().create(opArr,opDims,opAffine)
+        out.save(opname)
         
 
     def directInvokeAlgorithm(self,vals):
@@ -502,6 +533,16 @@ class calciumPreprocess(bis_basemodule.baseModule):
         segnum = vals['segnum']
         outputEveryStep = debug
 
+
+        # Op nifti configs
+        dimsOp = [0.025,0.025,0.025,1]
+        aff = np.eye(4)
+        aff[1,1] = -1
+        aff[2,2] = -1
+        aff = aff * 0.025
+        aff[3,3] = 1
+
+        
         # Load inputs        
         inputMovie = self.inputs['blue'].get_data().astype(np.float32)
         #if not createMask:
@@ -509,35 +550,39 @@ class calciumPreprocess(bis_basemodule.baseModule):
         if not createMCRef:
             MCRefBlue = self.inputs['mcrefblue'].get_data()
             MCRefUv = self.inputs['mcrefuv'].get_data()
-
-        if not createMask:
-            mask = self.inputs['mask'].get_data()
+        
+        if not createMask and ('mask' in self.inputs):
+            mask = np.squeeze(self.inputs['mask'].get_data().astype(int))
+        elif not createMask and ('mask' not in self.inputs):
+            raise Exception('If createMask != True you must give the path to a mask')
 
         inputTrigs = vals['opticalorder']
         inputTrigs=pd.read_csv(inputTrigs,index_col=0)
         opticalOrder=inputTrigs['opticalOrder'].values
 
         if outputEveryStep and not os.path.isfile(os.path.join(workdir,'calcium_movie_all.nii.gz')):
-            out = bis_objects.bisImage().create(inputMovie,[1,1,1,1,1],np.eye(4))
-            out.save(os.path.join(workdir,'calcium_movie_all.nii.gz'))
+            self.writeNiiImg(inputMovie, os.path.join(workdir,'calcium_movie_all.nii.gz'), dimsOp, aff,reshape4D = True)
+
 
 
         # Check triggers!
 
         #blueMovie,uvMovie = calcium_image.channelSeparate(inputMovie)
-        if segnum == 1:
-            opticalOrder=opticalOrder[:inputMovie.shape[2]]
-        elif segnum == 2:
-            opticalOrder=opticalOrder[4179:4179*2]
-        elif segnum == 3:
-            opticalOrder=opticalOrder[4179*2:]
+        #if segnum == 1:
+        #    opticalOrder=opticalOrder[:inputMovie.shape[2]]
+        #elif segnum == 2:
+        #    opticalOrder=opticalOrder[4179:4179*2]
+        #elif segnum == 3:
+        #    opticalOrder=opticalOrder[4179*2:]
         
         blueMovie = inputMovie[:,:,opticalOrder == 1]
         uvMovie = inputMovie[:,:,opticalOrder == 2]
+
+
         del inputMovie
 
-        if self.inputs['mask']:
-            mask = self.inputs['mask'].get_data()
+        #if self.inputs['mask']:
+        #    mask = self.inputs['mask'].get_data()
 
 
 
@@ -550,37 +595,53 @@ class calciumPreprocess(bis_basemodule.baseModule):
         if outputEveryStep:
             oppath = os.path.join(workdir,'calcium_blue_movie.nii.gz')
             if not os.path.isfile(oppath):
-                out = bis_objects.bisImage().create(blueMovie,[1,1,1,1,1],np.eye(4))
-                out.save(oppath)
+                self.writeNiiImg(blueMovie, oppath, dimsOp, aff, reshape4D = True)
 
             oppath = os.path.join(workdir,'calcium_uv_movie.nii.gz')
-            if not os.path.isfile(oppath):      
-                out = bis_objects.bisImage().create(uvMovie,[1,1,1,1,1],np.eye(4))
-                out.save(oppath)
-
-        #### Smooth Data ######
+            if not os.path.isfile(oppath):
+                self.writeNiiImg(uvMovie, oppath, dimsOp, aff, reshape4D = True)
+        #### Smooth Data 16 Filt ######
         
         blueSmoothOppath = os.path.join(workdir,'calcium_blue_movie_smooth16.nii.gz')
         uvSmoothOppath = os.path.join(workdir,'calcium_uv_movie_smooth16.nii.gz')
 
         if not os.path.isfile(blueSmoothOppath):
             blueSmooth=self.smoothImage(blueMovie)
-            out = bis_objects.bisImage().create(blueSmooth,[1,1,1,1,1],np.eye(4))
-            out.save(blueSmoothOppath)
+            self.writeNiiImg(blueSmooth, blueSmoothOppath, dimsOp, aff, reshape4D = True)
         else:
             blueSmoothObj = nb.Nifti1Image.load(blueSmoothOppath)
-            blueSmooth = blueSmoothObj.get_fdata(dtype = np.float32)
+            blueSmooth = blueSmoothObj.get_fdata(dtype = np.float32).squeeze()
 
         if not os.path.isfile(uvSmoothOppath):
             uvSmooth=self.smoothImage(uvMovie)
-            out = bis_objects.bisImage().create(uvSmooth,[1,1,1,1,1],np.eye(4))
-            out.save(uvSmoothOppath)
+            self.writeNiiImg(uvSmooth, uvSmoothOppath, dimsOp, aff, reshape4D = True)
         else:
             uvSmoothObj = nb.Nifti1Image.load(uvSmoothOppath)
-            uvSmooth = uvSmoothObj.get_fdata(dtype = np.float32)
+            uvSmooth = uvSmoothObj.get_fdata(dtype = np.float32).squeeze()
 
 
-        ###########################
+
+        #### Smooth Data 4 Filt ######
+
+        blueSmooth4Oppath = os.path.join(workdir,'calcium_blue_movie_smooth4.nii.gz')
+        uvSmooth4Oppath = os.path.join(workdir,'calcium_uv_movie_smooth4.nii.gz')
+
+        if not os.path.isfile(blueSmooth4Oppath):
+            blueSmooth4=self.smoothImage(blueMovie,width=4)
+            self.writeNiiImg(blueSmooth4, blueSmooth4Oppath, dimsOp, aff, reshape4D = True) 
+        else:
+            blueSmooth4Obj = nb.Nifti1Image.load(blueSmoothOppath)
+            blueSmooth4 = blueSmoothObj.get_fdata(dtype = np.float32).squeeze()
+
+        if not os.path.isfile(uvSmooth4Oppath):
+            uvSmooth4=self.smoothImage(uvMovie,width = 4)
+            self.writeNiiImg(uvSmooth4, uvSmooth4Oppath, dimsOp, aff, reshape4D = True)
+        else:
+            uvSmooth4Obj = nb.Nifti1Image.load(uvSmooth4Oppath)
+            uvSmooth4 = uvSmooth4Obj.get_fdata(dtype = np.float32).squeeze()
+
+
+        #### Motion correction of raw data for comparison ####
    
 
         blueMovieMCPath = os.path.join(workdir,'calcium_blue_movie_mc.nii.gz')
@@ -593,14 +654,13 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if not all([os.path.isfile(blueMovieMCPath), os.path.isfile(blueMovieRefPath), os.path.isfile(opTransformBluePath)]):
             blueMovieMC,blueMovieRef,opTransformBlue = self.computeMotionCorrection(blueMovie)
-            out = bis_objects.bisImage().create(blueMovieMC,[1,1,1,1,1],np.eye(4))
-            out.save(blueMovieMCPath)
-            out = bis_objects.bisImage().create(blueMovieRef,[1,1,1,1,1],np.eye(4))
+            self.writeNiiImg(blueMovieMC, blueMovieMCPath, dimsOp, aff, reshape4D = True)
+            out = bis_objects.bisImage().create(blueMovieRef,dimsOp,aff)
             out.save(blueMovieRefPath)
             np.save(opTransformBluePath, opTransformBlue)
         else:
             blueMovieMCObj = nb.Nifti1Image.load(blueMovieMCPath)
-            blueMovieMC = blueMovieMCObj.get_fdata(dtype = np.float32)
+            blueMovieMC = blueMovieMCObj.get_fdata(dtype = np.float32).squeeze()
             blueMovieRefObj = nb.Nifti1Image.load(blueMovieRefPath)
             blueMovieRef = blueMovieRefObj.get_fdata(dtype = np.float32)
             opTransformBlue = np.load(opTransformBluePath)
@@ -609,20 +669,21 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if not all([os.path.isfile(uvMovieMCPath),os.path.isfile(uvMovieRefPath),os.path.isfile(opTransformUvPath)]):
             uvMovieMC,uvMovieRef,opTransformUv = self.computeMotionCorrection(uvMovie)
-            out = bis_objects.bisImage().create(uvMovieMC,[1,1,1,1,1],np.eye(4))
-            out.save(uvMovieMCPath)
-            out = bis_objects.bisImage().create(uvMovieRef,[1,1,1,1,1],np.eye(4))
+            self.writeNiiImg(uvMovieMC, uvMovieMCPath, dimsOp, aff, reshape4D = True)
+            out = bis_objects.bisImage().create(uvMovieRef,dimsOp,aff)
             out.save(uvMovieRefPath)
             np.save(opTransformUvPath, opTransformUv)
  
         else:
             uvMovieMCObj = nb.Nifti1Image.load(uvMovieMCPath)
-            uvMovieMC = uvMovieMCObj.get_fdata(dtype = np.float32)
+            uvMovieMC = uvMovieMCObj.get_fdata(dtype = np.float32).squeeze()
             uvMovieRefObj = nb.Nifti1Image.load(uvMovieRefPath)
             uvMovieRef = uvMovieRefObj.get_fdata(dtype = np.float32)
             opTransformUv = np.load(opTransformUvPath)
 
         del uvMovieMC
+
+        #### Motion correction  calculaiton on smooth 16 data ####
 
         blueSmoothMovieMCPath = os.path.join(workdir,'calcium_blue_movie_smooth_mc.nii.gz')
         uvSmoothMovieMCPath = os.path.join(workdir,'calcium_uv_movie_smooth_mc.nii.gz')
@@ -634,31 +695,29 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         if not all([os.path.isfile(blueSmoothMovieMCPath),os.path.isfile(blueSmoothMovieRefPath),os.path.isfile(opSmoothTransformBluePath)]):
             blueSmoothMovieMC,blueSmoothMovieRef,opSmoothTransformBlue = self.computeMotionCorrection(blueSmooth)
-            out = bis_objects.bisImage().create(blueSmoothMovieMC,[1,1,1,1,1],np.eye(4))
-            out.save(blueSmoothMovieMCPath)
-            out = bis_objects.bisImage().create(blueSmoothMovieRef,[1,1,1,1,1],np.eye(4))
+            self.writeNiiImg(blueSmoothMovieMC, blueSmoothMovieMCPath, dimsOp, aff, reshape4D = True)
+            out = bis_objects.bisImage().create(blueSmoothMovieRef,dimsOp,aff)
             out.save(blueSmoothMovieRefPath)
             np.save(opSmoothTransformBluePath, opSmoothTransformBlue)
        
         else:
             blueSmoothMovieMCObj = nb.Nifti1Image.load(blueSmoothMovieMCPath)
-            blueSmoothMovieMC = blueSmoothMovieMCObj.get_fdata(dtype = np.float32)
+            blueSmoothMovieMC = blueSmoothMovieMCObj.get_fdata(dtype = np.float32).squeeze()
             blueSmoothMovieRefObj = nb.Nifti1Image.load(blueSmoothMovieRefPath)
             blueSmoothMovieRef = blueSmoothMovieRefObj.get_fdata(dtype = np.float32)
             opSmoothTransformBlue = np.load(opSmoothTransformBluePath)
 
         if not all([os.path.isfile(uvSmoothMovieMCPath),os.path.isfile(uvSmoothMovieRefPath),os.path.isfile(opSmoothTransformUvPath)]):
             uvSmoothMovieMC,uvSmoothMovieRef,opSmoothTransformUv = self.computeMotionCorrection(uvSmooth)
-            out = bis_objects.bisImage().create(uvSmoothMovieMC,[1,1,1,1,1],np.eye(4))
-            out.save(uvSmoothMovieMCPath)
-            out = bis_objects.bisImage().create(uvSmoothMovieRef,[1,1,1,1,1],np.eye(4))
+            self.writeNiiImg(uvSmoothMovieMC, uvSmoothMovieMCPath, dimsOp, aff, reshape4D = True) 
+            out = bis_objects.bisImage().create(uvSmoothMovieRef,dimsOp,aff)
             out.save(uvSmoothMovieRefPath)
             np.save(opSmoothTransformUvPath, opSmoothTransformUv)
        
 
         else:
             uvSmoothMovieMCObj = nb.Nifti1Image.load(uvSmoothMovieMCPath)
-            uvSmoothMovieMC = uvSmoothMovieMCObj.get_fdata(dtype = np.float32)
+            uvSmoothMovieMC = uvSmoothMovieMCObj.get_fdata(dtype = np.float32).squeeze()
             uvSmoothMovieRefObj = nb.Nifti1Image.load(uvSmoothMovieRefPath)
             uvSmoothMovieRef = uvSmoothMovieRefObj.get_fdata(dtype = np.float32)
             opSmoothTransformUv = np.load(opSmoothTransformUvPath)
@@ -673,23 +732,21 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
             if not all([os.path.isfile(MCRefBlueComboPath), os.path.isfile(opTransformMCRefBluePath)]):
                 MCRefBlueCombo,_,opTransformMCRefBlue = self.computeMotionCorrection(blueSmoothMovieRef,regFrame=MCRefBlue)
-                out = bis_objects.bisImage().create(MCRefBlueCombo,[1,1,1,1,1],np.eye(4))
-                out.save(MCRefBlueComboPath)
+                self.writeNiiImg(MCRefBlueCombo, MCRefBlueComboPath, dimsOp, aff, reshape4D = True)
                 np.save(opTransformMCRefBluePath,opTransformMCRefBlue)
 
             else:
                 MCRefBlueComboObj = nb.Nifti1Image.load(MCRefBlueComboPath)
-                blueSmoothMovieMC = MCRefBlueComboObj.get_fdata(dtype = np.float32)
+                MCRefBlueCombo = MCRefBlueComboObj.get_fdata(dtype = np.float32).squeeze()
                 opTransformMCRefBlue = np.load(opTransformMCRefBluePath)             
 
             if not all([os.path.isfile(MCRefUvComboPath), os.path.isfile(opTransformMCRefUvPath)]):
                 MCRefUvCombo,_,opTransformMCRefUv = self.computeMotionCorrection(uvSmoothMovieRef,regFrame=MCRefUv)
-                out = bis_objects.bisImage().create(MCRefUvCombo,[1,1,1,1,1],np.eye(4))
-                out.save(MCRefUvComboPath)
+                self.writeNiiImg(MCRefUvCombo, MCRefUvComboPath, dimsOp, aff, reshape4D = True)
                 np.save(opTransformMCRefUvPath,opTransformMCRefUv)
             else:
                 MCRefUvComboObj = nb.Nifti1Image.load(MCRefUvComboPath)
-                UvSmoothMovieMC = MCRefUvComboObj.get_fdata(dtype = np.float32)
+                MCRefUvCombo = MCRefUvComboObj.get_fdata(dtype = np.float32).squeeze()
                 opTransformMCRefUv = np.load(opTransformMCRefUvPath)
 
             opSmoothTransformBlueConcat = np.zeros(opSmoothTransformBlue.shape)
@@ -703,42 +760,51 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 opSmoothTransformUvConcat[:,:,frameNum]=np.matmul(opSmoothTransformUv[:,:,frameNum],np.squeeze(opTransformMCRefUv))
 
         else:
+            MCRefBlueCombo = blueSmoothMovieRef
+            MCRefUvCombo = uvSmoothMovieRef
             opSmoothTransformBlueConcat=opSmoothTransformBlue
             opSmoothTransformUvConcat=opSmoothTransformUv
+
+        ##### Apply motion correction to smooth 4 data with reslice and downsample x 2 ####
+
 
         blueMovieMCSmXfmPath = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfm.nii.gz')
         uvMovieMCSmXfmPath = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfm.nii.gz')
         
         if not os.path.isfile(blueMovieMCSmXfmPath):
-            blueMovieMCSmXfm = self.applyMotionCorrection(blueMovie,opSmoothTransformBlueConcat)
-            out = bis_objects.bisImage().create(blueMovieMCSmXfm,[1,1,1,1,1],np.eye(4))
-            out.save(blueMovieMCSmXfmPath)
+            MCRefComboX, MCRefComboY = MCRefBlueCombo.shape
+            MCRefBlueComboDS = calcium_image.resize(MCRefBlueCombo,[round(MCRefComboX/2),round(MCRefComboY/2)])
+            blueMovieMCSmXfm = self.applyMotionCorrection(blueSmooth4,opSmoothTransformBlueConcat,ref = MCRefBlueComboDS)
+            self.writeNiiImg(blueMovieMCSmXfm, blueMovieMCSmXfmPath, dimsOp, aff, reshape4D = True)
  
         else:
             blueMovieMCSmXfmObj = nb.Nifti1Image.load(blueMovieMCSmXfmPath)
-            blueMovieMCSmXfm = blueMovieMCSmXfmObj.get_fdata(dtype=np.float32)
+            blueMovieMCSmXfm = blueMovieMCSmXfmObj.get_fdata(dtype=np.float32).squeeze()
 
         if not os.path.isfile(uvMovieMCSmXfmPath):
-            uvMovieMCSmXfm = self.applyMotionCorrection(uvMovie,opSmoothTransformUvConcat)
-            out = bis_objects.bisImage().create(uvMovieMCSmXfm,[1,1,1,1,1],np.eye(4))
-            out.save(uvMovieMCSmXfmPath)
+            MCRefComboX, MCRefComboY = MCRefUvCombo.shape
+            MCRefUvComboDS = calcium_image.resize(MCRefUvCombo,[round(MCRefComboX/2),round(MCRefComboY/2)])
+            uvMovieMCSmXfm = self.applyMotionCorrection(uvSmooth4,opSmoothTransformUvConcat,ref = MCRefUvComboDS)
+            self.writeNiiImg(uvMovieMCSmXfm, uvMovieMCSmXfmPath, dimsOp, aff, reshape4D = True)
         else:
             uvMovieMCSmXfmObj = nb.Nifti1Image.load(uvMovieMCSmXfmPath)
-            uvMovieMCSmXfm = uvMovieMCSmXfmObj.get_fdata(dtype=np.float32)
+            uvMovieMCSmXfm = uvMovieMCSmXfmObj.get_fdata(dtype=np.float32).squeeze()
 
         del blueMovie
         del uvMovie
         del blueSmooth
         del uvSmooth
         
-        blueMovieMCSmXfmSm3Path = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfmSm3.nii.gz')
-        uvMovieMCSmXfmSm3Path = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfmSm3.nii.gz')
+        #### Test different levels of smoothing ####
 
-        blueMovieMCSmXfmSm5Path = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfmSm5.nii.gz')
-        uvMovieMCSmXfmSm5Path = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfmSm5.nii.gz')
+        #blueMovieMCSmXfmSm3Path = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfmSm3.nii.gz')
+        #uvMovieMCSmXfmSm3Path = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfmSm3.nii.gz')
 
-        blueMovieMCSmXfmSm7Path = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfmSm7.nii.gz')
-        uvMovieMCSmXfmSm7Path = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfmSm7.nii.gz')
+        #blueMovieMCSmXfmSm5Path = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfmSm5.nii.gz')
+        #uvMovieMCSmXfmSm5Path = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfmSm5.nii.gz')
+
+        #blueMovieMCSmXfmSm7Path = os.path.join(workdir,'calcium_blue_movie_mc_smoothXfmSm7.nii.gz')
+        #uvMovieMCSmXfmSm7Path = os.path.join(workdir,'calcium_uv_movie_mc_smoothXfmSm7.nii.gz')
 
 
         #if not os.path.isfile(blueMovieMCSmXfmSm3Path):
@@ -803,48 +869,55 @@ class calciumPreprocess(bis_basemodule.baseModule):
             meanImgSq,imgNormMSESq, spatialMaskSq, meanImgMaskSq, stdImgSq, meanTSOrig, mask = self.MSEDiffImg(blueMovieMCSmXfm, numFramesToUse = 1500, medianFilter = 8, dilationIters = 4)
             # Save images
              
-            out = bis_objects.bisImage().create(mask.astype('int'),[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(mask.astype('int'),dimsOp,aff)
             out.save(os.path.join(workdir,'MSEMask.nii.gz'))
-            out = bis_objects.bisImage().create(imgNormMSESq,[1,1,1,1,1],np.eye(4))
+            out = bis_objects.bisImage().create(imgNormMSESq,dimsOp,aff)
             out.save(os.path.join(workdir,'MSEImage.nii.gz'))
 
        
-
         # Photobleach correction
         blueMovieFiltered,uvMovieFiltered = calcium_analysis.expRegression(blueMovieMCSmXfm,uvMovieMCSmXfm,mask)
 
         if outputEveryStep:
-            out = bis_objects.bisImage().create(blueMovieFiltered,[1,1,1,1,1],np.eye(4))
-            out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt.nii.gz'))
-            out = bis_objects.bisImage().create(uvMovieFiltered,[1,1,1,1,1],np.eye(4))
-            out.save(os.path.join(workdir,'calcium_uv_movie_mc_filt.nii.gz'))
+            self.writeNiiImg(blueMovieFiltered, os.path.join(workdir,'calcium_blue_movie_mc_filt.nii.gz'), dimsOp, aff, reshape4D = True)
+            self.writeNiiImg(uvMovieFiltered, os.path.join(workdir,'calcium_uv_movie_mc_filt.nii.gz'), dimsOp, aff, reshape4D = True)
 
 
         #### Two-wavelength Regression
         blueReg = calcium_analysis.twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovieMCSmXfm,uvMovieMCSmXfm,mask)
-        del uvMovieMCSmXfm
+        #del uvMovieMCSmXfm
         del blueMovieFiltered 
         if outputEveryStep:
-            out = bis_objects.bisImage().create(blueReg.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
+            self.writeNiiImg(blueReg, os.path.join(workdir,'calcium_blue_movie_mc_filt_regress.nii.gz'), dimsOp, aff, reshape4D = True)
+            out = bis_objects.bisImage().create(blueReg,dimsOp,aff)
             out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt_regress.nii.gz'))
 
         #### dF/F
 
         #blue
-        blueDFF,uvDFF = calcium_analysis.dFF(blueMovieMCSmXfm,uvMovieFiltered,blueReg,mask)
+        #blueBPFilt = calcium_analysis.bandpassFilt(blueReg,mask)
 
-        if outputEveryStep:
-            out = bis_objects.bisImage().create(blueDFF.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
-            out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt_regress_dff.nii.gz'))
-            out = bis_objects.bisImage().create(uvDFF.reshape(uvMovieSize),[1,1,1,1,1],np.eye(4))
-            out.save(os.path.join(workdir,'calcium_uv_movie_mc_filt_regress_dff.nii.gz'))
+        #if outputEveryStep:
+        #    out = bis_objects.bisImage().create(blueBPFilt,[1,1,1,1,1],np.eye(4))
+        #    out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt_regress_bpfilt.nii.gz'))
+        
+
+
+
+       # blueDFF,uvDFF = calcium_analysis.dFF(blueMovieMCSmXfm,uvMovieFiltered,blueBPFilt,mask)
+
+       # if outputEveryStep:
+       #     out = bis_objects.bisImage().create(blueDFF,[1,1,1,1,1],np.eye(4))
+       #     out.save(os.path.join(workdir,'calcium_blue_movie_mc_filt_regress_bpfilt_dff.nii.gz'))
+       #     out = bis_objects.bisImage().create(uvDFF,[1,1,1,1,1],np.eye(4))
+       #     out.save(os.path.join(workdir,'calcium_uv_movie_mc_filt_regress_dff.nii.gz'))
         
         # for memory
         blueMovie = []
         uvMovie = []
-        out = bis_objects.bisImage().create(blueDFF.reshape(blueMovieSize),[1,1,1,1,1],np.eye(4))
+        out = bis_objects.bisImage().create(blueReg,dimsOp,aff)
         self.outputs['blueout']=out
-        out = bis_objects.bisImage().create(uvDFF.reshape(uvMovieSize),[1,1,1,1,1],np.eye(4))
+        out = bis_objects.bisImage().create(uvMovieMCSmXfm,dimsOp,aff)
         self.outputs['uvout']=out
         
         
