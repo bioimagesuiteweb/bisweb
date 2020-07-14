@@ -366,10 +366,11 @@ class bisImage(bisBaseObject):
 
 
         try:
+            arrDims = len(self.data_array.shape)
             out_image = nib.Nifti1Image(self.data_array, self.affine)
-            out_image.header.set_zooms(self.spacing)
+            out_image.header.set_zooms(self.spacing[:arrDims])
             nib.save(out_image, fname)
-            self.filename=fname;
+            self.filename=fname
             print('++++\t saved image in ',fname);
         except:
             e = sys.exc_info()[0]
