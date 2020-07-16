@@ -48,8 +48,6 @@ module.exports = {
         'images/Reorder_Atlas.nii.gz',
         'images/Shen_1mm_368_parcellation_RAS.nii.gz',
         'images/aal_surface_atlas.bin.gz',
-        'images/allen_185_surface_atlas.bin.gz',
-        'images/allen_parcellation.nii.gz',
         'images/atlases/atlaslist.json',
         'images/atlases/humanmni.json',
         'images/atlases/mouseallenmri.json',
@@ -80,7 +78,6 @@ module.exports = {
         'images/favicon.ico',
         'images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz',
         'images/logo.jpg',
-        'images/m19_ReslicedToAllen_0.1.nii.gz',
         'images/manual.png',
         'images/mean_reg2mean.nii.gz',
         'images/mni2tal.png',
@@ -99,6 +96,15 @@ module.exports = {
         'images/yale_broadmann_ras.nii.gz',
         'images/yale_brod_xy.png',
         'images/youtube.png',
+        "images/Symmetric_N162_0.05.nii.gz",
+        "images/allen_parcellation.nii.gz",
+        "images/Symmetric_N162_0.10.nii.gz",
+        "images/allen_coarse.nii.gz",
+        "images/allen_interm.nii.gz",
+        "images/Symmetric_N162_0.10__masked.nii.gz",
+        "images/allen_interm_surface_atlas.bin.gz",
+        "images/allen_coarse_surface_atlas.bin.gz",
+        "images/N162_yaleallen_010.nii.gz",
         'index.css',
         'index.html',
         'index.js',
@@ -134,4 +140,7 @@ module.exports = {
         'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js'
     ]
 };
+
+
+
 
