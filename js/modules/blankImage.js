@@ -93,7 +93,7 @@ class BlankImageModule extends BaseModule {
             if (v1===defaultMax)
                 vals[n1]=dim[ia]-1;
         }
-        console.log('oooo invoking: blankImage with vals', JSON.stringify(vals));
+        console.log('oooo \t parameters fixed=', JSON.stringify(vals));
         return new Promise( (resolve, reject) => {
 
             biswrap.initialize().then(() => {

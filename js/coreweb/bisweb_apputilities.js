@@ -50,15 +50,15 @@ module.exports = {
                 
                 if (species==='all' || species==='mouse') {
                     
-                    webutil.createMenuItem(fmenu,'Load Yale Mouse MRI Template (0.1mm, RAS)',
+                    webutil.createMenuItem(fmenu,'Load Yale Mouse 162 MRI Template (0.1mm, RAS)',
                                            function() {
                                                let imagepath=webutil.getWebPageImagePath();
-                                               callback(`${imagepath}/m19_ReslicedToAllen_0.1.nii.gz`,viewerno,'RAS');
+                                               callback(`${imagepath}/Symmetric_N162_0.10.nii.gz`,viewerno,'RAS');
                                            });
-                    webutil.createMenuItem(fmenu,'Load Yale Mouse MRI Template (0.1mm, LPS)',
+                    webutil.createMenuItem(fmenu,'Load Yale Mouse 162 MRI Template (0.1mm, LPS)',
                                            function() {
                                                let imagepath=webutil.getWebPageImagePath();
-                                               callback(`${imagepath}/m19_ReslicedToAllen_0.1.nii.gz`,viewerno,'LPS');
+                                               callback(`${imagepath}/Symmetric_N162_0.10.nii.gz`,viewerno,'LPS');
                                            });
                 }
                 resolve();
@@ -98,12 +98,12 @@ module.exports = {
                     webutil.createMenuItem(fmenu,'Load Yale-Allen Mouse Regions (0.1mm, RAS)',
                                            function() {
                                                let imagepath=webutil.getWebPageImagePath();
-                                               callback(`${imagepath}/CCFv3_map19_0.1.nii.gz`,viewerno,'RAS');
+                                               callback(`${imagepath}/N162_yaleallen_010.nii.gz`,viewerno,'RAS');
                                            });
                     webutil.createMenuItem(fmenu,'Load Yale-Allen Mouse Regions (0.1mm, LPS)',
                                            function() {
                                                let imagepath=webutil.getWebPageImagePath();
-                                           callback(`${imagepath}/CCFv3_map19_0.1.nii.gz`,viewerno,'LPS');
+                                           callback(`${imagepath}/N162_yaleallen_010.nii.gz`,viewerno,'LPS');
                                            });
                 }
                 resolve();
