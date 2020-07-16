@@ -1170,7 +1170,7 @@ class BisWebImage extends BisWebDataObject {
 
         if (origFrame.components>1) {
             // Color image
-            return this.parseColorTIFFStack(inputbuffer,filename,forceorient);
+            return this.parseColorTIFFStack(inputbuffer,filename);
         }
         
         let numpieces=500;
@@ -1321,7 +1321,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
      * @returns Promise
      */
-    async parseColorTIFFStack(rawdata,fname,forceorient) {
+    async parseColorTIFFStack(rawdata,fname) {
 
         console.log('Data=',rawdata.constructor.name);
         const tiff = await geotiff.fromArrayBuffer(rawdata);

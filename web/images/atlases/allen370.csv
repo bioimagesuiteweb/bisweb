@@ -1,0 +1,740 @@
+1,R-Frontal pole, cerebral cortex
+2,R-Primary motor area
+3,R-Secondary motor area
+4,R-Primary somatosensory area, nose
+5,R-Primary somatosensory area, barrel field
+6,R-Primary somatosensory area, lower limb
+7,R-Primary somatosensory area, mouth
+8,R-Primary somatosensory area, upper limb
+9,R-Primary somatosensory area, trunk
+10,R-undefined,
+11,R-Supplemental somatosensory area
+12,R-Gustatory areas
+13,R-Visceral area
+14,R-Dorsal auditory area
+15,R-Primary auditory area
+16,R-Posterior auditory area
+17,R-Ventral auditory area
+18,R-Anterolateral visual area
+19,R-Anteromedial visual area
+20,R-Lateral visual area
+21,R-Primary visual area
+22,R-Posterolateral visual area
+23,R-posteromedial visual area
+24,R-undefined,
+25,R-undefined,
+26,R-Rostrolateral visual area
+27,R-Rostrolateral area, layer 6b
+28,R-Anterior cingulate area, dorsal part
+29,R-Anterior cingulate area, ventral part
+30,R-Prelimbic area
+31,R-Infralimbic area
+32,R-Orbital area, lateral part
+33,R-Orbital area, medial part
+34,R-Orbital area, ventrolateral part
+35,R-Agranular insular area, dorsal part
+36,R-Agranular insular area, posterior part
+37,R-Agranular insular area, ventral part
+38,R-Retrosplenial area, lateral agranular part
+39,R-Retrosplenial area, dorsal part
+40,R-Retrosplenial area, ventral part
+41,R-Temporal association areas
+42,R-Perirhinal area
+43,R-Ectorhinal area
+44,R-Main olfactory bulb
+45,R-Accessory olfactory bulb, glomerular layer
+46,R-Accessory olfactory bulb, granular layer
+47,R-Accessory olfactory bulb, mitral layer
+48,R-Nucleus of the lateral olfactory tract, layer 3
+49,R-Anterior olfactory nucleus
+50,R-Nucleus of the lateral olfactory tract, molecular layer
+51,R-Postpiriform transition area
+52,R-Taenia tecta
+53,R-Cortical amygdalar area, anterior part
+54,R-Cortical amygdalar area, posterior part
+55,R-Olfactory areas
+56,R-Piriform-amygdalar area
+57,R-Dorsal peduncular area
+58,R-Piriform area
+59,R-Field CA1
+60,R-Field CA2
+61,R-Field CA3
+62,R-Dentate gyrus, molecular layer
+63,R-Dentate gyrus, polymorph layer
+64,R-Dentate gyrus, granule cell layer
+65,R-Fasciola cinerea
+66,R-Subiculum
+67,R-Induseum griseum
+68,R-Parasubiculum
+69,R-Entorhinal area, lateral part
+70,R-Entorhinal area, medial part, dorsal zone
+71,R-Entorhinal area, medial part, ventral zone
+72,R-Postsubiculum
+73,R-Presubiculum
+74,R-Hippocampal formation
+75,R-Claustrum
+76,R-Endopiriform nucleus, dorsal part
+77,R-Lateral amygdalar nucleus
+78,R-Basolateral amygdalar nucleus, anterior part
+79,R-Basolateral amygdalar nucleus, posterior part
+80,R-Basomedial amygdalar nucleus
+81,R-Basolateral amygdalar nucleus, ventral part
+82,R-Cortical subplate
+83,R-Posterior amygdalar nucleus
+84,R-Endopiriform nucleus, ventral part
+85,R-Caudoputamen
+86,R-Nucleus accumbens
+87,R-Olfactory tubercle
+88,R-Lateral septal nucleus, caudal
+89,R-Septohippocampal nucleus
+90,R-Anterior amygdalar area
+91,R-Lateral septal nucleus, rostral
+92,R-Lateral septal nucleus, ventral part
+93,R-Striatum-like amygdalar nuclei
+94,R-Bed nucleus of the accessory olfactory tract
+95,R-Septofimbrial nucleus
+96,R-Medial amygdalar nucleus
+97,R-Striatum
+98,R-Central amygdalar nucleus
+99,R-Fundus of striatum
+100,R-Intercalated amygdalar nucleus
+101,R-Globus pallidus, external segment
+102,R-Globus pallidus, internal segment
+103,R-Bed nucleus of the anterior commissure
+104,R-Magnocellular nucleus
+105,R-Substantia innominata
+106,R-Bed nuclei of the stria terminalis
+107,R-Medial septal nucleus
+108,R-Triangular nucleus of septum
+109,R-Diagonal band nucleus
+110,R-Pallidum
+111,R-Ventral anterior-lateral complex of the thalamus
+112,R-Ventral medial nucleus of the thalamus
+113,R-Ventral posterolateral nucleus of the thalamus
+114,R-Ventral posteromedial nucleus of the thalamus
+115,R-Peripeduncular nucleus
+116,R-Medial geniculate complex
+117,R-Dorsal part of the lateral geniculate complex
+118,R-Lateral posterior nucleus of the thalamus
+119,R-Posterior complex of the thalamus
+120,R-Suprageniculate nucleus
+121,R-Anteroventral nucleus of thalamus
+122,R-Anteromedial nucleus
+123,R-Anterodorsal nucleus
+124,R-Lateral dorsal nucleus of thalamus
+125,R-Interanterodorsal nucleus of the thalamus
+126,R-Interanteromedial nucleus of the thalamus
+127,R-Intermediodorsal nucleus of the thalamus
+128,R-Mediodorsal nucleus of thalamus
+129,R-Submedial nucleus of the thalamus
+130,R-Paraventricular nucleus of the thalamus
+131,R-Parataenial nucleus
+132,R-Nucleus of reuniens
+133,R-Rhomboid nucleus
+134,R-Paracentral nucleus
+135,R-Central lateral nucleus of the thalamus
+136,R-Central medial nucleus of the thalamus
+137,R-Parafascicular nucleus
+138,R-Reticular nucleus of the thalamus
+139,R-Intergeniculate leaflet of the lateral geniculate complex
+140,R-Ventral part of the lateral geniculate complex
+141,R-Subgeniculate nucleus
+142,R-Medial habenula
+143,R-Lateral habenula
+144,R-Subparafascicular nucleus, magnocellular part
+145,R-Subparafascicular nucleus, parvicellular part
+146,R-Thalamus
+147,R-Subparafascicular area
+148,R-Ventral posterolateral nucleus of the thalamus, parvicellular part
+149,R-Ventral posteromedial nucleus of the thalamus, parvicellular part
+150,R-Posterior limiting nucleus of the thalamus
+151,R-Perireunensis nucleus
+152,R-Supraoptic nucleus
+153,R-Subfornical organ
+154,R-Lateral mammillary nucleus
+155,R-Medial mammillary nucleus
+156,R-Subthalamic nucleus
+157,R-Zona incerta
+158,R-Tuberomammillary nucleus, ventral part
+159,R-Periventricular hypothalamic nucleus, anterior part
+160,R-Paraventricular hypothalamic nucleus
+161,R-Paraventricular hypothalamic nucleus, descending division
+162,R-Anterodorsal preoptic nucleus
+163,R-Anterior hypothalamic nucleus
+164,R-Periventricular hypothalamic nucleus, intermediate part
+165,R-Periventricular hypothalamic nucleus, posterior part
+166,R-Periventricular hypothalamic nucleus, preoptic part
+167,R-Retrochiasmatic area
+168,R-Lateral hypothalamic area
+169,R-Arcuate hypothalamic nucleus
+170,R-Lateral preoptic area
+171,R-Anteroventral preoptic nucleus
+172,R-Anteroventral periventricular nucleus
+173,R-Suprachiasmatic nucleus
+174,R-Subparaventricular zone
+175,R-Preparasubthalamic nucleus
+176,R-Parasubthalamic nucleus
+177,R-Median preoptic nucleus
+178,R-Medial preoptic nucleus
+179,R-Medial preoptic area
+180,R-Supramammillary nucleus
+181,R-Tuberal nucleus
+182,R-Ventrolateral preoptic nucleus
+183,R-Ventromedial hypothalamic nucleus
+184,R-Vascular organ of the lamina terminalis
+185,R-Dorsomedial nucleus of the hypothalamus
+186,R-Posterodorsal preoptic nucleus
+187,R-Posterior hypothalamic nucleus
+188,R-Dorsal premammillary nucleus
+189,R-Ventral premammillary nucleus
+190,R-Hypothalamus
+191,R-Parastrial nucleus
+192,R-Tuberomammillary nucleus, dorsal part
+193,R-Superior colliculus, optic layer
+194,R-Superior colliculus, superficial gray layer
+195,R-Inferior colliculus
+196,R-Substantia nigra, reticular part
+197,R-Superior colliculus, motor related, deep gray layer
+198,R-Superior colliculus, motor related, deep white layer
+199,R-Superior colliculus, motor related, intermediate white layer
+200,R-Superior colliculus, motor related, intermediate gray layer
+201,R-Periaqueductal gray
+202,R-Anterior pretectal nucleus
+203,R-Red nucleus
+204,R-Oculomotor nucleus
+205,R-Trochlear nucleus
+206,R-Ventral tegmental nucleus
+207,R-Interfascicular nucleus raphe
+208,R-Interpeduncular nucleus
+209,R-Lateral terminal nucleus of the accessory optic tract
+210,R-Midbrain reticular nucleus
+211,R-Rostral linear nucleus raphe
+212,R-Anterior tegmental nucleus
+213,R-Midbrain reticular nucleus, retrorubral area
+214,R-Nucleus sagulum
+215,R-Midbrain
+216,R-Substantia nigra, compact part
+217,R-Midbrain trigeminal nucleus
+218,R-Medial pretectal area
+219,R-Nucleus of the brachium of the inferior colliculus
+220,R-Central linear nucleus raphe
+221,R-Cuneiform nucleus
+222,R-Nucleus of the optic tract
+223,R-Nucleus of the posterior commissure
+224,R-Olivary pretectal nucleus
+225,R-Ventral tegmental area
+226,R-Dorsal nucleus raphe
+227,R-Parabigeminal nucleus
+228,R-Edinger-Westphal nucleus
+229,R-Pedunculopontine nucleus
+230,R-Posterior pretectal nucleus
+231,R-Nucleus of the lateral lemniscus
+232,R-Principal sensory nucleus of the trigeminal
+233,R-Superior olivary complex, periolivary region
+234,R-Superior olivary complex, medial part
+235,R-Superior olivary complex, lateral part
+236,R-Dorsal tegmental nucleus
+237,R-Pontine gray
+238,R-Supragenual nucleus
+239,R-Tegmental reticular nucleus
+240,R-Motor nucleus of trigeminal
+241,R-Superior central nucleus raphe
+242,R-Locus ceruleus
+243,R-Pontine reticular nucleus
+244,R-Laterodorsal tegmental nucleus
+245,R-Nucleus raphe pontis
+246,R-Barrington's nucleus
+247,R-Subceruleus nucleus
+248,R-Sublaterodorsal nucleus
+249,R-Supratrigeminal nucleus
+250,R-Nucleus incertus
+251,R-Pons
+252,R-Parabrachial nucleus
+253,R-Pontine central gray
+254,R-Pontine reticular nucleus, caudal part
+255,R-Area postrema
+256,R-Dorsal cochlear nucleus
+257,R-Ventral cochlear nucleus
+258,R-Cuneate nucleus
+259,R-Gracile nucleus
+260,R-External cuneate nucleus
+261,R-Nucleus of the trapezoid body
+262,R-Spinal nucleus of the trigeminal, caudal part
+263,R-Spinal nucleus of the trigeminal, interpolar part
+264,R-Spinal nucleus of the trigeminal, oral part
+265,R-Abducens nucleus
+266,R-Facial motor nucleus
+267,R-Accessory facial motor nucleus
+268,R-Nucleus ambiguus, dorsal division
+269,R-Nucleus ambiguus, ventral division
+270,R-Gigantocellular reticular nucleus
+271,R-Inferior olivary complex
+272,R-Intermediate reticular nucleus
+273,R-Inferior salivatory nucleus
+274,R-Linear nucleus of the medulla
+275,R-Parvicellular reticular nucleus
+276,R-Nucleus prepositus
+277,R-Lateral vestibular nucleus
+278,R-Medial vestibular nucleus
+279,R-Spinal vestibular nucleus
+280,R-Nucleus of Roller
+281,R-Nucleus raphe magnus
+282,R-Superior vestibular nucleus
+283,R-Nucleus raphe obscurus
+284,R-Nucleus raphe pallidus
+285,R-Lateral reticular nucleus
+286,R-Magnocellular reticular nucleus
+287,R-Medulla
+288,R-Infracerebellar nucleus
+289,R-Nucleus of the solitary tract
+290,R-Nucleus x
+291,R-Hypoglossal nucleus
+292,R-Nucleus y
+293,R-Dorsal motor nucleus of the vagus nerve
+294,R-Parasolitary nucleus
+295,R-Paragigantocellular reticular nucleus, dorsal part
+296,R-Paragigantocellular reticular nucleus, lateral part
+297,R-Parapyramidal nucleus
+298,R-Medullary reticular nucleus, dorsal part
+299,R-Medullary reticular nucleus, ventral part
+300,R-Paraflocculus
+301,R-Flocculus
+302,R-Fastigial nucleus
+303,R-Interposed nucleus
+304,R-Dentate nucleus
+305,R-Lingula
+306,R-Central lobule
+307,R-Culmen
+308,R-Declive
+309,R-Folium-tuber vermis
+310,R-Pyramus
+311,R-Uvula
+312,R-Nodulus
+313,R-Simple lobule
+314,R-Ansiform lobule
+315,R-Paramedian lobule
+316,R-Copula pyramidis
+317,R-olfactory nerve layer of main olfactory bulb
+318,R-lateral olfactory tract, body
+319,R-anterior commissure, olfactory limb
+320,R-optic nerve
+321,R-posterior commissure
+322,R-trochlear nerve
+323,R-motor root of the trigeminal nerve
+324,R-spinal tract of the trigeminal nerve
+325,R-facial nerve
+326,R-vestibular nerve
+327,R-inferior colliculus commissure
+328,R-medial lemniscus
+329,R-solitary tract
+330,R-superior cerebelar peduncles
+331,R-middle cerebellar peduncle
+332,R-inferior cerebellar peduncle
+333,R-arbor vitae
+334,R-corpus callosum
+335,R-corticospinal tract
+336,R-external medullary lamina of the thalamus
+337,R-anterior commissure, temporal limb
+338,R-cingulum bundle
+339,R-fimbria
+340,R-columns of the fornix
+341,R-ventral hippocampal commissure
+342,R-dorsal hippocampal commissure
+343,R-mammillothalamic tract
+344,R-stria medullaris
+345,R-fasciculus retroflexus
+346,R-habenular commissure
+347,R-medial longitudinal fascicle
+348,R-stria terminalis
+349,R-supramammillary decussation
+350,R-cuneate fascicle
+351,R-gracile fascicle
+352,R-ventral tegmental decussation
+353,R-alveus
+354,R-brachium of the inferior colliculus
+355,R-dorsal fornix
+356,R-lateral lemniscus
+357,R-mammillary peduncle
+358,R-mammillotegmental tract
+359,R-midbrain tract of the trigeminal nerve
+360,R-trapezoid body
+361,R-rubrospinal tract
+362,R-tectospinal pathway
+363,R-amygdalar capsule
+364,R-fiber tracts
+365,R-doral tegmental decussation
+366,R-lateral ventricle
+367,R-third ventricle
+368,R-cerebral aqueduct
+369,R-fourth ventricle
+370,R-ventricular systems
+501,L-Frontal pole, cerebral cortex
+502,L-Primary motor area
+503,L-Secondary motor area
+504,L-Primary somatosensory area, nose
+505,L-Primary somatosensory area, barrel field
+506,L-Primary somatosensory area, lower limb
+507,L-Primary somatosensory area, mouth
+508,L-Primary somatosensory area, upper limb
+509,L-Primary somatosensory area, trunk
+510,L-undefined,
+511,L-Supplemental somatosensory area
+512,L-Gustatory areas
+513,L-Visceral area
+514,L-Dorsal auditory area
+515,L-Primary auditory area
+516,L-Posterior auditory area
+517,L-Ventral auditory area
+518,L-Anterolateral visual area
+519,L-Anteromedial visual area
+520,L-Lateral visual area
+521,L-Primary visual area
+522,L-Posterolateral visual area
+523,L-posteromedial visual area
+524,L-undefined,
+525,L-undefined,
+526,L-Rostrolateral visual area
+527,L-Rostrolateral area, layer 6b
+528,L-Anterior cingulate area, dorsal part
+529,L-Anterior cingulate area, ventral part
+530,L-Prelimbic area
+531,L-Infralimbic area
+532,L-Orbital area, lateral part
+533,L-Orbital area, medial part
+534,L-Orbital area, ventrolateral part
+535,L-Agranular insular area, dorsal part
+536,L-Agranular insular area, posterior part
+537,L-Agranular insular area, ventral part
+538,L-Retrosplenial area, lateral agranular part
+539,L-Retrosplenial area, dorsal part
+540,L-Retrosplenial area, ventral part
+541,L-Temporal association areas
+542,L-Perirhinal area
+543,L-Ectorhinal area
+544,L-Main olfactory bulb
+545,L-Accessory olfactory bulb, glomerular layer
+546,L-Accessory olfactory bulb, granular layer
+547,L-Accessory olfactory bulb, mitral layer
+548,L-Nucleus of the lateral olfactory tract, layer 3
+549,L-Anterior olfactory nucleus
+550,L-Nucleus of the lateral olfactory tract, molecular layer
+551,L-Postpiriform transition area
+552,L-Taenia tecta
+553,L-Cortical amygdalar area, anterior part
+554,L-Cortical amygdalar area, posterior part
+555,L-Olfactory areas
+556,L-Piriform-amygdalar area
+557,L-Dorsal peduncular area
+558,L-Piriform area
+559,L-Field CA1
+560,L-Field CA2
+561,L-Field CA3
+562,L-Dentate gyrus, molecular layer
+563,L-Dentate gyrus, polymorph layer
+564,L-Dentate gyrus, granule cell layer
+565,L-Fasciola cinerea
+566,L-Subiculum
+567,L-Induseum griseum
+568,L-Parasubiculum
+569,L-Entorhinal area, lateral part
+570,L-Entorhinal area, medial part, dorsal zone
+571,L-Entorhinal area, medial part, ventral zone
+572,L-Postsubiculum
+573,L-Presubiculum
+574,L-Hippocampal formation
+575,L-Claustrum
+576,L-Endopiriform nucleus, dorsal part
+577,L-Lateral amygdalar nucleus
+578,L-Basolateral amygdalar nucleus, anterior part
+579,L-Basolateral amygdalar nucleus, posterior part
+580,L-Basomedial amygdalar nucleus
+581,L-Basolateral amygdalar nucleus, ventral part
+582,L-Cortical subplate
+583,L-Posterior amygdalar nucleus
+584,L-Endopiriform nucleus, ventral part
+585,L-Caudoputamen
+586,L-Nucleus accumbens
+587,L-Olfactory tubercle
+588,L-Lateral septal nucleus, caudal
+589,L-Septohippocampal nucleus
+590,L-Anterior amygdalar area
+591,L-Lateral septal nucleus, rostral
+592,L-Lateral septal nucleus, ventral part
+593,L-Striatum-like amygdalar nuclei
+594,L-Bed nucleus of the accessory olfactory tract
+595,L-Septofimbrial nucleus
+596,L-Medial amygdalar nucleus
+597,L-Striatum
+598,L-Central amygdalar nucleus
+599,L-Fundus of striatum
+600,L-Intercalated amygdalar nucleus
+601,L-Globus pallidus, external segment
+602,L-Globus pallidus, internal segment
+603,L-Bed nucleus of the anterior commissure
+604,L-Magnocellular nucleus
+605,L-Substantia innominata
+606,L-Bed nuclei of the stria terminalis
+607,L-Medial septal nucleus
+608,L-Triangular nucleus of septum
+609,L-Diagonal band nucleus
+610,L-Pallidum
+611,L-Ventral anterior-lateral complex of the thalamus
+612,L-Ventral medial nucleus of the thalamus
+613,L-Ventral posterolateral nucleus of the thalamus
+614,L-Ventral posteromedial nucleus of the thalamus
+615,L-Peripeduncular nucleus
+616,L-Medial geniculate complex
+617,L-Dorsal part of the lateral geniculate complex
+618,L-Lateral posterior nucleus of the thalamus
+619,L-Posterior complex of the thalamus
+620,L-Suprageniculate nucleus
+621,L-Anteroventral nucleus of thalamus
+622,L-Anteromedial nucleus
+623,L-Anterodorsal nucleus
+624,L-Lateral dorsal nucleus of thalamus
+625,L-Interanterodorsal nucleus of the thalamus
+626,L-Interanteromedial nucleus of the thalamus
+627,L-Intermediodorsal nucleus of the thalamus
+628,L-Mediodorsal nucleus of thalamus
+629,L-Submedial nucleus of the thalamus
+630,L-Paraventricular nucleus of the thalamus
+631,L-Parataenial nucleus
+632,L-Nucleus of reuniens
+633,L-Rhomboid nucleus
+634,L-Paracentral nucleus
+635,L-Central lateral nucleus of the thalamus
+636,L-Central medial nucleus of the thalamus
+637,L-Parafascicular nucleus
+638,L-Reticular nucleus of the thalamus
+639,L-Intergeniculate leaflet of the lateral geniculate complex
+640,L-Ventral part of the lateral geniculate complex
+641,L-Subgeniculate nucleus
+642,L-Medial habenula
+643,L-Lateral habenula
+644,L-Subparafascicular nucleus, magnocellular part
+645,L-Subparafascicular nucleus, parvicellular part
+646,L-Thalamus
+647,L-Subparafascicular area
+648,L-Ventral posterolateral nucleus of the thalamus, parvicellular part
+649,L-Ventral posteromedial nucleus of the thalamus, parvicellular part
+650,L-Posterior limiting nucleus of the thalamus
+651,L-Perireunensis nucleus
+652,L-Supraoptic nucleus
+653,L-Subfornical organ
+654,L-Lateral mammillary nucleus
+655,L-Medial mammillary nucleus
+656,L-Subthalamic nucleus
+657,L-Zona incerta
+658,L-Tuberomammillary nucleus, ventral part
+659,L-Periventricular hypothalamic nucleus, anterior part
+660,L-Paraventricular hypothalamic nucleus
+661,L-Paraventricular hypothalamic nucleus, descending division
+662,L-Anterodorsal preoptic nucleus
+663,L-Anterior hypothalamic nucleus
+664,L-Periventricular hypothalamic nucleus, intermediate part
+665,L-Periventricular hypothalamic nucleus, posterior part
+666,L-Periventricular hypothalamic nucleus, preoptic part
+667,L-Retrochiasmatic area
+668,L-Lateral hypothalamic area
+669,L-Arcuate hypothalamic nucleus
+670,L-Lateral preoptic area
+671,L-Anteroventral preoptic nucleus
+672,L-Anteroventral periventricular nucleus
+673,L-Suprachiasmatic nucleus
+674,L-Subparaventricular zone
+675,L-Preparasubthalamic nucleus
+676,L-Parasubthalamic nucleus
+677,L-Median preoptic nucleus
+678,L-Medial preoptic nucleus
+679,L-Medial preoptic area
+680,L-Supramammillary nucleus
+681,L-Tuberal nucleus
+682,L-Ventrolateral preoptic nucleus
+683,L-Ventromedial hypothalamic nucleus
+684,L-Vascular organ of the lamina terminalis
+685,L-Dorsomedial nucleus of the hypothalamus
+686,L-Posterodorsal preoptic nucleus
+687,L-Posterior hypothalamic nucleus
+688,L-Dorsal premammillary nucleus
+689,L-Ventral premammillary nucleus
+690,L-Hypothalamus
+691,L-Parastrial nucleus
+692,L-Tuberomammillary nucleus, dorsal part
+693,L-Superior colliculus, optic layer
+694,L-Superior colliculus, superficial gray layer
+695,L-Inferior colliculus
+696,L-Substantia nigra, reticular part
+697,L-Superior colliculus, motor related, deep gray layer
+698,L-Superior colliculus, motor related, deep white layer
+699,L-Superior colliculus, motor related, intermediate white layer
+700,L-Superior colliculus, motor related, intermediate gray layer
+701,L-Periaqueductal gray
+702,L-Anterior pretectal nucleus
+703,L-Red nucleus
+704,L-Oculomotor nucleus
+705,L-Trochlear nucleus
+706,L-Ventral tegmental nucleus
+707,L-Interfascicular nucleus raphe
+708,L-Interpeduncular nucleus
+709,L-Lateral terminal nucleus of the accessory optic tract
+710,L-Midbrain reticular nucleus
+711,L-Rostral linear nucleus raphe
+712,L-Anterior tegmental nucleus
+713,L-Midbrain reticular nucleus, retrorubral area
+714,L-Nucleus sagulum
+715,L-Midbrain
+716,L-Substantia nigra, compact part
+717,L-Midbrain trigeminal nucleus
+718,L-Medial pretectal area
+719,L-Nucleus of the brachium of the inferior colliculus
+720,L-Central linear nucleus raphe
+721,L-Cuneiform nucleus
+722,L-Nucleus of the optic tract
+723,L-Nucleus of the posterior commissure
+724,L-Olivary pretectal nucleus
+725,L-Ventral tegmental area
+726,L-Dorsal nucleus raphe
+727,L-Parabigeminal nucleus
+728,L-Edinger-Westphal nucleus
+729,L-Pedunculopontine nucleus
+730,L-Posterior pretectal nucleus
+731,L-Nucleus of the lateral lemniscus
+732,L-Principal sensory nucleus of the trigeminal
+733,L-Superior olivary complex, periolivary region
+734,L-Superior olivary complex, medial part
+735,L-Superior olivary complex, lateral part
+736,L-Dorsal tegmental nucleus
+737,L-Pontine gray
+738,L-Supragenual nucleus
+739,L-Tegmental reticular nucleus
+740,L-Motor nucleus of trigeminal
+741,L-Superior central nucleus raphe
+742,L-Locus ceruleus
+743,L-Pontine reticular nucleus
+744,L-Laterodorsal tegmental nucleus
+745,L-Nucleus raphe pontis
+746,L-Barrington's nucleus
+747,L-Subceruleus nucleus
+748,L-Sublaterodorsal nucleus
+749,L-Supratrigeminal nucleus
+750,L-Nucleus incertus
+751,L-Pons
+752,L-Parabrachial nucleus
+753,L-Pontine central gray
+754,L-Pontine reticular nucleus, caudal part
+755,L-Area postrema
+756,L-Dorsal cochlear nucleus
+757,L-Ventral cochlear nucleus
+758,L-Cuneate nucleus
+759,L-Gracile nucleus
+760,L-External cuneate nucleus
+761,L-Nucleus of the trapezoid body
+762,L-Spinal nucleus of the trigeminal, caudal part
+763,L-Spinal nucleus of the trigeminal, interpolar part
+764,L-Spinal nucleus of the trigeminal, oral part
+765,L-Abducens nucleus
+766,L-Facial motor nucleus
+767,L-Accessory facial motor nucleus
+768,L-Nucleus ambiguus, dorsal division
+769,L-Nucleus ambiguus, ventral division
+770,L-Gigantocellular reticular nucleus
+771,L-Inferior olivary complex
+772,L-Intermediate reticular nucleus
+773,L-Inferior salivatory nucleus
+774,L-Linear nucleus of the medulla
+775,L-Parvicellular reticular nucleus
+776,L-Nucleus prepositus
+777,L-Lateral vestibular nucleus
+778,L-Medial vestibular nucleus
+779,L-Spinal vestibular nucleus
+780,L-Nucleus of Roller
+781,L-Nucleus raphe magnus
+782,L-Superior vestibular nucleus
+783,L-Nucleus raphe obscurus
+784,L-Nucleus raphe pallidus
+785,L-Lateral reticular nucleus
+786,L-Magnocellular reticular nucleus
+787,L-Medulla
+788,L-Infracerebellar nucleus
+789,L-Nucleus of the solitary tract
+790,L-Nucleus x
+791,L-Hypoglossal nucleus
+792,L-Nucleus y
+793,L-Dorsal motor nucleus of the vagus nerve
+794,L-Parasolitary nucleus
+795,L-Paragigantocellular reticular nucleus, dorsal part
+796,L-Paragigantocellular reticular nucleus, lateral part
+797,L-Parapyramidal nucleus
+798,L-Medullary reticular nucleus, dorsal part
+799,L-Medullary reticular nucleus, ventral part
+800,L-Paraflocculus
+801,L-Flocculus
+802,L-Fastigial nucleus
+803,L-Interposed nucleus
+804,L-Dentate nucleus
+805,L-Lingula
+806,L-Central lobule
+807,L-Culmen
+808,L-Declive
+809,L-Folium-tuber vermis
+810,L-Pyramus
+811,L-Uvula
+812,L-Nodulus
+813,L-Simple lobule
+814,L-Ansiform lobule
+815,L-Paramedian lobule
+816,L-Copula pyramidis
+817,L-olfactory nerve layer of main olfactory bulb
+818,L-lateral olfactory tract, body
+819,L-anterior commissure, olfactory limb
+820,L-optic nerve
+821,L-posterior commissure
+822,L-trochlear nerve
+823,L-motor root of the trigeminal nerve
+824,L-spinal tract of the trigeminal nerve
+825,L-facial nerve
+826,L-vestibular nerve
+827,L-inferior colliculus commissure
+828,L-medial lemniscus
+829,L-solitary tract
+830,L-superior cerebelar peduncles
+831,L-middle cerebellar peduncle
+832,L-inferior cerebellar peduncle
+833,L-arbor vitae
+834,L-corpus callosum
+835,L-corticospinal tract
+836,L-external medullary lamina of the thalamus
+837,L-anterior commissure, temporal limb
+838,L-cingulum bundle
+839,L-fimbria
+840,L-columns of the fornix
+841,L-ventral hippocampal commissure
+842,L-dorsal hippocampal commissure
+843,L-mammillothalamic tract
+844,L-stria medullaris
+845,L-fasciculus retroflexus
+846,L-habenular commissure
+847,L-medial longitudinal fascicle
+848,L-stria terminalis
+849,L-supramammillary decussation
+850,L-cuneate fascicle
+851,L-gracile fascicle
+852,L-ventral tegmental decussation
+853,L-alveus
+854,L-brachium of the inferior colliculus
+855,L-dorsal fornix
+856,L-lateral lemniscus
+857,L-mammillary peduncle
+858,L-mammillotegmental tract
+859,L-midbrain tract of the trigeminal nerve
+860,L-trapezoid body
+861,L-rubrospinal tract
+862,L-tectospinal pathway
+863,L-amygdalar capsule
+864,L-fiber tracts
+865,L-doral tegmental decussation
+866,L-lateral ventricle
+867,L-third ventricle
+868,L-cerebral aqueduct
+869,L-fourth ventricle
+870,L-ventricular systems
