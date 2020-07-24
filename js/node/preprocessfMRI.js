@@ -57,7 +57,7 @@ const create_matrix=function(paramlist,numframes=-1) {
         //console.log(paramlist[frame]);
         let obj=JSON.parse(paramlist[inframe].data);
         for (let col=0;col<numcols;col++)
-            mat[frame][col]=obj.parameters[col];
+            mat[frame][col]=obj.parameters[col]+0.00000001;
 
     }
 
@@ -114,7 +114,7 @@ class PreprocessfMRIModule extends BaseModule {
             "params": [
                 {
                     "name": "TR",
-                    "description": "Temporaal resolution of image (in s)",
+                    "description": "Temporal resolution of image (in s)",
                     "priority": 0,
                     "advanced": false,
                     "gui": "slider",
@@ -179,14 +179,14 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "Polynomial",
-                    "description": "polynomial order to regress (-1 =skip)",
+                    "description": "polynomial order to regress (0 =just mean term)",
                     "priority": 10,
                     "advanced": false,
                     "gui": "slider",
                     "varname": "polynomial",
-                    "default": -1,
+                    "default": 0,
                     "type": 'int',
-                    "low":  -1,
+                    "low":  0,
                     "high": 3,
                     "step": 1,
                 },
@@ -197,11 +197,11 @@ class PreprocessfMRIModule extends BaseModule {
                     "advanced": false,
                     "gui": "slider",
                     "varname": "blow",
-                    "default": 0.2,
+                    "default": 0.008,
                     "type": 'float',
-                    "low":  0.01,
+                    "low":  0.001,
                     "high": 5.0,
-                    "step": 0.01,
+                    "step": 0.001,
                 },
 
                 {
@@ -213,14 +213,53 @@ class PreprocessfMRIModule extends BaseModule {
                     "varname": "bhigh",
                     "default": 0.2,
                     "type": 'float',
-                    "low":  0.01,
+                    "low":  0.001,
                     "high": 5.0,
+                    "step": 0.001,
+                },
+                {
+                    "name": "threshold",
+                    "description": "Fractional Threshold to create mask (def=0.1)",
+                    "priority": 2,
+                    "advanced": false,
+                    "gui": "slider",
+                    "varname": "threshold",
+                    "default": 0.1,
+                    "type": 'float',
+                    "low":  0.0,
+                    "high": 0.5,
                     "step": 0.01,
                 },
+
+
                 baseutils.getDebugParam(),
             ],
 
         };
+
+        des['outputs'].push({            
+            'type': 'matrix',
+            'name': 'Motion Matrix',
+            'description': 'The Motion Matrix',
+            'varname': 'outmotionmat',
+                'required': false,
+            'extension' : '.csv'
+        },{            
+            'type': 'matrix',
+            'name': 'GSR Matrix',
+            'description': 'The GSR Signal Matrix',
+            'varname': 'outgsrvector',
+            'required': false,
+            'extension' : '.csv'
+        },{            
+            'type': 'image',
+            'name': 'Output Mask',
+            'description': 'The Output Mask',
+            'varname': 'outputmask',
+            'required': false,
+            'extension' : '.nii.gz'
+        });
+
         return des;
     }
 
@@ -289,6 +328,7 @@ class PreprocessfMRIModule extends BaseModule {
                 console.log('Bad motion parameters nframes='+mparam.length+' vs '+input.getDimensions()[3]);
             let mat=create_matrix(mparam,input.getDimensions()[3]);
 
+            this.outputs['outmotionmat'] = mat;
             
             let regress_1=new regressOutImage();
             try {
@@ -303,6 +343,8 @@ class PreprocessfMRIModule extends BaseModule {
             }
             current_output=regress_1.getOutputObject('output');
             console.log('___ Motion regress output=',current_output.getDescription());
+        } else {
+            this.outputs['outmotionmat'] = new BisWebMatrix();
         }
 
         if (vals['dobandpass']) {
@@ -326,6 +368,7 @@ class PreprocessfMRIModule extends BaseModule {
             }
             current_output=bandpass_mod.getOutputObject('output');
             console.log('___ Bandpass output=',current_output.getDescription());
+            this.outputs['bandpassoutput'] = current_output;
                                     
         }
 
@@ -350,33 +393,36 @@ class PreprocessfMRIModule extends BaseModule {
         }
         
 
+        console.log('\n\n\n');
+        let roiimage=new BisWebImage();
+        roiimage.cloneImage(current_output,{ type: 'uchar', numframes : '1' });
+        let rdata=roiimage.getImageData();
+        let mdata=null;
+        let threshold=0.5;
+        let name='specified';
+        if (maskimage) {
+            mdata=maskimage.getImageData();
+        } else {
+            name='auto';
+            mdata=input.getImageData();
+            let r=input.getIntensityRange();
+            let m=vals['threshold'];
+            threshold=r[0]*(1-m)+m*r[1];
+        }
+        let numvoxels=rdata.length;
+        for (let i=0;i<numvoxels;i++) {
+            if (mdata[i]>=threshold)
+                rdata[i]=1;
+            else
+                rdata[i]=0;
+        }
+        
+        console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+        console.log(' = = = GSR. Using '+name+' mask. Threshold='+threshold);
+        
+        this.outputs['outputmask'] = roiimage;
+        
         if (vals['dogsr']) {
-            console.log('\n\n\n');
-            let roiimage=new BisWebImage();
-            roiimage.cloneImage(input,{ type: 'uchar', numframes : '1' });
-            let rdata=roiimage.getImageData();
-            let mdata=null;
-            let threshold=0.5;
-            let name='specified';
-            if (maskimage) {
-                mdata=maskimage.getImageData();
-            } else {
-                name='auto';
-                mdata=input.getImageData();
-                let r=input.getIntensityRange();
-                threshold=r[0]*0.95+0.05*r[1];
-            }
-            let numvoxels=rdata.length;
-            for (let i=0;i<numvoxels;i++) {
-                if (mdata[i]>=threshold)
-                    rdata[i]=1;
-                else
-                    rdata[i]=0;
-            }
-
-            console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-            console.log(' = = = GSR. Using '+name+' mask. Threshold='+threshold);
-
             let roi=new computeROI();
             try {
                 await roi.execute({ 'input' : current_output,
@@ -391,6 +437,7 @@ class PreprocessfMRIModule extends BaseModule {
             }
 
             let globalsignal=roi.getOutputObject('output');
+            this.outputs['outgsrvector'] = globalsignal;
             console.log('___ Global Signal Output=',globalsignal.getDescription());
 
             let regress_2=new regressOutImage();
@@ -406,11 +453,15 @@ class PreprocessfMRIModule extends BaseModule {
             }
             current_output=regress_2.getOutputObject('output');
             console.log('___ GSR regress output=',current_output.getDescription());
+        } else {
+            this.outputs['outgsrvector'] =  new BisWebMatrix();
         }
-
+        
         console.log(' = = = = = = = = = = = = = = = = = = = = = =');
         console.log(' = = = Done');
         this.outputs['output'] = current_output;
+        console.log('Done');
+
         return Promise.resolve('Done');
     } 
     
