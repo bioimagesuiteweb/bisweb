@@ -53,7 +53,7 @@ module.exports = {
             {
                 'type': 'image',
                 'name': 'Input Image',
-                'description': desc || 'The image to be processed',
+                'description': desc || 'The filename for the image to be processed',
                 'varname': 'input',
                 'shortname': 'i',
                 'required': true,
@@ -72,7 +72,7 @@ module.exports = {
             {
                 'type': 'image',
                 'name': 'Output Image',
-                'description': desc || 'Save the output image',
+                'description': desc || 'The output image filename',
                 'varname': 'output',
                 'shortname': 'o',
                 'required': true,

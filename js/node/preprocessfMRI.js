@@ -150,7 +150,7 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "motionparams",
-                    "description": "motion parameters file (specify csv or .json. If not specified, try to infer from image filename .nii.gz --> .json)",
+                    "description": "The filename to load motion parameters from (specify csv or .json. If not specified, try to infer from image filename .nii.gz --> .json)",
                     "priority": 2,
                     "advanced": true,
                     "type": 'string',
@@ -179,7 +179,7 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "Polynomial",
-                    "description": "polynomial order to regress (0=just mean term, -1=ignore)",
+                    "description": "Polynomial order to regress for drift correction (0=just mean term, -1=ignore)",
                     "priority": 10,
                     "advanced": false,
                     "gui": "slider",
@@ -240,21 +240,21 @@ class PreprocessfMRIModule extends BaseModule {
         des['outputs'].push({            
             'type': 'matrix',
             'name': 'Motion Matrix',
-            'description': 'The Motion Matrix',
+            'description': 'The filename for saving the motion matrix',
             'varname': 'outmotionmat',
                 'required': false,
             'extension' : '.csv'
         },{            
             'type': 'matrix',
             'name': 'GSR Matrix',
-            'description': 'The GSR Signal Matrix',
+            'description': 'The filename for saving the GSR Signal Matrix',
             'varname': 'outgsrvector',
             'required': false,
             'extension' : '.csv'
         },{            
             'type': 'image',
             'name': 'Output Mask',
-            'description': 'The Output Mask',
+            'description': 'The filename for saving the Output Mask',
             'varname': 'outputmask',
             'required': false,
             'extension' : '.nii.gz'
