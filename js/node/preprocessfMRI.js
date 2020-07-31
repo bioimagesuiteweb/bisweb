@@ -219,7 +219,7 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "threshold",
-                    "description": "Fractional Threshold to create mask (def=0.1)",
+                    "description": "Fractional Threshold to create mask",
                     "priority": 2,
                     "advanced": false,
                     "gui": "slider",
