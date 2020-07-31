@@ -65,11 +65,14 @@ let attachSingleFlag=function(param,cmd) {
 
     let dd=param.description;
 
-    if (param.default!==undefined)
+    if (param.default!==undefined) {
         if (param.type==='string') {
             if (param.default.length>1)
                 dd=dd+' (default value='+param.default+')';
+        } else {
+            dd=dd+' (default value='+param.default+')';
         }
+    }
     if (param.type==='boolean') {
         dd=dd+', (Acceptable values=[true,false])';
     } else if (param.restrictAnswer) {
