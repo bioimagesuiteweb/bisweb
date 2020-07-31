@@ -75,8 +75,14 @@ let attachSingleFlag=function(param,cmd) {
     } else if (param.restrictAnswer) {
         dd=dd+', (Acceptable values=['+param.restrictAnswer.join(',')+'])';
     } else {
-        let low=param.low || param.lowbound;
-        let high=param.high || param.highbound;
+        console.log('param=',param);
+        let low=param.low;
+        if (low === undefined)
+            low=param.lowbound;
+        let high=param.high;
+        if (high === undefined)
+            high= param.highbound;
+        console.log('Low=',low,high);
         if (low !== undefined && high!==undefined) {
             dd=dd+', (Allowed range='+low+':'+high+')';
         }

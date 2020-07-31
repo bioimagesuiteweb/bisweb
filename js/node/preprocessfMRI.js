@@ -127,7 +127,7 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "Smooth Sigma",
-                    "description": "The gaussian kernel standard deviation (in fwhmax) If <0.01 no smoothing is done.",
+                    "description": "The gaussian kernel standard deviation (in fwhmax) If <0.01 no smoothing is done",
                     "priority": 3,
                     "advanced": false,
                     "gui": "slider",
