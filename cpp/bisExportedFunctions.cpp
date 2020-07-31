@@ -916,7 +916,9 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
   
   
   Eigen::MatrixXf temp;
-  Eigen::VectorXf w;
+  Eigen::VectorXf w=Eigen::VectorXf::Zero(dim[3]);
+  for (int i=0;i<dim[3];i++)
+    w[i]=1.0;
 
 
   Eigen::MatrixXf input=  Eigen::MatrixXf::Zero(dim[3],1);
@@ -1684,6 +1686,10 @@ unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned cha
     return 0;
   if (weights.rows()>=2)
     useweights=1;
+
+  if (debug) {
+    std::cout << "Regress Out Image useweights=" << useweights << std::endl;
+  }
   
   
   Eigen::MatrixXf regressors=bisEigenUtil::mapToEigenMatrix(s_regressors.get());

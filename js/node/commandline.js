@@ -30,8 +30,8 @@ const boldoff = "";
 
 //Image processing functions are expected to be templated as Promises.
 let initialError = function (extra) {
-    console.log(`${extra}\nUsage: bisweb modulename [ options ]\n`);
-    console.log(` Type 'node bisweb [modulename] --help' for more information`);
+    console.log(`${extra}\nUsage: biswebnode modulename [ options ]\n`);
+    console.log(` Type 'biswebnode [modulename] --help' for more information`);
     let a=modules.getModuleNames().sort();
     let outstring='';
     for (let i=0;i<a.length;i++) {
@@ -63,14 +63,33 @@ let attachSingleFlag=function(param,cmd) {
         estr = '>';
     }
 
+    let dd=param.description;
+
+    if (param.default!==undefined)
+        if (param.type==='string') {
+            if (param.default.length>1)
+                dd=dd+' (default value='+param.default+')';
+        }
+    if (param.type==='boolean') {
+        dd=dd+', (Acceptable values=[true,false])';
+    } else if (param.restrictAnswer) {
+        dd=dd+', (Acceptable values=['+param.restrictAnswer.join(',')+'])';
+    } else {
+        let low=param.low || param.lowbound;
+        let high=param.high || param.highbound;
+        if (low !== undefined && high!==undefined) {
+            dd=dd+', (Allowed range='+low+':'+high+')';
+        }
+    }
+    
     if (param.type === "float")
-        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseFloat);
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + dd, parseFloat);
     else if (param.type === "int")
-        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseInt);
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + dd, parseInt);
     else if (param.type === "extra")
-        cmd = cmd.option(`filename1 filename2 filename3 ...`, optdesc + param.description, parseInt);
+        cmd = cmd.option(`filename1 filename2 filename3 ...`, optdesc + dd, parseInt);
     else
-        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + param.description);
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + dd);
     return cmd;
 };
 

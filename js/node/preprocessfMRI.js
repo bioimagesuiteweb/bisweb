@@ -150,7 +150,7 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "motionparams",
-                    "description": "motion parameters file (if not specified, try to infer from image filename .nii.gz --> .json)",
+                    "description": "motion parameters file (specify csv or .json. If not specified, try to infer from image filename .nii.gz --> .json)",
                     "priority": 2,
                     "advanced": true,
                     "type": 'string',
@@ -179,14 +179,14 @@ class PreprocessfMRIModule extends BaseModule {
                 },
                 {
                     "name": "Polynomial",
-                    "description": "polynomial order to regress (0 =just mean term)",
+                    "description": "polynomial order to regress (0=just mean term, -1=ignore)",
                     "priority": 10,
                     "advanced": false,
                     "gui": "slider",
                     "varname": "polynomial",
                     "default": 0,
                     "type": 'int',
-                    "low":  0,
+                    "low":  -1,
                     "high": 3,
                     "step": 1,
                 },
@@ -276,6 +276,8 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject("Input Image and mask have different sizes");
         }
 
+        console.log('___ Beginning=',input.getDescription(),'range=',input.getIntensityRange());
+        
         if (vals['sigma']>0.01) {
             console.log('\n\n\n');
             console.log(' = = = = = = = = = = = = = = = = = = = = = =');
@@ -294,6 +296,7 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject('Failed to smooth image'+e);
             }
             current_output=smooth_mod.getOutputObject('output');
+            console.log('___ Spatial smoothing output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
         }
         
         
@@ -311,30 +314,42 @@ class PreprocessfMRIModule extends BaseModule {
             }
 
             console.log(' = = = Loading motion parameters from '+fname);
-            let mparam=null;
-            try {
-                let obj=await genericio.read(fname);
-                mparam=JSON.parse(obj.data).itemlist;
-                console.log('= = = Loaded ',mparam.length,' frames of motion parameters');
+            let ext=fname.split('.').pop().toLowerCase();
+            if (ext==="csv" || ext==="binmatr" || ext==="matr") {
+                this.outputs['outmotionmat'] = new BisWebMatrix();
+                try {
+                    await this.outputs["outmotionmat"].load(fname);
+                    console.log('= = = Loaded motion matrix'+this.outputs['outmotionmat'].getDescription());
+                } catch(e)  {
+                    return Promise.reject('Failed to load motion parameters from'+fname+' '+e);
+                }
+                let l=this.outputs['outmotionmat'].getDimensions();
+                if (l[0]!==input.getDimensions()[3] || l[1]>50) {
+                    return Promise.reject('Bad motion parameters nframes='+l.join(',')+' vs '+input.getDimensions()[3]);
+                }
+            } else {
+                let mparam=null;
+                try {
+                    let obj=await genericio.read(fname);
+                    mparam=JSON.parse(obj.data).itemlist;
+                    console.log('= = = Loaded ',mparam.length,' frames of motion parameters');
+                    
+                } catch(e) {
+                    return Promise.reject('Failed to load motion parameters from'+fname+' '+e);
+                }
                 
-            } catch(e) {
-                return Promise.reject('Failed to load motion parameters from'+fname+' '+e);
+                
+                let l=mparam.length;
+                if (l!==input.getDimensions()[3]) {
+                    console.log('Bad motion parameters nframes='+mparam.length+' vs '+input.getDimensions()[3]);
+                }
+                this.outputs['outmotionmat']=create_matrix(mparam,input.getDimensions()[3]);
             }
-
-
-            // XENIOS -- this should be an error!!!!
-            let l=mparam.length;
-            if (l!==input.getDimensions()[3])
-                console.log('Bad motion parameters nframes='+mparam.length+' vs '+input.getDimensions()[3]);
-            let mat=create_matrix(mparam,input.getDimensions()[3]);
-
-            this.outputs['outmotionmat'] = mat;
-            
             let regress_1=new regressOutImage();
             try {
                 await regress_1.execute({
                     'input' : current_output,
-                    'regressor' : mat
+                    'regressor' : this.outputs['outmotionmat'],
                 }, {
                     'debug' : debug
                 });
@@ -342,7 +357,7 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject('Failed to regress motion parameters'+e);
             }
             current_output=regress_1.getOutputObject('output');
-            console.log('___ Motion regress output=',current_output.getDescription());
+            console.log('___ Motion regress output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
         } else {
             this.outputs['outmotionmat'] = new BisWebMatrix();
         }
@@ -351,6 +366,16 @@ class PreprocessfMRIModule extends BaseModule {
             console.log('\n\n\n');
             console.log(' = = = = = = = = = = = = = = = = = = = = = =');
             console.log(' = = = Bandpass filtering='+vals['blow']+':'+vals['bhigh']+' TR=',vals['tr']);
+
+            /*let range=current_output.getIntensityRange();
+            let imdata1=current_output.getImageData();
+            let offset=100-range[0];
+            offset=0.0;
+            console.log("Shifting intensities by",offset);
+            for (let i=0;i<imdata1.length;i++) {
+                imdata1[i]+=offset;
+            }
+            current_output.computeIntensityRange();*/
             
             let bandpass_mod=new butterworthFilterImage();
             try {
@@ -367,9 +392,17 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject('Failed to regress bandpass filter image'+e);
             }
             current_output=bandpass_mod.getOutputObject('output');
-            console.log('___ Bandpass output=',current_output.getDescription());
+
+            /*let imdata=current_output.getImageData();
+            offset=-1.0*offset;
+            console.log("___ Shifting intensities by",offset);
+            for (let i=0;i<imdata.length;i++) {
+                imdata[i]+=offset;
+            }*/
+            current_output.computeIntensityRange();
+            console.log('___ Bandpass output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
             this.outputs['bandpassoutput'] = current_output;
-                                    
+
         }
 
         if (vals['polynomial']>-1) {
@@ -389,7 +422,7 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject('Failed to regress polynomial'+e);
             }
             current_output=polynomial_mod.getOutputObject('output');
-            console.log('___ Drift Correction output=',current_output.getDescription());
+            console.log('___ Drift Correction output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
         }
         
 
@@ -452,7 +485,7 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject('Failed to regress motion parameters'+e);
             }
             current_output=regress_2.getOutputObject('output');
-            console.log('___ GSR regress output=',current_output.getDescription());
+            console.log('___ GSR regress output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
         } else {
             this.outputs['outgsrvector'] =  new BisWebMatrix();
         }
@@ -460,7 +493,8 @@ class PreprocessfMRIModule extends BaseModule {
         console.log(' = = = = = = = = = = = = = = = = = = = = = =');
         console.log(' = = = Done');
         this.outputs['output'] = current_output;
-        console.log('Done');
+        this.outputs['output'].computeIntensityRange();
+        console.log('___ Final Output=',this.outputs['output'].getDescription(),'range=',this.outputs['output'].getIntensityRange());
 
         return Promise.resolve('Done');
     } 
