@@ -214,12 +214,8 @@ def eleGenarator(TPL, LUT, appx, dgr, BIDS_path, debug):
                     if f_row:
                         oup_data.append(f_row)
                     if errorm:
-                        oup_elog.append(errorm[0])
-
-                    # if bool(f_row):
-                    #     csvappendaline(tpl_cp, f_row)
-                    # if bool(errorm):
-                    #     csvappendlines(error_log, errorm)
+                        for ele in errorm:
+                            oup_elog.append(ele)
 
                 else:
                     continue

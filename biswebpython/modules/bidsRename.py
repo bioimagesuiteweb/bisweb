@@ -27,24 +27,51 @@ except ImportError:
 
 import biswebpython.core.bis_basemodule as bis_basemodule;
 import biswebpython.core.bis_objects as bis_objects;
-import biswebpython.utilities.dgrTimeInterval as dgrti
-import biswebpython.utilities.bidsObjects as bids_objects;
+import biswebpython.utilities.bidsRenaming as bidsRn
+import biswebpython.utilities.bidsObjects as bids_objects
 
 
 
-class timeInterval(bis_basemodule.baseModule):
+class bidsRename(bis_basemodule.baseModule):
 
     def __init__(self):
         super().__init__();
-        self.name='timeInterval';
+        self.name='bidsRename';
 
     def createDescription(self):
         return {
-            "name": "timeInterval",
-            "description": "Calculate the time interval of two given dates",
+            "name": "bidsRename",
+            "description": "Renaming files into bids format",
             "author": "An Qu",
             "version": "1.0",
             "inputs": [
+                # {
+                #     "type": "bidstext",
+                #     "name": "Input Template File",
+                #     "description": "Input data submission template file of NDA standard data structure",
+                #     "varname": "template",
+                #     "shortname": "tpl",
+                #     "required": True,
+                #     "extension": ".csv"
+                # },
+                # {
+                #     "type": "bidslut",
+                #     "name": "Input Lookup Table",
+                #     "description": "Meta data of all the required elements in the template file",
+                #     "varname": "lookuptable",
+                #     "shortname": "lut",
+                #     "required": True,
+                #     "extension": ".txt"
+                # },
+                # {
+                #     "type": "bidsappx",
+                #     "name": "Input Appendix",
+                #     "description": "Meta data of some required elements in the template file",
+                #     "varname": "appendix",
+                #     "shortname": "appx",
+                #     "required": True,
+                #     "extension": ".txt"
+                # },
                 {
                     "type": "bidsdemogr",
                     "name": "Input Demographics file",
@@ -53,6 +80,13 @@ class timeInterval(bis_basemodule.baseModule):
                     "shortname": "dgr",
                     "required": True,
                     "extension": ".txt"
+                },
+                {
+                    "type": "bidssubj",
+                    "name": "Input file path",
+                    "description": "File path of BIDS format dataset",
+                    "varname": "bidspath",
+                    "required": True
                 }
             ],
             "outputs": [
@@ -67,7 +101,16 @@ class timeInterval(bis_basemodule.baseModule):
                 },
                 {
                     "type": "bidstext",
-                    "name": "Output File",
+                    "name": "Output Log",
+                    "description": "Debug logging file",
+                    "varname": "log",
+                    "shortname": "log",
+                    "required": True,
+                    "extension": ".txt"
+                },
+                {
+                    "type": "bidstext",
+                    "name": "Output File Path",
                     "description": "Output file",
                     "varname": "output",
                     "shortname": "o",
@@ -81,39 +124,6 @@ class timeInterval(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": True
-                },
-                {
-                    "name": "start date",
-                    "description": "Keyword indicates the start dates in the demographics.",
-                    "varname": "startdate",
-                    "shortname": "sd",
-                    "type": "string",
-                    "default": "bday"
-                },
-                {
-                    "name": "end date",
-                    "description": "Keyword indicates the end dates in the demographics.",
-                    "varname": "enddate",
-                    "shortname": "ed",
-                    "type": "string",
-                    "default": "tday"
-                },
-                {
-                    "name": "output key",
-                    "description": "Keyword indicates indicates where the outputs saved in the demographics. If the keyword is already existed in the demographics, all of its value will be reaplced by the outputs. If it is not existed in the demographics, this keyword will be added and the outputs will be saved under it.",
-                    "varname": "outputkey",
-                    "shortname": "oupk",
-                    "type": "string",
-                    "default": "age"
-                },
-                {
-                    "name": "identifier",
-                    "description": "display format of time interval",
-                    "varname": "identifier",
-                    "shortname": "id",
-                    "type": "string",
-                    "default": "month",
-                    "fields": ["year", "month", "day"]
                 }
             ]
         }
@@ -125,20 +135,21 @@ class timeInterval(bis_basemodule.baseModule):
 
 
         try:
-            odata, elog = dgrti.demogrTimeInterval(self.inputs['demographics'], \
-            vals['startdate'], vals['enddate'], vals['outputkey'], vals['identifier'], debug)
+            odata, elog, log = bidsRn.Rename(self.inputs['demographics'], self.inputs['bidspath'].filepath, \
+            debug)
 
         except:
             e = sys.exc_info()[0]
             print('---- Failed to invoke algorithm ----',e);
             return False
 
-
         self.outputs['output'] = bids_objects.bidsText();
         self.outputs['errorlog'] = bids_objects.bidsText();
+        self.outputs['log'] = bids_objects.bidsText();
 
         self.outputs['output'].create(odata)
         self.outputs['errorlog'].create(elog)
+        self.outputs['log'].create(log)
 
         return True
 
@@ -146,4 +157,4 @@ class timeInterval(bis_basemodule.baseModule):
 
 if __name__ == '__main__':
     import biswebpython.core.bis_commandline as bis_commandline;
-    sys.exit(bis_commandline.loadParse(timeInterval(),sys.argv,False));
+    sys.exit(bis_commandline.loadParse(bidsRename(),sys.argv,False));

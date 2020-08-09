@@ -77,7 +77,7 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
                     "name": "Input Demographics file",
                     "description": "Demographics file",
                     "varname": "demographics",
-                    "shortname": "demogr",
+                    "shortname": "dgr",
                     "required": True,
                     "extension": ".txt"
                 },
@@ -93,7 +93,7 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
                 {
                     "type": "bidstext",
                     "name": "Output Error Log",
-                    "description": "Debug logging file with file path",
+                    "description": "Debug logging file",
                     "varname": "errorlog",
                     "shortname": "elog",
                     "required": True,
@@ -101,8 +101,8 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
                 },
                 {
                     "type": "bidstext",
-                    "name": "Output File Path",
-                    "description": "File Path to save output template file",
+                    "name": "Output File",
+                    "description": "Output file",
                     "varname": "output",
                     "shortname": "o",
                     "required": True,

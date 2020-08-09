@@ -39,3 +39,4 @@ computeImageMatrixCorrelation
 timeseriesNormalizeImage
 ndaElementsGenerator
 timeInterval
+bidsRename
