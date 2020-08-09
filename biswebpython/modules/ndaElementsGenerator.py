@@ -145,6 +145,7 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
         return True
 
 
+
 if __name__ == '__main__':
     import biswebpython.core.bis_commandline as bis_commandline;
     sys.exit(bis_commandline.loadParse(ndaElementsGenerator(),sys.argv,False));
