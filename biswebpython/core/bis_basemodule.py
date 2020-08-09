@@ -19,6 +19,7 @@ import os
 import sys
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.core.bis_baseutils as bis_baseutils;
+import biswebpython.utilities.bidsObjects as bids_objects;
 
 class baseModule:
 
@@ -111,7 +112,6 @@ class baseModule:
                 found=False;
 
             if (found==False):
-                
                 if (name in extra):
                     out[vname]=extra[name];
                 else:
@@ -122,7 +122,6 @@ class baseModule:
 
         return out;
 
-    
     def typeCheckParam(self,param, val):
 
         try:
@@ -202,10 +201,23 @@ class baseModule:
             if (self.inputs[key]==None):
                 return False;
             return True
+        elif (objecttype=='bidsdemogr'):
+            self.inputs[key] = bids_objects.bidsDemogr();
+        elif (objecttype=='bidsappx'):
+            self.inputs[key] = bids_objects.bidsAppx();
+        elif (objecttype=='bidslut'):
+            self.inputs[key] = bids_objects.bidsLUT();
+        elif (objecttype=='bidstext'):
+            self.inputs[key] = bids_objects.bidsText();
+        elif (objecttype=='bidssubj'):
+            self.inputs[key] = bids_objects.bidsSubj();
 
         try:
             ok=self.inputs[key].load(filename);
-            if (ok!=False and objecttype != 'surface'):
+            if objecttype == 'surface' or 'bids' in objecttype:
+                chkobjtype = True
+
+            if (ok!=False and not chkobjtype):
                 sz=self.inputs[key].data_array.shape;
                 if (sz[1]==1 and objecttype=='vector'):
                     tmp=self.inputs[key];

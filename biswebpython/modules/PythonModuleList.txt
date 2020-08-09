@@ -37,3 +37,4 @@ inflateSurface
 regressionTests
 computeImageMatrixCorrelation
 timeseriesNormalizeImage
+ndaElementsGenerator
