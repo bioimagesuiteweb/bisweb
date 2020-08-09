@@ -38,3 +38,4 @@ regressionTests
 computeImageMatrixCorrelation
 timeseriesNormalizeImage
 ndaElementsGenerator
+timeInterval

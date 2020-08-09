@@ -23,6 +23,8 @@
 #   Authors:   An Qu
 #             {an.qu} <at> yale.edu
 
+
+
 import re
 import sys
 import math
@@ -142,8 +144,9 @@ class bidsDemogr(bidsText):
 
 
 
-    def get_timeInterval(self, f_str, l_str, out_str, id = 'year'):
+    def get_timeInterval(self, f_str, l_str, out_str, id = 'year', debug = True):
         new_data = []
+        errorm = []
 
         if self.data == {}:
             raise ValueError("Please read demographics data first!")
@@ -172,8 +175,9 @@ class bidsDemogr(bidsText):
                         f_date = date(int(f_dstr[2]), int(f_dstr[0]), int(f_dstr[1]))
                         l_date = date(int(l_dstr[2]), int(l_dstr[0]), int(l_dstr[1]))
                     except:
-                        print('Cannot recongnize line: ', idx+3, ' string(s): ', self.data[f_str][idx], ' and/or ', self.data[l_str][idx], 'in the demographics file.')
-                        print('Cannot get the timeInterval of the subject in this line!')
+                        if debug:
+                            errorm.append(['Cannot recongnize line: ' + str(idx+3) + ' string(s): ' + self.data[f_str][idx] + ' and/or ' + self.data[l_str][idx] + ' in the demographics file.'])
+                            errorm.append(['Cannot get the timeInterval of the subject in this line!'])
                         continue
 
                     delta = relativedelta(l_date, f_date)
@@ -203,7 +207,7 @@ class bidsDemogr(bidsText):
                         temp.append(interval)
                         new_data.append(['---'.join(temp)])
 
-        return new_data
+        return new_data, errorm
 
 
 
@@ -391,12 +395,9 @@ class imgSubj:
 
 
 
-# change to bisweb later---------------------------------------------------------------
     def get_img_header(self):
         img = nib.load(self.file_path)
         self.hdr = img.header
-
-# change to bisweb later---------------------------------------------------------------
 
 
     def get_dim_info(self):
@@ -510,15 +511,3 @@ class imgSubj:
         self.get_dim_info()
         self.get_pix_info()
         self.get_img_fov()
-
-
-
-
-
-
-if __name__ == '__main__':
-    instant = bidsDemogr()
-    instant.read(image03_demogr)
-    output = '/home/an/work/MRRC_working_scripts/dataManagement/scripts/demographics_testtt.txt'
-    n_data = instant.get_timeInterval('bday', 'tday', 'age', id = 'month')
-    instant.writeDemogr(output, n_data)
