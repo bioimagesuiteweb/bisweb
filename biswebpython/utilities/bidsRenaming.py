@@ -46,6 +46,12 @@ import biswebpython.utilities.bidsObjects as bids_objects
 
 
 def anatBidsRename(bsj):
+    xx = '_'
+    if 'sub-' in bsj.ses.lower():
+        bsj.subj = bsj.ses
+        bsj.ses = ''
+        xx = ''
+
     errorm = []
     logm = []
     flag = True
@@ -95,13 +101,13 @@ def anatBidsRename(bsj):
 
                     for idx in range(len(s_nii)):
                         run_idx = idx + 1
-                        newname = bsj.subj + '_' + bsj.ses + '_run-' + str(run_idx).zfill(2) + '_' + st + '.nii.gz'
+                        newname = bsj.subj + xx + bsj.ses + '_run-' + str(run_idx).zfill(2) + '_' + st + '.nii.gz'
                         temp_cmd.append(['mv ' + bsj.root + '/' + s_nii[idx] + ' ' + bsj.root + '/' + newname])
                 except:
                     errorm.append(['Error: Cannot recongnize ' + bsj.subj + ' ' + st + ' nifti file and it is not able to be renamed! Please double check the spelling!'])
                     flag = False
             elif len(splt_nii[st]) == 1:
-                newname = bsj.subj + '_' + bsj.ses + '_' + st + '.nii.gz'
+                newname = bsj.subj + xx + bsj.ses + '_' + st + '.nii.gz'
                 temp_cmd.append(['mv ' + bsj.root + '/' + splt_nii[st][0] + ' ' + bsj.root + '/' + newname])
 
 
@@ -138,13 +144,13 @@ def anatBidsRename(bsj):
 
                         for idx in range(len(s_jf)):
                             run_idx = idx + 1
-                            newname = bsj.subj + '_' + bsj.ses + '_run-' + str(run_idx).zfill(2) + '_' + st + '.json'
+                            newname = bsj.subj + xx + bsj.ses + '_run-' + str(run_idx).zfill(2) + '_' + st + '.json'
                             temp_cmd.append(['mv ' + bsj.root + '/' + s_jf[idx] + ' ' + bsj.root + '/' + newname])
                     except:
                         errorm.append(['Error: Cannot recongnize ' + bsj.subj + ' ' + st + ' json file and it is not able to be renamed! Please double check the spelling!'])
                         flag = False
                 elif len(splt_nii[st]) == 1:
-                    newname = bsj.subj + '_' + bsj.ses + '_' + st + '.json'
+                    newname = bsj.subj + xx + bsj.ses + '_' + st + '.json'
                     temp_cmd.append(['mv ' + bsj.root + '/' + splt_jf[st][0] + ' ' + bsj.root + '/' + newname])
 
     if flag:
@@ -159,6 +165,12 @@ def anatBidsRename(bsj):
 
 
 def funcBidsRename(bsj, bidsDgr):
+    xx = '_'
+    if 'sub-' in bsj.ses.lower():
+        bsj.subj = bsj.ses
+        bsj.ses = ''
+        xx = ''
+
 
     errorm = []
     logm = []
@@ -220,14 +232,14 @@ def funcBidsRename(bsj, bidsDgr):
                             cmd_temp.append(['rm ' + bsj.root + '/' + nfile])
                         elif tskrp[ordl[idx]] == 1:
                             taskn = bidsDgr.taskIntpn[int(ordl[idx])]
-                            newname = bsj.subj + '_' + bsj.ses + '_task-' + taskn + '_bold.nii.gz'
+                            newname = bsj.subj + xx + bsj.ses + '_task-' + taskn + '_bold.nii.gz'
                         else:
                             taskn = bidsDgr.taskIntpn[int(ordl[idx])]
                             if ordl.index(ordl[idx]) == idx:
                                 tskrn[ordl[idx]] = 1
                             else:
                                 tskrn[ordl[idx]] += 1
-                            newname = bsj.subj + '_' + bsj.ses + '_task-' + taskn + '_run-' + str(tskrn[ordl[idx]]).zfill(2) + '_bold.nii.gz'
+                            newname = bsj.subj + xx + bsj.ses + '_task-' + taskn + '_run-' + str(tskrn[ordl[idx]]).zfill(2) + '_bold.nii.gz'
 
                         if newname:
                             cmd_temp.append(['mv ' + bsj.root + '/' + nfile + ' ' + bsj.root + '/' + newname])
