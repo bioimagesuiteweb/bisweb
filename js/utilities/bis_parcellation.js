@@ -856,6 +856,9 @@ class BisParcellation {
 
         var dim_p=parcimage.getDimensions();
         var dim_a=atlas.getDimensions();
+
+        console.log('Dim=',dim_p,dim_a);
+        
         var sum=0,i=0,j=0;
         for (i=0;i<=2;i++)
             sum+=Math.abs(dim_p[i]-dim_a[i]);

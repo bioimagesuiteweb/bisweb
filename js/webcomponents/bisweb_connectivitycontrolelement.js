@@ -527,7 +527,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.overlaycontext.fillStyle=internal.parcellation.getNonSidedLobeColor(i);
                     internal.overlaycontext.fillRect(px,py,pw,1.5*lobegap);
                     internal.overlaycontext.fillStyle=internal.parcellation.getInverseNonSidedLobeColor(i);
-                    let name=guiParameters.Lobes[i];
+                    let name=guiParameters.Lobes[i] || '';
                     let ind = name.indexOf(' ');
                     if (ind<5)
                         ind=name.length;
@@ -537,7 +537,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 }
             }
         }
-
 
         let y0=fnsize2*2;
         if (internal.showlegend) {
