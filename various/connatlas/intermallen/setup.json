@@ -1,15 +1,15 @@
 {
     "multires" : [
-        "output/right_allen_80.json" ,
-        "output/left_allen_80.json"
+        "output/right_allen_60.json" ,
+        "output/left_allen_60.json"
     ],
     "atlas"   : [
-        "output/right_allen_80.json" ,
-        "output/left_allen_80.json"
+        "output/right_allen_60.json" ,
+        "output/left_allen_60.json"
     ],
     "output"  : [
-        "output/lobes_allen_right_80.json" ,
-        "output/lobes_allen_left_80.json" ,
+        "output/lobes_allen_right_60.json" ,
+        "output/lobes_allen_left_60.json" ,
         "output/allen_interm_surface_atlas.bin.gz"
     ]
 }
