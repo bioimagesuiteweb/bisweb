@@ -46,7 +46,7 @@ class butterworthFilterImage(bis_basemodule.baseModule):
             if (vals['type'] == "low" or vals['type'] == "band"):
                 out = libbis.butterworthFilterImageWASM(input, {
                     "type": "low",
-                    "cutoff": vals['low'],
+                    "cutoff": vals['high'],
                     "samplerate": vals['tr']
                 }, self.parseBoolean(vals['debug']));
 
@@ -57,7 +57,7 @@ class butterworthFilterImage(bis_basemodule.baseModule):
 
             out= libbis.butterworthFilterImageWASM(inp, {
                 "type": "high",
-                "cutoff": vals['high'],
+                "cutoff": vals['low'],
                 "samplerate": vals['tr'],
             }, self.parseBoolean(vals['debug']));
 

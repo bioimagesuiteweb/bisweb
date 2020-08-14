@@ -1,19 +1,19 @@
 /*  LICENSE
  
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
  
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
  
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
  
- ENDLICENSE */
+    ENDLICENSE */
 
 
 #include "bisfMRIAlgorithms.h"
@@ -38,7 +38,7 @@ namespace bisfMRIAlgorithms {
     int numcols=regressorMatrix->getNumCols();
     if (numrows!=nc || numcols<num_tasks)
       {
-	std::cerr << "Bad Regressor Matrix " << numrows << "*" << numcols << " Need " << nc << "rows and at least " << num_tasks << " columns" << std::endl;
+        std::cerr << "Bad Regressor Matrix " << numrows << "*" << numcols << " Need " << nc << "rows and at least " << num_tasks << " columns" << std::endl;
         return NULL;
       }
 
@@ -47,20 +47,20 @@ namespace bisfMRIAlgorithms {
     unsigned char* maskdata=0;
     if (mask!=0)
       {
-	int m_dim[3]; mask->getImageDimensions(m_dim);
-	int sum=0;
-	for (int ia=0;ia<=2;ia++)
-	  sum+=abs(m_dim[ia]-dim[ia]);
+        int m_dim[3]; mask->getImageDimensions(m_dim);
+        int sum=0;
+        for (int ia=0;ia<=2;ia++)
+          sum+=abs(m_dim[ia]-dim[ia]);
 
-	if (sum>0)
-	  {
-	    std::cerr << "Bad Mask for compute GLM ... ignoring " << std::endl;
-	  }
-	else
-	  {
-	    usemask=1;
-	    maskdata=mask->getImageData();
-	  }
+        if (sum>0)
+          {
+            std::cerr << "Bad Mask for compute GLM ... ignoring " << std::endl;
+          }
+        else
+          {
+            usemask=1;
+            maskdata=mask->getImageData();
+          }
       }
 
     bisSimpleImage<float>* output=new bisSimpleImage<float>("beta_image");
@@ -79,22 +79,22 @@ namespace bisfMRIAlgorithms {
     int volsize=nt;
     for (int voxel=0;voxel<nt;voxel++)
       {
-	int compute=0;
-	if (usemask)
-	  {
-	    if (double(maskdata[voxel])>0)
-	      compute=1;
-	  }
-	else
-	  compute=1;
+        int compute=0;
+        if (usemask)
+          {
+            if (double(maskdata[voxel])>0)
+              compute=1;
+          }
+        else
+          compute=1;
 
-	if (compute)
-	  {
+        if (compute)
+          {
             Eigen::VectorXf x=inputdata.col(voxel);
     	    bisEigenUtil::inPlaceMultiplyMV(LSQ,x,b);
             for (int task=0;task<num_tasks;task++)
               outdata[task*volsize+voxel]=b[task+task_offset];
-	  }
+          }
       }
 
     return output;
@@ -142,7 +142,7 @@ namespace bisfMRIAlgorithms {
     for (int i=0;i<numframes;i++) {
       float t=(i-shift)/bot;
       for (int j=0;j<=order;j++)
-	m(i,j)=legendre(t,j);
+        m(i,j)=legendre(t,j);
     }
     return m;
   }
@@ -162,7 +162,7 @@ namespace bisfMRIAlgorithms {
     int sz[2]; bisEigenUtil::getMatrixDimensions(input,sz);
     for (int row=0;row<sz[0];row++)
       for (int col=0;col<sz[1];col++)
-	output(row,col)=input(row,col)-output(row,col);
+        output(row,col)=input(row,col)-output(row,col);
     return 1;
   }
 
@@ -170,8 +170,8 @@ namespace bisfMRIAlgorithms {
   // Regress out "regressors" using weight vector `weights' which signifies quality of each frame (row)
   // ---------------------------------------------------------------------------------------------------
   int weightedRegressOut(Eigen::MatrixXf& input,Eigen::MatrixXf& weightedRegressors,Eigen::VectorXf& weights,Eigen::MatrixXf& LSQ,
-						Eigen::MatrixXf& wI,
-						Eigen::MatrixXf& output)
+                         Eigen::MatrixXf& wI,
+                         Eigen::MatrixXf& output)
   {
 
     int sz_inp[2];
@@ -182,9 +182,9 @@ namespace bisfMRIAlgorithms {
     
     for (int i=0;i<sz_inp[0];i++)
       {
-	float w=weights(i);
-	for(int j=0;j<sz_inp[1];j++) 
-	  wI(i,j)=w*input(i,j);
+        float w=weights(i);
+        for(int j=0;j<sz_inp[1];j++) 
+          wI(i,j)=w*input(i,j);
       }
     
     int ok=regressOut(wI,weightedRegressors,LSQ,output);
@@ -193,10 +193,10 @@ namespace bisfMRIAlgorithms {
 
     for (int i=0;i<sz_inp[0];i++)
       {
-	float w=weights(i);
-	for(int j=0;j<sz_inp[1];j++)
-	  if (fabs(w)>0.001)
-	    output(i,j)=output(i,j)/w;
+        float w=weights(i);
+        for(int j=0;j<sz_inp[1];j++)
+          if (fabs(w)>0.001)
+            output(i,j)=output(i,j)/w;
       }
     
     return 1;
@@ -213,9 +213,9 @@ namespace bisfMRIAlgorithms {
     // Multiply by weights
     for (int i=0;i<weights.rows();i++)
       {
-	float w=weights(i);
-	for(int j=0;j<sz_reg[1];j++) 
-	  wR(i,j)=w*regressors(i,j);
+        float w=weights(i);
+        for(int j=0;j<sz_reg[1];j++) 
+          wR(i,j)=w*regressors(i,j);
       }
     
     Eigen::MatrixXf LSQ=bisEigenUtil::createLSQMatrix(wR);
@@ -223,60 +223,71 @@ namespace bisfMRIAlgorithms {
   }
 
 
-  
+
   int butterworthFilter(Eigen::MatrixXf& input,Eigen::MatrixXf& output,Eigen::VectorXf& w,Eigen::MatrixXf& temp,
-			std::string passType,float frequency,float sampleRate,int )
+                        std::string passType,float frequency,float sampleRate,int debug)
   {
 
     class internal
     {
-   protected:
-      double c,a1,a2,a3,b1,b2;
+    protected:
+      double b0,b1,b2,a0,a1,a2;
       double inputHistory[2];
       double outputHistory[3];
       int filter_element_count;
 
     public:
-      internal(float frequency,std::string passType,float sampleRate) {
+      internal(float frequency,std::string passType,float sampleRate,int debug) {
 
-	this->inputHistory[0]=0.0;
-	this->inputHistory[1]=0.0;
-	this->outputHistory[0]=0.0;
-	this->outputHistory[1]=0.0;
-	this->outputHistory[2]=0.0;
+        this->inputHistory[0]=0.0;
+        this->inputHistory[1]=0.0;
+        this->outputHistory[0]=0.0;
+        this->outputHistory[1]=0.0;
+        this->outputHistory[2]=0.0;
 	
-	filter_element_count=0;
-	if (passType !="high")
-	  passType = "low";
+        filter_element_count=0;
+        if (passType !="high")
+          passType = "low";
 	
-	if (sampleRate<0.0)
-	  sampleRate=0.6452f; // (1.0/1.55s);
+        if (sampleRate<0.0)
+          sampleRate=0.6452f; // (1.0/1.55s);
 	
-	if (passType=="low" && frequency<0.0)
-	  frequency=0.02f;
-	if (passType=="high" && frequency<0.0)
-	  frequency=0.1f;
+        if (passType=="low" && frequency<0.0)
+          frequency=0.02f;
+        if (passType=="high" && frequency<0.0)
+          frequency=0.1f;
 	
-	float resonance=float(sqrt(2.0));
+        //https://stackoverflow.com/questions/20924868/calculate-coefficients-of-2nd-order-butterworth-low-pass-filter
 
-	if (passType=="low")
-	  {
-	    c = 1.0 / tan(bisUtil::PI * frequency / sampleRate);
-	    a1 = 1.0 / (1.0 + resonance * c + c * c);
-	    a2 = 2.0 * a1;
-	    a3 = a1;
-	    b1 = 2.0 * (1.0 - c * c) * a1;
-	    b2 = (1.0 - resonance * c + c * c) * a1;
-	  }
-	else
-	  {
-	    c =  tan(bisUtil::PI * frequency / sampleRate);
-	    a1 = 1.0 / (1.0 + resonance * c + c * c);
-	    a2 = -2 * a1;
-	    a3 = a1;
-	    b1 = 2.0 * (c * c - 1.0) * a1;
-	    b2 = (1.0 - resonance * c + c * c) * a1;
-	  }
+        const double ff=frequency/sampleRate;
+        
+        const double ita =1.0/ tan(bisUtil::PI*ff);
+        const double q=sqrt(2.0);
+        this->b0 = 1.0 / (1.0 + q*ita + ita*ita);
+        this->b1= 2*b0;
+        this->b2= b0;
+        this->a0 = 1.0;
+        this->a1 = -(2.0 * (ita*ita - 1.0) * this->b0);
+        this->a2 = ((1.0 - q*ita + ita*ita) * this->b0);
+      
+
+        if (passType=="high")
+          {
+            if (debug)
+              std::cout << "___ Computing high pass" << std::endl;
+            this->b0 = this->b0*ita*ita;
+            this->b1 = -this->b1*ita*ita;
+            this->b2 = this->b2*ita*ita; 
+          }
+        else if (debug) {
+          std::cout << "___ Computing low pass" << std::endl;
+        }
+
+        if (debug) {
+          std::cout << "___ Pass=" << passType << " freq=" << frequency << ", ff=" << ff <<  std::endl;
+          std::cout << "___ B=" << this->b0 << "," << this->b1 << "," << this->b2 << std::endl;
+          std::cout << "___ A=" << this->a0 << "," << this->a1 << "," << this->a2  << std::endl;
+        }
       }
 
 
@@ -285,113 +296,165 @@ namespace bisfMRIAlgorithms {
       // While zero fill is good we need to think harder about this
       double update(double updated_Input) {
 	
-	double updated_Output=0.0;
+        double updated_Output=0.0;
 	
-	if (filter_element_count>1)
-	  {
-	    updated_Output= this->a1 * updated_Input + this->a2 * inputHistory[0] + this->a3 * inputHistory[1] -
-	      this->b1 * outputHistory[0] - this->b2 * outputHistory[1];
-	  }
-	else if (filter_element_count==1)
-	  {
-	    updated_Output= this->a1 * updated_Input + this->a2 * inputHistory[0]  -
-	      this->b1 * outputHistory[0];
-	  }
-	else if (filter_element_count==0)
-	  {
-	    updated_Output= this->a1 * updated_Input;
-	  }
+        if (filter_element_count>1)
+          {
+            updated_Output= this->b0 * updated_Input + this->b1 * inputHistory[0] + this->b2 * inputHistory[1] -
+              this->a1 * outputHistory[0] - this->a2 * outputHistory[1];
+          }
+        else if (filter_element_count==1)
+          {
+            updated_Output= this->b0 * updated_Input + this->b1 * inputHistory[0]  -this->a1 * outputHistory[0];
+          }
+        else if (filter_element_count==0)
+          {
+            updated_Output= this->b0 * updated_Input;
+          }
 	    
-	filter_element_count=filter_element_count+1;
-	inputHistory[1] = inputHistory[0];
-	inputHistory[0] = updated_Input;
+        filter_element_count=filter_element_count+1;
+        inputHistory[1] = inputHistory[0];
+        inputHistory[0] = updated_Input;
 	
-	outputHistory[2] = outputHistory[1];
-	outputHistory[1] = outputHistory[0];
-	outputHistory[0] = updated_Output;
-	return updated_Output;
+        outputHistory[2] = outputHistory[1];
+        outputHistory[1] = outputHistory[0];
+        outputHistory[0] = updated_Output;
+        return updated_Output;
       };
 
       int backfill(Eigen::MatrixXf& input,Eigen::VectorXf& w,Eigen::MatrixXf& output) { 
 
-	int sz[2]; bisEigenUtil::getMatrixDimensions(input,sz);
+        int sz[2]; bisEigenUtil::getMatrixDimensions(input,sz);
 
-	int sw=w.rows();
-	if (sz[0]!=sw)
-	  {
-	    std::cerr << "Bad array sizes for backfill." << std::endl;
-	    return 0;
-	  }
+        int sw=w.rows();
+        if (sz[0]!=sw)
+          {
+            std::cerr << "Bad array sizes for backfill." << std::endl;
+            return 0;
+          }
 
-	bisEigenUtil::resizeZeroMatrix(output,sz);
+        bisEigenUtil::resizeZeroMatrix(output,sz);
 	
-	int row=0,nextgoodrow=0;
-	while (row< sz[0])
-	  {
-	    for (int i=0;i<sz[1];i++)
-	      output(row,i)=input(row,i);
+        int row=0,nextgoodrow=0;
+        while (row< sz[0])
+          {
+            for (int i=0;i<sz[1];i++)
+              output(row,i)=input(row,i);
 	    
-	    if (w(row)<0.5)
-	      {
-		nextgoodrow=row+1;
-		while (w(nextgoodrow)<0.5 && nextgoodrow < sz[0])
-		  {
-		    nextgoodrow++;
-		  }
+            if (w(row)<0.5)
+              {
+                nextgoodrow=row+1;
+                while (w(nextgoodrow)<0.5 && nextgoodrow < sz[0])
+                  {
+                    nextgoodrow++;
+                  }
 		
-		if (nextgoodrow!=sz[0])
-		  {
-		    // We found a good one, now back fill
-		    for (long c=0;c<sz[1];c++)
-		      {
-			float v=output(nextgoodrow,c);
-			for (long r=row;r<nextgoodrow;r++) {
-			  output(r,c)=v;
-			}
-		      }
-		  }
-	      }
-	    ++row;
-	  }
-	return 1;
+                if (nextgoodrow!=sz[0])
+                  {
+                    // We found a good one, now back fill
+                    for (long c=0;c<sz[1];c++)
+                      {
+                        float v=output(nextgoodrow,c);
+                        for (long r=row;r<nextgoodrow;r++) {
+                          output(r,c)=v;
+                        }
+                      }
+                  }
+              }
+            ++row;
+          }
+        return 1;
       };
 
     public:
       
-      int filter(Eigen::MatrixXf& input,Eigen::VectorXf& w,Eigen::MatrixXf& output,Eigen::MatrixXf& temp)
+      int filter(Eigen::MatrixXf& input,Eigen::VectorXf& w,Eigen::MatrixXf& output,Eigen::MatrixXf& temp,int debug)
       {
-	int sz[2]; bisEigenUtil::getMatrixDimensions(input,sz);
-	bisEigenUtil::resizeZeroMatrix(output,sz);
+        int sz[2]; bisEigenUtil::getMatrixDimensions(input,sz);
+        bisEigenUtil::resizeZeroMatrix(output,sz);
 
-	int doweight=0;
-	if (w.rows()>2)
-	  {
-	    int ok=backfill(input,w,temp);
-	    if (ok==0)
-	      return 0;
-	    doweight=1;
-	  }
+        int doweight=0;
+        if (w.rows()>2)
+          {
+            if (debug)
+              std::cout << "Backfilling" << std::endl;
+            int ok=backfill(input,w,temp);
+            if (ok==0)
+              return 0;
+            doweight=1;
+          }
+
+        filter_element_count=0;
 	
-	for (int col=0;col<output.cols();col++)
-	  {
-	    filter_element_count=0; // Reset  filter
-	    for (int row=0;row<output.rows();row++)
-	      {
-		if (doweight)
-		  output(row,col)=(float)update(temp(row,col));
-		else
-		  output(row,col)=(float)update(input(row,col));
-	      }
-	  }
-	return 1;
+        for (int col=0;col<output.cols();col++)
+          {
+            filter_element_count=0; // Reset  filter
+            for (int row=0;row<output.rows();row++)
+              {
+                if (doweight)
+                  output(row,col)=(float)update(temp(row,col));
+                else
+                  output(row,col)=(float)update(input(row,col));
+              }
+          }
+        return 1;
       }
       
     };
 
-    internal filter_obj(frequency,passType,sampleRate);
+    internal filter_obj(frequency,passType,sampleRate,debug);
     
-    return filter_obj.filter(input,w,output,temp);
+    return filter_obj.filter(input,w,output,temp,debug);
     
+  }
+
+  // ------------------------------------------------------------------------------------------
+  int butterworthFilterImage(bisSimpleImage<float>* input_image,bisSimpleImage<float>* output_image,
+                             std::string passType,float frequency,float sampleRate,int debug) {
+
+
+    int dim[5]; input_image->getDimensions(dim);
+    Eigen::MatrixXf temp;
+    Eigen::VectorXf w;
+
+    Eigen::MatrixXf input=  Eigen::MatrixXf::Zero(dim[3],1);
+    Eigen::MatrixXf output=  Eigen::MatrixXf::Zero(dim[3],1);
+    int numvoxels=dim[0]*dim[1]*dim[2];
+    float* indata=input_image->getImageData();
+    float* outdata=output_image->getImageData();
+
+    int ok=1;
+    
+    //std::cout << "Dim=" << dim[0] << "," << dim[1] << "," << dim[2] << ", frames=" << dim[3] << " nv=" << numvoxels << std::endl;
+    
+    for (int i=0;i<numvoxels;i++)
+      {
+
+        //        if (i==0)
+        //std::cout << "Input" << std::endl;
+  
+        for (int f=0;f<dim[3];f++)  {
+          input(f,0)=indata[numvoxels*f+i];
+          //if (i==0)
+          //std::cout  << input(f,0) << " (" << numvoxels*f+i << ")" << std::endl;
+        }
+        
+        int d=debug;
+        if (i>0)
+          d=0;
+        
+        ok*=butterworthFilter(input,output,w,temp,passType,frequency,sampleRate,d);
+
+        //        if (i==0)
+        //std::cout << "Output" << std::endl;
+          
+        for (int f=0;f<dim[3];f++) {
+          outdata[numvoxels*f+i]=output(f,0);
+          /*if (i==0)
+            std::cout <<  outdata[numvoxels*f+i] << std::endl;*/
+        }
+      }
+    return ok;
   }
 
 
@@ -408,14 +471,14 @@ namespace bisfMRIAlgorithms {
     int sw=weights.rows();
     if (sw<=2)
       {
-	weights=Eigen::VectorXf::Zero(dm[0]);
-	for (int ia=0;ia<dm[0];ia++)
-	  weights(ia)=1.0;
+        weights=Eigen::VectorXf::Zero(dm[0]);
+        for (int ia=0;ia<dm[0];ia++)
+          weights(ia)=1.0;
       }
     else if (sw!=dm[0])
       {
-	std::cerr << "Bad weight size for global Signal Regression. Mush be a vector of size " << dm[0] << std::endl;
-	return 0;
+        std::cerr << "Bad weight size for global Signal Regression. Mush be a vector of size " << dm[0] << std::endl;
+        return 0;
       }
 
     bisEigenUtil::resizeZeroVector(mean,dm[0]);
@@ -424,9 +487,9 @@ namespace bisfMRIAlgorithms {
     for (int row=0;row<dm[0];row++) {
       float sum=0.0;
       if (weights(row)>0.5)
-	for (int col=0;col<dm[1];col++) {
-	  sum=sum+input(row,col);
-	}
+        for (int col=0;col<dm[1];col++) {
+          sum=sum+input(row,col);
+        }
       mean(row)=sum/dm[1];
       sumv+=pow(mean(row),2.0);
     }
@@ -448,20 +511,20 @@ namespace bisfMRIAlgorithms {
 
     if (sm!=sz[0])
       {
-	std::cerr << "Bad mean vector size for global Signal Regression. Mush be a vector of size " << sz[0] << std::endl;
-	return 0;
+        std::cerr << "Bad mean vector size for global Signal Regression. Mush be a vector of size " << sz[0] << std::endl;
+        return 0;
       }
     
     if (sw<=2)
       {
-	weights=Eigen::VectorXf::Zero(sz[0]);
-	for (int ia=0;ia<sz[0];ia++)
-	  weights(ia)=1.0;
+        weights=Eigen::VectorXf::Zero(sz[0]);
+        for (int ia=0;ia<sz[0];ia++)
+          weights(ia)=1.0;
       }
     else if (sw!=sz[0])
       {
-	std::cerr << "Bad weight size for global Signal Regression. Mush be a vector of size " << sz[0] << std::endl;
-	return 0;
+        std::cerr << "Bad weight size for global Signal Regression. Mush be a vector of size " << sz[0] << std::endl;
+        return 0;
       }
 
     
@@ -470,17 +533,17 @@ namespace bisfMRIAlgorithms {
 
     for (int col=0;col<sz[1];col++)
       {
-	float sum=0.0;
-	for (int row=0;row<sz[0];row++)
-	  {
-	    if (weights(row)>0.5) 
-	      sum=sum+input(row,col)*mean(row);
-	  }
-	for (int row=0;row<sz[0];row++)
-	  {
-	    if (weights(row)>0.5)
-	      output(row,col)=input(row,col)-sum*mean(row);
-	  }
+        float sum=0.0;
+        for (int row=0;row<sz[0];row++)
+          {
+            if (weights(row)>0.5) 
+              sum=sum+input(row,col)*mean(row);
+          }
+        for (int row=0;row<sz[0];row++)
+          {
+            if (weights(row)>0.5)
+              output(row,col)=input(row,col)-sum*mean(row);
+          }
       }
     return 1;
   }
@@ -499,14 +562,14 @@ namespace bisfMRIAlgorithms {
     int sw=weights.rows();
     if (sw<=2)
       {
-	weights=Eigen::VectorXf::Zero(sz[0]);
-	for (int ia=0;ia<sz[0];ia++)
-	  weights(ia)=1.0;
+        weights=Eigen::VectorXf::Zero(sz[0]);
+        for (int ia=0;ia<sz[0];ia++)
+          weights(ia)=1.0;
       }
     else if (sw!=sz[0])
       {
-	std::cerr << "Bad weight size. Must be a vector of size " << sz[1] << std::endl;
-	return 0;
+        std::cerr << "Bad weight size. Must be a vector of size " << sz[1] << std::endl;
+        return 0;
       }
 
     Eigen::MatrixXf norm=Eigen::MatrixXf::Zero(sz[0],sz[1]);
@@ -525,8 +588,8 @@ namespace bisfMRIAlgorithms {
     
     if (sumw<0.00001)
       {
-	std::cerr << "bad weights, must have a positive sum!" <<std::endl;
-	return 0;
+        std::cerr << "bad weights, must have a positive sum!" <<std::endl;
+        return 0;
       }
 
     for (int row=0;row<sz[0];row++) {
@@ -535,22 +598,22 @@ namespace bisfMRIAlgorithms {
 
     for (int col=0;col<sz[1];col++)
       {
-	double sum=0.0;
-	double sum2=0.0;
+        double sum=0.0;
+        double sum2=0.0;
 	
-	for (int row=0;row<sz[0];row++)
-	  {
-	    float v=input(row,col);
-	    sum=sum+v*weights(row);
-	    sum2=sum2+v*v*weights(row);
-	  }
-	double mean=sum;
-	double sigma=sqrt(sum2-mean*mean);
-	if (sigma>0.0)
-	  {
-	    for (int row=0;row<sz[0];row++)
-	      norm(row,col)=(float)((input(row,col)-mean)/sigma);
-	  }
+        for (int row=0;row<sz[0];row++)
+          {
+            float v=input(row,col);
+            sum=sum+v*weights(row);
+            sum2=sum2+v*v*weights(row);
+          }
+        double mean=sum;
+        double sigma=sqrt(sum2-mean*mean);
+        if (sigma>0.0)
+          {
+            for (int row=0;row<sz[0];row++)
+              norm(row,col)=(float)((input(row,col)-mean)/sigma);
+          }
       }
   
     // Now compute matrix
@@ -559,24 +622,24 @@ namespace bisfMRIAlgorithms {
 
     for (int outrow=0;outrow<sz[1];outrow++)
       {
-	for (int outcol=outrow;outcol<sz[1];outcol++)
-	  {
-	    double sum=0.0;
-	    for (int row=0;row<sz[0];row++) {
-	      sum=sum+norm(row,outrow)*norm(row,outcol)*weights(row);
-	    }
+        for (int outcol=outrow;outcol<sz[1];outcol++)
+          {
+            double sum=0.0;
+            for (int row=0;row<sz[0];row++) {
+              sum=sum+norm(row,outrow)*norm(row,outcol)*weights(row);
+            }
 
 	    
-	    if (toz)
-	      {
-		std::cout << " toz " << sum << " --> ";
-		sum=bisUtil::rhoToZConversion(sum);
-		std::cout  << sum << std::endl;
-	      }
+            if (toz)
+              {
+                std::cout << " toz " << sum << " --> ";
+                sum=bisUtil::rhoToZConversion(sum);
+                std::cout  << sum << std::endl;
+              }
 			
-	    output(outrow,outcol)=(float)sum;
-	    output(outcol,outrow)=(float)sum; // symmetric;
-	  }
+            output(outrow,outcol)=(float)sum;
+            output(outcol,outrow)=(float)sum; // symmetric;
+          }
       }
     return 1;
   }
@@ -608,14 +671,14 @@ namespace bisfMRIAlgorithms {
     int sw=weights.rows();
     if (sw<=2)
       {
-	weights=Eigen::VectorXf::Zero(sz[0]);
-	for (int ia=0;ia<sz[0];ia++)
-	  weights(ia)=1.0;
+        weights=Eigen::VectorXf::Zero(sz[0]);
+        for (int ia=0;ia<sz[0];ia++)
+          weights(ia)=1.0;
       }
     else if (sw!=sz[0])
       {
-	std::cerr << "Bad weight size. Must be a vector of size " << sz[1] << std::endl;
-	return 0;
+        std::cerr << "Bad weight size. Must be a vector of size " << sz[1] << std::endl;
+        return 0;
       }
 
     for (int ia=0;ia<sz[0];ia++) {
@@ -634,8 +697,8 @@ namespace bisfMRIAlgorithms {
 
     if (sumw<0.00001)
       {
-	std::cerr << "bad weights, must have a positive sum!" <<std::endl;
-	return 0;
+        std::cerr << "bad weights, must have a positive sum!" <<std::endl;
+        return 0;
       }
 
     for (int row=0;row<sz[0];row++) 
@@ -650,22 +713,22 @@ namespace bisfMRIAlgorithms {
 
     for (int col=0;col<sz[1];col++)
       {
-	double sum=0.0;
-	double sum2=0.0;
+        double sum=0.0;
+        double sum2=0.0;
 	
-	for (int row=0;row<sz[0];row++)
-	  {
-	    float v=roi(row,col);
-	    sum=sum+v*weights(row);
-	    sum2=sum2+v*v*weights(row);
-	  }
-	double mean=sum;
-	double sigma=sqrt(sum2-mean*mean);
-	if (sigma>0.0)
-	  {
-	    for (int row=0;row<sz[0];row++)
-	      norm(row,col)=(float)((roi(row,col)-mean)/sigma);
-	  }
+        for (int row=0;row<sz[0];row++)
+          {
+            float v=roi(row,col);
+            sum=sum+v*weights(row);
+            sum2=sum2+v*v*weights(row);
+          }
+        double mean=sum;
+        double sigma=sqrt(sum2-mean*mean);
+        if (sigma>0.0)
+          {
+            for (int row=0;row<sz[0];row++)
+              norm(row,col)=(float)((roi(row,col)-mean)/sigma);
+          }
 
       }
 

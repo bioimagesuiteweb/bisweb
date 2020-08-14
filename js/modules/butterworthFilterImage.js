@@ -109,16 +109,22 @@ class ButterworthFilterImageModule extends BaseModule {
         
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then(() => {
-
+                
                 let inp = input;
+
+                //                inp.computeIntensityRange();
+                //                console.log('___ input range=',inp.getIntensityRange());
+                
                 let out = null;
                 if (vals.type === "low" || vals.type === "band") {
                     out = biswrap.butterworthFilterImageWASM(input, {
                         "type": "low",
-                        "cutoff": parseFloat(vals.low),
+                        "cutoff": parseFloat(vals.high),
                         "samplerate": parseFloat(vals.tr)
                     }, super.parseBoolean(vals.debug));
 
+                    //console.log('___ low range=',out.getIntensityRange());
+                    
                     if (vals.type === "low") {
                         this.outputs['output'] = out;
                         resolve();
@@ -127,11 +133,16 @@ class ButterworthFilterImageModule extends BaseModule {
                     inp = out;
                 }
 
+                //inp.computeIntensityRange();
+                //console.log('___ high input=',inp.getIntensityRange());
+                
                 this.outputs['output'] = biswrap.butterworthFilterImageWASM(inp, {
                     "type": "high",
-                    "cutoff": parseFloat(vals.high),
+                    "cutoff": parseFloat(vals.low),
                     "samplerate": parseFloat(vals.tr)
                 }, vals.debug);
+
+                //console.log('___ high range=',this.outputs['output'].getIntensityRange());
                 
                 resolve();
             }).catch((e) => {

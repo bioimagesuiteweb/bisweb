@@ -60,9 +60,10 @@ mat.load(inpfilename).then( async () => {
     if (dim[1]===1 && rows>1)
         numvoxels=rows;
     
-    let idim=[ numvoxels,1,1];
+    let idim=[ numvoxels,numvoxels,1];
     
     let numframes=dim[0];
+    console.log('Numframes=',numframes);
     
     let img=new BisWebImage();
     img.createImage({
@@ -76,7 +77,9 @@ mat.load(inpfilename).then( async () => {
     let imgdata=img.getImageData();
     let matrix=mat.getNumericMatrix();
 
-    let index=0;
+    let d=img.getDimensions();
+    numvoxels=d[0]*d[1]*d[2];
+
     for (let frame=0;frame<numframes;frame++) { 
         for (let i=0;i<numvoxels;i++) {
             let j=i,scale=1.0;
@@ -84,7 +87,10 @@ mat.load(inpfilename).then( async () => {
                 j=0;
                 scale=(i+1);
             }
+            let index=frame*numvoxels+i;
             imgdata[index]=matrix[frame][j]*scale;
+            if (i===0)
+                console.log('i=',i,frame,' j=',j,' index=',index,' val=',imgdata[index]);
             ++index;
         }
     }

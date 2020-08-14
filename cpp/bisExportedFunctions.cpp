@@ -909,40 +909,13 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
   float samplerate=params->getFloatValue("sampleRate",1.0f);
 
   if (debug)
-    std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
+    std::cout << "ButterworthImage Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
 
 
-  int dim[5]; in_image->getDimensions(dim);
-  
-  
-  Eigen::MatrixXf temp;
-  Eigen::VectorXf w=Eigen::VectorXf::Zero(dim[3]);
-  for (int i=0;i<dim[3];i++)
-    w[i]=1.0;
-
-
-  Eigen::MatrixXf input=  Eigen::MatrixXf::Zero(dim[3],1);
-  Eigen::MatrixXf output=  Eigen::MatrixXf::Zero(dim[3],1);
-  int numvoxels=dim[0]*dim[1]*dim[2];
-  float* indata=in_image->getImageData();
-  float* outdata=out_image->getImageData();
-
-  int ok=1;
-
-  
-  for (int i=0;i<numvoxels;i++) {
-    for (int f=0;f<dim[3];f++) {
-      input(f,0)=indata[numvoxels*f+i];
-    }
-
-    ok*=bisfMRIAlgorithms::butterworthFilter(input,output,w,temp,ftype,cutoff,samplerate,debug);
-    for (int f=0;f<dim[3];f++) {
-      outdata[numvoxels*f+i]=output(f,0);
-    }
-  }
+  int ok=bisfMRIAlgorithms::butterworthFilterImage(in_image.get(),out_image.get(),ftype,cutoff,samplerate,debug);
 
   if (debug)
-    std::cout << "Butterworth Filter done " << ok << std::endl;
+    std::cout << "Butterworth Filter Image done " << ok << std::endl;
 
   return out_image->releaseAndReturnRawArray();
 

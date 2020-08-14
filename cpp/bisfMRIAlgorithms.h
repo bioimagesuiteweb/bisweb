@@ -79,6 +79,21 @@ namespace bisfMRIAlgorithms {
 			std::string passType,float frequency,float sampleRate,int debug);
 
 
+  /** Performs high or low pass butterworth filtration on images
+   * @param input the input timeseries matrix (rows=frame)
+   * @param output the input timeseries matrix (rows=frame)
+   * @param w the weight vector  (BINARY here if > 0.5 use, else ignore)
+   * @param temp  a temporary matrix
+   * @param passType the filter type either "low" or "high"
+   * @param frequency  cuttoff frequency in Hz
+   * @param sampleRate Data TR (TR = Time of repetition)
+   * @param debug  if > 0 print filter characteristics
+   * @return 1 if success, 0 if fail
+   */
+  int butterworthFilterImage(bisSimpleImage<float>* input,bisSimpleImage<float>* output,
+                             std::string passType,float frequency,float sampleRate,int debug);
+
+
 
   /** Removes components of data parallel to regressors
    * @param input the input timeseries matrix (rows=frame)

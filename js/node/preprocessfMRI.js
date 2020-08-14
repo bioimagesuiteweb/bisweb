@@ -63,7 +63,6 @@ const create_matrix=function(paramlist,numframes=-1) {
 
     
     let output=new BisWebMatrix('matrix',mat);
-    console.log('Created output matrix=',output.getDescription());
     return output;
 };
 
@@ -367,15 +366,8 @@ class PreprocessfMRIModule extends BaseModule {
             console.log(' = = = = = = = = = = = = = = = = = = = = = =');
             console.log(' = = = Bandpass filtering='+vals['blow']+':'+vals['bhigh']+' TR=',vals['tr']);
 
-            /*let range=current_output.getIntensityRange();
-            let imdata1=current_output.getImageData();
-            let offset=100-range[0];
-            offset=0.0;
-            console.log("Shifting intensities by",offset);
-            for (let i=0;i<imdata1.length;i++) {
-                imdata1[i]+=offset;
-            }
-            current_output.computeIntensityRange();*/
+            current_output.computeIntensityRange();
+            console.log('Range = ',            current_output.getIntensityRange());
             
             let bandpass_mod=new butterworthFilterImage();
             try {
@@ -392,13 +384,9 @@ class PreprocessfMRIModule extends BaseModule {
                 return Promise.reject('Failed to regress bandpass filter image'+e);
             }
             current_output=bandpass_mod.getOutputObject('output');
-
-            /*let imdata=current_output.getImageData();
-            offset=-1.0*offset;
-            console.log("___ Shifting intensities by",offset);
-            for (let i=0;i<imdata.length;i++) {
-                imdata[i]+=offset;
-            }*/
+            console.log('Range = ',            current_output.getIntensityRange());
+            
+            let imdata=current_output.getImageData();
             current_output.computeIntensityRange();
             console.log('___ Bandpass output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
             this.outputs['bandpassoutput'] = current_output;

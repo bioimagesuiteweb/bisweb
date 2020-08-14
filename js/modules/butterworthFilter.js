@@ -109,7 +109,7 @@ class ButterworthFilterModule extends BaseModule {
                 if (vals.type === "low" || vals.type === "band") {
                     out = biswrap.butterworthFilterWASM(input, {
                         "type": "low",
-                        "cutoff": parseFloat(vals.low),
+                        "cutoff": parseFloat(vals.high),
                         "samplerate": parseFloat(vals.tr)
                     }, super.parseBoolean(vals.debug));
 
@@ -123,7 +123,7 @@ class ButterworthFilterModule extends BaseModule {
 
                 this.outputs['output'] = biswrap.butterworthFilterWASM(inp, {
                     "type": "high",
-                    "cutoff": parseFloat(vals.high),
+                    "cutoff": parseFloat(vals.low),
                     "samplerate": parseFloat(vals.tr)
                 }, vals.debug);
                 resolve();

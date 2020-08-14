@@ -68,20 +68,44 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  low --tr 1.0 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_low_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "command" : "butterworthFilter -i testdata/newtests/timeseries.csv  --type  low --tr 1.0 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/lowpass.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  high --tr 1.0 --high 0.03 --debug true",
-	    "test"    : "--test_target testdata/newtests/but_high_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "command" : "butterworthFilter -i testdata/newtests/timeseries.csv  --type  high --tr 1.0 --low 0.008 --debug true",
+	    "test"    : "--test_target testdata/newtests/highpass.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  band --tr 1.0 --high 0.03 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_band_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "command" : "butterworthFilter -i testdata/newtests/timeseries.csv --tr 1.0 --type band --low 0.008 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/bandpass.csv --test_type matrix --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  low --tr 1.0 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/lowpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  high --tr 1.0 --low 0.008 --debug true",
+	    "test"    : "--test_target testdata/newtests/highpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/bandpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/cropped.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/cropped_matlab.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
 	    "result"  : true,
 	    "dopython": true
 	},
@@ -725,24 +749,6 @@
             "result" : true,
             "dopython": false
         },
-	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  low --tr 1.0 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_low_out.matr.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
-	    "result"  : true,
-	    "dopython": true
-	},
-	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  high --tr 1.0 --high 0.03 --debug true",
-	    "test"    : "--test_target testdata/newtests/but_high_out.matr.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
-	    "result"  : true,
-	    "dopython": true
-	},
-	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  band --tr 1.0 --high 0.03 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_band.nii.gz --test_type image --test_comparison ssd --test_threshold 16 --debug true" ,
-	    "result"  : true,
-	    "dopython": true
-	},
 	{
 	    "command" : "regressOutImage -i testdata/newtests/drift_input.csv.nii.gz -r testdata/newtests/drift.csv",
 	    "test"    : "--test_target testdata/simpleregress.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.1",

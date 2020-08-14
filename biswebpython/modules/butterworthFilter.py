@@ -40,7 +40,7 @@ class butterworthFilter(bis_basemodule.baseModule):
             if (vals['type'] == "low" or vals['type'] == "band"):
                 out = libbis.butterworthFilterWASM(input, {
                     "type": "low",
-                    "cutoff": vals['low'],
+                    "cutoff": vals['high'],
                     "samplerate": vals['tr']
                 }, self.parseBoolean(vals['debug']));
 
@@ -52,7 +52,7 @@ class butterworthFilter(bis_basemodule.baseModule):
 
             out= libbis.butterworthFilterWASM(inp, {
                 "type": "high",
-                "cutoff": vals['high'],
+                "cutoff": vals['low'],
                 "samplerate": vals['tr'],
             }, self.parseBoolean(vals['debug']));
 
