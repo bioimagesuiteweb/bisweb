@@ -93,6 +93,16 @@ class ButterworthFilterImageModule extends BaseModule {
                     "low" : -1.0,
                     "high" : 5.0
                 },
+                {
+                    "name": "Remove Mean",
+                    "description": "Remove Mean before high pass filtering",
+                    "priority": 20,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "removemean",
+                    "type": 'boolean',
+                    "default": true,
+                },
                 baseutils.getDebugParam(),
             ]
         };
@@ -106,6 +116,8 @@ class ButterworthFilterImageModule extends BaseModule {
             vals.tr = input.getSpacing()[3] || 1.0;
             console.log('+++ Using TR=',vals.tr);
         }
+
+        let removemean=super.parseBoolean(vals.removemean);
         
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then(() => {
@@ -116,29 +128,32 @@ class ButterworthFilterImageModule extends BaseModule {
                 //                console.log('___ input range=',inp.getIntensityRange());
                 
                 let out = null;
-                if (vals.type === "low" || vals.type === "band") {
+                if (vals.type === "high" || vals.type === "band") {
                     out = biswrap.butterworthFilterImageWASM(input, {
-                        "type": "low",
-                        "cutoff": parseFloat(vals.high),
+                        "type": "high",
+                        "removeMean" : removemean,
+                        "cutoff": parseFloat(vals.low),
                         "samplerate": parseFloat(vals.tr)
                     }, super.parseBoolean(vals.debug));
 
                     //console.log('___ low range=',out.getIntensityRange());
                     
-                    if (vals.type === "low") {
+                    if (vals.type === "high") {
                         this.outputs['output'] = out;
                         resolve();
                         return;
                     }
                     inp = out;
+                    removemean=false;
                 }
 
                 //inp.computeIntensityRange();
                 //console.log('___ high input=',inp.getIntensityRange());
                 
                 this.outputs['output'] = biswrap.butterworthFilterImageWASM(inp, {
-                    "type": "high",
-                    "cutoff": parseFloat(vals.low),
+                    "type": "low",
+                    "removeMean" : removemean,
+                    "cutoff": parseFloat(vals.high),
                     "samplerate": parseFloat(vals.tr)
                 }, vals.debug);
 

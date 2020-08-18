@@ -865,7 +865,7 @@ unsigned char* butterworthFilterWASM(unsigned char* input_ptr,const char* jsonst
   float samplerate=params->getFloatValue("sampleRate",1.0f);
 
   if (debug)
-    std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
+    std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate <<  std::endl;
 
 
   Eigen::MatrixXf output;
@@ -907,12 +907,13 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
   std::string ftype=params->getValue("type","low");
   float cutoff=params->getFloatValue("cutoff",0.15f);
   float samplerate=params->getFloatValue("sampleRate",1.0f);
-
+  int removeMean=params->getBooleanValue("removeMean",1);
+ 
   if (debug)
-    std::cout << "ButterworthImage Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
+    std::cout << "ButterworthImage Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << ", removeMean=" << removeMean << std::endl;
 
 
-  int ok=bisfMRIAlgorithms::butterworthFilterImage(in_image.get(),out_image.get(),ftype,cutoff,samplerate,debug);
+  int ok=bisfMRIAlgorithms::butterworthFilterImage(in_image.get(),out_image.get(),ftype,cutoff,samplerate,removeMean,debug);
 
   if (debug)
     std::cout << "Butterworth Filter Image done " << ok << std::endl;

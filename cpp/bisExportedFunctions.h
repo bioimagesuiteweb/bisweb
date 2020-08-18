@@ -375,7 +375,8 @@ extern "C" {
 
   /** Compute butterworthFilter Output applied to images
    * @param input the input image to filter
-   * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5 };
+   * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5, 'removeMean' : true };
+   * if removeMean is true, remove mean of time series before filtering it 
    * @param debug if > 0 print debug messages
    * @returns a pointer to the filtered image
    */

@@ -76,7 +76,7 @@ namespace bisfMRIAlgorithms {
    * @return 1 if success, 0 if fail
    */
   int butterworthFilter(Eigen::MatrixXf& input,Eigen::MatrixXf& output,Eigen::VectorXf& w,Eigen::MatrixXf& temp,
-			std::string passType,float frequency,float sampleRate,int debug);
+                        std::string passType,float frequency,float sampleRate,int debug);
 
 
   /** Performs high or low pass butterworth filtration on images
@@ -87,11 +87,12 @@ namespace bisfMRIAlgorithms {
    * @param passType the filter type either "low" or "high"
    * @param frequency  cuttoff frequency in Hz
    * @param sampleRate Data TR (TR = Time of repetition)
+   * @param removeMean  (if > 0 removeMean of time series before filtering)
    * @param debug  if > 0 print filter characteristics
    * @return 1 if success, 0 if fail
    */
   int butterworthFilterImage(bisSimpleImage<float>* input,bisSimpleImage<float>* output,
-                             std::string passType,float frequency,float sampleRate,int debug);
+                             std::string passType,float frequency,float sampleRate,int removeMean,int debug);
 
 
 

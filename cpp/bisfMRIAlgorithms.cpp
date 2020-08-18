@@ -410,7 +410,7 @@ namespace bisfMRIAlgorithms {
 
   // ------------------------------------------------------------------------------------------
   int butterworthFilterImage(bisSimpleImage<float>* input_image,bisSimpleImage<float>* output_image,
-                             std::string passType,float frequency,float sampleRate,int debug) {
+                             std::string passType,float frequency,float sampleRate,int removeMean,int debug) {
 
 
     int dim[5]; input_image->getDimensions(dim);
@@ -429,19 +429,23 @@ namespace bisfMRIAlgorithms {
     
     for (int i=0;i<numvoxels;i++)
       {
-
-        //        if (i==0)
-        //std::cout << "Input" << std::endl;
-  
-        for (int f=0;f<dim[3];f++)  {
-          input(f,0)=indata[numvoxels*f+i];
-          //if (i==0)
-          //std::cout  << input(f,0) << " (" << numvoxels*f+i << ")" << std::endl;
+        double mean=0.0;
+        
+        if (removeMean) {
+          double sum=0.0;
+          for (int f=0;f<dim[3];f++)  
+            sum+=indata[numvoxels*f+i];
+          mean=sum/double(dim[3]);
         }
+          
+        for (int f=0;f<dim[3];f++)  
+          input(f,0)=indata[numvoxels*f+i]-mean;
         
         int d=debug;
         if (i>0)
           d=0;
+        if (d>0) 
+          std::cout << "___ Mean removed=" << mean << std::endl;
         
         ok*=butterworthFilter(input,output,w,temp,passType,frequency,sampleRate,d);
 

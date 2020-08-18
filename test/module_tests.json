@@ -86,20 +86,26 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  low --tr 1.0 --high 0.2 --debug true",
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  low --tr 1.0 --high 0.2 --debug true --removemean false",
 	    "test"    : "--test_target testdata/newtests/lowpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  high --tr 1.0 --low 0.008 --debug true",
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  high --tr 1.0 --low 0.008 --debug true --removemean false",
 	    "test"    : "--test_target testdata/newtests/highpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true",
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true --removemean false",
 	    "test"    : "--test_target testdata/newtests/bandpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true --removemean true",
+	    "test"    : "--test_target testdata/newtests/bandpass_meanremoved.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
 	    "result"  : true,
 	    "dopython": true
 	},
