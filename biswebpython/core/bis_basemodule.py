@@ -214,6 +214,7 @@ class baseModule:
 
         try:
             ok=self.inputs[key].load(filename);
+            chkobjtype = False
             if objecttype == 'surface' or 'bids' in objecttype:
                 chkobjtype = True
 
