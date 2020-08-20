@@ -17,6 +17,7 @@
 
 import os
 import sys
+import ast
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.core.bis_baseutils as bis_baseutils;
 import biswebpython.utilities.bidsObjects as bids_objects;
@@ -135,7 +136,6 @@ class baseModule:
             print('Parameter', param['name'], 'does not have a default value');
             return False;
 
-
         if (tp=="bool" or tp=="boolean") :
             return (val in ['0', '1', True, False, 'true', 'false', 'True','False','on', 'off' ]);
 
@@ -180,6 +180,8 @@ class baseModule:
 
         for i in range (0,len(desc['params'])):
             param = desc['params'][i];
+            if param['type'] == 'list':
+                vals[param['varname']] = ast.literal_eval(vals[param['varname']])
             if (self.typeCheckParam(param, vals[param['varname']])==False):
                 print('Error: parameter with name=', param['varname'], ', and  value=', vals[param['varname']], ' does not match expected.');
                 return False;

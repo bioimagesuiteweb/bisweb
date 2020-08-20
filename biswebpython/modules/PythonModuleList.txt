@@ -40,3 +40,4 @@ timeseriesNormalizeImage
 ndaElementsGenerator
 timeInterval
 bidsRename
+rotateScaleImage
