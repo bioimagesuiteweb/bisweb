@@ -125,12 +125,11 @@ class LandmarkControlElement extends HTMLElement {
 
         if (this.internal.subviewers===null || this.internal.mesh===null)
             return;
-        
-        var i=0;
-        for (var st=0;st<this.internal.landmarkset.length;st++) {
+
+        for (let st=0;st<this.internal.landmarkset.length;st++) {
             if ( (currentonly===false || st === this.internal.currentsetindex) &&
                  (this.internal.mesh[st]!==null)) {
-                for ( i=0;i<this.internal.subviewers.length;i++)  {
+                for (let i=0;i<this.internal.subviewers.length;i++)  {
                     if (this.internal.subviewers[i]!==null && this.internal.mesh[st][i]!==null) {
                         this.internal.mesh[st][i].visible=false;
                         this.internal.subviewers[i].getScene().remove(this.internal.mesh[st][i]);
@@ -142,7 +141,7 @@ class LandmarkControlElement extends HTMLElement {
         }
         
         if (docursor) {
-            for (i=0;i<this.internal.subviewers.length;i++)  {
+            for (let i=0;i<this.internal.subviewers.length;i++)  {
                 if (this.internal.cursormesh[i]!==null) {
                     if (this.internal.subviewers[i]!==null) {
                         let scene=this.internal.subviewers[i].getScene();
@@ -210,9 +209,11 @@ class LandmarkControlElement extends HTMLElement {
         } );
 
         for (var i=0;i<this.internal.subviewers.length;i++) {
-            this.internal.cursormesh[i]=new THREE.Mesh(cursorgeom, gmat);
-            this.internal.cursormesh[i].visible=false;
-            this.internal.subviewers[i].getScene().add(this.internal.cursormesh[i]);
+            if (this.internal.subviewers[i]!==null) {
+                this.internal.cursormesh[i]=new THREE.Mesh(cursorgeom, gmat);
+                this.internal.cursormesh[i].visible=false;
+                this.internal.subviewers[i].getScene().add(this.internal.cursormesh[i]);
+            }
         }
     }
 

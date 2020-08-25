@@ -151,7 +151,7 @@ class bisweb3DSurfaceMeshSet {
         if (this.subviewers && this.meshes) {
             for (let i=0;i<this.subviewers.length;i++) {
 
-                if (this.meshes[i]) {
+                if (this.meshes[i] && this.subviewers[i]) {
                     this.subviewers[i].getScene().remove(this.meshes[i]);
                     if (doGeometries)
                         this.geometries[i]=null;
@@ -357,7 +357,8 @@ class bisweb3DSurfaceMeshSet {
 
             this.meshes[index] = new THREE.Mesh(this.geometries[index],this.materials[index]);
             this.meshes[index].visible=false;
-            this.subviewers[index].getScene().add(this.meshes[index]);
+            if (this.subviewers[index])
+                this.subviewers[index].getScene().add(this.meshes[index]);
         }
     }
 }
