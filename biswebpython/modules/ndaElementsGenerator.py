@@ -82,10 +82,11 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
                     "extension": ".txt"
                 },
                 {
-                    "type": "bidssubj",
+                    "type": "path",
                     "name": "Input file path",
                     "description": "File path of BIDS format dataset",
                     "varname": "bidspath",
+                    "shortname": "bp",
                     "required": True
                 }
             ],
@@ -128,7 +129,7 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
         try:
 
             odata, elog = eleGen.eleGenarator(self.inputs['template'], self.inputs['lookuptable'].data, self.inputs['appendix'], \
-            self.inputs['demographics'], self.inputs['bidspath'].filepath, \
+            self.inputs['demographics'], self.inputs['bidspath'].path, \
             debug)
 
         except:

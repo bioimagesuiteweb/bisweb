@@ -34,17 +34,6 @@ import biswebpython.utilities.bidsUtils as bids_utils
 import biswebpython.utilities.bidsObjects as bids_objects
 
 
-
-# bids_path= '/home/an/work/MRRC_working_scripts/dataManagement/bids'
-# image03_demogr= '/home/an/work/MRRC_working_scripts/dataManagement/scripts/image03_demographics_temp.txt'
-# error_log = '/home/an/work/MRRC_working_scripts/dataManagement/scripts/bids_errors.txt'
-# log = '/home/an/work/MRRC_working_scripts/dataManagement/scripts/bids_logs.txt'
-# cmd = '/home/an/work/MRRC_working_scripts/dataManagement/scripts/bids_cmd.txt'
-
-
-
-
-
 def anatBidsRename(bsj):
     xx = '_'
     if 'sub-' in bsj.ses.lower():
@@ -215,7 +204,6 @@ def funcBidsRename(bsj, bidsDgr):
                 N = len(splt_f['.nii.gz'])
 
                 ordl = ord.split( )
-                # if N != len(ordl) + 2:
                 if N != len(ordl):
                     errorm.append(['Error: taskOrder of ' + bsj.subj + ' in demographics does not match the files in its func folder, and all the func images are not able to be renamed!'])
                     flag = False

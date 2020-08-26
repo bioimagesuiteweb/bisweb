@@ -66,7 +66,7 @@ def csvappendlines(fname, l_str):
 
 def csvwritelines(fname, l_str):
     with open(fname, 'w') as f:
-        fWriter = csv.writer(f)
+        fWriter = csv.writer(f, lineterminator="\n")
         fWriter.writerows(l_str)
 
 

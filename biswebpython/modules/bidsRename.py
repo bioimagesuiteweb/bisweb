@@ -45,33 +45,6 @@ class bidsRename(bis_basemodule.baseModule):
             "author": "An Qu",
             "version": "1.0",
             "inputs": [
-                # {
-                #     "type": "bidstext",
-                #     "name": "Input Template File",
-                #     "description": "Input data submission template file of NDA standard data structure",
-                #     "varname": "template",
-                #     "shortname": "tpl",
-                #     "required": True,
-                #     "extension": ".csv"
-                # },
-                # {
-                #     "type": "bidslut",
-                #     "name": "Input Lookup Table",
-                #     "description": "Meta data of all the required elements in the template file",
-                #     "varname": "lookuptable",
-                #     "shortname": "lut",
-                #     "required": True,
-                #     "extension": ".txt"
-                # },
-                # {
-                #     "type": "bidsappx",
-                #     "name": "Input Appendix",
-                #     "description": "Meta data of some required elements in the template file",
-                #     "varname": "appendix",
-                #     "shortname": "appx",
-                #     "required": True,
-                #     "extension": ".txt"
-                # },
                 {
                     "type": "bidsdemogr",
                     "name": "Input Demographics file",
@@ -82,10 +55,11 @@ class bidsRename(bis_basemodule.baseModule):
                     "extension": ".txt"
                 },
                 {
-                    "type": "bidssubj",
+                    "type": "path",
                     "name": "Input file path",
                     "description": "File path of BIDS format dataset",
                     "varname": "bidspath",
+                    "shortname": "bp",
                     "required": True
                 }
             ],
@@ -135,7 +109,7 @@ class bidsRename(bis_basemodule.baseModule):
 
 
         try:
-            odata, elog, log = bidsRn.Rename(self.inputs['demographics'], self.inputs['bidspath'].filepath, \
+            odata, elog, log = bidsRn.Rename(self.inputs['demographics'], self.inputs['bidspath'].path, \
             debug)
 
         except:

@@ -111,7 +111,7 @@ class rotateScaleImage(bis_basemodule.baseModule):
                     "varname": "rotate",
                     "shortname": "r",
                     "type": "list",
-                    "default": True
+                    "default": [0, 0, 0]
                 },
                 {
                     "name": "scaling",
@@ -119,7 +119,7 @@ class rotateScaleImage(bis_basemodule.baseModule):
                     "varname": "scale",
                     "shortname": "sc",
                     "type": "list",
-                    "default": True
+                    "default": [1, 1, 1]
                 }
             ]
         }

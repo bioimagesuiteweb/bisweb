@@ -46,7 +46,7 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
 
     for ele in LUT:
         temp_var = None
-        if 'ALL' in ele[1] or imgSubj.scan_type in ele[1]:
+        if 'ALL' in ele[1] or ele[1] in imgSubj.scan_type:
 
             jfile = imgSubj.file_path.replace('.nii.gz', '.json')
             if not os.path.exists(jfile):
@@ -82,7 +82,10 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
 
                     else:
                         try:
-                            temp_var = appx_c[ele[0]][appx_c[ele[0]].index(imgSubj.description)-1]
+                            keywords = appx_c[ele[0]][1::2]
+                            for kw in keywords:
+                                if kw in imgSubj.filename:
+                                    temp_var = appx_c[ele[0]][appx_c[ele[0]].index(kw)-1]
                         except:
                             errorm.append(['Failed to write element: ' + ele[0] + ' of the file: ' + imgSubj.file_path + ' into the output file! '])
 
@@ -158,37 +161,6 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
 
 
 def eleGenarator(TPL, LUT, appx, dgr, BIDS_path, debug):
-    # tpl_cp = cpFile(image03_tpl, output)
-    #
-    # clearFile(error_log)
-    #
-    # try:
-    #     dgr = bidsDemogr()
-    #     dgr.read(image03_demogr)
-    # except:
-    #     print ("Error: cannot read demographics file!")
-    #     sys.exit()
-    #
-    # try:
-    #     tpl = csvread(tpl_cp)[1]
-    # except:
-    #     print("Error: cannot read template file!")
-    #     sys.exit()
-    #
-    # try:
-    #     LUT = csvread(image03_LUT, bids_demogr=True, id='---')
-    # except:
-    #     print("Error: cannot read look up table!")
-    #     sys.exit()
-    #
-    # try:
-    #     constants, variables = img03AppxRead(image03_appx, '---')
-    # except:
-    #     print("Error: cannot read appendix file!")
-    #     sys.exit()
-
-
-
     tpl = TPL.rawdata[1]
     oup_data = dp(TPL.rawdata)
     oup_elog = []

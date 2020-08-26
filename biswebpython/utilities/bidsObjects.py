@@ -37,6 +37,18 @@ from datetime import date
 
 
 
+class filePath:
+    def __init__(self):
+        self.path = ''
+
+    def load(self, fname):
+        try:
+            self.path = fname
+            return True
+        except:
+            return False
+
+
 
 
 class bidsText:
@@ -468,9 +480,31 @@ class imgSubj:
 
     def get_scan_type(self):
         if self.datatype == 'anat':
-            self.scan_type = 'MR structural'
+            if 't1w' in self.filename.lower():
+                self.scan_type = 'MR structural (T1)'
+            elif 'mprage' in self.filename.lower():
+                self.scan_type = 'MR structural (MPRAGE)'
+            elif 't2' in self.filename.lower():
+                self.scan_type = 'MR structural (T2)'
+            elif 'flash' in self.filename.lower():
+                self.scan_type = 'MR structural (FLASH)'
+            elif 'fspgr' in self.filename.lower():
+                self.scan_type = 'MR structural (FSPGR)'
+            elif 'fisp' in self.filename.lower():
+                self.scan_type = 'MR structural (FISP)'
+            elif 'tse' in self.filename.lower():
+                self.scan_type = 'MR structural (TSE)'
+            elif 'mpnrage' in self.filename.lower():
+                self.scan_type = 'MR structural (MPnRAGE)'
+            else:
+                self.scan_type = 'MR structural'
+
         elif self.datatype == 'func':
             self.scan_type = 'fMRI'
+
+        elif self.datatype == 'dwi':
+            self.scan_type = 'MR diffusion'
+
         else:
             print('Error: the scan_type of ', self.datatype , ' files is not in coded field! Please remove scan_type element from the look up table & appendix and run the code again.')
             print('Image that raised the error:', self.file_path)
