@@ -41,3 +41,4 @@ ndaElementsGenerator
 timeInterval
 bidsRename
 rotateScaleImage
+dicom2nii

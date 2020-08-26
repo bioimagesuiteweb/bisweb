@@ -194,31 +194,40 @@ class baseModule:
 
         if (objecttype=='image'):
             self.inputs[key]=bis_objects.bisImage();
+            chkobjtype = False
         elif (objecttype=='surface'):
             self.inputs[key]=bis_objects.bisSurface();
+            chkobjtype = True
         elif (objecttype=='matrix' or objecttype=='vector'):
             self.inputs[key]=bis_objects.bisMatrix();
+            chkobjtype = False
         elif (objecttype == 'transformation' or objecttype == 'transform'):
             self.inputs[key]= bis_objects.loadTransformation(filename);
+            chkobjtype = False
             if (self.inputs[key]==None):
                 return False;
             return True
         elif (objecttype=='bidsdemogr'):
             self.inputs[key] = bids_objects.bidsDemogr();
+            chkobjtype = True
         elif (objecttype=='bidsappx'):
             self.inputs[key] = bids_objects.bidsAppx();
+            chkobjtype = True
         elif (objecttype=='bidslut'):
             self.inputs[key] = bids_objects.bidsLUT();
+            chkobjtype = True
         elif (objecttype=='bidstext'):
             self.inputs[key] = bids_objects.bidsText();
+            chkobjtype = True
         elif (objecttype=='bidssubj'):
             self.inputs[key] = bids_objects.bidsSubj();
+            chkobjtype = True
+        elif (objecttype=='path'):
+            self.inputs[key] = bids_objects.filePath();
+            chkobjtype = True
 
         try:
             ok=self.inputs[key].load(filename);
-            chkobjtype = False
-            if objecttype == 'surface' or 'bids' in objecttype:
-                chkobjtype = True
 
             if (ok!=False and not chkobjtype):
                 sz=self.inputs[key].data_array.shape;
