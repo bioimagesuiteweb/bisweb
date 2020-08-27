@@ -204,16 +204,24 @@ class LandmarkSet {
      * @return {boolean} val - true or false
      */
     legacydeserialize(inpstring,filename,doerror) {
+
+        var cleanstring=function(s) {
+            return s.trim().replace(/ +/g,' ');
+        };
+
         
         var lines=inpstring.split("\n");
         if (lines[0].trim() !== "#Landmark Data") {
             doerror(filename+' is not a valid legacy .land file');
             return;
         }
+
+
+
         
         var np=lines[2].split(" ")[0];
-        var origin=lines[4].trim().split(" ");
-        var spacing=lines[6].trim().split(" ");
+        var origin=cleanstring(lines[4]).split(" ");
+        var spacing=cleanstring(lines[6]).split(" ");
         for (var k=0;k<=2;k++) {
             origin[k]=parseFloat(origin[k]);
             spacing[k]=parseFloat(spacing[k]);
@@ -224,7 +232,7 @@ class LandmarkSet {
         this.points=new Array(np);
         this.names=new Array(np);
         for (var pt=0;pt<np;pt++) {
-            var x=lines[8+pt].trim().split(" ");
+            var x=cleanstring(lines[8+pt]).split(" ");
             var newp = [ 0,0,0 ];
             for (var j=0;j<=2;j++) {
                 newp[j]=parseFloat(x[j])*spacing[j]+origin[j];

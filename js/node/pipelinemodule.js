@@ -120,8 +120,30 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     console.log('__\n__ Checking for external files in variables');
     for (let variable of pipelineOptions.variables) {
         if (variable.filename) {
+            let dat=null;
             try {
-                let dat=fs.readFileSync(variable.filename, 'utf-8');
+                dat=fs.readFileSync(variable.filename, 'utf-8');
+            } catch(e) {
+                console.log('Failed to read filename '+variable.filename);
+                return null;
+            }
+            
+            // Is this a text file
+            if (path.extname(variable.filename)==='.txt' ||
+                path.extname(variable.filename)==='.TXT' ) {
+                    // Text file
+                    let lst= dat.split('\n');
+                    let fnames=[];
+                    for (let i=0;i<lst.length;i++) {
+                        let f=lst[i].trim();
+                        if (f.length>3) {
+                            fnames.push(f);
+                        }
+                    }
+                variable.files=fnames;
+                console.log('____ Read ',fnames.length,'filenames from file', variable.filename, ' for variable', variable.name);
+            } else {
+                // JSON File
                 try {
                     let flist=JSON.parse(dat);
                     let fnames=flist.filenames || [];
@@ -137,12 +159,10 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                     }
                     return null;
                 }
-            } catch(e) {
-                console.log('Failed to read',variable.filename,'error',e);
-                return null;
             }
         }
     }
+
     console.log('__');
 
     // Add more variables from jobs
@@ -240,7 +260,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                         variablesWithDependencies.push({ 'name': variableName, 'index': j });
                     } else {
                         console.log('____ Not Adding variableName as depenency',variableName);
-                        console.log("Files=",pipelineOptions.variables[j].files);
+                        //console.log("Files=",pipelineOptions.variables[j].files);
                         console.log("Expanded=",expandedVariables[variableName]);
                     }
                     j+= pipelineOptions.variables.length + 1;
@@ -270,7 +290,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
         //variables with lower indices precede variables with higher indexes in the job hierarchy, and may therefore be variables that determine how the higher-indexed jobs are generated.
         //by this logic, we want to make sure we process the lower indexed jobs first (sort in ascending order by index) to ensure that higher-indexed jobs have the relevant information on how they are generated
         variablesWithDependencies.sort( (a,b) => { return a.index - b.index; });
-        console.log('variables with dependencies for job', job.name, variablesWithDependencies);
+        console.log('__\t variables with dependencies for job', job.name, variablesWithDependencies);
         for (let variable of variablesWithDependencies) {
             //console.log('\n\n-----------------------------\n');
             //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
@@ -294,7 +314,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                     let outname= variableNaming[variable.name]+variableSuffix[variable.name];
                     
                     outname=outname.trim().replace(/ /g,'-');
-                    console.log('inputs used by job', inputsUsedByJob);
+                    //console.log('inputs used by job', inputsUsedByJob);
                     inputsUsedByJob.forEach( (input) => {
 
                         if (listMatches[input.name]) {
@@ -309,7 +329,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                             basename = outname.replace(matchString, basename);
                             splitString[splitString.length - 1] = basename;
                             outname = splitString.join('/');
-                            console.log('outname', outname, basename);
+                            //console.log('outname', outname, basename);
                         } else {
                             let marker=`%${input.name}%`;
                             let ind=outname.indexOf(marker);
@@ -358,7 +378,8 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
             }
             
         }
-        
+
+
         //construct the inputs, outputs, and command in the way that 'make' expects
         for (let i = 0; i < numOutputs; i++) {
 
@@ -370,7 +391,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
             }
             
             inputsUsedByJob.forEach( (input) => {
-                console.log('input', input);
+                //console.log('input', input);
                 //if list is included then combine all the inputs
                 if (input.isList) {
                     input = expandedVariables[input.name];
@@ -430,11 +451,12 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     let resultsfile = { 'Outputs': [] };
     
 
-    
+    let outjson={};
     //add 'make [job]' for each job
     for (let job of jobsWithOutputs) {
         //        console.log('job', job);
         let name = job.name;
+        outjson[name]=[];
         makefile +='#-----------------------------------------------\n#\n';
         makefile += '# execute job '+name+'\n#\n';
         makefile +=  name + ' : ';
@@ -447,7 +469,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
         for (let output of job.outputs) {
             makefile += output + ' ';
             res.filenames.push(output);
-
+            outjson[name].push(output);
         }
         makefile += '\n\n';
         resultsfile['Outputs'].push(res);
@@ -507,11 +529,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     makefile+= "list : \n\t @echo "+joblist.join(" ")+"\n";
     console.log('__ Added: make list');
     console.log('__');
-
-
-    
-
-    return makefile;
+    return [ makefile, outjson ] ;
 };
 
 
@@ -551,6 +569,15 @@ class PipelineModule extends BaseModule {
                     'varname': 'output',
                     'required': true,
                     'extension': '.txt'
+                },
+                {
+                    'type': 'text',
+                    'shortname' : 'l',
+                    'name': 'Results',
+                    'description': 'output log file',
+                    'varname': 'outlog',
+                    'required': false,
+                    'extension': '.json'
                 },
             ],
             "buttonName": "Execute",
@@ -647,7 +674,11 @@ class PipelineModule extends BaseModule {
                         reject(e);
                         return;
                     }
-                    let out=makePipeline(dat,vals.odir,vals.debug);
+                    let out_arr=makePipeline(dat,vals.odir,vals.debug);
+
+                    let out=out_arr[0];
+                    //console.log(out_arr[1]);
+                    
                     if (vals.unixstyle) {
                         out=out.replace(/\\\\/g,'/');
                         out=out.replace(/\\/g,'/');
@@ -655,6 +686,7 @@ class PipelineModule extends BaseModule {
                     if (out!==null) {
                         this.outputs['output']=new BisWebTextObject(out);
                         this.outputs['output'].forceTextSave(); // No JSON!
+                        this.outputs['outlog']=new BisWebTextObject(out_arr[1]);
                         resolve();
                     } else {
                         reject('Something went wrong');

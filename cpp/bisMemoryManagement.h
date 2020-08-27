@@ -23,6 +23,18 @@
 #include "bisDataTypes.h"
 #include "bisObject.h"
 
+ #ifndef BISLONG
+  #ifdef BISWASM
+    #define BISLONG long
+  #else
+    #ifdef _WINDOWS
+       #define BISLONG long long
+    #else
+       #define BISLONG int64_t
+    #endif
+  #endif
+#endif
+
 // --------------------- bisMemoryManagement -------------------------------------
 //
 /** This code provides functionality for serializing/deserializing and manipulating
@@ -73,7 +85,7 @@ namespace bisMemoryManagement {
    * @param operation description of the operation
    * @param owner owner object for this memory
    */
-  unsigned char* allocate_memory(long sz,std::string name="",std::string operation="",bisObject* owner=0);
+  unsigned char* allocate_memory(BISLONG sz,std::string name="",std::string operation="",bisObject* owner=0);
 
   /**
    * Release memory at location specified by pointer
@@ -107,7 +119,7 @@ namespace bisMemoryManagement {
    * @param input location of input data
    * @param length number of bytes to copy
    */
-  void copy_memory(unsigned char* output,unsigned char* input,long length);
+  void copy_memory(unsigned char* output,unsigned char* input,BISLONG length);
 
 
   

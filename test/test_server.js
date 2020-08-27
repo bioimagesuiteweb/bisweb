@@ -44,6 +44,10 @@ for (let i=0;i<=1;i++)
 
 let client=null;
 
+// Debug
+//let olddescribe=function() { };
+//let oldit=function() { };
+
 describe('Testing the WS server utilities\n', function() {
 
     this.timeout(50000);
@@ -67,7 +71,9 @@ describe('Testing the WS server utilities\n', function() {
         assert.equal(ok,true);
     });
 
-    it ('run find directory and basename',function() {
+   it ('run find directory and basename',function() {
+
+        
 
         let ok=true;
         
@@ -336,37 +342,11 @@ describe('Testing the WS server\n', function() {
             let o_obj=JSON.parse(f);
             let obj=JSON.parse(o_obj.text);
             console.log('Final obj=',JSON.stringify(obj));
-            let hash=obj.hash;
+            let hash=obj['hash'];
+            console.log('Hash=',hash);
             let gold="0cfb6bd4c589813f7abf46a17b1b44b3a0c15fd5739769cd860c206171b510d3";
             
-            console.log('____ Module headerinfo output',gold,'vs',hash);
-            assert.equal(hash,gold);
-            done();
-        }).catch( (e) => {
-            console.log('Failed',e);
-            assert.equal(true,false);
-            done();
-        });
-            
-    });
-
-    it ('ws ... test run checksum module internal',  (done) => {
-
-        console.log('\n\n\n');
-        console.log('Running module');
-        
-        client.runModule('makechecksum', {
-            'debug' : true,
-            'input' : path.resolve(path.join(__dirname,'testdata/glm/clusterno.nii.gz')),
-        },false).then( (obj) => {
-
-            
-            console.log('Final obj=',JSON.stringify(obj,null,2));
-            console.log('\n\n\n');
-            let hash=obj.output.hash;
-            let gold="0cfb6bd4c589813f7abf46a17b1b44b3a0c15fd5739769cd860c206171b510d3";
-            
-            console.log('____ Module headerinfo output',gold,'vs',hash);
+            console.log('____ Module headerinfo output gold:',gold,'vs',hash);
             assert.equal(hash,gold);
             done();
         }).catch( (e) => {

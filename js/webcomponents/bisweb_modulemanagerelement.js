@@ -120,6 +120,42 @@ class ModuleManagerElement extends HTMLElement {
             webutil.createMenuItem(this.moduleMenu[index],'');
         }
     }
+
+
+    transfer(v1,v2,img1,img2) {
+        v1=parseInt(v1);
+        v2=parseInt(v2);
+        img1=parseInt(img1);
+        img2=parseInt(img2);
+
+        if (v1=== v2 && img1===img2) {
+            return;
+        }
+
+        let source=this.viewers[v1];
+        let target=this.viewers[v2];
+
+        let sourceimg=null;
+        let sourcecolor=0;
+        if (img1===0) {
+            sourceimg=source.getimage();
+        }  else {
+            sourceimg=source.getobjectmap();
+            if (sourceimg)
+                sourcecolor=source.getcolortype();
+        }
+
+        if (!sourceimg)
+            return;
+
+        if (img2===0) {
+            target.setimage(sourceimg);
+            return;
+        }
+
+        target.setobjectmap(sourceimg,false,sourcecolor);
+    }
+
     
     transferImages(v1,v2) {
 
@@ -203,11 +239,12 @@ class ModuleManagerElement extends HTMLElement {
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
-                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
+//                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
                 this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
                 this.createModule('Individualize Parcellation',1, false, modules.getModule('individualizedParcellation'), moduleoptions);
-                this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+//               this.createModule('Bilateral Filter', 1, false, modules.getModule('bilateralFilter'), moduleoptions);
+                this.createModule('Patch Reformat Image', 1, false, modules.getModule('patchReformatImage'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);
@@ -220,6 +257,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Shift+Scale(+Cast) Image',1, false, modules.getModule('shiftScaleImage'), moduleoptions);
         this.createModule('Reorient Image',1, false, modules.getModule('reorientImage'), moduleoptions);
         this.createModule('Flip Image',1, false, modules.getModule('flipImage'), moduleoptions);
+        this.createModule('Permute Image',1, false, modules.getModule('permuteImage'), moduleoptions);
         this.createModule('Crop Image',1, false, modules.getModule('cropImage'), moduleoptions);
         this.createModule('Blank Image',1, false, modules.getModule('blankImage'), moduleoptions);
         this.createModule('Extract Frame',1, true, modules.getModule('extractFrame'), moduleoptions);
@@ -230,13 +268,18 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
         this.createModule('Drift Correct 4D Image',1, dosep, modules.getModule('driftCorrectImage'), moduleoptions);
         this.createModule('Temporal Filter 4D Image',1, dosep, modules.getModule('butterworthFilterImage'), moduleoptions);
+        this.createModule('Normalize Time Series',1, dosep, modules.getModule('timeseriesnormalizeimage'), moduleoptions);
+        
         this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {
             this.createModule('Segment Image',2, true, modules.getModule('segmentImage'), moduleoptions);
             this.createModule('Deface Head Image',2, true, modules.getModule('defaceImage'), moduleoptions);
         }
-        this.createModule('Skull Strip Image (DL)',2, true, modules.getModule('skullStrip'), moduleoptions);                    
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f)
+                this.createModule('Skull Strip Image (DL)',2, false, modules.getModule('skullStrip'), moduleoptions);
+        });
 
         this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);
         this.createModule('Mask Image', 2, false, modules.getModule('maskImage'), moduleoptions);
@@ -252,6 +295,7 @@ class ModuleManagerElement extends HTMLElement {
             }
             this.createModule('Project Image',3, false, modules.getModule('projectImage'), moduleoptions);
             this.createModule('Back-Project Image',3, usesgpl, modules.getModule('backProjectImage'), moduleoptions);
+            this.createModule('Jacobian Image',3, false, modules.getModule('jacobianImage'), moduleoptions);
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
             }

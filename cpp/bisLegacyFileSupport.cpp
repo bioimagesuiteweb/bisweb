@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-
+#include "bisUtil.h"
 #include "bisLegacyFileSupport.h"
 #include "bisEigenUtil.h"
 #include <Eigen/Dense>
@@ -42,9 +42,9 @@ namespace bisLegacyFileSupport {
   }
 
   // Store Data in String
-  std::unique_ptr<bisSimpleVector<char> > storeStringInSimpleVector(std::string& s)
+  bisSimpleVector<char>* storeStringInSimpleVector(std::string& s)
   {
-    std::unique_ptr<bisSimpleVector<char> > outvect(new bisSimpleVector<char>());
+    bisSimpleVector<char>*  outvect=new bisSimpleVector<char>();
 
     const char* outstring=s.c_str();
     int len=strlen(outstring);
@@ -53,7 +53,9 @@ namespace bisLegacyFileSupport {
     
     char* outdata=outvect->getData();
     strcpy(outdata,outstring);
-    return std::move(outvect);
+
+    return outvect;
+
   }
 
   /** return a matrix from a .matr file (either octave style or straight up 4x4 matrix)

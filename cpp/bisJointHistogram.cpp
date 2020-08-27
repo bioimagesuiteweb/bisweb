@@ -363,13 +363,13 @@ void bisJointHistogram::print()
 }
 
 
-std::unique_ptr<bisSimpleMatrix<float> > bisJointHistogram::exportHistogram(std::string name)
+bisSimpleMatrix<float>* bisJointHistogram::exportHistogram(std::string name)
 {
-  std::unique_ptr <bisSimpleMatrix<float> > output(new bisSimpleMatrix<float>(name));
+  bisSimpleMatrix<float>* output=new bisSimpleMatrix<float>(name);
   output->allocate(this->numbinsy,this->numbinsx);
   for (int i=0;i<this->numbinsx*this->numbinsy;i++)
     output->getData()[i]=this->bins[i];
 
-  return std::move(output);
+  return output;
 }
 

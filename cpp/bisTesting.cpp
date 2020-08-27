@@ -19,6 +19,7 @@
 #include "bisEigenUtil.h"
 #include "bisUtil.h"
 #include "bisSimpleDataStructures.h"
+#include "bisSurface.h"
 #include "bisExportedFunctions.h"
 #include "bisJointHistogram.h"
 #include "bisJSONParameterList.h"
@@ -173,7 +174,7 @@ unsigned char*  test_create_4x4matrix(unsigned char* image1_ptr,
   if (debug)
     xform->printSelf();
 
-  std::unique_ptr<bisSimpleMatrix<float> > matrix=xform->getSimpleMatrix("outmatrix");
+  std::unique_ptr<bisSimpleMatrix<float> > matrix(xform->getSimpleMatrix("outmatrix"));
   return matrix->releaseAndReturnRawArray();
 }
 
@@ -625,6 +626,58 @@ unsigned char*  test_compute_histo_metric(unsigned char* image1_ptr,
       return results->releaseAndReturnRawArray();
     }
 
-  std::unique_ptr<bisSimpleMatrix<float> > outmat=histo->exportHistogram("histo_matrix");
+  std::unique_ptr<bisSimpleMatrix<float> > outmat(histo->exportHistogram("histo_matrix"));
   return outmat->releaseAndReturnRawArray();
+}
+
+
+// ------- Surface ------- Surface ------- Surface ------- Surface ------- Surface ------- Surface 
+unsigned char* test_shiftSurfaceWASM(unsigned char* input,const char* jsonstring,int debug) {
+
+  std::cout << "Starting test_ShiftSurface" << std::endl;
+  
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+  
+  params->print();
+
+  float shiftpoints=params->getFloatValue("shiftpoints",2.0);
+  int shiftindices=params->getIntValue("shiftindices",3);
+  std::cout << "Shift_points=" << shiftpoints << ", Shift_indices=" << shiftindices << std::endl;
+
+  std::unique_ptr<bisSurface > surface(new bisSurface("surface"));
+  if (!surface->deSerialize(input))
+    {
+      std::cerr << "Failed to deserialize surface" << std::endl;
+      return 0;
+    }
+
+  std::shared_ptr<bisSimpleMatrix<float> > pts=surface->getPoints();
+  float* ptdata=pts->getData();
+  int rows=pts->getNumRows();
+  int cols=pts->getNumCols();
+  if (debug)
+    std::cout << "Deserialized Points:" << rows << "*" << cols << " points." << std::endl;
+  for (int ia=0;ia<rows;ia++) {
+    ptdata[ia*3+0]=ptdata[ia*3+0]+shiftpoints;
+    ptdata[ia*3+1]=ptdata[ia*3+1]+shiftpoints+1.0;
+    ptdata[ia*3+2]=ptdata[ia*3+2]+shiftpoints+2.0;
+  }
+
+  std::shared_ptr<bisSimpleMatrix<int> > tris=surface->getTriangles();
+  int* tridata=tris->getData();
+  int rows2=tris->getNumRows();
+  int cols2=tris->getNumCols();
+  std::cout << "Deserialized Triangles:" << rows2 << "*" << cols2 << " indices." << std::endl;
+  for (int ia=0;ia<rows2;ia++) {
+    tridata[ia*3+0]=tridata[ia*3+0]+shiftindices;
+    tridata[ia*3+1]=tridata[ia*3+1]+shiftindices+1;
+    tridata[ia*3+2]=tridata[ia*3+2]+shiftindices+2;
+  }
+
+
+  unsigned char* pointer=surface->serialize();
+  return pointer;
 }

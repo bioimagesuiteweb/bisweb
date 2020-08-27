@@ -56,7 +56,7 @@ if (!webpack) {
 } else {
     try  {
         filesaver = bisexternals['FileSaver'];
-        console.log("++++ In Browser");
+        console.log("++++ BisWeb I/O Mode=Browser");
     }
     catch(e)  {
 /*        if (typeof ( WorkerGlobalScope ) !== "undefined") {
@@ -175,6 +175,14 @@ const dataURLToBlob = function(dataURL) {
  */
 var inIOS = function () {
 
+    if (navigator.platform==='MacIntel') {
+        // Test for Ipad that shows up as Mac
+        let isTouchDevice = 'ontouchstart' in document.documentElement;
+        if (isTouchDevice)
+            return true;
+    }
+    
+    
     try {
         if (/iP(hone|od|ad)/.test(navigator.platform)) {
             return true;
@@ -340,6 +348,24 @@ var removeSpacesFromFilenameWin32Electron=function(s) {
     return q;
 
 };
+
+/** handles payload from electron dialog */
+var getElectronDialogFilename = function(obj) {
+
+    if (obj.canceled)
+        return null;
+
+    if (obj.filePath)
+        return obj.filePath+'';
+
+    let filepaths=obj.filePaths;
+    if (filepaths.length===1) 
+        return filepaths[0] + '';
+
+    return filepaths;
+};
+
+
 
 /** read text data in node.js
  * @alias BisCoreGenericIO~readtextdatanode
@@ -717,7 +743,7 @@ var writebinarydatabrowser = function (filename, data, donecallback) {
     var iscomp = iscompressed(filename);
     if (iscomp) {
         var compressed = pako.gzip(data);
-        blob = new Blob([compressed],{ type: "application/gzip" });
+        blob = new Blob([compressed],{ type: "application/octet-stream" });
     } else {
         blob = new Blob([data],{ type: "application/octet-stream" });
     }
@@ -849,7 +875,9 @@ var writedataelectron = function (url, data, isbinary, donecallback, errorcallba
             title: url.title,
             defaultPath: url.filename,
             filters: url.filters
-        }, function (filename) {
+        }).then( (obj) => {
+
+            let filename=getElectronDialogFilename(obj);
             if (filename) {
                 return writecommand(filename + '', data, donecallback, errorcallback);
             }
@@ -885,7 +913,8 @@ var readdataelectron = function (url, isbinary, donecallback, errorcallback) {
             title: url.title,
             defaultPath: url.filename,
             filters: url.filters,
-        }, function (filename) {
+        }).then( (obj) => { 
+            let filename=getElectronDialogFilename(obj);
             if (filename) {
                 return readcommand(filename + '', donecallback, errorcallback);
             }
@@ -1110,6 +1139,7 @@ const biscoregenericio = {
     writetextdatanode : writetextdatanode,
     writebinarydatanode : writebinarydatanode,
     getimagepath : getimagepath,
+    getElectronDialogFilename : getElectronDialogFilename
 };
 
 

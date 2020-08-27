@@ -395,6 +395,10 @@ class BaseModule {
             }
         }
 
+        if (inpfilenames.length===0) {
+            return '';
+        }
+
         let nm=des.shortname;
         if (!nm)
             nm=this.name;

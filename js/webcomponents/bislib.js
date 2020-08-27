@@ -27,6 +27,7 @@ require("bisweb_awsmodule.js");
 require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_studypanel.js");
+require("bisweb_repopanel.js");
 require('bisweb_oldgrapherelement.js');
 require('bisweb_filetreepipeline.js');
 require('bisweb_keylistener.js');
@@ -66,6 +67,7 @@ const Elements = {
     ParavisionImportElement: require("bisweb_paravisionimportelement.js"),
     MNI2TalElement : require("bisweb_mni2talelement.js"),
     ParavisionApplicationElement : require("bisweb_paravisionapplicationelement.js"),
+    SurfaceControlElement: require('bisweb_surfacecontrolelement.js'),
     MainViewerApplicationElement : require("bisweb_mainviewerapplication.js"),
     ConnectivityApplicationElement : require("bisweb_connectivityapplicationelement.js"),
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),

@@ -1,0 +1,75 @@
+on: [push]
+
+jobs:
+  hosted_build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest]
+    name: bisweb-test
+    steps:
+    - name: Clone
+      run: |
+        echo %PATH%
+        python --version
+        git --version
+        node --version
+        cmake --version
+        mkdir \bisweb
+        mkdir \bisweb\src
+        cd \bisweb\bisweb
+        echo "git"
+        git clone https://github.com/bioimagesuiteweb/bisweb src
+        cd src
+        git checkout devel
+        git pull
+        copy npm-shrinkwrap-orig.json npm-shrinkwrap.json
+    - name: Clone Plugin
+      run: |
+        cd \bisweb
+        mkdir \bisweb\gpl
+        git clone https://github.com/bioimagesuiteweb/gplcppcode gpl
+        cd gpl
+        git pull
+    - name : Python Prereqs
+      run: |
+        cd \bisweb\src
+        python3 -m pip install --user -r biswebpython/config/requirements.txt
+    - name : JS Prereqs
+      run: |
+        cd \bisweb\src
+        npm install -d
+        node config\createbuild.js
+    - name : Build
+      run: |
+        cd \bisweb\src\build
+        echo "-------------------------------------------------"
+        echo "Beginning build"
+        echo "-------------------------------------------------"
+        bash \bisweb\src\compiletools\fullbuild.bat
+        cd \bisweb\src
+    - name : Test
+      run : bash \bisweb\src\actions\hosted\dockeractiontest.bat 
+      id: run    
+    - name: Results
+      run: echo "${{ steps.run.outputs.result}}"
+    - name: Store Results
+      uses: actions/upload-artifact@v1
+      with:
+        name: logs
+        path: \bisweb\src\build\output\logs
+#    - name: Store Electron
+#      uses: actions/upload-artifact@v1
+#      with:
+#        name: electron
+#        path: \bisweb\src\build\output\electron
+#    - name: Store Binaries
+#      uses: actions/upload-artifact@v1
+#      with:
+#        name: binaries
+#        path: \bisweb\src\build\output\binaries
+    - name: Store Libraries
+      uses: actions/upload-artifact@v1
+      with:
+        name: libraries
+        path: \bisweb\src\build\output\libraries

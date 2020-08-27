@@ -1,19 +1,19 @@
 /*  LICENSE
  
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
  
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
  
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
  
- ENDLICENSE */
+    ENDLICENSE */
 
 #include "bisGridTransformation.h"
 #include "bisMemoryManagement.h"
@@ -26,6 +26,11 @@ bisGridTransformation::bisGridTransformation(std::string n) : bisAbstractTransfo
   this->grid_dimensions[0]=0;
   this->grid_dimensions[1]=0;
   this->grid_dimensions[2]=0;
+  this->grid_spacing[0]=0.0;
+  this->grid_spacing[1]=0.0;
+  this->grid_spacing[2]=0.0;
+
+  
   this->dobspline_interpolation=1;
   this->magic_type=bisDataTypes::s_gridtransform;
   this->grid_vol_size=0;
@@ -57,10 +62,9 @@ void bisGridTransformation::initializeGrid(int dim[3],float spa[3],float origin[
 
   this->dobspline_interpolation=(dobspline>0);
 
-  /*  std::cout << "Grid Initialized dim= " << this->grid_dimensions[0] << "," << this->grid_dimensions[1] << "," << this->grid_dimensions[2] << std::endl;
-      std::cout << "Grid Initialized spa=" << this->grid_spacing[0] << "," << this->grid_spacing[1] << "," << this->grid_spacing[2] << std::endl;
-      std::cout << "Grid Initialized ori=" << this->grid_origin[0] << "," << this->grid_origin[1] << "," << this->grid_origin[2] << std::endl;*/
-  
+  /* std::cout << "Grid Initialized dim= " << this->grid_dimensions[0] << "," << this->grid_dimensions[1] << "," << this->grid_dimensions[2] << std::endl;
+  std::cout << "Grid Initialized spa=" << this->grid_spacing[0] << "," << this->grid_spacing[1] << "," << this->grid_spacing[2] << std::endl;
+  std::cout << "Grid Initialized ori=" << this->grid_origin[0] << "," << this->grid_origin[1] << "," << this->grid_origin[2] << std::endl;*/
 }
 
 int bisGridTransformation::getBSplineMode()
@@ -87,49 +91,76 @@ unsigned int bisGridTransformation::getNumberOfControlPoints()
 
 void bisGridTransformation::transformPointLinearInterpolation(float X[3],float TX[3])
 {
+  int maxcoord=2;
+  if (this->grid_dimensions[2]<2)
+    maxcoord=1;
+
+  
   double W[3][2];
   int   B[3][2];
-  
-  for (int ia=0;ia<=2;ia++)
+
+  for (int ia=0;ia<=maxcoord;ia++)
     {
       float p= (X[ia]-this->grid_origin[ia])/this->grid_spacing[ia];
       B[ia][0]=int(p);
       B[ia][1]=B[ia][0]+1;
       if (B[ia][1]>minusdim[ia])
-	B[ia][1]=minusdim[ia];
+        B[ia][1]=minusdim[ia];
       W[ia][0]=B[ia][1]-TX[ia];
       W[ia][1]=1.0-W[ia][0];
     }
   
   B[1][0]*=this->grid_dimensions[0];
   B[1][1]*=this->grid_dimensions[0];
-  
+
   B[2][0]=B[2][0]*this->grid_slice_size;
   B[2][1]=B[2][1]*this->grid_slice_size;
   
   float* data=this->displacementField->getData();
-  for (int coord=0;coord<=2;coord++)
-    {
-      double sum=X[coord];
-      for (int i=0;i<=1;i++)
-	for (int j=0;j<=1;j++)
-	  for (int k=0;k<=1;k++)
-	    {
-	      sum+=W[2][k]*W[1][j]*W[0][i]*data[ B[2][k]+B[1][j]+B[0][i]];
-	    }
-      TX[coord]=(float)sum;
-      for (int ia=0;ia<=1;ia++)
-	B[2][ia]+=this->grid_vol_size;
-    }
-}    
+  if (maxcoord==2) {
+    for (int coord=0;coord<=2;coord++)
+      {
+        double sum=X[coord];
+        for (int i=0;i<=1;i++)
+          for (int j=0;j<=1;j++)
+            for (int k=0;k<=1;k++)
+              {
+                sum+=W[2][k]*W[1][j]*W[0][i]*data[ B[2][k]+B[1][j]+B[0][i]];
+              }
+        TX[coord]=(float)sum;
+        for (int ia=0;ia<=1;ia++)
+          B[2][ia]+=this->grid_vol_size;
+      }
+  } else {
+    for (int coord=0;coord<=1;coord++)
+      {
+        double sum=X[coord];
+        for (int i=0;i<=1;i++)
+          for (int j=0;j<=1;j++) {
+            sum+=W[1][j]*W[0][i]*data[ B[1][j]+B[0][i]];
+          }
+        TX[coord]=(float)sum;
+        for (int ia=0;ia<=1;ia++)
+          B[2][ia]+=this->grid_vol_size;
+      }
+    TX[2]=X[2];
+ 
+  }
+}
+  
 
 
 void bisGridTransformation::transformPointBSplineInterpolation(float X[3],float TX[3])
 {
+
+  int maxcoord=2;
+  if (this->grid_dimensions[2]<2)
+    maxcoord=1;
+
   int B[3][4];
   double W[3][4];
   
-  for (int ia=0;ia<=2;ia++)
+  for (int ia=0;ia<=maxcoord;ia++)
     {
       float p= (X[ia]-this->grid_origin[ia])/this->grid_spacing[ia];
 
@@ -141,7 +172,7 @@ void bisGridTransformation::transformPointBSplineInterpolation(float X[3],float 
       B[ia][3]=B[ia][1]+2;
       
       for (int ib=0;ib<=3;ib++)
-	B[ia][ib]=bisUtil::irange(B[ia][ib],0,this->minusdim[ia]);
+        B[ia][ib]=bisUtil::irange(B[ia][ib],0,this->minusdim[ia]);
       
       W[ia][0]=pow(1.0-t,3.0)/6.0;
       W[ia][1]=(3.0*t*t*t - 6.0*t*t + 4.0)/6.0;
@@ -158,21 +189,37 @@ void bisGridTransformation::transformPointBSplineInterpolation(float X[3],float 
     }
 
   float* data=this->displacementField->getData();
-  
-  for (int coord=0;coord<=2;coord++)
-    {
-      double sum=X[coord];
-      for (int ka=0;ka<=3;ka++) {
-	for (int ja=0;ja<=3;ja++)  {
-	  for (int ia=0;ia<=3;ia++) {
-	    sum+=W[2][ka]*W[1][ja]*W[0][ia]*data[B[2][ka]+B[1][ja]+B[0][ia]];
-	  }
-	}
+
+  if (maxcoord==2) {
+    for (int coord=0;coord<=2;coord++)
+      {
+        double sum=X[coord];
+        for (int ka=0;ka<=3;ka++) {
+          for (int ja=0;ja<=3;ja++)  {
+            for (int ia=0;ia<=3;ia++) {
+              sum+=W[2][ka]*W[1][ja]*W[0][ia]*data[B[2][ka]+B[1][ja]+B[0][ia]];
+            }
+          }
+        }
+        TX[coord]=(float)sum;
+        for (int ia=0;ia<=3;ia++)
+          B[2][ia]+=this->grid_vol_size;
       }
-      TX[coord]=(float)sum;
-      for (int ia=0;ia<=3;ia++)
-	B[2][ia]+=this->grid_vol_size;
-    }
+  } else {
+     for (int coord=0;coord<=1;coord++)
+       {
+         double sum=X[coord];
+         for (int ja=0;ja<=3;ja++)  {
+           for (int ia=0;ia<=3;ia++) {
+             sum+=W[1][ja]*W[0][ia]*data[B[1][ja]+B[0][ia]];
+           }
+         }
+         TX[coord]=(float)sum;
+         for (int ia=0;ia<=3;ia++)
+           B[2][ia]+=this->grid_vol_size;
+       }
+     TX[2]=X[2];
+  }
 }
 
 
@@ -182,13 +229,13 @@ void bisGridTransformation::transformPoint(float x[3],float y[3])
     {
   
       if (this->dobspline_interpolation)
-	{
-	  this->transformPointBSplineInterpolation(x,y);
-	}
+        {
+          this->transformPointBSplineInterpolation(x,y);
+        }
       else
-	{
-	  this->transformPointLinearInterpolation(x,y);
-	}
+        {
+          this->transformPointLinearInterpolation(x,y);
+        }
       return;
     }
 
@@ -227,24 +274,24 @@ int bisGridTransformation::getParameterVector(std::vector<float>& params)
 }
 
 float bisGridTransformation::computeGradientForOptimization(std::vector<float>& params,
-							    std::vector<float>& grad,
-							    float stepsize,
-							    int imgdim[3],
-							    float imgspa[3],
-							    float windowsize,
-							    bisGridTransformationOptimizable* optimizable) {
+                                                            std::vector<float>& grad,
+                                                            float stepsize,
+                                                            int imgdim[3],
+                                                            float imgspa[3],
+                                                            float windowsize,
+                                                            bisGridTransformationOptimizable* optimizable) {
   
   float radius[3]= { windowsize*this->grid_spacing[0],
-		     windowsize*this->grid_spacing[1],
-		     windowsize*this->grid_spacing[2] };
+                     windowsize*this->grid_spacing[1],
+                     windowsize*this->grid_spacing[2] };
   
   int bounds[6]={0,0,0,0,0,0};
 
   int imgmindim[3] = { imgdim[0]-1,imgdim[1]-1,imgdim[2]-1 };
 
   if (params.size()!=this->getNumberOfDOF() || grad.size()!=params.size()) {
-      std::cerr << "Bad dimensions for computing grdient optimization in grid transform";
-      return 0;
+    std::cerr << "Bad dimensions for computing grdient optimization in grid transform";
+    return 0;
   }
   
   this->setParameterVector(params);
@@ -261,70 +308,70 @@ float bisGridTransformation::computeGradientForOptimization(std::vector<float>& 
       bounds[4]= bisUtil::irange( int((pos_z-radius[2])/imgspa[2]+0.5),0,imgmindim[2]);
       bounds[5]= bisUtil::irange( int((pos_z+radius[2])/imgspa[2]+0.5),0,imgmindim[2]);
       for (int j=0;j<this->grid_dimensions[1];j++)
-	{
-	  float pos_y=j*this->grid_spacing[1]+grid_origin[1];
-	  bounds[2]= bisUtil::irange( int((pos_y-radius[1])/imgspa[1]+0.5),0,imgmindim[1]);
-	  bounds[3]= bisUtil::irange( int((pos_y+radius[1])/imgspa[1]+0.5),0,imgmindim[1]);
-	  for (int i=0;i<this->grid_dimensions[0];i++)
-	    {
-	      float pos_x=i*this->grid_spacing[0]+grid_origin[0];
-	      bounds[0]= bisUtil::irange( int((pos_x-radius[0])/imgspa[0]+0.5),0,imgmindim[0]);
-	      bounds[1]= bisUtil::irange( int((pos_x+radius[0])/imgspa[0]+0.5),0,imgmindim[0]);
-	     
-	      //float X[3] = { pos_x,pos_y,pos_z }, TX[3];
-	      
-	      /*	      if (cp_index==debug_index)
-		{
-		  std::cout << "cp_index=" << cp_index << " (pos=" << i << "," << j << "," << k << ") X=" << X[0] << "," << X[1] << "," << X[2]  << std::endl;
-		  std::cout << "bounds=" << bounds[0] << ":" << bounds[1] << ", " << bounds[2] << ":" << bounds[3] << ", " << bounds[4] << ":" << bounds[5] << std::endl;
-		  int fb[6];
-		  for (int ia=0;ia<=2;ia++)
-		    {
-		      fb[2*ia]=bounds[2*ia]*imgspa[ia];
-		      fb[2*ia+1]=bounds[2*ia+1]*imgspa[ia];
-		    }
-		  std::cout << "fb=" << fb[0] << ":" << fb[1] << ", " << fb[2] << ":" << fb[3] << ", " << fb[4] << ":" << fb[5] << std::endl;
-		  }*/
-	    
+        {
+          float pos_y=j*this->grid_spacing[1]+grid_origin[1];
+          bounds[2]= bisUtil::irange( int((pos_y-radius[1])/imgspa[1]+0.5),0,imgmindim[1]);
+          bounds[3]= bisUtil::irange( int((pos_y+radius[1])/imgspa[1]+0.5),0,imgmindim[1]);
+          for (int i=0;i<this->grid_dimensions[0];i++)
+            {
+              float pos_x=i*this->grid_spacing[0]+grid_origin[0];
+              bounds[0]= bisUtil::irange( int((pos_x-radius[0])/imgspa[0]+0.5),0,imgmindim[0]);
+              bounds[1]= bisUtil::irange( int((pos_x+radius[0])/imgspa[0]+0.5),0,imgmindim[0]);
+         
+              //float X[3] = { pos_x,pos_y,pos_z }, TX[3];
+          
+              /*          if (cp_index==debug_index)
+                          {
+                          std::cout << "cp_index=" << cp_index << " (pos=" << i << "," << j << "," << k << ") X=" << X[0] << "," << X[1] << "," << X[2]  << std::endl;
+                          std::cout << "bounds=" << bounds[0] << ":" << bounds[1] << ", " << bounds[2] << ":" << bounds[3] << ", " << bounds[4] << ":" << bounds[5] << std::endl;
+                          int fb[6];
+                          for (int ia=0;ia<=2;ia++)
+                          {
+                          fb[2*ia]=bounds[2*ia]*imgspa[ia];
+                          fb[2*ia+1]=bounds[2*ia+1]*imgspa[ia];
+                          }
+                          std::cout << "fb=" << fb[0] << ":" << fb[1] << ", " << fb[2] << ":" << fb[3] << ", " << fb[4] << ":" << fb[5] << std::endl;
+                          }*/
+        
 
-	      for (int coord=0;coord<=2;coord++)
-		{
+              for (int coord=0;coord<=2;coord++)
+                {
 
-		  
-		  int index=cp_index+coord*nc;
-		  dispfield[index]=params[index]+stepsize;
-		  /*		  if (cp_index==debug_index)
-		    {
-		      this->transformPoint(X,TX);
-		      std::cout << "disp=" << dispfield[index] << "(" << TX[0] << "," << TX[1] << "," << TX[2] << ") ";
-		      }*/
-		  float a=optimizable->computeValueFunctionPiece(this,bounds,cp_index);
-		  dispfield[index]=params[index]-stepsize;
-		  /*		  if (cp_index==debug_index)
-		    {
-		      this->transformPoint(X,TX);
-		      std::cout << "disp=" << dispfield[index] << "(" << TX[0] << "," << TX[1] << "," << TX[2] << ") ";
-		      }*/
-		  float b=optimizable->computeValueFunctionPiece(this,bounds,cp_index);
-		  dispfield[index]=params[index];
+          
+                  int index=cp_index+coord*nc;
+                  dispfield[index]=params[index]+stepsize;
+                  /*          if (cp_index==debug_index)
+                              {
+                              this->transformPoint(X,TX);
+                              std::cout << "disp=" << dispfield[index] << "(" << TX[0] << "," << TX[1] << "," << TX[2] << ") ";
+                              }*/
+                  float a=optimizable->computeValueFunctionPiece(this,bounds,cp_index);
+                  dispfield[index]=params[index]-stepsize;
+                  /*          if (cp_index==debug_index)
+                              {
+                              this->transformPoint(X,TX);
+                              std::cout << "disp=" << dispfield[index] << "(" << TX[0] << "," << TX[1] << "," << TX[2] << ") ";
+                              }*/
+                  float b=optimizable->computeValueFunctionPiece(this,bounds,cp_index);
+                  dispfield[index]=params[index];
 
-		  /*		  if (cp_index==debug_index)
-		    {
-		      this->transformPoint(X,TX);
-		      std::cout << "disp=" << dispfield[index] << "(" << TX[0] << "," << TX[1] << "," << TX[2] << ") ";
-		      }*/
+                  /*          if (cp_index==debug_index)
+                              {
+                              this->transformPoint(X,TX);
+                              std::cout << "disp=" << dispfield[index] << "(" << TX[0] << "," << TX[1] << "," << TX[2] << ") ";
+                              }*/
 
-		  float g=-0.5f*(b-a)/stepsize;
-		  grad[index]=g;
+                  float g=-0.5f*(b-a)/stepsize;
+                  grad[index]=g;
 
-		  /*		  if (cp_index==debug_index)
-				  std::cout << "index=" << index << " (a=" << a << ", b=" << b << " g=" << g << " --> grad[index]=" << grad[index] << std::endl;*/
-		  
-		  GradientNorm+=g*g;
-		}
-	      cp_index++;
-	    }
-	}
+                  /*          if (cp_index==debug_index)
+                              std::cout << "index=" << index << " (a=" << a << ", b=" << b << " g=" << g << " --> grad[index]=" << grad[index] << std::endl;*/
+          
+                  GradientNorm+=g*g;
+                }
+              cp_index++;
+            }
+        }
     }
 
   
@@ -340,34 +387,43 @@ float bisGridTransformation::getBendingEnergyAtControlPoint(int cpoint,float sca
   if (scale<0.01)
     scale=0.01f*(1.0f/(float(this->getNumberOfControlPoints())));
 
-  int k=int(cpoint/this->grid_slice_size);
+  int k=0;
+  int maxcomponent=2;
+  if (this->grid_dimensions[2]<2) {
+    maxcomponent=1;
+  } else {
+    k=int(cpoint/this->grid_slice_size);
+  }
+  
   int tmp=cpoint-k*this->grid_slice_size;
   int j=int(tmp/this->grid_dimensions[0]);
   int i=tmp-j*this->grid_dimensions[0];
 
   float* U=this->displacementField->getData();
-
   double sum=0.0;
 
   int ip=bisUtil::irange(i+1,0,this->grid_dimensions[0]-1);
   int jp=bisUtil::irange(j+1,0,this->grid_dimensions[1]-1);
-  int kp=bisUtil::irange(k+1,0,this->grid_dimensions[2]-1);
-
   int im=bisUtil::irange(i-1,0,this->grid_dimensions[0]-1);
   int jm=bisUtil::irange(j-1,0,this->grid_dimensions[1]-1);
-  int km=bisUtil::irange(k-1,0,this->grid_dimensions[2]-1);
-
   // Compute offsets now for j and k
   j*=this->grid_dimensions[0];
   jp*=this->grid_dimensions[0];
   jm*=this->grid_dimensions[0];
-  k*=this->grid_slice_size;
-  kp*=this->grid_slice_size;
-  km*=this->grid_slice_size;
 
+  int kp=0,km=0;
 
+  if (maxcomponent>1) {
+    kp=bisUtil::irange(k+1,0,this->grid_dimensions[2]-1);
+    km=bisUtil::irange(k-1,0,this->grid_dimensions[2]-1);
+    kp*=this->grid_slice_size;
+    km*=this->grid_slice_size;
+    k*=this->grid_slice_size;
+  }
+
+  
   // component is component of displacement i.e. u,v,w 
-  for (int component=0;component<=2;component++)
+  for (int component=0;component<=maxcomponent;component++)
     {
       // Bending energy is d^2u/dx^2+d*2u/dy^2+d^2u/dz^2+2*(d^2u/dxdy+d^u/dxdz+d^2u/dydz)
       //
@@ -381,28 +437,26 @@ float bisGridTransformation::getBendingEnergyAtControlPoint(int cpoint,float sca
       // d^2u/dy^2
       sum+= pow((U[i+jp+k]-2.0*U[i+j+k]+U[i+jm+k]),2.0f);
 
-      // d^2u/dz^2
-      sum+= pow((U[i+j+kp]-2.0*U[i+j+k]+U[i+j+km]),2.0f);
-
-
       // 2.0*d^2u/dxdy
       sum+= 2.0*pow((U[ip+jp+k]+U[im+jm+k]-U[ip+jm+k]-U[im+jp+k])/4.0,2.0f);
 
 
-      // 2.0*d^2u/dxdz
-      sum+= 2.0*pow((U[ip+j+kp]+U[im+j+km]-U[ip+j+km]-U[im+j+kp])/4.0,2.0f);
-
-
-      // 2.0*d^2u/dydz
-      sum+= 2.0*pow((U[i+jp+kp]+U[i+jm+km]-U[i+jp+km]-U[i+jm+kp])/4.0,2.0f);
-
+      if (maxcomponent>1)  {
+        // d^2u/dz^2
+        sum+= pow((U[i+j+kp]-2.0*U[i+j+k]+U[i+j+km]),2.0f);
+        // 2.0*d^2u/dxdz
+        sum+= 2.0*pow((U[ip+j+kp]+U[im+j+km]-U[ip+j+km]-U[im+j+kp])/4.0,2.0f);
+        // 2.0*d^2u/dydz
+        sum+= 2.0*pow((U[i+jp+kp]+U[i+jm+km]-U[i+jp+km]-U[i+jm+kp])/4.0,2.0f);
+      }
+      
       // Add shift to next frame
       U+=this->grid_vol_size;
     }
   
   return (float)((sum)*scale);
 
-}				    
+}                   
 
 float bisGridTransformation::getTotalBendingEnergy()
 {
@@ -499,12 +553,12 @@ int bisGridTransformation::deSerialize(unsigned char* pointer)
 
 // ----------------------------------
 
-  /** parse from Text 
-   * @param linevector (a vector of lines)
-   * @param offset the line to begin parsing
-   * @param debug print diagnostic messages if > 0
-   * @returns a string
-   */
+/** parse from Text 
+ * @param linevector (a vector of lines)
+ * @param offset the line to begin parsing
+ * @param debug print diagnostic messages if > 0
+ * @returns a string
+ */
 int bisGridTransformation::textParse(std::vector<std::string>& lines,int& offset,int debug)
 {
   int read_interpmode=0;
@@ -514,9 +568,9 @@ int bisGridTransformation::textParse(std::vector<std::string>& lines,int& offset
   if (lines[offset].find("#vtkpxBaseGridTransform File")==std::string::npos)
     {
       if (lines[offset].find("#vtkpxBaseGridTransform2 File")==std::string::npos)
-	return 0;
+        return 0;
       else
-	read_interpmode=1;
+        read_interpmode=1;
     }
 
 
@@ -552,11 +606,11 @@ int bisGridTransformation::textParse(std::vector<std::string>& lines,int& offset
   for (int i=0;i<np;i++)
     {
       if (debug && (i==0 || i==np-1))
-	std::cout << "data point = " << i << " = " << lines[offset] << std::endl;
+        std::cout << "data point = " << i << " = " << lines[offset] << std::endl;
 
       sscanf(lines[offset].c_str(),"%d %f %f %f",&tmp,&dx[0],&dx[1],&dx[2]);
       for (int ia=0;ia<=2;ia++)
-	data[i+ia*np]=dx[ia];
+        data[i+ia*np]=dx[ia];
       offset+=1;
     }
 
@@ -596,7 +650,7 @@ std::string bisGridTransformation::textSerialize(int debug)
     {
       output << i;
       for (int ia=0;ia<=2;ia++)
-	output << " " << data[i+ia*np];
+        output << " " << data[i+ia*np];
       output << std::endl;
     }
   return output.str();

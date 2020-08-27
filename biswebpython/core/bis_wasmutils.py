@@ -48,8 +48,14 @@ def load_library(name=''):
     if not os.path.isfile(name):
         my_path=(os.path.dirname(os.path.dirname(name)));
         name=my_path+'/win32/Release/biswasm.dll';
+        if not os.path.isfile(name):
+            my_path=(os.path.dirname(os.path.dirname(name)));
+            name=my_path+'/biswasm.dll';
+
         print('____ Recomputing name:',name);
-        
+
+    
+    print('___ Loading library from',name);
     m=ctypes.CDLL(name);
     if (m.uses_gpl()):
         print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)');
@@ -106,6 +112,10 @@ def getComboTransformMagicCode():
 def getCollectionMagicCode():
     return Module().getCollectionMagicCode();
 
+def getSurfaceMagicCode():
+    return Module().getSurfaceMagicCode();
+
+
 def getNameFromMagicCode(magic_code):
 
     if magic_code==getVectorMagicCode():
@@ -125,7 +135,10 @@ def getNameFromMagicCode(magic_code):
 
     if magic_code==getCollectionMagicCode():
         return 'bisCollection';
-    
+
+    if magic_code==getSurfaceMagicCode():
+        return 'bisSurface';
+
 
 # --------------------------------------------
 # Type Mapping
@@ -425,6 +438,11 @@ def deserialize_object(ptr,datatype='',offset=0,first_input=0):
         output.deserializeWasm(ptr,offset);
         return output.get_data();
 
+    if datatype == 'bisSurface':
+        output=bis.bisSurface();
+        output.deserializeWasm(ptr,offset);
+        return output;
+    
     if datatype != 'bisImage':
         raise ValueError('Unknown datatype ',datatype);
 

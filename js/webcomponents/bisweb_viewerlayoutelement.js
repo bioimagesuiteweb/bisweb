@@ -23,6 +23,8 @@ const webutil=require('bis_webutil');
 const webcss = require('bisweb_css');
 const THREE = require('three');
 const volrenutils = require('bis_3dvolrenutils');
+const genericio=require('bis_genericio');
+const userPreferences = require('bisweb_userpreferences.js');
 
 //const WebGLDebugUtils=require('webgl-debug');
 
@@ -76,7 +78,7 @@ var detectWebGL = function() {
  *     bis-coreopen  : if true the core (top dock panel) is open else closed
  *     bis-minimizedockpanel : if 1 the dock panel is minimized to a narrow column
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
- *     bis-dualmode : if 1 then operates in dual mode
+ *     bis-dualmode : if 1 then operates in dual mode (if -1 no core controls)
  *     bis-webgl   : if 2 then use webgl2 (if possible)
  *     bis-bright   : if 1 then use bright colors
  */
@@ -341,7 +343,13 @@ class ViewerLayoutElement extends HTMLElement {
             webutil.createAlert('Your browser does not support WEBGL (even v1).<BR> We can not proceeed.<BR> Try using a modern web browser.', true);
         } else if (this.webgl2===true  && webglversion<2) {
             let link=`<a target="_blank" rel="noopener" href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL v2</a>`;
-            webutil.createAlert(`Your browser does not support ${link}.<BR> Some features (e.g. volume rendering) will not be available.<BR>Please switch to a modern version of chrome (or firefox).`, true);
+            if (!genericio.inIOS()) {
+                userPreferences.safeGetItem("internal").then( (f) => {
+                    if (f) {
+                        webutil.createAlert(`Your browser does not support ${link}.<BR> If you need to use volume rendering, please switch to Google Chrome or Microsoft Edge.`, true);
+                    }
+                });
+            }
             this.webgl2=false;
         }
         
@@ -420,9 +428,8 @@ class ViewerLayoutElement extends HTMLElement {
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
             this.elements.secondviewercontrols=webutil.createCollapseElement(newpanel,'Viewer 2 Controls',false);
-        } else {
+        } else if (this.dualmode!==-1) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer Controls',coreopen);
-
         }
         
         this.elements.toolbase=webutil.createpanelgroup(this.elements.dockbarcontent);
@@ -453,8 +460,9 @@ class ViewerLayoutElement extends HTMLElement {
             let canvas = document.createElement( 'canvas' );
             let context = canvas.getContext( 'webgl2' );
             this.renderer = new THREE.WebGLRenderer( { canvas: canvas, context: context, alpha : true } );
+            console.log('++++ Using WebGL2');
         } else {
-            console.log('Not using webgl2');
+            //console.log('Not using webgl2');
             this.renderer = new THREE.WebGLRenderer({alpha:true});
         }
 

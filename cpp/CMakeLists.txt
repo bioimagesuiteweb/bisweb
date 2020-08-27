@@ -33,7 +33,8 @@ MESSAGE("----------------------------------------------------")
 MESSAGE("-- Building BISWEB ${BISWEB_VERSION} major=${BISWEB_VERSION_MAJOR} minor=${BISWEB_VERSION_MINOR} patch=${BISWEB_VERSION_PATCH}")
 MESSAGE("----------------------------------------------------")
 
-
+FIND_PROGRAM(NODE_JS_EXECUTABLE node REQUIRED)
+SET(MOCHA_EXECUTABLE "${MOCHA}")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -51,6 +52,7 @@ SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
 SET (MODULE_SCRIPTS_CREATOR ${TOOLS_DIR}/bis_createmodulescripts.js)
+SET (MODULE_LIST_CREATOR ${TOOLS_DIR}/bis_createjsmodulestotestlist.js)
 SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 
 #Python
@@ -82,6 +84,7 @@ SET(KITSRCS
   bisLinearTransformation.cpp
   bisGridTransformation.cpp
   bisComboTransformation.cpp
+  bisSurface.cpp
   bisDataObjectFactory.cpp
   bisSimpleImageSegmentationAlgorithms.cpp
   bisfMRIAlgorithms.cpp
@@ -91,6 +94,9 @@ SET(KITSRCS
   bisTesting.cpp
   bisvtkMultiThreader.cxx
   bisImageDistanceMatrix.cpp
+  bisImageTransformationJacobian.cpp
+  bisPointLocator.cpp
+  bisPointRegistrationUtils.cpp
   )
 
 # ---------------------------------------------------------------------------------------------
@@ -174,6 +180,8 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
   ${CPP_SOURCE_DIR}/bisTesting.h
   ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
+  ${CPP_SOURCE_DIR}/bisImageTransformationJacobian.h
+  ${CPP_SOURCE_DIR}/bisPointRegistrationUtils.h
   )
 
 
@@ -301,9 +309,9 @@ IF (BIS_A_EMSCRIPTEN)
     SET(WASM_STRING "")
   ENDIF(BIS_WEB_WASM)
   
-  SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -I ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
+  SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   IF (BIS_USEINDIV)
-    SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${IGL_INCLUDE_DIRS}")
+    SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
   ENDIF (BIS_USEINDIV)
   IF (BIS_USECPM)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${PROJECT_SOURCE_DIR}/cpmcode")
@@ -367,7 +375,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
   
   # ---- create library for command line  -----------
-  FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/*.js)
+  FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/[a-zA-z]*.js)
 
   # bioimagesuiteweblib.js
   SET (BISWEBLIBFILE bioimagesuiteweblib.js)
@@ -461,33 +469,35 @@ IF (BIS_A_EMSCRIPTEN)
   ENDIF()
   
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
-    # ------------------ module tests ---------------------------
-    IF(BIS_MODULETEST)
-      SET (COUNT 0)
-      FOREACH (item ${JSMODULES})
-	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
-	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${TLIST})
-      MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")
-    ENDIF(BIS_MODULETEST)
 
-    # ------------------ unit tests ---------------------------
-    IF(BIS_UNITTEST)
-      SET (COUNT 0)
-      FILE(GLOB TLIST ${TEST_DIR}/test*.js)
-      list(REMOVE_ITEM TLIST ${TEST_DIR}/test_module.js)
-      list(LENGTH TLIST N)
-      FOREACH (item ${TLIST})
-	GET_FILENAME_COMPONENT(TNAME ${item} NAME)
-	GET_FILENAME_COMPONENT(DNAME ${item} DIRECTORY)
-	GET_FILENAME_COMPONENT(DNAME ${DNAME} ABSOLUTE)
-	add_test(NAME "js-unit-${TNAME}" COMMAND mocha ${TNAME} WORKING_DIRECTORY ${DNAME})
-	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${TLIST})
-      MESSAGE("~~~~~ Added ${COUNT} javascript/mocha unit tests")
-    ENDIF(BIS_UNITTEST)
-  
-
+  # ------------------ unit tests ---------------------------
+  IF(BIS_UNITTEST)
+    SET (COUNT 0)
+    FILE(GLOB TLIST ${TEST_DIR}/test*.js)
+    list(REMOVE_ITEM TLIST ${TEST_DIR}/test_module.js)
+    list(LENGTH TLIST N)
+    FOREACH (item ${TLIST})
+      GET_FILENAME_COMPONENT(TNAME ${item} NAME)
+      GET_FILENAME_COMPONENT(DNAME ${item} DIRECTORY)
+      GET_FILENAME_COMPONENT(DNAME ${DNAME} ABSOLUTE)
+      add_test(NAME "js-unit-${TNAME}" COMMAND ${MOCHA_EXECUTABLE} ${TNAME} WORKING_DIRECTORY ${DNAME})
+      MATH (EXPR COUNT "${COUNT}+1")
+    ENDFOREACH (item ${TLIST})
+    MESSAGE("~~~~~ Added ${COUNT} javascript/mocha unit tests")
+  ENDIF(BIS_UNITTEST)
+  # ------------------ module tests ---------------------------
+  IF(BIS_MODULETEST)
+    SET(JS_MODULE_LIST_FILENAME "${LIBRARY_OUTPUT_PATH}/JSModules.txt")
+    MESSAGE("Creating Module List in ${JS_MODULE_LIST_FILENAME}")
+    execute_process(COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_LIST_CREATOR} -o ${JS_MODULE_LIST_FILENAME})
+    FILE (STRINGS ${JS_MODULE_LIST_FILENAME} JSMODULES)
+    SET (COUNT 0)
+    FOREACH (item ${JSMODULES})
+      add_test(NAME "js-module-${item}" COMMAND ${MOCHA_EXECUTABLE} test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
+      MATH (EXPR COUNT "${COUNT}+1")
+    ENDFOREACH (item ${TLIST})
+    MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")
+  ENDIF(BIS_MODULETEST)
   # ---------------------------------------------------------------------------------------------
 
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
@@ -534,18 +544,18 @@ ELSE(BIS_A_EMSCRIPTEN)
   # ---------------------------
   
   IF (WIN32)
-    SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1" CACHE STRING "" FORCE)
+    SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1 /EHsc" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    SET( COMPILE_FLAGS "-O2 -Wall -Wextra -Wpedantic -Wformat")
-    SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 -Wno-int-in-bool-context" CACHE STRING "" FORCE)
+    SET( COMPILE_FLAGS "-Wall -Wextra -Wpedantic -Wformat")
+    SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 " CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
   
   # ---------------------------
 
-  include_directories ( ${EIGEN3_INCLUDE_DIRS} )
+  include_directories (SYSTEM ${EIGEN3_INCLUDE_DIRS} )
   IF (BIS_USEINDIV)
-    include_directories ( ${IGL_INCLUDE_DIRS} )
+    include_directories (SYSTEM ${IGL_INCLUDE_DIRS} )
   ENDIF (BIS_USEINDIV)
 
   IF (BIS_USECPM)
@@ -601,6 +611,8 @@ ELSE(BIS_A_EMSCRIPTEN)
       PRE_BUILD COMMENT "Creating Python Header"
       COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}
       )
+
+    #    MESSAGE("${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} --python -i ${PARSE_LIST} -o ${PYTHON_WRAP_OUTPUT}")
     add_custom_target(wrappers_py ALL DEPENDS ${PYTHON_WRAP_OUTPUT})
     install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION biswebpython/lib)
 
@@ -609,21 +621,29 @@ ELSE(BIS_A_EMSCRIPTEN)
     FILE (STRINGS ${BISWEBPYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
-    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
-    
-    add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
-      DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
-      PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
-      )
+    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/[a-zA-Z]*.js)
+
+    IF (WIN32)
+      add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
+        DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt #${JMODS}
+        PRE_BUILD COMMENT "Creating Python Module Descriptions"
+        COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+        )
+    ELSE(WIN32)
+        add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
+        DEPENDS ${BISWEBPYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
+        PRE_BUILD COMMENT "Creating Python Module Descriptions"
+        COMMAND ${NODE_JS_EXECUTABLE} ${DESCRIPTION_SCRIPT} -i ${BISWEBPYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
+        )
+    ENDIF(WIN32)
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
 
-    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/*.py)
-    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
-    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
-    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
+    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/[a-zA-Z]*.py)
+    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/[a-zA-Z]*.py)
+    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/[a-zA-Z]*.py)
+    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/[a-zA-Z]*.py)
     
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
     install (FILES ${PYLIST0} DESTINATION  biswebpython
@@ -642,17 +662,6 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION biswebpython)
     install (FILES ${BISWEBPYTHON_MODULE_LIST_FILENAME} DESTINATION biswebpython/modules)
     
-    # ------------------ module tests ---------------------------
-    IF(BIS_MODULETEST)
-      SET (COUNT 0)
-      FOREACH (item ${PYTHONMODULES})
-	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
-	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${PYTHONMODULES})
-      MESSAGE("~~~~~ Added ${COUNT} python module tests")
-    
-    ENDIF(BIS_MODULETEST)
-
     # ------------------ unit tests ---------------------------
     IF(BIS_UNITTEST)
       FILE(GLOB TLIST ${TEST_DIR}/test*.py)
@@ -667,6 +676,18 @@ ELSE(BIS_A_EMSCRIPTEN)
       ENDFOREACH (item ${TLIST})
       MESSAGE("~~~~~ Added ${COUNT} python/unittest tests")
     ENDIF(BIS_UNITTEST)
+
+    # ------------------ module tests ---------------------------
+    IF(BIS_MODULETEST)
+      SET (COUNT 0)
+      FOREACH (item ${PYTHONMODULES})
+	add_test(NAME "py-module-${item}" COMMAND ${PYTHON_EXECUTABLE} test_module.py --testname ${item} --input local WORKING_DIRECTORY ${TEST_DIR})
+	MATH (EXPR COUNT "${COUNT}+1")
+      ENDFOREACH (item ${PYTHONMODULES})
+      MESSAGE("~~~~~ Added ${COUNT} python module tests")
+    
+    ENDIF(BIS_MODULETEST)
+
 
     # Do not install this just yet
     install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython)
@@ -713,11 +734,11 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/example.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab)
-    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/*.m)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/[a-zA-Z]*.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/nii/license.txt)
     install (FILES ${MLIST} DESTINATION biswebmatlab/nii)
-    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/tests/*.m)
+    FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/tests/[a-zA-Z]*.m)
     install (FILES ${MLIST} DESTINATION biswebmatlab/tests)
 
     # Install replacement bispath

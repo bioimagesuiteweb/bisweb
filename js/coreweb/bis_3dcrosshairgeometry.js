@@ -66,7 +66,7 @@ const THREE=require('three');
  * See: {@link http://threejs.org/docs/#Reference/Core/BufferGeometry}
  * @typedef Bis_3dCrosshairGeometry.preGeometry
  * @property {Float32Array} vertices - locations of points (a flat 1D array of the form x1,y1,z1,x2,y2,z2,...)
- * @property {Uint16Array}  indices - indices of triangles
+ * @property {Uint32Array}  indices - indices of triangles
  */
 
 
@@ -146,7 +146,7 @@ var bis3dcreatecrosshairgeometry = {
         }
 
         var vertices = new Float32Array( numpoints * 3 ); // three components per vertex
-        var indices = new Uint16Array(numfaces*3);
+        var indices = new Uint32Array(numfaces*3);
         var index=0;
         for (i=0;i<numelements;i++) {
             var points=bufarray[i].vertices;
@@ -186,10 +186,9 @@ var bis3dcreatecrosshairgeometry = {
     createcopies : function( core, positions,scales) {
         
         scales=scales || null;
-
         var numelements=positions.length;
         var combovertices = new Float32Array( core.vertices.length * numelements ); 
-        var comboindices = new Uint16Array(core.indices.length * numelements);
+        var comboindices = new Uint32Array(core.indices.length * numelements);
 
         var points=core.vertices;
         var faces=core.indices;
@@ -221,7 +220,11 @@ var bis3dcreatecrosshairgeometry = {
 
         var buf=new THREE.BufferGeometry();
         buf.setIndex(new THREE.BufferAttribute( comboindices, 1 ));
-        buf.addAttribute( 'position', new THREE.BufferAttribute( combovertices, 3 ) );
+        if (THREE['REVISION']<101) {
+            buf.addAttribute( 'position', new THREE.BufferAttribute( combovertices, 3 ) );
+        } else {
+            buf.setAttribute( 'position', new THREE.BufferAttribute( combovertices, 3 ) );
+        }
         return buf;
     },
 };

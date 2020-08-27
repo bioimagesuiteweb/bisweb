@@ -1,23 +1,25 @@
 /*  LICENSE
  
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
  
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
  
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
  
- ENDLICENSE */
+    ENDLICENSE */
 
 #include "bisLinearTransformation.h"
 #include "math.h"
 #include <iostream>
+
+const int LINEAR_LOOKUP_2D[6]={ 0,1,5,6,7,9};
 
 bisLinearTransformation::bisLinearTransformation(std::string name) : bisMatrixTransformation(name) {
 
@@ -44,24 +46,24 @@ void bisLinearTransformation::eulerXYZRotationMatrix(float* theta,int offset,bis
     rad[i]=float((bisUtil::PI*theta[i+offset])/180.0);
 
   /*
-  float calpha=cosf(rad[2]),salpha=sinf(rad[2]);
-  float cbeta =cosf(rad[1]),sbeta=sinf(rad[1]);
-  float cgamma=cosf(rad[0]),sgamma=sinf(rad[0]);
+    float calpha=cosf(rad[2]),salpha=sinf(rad[2]);
+    float cbeta =cosf(rad[1]),sbeta=sinf(rad[1]);
+    float cgamma=cosf(rad[0]),sgamma=sinf(rad[0]);
 
-  float sbeta_cgamma=sbeta*cgamma;
-  float sbeta_sgamma=sbeta*sgamma;
+    float sbeta_cgamma=sbeta*cgamma;
+    float sbeta_sgamma=sbeta*sgamma;
 	
-  out[0][0]= calpha*cbeta;
-  out[0][1]= calpha*sbeta_sgamma-salpha*cgamma;
-  out[0][2]= calpha*sbeta_cgamma+salpha*sgamma;
+    out[0][0]= calpha*cbeta;
+    out[0][1]= calpha*sbeta_sgamma-salpha*cgamma;
+    out[0][2]= calpha*sbeta_cgamma+salpha*sgamma;
   
-  out[1][0]= salpha*cbeta;
-  out[1][1]= salpha*sbeta_sgamma+calpha*cgamma;
-  out[1][2]= salpha*sbeta_cgamma-calpha*sgamma;
+    out[1][0]= salpha*cbeta;
+    out[1][1]= salpha*sbeta_sgamma+calpha*cgamma;
+    out[1][2]= salpha*sbeta_cgamma-calpha*sgamma;
   
-  out[2][0]= -sbeta;
-  out[2][1]= cbeta*sgamma;
-  out[2][2]= cbeta*cgamma;*/
+    out[2][0]= -sbeta;
+    out[2][1]= cbeta*sgamma;
+    out[2][2]= cbeta*cgamma;*/
 
   float cz=cosf(rad[2]),sz=sinf(rad[2]);
   float cy =cosf(rad[1]),sy=sinf(rad[1]);
@@ -87,7 +89,7 @@ void bisLinearTransformation::inPlaceMatrixMultiply(bisUtil::mat44 a,bisUtil::ma
     for (int col=0;col<l;col++) {
       result[row][col]=0.0;
       for (int index=0;index<l;index++)
-	result[row][col]+=a[row][index]*b[index][col];
+        result[row][col]+=a[row][index]*b[index][col];
     }  
   }
 }
@@ -120,7 +122,7 @@ void bisLinearTransformation::seriesMultiply(bisUtil::mat44* arr[6],int maxnum)
   for (i=0;i<=3;i++) {
     for (j=0;j<=3;j++) {
       if (fabs(this->matrix[i][j])<0.00001)
-	this->matrix[i][j]=0.0;
+        this->matrix[i][j]=0.0;
     }
   }
 }
@@ -299,16 +301,33 @@ void bisLinearTransformation:: setParameterVector(std::vector<float>& values,int
 {
   int n=this->getOutputLength(this->getNumberOfDOF(),values.size(),rigidOnly);
   this->identity();
-  for (int i=0;i<n;i++) 
-    this->parameters[i]=values[i];
-		
-  // Check scale
   
-  if (doscale && n>6)
-    {
-      for (int i=6;i<n;i++) 
-	this->parameters[i]=this->parameters[i]/100.0f;
+  /*  std::cout << "[ ";
+  for (int i=0;i<n;i++) 
+    std::cout << values[i] << " ";
+    std::cout << "]" << std::endl;*/
+
+  if (this->mode>3) {
+    for (int i=0;i<n;i++)  {
+      int index=LINEAR_LOOKUP_2D[i];
+      this->parameters[index]=values[i];
+      if (doscale && index>=6 && index<=8) {
+        this->parameters[index]=this->parameters[index]/100.0f;
+      }
     }
+  } else {
+    for (int i=0;i<n;i++)  {
+      this->parameters[i]=values[i];
+      if (doscale && i>=6 && i<=8) {
+        this->parameters[i]=this->parameters[i]/100.0f;
+      }
+    }
+  }
+
+  /*std::cout << "[ ";
+  for (int i=0;i<12;i++) 
+    std::cout << this->parameters[i] << " ";
+    std::cout << "]" << std::endl;*/
 
   this->updateInternalMatrix();
 }
@@ -316,16 +335,20 @@ void bisLinearTransformation:: setParameterVector(std::vector<float>& values,int
 void bisLinearTransformation:: storeParameterVector(std::vector<float>& out,int doscale,int rigidOnly)
 {
   int l=this->getOutputLength(this->getNumberOfDOF(),out.size(),rigidOnly);
+
+  if (this->mode>3) {
+    for (int i=0;i<l;i++)  {
+      int index=LINEAR_LOOKUP_2D[i];
+      out[i]=this->parameters[index];
+      if (doscale && index>=6 && index<=8)
+        out[i]=out[i]*100.0f;
+    }
+  } else {
+    for (int i=0;i<l;i++) {
+      out[i]=this->parameters[i];
 		
-  for (int i=0;i<l;i++) 
-    out[i]=this->parameters[i];
-		
-  if (doscale) {
-    int maxi=9;
-    if (maxi>l)
-      maxi=l;
-    for (int i=6;i<maxi;i++) {
-      out[i]=this->parameters[i]*100.0f;
+      if (doscale && i>=6 && i<=8)
+        out[i]=out[i]*100.0f;
     }
   }
 }

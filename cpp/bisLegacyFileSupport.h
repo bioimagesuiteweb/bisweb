@@ -37,7 +37,7 @@ namespace bisLegacyFileSupport {
    * @param s the input string
    * @returns a simple vector containing the string
    */
-  std::unique_ptr<bisSimpleVector<char> > storeStringInSimpleVector(std::string& s);
+  bisSimpleVector<char>* storeStringInSimpleVector(std::string& s);
   
   /** return a matrix from a .matr file (either octave style or straight up 4x4 matrix)
    * @param text string containing text file

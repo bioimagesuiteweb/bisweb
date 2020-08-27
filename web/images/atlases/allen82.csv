@@ -1,0 +1,164 @@
+1,R-Frontal pole, cerebral cortex
+2,R-Somatomotor areas
+3,R-Somatosensory areas
+4,R-Gustatory areas
+5,R-Visceral area
+6,R-Auditory areas
+7,R-Visual areas
+8,R-Anterior cingulate area
+9,R-Prelimbic area
+10,R-Infralimbic area
+11,R-Orbital area
+12,R-Agranular insular area
+13,R-Retrosplenial area
+14,R-Posterior parietal association areas
+15,R-Temporal association areas
+16,R-Perirhinal area
+17,R-Ectorhinal area
+18,R-Olfactory areas
+19,R-Main olfactory bulb
+20,R-Accessory olfactory bulb
+21,R-Anterior olfactory nucleus
+22,R-Taenia tecta
+23,R-Dorsal peduncular area
+24,R-Piriform area
+25,R-Nucleus of the lateral olfactory tract
+26,R-Cortical amygdalar area
+27,R-Piriform-amygdalar area
+28,R-Postpiriform transition area
+29,R-Hippocampal formation
+30,R-Hippocampal region
+31,R-Retrohippocampal region
+32,R-Cortical subplate
+33,R-Claustrum
+34,R-Endopiriform nucleus
+35,R-Lateral amygdalar nucleus
+36,R-Basolateral amygdalar nucleus
+37,R-Basomedial amygdalar nucleus
+38,R-Posterior amygdalar nucleus
+39,R-Striatum
+40,R-Striatum dorsal region
+41,R-Striatum ventral region
+42,R-Lateral septal complex
+43,R-Striatum-like amygdalar nuclei
+44,R-Pallidum
+45,R-Pallidum, dorsal region
+46,R-Pallidum, ventral region
+47,R-Pallidum, medial region
+48,R-Pallidum, caudal region
+49,R-Thalamus
+50,R-Thalamus, sensory-motor cortex related
+51,R-Thalamus, polymodal association cortex related
+52,R-Hypothalamus
+53,R-Periventricular zone
+54,R-Periventricular region
+55,R-Hypothalamic medial zone
+56,R-Hypothalamic lateral zone
+57,R-Midbrain
+58,R-Midbrain, sensory related
+59,R-Midbrain, motor related
+60,R-Midbrain, behavioral state related
+61,R-Pons
+62,R-Pons, sensory related
+63,R-Pons, motor related
+64,R-Pons, behavioral state related
+65,R-Medulla
+66,R-Medulla, sensory related
+67,R-Medulla, motor related
+68,R-Medulla, behavioral state related
+69,R-Cerebellar cortex
+70,R-Cerebellar nuclei
+71,R-fiber tracts
+72,R-cranial nerves
+73,R-cerebellum related fiber tracts
+74,R-lateral forebrain bundle system
+75,R-extrapyramidal fiber systems
+76,R-medial forebrain bundle system
+77,R-ventricular systems
+78,R-lateral ventricle
+79,R-third ventricle
+80,R-cerebral aqueduct
+81,R-fourth ventricle
+82,R-Ectorhinal area/Layer 6a
+101,L-Frontal pole, cerebral cortex
+102,L-Somatomotor areas
+103,L-Somatosensory areas
+104,L-Gustatory areas
+105,L-Visceral area
+106,L-Auditory areas
+107,L-Visual areas
+108,L-Anterior cingulate area
+109,L-Prelimbic area
+110,L-Infralimbic area
+111,L-Orbital area
+112,L-Agranular insular area
+113,L-Retrosplenial area
+114,L-Posterior parietal association areas
+115,L-Temporal association areas
+116,L-Perirhinal area
+117,L-Ectorhinal area
+118,L-Olfactory areas
+119,L-Main olfactory bulb
+120,L-Accessory olfactory bulb
+121,L-Anterior olfactory nucleus
+122,L-Taenia tecta
+123,L-Dorsal peduncular area
+124,L-Piriform area
+125,L-Nucleus of the lateral olfactory tract
+126,L-Cortical amygdalar area
+127,L-Piriform-amygdalar area
+128,L-Postpiriform transition area
+129,L-Hippocampal formation
+130,L-Hippocampal region
+131,L-Retrohippocampal region
+132,L-Cortical subplate
+133,L-Claustrum
+134,L-Endopiriform nucleus
+135,L-Lateral amygdalar nucleus
+136,L-Basolateral amygdalar nucleus
+137,L-Basomedial amygdalar nucleus
+138,L-Posterior amygdalar nucleus
+139,L-Striatum
+140,L-Striatum dorsal region
+141,L-Striatum ventral region
+142,L-Lateral septal complex
+143,L-Striatum-like amygdalar nuclei
+144,L-Pallidum
+145,L-Pallidum, dorsal region
+146,L-Pallidum, ventral region
+147,L-Pallidum, medial region
+148,L-Pallidum, caudal region
+149,L-Thalamus
+150,L-Thalamus, sensory-motor cortex related
+151,L-Thalamus, polymodal association cortex related
+152,L-Hypothalamus
+153,L-Periventricular zone
+154,L-Periventricular region
+155,L-Hypothalamic medial zone
+156,L-Hypothalamic lateral zone
+157,L-Midbrain
+158,L-Midbrain, sensory related
+159,L-Midbrain, motor related
+160,L-Midbrain, behavioral state related
+161,L-Pons
+162,L-Pons, sensory related
+163,L-Pons, motor related
+164,L-Pons, behavioral state related
+165,L-Medulla
+166,L-Medulla, sensory related
+167,L-Medulla, motor related
+168,L-Medulla, behavioral state related
+169,L-Cerebellar cortex
+170,L-Cerebellar nuclei
+171,L-fiber tracts
+172,L-cranial nerves
+173,L-cerebellum related fiber tracts
+174,L-lateral forebrain bundle system
+175,L-extrapyramidal fiber systems
+176,L-medial forebrain bundle system
+177,L-ventricular systems
+178,L-lateral ventricle
+179,L-third ventricle
+180,L-cerebral aqueduct
+181,L-fourth ventricle
+182,L-Ectorhinal area/Layer 6a

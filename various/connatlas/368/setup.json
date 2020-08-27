@@ -1,0 +1,15 @@
+{
+    "multires" : [
+        "../brainsurface/lobes_right.json",
+        "../brainsurface/lobes_left.json"
+                 ],
+    "atlas"   : [
+        "output/right_368.json",
+        "output/left_368.json"
+    ],
+    "output"  : [
+        "output/lobes_368_right.json" ,
+        "output/lobes_368_left.json" ,
+        "output/368_surface_atlas.bin.gz"
+    ]
+}

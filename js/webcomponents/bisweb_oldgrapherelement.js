@@ -20,6 +20,7 @@
 const $ = require('jquery');
 const Chart = require('chart.js');
 const webutil = require('bis_webutil');
+const webfileutil = require('bis_webfileutil');
 const util = require('bis_util');
 const fmriutil = require('bis_fmrimatrixconnectivity');
 const numeric = require('numeric');
@@ -51,6 +52,10 @@ class OldGrapherModule extends HTMLElement {
         this.graphWindow=null;
         this.resizingTimer=null;
         this.buttons=[];
+        this.namelist=null;
+        let imagepath=webutil.getWebPageImagePath();
+        this.atlaspath=imagepath+'/atlases/';
+        this.atlaslist = null;
     }
 
 
@@ -99,6 +104,34 @@ class OldGrapherModule extends HTMLElement {
         if (showbuttons) {
 
             this.buttons=[];
+            this.buttons.push(webfileutil.createFileButton(
+                { type : "warning",
+                  name : "Load Nms",
+                  position : "left",
+                  tooltip : "Click this to load names from a json or csv file",
+                  parent : bbar,
+                  callback : (f) => { this.loadNames(f).catch( () => { } );},
+                },{
+                    filename : '',
+                    title    : 'Select file to load names from',
+                    filters  : [ { name: 'Name Files', extensions: ['csv','njson' ]}],
+                    save : false,
+                    suffix : ".csv,njson",
+                }));
+
+            this.buttons.push(webutil.createbutton({
+                name: 'Clear Nms',
+                type: "danger",
+                tooltip: '',
+                css: {
+                    'margin-left': '1px',
+                    'margin-right': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click(() => { this.clearNames(); }));
+
+            
             this.buttons.push(webutil.createbutton({
                 name: 'Plot VOI Values',
                 type: "primary",
@@ -110,6 +143,7 @@ class OldGrapherModule extends HTMLElement {
                 parent: bbar
             }).click(() => { this.rePlotGraph(false).catch( () => { } ); }));
             
+
             this.buttons.push(webutil.createbutton({
                 name: 'Plot VOI Volumes',
                 type: "default",
@@ -134,7 +168,7 @@ class OldGrapherModule extends HTMLElement {
         }).click(fn3);
 
         webutil.createbutton({
-            name: 'Save Snapshot',
+            name: 'Snapshot',
             type: "warning",
             tooltip: '',
             css: {
@@ -299,9 +333,11 @@ class OldGrapherModule extends HTMLElement {
             d_type = 'line';
         } else {
             let heading = "Volume of each Region";
-            if (showVolume === false)
+            let ylabel = 'Volume (mm^3)';
+            if (showVolume === false) {
                 heading = "Average Intensity in each Region";
-
+                ylabel = 'Intensity';
+            }
             options = {
                 title: {
                     display: true,
@@ -315,7 +351,7 @@ class OldGrapherModule extends HTMLElement {
                     yAxes: [{
                         scaleLabel: {
                             display: true,
-                            labelString: 'Volume (mm^3)',
+                            labelString: ylabel,
                             fontSize: 10
                         }
                     }],
@@ -387,7 +423,7 @@ class OldGrapherModule extends HTMLElement {
      */
     formatChartData(x, y, numVoxels, showVolume) {
 
-        let mx = util.objectmapcolormap.length;
+        let mx = util.getobjectmapcolormaplength();
         let dim = numeric.dim(y);
         let numframes = dim[1];
         let labels = [];
@@ -399,7 +435,7 @@ class OldGrapherModule extends HTMLElement {
                     let index = i + 1;
                     while (index >= mx) { index = index - mx; }
 
-                    let cl = util.objectmapcolormap[index];
+                    let cl = util.getobjectmapcolor(index);
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
                     parsedDataSets[i] = {
@@ -436,10 +472,16 @@ class OldGrapherModule extends HTMLElement {
                     let colorindex = index;
                     while (colorindex >= mx) { colorindex = (colorindex - 1) - (mx - 1) + 1; }
 
-                    let cl = util.objectmapcolormap[colorindex];
+                    let cl = util.getobjectmapcolor(colorindex);
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
                     backgroundColor.push(cl);
+
                     let out = 'R' + index;
+                    if (this.namelist) {
+                        let v=this.namelist[index] || null;
+                        if (v)
+                            out=`${index}:${v}`;
+                    }
                     labels.push(out);
                     if (showVolume === false)
                         data.push(y[i]);
@@ -531,20 +573,34 @@ class OldGrapherModule extends HTMLElement {
         let numrows = dim[1];
         let numcols = dim[0];
 
-        let out = " ,";
+        let out = "Values,";
         for (let pass = 0; pass <= 2; pass++) {
-
-            if (pass == 1)
-                out += "Volume,";
-            if (pass == 2)
+            if (pass === 1)
+                out += "Volume (voxels),";
+            else if (pass === 2)
                 out += "\nFrame,";
 
             for (let col = 0; col < numcols; col++) {
                 if (this.lastdata.numvoxels[col]>0) {
-                    if (pass === 0 || pass === 2)
-                        out += `Region ${col + 1}`;
-                    else
+                    if (pass === 0 || pass === 2) {
+                        let t=`Region ${col + 1}`;
+                        if (this.namelist) {
+                            let v=this.namelist[col+1] || null;
+                            if (v)
+                                t=`${col+1}:${v}`;
+                        }
+                        out+=t;
+                    } else {
                         out += `${this.lastdata.numvoxels[col]}`;
+                    }
+                    if (col < numcols - 1)
+                        out += ',';
+                } else if (this.namelist === null) {
+                    if (pass === 0 || pass === 2) {
+                        out+=`Region ${col + 1}`;
+                    } else {
+                        out += '0.0';
+                    }
                     if (col < numcols - 1)
                         out += ',';
                 }
@@ -558,6 +614,10 @@ class OldGrapherModule extends HTMLElement {
             for (let col = 0; col < numcols; col++) {
                 if (this.lastdata.numvoxels[col]>0) {
                     line += `${this.lastdata.y[col][row]}`;
+                    if (col < numcols - 1)
+                        line += ',';
+                } else if (this.namelist===null) {
+                    line += '0.0';
                     if (col < numcols - 1)
                         line += ',';
                 }
@@ -664,6 +724,65 @@ class OldGrapherModule extends HTMLElement {
         return [ innerw, innerh-15 ];
     }
 
+    /** replots the current values
+     * @param {Boolean} showVolume -- if true show the volumes (if they exist), else the values
+     * @returns {Promise} - when done
+     */
+    async loadNames(f) {
+
+        var cleanstring=function(s) {
+            return s.trim().replace(/ /g,',').replace(/\t/g,',').replace(/,+/g,',');
+        };
+
+        
+        console.log(f);
+        let obj=null;
+        try {
+            obj=await bisgenericio.read(f);
+        } catch(e) {
+            webutil.createAlert('Failed to load names from ',bisgenericio.getFixedSaveFileName(f));
+            return Promise.reject('');
+        }
+        
+        this.namelist=null;
+        let ext=obj.filename.split('.').pop().toLowerCase();
+        console.log('Extension=',ext,obj.filename);
+        if (ext==='njson') {
+            try {
+                this.namelist=JSON.parse(obj.data);
+            } catch(e) {
+                webutil.createAlert('Failed to load names from ',bisgenericio.getFixedSaveFileName(f));
+                return Promise.reject('');
+            }
+        } else {
+            let s=obj.data.split('\n');
+            let n=s.length;
+            this.namelist={};
+            for (let i=0;i<n;i++) {
+                let l=s[i].split(',');
+                if (l.length===2) {
+                    let key=cleanstring(l[0]);
+                    let val=cleanstring(l[1]);
+                    this.namelist[key]=val;
+                }
+            }
+        }
+
+        console.log("Names=",JSON.stringify(this.namelist,null,2));
+        try {
+            await this.rePlotGraph(self.lastShowVolume);
+        } catch(e) {
+            console.log('Failed to plot '+e);
+        }
+        return '';
+    }
+    
+    clearNames() {
+        this.namelist=null;
+        this.rePlotGraph(self.lastShowVolume).then( () => { }).catch( () => { });
+    }
+
+        
 }
 
 webutil.defineElement('bisweb-oldgrapherelement', OldGrapherModule);

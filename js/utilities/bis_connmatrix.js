@@ -38,7 +38,7 @@ const DEBUG=false;
 class ConnMatrix {
 
     constructor() {
-        this.offset=50.0;
+
         this.posMatrix=null;
         this.negMatrix=null;
         this.statMatrix=null;
@@ -205,6 +205,8 @@ class ConnMatrix {
         */
     getSortedNodesByDegree(index) {
 
+
+        
         if (this.statMatrix===null) {
             console.log('Stat Matrix is null\n');
             return 0;
@@ -213,11 +215,14 @@ class ConnMatrix {
         if (index === undefined)
             index=2;
         index=util.range(index,0,3);
-
+        
         var arr=[];
         var np=numeric.dim(this.statMatrix)[0];
         for (var i=0;i<np;i++) {
             var val=this.statMatrix[i][index];
+            //if (val>0) {
+                //console.log('Node=',i,this.statMatrix[i],'index=',index,'val=',val);
+            //            }
             arr.push({ node: i, degree:val });
         }
 
@@ -490,7 +495,7 @@ class ConnMatrix {
      * @param {number} power -- the scale for each node
      * @returns {Bis_3dCrosshairGeometry.preGeometry} out 
      */
-    draw3DLines(parc,poslines,neglines,radius,power) {
+    draw3DLines(parc,poslines,neglines,radius,power,atlasinfo={}) {
 
         radius=radius || 2.0;
         power =power  || 1.0;
@@ -500,9 +505,17 @@ class ConnMatrix {
             return 0;
         }
 
+        const ATLAS = {
+            shift :  atlasinfo['origin'] || [ 90, 126, 72 ],
+            midlobe : atlasinfo['midlobe'] || 11,
+            offset : atlasinfo['midoffset'] || 20.0,
+            spacing : atlasinfo["spacing"] || [ 1.0,1.0,1.0 ]
+        };
+
+        radius=radius*ATLAS.spacing[0];
+        
         var pairsarray= [ poslines,neglines ];
         var lst = [],arr=0,index=0,n,i,j;
-        var MNI = [ 90, 126, 72 ];
         var out = [];
         for (arr=0;arr<=1;arr++) {
             var pairs=pairsarray[arr];
@@ -525,17 +538,17 @@ class ConnMatrix {
                               [ parc.rois[othernode].x,parc.rois[othernode].y, parc.rois[othernode].z ]];
                     var lobe = [ parc.rois[node].attr[0], parc.rois[othernode].attr[0] ];
                     // Offset the point by MNI shift
-
+                    
                     
                     for (i=0;i<=1;i++) {
                         for (j=0;j<=2;j++) {
 
-                            vertices[v_index]=pt[i][j]+MNI[j];
+                            vertices[v_index]=pt[i][j]*ATLAS['spacing'][j]+ATLAS.shift[j];
                             if (j===0) {
-                                if (lobe[i]>10)
-                                    vertices[v_index]-=this.offset;
+                                if (lobe[i]>=ATLAS['midlobe'])
+                                    vertices[v_index]-=ATLAS.offset;
                                 else
-                                    vertices[v_index]+=this.offset;
+                                    vertices[v_index]+=ATLAS.offset;
                             }
                             ++v_index;
                         }
@@ -570,12 +583,12 @@ class ConnMatrix {
             var nd0=parc.indexmap[lst[i]];
             var lob=parc.rois[nd0].attr[0];
             if (this.statMatrix[lst[i]][0]>=this.statMatrix[lst[i]][1] && poslines.length>0) {
-                if (lob<11)
+                if (lob<ATLAS.midlobe)
                     poslst0.push(lst[i]);
                 else
                     poslst1.push(lst[i]);
             } else {
-                if (lob<11)
+                if (lob<ATLAS.midlobe)
                     neglst0.push(lst[i]);
                 else
                     neglst1.push(lst[i]);
@@ -600,12 +613,12 @@ class ConnMatrix {
                              parc.rois[int_nd].z ];
                     var lb=parc.rois[int_nd].attr[0];
                     for (var ia=0;ia<=2;ia++) {
-                        px[ia]=px[ia]+MNI[ia];
+                        px[ia]=px[ia]*ATLAS['spacing'][ia]+ATLAS['shift'][ia];
                     }
-                    if (lb>10)
-                        px[0]-=this.offset;
+                    if (lb>=ATLAS.midlobe)
+                        px[0]-=ATLAS.offset;
                     else
-                        px[0]+=this.offset;
+                        px[0]+=ATLAS.offset;
                     obj[arr].positions.push(px);
                     var r=radius*Math.pow(this.statMatrix[nd][2]/maxp,power);
                     obj[arr].scales.push(Math.max(radius,r));
@@ -659,7 +672,13 @@ class ConnMatrix {
 
         var numrows=numeric.dim(matrix)[0];
         var imgData=context.createImageData(numrows,numrows);
-        var yesc=[255,0,0,255],noc=[192,224,224,224];
+        var yesc=[128,0,0,255],noc=[255,255,255,255];//[192,224,224,224];
+
+        if (!ispositive) {
+            yesc=[0,128,0,255];
+            noc =[255,255,255,255];
+        }
+        
         let px=0;
         
         for (var j=0;j<numrows;j++) {

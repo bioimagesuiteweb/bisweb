@@ -20,7 +20,7 @@
 const moduleImports = {
     
     smoothimage : require('smoothImage.js'),
-    qualitymeasures : require('qualityMeasures.js'),
+//    qualitymeasures : require('qualityMeasures.js'),
     gradientimage : require('gradientImage.js'),
     thresholdimage : require('thresholdImage.js'),
     shiftscaleimage : require('shiftScaleImage.js'),
@@ -47,7 +47,6 @@ const moduleImports = {
     preprocessoptical : require('preprocessOptical.js'),
     diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
-// FIltering
     butterworthfilter : require('butterworthFilter.js'),
     butterworthfilterimage : require('butterworthFilterImage.js'),
     regressglobal : require('regressGlobal.js'),
@@ -57,17 +56,23 @@ const moduleImports = {
     computecorrelation : require('computeCorrelation.js'),
     seedcorrelation : require('seedCorrelation.js'),
     computeroi : require('computeROI.js'),
-    bilateralfilter : require('bilateralfilter.js'),
+    computevolume : require('computeVolume.js'),
+//    bilateralfilter : require('bilateralfilter.js'),
     timeseriesnormalizeimage: require('timeseriesNormalizeImage'),
+    patchreformatimage: require('patchReformatImage'),
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
     displacementfield : require('displacementField.js'),
+    jacobianimage : require('jacobianImage.js'),
     inverttransformation : require('invertTransformation.js'),
     resliceimage : require('resliceImage.js'),
+    permuteimage : require('permuteImage.js'),
     motionreslice : require('motionReslice.js'),
     manualregistration : require('manualRegistration.js'),
     linearregistration : require('linearRegistration.js'),
+    linearpointregistration : require('linearPointRegistration.js'),
     nonlinearregistration : require('nonlinearRegistration.js'),
+    nonlinearpointregistration : require('nonlinearPointRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
     skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),
@@ -81,7 +86,7 @@ const moduleImports = {
 
     // these are here so that can be accessed by electron
     dicomconversion : require('./dicommodule.js'),
-    bidsconversion : require('./bis_bidsmodule.js'),
+    bidsconversion : require('./bidsmodule.js'),
 
 };
 

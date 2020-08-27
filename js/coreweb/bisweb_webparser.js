@@ -126,6 +126,7 @@ let createInputsGUI=function(gui,description,numViewers,dict) {
                         inputVars[key]= inpt.guiviewer || 'identity';
                         inputControllers[key]=myFolder.add(inputVars,key,[ 'identity', 'current' ]).name(inpt.name);
                     }
+                    // For surface input add here
                 } 
             }
         });
@@ -136,7 +137,7 @@ let createInputsGUI=function(gui,description,numViewers,dict) {
     dict['inputFolder']= inputFolder;
 };
 
-/** Create Inputs */
+/** Create Outputs */
 let createOutputsGUI=function(gui,description,numViewers,dict) {
 
     // Handle Outputs

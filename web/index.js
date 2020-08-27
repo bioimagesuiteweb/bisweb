@@ -495,7 +495,6 @@ var aboutApplication=async function() {// jshint ignore:line
         }
     }
 
-    console.log('This far ');
     
     if (dosimple)  {
         let m=getModal();
@@ -557,17 +556,23 @@ var createApplicationSelector=async function(externalobj) {
     
     let keys=Object.keys(externalobj);
     let max=keys.length;
-        
+
+    let indexcount=1;
+    
     for (let i=0;i<max;i++) {
             
         let elem=externalobj[keys[i]];
+
         let title=elem.title;
         let url='';
         
         if (elem.url.indexOf('http')===0) {
             url=elem.url;
         } else {
-            url=internal.scope+elem.url+'.html';
+            if (elem.url.indexOf('.html')>0)
+                url=internal.scope+elem.url;
+            else
+                url=internal.scope+elem.url+'.html';
         }
         
         let description=elem.description;
@@ -585,19 +590,20 @@ var createApplicationSelector=async function(externalobj) {
                 cname=" active";
             
             if (internal.runningAsDesktopPWA) {
-                imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count+2}. ${description}</div></div>`;
                 menustring+=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
                 urllist.push({
                     name : elem.url,
                     url  : url
                 });
             } else {
-                imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count+2}. ${description}</div></div>`;
                 menustring+=`<li><a href="${url}" role="button" target="${target}">${title}</a></li>`;
             }
                 
-            let b=`<li data-target="#mycarousel" data-slide-to="${i+2}"></li>\n`;
+            let b=`<li data-target="#mycarousel" data-slide-to="${indexcount}"></li>\n`;
             indstring+=b;
+            indexcount=indexcount+1;
         }
     }
 

@@ -53,7 +53,7 @@ module.exports = {
             {
                 'type': 'image',
                 'name': 'Input Image',
-                'description': desc || 'The image to be processed',
+                'description': desc || 'The filename for the image to be processed',
                 'varname': 'input',
                 'shortname': 'i',
                 'required': true,
@@ -72,7 +72,7 @@ module.exports = {
             {
                 'type': 'image',
                 'name': 'Output Image',
-                'description': desc || 'Save the output image',
+                'description': desc || 'The output image filename',
                 'varname': 'output',
                 'shortname': 'o',
                 'required': true,
@@ -136,6 +136,33 @@ module.exports = {
         ];
     },
 
+    getSurfaceToSurfaceInputs: function (desc=null) {
+        return [
+            {
+                'type': 'surface',
+                'name': 'Surface',
+                'description': desc || 'The input data (surface) to process..',
+                'varname': 'input',
+                'shortname': 'i',
+                'required': true,
+            }
+        ];
+    },
+
+    getSurfaceToSurfaceOutputs: function (desc = null) {
+        return [
+            {
+                'type': 'surface',
+                'name': 'Output Surface',
+                'description': desc || 'The output surface',
+                'varname': 'output',
+                'shortname': 'o',
+                'required': true,
+                'extension' : '.surjson'
+            }
+        ];
+    },
+
 
     getRegistrationInputs: function (includematrix=true) {
         let inp= [
@@ -174,6 +201,38 @@ module.exports = {
         return inp;
     },
 
+    getSurfaceRegistrationInputs: function (includematrix=true) {
+        let inp= [
+            {
+                'type': 'surface',
+                'name': 'Reference Surface',
+                'description': 'The reference surface',
+                'varname': 'reference',
+                'shortname': 'r',
+                'required': true
+            },
+            {
+                'type': 'surface',
+                'name': 'Target Surface',
+                'description': 'The surface to register',
+                'varname': 'target',
+                'shortname': 't',
+                'required': true,
+
+            }
+        ];
+        if (includematrix)
+            inp.push({
+                'type': 'transformation',
+                'name': 'Initial Xform',
+                'description': 'The initial transformation (optional)',
+                'varname': 'initial',
+                'required': false,
+                'guiviewer' : 'identity',
+            });
+        return inp;
+    },
+
     getRegistrationOutputs: function () {
         return [
             {
@@ -190,6 +249,31 @@ module.exports = {
                 'name': 'Resliced Image',
                 'description': 'The resliced image',
                 'varname': 'resliced',
+                'required': false,
+                'extension' : '.nii.gz',
+                'guiviewertype' : 'overlay',
+                'guiviewer'  : 'viewer1',
+                'colortype'  : 'Orange'
+            }
+        ];
+    },
+
+    getSurfaceRegistrationOutputs: function () {
+        return [
+            {
+                'type': 'transformation',
+                'name': 'Output Transformation',
+                'description': 'The output transformation',
+                'varname': 'output',
+                'shortname': 'o',
+                'required': true,
+                'extension' : '.json',
+            },
+            {
+                'type': 'surface',
+                'name': 'Warped Surface',
+                'description': 'The warped surface',
+                'varname': 'warped',
                 'required': false,
                 'extension' : '.nii.gz',
                 'guiviewertype' : 'overlay',

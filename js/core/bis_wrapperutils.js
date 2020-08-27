@@ -32,6 +32,7 @@
 
 const libbiswasm_raw=require('libbiswasm'); // Ignored in Webpack for Web, used just for node.js
 const BisWebImage=require('bisweb_image');
+const BisWebSurface=require('bisweb_surface');
 const BisWebMatrix=require('bisweb_matrix');
 const bistransforms=require('bis_transformationutil');
 const wasmutil=require('bis_wasmutils');
@@ -190,6 +191,12 @@ var deserializeAndDeleteObject=function(Module,ptr,datatype,first_input=0) {
             output.deserializeWasmAndDelete(Module,ptr,first_input);
         else
             output.deserializeWasmAndDelete(Module,ptr);
+        return output;
+    }
+
+    if (datatype==='bisSurface' || datatype==='surface' || datatype==='Surface') {
+        let output=new BisWebSurface();
+        output.deserializeWasmAndDelete(Module,ptr);
         return output;
     }
     

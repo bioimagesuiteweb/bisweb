@@ -51,7 +51,7 @@ namespace bisImageAlgorithms {
    * @param outputis100 if 1 then "in" values are set to 100 else 1
    * @returns mask image
    */
-  template<class TT> std::unique_ptr<bisSimpleImage<unsigned char> >  createMaskImage(bisSimpleImage<TT>* image,float threshold=0.05,int absolute=0,int outputis100=0);
+  template<class TT> bisSimpleImage<unsigned char>* createMaskImage(bisSimpleImage<TT>* image,float threshold=0.05,int absolute=0,int outputis100=0);
   
   /** thresholds an image.
    * to perform a simple threshold where the values are set to 0 if lower than 50 or higher than 100 and stay the same otherwise use
@@ -170,7 +170,7 @@ namespace bisImageAlgorithms {
    * @param name the name of the output image
    * @returns a normalized image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<short> > imageNormalize(bisSimpleImage<T>* input,float per_low,float per_high,short outmaxvalue,double outdata[2],std::string name="");
+  template<class T> bisSimpleImage<short>* imageNormalize(bisSimpleImage<T>* input,float per_low,float per_high,short outmaxvalue,double outdata[2],std::string name="");
 
   /** Normalizes the image intensity of image using robust image range saturation using an existing output image
    * if value < intensity at percentage per_low then it is set to 0
@@ -281,12 +281,39 @@ namespace bisImageAlgorithms {
    * @param debug if > 0 print debug statements
    * @returns the single frame, smoothed, resampled and normalized image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<short> >  prepareImageForRegistration(bisSimpleImage<T>* input,
-											 int numbins=64,int normalize=1,
-											 float resolution_factor=1.0,float smoothing=0.0,int intscale=10,
-											 int frame=0,std::string name="",
-											 int debug=1);
+  template<class T> bisSimpleImage<short>* prepareImageForRegistration(bisSimpleImage<T>* input,
+                                                                       int numbins=64,int normalize=1,
+                                                                       float resolution_factor=1.0,float smoothing=0.0,int intscale=10,
+                                                                       int frame=0,std::string name="",
+                                                                       int debug=1);
 
+
+
+  /** Prepares an image for registration by calling
+   * extractFrame, smoothImage, resampleImage and normalizeImage in sequence 
+   * and tehn reslices
+   * @param input the input image
+   * @param reslicexform the reslicetransformation
+   * @param refdim the reference dimensions
+   * @param refspa the reference spacing
+   * @param numbins the number of bins targetted (sets the maximum value of the output image to numbins*intscale-1)
+   * @param normalize if set to 0 the image is not normalized
+   * @param resolution_factor factor to shrink the resolution (increase the spacing) of the output image relative to the input
+   * @param smoothing amount of smoothing to perform. If  < 0.0 use image resolution. Assume this is in mm
+   * @param intscale used to compute the maximum value of the normalized image
+   * @param frame used to specify the frame to extract for 4D input images
+   * @param name is the name of the output image
+   * @param debug if > 0 print debug statements
+   * @returns the single frame, smoothed, resampled and normalized image
+   */
+  template<class T> bisSimpleImage<short>*  prepareAndResliceImageForRegistration(bisSimpleImage<T>* input,
+                                                                                  bisAbstractTransformation* reslicexform,
+                                                                                  int refdim[5],
+                                                                                  float refspa[5],
+                                                                                  int numbins=64,int normalize=1,
+                                                                                  float smoothing=0.0,int intscale=10,
+                                                                                  int frame=0,std::string name="",
+                                                                                  int debug=1);
 
   /** Compute round trip  displacement field error
    * @param forward the forward displacement field
@@ -367,7 +394,7 @@ namespace bisImageAlgorithms {
    * @param debug a debug flag
    * @returns the normalized image (float)
    */
-  template<class T> std::unique_ptr<bisSimpleImage<float> >  medianNormalizeImage(bisSimpleImage<T>* input,int debug=0);
+  template<class T> bisSimpleImage<float>*  medianNormalizeImage(bisSimpleImage<T>* input,int debug=0);
 
 }
 

@@ -59,12 +59,13 @@ class ConcatenateImageModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: combineImages with vals', JSON.stringify(vals));
 
+        let inputlist=vals.extraArgs;
+        if (inputlist.length<2) {
+            return Promise.reject('Need at least two input images');
+        }
+        
+        
         return new Promise( (resolve,reject) => {
-
-            let inputlist=vals.extraArgs;
-            if (inputlist.length<2) {
-                return Promise.reject('Need at least two input images');
-            }
             
             let imagelist=[],promiselist=[];
             for (let i=0;i<inputlist.length;i++) {

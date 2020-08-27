@@ -19,38 +19,100 @@
 
 const genericio=require('bis_genericio');
 const webutil = require('bis_webutil');
+const userPreferences = require('bisweb_userpreferences.js');
 
 module.exports = {
 
 
     createMNIImageLoadMenuEntries : function(fmenu,callback,viewerno=0) {
-        webutil.createMenuItem(fmenu,'Load MNI T1 (1mm)',
-                               function() {
-                                   let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno);
-                               });
-        webutil.createMenuItem(fmenu,'Load MNI T1 (2mm)',
-                               function() {
-                                   let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno);
-                               });
+
+
+        return new Promise( (resolve,reject)  => {
+            userPreferences.safeGetItem('species').then( (species) => {        
+                
+                if (species==='all' || species==='human') {
+                    webutil.createMenuItem(fmenu,'Load MNI T1 (1mm, RAS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno,'RAS');
+                                           });
+                    webutil.createMenuItem(fmenu,'Load MNI T1 (2mm, RAS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno,'RAS');
+                                           });
+                    webutil.createMenuItem(fmenu,'Load MNI T1 (1mm, LPS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno,'LPS');
+                                           });
+                }
+                
+                if (species==='all' || species==='mouse') {
+                    
+                    webutil.createMenuItem(fmenu,'Load Yale Mouse 162 MRI Template (0.1mm, RAS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/Symmetric_N162_0.10.nii.gz`,viewerno,'RAS');
+                                           });
+                    webutil.createMenuItem(fmenu,'Load Yale Mouse 162 MRI Template (0.1mm, LPS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/Symmetric_N162_0.10.nii.gz`,viewerno,'LPS');
+                                           });
+                }
+                resolve();
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
     },
     
     createBroadmannAtlasLoadMenuEntries : function(fmenu,callback,viewerno=0) {
 
-        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm)',
-                               function () {
-                                   let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno);
-                               });
-        
-        webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm)',
-                               function () {
-                                   let imagepath=webutil.getWebPageImagePath();
-                                   callback(`${imagepath}/yale_broadmann_2mm_ras.nii.gz`, viewerno);
-                               });
-
+        return new Promise( (resolve,reject)  => {
+            userPreferences.safeGetItem('species').then( (species) => {
+                
+                if (species==='all' || species==='human') {
+                    
+                    webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm, RAS)',
+                                           function () {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno,'RAS');
+                                           });
+                    
+                    webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm, RAS)',
+                                           function () {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/yale_broadmann_2mm_ras.nii.gz`, viewerno,'RAS');
+                                           });
+                    
+                    webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm, LPS)',
+                                           function () {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno,'LPS');
+                                           });
+                }
+                
+                if (species==='all' || species==='mouse') {
+                    webutil.createMenuItem(fmenu,'Load Yale-Allen Mouse Regions (0.1mm, RAS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/N162_yaleallen_010.nii.gz`,viewerno,'RAS');
+                                           });
+                    webutil.createMenuItem(fmenu,'Load Yale-Allen Mouse Regions (0.1mm, LPS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                           callback(`${imagepath}/N162_yaleallen_010.nii.gz`,viewerno,'LPS');
+                                           });
+                }
+                resolve();
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
     },
+                                                   
 
     
     saveImage: function(img,fname,name) {

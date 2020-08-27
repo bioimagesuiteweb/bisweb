@@ -149,6 +149,26 @@ class bisGridTransformation : public bisAbstractTransformation {
   // No
   virtual  int isLinear() { return 0;}
 
+  /** Get Grid Origin */
+  virtual void getGridOrigin(float ori[3]) {
+    ori[0]=this->grid_origin[0];
+    ori[1]=this->grid_origin[1];
+    ori[2]=this->grid_origin[2];
+  }
+
+  /** Get Grid Spacing */
+  virtual void getGridSpacing(float spa[3]) {
+    spa[0]=this->grid_spacing[0];
+    spa[1]=this->grid_spacing[1];
+    spa[2]=this->grid_spacing[2];
+  }
+    
+  virtual void getGridDimensions(int dim[3]) {
+    dim[0]=this->grid_dimensions[0];
+    dim[1]=this->grid_dimensions[1];
+    dim[2]=this->grid_dimensions[2];
+  }
+  
 protected:
 
   /** Object to store displacements in */

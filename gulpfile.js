@@ -159,7 +159,7 @@ let internal = {
         "./node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css",
         "./web/biscommon.css"
     ], // Bright mode
-    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],
+    lintscripts : ['js/**/[a-z].js','config/[a-z].js','compiletools/[a-z].js','[a-z]*.js','web/**/[a-z]*.js','test/**/[a-z].js','fileserver/[a-z]*.js'],
     toolarray : [ 'index'],
     serveroptions : { },
     setwebpackwatch : 0,
@@ -171,7 +171,7 @@ internal.serveroptions = {
     "root" : path.normalize(__dirname),
     "host" : options.hostname,
     "port" : `${options.portno}`,
-    'directoryListing': true,
+    'directoryListing': false,
 };
 
 if (options.external>0) {
@@ -186,13 +186,13 @@ if (options.internal>=2 || options.external>0)  {
 
 
 if (options.internal) {
-    internal.lintscripts.push('../internal/js/*/*.js');
-    internal.lintscripts.push('../internal/js/*.js');
+    internal.lintscripts.push('../internal/js/*/[a-z]*.js');
+    internal.lintscripts.push('../internal/js/[a-z]*.js');
 }
 
 if (options.external) {
-    internal.lintscripts.push('../external/js/*/*.js');
-    internal.lintscripts.push('../external/js/*.js');
+    internal.lintscripts.push('../external/js/*/[a-z]*.js');
+    internal.lintscripts.push('../external/js/[a-z]*.js');
 }
 
 
@@ -218,8 +218,14 @@ console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
     let keys=Object.keys(obj);
-    options.inpfilename ='index,'+keys.join(",");
-} 
+    let names=['index'];
+    for (let i=0;i<keys.length;i++) {
+        let donotbuild=obj[keys[i]]['donotbuild'] || false;
+        if (!donotbuild)
+            names.push(keys[i]);
+    }
+    options.inpfilename=names.join(",");
+}
 
 // ------------------------
 // Define webpack jobs
@@ -415,6 +421,7 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./node_modules/d3/d3.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
@@ -458,6 +465,7 @@ gulp.task('tools', ( (cb) => {
     promises.push(bis_gutil.createCSSCommon(internal.dependcss2,internal.biscss2,options.outdir));
     
     for (let index=0;index<internal.toolarray.length;index++) {
+        
         let toolname=internal.toolarray[index];
         let gpl=true;
         let maincss=internal.biscss;

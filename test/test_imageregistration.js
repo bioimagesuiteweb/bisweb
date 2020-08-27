@@ -39,10 +39,10 @@ describe('Testing Image Registration (from bis_imageregistration.js)\n', functio
     let imgnames = [ 'MNI_2mm_orig.nii.gz', 'MNI_2mm_resliced.nii.gz' ,
                      'MNI_T1_1mm_resampled.nii.gz','MNI_T1_1mm_resampled_MNI_T1_1mm_resampled_shifted15_5_0.nii.gz' ];
 
-    let gold_matrix = [[0.968,0.232,0.002,-31.799],
-                       [-0.247,0.902,0.089,26.579],
-                       [0.020,-0.081,1.000,7.064],
-                       [0.000,0.000,0.000,1.000]];
+    let gold_matrix = [[     0.965,     0.228,  -5.61e-4,     -30.9],
+                       [    -0.238,     0.917,    0.0793,        25],
+                       [    0.0195,   -0.0719,         1,      5.79],
+                       [         0,         0,         0,         1]];
 
     
     let fullnames = [ '','','',''   ];

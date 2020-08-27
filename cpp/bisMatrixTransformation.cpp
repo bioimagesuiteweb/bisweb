@@ -88,14 +88,15 @@ int bisMatrixTransformation::setMatrix(bisUtil::mat44 inp)
 
 
 // Set and Get from SimpleMatrix
-std::unique_ptr<bisSimpleMatrix<float> > bisMatrixTransformation::getSimpleMatrix(std::string name)
+bisSimpleMatrix<float>* bisMatrixTransformation::getSimpleMatrix(std::string name)
 {
   bisUtil::mat44 mat; this->getMatrix(mat);
   
-  std::unique_ptr<bisSimpleMatrix<float> > simple(new bisSimpleMatrix<float>(name));
+  bisSimpleMatrix<float>* simple=new bisSimpleMatrix<float>(name);
   simple->allocate(4,4);
   simple->importMatrix(mat);
-  return std::move(simple);
+
+  return simple;
 }
 
 int bisMatrixTransformation::setSimpleMatrix(bisSimpleMatrix<float>* simple)

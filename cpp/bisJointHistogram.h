@@ -122,7 +122,7 @@ class bisJointHistogram : public bisObject {
    * @param name used to set the name of the output matrix
    * @returns output matrix
    */
-  std::unique_ptr<bisSimpleMatrix<float> > exportHistogram(std::string name="");
+  bisSimpleMatrix<float>* exportHistogram(std::string name="");
 
   /** print the histogram for debugging purposes */
   void print();

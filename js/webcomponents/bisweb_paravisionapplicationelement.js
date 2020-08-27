@@ -49,7 +49,7 @@ const bisgenericio=require('bis_genericio');
  */
 class ParavisionApplicationElement extends ViewerApplicationElement {
     
-    connectedCallback() {
+    async internalConnectedCallback() {
 
         // Check if we are in external mode and if we have an imagepath
         this.setExternalAndImagePath();
@@ -67,6 +67,7 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
 
         const PARATOOL=document.querySelector(importid);
         this.findViewers();
+        this.createExtraComponents();
         this.VIEWERS[0].finalizeTools();
 
 
@@ -74,31 +75,30 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         
         let menubar=document.querySelector(menubarid).getMenuBar();
 
-        let fmenu=this.createFileAndOverlayMenus(menubar,null);
+        let fmenu=await this.createFileAndOverlayMenus(menubar,null);
         this.createApplicationMenu(fmenu);
         let editmenu=this.createEditMenu(menubar);
         this.createAdvancedTransferTool(modulemanager,editmenu);
         this.createDisplayMenu(menubar,null);
-
         
         if (modulemanager!==null)  {
             let menus=modulemanager.initializeElements(menubar,self.VIEWERS);
-            userPreferences.safeGetItem("internal").then( (f) =>  {
-                if (f) {
-                    let misactool=document.createElement('bisweb-misactool');
-                    //let algoid=this.getAttribute('bis-algorithmcontrollerid');
-                    const managerid = this.getAttribute('bis-modulemanagerid') || null;
-                    let modulemanager=document.querySelector(managerid);
-                    let algocontroller = modulemanager.getAlgorithmController();
-                    let algoid=algocontroller.getAttribute('id');
-                    misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
-                    document.body.appendChild(misactool);
-                    let regmenu=menus[3] || editmenu;
-                    webutil.createMenuItem(regmenu, ''); // separator
-                    misactool.addtomenu(regmenu);
-                }
-            });
+            let f=await userPreferences.safeGetItem("internal");
+            if (f) {
+                let misactool=document.createElement('bisweb-misactool');
+                //let algoid=this.getAttribute('bis-algorithmcontrollerid');
+                const managerid = this.getAttribute('bis-modulemanagerid') || null;
+                let modulemanager=document.querySelector(managerid);
+                let algocontroller = modulemanager.getAlgorithmController();
+                let algoid=algocontroller.getAttribute('id');
+                misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
+                document.body.appendChild(misactool);
+                let regmenu=menus[3] || editmenu;
+                webutil.createMenuItem(regmenu, ''); // separator
+                misactool.addtomenu(regmenu);
+            } 
         }
+
         
 
         // ----------------------------------------------------------
@@ -145,6 +145,10 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         // Clean up at the end
         this.finalizeConnectedEvent();
 
+    }
+
+    connectedCallback() {
+        this.internalConnectedCallback();
     }
 }
 

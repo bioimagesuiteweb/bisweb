@@ -24,7 +24,7 @@ const BaseModule = require('basemodule.js');
  * blanks an image along 
  */
 
-const defaultMin=-1;
+const defaultMin=0;
 const defaultMax=10001;
 
 class BlankImageModule extends BaseModule {
@@ -77,8 +77,12 @@ class BlankImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         let input = this.inputs['input'];
+        
         let dim=input.getDimensions();
+        console.log('oooo invoking: blankImage with vals', JSON.stringify(vals));
+        
         let names = ['i0','i1','j0','j1','k0','k1' ];
+        
         for (let ia=0;ia<=2;ia++) {
             let n0=names[2*ia];
             let n1=names[2*ia+1];
@@ -89,7 +93,7 @@ class BlankImageModule extends BaseModule {
             if (v1===defaultMax)
                 vals[n1]=dim[ia]-1;
         }
-        console.log('oooo invoking: blankImage with vals', JSON.stringify(vals));
+        console.log('oooo \t parameters fixed=', JSON.stringify(vals));
         return new Promise( (resolve, reject) => {
 
             biswrap.initialize().then(() => {

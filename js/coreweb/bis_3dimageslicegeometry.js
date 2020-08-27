@@ -26,6 +26,9 @@
 
 const THREE=require('three');
 
+
+
+
 /** 
  * A class that inherits from {@link ThreeJS-BufferGeometry} to create a plane on which to render an image texture or an image outline.
  * This is hidden behind a factory function -- see examples below. <BR> <BR>
@@ -44,6 +47,9 @@ const bis3dimageslicegeometry = function ( p0,p1,p2,wireframe,flip ) {
     flip= flip || [ false, false ];
     wireframe=wireframe || false;
     THREE.BufferGeometry.call( this );
+
+    if (!this.setAttribute)
+        this.setAttribute=this.addAttribute;
     
     this.type = 'PlaneBufferGeometry';
     
@@ -145,11 +151,11 @@ const bis3dimageslicegeometry = function ( p0,p1,p2,wireframe,flip ) {
         indices[ 9 ] = 6;   indices[10 ] = 4;  indices[11 ] = 7;  
     }
     
-    //      this.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
+    //      this.setAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
     this.setIndex(  new THREE.BufferAttribute( indices, 1 ));
-    this.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-    this.addAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
-    this.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
+    this.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    this.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
+    this.setAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
 
 };
 

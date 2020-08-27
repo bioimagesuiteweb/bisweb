@@ -30,6 +30,9 @@
 #include "bisLegacyFileSupport.h"
 #include "bisDataObjectFactory.h"
 #include "bisSimpleImageSegmentationAlgorithms.h"
+#include "bisSurface.h"
+#include "bisPointRegistrationUtils.h"
+#include "bisMemoryManagement.h"
 #include <memory>
 
 
@@ -75,6 +78,7 @@ int getImageMagicCode() { return bisDataTypes::s_image;   }
 int getGridTransformMagicCode() { return bisDataTypes::s_gridtransform; }
 int getComboTransformMagicCode() { return bisDataTypes::s_combotransform; }
 int getCollectionMagicCode() { return bisDataTypes::s_collection; }
+int getSurfaceMagicCode() { return bisDataTypes::s_surface; }
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -203,8 +207,14 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
   }
 
   int interpolation=params->getIntValue("interpolation",1);
+  //int numthreads=params->getIntValue("numthreads",1);
   if (interpolation!=3 && interpolation!=0)
     interpolation=1;
+
+  /*  if (numthreads<1)
+    numthreads=1;
+  else if (numthreads>4)
+  numthreads=4;*/
 
   //Create a hodgepodge output image
   // Image spacing and dimensions come from parameters but
@@ -258,17 +268,19 @@ template <class BIS_TT> unsigned char* resliceImageTemplate(unsigned char* input
       std::cout << "-----------------------------------" << std::endl;
     }
 
-  if (sum>0)
+  if (sum>0) {
+    if (debug) std::cout << "___ Reslice with bounds " << std::endl;
     bisImageAlgorithms::resliceImageWithBounds(inp_image.get(),
                                                out_image.get(),
                                                resliceXform.get(),
                                                bounds,interpolation,backgroundValue);
-  else
+  } else {
+    if (debug) std::cout << "___ Reslice normal " << std::endl;
     bisImageAlgorithms::resliceImage(inp_image.get(),
                                      out_image.get(),
                                      resliceXform.get(),
                                      interpolation,backgroundValue);
-  
+  }
   
   return out_image->releaseAndReturnRawArray();
 }
@@ -494,8 +506,8 @@ template <class BIS_TT> unsigned char* normalizeImageTemplate(unsigned char* inp
   }
 
   double outdata[2];
-  std::unique_ptr<bisSimpleImage<short> > out_image=bisImageAlgorithms::imageNormalize(inp_image.get(),
-										       perlow,perhigh,outmaxvalue,outdata);
+  std::unique_ptr<bisSimpleImage<short> > out_image(bisImageAlgorithms::imageNormalize(inp_image.get(),
+										       perlow,perhigh,outmaxvalue,outdata));
 
   if (debug)
     std::cout << "\t Normalizing Image Done : " << outdata[0] << "," << outdata[1] << std::endl;
@@ -541,11 +553,11 @@ template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsig
   int frame=params->getIntValue("frame",0);
   
   std::string name="external";
-  std::unique_ptr<bisSimpleImage<short> > out_image=bisImageAlgorithms::prepareImageForRegistration(inp_image.get(),
+  std::unique_ptr<bisSimpleImage<short> > out_image(bisImageAlgorithms::prepareImageForRegistration(inp_image.get(),
 												    numbins,normalize,
 												    res,sigma,intscale,frame,
                                                                                                     name,
-                                                                                                    debug);
+                                                                                                    debug));
   
 
   return out_image->releaseAndReturnRawArray();
@@ -777,7 +789,7 @@ unsigned char* computeGLMWASM(unsigned char* input_ptr,unsigned char* mask_ptr,u
       mask->fill(100);
     }
       
-  std::unique_ptr<bisSimpleImage<float > > output=bisfMRIAlgorithms::computeGLM(timeseries.get(),mask.get(),glm.get(),numtasks);
+  std::unique_ptr<bisSimpleImage<float > > output(bisfMRIAlgorithms::computeGLM(timeseries.get(),mask.get(),glm.get(),numtasks));
   return output->releaseAndReturnRawArray();
 }
 
@@ -853,7 +865,7 @@ unsigned char* butterworthFilterWASM(unsigned char* input_ptr,const char* jsonst
   float samplerate=params->getFloatValue("sampleRate",1.0f);
 
   if (debug)
-    std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
+    std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate <<  std::endl;
 
 
   Eigen::MatrixXf output;
@@ -895,40 +907,16 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
   std::string ftype=params->getValue("type","low");
   float cutoff=params->getFloatValue("cutoff",0.15f);
   float samplerate=params->getFloatValue("sampleRate",1.0f);
+  int removeMean=params->getBooleanValue("removeMean",1);
+ 
+  if (debug)
+    std::cout << "ButterworthImage Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << ", removeMean=" << removeMean << std::endl;
+
+
+  int ok=bisfMRIAlgorithms::butterworthFilterImage(in_image.get(),out_image.get(),ftype,cutoff,samplerate,removeMean,debug);
 
   if (debug)
-    std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
-
-
-  int dim[5]; in_image->getDimensions(dim);
-  
-  
-  Eigen::MatrixXf temp;
-  Eigen::VectorXf w;
-
-
-  Eigen::MatrixXf input=  Eigen::MatrixXf::Zero(dim[3],1);
-  Eigen::MatrixXf output=  Eigen::MatrixXf::Zero(dim[3],1);
-  int numvoxels=dim[0]*dim[1]*dim[2];
-  float* indata=in_image->getImageData();
-  float* outdata=out_image->getImageData();
-
-  int ok=1;
-
-  
-  for (int i=0;i<numvoxels;i++) {
-    for (int f=0;f<dim[3];f++) {
-      input(f,0)=indata[numvoxels*f+i];
-    }
-
-    ok*=bisfMRIAlgorithms::butterworthFilter(input,output,w,temp,ftype,cutoff,samplerate,debug);
-    for (int f=0;f<dim[3];f++) {
-      outdata[numvoxels*f+i]=output(f,0);
-    }
-  }
-
-  if (debug)
-    std::cout << "Butterworth Filter done " << ok << std::endl;
+    std::cout << "Butterworth Filter Image done " << ok << std::endl;
 
   return out_image->releaseAndReturnRawArray();
 
@@ -976,7 +964,7 @@ unsigned char* weightedRegressOutWASM(unsigned char* input_ptr,unsigned char* re
 {
 
   if (debug)
-    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (long)weights_ptr << std::endl;
+    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (BISLONG)weights_ptr << std::endl;
   
   Eigen::MatrixXf input;
   std::unique_ptr<bisSimpleMatrix<float> > s_matrix(new bisSimpleMatrix<float>("matrix"));
@@ -1033,7 +1021,7 @@ unsigned char* weightedRegressGlobalSignalWASM(unsigned char* input_ptr,unsigned
 {
 
   if (debug)
-    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (long)weights_ptr << std::endl;
+    std::cout << std::endl << "______ in weighted RegressOutJSON  weights=" << (BISLONG)weights_ptr << std::endl;
 
   Eigen::MatrixXf input;
   std::unique_ptr<bisSimpleMatrix<float> > s_matrix(new bisSimpleMatrix<float>("matrix"));
@@ -1498,7 +1486,7 @@ unsigned char* blankImageWASM(unsigned char* input,
   }
 
   
-  std::unique_ptr<bisSimpleImage<unsigned char> > out_image=bisSimpleImageSegmentationAlgorithms::doBinaryMorphology(input_image.get(),mode,radius,do3d);
+  std::unique_ptr<bisSimpleImage<unsigned char> > out_image(bisSimpleImageSegmentationAlgorithms::doBinaryMorphology(input_image.get(),mode,radius,do3d));
   if (debug)
     std::cout << std::endl << "..... Morphology Operation " << operation  << "(" << mode << ") done." << std::endl;
   return out_image->releaseAndReturnRawArray();
@@ -1533,7 +1521,7 @@ unsigned char* seedConnectivityWASM(unsigned char* input,const char* jsonstring,
     std::cout << "-----------------------------------" << std::endl;
   }
 
-  std::unique_ptr<bisSimpleImage<unsigned char> > out_image=bisSimpleImageSegmentationAlgorithms::seedConnectivityAlgorithm(input_image.get(),seed,1);
+  std::unique_ptr<bisSimpleImage<unsigned char> > out_image(bisSimpleImageSegmentationAlgorithms::seedConnectivityAlgorithm(input_image.get(),seed,1));
   
   if (debug)
     std::cout << std::endl << "..... Seed Connectivity done " << std::endl;
@@ -1623,7 +1611,7 @@ template <class BIS_TT> unsigned char* medianNormalizeImageTemplate(unsigned cha
   if (!inp_image->linkIntoPointer(input))
     return 0;
 
-  std::unique_ptr<bisSimpleImage<float> > out_image=bisImageAlgorithms::medianNormalizeImage<BIS_TT>(inp_image.get(),debug);
+  std::unique_ptr<bisSimpleImage<float> > out_image(bisImageAlgorithms::medianNormalizeImage<BIS_TT>(inp_image.get(),debug));
   
   if (debug)
     std::cout << "MedianNormalizing Done" << std::endl;
@@ -1649,7 +1637,7 @@ unsigned char* medianNormalizeImageWASM(unsigned char* input,int debug)
 unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug)
 {
   if (debug)
-    std::cout << std::endl << "______ in weighted RegressOutImage  weights=" << (long)weights_ptr << std::endl;
+    std::cout << std::endl << "______ in weighted RegressOutImage  weights=" << (BISLONG)weights_ptr << std::endl;
   
   std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input"));
   if (!in_image->linkIntoPointer(input_ptr))
@@ -1672,6 +1660,10 @@ unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned cha
     return 0;
   if (weights.rows()>=2)
     useweights=1;
+
+  if (debug) {
+    std::cout << "Regress Out Image useweights=" << useweights << std::endl;
+  }
   
   
   Eigen::MatrixXf regressors=bisEigenUtil::mapToEigenMatrix(s_regressors.get());
@@ -1792,4 +1784,39 @@ unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug) {
     std::cout << "timeSeriesNormalizeImage done " << ok << std::endl;
   
   return out_image->releaseAndReturnRawArray();
+}
+
+/**
+ * Transform Surface
+ */
+unsigned char* transformSurfaceWASM(unsigned char* input,unsigned char* xform,int debug) {
+  std::unique_ptr<bisSurface > surface(new bisSurface("surface"));
+  if (!surface->deSerialize(input))
+    {
+      std::cerr << "Failed to deserialize surface" << std::endl;
+      return 0;
+    }
+
+  std::shared_ptr<bisAbstractTransformation> warpXform=bisDataObjectFactory::deserializeTransformation(xform,"warpxform");
+  if (warpXform.get()==0) {
+    std::cerr << "Failed to deserialize transformation " << std::endl;
+    return 0;
+  }
+
+  std::unique_ptr<bisSurface> output(new bisSurface("output"));
+  if (surface->getTriangles())
+    output->setTriangles(surface->getTriangles());
+  if (surface->getTriangleData())
+    output->setTriangleData(surface->getTriangleData());
+  if (surface->getPointData())
+    output->setPointData(surface->getPointData());
+
+  if (surface->getPoints()) {
+    std::shared_ptr<bisSimpleMatrix<float> > newpoints(bisPointRegistrationUtils::transformPoints(surface->getPoints().get(),
+                                                                                                  warpXform.get(),debug));
+    output->setPoints(newpoints);
+  }
+
+  unsigned char* outstr=output->serialize();
+  return outstr;
 }

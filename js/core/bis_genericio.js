@@ -719,6 +719,7 @@ const bisgenericio = {
     readtextdatafromurl : biscoreio.readtextdatafromurl, // read from url
     readbinarydatafromurl : biscoreio.readbinarydatafromurl, // read from url
     getimagepath : biscoreio.getimagepath,
+    getElectronDialogFilename :  biscoreio.getElectronDialogFilename,
     // New functions internal to this
     inBrowser : isInBrowser,
     setFileServerObject : setFileServerObject,

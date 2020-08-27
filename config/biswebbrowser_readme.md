@@ -48,13 +48,14 @@ or a standard `light` style:
 
     <link rel="stylesheet" type="text/css href="node_modules/biswebbrowser/dist/css/bootstrap.min.css">
 
-b. The external JS dependencies (jQuery 3.3.1, THREE.js 0.100.0, Bootstrap 3.4.0 and
+b. The external JS dependencies (jQuery 3.4.1, THREE.js 0.113.0, D3 v3, Bootstrap 3.4.1 and
 the Polymer webcomponents package)
 
     <script src="node_modules/biswebbrowser/dist/webcomponents-lite.js"></script>
     <script src="node_modules/biswebbrowser/dist/jquery.min.js"></script>
     <script src="node_modules/biswebbrowser/dist/bootstrap.min.js"></script>
     <script src="node_modules/biswebbrowser/dist/three.min.js"></script>
+    <script src="node_modules/biswebbrowser/dist/d3.min.js"></script>
     
 c. The BioImage Suite Web Files JS/WASM files
 
@@ -111,6 +112,7 @@ bioimagesuite web within your bundle you will need to:
             "jquery": "jQuery",
             "jQuery": "jQuery",
             "THREE": "THREE", 
+            "d3": "d3", 
         },
         
 2. Include bioimagesuiteweb using require (instead of the script tag), e.g.
@@ -122,6 +124,7 @@ bioimagesuite web within your bundle you will need to:
 
         <script src="node_modules/biswebbrowser/dist/webcomponents-lite.js"></script>
         <script src="node_modules/biswebbrowser/dist/jquery.min.js"></script>
+        <script src="node_modules/biswebbrowser/dist/d3.min.js"></script>
         <script src="node_modules/biswebbrowser/dist/bootstrap.min.js"></script>
         <script src="node_modules/biswebbrowser/dist/three.min.js"></script>
         <script src="node_modules/biswebbrowser/dist/libbiswasm_wasm.js"></script>

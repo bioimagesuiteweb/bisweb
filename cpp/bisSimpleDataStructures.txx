@@ -27,7 +27,7 @@ namespace bisSimpleDataUtil {
   const long MAX_SIZE=2147483647;
 #endif
   
-  template<class OT,class IT> unsigned char* internal_cast_raw_data(unsigned char* in_pointer,long& data_size,
+  template<class OT,class IT> unsigned char* internal_cast_raw_data(unsigned char* in_pointer,BISLONG& data_size,
 								    std::string name,bisObject* owner,OT* ,IT* ) {
 
 
@@ -39,8 +39,8 @@ namespace bisSimpleDataUtil {
     if (data_size<1)
       data_size=begin_int[3];
 
-    long numelements=data_size/sizeof(IT);
-    long output_data_size= numelements*sizeof(OT);
+    BISLONG numelements=data_size/sizeof(IT);
+    BISLONG output_data_size= numelements*sizeof(OT);
 
     //std::cout << "Casting data_size=" << data_size << " numelements=" << numelements << "new data_size=" << output_data_size << std::endl;
     
@@ -68,7 +68,7 @@ namespace bisSimpleDataUtil {
     return out_pointer;
   }
 
-  template<class OT> unsigned char* cast_raw_data(unsigned char* in_pointer,long& data_size,std::string name,bisObject* owner=0) {
+  template<class OT> unsigned char* cast_raw_data(unsigned char* in_pointer,BISLONG& data_size,std::string name,bisObject* owner=0) {
     
     int* begin_int=(int*)in_pointer;
     int data_type=begin_int[1];
@@ -186,13 +186,13 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
 
   int* begin_int=(int*)pointer;
   int incoming_magic_type=begin_int[0];
-  long dt_size=begin_int[3];
+  BISLONG dt_size=begin_int[3];
 
   if (dt_size<0) {
     std::cout << "____ C++ large image: original length=" << dt_size << ", B=" << begin_int[3] << std::endl;
     if (this->magic_type==bisDataTypes::s_image ||
         this->magic_type==bisDataTypes::s_matrix) {
-      long len=1;
+      BISLONG len=1;
       int maxdim=4;
       if (this->magic_type==bisDataTypes::s_matrix)
         maxdim=1;
@@ -249,17 +249,17 @@ template<class T> int bisSimpleData<T>::linkIntoPointer(unsigned char* pointer,i
       if (bisMemoryManagement::debugMemory() )  
 	std::cout << "***** linkIntoPointer " << this->name << ". Copying pointer as requested" << std::endl;
 
-      long sz=begin_int[2]+dt_size;//begin_int[3];
+      BISLONG sz=begin_int[2]+dt_size;//begin_int[3];
 
       
       output_pointer=bisMemoryManagement::allocate_memory(16+sz,this->raw_array_name,"copying",this);
-      bisMemoryManagement::copy_memory(output_pointer,pointer,sz);
+      bisMemoryManagement::copy_memory(output_pointer,pointer,sz+16);
       this->owns_pointer=1;
       this->used_to_own_pointer=0;
     }
   else if (bisMemoryManagement::debugMemory() )
     {
-      std::cout << "***** linkIntoPointer " << this->name << " from location " << (long)pointer << ". Not taking ownership. dt_size=" << dt_size  << std::endl;
+      std::cout << "***** linkIntoPointer " << this->name << " from location " << (BISLONG)pointer << ". Not taking ownership. dt_size=" << dt_size  << std::endl;
     }
   
   begin_int=(int*)output_pointer;
@@ -364,10 +364,10 @@ template<class T> int bisSimpleMatrix<T>::linkIntoPointer(unsigned char* pointer
       int* i_head=(int*)(this->header);
       this->numrows=i_head[0];
       this->numcols=i_head[1];
-      /*      std::cout << "Matrix dims=" << this->numrows << "," << this->numcols << std::endl;
+      /*      std::cout << "Linked: ";
       for (int i=0;i<this->numrows*this->numcols;i++)
 	std::cout << this->data[i] << " ";
-	std::cout << std::endl;*/
+        std::cout << std::endl;*/
   }
   return ok;
 }

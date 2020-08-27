@@ -73,6 +73,7 @@ describe('Testing Text Object\n', function() {
         
         let sampletext="Yale 1701\nHelp";
         let jsontext ='{"bisformat":"BisText","filename":"","comments":[],"text":"Yale 1701\\nHelp"}';
+        let comparejson=JSON.stringify(JSON.parse(jsontext),null,4);
         let obj =new BisWebTextObject();
         obj.setText(sampletext);
         Promise.all( [
@@ -87,7 +88,7 @@ describe('Testing Text Object\n', function() {
             ]).then( (dat2) => {
                 console.log('\nLoaded back:',JSON.stringify(dat2,null,2));
                 let ok=false;
-                if (dat2[0].data.trim()===jsontext.trim() ) {
+                if (dat2[0].data.trim()===comparejson.trim() ) {
                     console.log("Step 1 OK",tmpFname);
                     if (dat2[1].data.trim()===sampletext.trim() ) {
                         console.log("Step 2",tmpFname2);
@@ -101,11 +102,15 @@ describe('Testing Text Object\n', function() {
                         console.log('Bad Step 2');
                     }
                 } else {
-                    console.log('Bad Step 1',dat2[0].data,jsontext);
+                    console.log('Bad Step 1\n1=\n',dat2[0].data.trim(),'\n2=\n',comparejson.trim());
                 }
                 assert(ok,true);
                 done();
             });
+        }).catch( (e) => {
+            console.log(e);
+            assert(false,true);
+            done();
         });
     });
 });

@@ -35,7 +35,7 @@ const idb=require('idb-keyval');
 const localforage=require('localforage');
 const biscustom = require('bisweb_custommodule.js');
 const moduleindex = require('moduleindex.js');
-
+const SurfaceControlElement=require('bisweb_surfacecontrolelement');
 
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
@@ -85,7 +85,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationName=webutil.getWebPageName();
         if (this.applicationName.lastIndexOf("2")===this.applicationName.length-1)
             this.applicationName=this.applicationName.substr(0,this.applicationName.length-1);
-        console.log("+++++ App name=",this.applicationName,this.applicationURL);
+        console.log("++++ App_name="+this.applicationName+' ('+this.applicationURL+')');
 
         // For dual tab apps
         this.tab1name=null;
@@ -99,7 +99,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationInitializedPromiseList= [ ];
         this.oldgraphtool=null;
         
-        
+            
     }
 
     // ----------------------------------------------------------------------------
@@ -358,7 +358,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // I/O Code
     // ---------------------------------------------------------------------------
-    loadImage(fname, viewer = 0) {
+    loadImage(fname, viewer = 0, orient='None') {
         const self=this;
 
         
@@ -367,7 +367,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress', 30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
-                img.load(fname)
+                img.load(fname,orient)
                     .then(function () {
                         webutil.createAlert('Image loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setimage(img);
@@ -380,14 +380,14 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
-    loadOverlay(fname, viewer=0) {
+    loadOverlay(fname, viewer=0,orient='None') {
 
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
-                img.load(fname)
+                img.load(fname,orient)
                     .then(function () {
                         webutil.createAlert('Objectmap loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setobjectmap(img, false);
@@ -414,9 +414,14 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     getSaveImageInitialFilename(viewerno = 0) {
+        
         let img = this.VIEWERS[viewerno].getimage();
-        if (img)
-            return img.getFilename();
+        console.log('Img=',img);
+        if (img) {
+            let a=img.getFilename();
+            console.log(a);
+            return a;
+        }
         return "none.nii.gz";
     }
     
@@ -430,8 +435,8 @@ class ViewerApplicationElement extends HTMLElement {
             //index=`_${viewerno+1}`;
         }
         let img = this.VIEWERS[viewerno].getobjectmap();
-        //        if (!fname)
-        //  fname = "objectmap" + index +".nii.gz";
+        if (!fname)
+            fname = "overlay" + viewerno +".nii.gz";
         bisweb_apputil.saveImage(img, fname, name);
     }
 
@@ -474,14 +479,14 @@ class ViewerApplicationElement extends HTMLElement {
                                          });
         
         var bbar1=webutil.createbuttonbar({ parent: bbar,
-                                            css : { 'margin-bottom' : '20px','width' : '100%'}
+                                            css : { 'margin-bottom' : '20px', 'margin-left' : '0px' },
                                           });
 
 
         webutil.createbutton({ type : "default",
                                name : "Store State",
                                parent : bbar1,
-                               css : { 'width' : '120px' },
+                               css : { 'width' : '120px', 'margin-left' : '0px' },
                                callback : function() {
                                    self.storeState();
                                }
@@ -504,7 +509,7 @@ class ViewerApplicationElement extends HTMLElement {
 
                 var bbar0=webutil.createbuttonbar({ parent: bbar,
                                                     css : {
-                                                        'margin-bottom' : '10px',
+                                                        'margin-bottom' : '20px',
                                                         'width' : '100%',
                                                     }
                                                   });
@@ -532,7 +537,7 @@ class ViewerApplicationElement extends HTMLElement {
                 
 
                 webutil.createbutton({ type : "success",
-                                       name : "V1 &harr; V2",
+                                       name : "V1 (&harr;) V2",
                                        parent : bbar0,
                                        css : { 'position': 'absolute',
                                                'width' : '80px',
@@ -544,59 +549,100 @@ class ViewerApplicationElement extends HTMLElement {
                                      });
 
 
+                bbar.append('<HR width="90%">');
+                
                 var bbar2=webutil.createbuttonbar({ parent: bbar,
                                                     css : { 'margin-bottom' : '10px',
+                                                            'margin-top' : '0px',
                                                             'width' : '100%' }
                                                   });
-
-                
-                webutil.createbutton({ type : "info",
-                                       name : "V2 Im &rarr; V1 Ov",
-                                       parent : bbar2,
-                                       css : { 'width' : '120px' },
-                                       callback : function() {
-                                           modulemanager.transferImageToOverlay(1,0);
-                                       }
-                                     });
-
-                webutil.createbutton({ type : "info",
-                                       name : "V1 Im &rarr; V2 Ov",
-                                       parent : bbar2,
-                                       css : { 'width' : '120px',
-                                               'left'  : '140px',
-                                               'position' : 'absolute',
-                                             },
-                                       callback : function() {
-                                           modulemanager.transferImageToOverlay(0,1);
-                                       }
-                                     });
-
                 var bbar3=webutil.createbuttonbar({ parent: bbar,
                                                     css : { 'margin-bottom' : '10px',
                                                             'width' : '100%' }
                                                   });
+                
+                var bbar4=webutil.createbuttonbar({ parent: bbar,
+                                                    css : { 'margin-bottom' : '5px',
+                                                            'margin-left' : '0px' ,
+                                                            'width' : '100%' }
+                                                  });
+                bbar.append('<HR width="90%">');
+
+                this.transferElements= {
+                    'sourceviewer' : 0,
+                    'targetviewer' : 1,
+                    'sourceimage' : 0,
+                    'targetimage' : 0
+                };
+                
+
+
+                webutil.createselect({
+                    parent: bbar2,
+                    values: ['V1', 'V2' ],
+                    position: "top",
+                    index: this.transferElements['sourceviewer'],
+                    tooltip: "Source viewer",
+                    css : { 'margin-left' : '10px' },
+                }).change( (e) => {
+                    this.transferElements['sourceviewer']= parseInt(e.target.value);
+                });
+
+                webutil.createselect({
+                    parent: bbar2,
+                    values: ['image', 'overlay' ],
+                    position: "top",
+                    index: this.transferElements['sourceimage'],
+                    tooltip: "Source image",
+                    css : { 'margin-left' : '10px' },
+                }).change( (e) => {
+                    this.transferElements['sourceimage']= parseInt(e.target.value);
+                });
+
+                bbar2.append('<B>&nbsp; &nbsp; &rarr; &nbsp; &nbsp;</B>');
 
                 
-                webutil.createbutton({ type : "info",
-                                       name : "V2 Ov &rarr; V1 Im",
-                                       parent : bbar3,
-                                       css : { 'width' : '120px' },
-                                       callback : function() {
-                                           modulemanager.transferOverlayToImage(1,0);
-                                       }
-                                     });
+                webutil.createselect({
+                    parent: bbar3,
+                    values: ['V1', 'V2' ],
+                    position: "top",
+                    index: this.transferElements['targetviewer'],
+                    css : { 'margin-left' : '80px' },
+                    tooltip: "Target viewer"
+                }).change( (e) => {
+                    this.transferElements['targetviewer']= parseInt(e.target.value);
+                });
+
+                webutil.createselect({
+                    parent: bbar3,
+                    values: ['image', 'overlay' ],
+                    position: "top",
+                    index: this.transferElements['targetimage'],
+                    css : { 'margin-left' : '10px' },
+                    tooltip: "Target image"
+                }).change( (e) => {
+                    this.transferElements['targetimage']= parseInt(e.target.value);
+                });
 
                 webutil.createbutton({ type : "info",
-                                       name : "V1 Ov &rarr; V2 Im",
-                                       parent : bbar3,
-                                       css : { 'width' : '120px',
-                                               'left'  : '140px',
-                                               'position' : 'absolute',
-                                             },
-                                       callback : function() {
-                                           modulemanager.transferOverlayToImage(0,1);
+                                       name : "Copy Image",
+                                       parent : bbar4,
+                                       css : {
+                                           'width' : '120px',
+                                           'margin-left':  '120px',
+                                           'margin-top' : '10px',
+                                           'margin-bottom' : '10px'
+                                       },
+                                       callback : () => {
+                                           modulemanager.transfer(
+                                               this.transferElements['sourceviewer'],
+                                               this.transferElements['targetviewer'],
+                                               this.transferElements['sourceimage'],
+                                               this.transferElements['targetimage']);
                                        }
                                      });
+                                                    
+
 
             } else {
                 webutil.createbutton({ type : "info",
@@ -619,7 +665,8 @@ class ViewerApplicationElement extends HTMLElement {
             }
 
             let bottom=webutil.createbuttonbar({ parent: bbar,
-                                                 css : {'margin-top' : '20px',
+                                                 css : {'margin-top' : '10px',
+                                                        'margin-left' : '0px',
                                                         'width' : '100%' }
                                                });
             webutil.createbutton({ type : "danger",
@@ -649,7 +696,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
     //  ---------------------------------------------------------------------------
-    createFileAndOverlayMenus(menubar,painttoolid) {
+    async createFileAndOverlayMenus(menubar,painttoolid) {
 
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
@@ -672,14 +719,14 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         // Essentially bind self here
-        let load_image=function(f,v) { return self.loadImage(f,v); };        
-        let load_objectmap=function(f,v) { return self.loadOverlay(f,v); };
+        let load_image=function(f,v,orient='None') { return self.loadImage(f,v,orient); };        
+        let load_objectmap=function(f,v,orient='None') { return self.loadOverlay(f,v,orient); };
 
         //  ---------------------------------------------------------------------------
         // Internal Function to eliminate having a loop variable inside callbacks
         // JSHint calls this confusing semantics ... maybe it knows something
         //  ---------------------------------------------------------------------------
-        let internal_create_menu=function(viewerno) {
+        let internal_create_menu=async function(viewerno) {
 
             if (viewerno === 1) {
                 fmenuname = 'Image2';
@@ -722,7 +769,7 @@ class ViewerApplicationElement extends HTMLElement {
                                                    })
                                                });
                 webutil.createMenuItem(fmenu[viewerno], ''); // separator
-                bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
+                await bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
             }
 
 
@@ -785,7 +832,7 @@ class ViewerApplicationElement extends HTMLElement {
                 }
                 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
+                await bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
             }
         };
 
@@ -794,7 +841,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ---------------------------------------------------------------------
         
         for (let viewerno = 0; viewerno < this.num_independent_viewers; viewerno++) {
-            internal_create_menu(viewerno);
+            await internal_create_menu(viewerno);
         }
 
         return fmenu[0];
@@ -917,6 +964,17 @@ class ViewerApplicationElement extends HTMLElement {
     // create the help menu
     // ---------------------------------------------
 
+    restartApplicationQuestion() {
+        setTimeout( () => {
+            bootbox.confirm("Must restart application for changes to take effect. Are you sure? You will lose all unsaved data.",
+                            (e) => {
+                                if (e)
+                                    window.open(this.applicationURL,'_self');
+                            }
+                           );
+        });
+    }
+    
     addOrientationSelectToMenu(hmenu) {
 
         let orientSelect = function () {
@@ -936,7 +994,32 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(hmenu, "Set Image Orientation On Load", orientSelect);
 
     }
-    
+
+    addSpeciesSelectToMenu(hmenu) {
+        
+        let speciesselect = () => {
+            userPreferences.safeGetItem('species').then( (species) => {
+                console.log('Species=',species);
+                webutil.createRadioSelectModalPromise(`<H4>Select atlases to show</H4>`,
+                                                      "Close",
+                                                      species,
+                                                      [{ value: "all", text: "All Atlases" },
+                                                       { value: "human", text: "Human Atlases" },
+                                                       { value: "mouse", text: "Mouse Atlases" }]).then( (m) => {
+                                                           
+                                                           if (m!=='species') {
+                                                               userPreferences.setItem('species',m);
+                                                               userPreferences.storeUserPreferences();
+                                                               this.restartApplicationQuestion();
+                                                           }
+                                                       }).catch( (e) => {
+                                                           console.log('Error ',e);
+                                                       });
+            });
+        };
+        webutil.createMenuItem(hmenu, "Set Atlases to Show", speciesselect);
+    }
+
     createHelpMenu(menubar,extrahtml=null) {
 
         if (extrahtml===null)
@@ -956,6 +1039,7 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(hmenu, ''); // separator
 
         this.addOrientationSelectToMenu(hmenu);
+        this.addSpeciesSelectToMenu(hmenu);
 
         if (webutil.inElectronApp()) {
             webutil.createMenuItem(hmenu, ''); // separator
@@ -985,16 +1069,41 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
-        const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
-        if (filetreepipelineid) {
-            let filetreepipeline = document.querySelector(filetreepipelineid);
-            webutil.createMenuItem(hmenu, '');
-            webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
-                                    () => {
-                                        filetreepipeline.openPipelineCreationModal();
-                                    });
-        }
 
+        
+        
+        userPreferences.safeGetItem("internal").then( (f) => {
+
+            webutil.createMenuItem(hmenu, '');
+
+            if (f) {
+                webutil.createMenuItem(hmenu, 'Disable Internal Features', 
+                                       () => {
+                                           userPreferences.setItem('internal',false,true);
+                                           this.restartApplicationQuestion();
+                                       });
+            } else {
+                webutil.createMenuItem(hmenu, 'Enable Internal Features (At your own risk!)', 
+                                       () => {
+                                           userPreferences.setItem('internal',true,true);
+                                           this.restartApplicationQuestion();
+                                       });
+            }
+            
+            /*            if (f) {
+                const filetreepipelineid = this.getAttribute('bis-filetreepipelineid') || null;
+                if (filetreepipelineid) {
+                    let filetreepipeline = document.querySelector(filetreepipelineid);
+                    webutil.createMenuItem(hmenu, '');
+                    webutil.createMenuItem(hmenu, 'Open Pipeline Editor', 
+                                           () => {
+                                               filetreepipeline.openPipelineCreationModal();
+                                       });
+                }
+            }*/
+        });
+                                                    
+        
         return hmenu;
     }
 
@@ -1082,6 +1191,19 @@ class ViewerApplicationElement extends HTMLElement {
         } else {
             webutil.createMenuItem(gmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
         }
+
+        
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f &&  self.VIEWERS.length ===1 ) {
+                let tcont=new SurfaceControlElement();
+                tcont.setAttribute('bis-viewerid','#'+this.VIEWERS[0].getAttribute('id'));
+                tcont.setAttribute('bis-layoutwidgetid','#'+this.VIEWERS[0].getLayoutController().getAttribute('id'));
+                this.VIEWERS[0].getLayoutController().appendChild(tcont);
+                webutil.createMenuItem(gmenu,'');
+                webutil.createMenuItem(gmenu, 'Surface Tool', function () { tcont.show(); });
+            }
+        });
+                
         
 
         
@@ -1246,30 +1368,43 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM / BIDS / Study Panel
         // ----------------------------------------------------------
-        const dicomid = this.getAttribute('bis-dicomimportid') || null;
-        if (dicomid) {
-            let dicommodule = document.querySelector(dicomid) || null;
-            webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
-                dicommodule.show();
-            });
 
-            /*
-            webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
-                            dicommodule.showDICOMImportModal();
-            });*/
-        }
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                /*const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                if (dicomid) {
+                    let dicommodule = document.querySelector(dicomid) || null;
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Study (BIDS) Panel', () => {
+                        dicommodule.show();
+                    });
+                    
+                    webutil.createMenuItem(bmenu, 'DICOM->NII', () => {
+                        dicommodule.showDICOMImportModal();
+                    });
+                }*/
+
+                if (this.applicationName!=="connviewer") {
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'File Tree Panel', () => {
+                        this.repopanel.show();
+                    });
+
+                    
+                    
+                }
+            }
+            webutil.createMenuItem(bmenu,'');
+            webutil.createMenuItem(bmenu, 'Restart Application', () => {
+                bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                (e) => {
+                                    if (e)
+                                        window.open(self.applicationURL,'_self');
+                                }
+                               );
+            });
+        });
         
-        webutil.createMenuItem(bmenu,'');
-        webutil.createMenuItem(bmenu, 'Restart Application',
-                               function () {
-                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function(e) {
-                                                       if (e)
-                                                           window.open(self.applicationURL,'_self');
-                                                   }
-                                                  );
-                               });
         return bmenu;
     }
 
@@ -1282,6 +1417,16 @@ class ViewerApplicationElement extends HTMLElement {
         let imagename2=webutil.getQueryParameter('image2') || '';
         let overlayname=webutil.getQueryParameter('overlay') || '';
         let overlayname2=webutil.getQueryParameter('overlay2') || '';
+        let repo=webutil.getQueryParameter('repo') || '';
+
+        if (repo.length>0) {
+
+            
+            this.repopanel.show();
+            this.repopanel.openDirectory(repo);
+            return;
+        }
+        
         
         if (load.length>0) {
             this.loadApplicationState(load);
@@ -1374,7 +1519,7 @@ class ViewerApplicationElement extends HTMLElement {
                     if (m!==s) 
                         this.toggleColorMode(false);
                 });
-                
+
             }).catch( (e) => {
                 console.log('Error ',e);
             });
@@ -1518,8 +1663,21 @@ class ViewerApplicationElement extends HTMLElement {
 
 
     }
+
+    createExtraComponents() {
+
+        this.repopanel=document.createElement('bisweb-repopanel');
+        this.repopanel.setAttribute('bis-layoutwidgetid',this.VIEWERS[0].getLayoutController().getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerid',this.VIEWERS[0].getAttribute('id'));
+        if (this.VIEWERS[1])
+            this.repopanel.setAttribute('bis-viewerid2',this.VIEWERS[1].getAttribute('id'));
+        this.repopanel.setAttribute('bis-viewerapplicationid',this.getAttribute('id'));
+        this.VIEWERS[0].getLayoutController().appendChild(this.repopanel);
+        
+    }
+
     
-    connectedCallback() {
+    async internalConnectedCallback() {
 
         // Check if we are in external mode and if we have an imagepath
         this.setExternalAndImagePath();
@@ -1539,7 +1697,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         this.findViewers();
-        
+        this.createExtraComponents();
 
 
         let menubar = document.querySelector(menubarid).getMenuBar();
@@ -1557,9 +1715,9 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
         // ----------------------------------------------------------
-        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid);
+        let fmenu=await this.createFileAndOverlayMenus(menubar,painttoolid);
 
-        this.createApplicationMenu(fmenu);
+        await this.createApplicationMenu(fmenu);
 
         let editmenu=null;
 
@@ -1663,6 +1821,8 @@ class ViewerApplicationElement extends HTMLElement {
                                            self.loadApplicationState(f);
                                        });
             }
+
+            
         }
 
         // ----------------------------------------------------------
@@ -1677,7 +1837,13 @@ class ViewerApplicationElement extends HTMLElement {
         // Clean up at the end
         this.finalizeConnectedEvent();
     }
-}
 
-module.exports = ViewerApplicationElement;
+
+    connectedCallback() {
+        this.internalConnectedCallback();
+    }
+        
+}
 webutil.defineElement('bisweb-viewerapplication', ViewerApplicationElement);
+module.exports=ViewerApplicationElement;
+

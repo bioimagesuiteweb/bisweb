@@ -105,7 +105,7 @@ class DisplacementFieldModule extends BaseModule {
                 this.outputs['output'] = biswrap.computeDisplacementFieldWASM(xform, {
                     "dimensions" : [ dimension[0], dimension[1], dimension[2] ],
                     "spacing" : [ spacing[0], spacing[1], spacing[2] ]
-                }, vals.debug);
+                }, super.parseBoolean(vals.debug));
 
                 resolve(); 
             }).catch( (e) => {

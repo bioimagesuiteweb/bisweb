@@ -97,6 +97,9 @@ else if (test_type==="registration")
     tempName=dirname+'/out.json';
 else if (test_type==="text")
     tempName=dirname+'/makefile.txt';
+else if (test_type==="surfaceregistration")
+    tempName=dirname+'/out.json';
+
 if (test_type !== "smoketest") {
     args.push('--output', tempName);
 }
@@ -106,6 +109,13 @@ if (test_type==="registration") {
     args.push("--doreslice", true);
     args.push("--resliced", tempName);
     test_type="image";
+}
+
+if (test_type==="surfaceregistration") {
+    tempName=dirname+"/out_warped.json";
+    args.push("--dowarp", true);
+    args.push("--warped", tempName);
+    test_type="surface";
 }
 
 if (test_type==="smoketest") {
@@ -131,9 +141,10 @@ console.log('.... Testing module '+toolname+' base='+basedirectory);
 console.log('................................................');
 
 
-commandline.loadParse(args, toolname, basedirectory).then(() => {
+commandline.loadParse(args, toolname, basedirectory,true).then(() => {
     console.log('.... -------------------------------------------------------');
     if (test_type !== "smoketest") {
+        console.log('.....\n.... processing result\n.....');
         commandline.processTestResult(toolname,tempName,
                                       basedirectory+program.test_target,
                                       test_type,

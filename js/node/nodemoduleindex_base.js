@@ -27,7 +27,8 @@ const moduleImports = {
     'pipeline' : require('./pipelinemodule.js'),
     'concatenateimages' : require('./concatenateImages.js'),
     'headerinfo' : require('./bis_headerinfo.js'),
-    'computeroilarge' : require('./computeROILarge.js')
+    'computeroilarge' : require('./computeROILarge.js'),
+    'preprocessfmri' : require('./preprocessfMRI.js')
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

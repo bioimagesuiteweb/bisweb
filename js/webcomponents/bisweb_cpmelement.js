@@ -117,16 +117,61 @@ class CPMElement extends HTMLElement {
         });
     }
 
+    
+    importFileCallback (f)  {
+        bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
+        this.importFiles(f).then( () => {
+            bis_webutil.dismissAlerts();
+            bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
+            this.importButton.remove();
+            if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
+            this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
+        });
+    }
+
+    
     /**
      * Creates the Connectivity Files panel and adds the CPM menubar item to the top of the page. 
      * 
      * @param {JQuery} menubar - The top menubar of the BioImage Suite page.
      * @param {JQuery} dockbar - The right panel on the BioImage Suite page.
      */
-    createMenubarItems(menubar, dockbar) {
-        let topmenu = bis_webutil.createTopMenuBarMenu('CPM', menubar);
-        bis_webutil.createMenuItem(topmenu, 'Open Connectivity File Loader', () => { this.openCPMSidebar(dockbar); });
+    createMenubarItems(menubar) {
+        let topmenu = bis_webutil.createTopMenuBarMenu('File', menubar);
+
+        let importFileCallback = (f) => { this.importFileCallback(f);};
+        
+        let importFileItem = bis_webfileutil.createFileButton({
+            'callback' : importFileCallback
+        }, {
+            'title': 'Import connectivity index file',
+            'filters' : [ { 'name': 'JSON', 'extensions': ['.json', '.JSON']}],
+            'suffix' : 'json'
+        });
+
+        let importDirectoryItem = bis_webfileutil.createFileButton({
+            'callback' : importFileCallback
+        }, {
+            'mode' : 'directory',
+            'title': 'Import connectivity files from directory',
+            'filters' : [ { 'name': 'Connectivity data files', 'extensions': ['.tsv', '.csv']}],
+        });
+
+        bis_webutil.createMenuItem(topmenu, 'Import From CPM File', () => {  importFileItem.click(); });
+        bis_webutil.createMenuItem(topmenu, 'Import From Directory', () => {  importDirectoryItem.click(); });
+        bis_webutil.createMenuItem(topmenu, '');
+
+        if (bis_webutil.inElectronApp()) {
+            bis_webutil.createMenuItem(topmenu, ''); // separator
+            bis_webutil.createMenuItem(topmenu, 'Show JavaScript Console',
+                                       function () {
+                                           window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                       });
+        } else {
+            bis_webfileutil.createFileSourceSelector(topmenu);
+        }
     }
+
 
     /**
      * Opens the CPM panel in the dockbar, creating it if necessary. 
@@ -158,7 +203,7 @@ class CPMElement extends HTMLElement {
             `);
 
             let buttonGroup = bis_webutil.createbuttonbar();
-            let importButton = this.createCPMPopoverButton();
+            this.importButton = this.createCPMPopoverButton();
             let exportButton = bis_webfileutil.createFileButton({
                 'name' : 'Export CPM file',
                 'type' : 'warning',
@@ -216,8 +261,8 @@ class CPMElement extends HTMLElement {
                 'suffix' : 'json'
             });
 
-            this.createFormButtons(buttonGroup, importButton, exportButton);
-            buttonGroup.append(importButton, exportButton);
+            this.createFormButtons(buttonGroup, this.importButton, exportButton);
+            buttonGroup.append(this.importButton, exportButton);
             this.cpmDisplayPanel.append(buttonGroup);
         } else {
             this.cpmDisplayPanel.parent().addClass('in');
@@ -427,15 +472,8 @@ class CPMElement extends HTMLElement {
     createCPMPopoverButton() {
 
         //Unattached buttons that are clicked when one of the popover buttons is clicked
-        let importFileCallback = (f) => {
-            bis_webutil.createAlert('Loading from ' + f, false, 0, 0, {'makeLoadSpinner' : true });
-            this.importFiles(f).then( () => {
-                bis_webutil.dismissAlerts();
-                bis_webutil.createAlert('' + f + ' loaded successfully.', false, 0, 3000);
-                if (this.cpmDisplayPanel.find('#' + this.fileListFormId).length === 0) { this.cpmDisplayPanel.append(this.fileListForm); }
-                this.cpmDisplayPanel.find('.btn-group').children().css('visibility', 'visible');
-            });
-        };
+        let importFileCallback = (f) => { this.importFileCallback(f);};
+
 
         let importFileItem = bis_webfileutil.createFileButton({
             'callback' : importFileCallback

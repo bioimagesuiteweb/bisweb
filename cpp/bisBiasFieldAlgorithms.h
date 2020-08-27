@@ -40,7 +40,7 @@ namespace bisBiasFieldAlgorithms {
    * @param in_threshold  the fractional threshold to ignore noise
    * @returns the 3D bias field image (always float)
    */
-  template<class TT> std::unique_ptr<bisSimpleImage<float> > computeSliceBiasField(bisSimpleImage<TT>* input,int in_axis=2,float in_threshold=0.05);
+  template<class TT> bisSimpleImage<float>* computeSliceBiasField(bisSimpleImage<TT>* input,int in_axis=2,float in_threshold=0.05);
 
 
   /** compute tripleslice inhomogeneity. Class computeSliceBiasField three times and combines result
@@ -48,14 +48,14 @@ namespace bisBiasFieldAlgorithms {
    * @param threshold  the fractional threshold to ignore noise
    * @returns the 3D bias field image (always float)
    */
-  template<class TT> std::unique_ptr<bisSimpleImage<float> > computeTripleSliceBiasField(bisSimpleImage<TT>* input,float threshold=0.05);
+  template<class TT> bisSimpleImage<float>* computeTripleSliceBiasField(bisSimpleImage<TT>* input,float threshold=0.05);
   
   /** Perform bias Field correction
    * @param input the input image of type TT
    * @param biasField the bias field image
    * @returns a correct float image.
    */
-  template<class TT> std::unique_ptr<bisSimpleImage<float> > biasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<float>* biasField);
+  template<class TT> bisSimpleImage<float>* biasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<float>* biasField);
 }
 
 

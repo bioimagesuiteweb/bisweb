@@ -31,9 +31,9 @@ namespace bisSimpleImageSegmentationAlgorithms {
    * @param do3d if >0 work in 3d
    * @returns the processed image
    */
-  std::unique_ptr<bisSimpleImage<unsigned char> > doBinaryMorphology(bisSimpleImage<unsigned char>* input,int mode,int radius,int do3d)  {
+  bisSimpleImage<unsigned char>* doBinaryMorphology(bisSimpleImage<unsigned char>* input,int mode,int radius,int do3d)  {
 
-    std::unique_ptr<bisSimpleImage<unsigned char > > output(new bisSimpleImage<unsigned char>());
+    bisSimpleImage<unsigned char >* output=new bisSimpleImage<unsigned char>();
     int dim[5]; input->getDimensions(dim);
     dim[3]=1; dim[4]=1;
     float spa[5]; input->getSpacing(spa);
@@ -111,7 +111,8 @@ namespace bisSimpleImageSegmentationAlgorithms {
               }
           }
       }
-    return std::move(output);
+
+    return output;
   }
 
       /** 
@@ -136,7 +137,7 @@ namespace bisSimpleImageSegmentationAlgorithms {
     int data[4];
   };
   
-  std::unique_ptr<bisSimpleImage<unsigned char> > seedConnectivityAlgorithm(bisSimpleImage<unsigned char>* input,int seed[3],int oneconnected)
+  bisSimpleImage<unsigned char>* seedConnectivityAlgorithm(bisSimpleImage<unsigned char>* input,int seed[3],int oneconnected)
   {
     const short VOXELVISITED=   2;
     const short UNVISITEDVOXEL= 0;
@@ -146,7 +147,7 @@ namespace bisSimpleImageSegmentationAlgorithms {
     dim[3]=1; dim[4]=1;
     float spa[5]; input->getSpacing(spa);
 
-    std::unique_ptr<bisSimpleImage<unsigned char > > output(new bisSimpleImage<unsigned char>());
+    bisSimpleImage<unsigned char >* output=new bisSimpleImage<unsigned char>();
     output->allocate(dim,spa);
     unsigned char* idata=input->getData();
     unsigned char* odata=output->getData();
@@ -237,7 +238,7 @@ namespace bisSimpleImageSegmentationAlgorithms {
 	  odata[i]=0;
       }
 
-    return std::move(output);
+    return output;
   }
 
   // Close namespace

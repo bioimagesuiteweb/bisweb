@@ -1,10 +1,21 @@
 import setuptools
+import os
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+print('OS=',os.name);
 
-with open("biswebpython/requirements.txt", "r") as fh:
-    install_requires = list(fh.read().splitlines())
+if (os.name == 'nt'):
+  print('In Windows');
+  with open("README.md", "r") as fh:
+     long_description = fh.read()
+  with open("biswebpython/requirements.txt", "r") as fh:
+     install_requires = list(fh.read().splitlines())
+else:
+  print('In UNIX');
+  with open("README.md", "r") as fh:
+     long_description = fh.read()
+  with open("biswebpython/requirements.txt", "r") as fh:
+     install_requires = list(fh.read().splitlines())
+
     
 setuptools.setup(
     name="biswebpython",

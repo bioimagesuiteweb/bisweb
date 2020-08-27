@@ -59,7 +59,10 @@ class StudyTaskManager {
 
         if (this.widget!==null) 
             return;
-            
+
+        if (this.studypanel===null)
+            return;
+        
         this.widget =  webutil.creatediv({ parent : this.studypanel.panel.getWidget(),
                                            css : { 'width' : '95%' }});
 
@@ -220,7 +223,6 @@ class StudyTaskManager {
         let loadTaskData = async () => {
             try {
                 this.taskdata= await bisweb_taskutils.parseFile(name);
-                console.log('this.taskdata', this.taskdata);
             } catch(e) {
                 webutil.createAlert('Failed to parse task definitions',true);
                 return Promise.reject();
@@ -247,7 +249,6 @@ class StudyTaskManager {
                     if (makeTsv) {
                         await loadTaskData();
                         let baseDirectory = this.studypanel.baseDirectory;
-                        console.log("BASE =",baseDirectory);
                         bis_bidsutils.convertTASKFileToTSV(this.taskdata, baseDirectory, true);
                     } else {
                         await loadTaskData();
@@ -421,6 +422,7 @@ class StudyTaskManager {
             })
         });
 
+
         const taskNames = this.taskdata.taskNames;
         
         let canvas=this.canvas;
@@ -456,7 +458,7 @@ class StudyTaskManager {
         context.textAlign="center";
         context.textBaseline="middle";
         context.fillStyle="#ffffff";
-        context.fillText('Showing Task Definitions for '+runName.toUpperCase(),
+        context.fillText('Showing Task Definitions for '+runName,
                          0.5*canvas.width,0.5*this.margins[1]);
         
         context.fillStyle = "#ffffff";
@@ -464,16 +466,16 @@ class StudyTaskManager {
         const texth=25;
         
         for (let i=0;i<taskNames.length;i++) {
-            let y=this.htaskbase+(i+0.5)*this.htask;
+            let y= this.htaskbase+this.htask*(i+1)+OFFSET;
             let x=Math.round(canvas.width-this.legendMargin+OFFSET/2);
-            let cl=util.objectmapcolormap[i+1];
+            let cl=util.getobjectmapcolor(i+1);
             context.fillStyle=`rgba(${cl[0]},${cl[1]},${cl[2]},${OPACITY})`;
             context.fillRect(x,y,this.textWidth,1.25*texth);
             context.fillStyle="#000000";
             context.fillText(taskNames[i],Math.floor(x+this.textWidth/2),Math.floor(y+0.625*texth));
         }
 
-        context.fillStyle="#383838";
+        context.fillStyle="#585858";
         context.fillRect(this.margins[0],this.margins[1],this.margins[2],this.margins[3]);
 
 
@@ -484,8 +486,9 @@ class StudyTaskManager {
         for (let i=0;i<taskNames.length;i++) {
             let task=taskNames[i];
             let runpairs=runInfo[task] || [];
-
             for (let i = 0; i < runpairs.length; i++) {
+                if (runpairs[i].indexOf('-')>=0)
+                    runpairs[i]=runpairs[i].split('-');
                 let m = parseFloat(runpairs[i][1]);
                 if (m > maxt)
                     maxt = m;
@@ -515,7 +518,7 @@ class StudyTaskManager {
             let task=taskNames[i];
             let runpairs=runInfo[task] || [];
 
-            let maxy=this.htaskbase+this.htask*(i+1)+OFFSET;
+            let maxy=this.htaskbase+this.htask*(i+1)+OFFSET*2;
             let miny=maxy-0.8*this.htask;
             
             context.save();
@@ -527,7 +530,7 @@ class StudyTaskManager {
             context.stroke();
             context.restore();
             context.save();
-            let cl=util.objectmapcolormap[i+1];
+            let cl=util.getobjectmapcolor(i+1);
             for (let i=0;i<runpairs.length;i++) {
                 let limits=[ runpairs[i][0], runpairs[i][1] ];
 
@@ -557,7 +560,7 @@ class StudyTaskManager {
             context.fillText(util.scaledround(t,2)+'s',x,liney+0.7*AXIS);
             context.save();
             
-            context.strokeStyle="#888888";
+            context.strokeStyle="#ffffff";
             context.beginPath();
             context.setLineDash([20,5]);
             context.moveTo(x,liney-0.3*AXIS);
@@ -565,7 +568,7 @@ class StudyTaskManager {
             context.stroke();
 
             if (t<maxt) {
-                context.strokeStyle="#666666";
+                context.strokeStyle="#606060";
                 context.beginPath();
                 context.setLineDash([20,10]);
                 context.moveTo(x2,liney);
@@ -581,11 +584,11 @@ class StudyTaskManager {
     addItemToFooter(footer,key) {
 
         let bt=webutil.createbutton({
-            'name': 'Show '+key.toUpperCase(),
+            'name': key,
             'type': 'info' ,
             'parent' : footer,
             'css' : {
-                'margin-right' : '20px',
+                'margin-right' : '5px',
                 'margin-top'  : '0px',
             },
         });

@@ -1,5 +1,5 @@
 /*  LICENSE
- 
+
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
  BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
@@ -42,8 +42,16 @@ class ManualRegistrationModule extends BaseModule {
             "outputs" : baseutils.getRegistrationOutputs(),
             "buttonName": "Apply",
             "shortname" : "mrg",
-            "params": [
-                {
+            "params": [ 
+		{
+                    "name": "Rotate First",
+                    "description": "rotate first",
+                    "priority": 5,
+                    "advanced": false,
+                    "type": "boolean",
+                    "default": false,
+                    "varname": "rotatefirst"
+                },               {
                     "name": "Shift I (vx)",
                     "description": "I - translation (voxels)",
                     "priority": 10,
@@ -91,8 +99,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "rotatei",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -179.0,
+                    "high": 179.0,
                     "step" : 0.1,
                 },
                 {
@@ -104,8 +112,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "rotatej",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -179.0,
+                    "high": 179.0,
                     "step" : 0.1,
                 },
                 {
@@ -117,8 +125,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "rotatek",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -179.0,
+                    "high": 179.0,
                     "step" : 0.1,
                 },
                 {
@@ -187,16 +195,16 @@ class ManualRegistrationModule extends BaseModule {
             ]
         };
     }
-
+    
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: manualRegistration with vals', JSON.stringify(vals));
-
+        
         let target = this.inputs['target'];
         let reference = this.inputs['reference'];
 
         let dim=reference.getDimensions();
         let spa=reference.getSpacing();
-
+        
         let tx=parseFloat(vals.shifti)*spa[0];
         let ty=parseFloat(vals.shiftj)*spa[1];
         let tz=parseFloat(vals.shiftk)*spa[2];
@@ -208,9 +216,10 @@ class ManualRegistrationModule extends BaseModule {
         let linear=new BisWebLinearTransformation(1); 
         let dim2=target.getDimensions();
         let spa2=target.getSpacing();
-
+        
         let interp=parseInt(vals.interpolation);
         
+        let rotatefirst=this.parseBoolean(vals.rotatefirst);
         let useheader=this.parseBoolean(vals.useheader);
         let usefullheader=this.parseBoolean(vals.usefullheader);
         let usefullheaderxy=this.parseBoolean(vals.usefullheaderxy);
@@ -225,7 +234,7 @@ class ManualRegistrationModule extends BaseModule {
         } else {
             mode=2;
         }
-
+        
         if (mode>0) {
             let usetranslation=false;
             if (mode>1)
@@ -240,17 +249,42 @@ class ManualRegistrationModule extends BaseModule {
         } 
         
         linear.setShifts(dim,spa,dim2,spa2);
-        linear.setParameterVector( [ tx,ty,tz,rx,ry,rz,sc], { scale:true, rigidOnly:false });
-
-
         
-        if (mode>0) {
-            this.outputs['output']=xformutil.computeCombinedTransformation(linear,headertransform);
-            linear=this.outputs['output'];
-        }  else {
-            this.outputs['output']=linear;
+        
+        
+        if (!rotatefirst) {
+            //            console.log('Not rotate first');
+            linear.setParameterVector( [ tx,ty,tz,rx,ry,rz,sc], { scale:true, rigidOnly:false });
+            if (mode>0) {
+                //  console.log('Linear=',linear.legacySerialize("\n"));
+                this.outputs['output']=xformutil.computeCombinedTransformation(linear,headertransform);
+                linear=this.outputs['output'];
+            }  else {
+                this.outputs['output']=linear;
+            }
+        } else {
+            //console.log('Rotate first');
+            linear.setParameterVector( [ 0,0,0,rx,ry,rz,sc], { scale:true, rigidOnly:false });
+            //console.log('Linear=',linear.legacySerialize("\n"));
+            let linear2=new BisWebLinearTransformation(1); 
+            linear2.setShifts(dim,spa,dim2,spa2);
+            linear2.setParameterVector( [ tx,ty,tz,0,0,0], { scale:false, rigidOnly:true });
+            
+            if (mode>0) {
+                let l=xformutil.computeCombinedTransformation(linear2,linear);
+            
+                //console.log('Linear2 =',linear2.legacySerialize("\n"));
+                this.outputs['output']=xformutil.computeCombinedTransformation(l,headertransform);
+                linear=this.outputs['output'];
+            }  else {
+                this.outputs['output']=xformutil.computeCombinedTransformation(linear2,linear);
+                linear=this.outputs['output'];
+            }
+            
         }
 
+        //console.log('Output=',linear.legacySerialize("\n"));
+        
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then(() => {
                 //                console.log('Reference=',reference.getDescription(),reference.getHeader().getDescription());

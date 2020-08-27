@@ -39,14 +39,14 @@ void bisAbstractTransformation::computeDisplacement(float x[3],float disp[3])
 }
 
 
-std::unique_ptr<bisSimpleImage<float> > bisAbstractTransformation::computeDisplacementField(int i_dim[3],float i_spa[3])
+bisSimpleImage<float>* bisAbstractTransformation::computeDisplacementField(int i_dim[3],float i_spa[3])
 {
 
   int dim[5] = { i_dim[0],i_dim[1],i_dim[2],3,1};
   float spa[5] = { i_spa[0],i_spa[1],i_spa[2],1.0,1.0};
 
   std::string n1=this->name+":dispfield";
-  std::unique_ptr<bisSimpleImage<float > > out(new bisSimpleImage<float>(n1));
+  bisSimpleImage<float >* out=new bisSimpleImage<float>(n1);
   out->allocate(dim,spa);
 
   float* data=out->getImageData();
@@ -70,7 +70,7 @@ std::unique_ptr<bisSimpleImage<float> > bisAbstractTransformation::computeDispla
 	}
     }
 
-  return std::move(out);
+  return out;
   
 }
 

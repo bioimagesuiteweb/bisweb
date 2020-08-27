@@ -1,18 +1,18 @@
 /*  LICENSE
- 
+
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
+
  BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
+
  - you may not use this software except in compliance with the License.
  - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
+
  __Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.__
- 
+
  ENDLICENSE */
 
 "use strict";
@@ -30,21 +30,22 @@ const util=require('bis_util');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisgenericio=require("bis_genericio");
 const tiff=require('tiff2');
+const geotiff=require('geotiff');
 const bisheader = require("bis_header.js");
 const simplemat=require('bis_simplemat');
 const numeric=require('numeric');
 const nrrd=require('nrrd');
 
 /** Class representing a medical image */
-class BisWebImage extends BisWebDataObject { 
-    
+class BisWebImage extends BisWebDataObject {
+
     /**
        Initialize the image
     */
     constructor() {
         super();
         this.jsonformatname='BisImage';
-        this.internal = { 
+        this.internal = {
             dimensions : [ 0, 0, 0, 0 ,0 ],
             offsets    : [ 1,1,1,1,1 ],
             range      : [ 0,0 ],
@@ -64,7 +65,7 @@ class BisWebImage extends BisWebDataObject {
                 name     : "RAS"
             },
             header    : {} ,
-            imginfo   : { 
+            imginfo   : {
                 type     : Uint8Array,
                 size     : 1,
                 name     : 'uchar'
@@ -96,7 +97,7 @@ class BisWebImage extends BisWebDataObject {
     getImageType() {
         return this.internal.imginfo.name;
     }
-    
+
     /** returns a textual description of the object for GUIs etc.
      * @returns {string} description
      */
@@ -110,14 +111,14 @@ class BisWebImage extends BisWebDataObject {
 
     }
 
-    /** compute hash 
+    /** compute hash
      * @returns {String} - hash string identifying the object
      */
     computeHash() {
         return util.SHA256(this.getRawData());
     }
 
-    /** returns the memory used in bytes by this object 
+    /** returns the memory used in bytes by this object
      * @returns {number} -- the size or 0 if not implemented or small
      */
     getMemorySize() {
@@ -132,60 +133,66 @@ class BisWebImage extends BisWebDataObject {
      * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. If "LAS" force to LAS (.nii.gz only).  Else do nothing
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
-    load(fobj,forceorient) {
+    async load(fobj,forceorient) {
 
-        
+
         forceorient = userPreferences.sanitizeOrientationOnLoad(forceorient ||  userPreferences.getImageOrientationOnLoad());
         if (this.debug) {
             console.log('..... forceorient in readbinary=',forceorient);
         }
         const self=this;
 
-        return new Promise( (resolve,reject) => {
-            bisgenericio.read(fobj,true).then( function(obj) {
-                self.initialize();
+        let obj=null;
 
-                let ext=obj.filename.split('.').pop().toLowerCase();
-                if (ext==="tif" || ext==="tiff")  {
-                    if (obj.data.constructor.name === "Uint8Array")
-                        self.parseTIFF(obj.data.buffer,obj.filename,forceorient);
-                    else
-                        self.parseTIFF(obj.data,obj.filename,forceorient);
-                    
-                    self.commentlist.push({ 'Import' : 'read from tiff '+obj.filename });                                        
-                    self.internal.header.setExtensionsFromArray(self.commentlist);
-                } else if (ext==="nrrd") {
-                    //console.log("Name=",obj.data.constructor.name);
-                    if (obj.data.constructor.name === "Uint8Array")
-                        self.parseNRRD(obj.data.buffer,obj.filename,forceorient);
-                    else
-                        self.parseNRRD(obj.data,obj.filename,forceorient);
-                    
-                    self.commentlist.push({'Import' : '... read from nrrd '+obj.filename});                                        
-                    self.internal.header.setExtensionsFromArray(self.commentlist);
-                }else {
-                    try {
-                        self.parseNIIModular(obj.data.buffer,forceorient);
-                    } catch(e) {
-                        reject('Failed to load from '+fobj + '('+e+')');
-                        reject(e);
-                    }
-                }
+        try {
+            obj=await bisgenericio.read(fobj,true);
+        } catch(e) {
+            return Promise.reject(e);
+        }
+        
+        self.initialize();
+        
+        let ext=obj.filename.split('.').pop().toLowerCase();
+        if (ext==="tif" || ext==="tiff")  {
+            try {
+                if (obj.data.constructor.name === "Uint8Array")
+                    await self.parseTIFF(obj.data.buffer,obj.filename,forceorient);
+                else
+                    await self.parseTIFF(obj.data,obj.filename,forceorient);
+            } catch(e) {
+                return Promise.reject(e);
+            }
+            
+            self.commentlist.push({ 'Import' : 'read from tiff '+obj.filename });
+            self.internal.header.setExtensionsFromArray(self.commentlist);
+        } else if (ext==="nrrd") {
+            //console.log("Name=",obj.data.constructor.name);
+            if (obj.data.constructor.name === "Uint8Array")
+                self.parseNRRD(obj.data.buffer,obj.filename,forceorient);
+            else
+                self.parseNRRD(obj.data,obj.filename,forceorient);
+            
+            self.commentlist.push({'Import' : '... read from nrrd '+obj.filename});
+            self.internal.header.setExtensionsFromArray(self.commentlist);
+        }else {
+            try {
+                self.parseNIIModular(obj.data.buffer,forceorient);
+            } catch(e) {
+                return Promise.reject('Failed to load from '+fobj + '('+e+')');
+            }
+        }
+        
+		let newfname=obj.filename;
+        self.setFilename(bisgenericio.getFixedLoadFileName(newfname));
+        
+        console.log('++++\t loaded image from '+newfname+'. Dim=',self.getDimensions(),self.getOrientationName()+' spa='+self.getSpacing() + ' type='+self.getDataType());
+        if (self.internal.forcedorientationchange) {
+            console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
+            self.commentlist.push({ "Operation" : "On Load from "+newfname+" reoriented to "+self.internal.orient.name+" to match user preferences."});
+            self.internal.header.setExtensionsFromArray(self.commentlist);
+        }
+        
 
-                self.setFilename(bisgenericio.getFixedLoadFileName(fobj));
-                
-                console.log('++++\t loaded image from '+fobj+'. Dim=',self.getDimensions(),self.getOrientationName()+' spa='+self.getSpacing() + ' type='+self.getDataType());
-                if (self.internal.forcedorientationchange) {
-                    console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
-                    self.commentlist.push({ "Operation" : "On Load from "+fobj+" reoriented to "+self.internal.orient.name+" to match user preferences."});
-                    self.internal.header.setExtensionsFromArray(self.commentlist);
-                } /*else {
-                    console.log('++++ \t\t maintained original orientation ');
-                }*/
-                
-                resolve();
-            }).catch( (e)=> { reject(e); });
-        });
     }
 
     /** saves an image to a filename. This is a messy function depending on whether one is in
@@ -213,7 +220,7 @@ class BisWebImage extends BisWebDataObject {
     }
 
 
-    /** parses from Dictionary Object  
+    /** parses from Dictionary Object
      * @param {Object} obj -- dictionary object
      * @returns {Boolean} true if OK
      */
@@ -240,7 +247,7 @@ class BisWebImage extends BisWebDataObject {
         return biswasm.packStructure(Module,arr,dim,spa);
     }
 
-    /** deserializes an image from WASM array (with an optional bis_image second input to 
+    /** deserializes an image from WASM array (with an optional bis_image second input to
         help with header input)
         * @param {EmscriptenModule} Module - the emscripten Module object
         * @param {Pointer} wasmarr - the unsined char wasm object
@@ -258,9 +265,9 @@ class BisWebImage extends BisWebDataObject {
 
         let dataptr=wasmobj.dataptr+56;
         this.initialize();
-        
+
         let nifti_info=internal.header.getniftitype(wasmobj.datatype);
-        
+
         let opts = {
             type : nifti_info[0],
             numframes :  wasmobj.dimensions[3] ,
@@ -276,20 +283,20 @@ class BisWebImage extends BisWebDataObject {
             this.createImage(opts);
         }
 
-        
+
         let dataView=biswasm.get_array_view(Module, nifti_info[1],dataptr,internal.volsize);
         for (let k=0;k<internal.volsize;k++)
             internal.imgdata[k]=dataView[k];
-        
+
         return 1;
     }
 
     // ---- Testing utility ----------------------------------------------------
-    /** compares an image with a peer object of the same class and returns true if similar or false if different 
+    /** compares an image with a peer object of the same class and returns true if similar or false if different
      * @param{BisWebDataObject} other - the other object
      * @param{String} method - the comparison method one of maxabs,ssd,cc etc.
      * @param{Number} threshold - the threshold to use for comparison
-     * @returns{Object} - { testresult: true or false, value: comparison value, metric: metric name } 
+     * @returns{Object} - { testresult: true or false, value: comparison value, metric: metric name }
      */
     compareWithOther(other,method="maxabs",threshold=0.01) {
 
@@ -303,9 +310,9 @@ class BisWebImage extends BisWebDataObject {
             console.log('COMPARE WITH OTHER RETURNING FALSE', other.constructor.name, 'NOT EQUAL TO', this.constructor.name);
             return out;
         }
-            
-        
-        
+
+
+
         console.log('....\t comparing images:',this.getDimensions(),other.getDimensions());
         if (method==='cc') {
             out.value=util.computeCC(this.getImageData(),other.getImageData());
@@ -319,7 +326,7 @@ class BisWebImage extends BisWebDataObject {
                 let idata=this.getImageData();
                 let l=idata.length, l2=odata.length;
                 out.metric='ssd';
-                
+
                 if (l===l2 && l>1) {
                     let sum=0.0;
                     for (let i=0;i<l;i++) {
@@ -359,7 +366,9 @@ class BisWebImage extends BisWebDataObject {
         this.internal.range = [ 0,0];
         if (this.internal.imgdata===null)
             return;
-        
+
+
+
         let l=this.internal.imgdata.length;
         if (l===0)
             return;
@@ -371,10 +380,12 @@ class BisWebImage extends BisWebDataObject {
             else if (v<this.internal.range[0])
                 this.internal.range[0]=v;
         }
+
+
     }
-    
+
     /** get intensity range as a 2-array [ min,max]
-     * @returns {array} 
+     * @returns {array}
      */
     getIntensityRange() {
         if (this.internal.range[0] === this.internal.range[1])
@@ -403,30 +414,30 @@ class BisWebImage extends BisWebDataObject {
         @return {TypedArray} -- the raw image data */
     getRawData() { return this.internal._rawdata;}
 
-    /** get Image Dimensions 
+    /** get Image Dimensions
      * @return {array} image dimensions */
     getDimensions() { return this.internal.dimensions.slice(0); }
 
     /** get image bounds as a 6-array [ 0,width-1,0,height-1,0,depth-1]
      * @param {number} margin - default 0. If not zero then bounds are shrunk by margin all around
-     * @returns {array} 
+     * @returns {array}
      */
     getBounds(margin)  {
-        margin = margin | 0; 
+        margin = margin | 0;
         return [ margin,this.internal.dimensions[0]-(1+margin),
                  margin,this.internal.dimensions[1]-(1+margin),
                  margin,this.internal.dimensions[2]-(1+margin)];
     }
 
-    /** get Image Size (width,height,depth) 
+    /** get Image Size (width,height,depth)
      * @return {array} first 3 image dimensions */
     getImageSize() {
         return [ this.internal.dimensions[0]*this.internal.spacing[0],
                  this.internal.dimensions[1]*this.internal.spacing[1],
                  this.internal.dimensions[2]*this.internal.spacing[2]];
     }
-    
-    /** get Image Spacing 
+
+    /** get Image Spacing
      * @return {array} image spacing */
     getSpacing() { return this.internal.spacing.slice(0);}
 
@@ -445,34 +456,34 @@ class BisWebImage extends BisWebDataObject {
     cloneImage(inputimage,opts={},force=false) {
 
         const internal=this.internal;
-        
+
         let newniftitype = opts.type || 'same';
         let newnumframes = opts.numframes || 0;
         let newnumcomponents = opts.numcomponents || 0;
         let newdims = opts.dimensions || 'same';
         let newspacing = opts.spacing || 'same';
-        
+
         if (inputimage.getRawData()===null && !force) {
             console.log('bad image, can not clone');
             return null;
         }
-        
+
         this.initialize();
         let headerdata=inputimage.getHeaderData(true);
         this.parseNIIModular(headerdata.data.buffer);
-        
-        
+
+
         let headerstruct=internal.header.struct;
-        
+
         if(newniftitype!=='same') {
-            
+
             let ntype=internal.header.getniftitype(newniftitype);
             if (ntype!==null) {
                 //          console.log('ntype=',ntype,'code=',ntype[2]);
                 // Fix header first ...
                 headerstruct.datatype=ntype[2];
 
-                // name = 
+                // name =
                 let outmap=internal.header.gettypesize(ntype[0]);
                 headerstruct.bitpix=outmap[0]*8;
                 internal.imginfo =  {
@@ -491,12 +502,12 @@ class BisWebImage extends BisWebDataObject {
         // If needed alter number of frames
         // -------------------------------------------------------
 
-        if (newdims !== 'same') 
+        if (newdims !== 'same')
             BisWebImage.changeDimensions(internal,newdims);
-        
-        if (newspacing !== 'same') 
+
+        if (newspacing !== 'same')
             BisWebImage.changeSpacing(internal,newspacing);
-        
+
 
         if (newnumframes!==0 || newnumcomponents!==0) {
             if (newnumframes!==0) {
@@ -519,11 +530,11 @@ class BisWebImage extends BisWebDataObject {
             internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
                 internal.dimensions[2]*internal.dimensions[3]*internal.dimensions[4];
         }
-        
+
 
         internal.rawsize=internal.volsize*headerstruct.bitpix/8;
         let Imginfo=internal.imginfo.type;
-        
+
         let newbuffer=new ArrayBuffer(internal.rawsize);
         internal._rawdata=new Uint8Array(newbuffer);
         internal.imgdata=new Imginfo(newbuffer);
@@ -548,16 +559,16 @@ class BisWebImage extends BisWebDataObject {
         let newdims = opts.dimensions || [ 10,10,10 ];
         let newspacing = opts.spacing || [ 1.0,1.0,1.0 ];
         let orientation =opts.orientation || "RAS";
-        
+
         // Create header
         this.initialize();
         internal.header.createNIFTIHeader();
         let headerstruct = internal.header.struct;
-        
+
         let ntype=internal.header.getniftitype(newniftitype);
         if (ntype!==null) {
             headerstruct.datatype=ntype[2];
-            // name = 
+            // name =
             let outmap=internal.header.gettypesize(ntype[0]);
             headerstruct.bitpix=outmap[0]*8;
             internal.imginfo =  {
@@ -576,12 +587,12 @@ class BisWebImage extends BisWebDataObject {
         // If needed alter number of frames
         // -------------------------------------------------------
 
-        if (newdims !== 'same') 
+        if (newdims !== 'same')
             BisWebImage.changeDimensions(internal,newdims);
-        
-        if (newspacing !== 'same') 
+
+        if (newspacing !== 'same')
             BisWebImage.changeSpacing(internal,newspacing);
-        
+
         if (newnumframes !==0 || newnumcomponents!==0) {
             if (newnumframes!==0) {
                 newnumframes=util.range(newnumframes,1,9999);
@@ -592,7 +603,7 @@ class BisWebImage extends BisWebDataObject {
                 else
                     internal.header.struct.dim[0]=3;
             }
-            
+
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
@@ -606,7 +617,7 @@ class BisWebImage extends BisWebDataObject {
 
         internal.rawsize=internal.volsize*headerstruct.bitpix/8;
         let Imginfo=internal.imginfo.type;
-        
+
         let newbuffer=new ArrayBuffer(internal.rawsize);
         internal._rawdata=new Uint8Array(newbuffer);
         internal.imgdata=new Imginfo(newbuffer);
@@ -617,24 +628,24 @@ class BisWebImage extends BisWebDataObject {
             let scale=1.0;
             if (orientation==="LPS")
                 scale=-1.0;
-            
+
             internal.header.struct.srow_x[0]=scale*this.internal.spacing[0];
             internal.header.struct.srow_x[1]=0.0;
             internal.header.struct.srow_x[2]=0.0;
             internal.header.struct.srow_x[3]=0.0;
-            
+
             internal.header.struct.srow_y[0]=0.0;
             internal.header.struct.srow_y[1]=scale*internal.spacing[1];
             internal.header.struct.srow_y[2]=0.0;
             internal.header.struct.srow_y[3]=0.0;
-            
+
             internal.header.struct.srow_z[0]=0.0;
             internal.header.struct.srow_z[1]=0.0;
             internal.header.struct.srow_z[2]=internal.spacing[2];
             internal.header.struct.srow_z[3]=0.0;
             internal.header.struct.qform_code=0;
             internal.header.struct.sform_code=1;
-            
+
             /*            internal.orient.axis=[0,1,2];
                           internal.orient.flip=[0,0,0];
                           if (orientation==='LPS')
@@ -642,7 +653,7 @@ class BisWebImage extends BisWebDataObject {
 
             BisWebImage.parseHeaderAndComputeOrientation(internal);
         }
-        
+
     }
 
     /** adds an offset to each image. i.e. this=input+offset. This is mostly for testing. Images must have exactly the same size.
@@ -650,41 +661,41 @@ class BisWebImage extends BisWebDataObject {
      * @param {number} offset - the value to add
      * @param {array} location - this is a debug voxel
      */
-    addoffset(input,offset,location) { 
+    addoffset(input,offset,location) {
 
         const internal=this.internal;
         const debug=this.debug;
         let inp_data=input.getImageData();
         let l=internal.imgdata.length, l2=inp_data.length;
-        
+
         if (l!=l2) {
             throw new Error('Cannot add one to mis-sized image ');
         }
-        
+
         let dim=this.getDimensions();
-        
+
         let index=0;
         if (location)
             index=location[0]+location[1]*dim[0]+location[2]*dim[0]*dim[1];
-        
+
         if (debug) {
             console.log('..... Input Value at ',index,' = ',inp_data[index]);
             console.log('..... in addone type = ',Object.prototype.toString.call(internal.imgdata),", length ",l, "adding "+offset);
         }
-        
+
         for (let i=0;i<l;i++) {
             if (i%3000000 === 0 && debug)
                 console.log('.....',i,"/",l);
             internal.imgdata[i]=inp_data[i]+offset;
         }
-        
+
         if (debug)
             console.log('..... Output Value at ',index,' = ',internal.imgdata[index]);
     }
 
 
 
-    /** get image orientation 
+    /** get image orientation
      * @returns {object} -- this is complicated
      */
     getOrientation()  { return this.internal.orient;}
@@ -699,7 +710,7 @@ class BisWebImage extends BisWebDataObject {
      */
     getDataType()  { return this.internal.imginfo.name;}
 
-    /** returns the nifti header 
+    /** returns the nifti header
      * @returns{BisHeader} - the image header
      */
     getHeader() { return this.internal.header; }
@@ -707,7 +718,7 @@ class BisWebImage extends BisWebDataObject {
 
     /** get pointer to raw data of Image Header {@link Header}.
      * @param {keepextensions} boolean - if true keep header extensions, else disgard.
-     * @returns {Uint8Array} 
+     * @returns {Uint8Array}
      */
     getHeaderData(keepextensions=false)  { return this.internal.header.createHeaderRawData(keepextensions);}
 
@@ -721,31 +732,31 @@ class BisWebImage extends BisWebDataObject {
         BisWebImage.parseHeaderAndComputeOrientation(this.internal);
         this.addComment({ "Operation" : "Copied orientation info from "+otherimage.getFilename() });
     }
-    
+
     /** Computes the max absolute value between two images *
      * @param {other} - the other image
      * @returns {number} -- the maximum absolute difference */
     maxabsdiff(other) {
         const internal=this.internal;
-        
+
         let inp_data=other.getImageData();
         let l=internal.imgdata.length, l2=inp_data.length;
-        
+
         if (l!=l2 || l<1) {
-            
+
             console.log('voxoffset=',internal.header.struct.vox_offset);
             console.log(this.printinfo('this'));
             console.log(other.printinfo('other'));
             console.log('Cannot run sumdiff due to mis-sized images this=l'+l+', other=l2='+l2+' d'+other.getDimensions()+' vs'+this.getDimensions());
             throw new Error('Cannot run sumdiff due to mis-sized images this=l'+l+', other=l2='+l2+' d'+other.getDimensions()+' vs'+this.getDimensions());
         }
-        
+
         let index=0;
-        
+
         if (this.debug) {
             console.log('..... Input Values at ',index,' = ',inp_data[index],internal.imgdata[index]);
         }
-        
+
         let maxd=0.0;
         for (let i=0;i<l;i++) {
             if (i%3000000 === 0 && this.debug)
@@ -754,13 +765,13 @@ class BisWebImage extends BisWebDataObject {
             if (d>maxd)
                 maxd=d;
         }
-        
+
         if (this.debug)
             console.log('..... maxabsdiff=',maxd);
         return maxd;
     }
 
-    /** compare orientation, return true if same 
+    /** compare orientation, return true if same
      * @param{BisWebImage} otherimage - the image to compare to
      @returns {Boolean} true if this image and other image have same dimensions */
     hasSameOrientation(otherimage,name1='',name2='',debug=false) {
@@ -781,7 +792,7 @@ class BisWebImage extends BisWebDataObject {
     }
 
 
-    /** compare dimensions, spacing and orientation return true if same 
+    /** compare dimensions, spacing and orientation return true if same
      * @param{BisWebImage} otherimage - the image to compare to
      * @param{number} threshold - spacing comparison threshold (default=0.001)
      * @param{Boolean} spaceonly - if true (default=false) then only x,y,z dims are compared
@@ -802,8 +813,8 @@ class BisWebImage extends BisWebDataObject {
             maxd=3;
         }
 
-        
-        
+
+
         for (let i=0;i<maxd;i++) {
             if (d1[i]!==d2[i])
                 same=false;
@@ -813,8 +824,8 @@ class BisWebImage extends BisWebDataObject {
 
             if (d1[3]*d1[4]<=1 && d2[3]* d2[4]<=1)
                 maxs=3;
-        
-            
+
+
             for (let i=0;i<maxs;i++) {
                 let diff=Math.abs(s1[i]-s2[i]);
                 if (diff>threshold)
@@ -841,15 +852,15 @@ class BisWebImage extends BisWebDataObject {
         this.initialize();
         let hdata=header.createHeaderRawData(false);
         this.internal.header.parse(hdata.data.buffer,hdata.length);
-        
+
         if (this.debug) {
             console.log('+++++ dims=',this.internal.header.struct.dim[1],this.internal.header.struct.dim[2],this.internal.header.struct.dim[3],this.internal.header.struct.dim[4]);
         }
-        
+
         // Next get ready for the real thing
         let dt=this.internal.header.struct.datatype;
-        let typename=this.internal.header.getniftitype(dt);     
-        
+        let typename=this.internal.header.getniftitype(dt);
+
         this.internal.imginfo =  {
             type: typename[1],
             size: this.internal.header.struct.bitpix/8,
@@ -873,8 +884,8 @@ class BisWebImage extends BisWebDataObject {
     }
 
 
-    
-    /** serialize to NII Binary array 
+
+    /** serialize to NII Binary array
      * creates a uint8 array with all the data
      * @return {Uint8Array}
      */
@@ -890,8 +901,8 @@ class BisWebImage extends BisWebDataObject {
         internal.header.setExtensionsFromArray(this.commentlist);
         let headerbin=this.getHeaderData(true);
         let rawdata=this.getRawData();
-        
-        
+
+
         if (internal.singlebuffer===null) {
             let c=new Uint8Array(headerbin.length+rawdata.length);
             c.set(headerbin.data);
@@ -904,23 +915,23 @@ class BisWebImage extends BisWebDataObject {
             console.log('this is a single buffer case ...');
         return new Uint8Array(internal.singlebuffer,0,headerbin.length+rawdata.length);
     }
-    
+
     /** parses a binary buffer (nifti image) to create the image
      * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
-     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
+     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS.
      * @param {boolean} forcecopy -- if false then potential store image in existing inputbuffer (use this for large images)
      */
     parseNIILegacy(_inputbuffer,forceorient_in,forcecopy=false) {
 
         forcecopy = true;
-        
+
         let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
         const debug=this.debug;
         const internal=this.internal;
-        
+
         if (debug)
             console.log('..... in PARSENII BUFFER forceorient=',forceorient);
-        
+
         // First do header stuff
         let tmpfloat=new Float32Array(_inputbuffer,108,1);
         //console.log('tmpfloat=',tmpfloat[0]);
@@ -939,14 +950,14 @@ class BisWebImage extends BisWebDataObject {
         }
         if (debug)
             console.log('Len = ',len,' swap=',swap);
-        
+
 
         if (len<1) {
             throw new Error('BAD BAD BAD ..... in PARSENII BUFFER len='+len);
         }
-        
+
         internal.singlebuffer=null;
-        
+
         let tmpheaderdata;
         if (forceorient!=="None" || forcecopy===true) {
             tmpheaderdata=_inputbuffer.slice(0,len);
@@ -957,7 +968,7 @@ class BisWebImage extends BisWebDataObject {
             if (debug)
                 console.log('Linking data ... not copying');
         }
-        
+
         if (internal.header.struct.dim[1]===0) {
             throw new Error('BAD dimensions');
         }
@@ -969,13 +980,13 @@ class BisWebImage extends BisWebDataObject {
         tmpheaderdata=null;
 
 
-        
+
         // Next get ready for the real thing
         let dt=internal.header.struct.datatype;
         let typename=internal.header.getniftitype(dt);
         if (debug)
             console.log('+++++++ dt=',dt,' tpname=',typename);
-        
+
         internal.imginfo =  {
             type: typename[1],
             size: internal.header.struct.bitpix/8,
@@ -998,7 +1009,7 @@ class BisWebImage extends BisWebDataObject {
             let sizeoftype=internal.imginfo.size;
             let half=sizeoftype/2;
             console.log('Byte swapping data',headerlength,internal.rawsize,sizeoftype,half);
-            
+
             for (let i=0;i<internal.rawsize;i++) {
                 let offset=i*sizeoftype;
                 for (let j=0;j<half;j++) {
@@ -1010,12 +1021,12 @@ class BisWebImage extends BisWebDataObject {
                 }
             }
         }
-        
 
-        
+
+
         if (forceorient === "None" || forceorient === internal.orient.name) {
             // Just link the data over
-            
+
             if (forcecopy===true) {
                 internal._rawdata=new Uint8Array(_inputbuffer.slice(headerlength,imgend));
                 internal.imgdata=new Imginfo(internal._rawdata.buffer);
@@ -1043,21 +1054,21 @@ class BisWebImage extends BisWebDataObject {
             BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient,debug);
             internal.forcedorientationchange=true;
         }
-        
-        
+
+
         // Eliminate Nan's
         for (let i=0;i<internal.imgdata.length;i++) {
             if (internal.imgdata[i]!==internal.imgdata[i])
                 internal.imgdata[i]=0;
         }
-        
+
         this.commentlist=internal.header.parseExtensionsToArray();
         this.computeIntensityRange();
-        
+
     }
 
-        
-    /** parse single frame tiff file -- parses multipage tiff document 
+
+    /** parse single frame tiff file -- parses multipage tiff document
      * @param {Uint8Array} input_rawdata -- the raw data
      * @param {String} filename -- the original filename
      * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
@@ -1066,13 +1077,13 @@ class BisWebImage extends BisWebDataObject {
 
         let decoder=tiff.newobject(input_rawdata);
         decoder.decodeHeader();
-            
+
         let frame=decoder.decodeIFD({ignoreImageData: false});
 
         let xspa= frame.xResolution || 0.025;
         let yspa= frame.yResolution || 0.025;
         let zspa= frame.zResolution || 1.0;
-        
+
         let data_type='ushort';
         if (frame.data.constructor.name==="Int16Array") {
             data_type='short';
@@ -1083,14 +1094,14 @@ class BisWebImage extends BisWebDataObject {
         if (forceorient === 'RAS') {
             orient='RAS';
         }
-        
+
         this.createImage( { dimensions : [ frame.width,frame.height,1 ],
                             numframes : 1,
                             spacing : [ xspa,yspa,zspa ],
                             type : data_type ,
                             orientation : orient,
                           });
-        
+
         let data=this.getImageData();
         data.set(frame.data);
 
@@ -1109,46 +1120,45 @@ class BisWebImage extends BisWebDataObject {
                     data[index1]=tmp;
                 }
             }
-        } 
-        
+        }
+
         // Eliminate Nan's
         for (let i=0;i<data.length;i++) {
             if (data[i]!==data[i])
                 data[i]=0;
         }
-        
-        
+
+
         let fname=filename;
         if (fname.name)
             fname=fname.name;
         this.setFilename(fname);
         this.commentlist= [ 'loaded from '+ fname +' forceorient='+forceorient ];
         this.computeIntensityRange();
-        return;
+        return Promise.resolve('done');
     }
 
-    
-    /** parse tiff file -- parses multipage tiff document 
+
+    /** parse tiff file -- parses multipage tiff document
      * @param {Uint8Array} arr -- the raw data
      * @param {String} filename -- the original filename
      * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
      */
-    parseTIFF(inputbuffer,filename,forceorient) {
-        
+    async parseTIFF(inputbuffer,filename,forceorient) {
+
         this.debug=1;
         const internal=this.internal;
         let input_rawdata=new Uint8Array(inputbuffer);
         let numframes=tiff.pageCount(input_rawdata);
-        
+
         if (numframes===1) {
-            this.parseSingleFrameTIFF(input_rawdata,filename,forceorient);
-            return;
+            return this.parseSingleFrameTIFF(input_rawdata,filename,forceorient);
         }
 
         let orient='LPS';
         if (forceorient==='RAS')
             orient='RAS';
-        
+
         if (numframes>500)
             this.debug=2;
         console.log('+++++++++++++++++++++++++++++++++++++++++\n');
@@ -1156,6 +1166,13 @@ class BisWebImage extends BisWebDataObject {
         let decoder=tiff.newobject(input_rawdata);
         decoder.decodeHeader();
 
+        let origFrame=decoder.decodeIFD({ignoreImageData: false});
+
+        if (origFrame.components>1) {
+            // Color image
+            return this.parseColorTIFFStack(inputbuffer,filename);
+        }
+        
         let numpieces=500;
         if (numpieces>numframes)
             numpieces=numframes;
@@ -1165,15 +1182,16 @@ class BisWebImage extends BisWebDataObject {
 
         let lastframe=0;
         let data_type='ushort';
-        
+
         for (let f=0;f<numframes;f++) {
 
             //let readoffset=decoder.nextIFD;
-            
-            let frame=decoder.decodeIFD({ignoreImageData: false});
+            let frame=origFrame;
+            if (f>0)
+                frame=decoder.decodeIFD({ignoreImageData: false});
 
-            
-            
+
+
             if (f==0) {
                 if (frame.data.constructor.name==="Int16Array") {
                     data_type='short';
@@ -1181,14 +1199,14 @@ class BisWebImage extends BisWebDataObject {
 
                 let xspa= frame.xResolution || 0.025;
                 let yspa= frame.yResolution || 0.025;
-                
+
                 temp_img.createImage( { dimensions : [ frame.width,frame.height,1 ],
                                         numframes : numpieces,
                                         spacing : [ xspa,yspa,1.0 ],
                                         orientation : orient,
                                         type : data_type });
             }
-            
+
             let data=temp_img.getImageData();
 
             let temp_offset=frame.width*frame.height*pieceframe;
@@ -1199,7 +1217,7 @@ class BisWebImage extends BisWebDataObject {
                 data_part=new Int16Array(data.buffer,bisoffset+temp_offset*2,frame.data.length);
             else
                 data_part=new Uint16Array(data.buffer,bisoffset+temp_offset*2,frame.data.length);
-            
+
             data_part.set(frame.data);
             if (orient === 'RAS') {
                 // We need to flip as data coming in is LPS (at least for our data)
@@ -1218,14 +1236,14 @@ class BisWebImage extends BisWebDataObject {
             }
 
             pieceframe+=1;
-            
+
             if (pieceframe>=numpieces || f===numframes-1) {
                 let nextstrip=frame.stripOffsets[0]+slicebytesize;
                 let nextstore=storeoffset+slicebytesize*numpieces;
                 if (nextstore>=nextstrip)  {
                     throw new Error(`Can not store this tiff image strip=${nextstrip} < ${nextstore}, slicesize=${slicebytesize}`);
                 }
-                
+
                 if (storeoffset===0) {
                     // Copy the header
                     let header=temp_img.getHeader();
@@ -1236,7 +1254,7 @@ class BisWebImage extends BisWebDataObject {
                     header_rawdata.set(dat);
                     storeoffset=dat.length;
                 }
-                
+
                 let buffersize=(pieceframe)*slicebytesize;
                 let data=temp_img.getImageData();
                 let numpieceframes=(f-lastframe+1);
@@ -1251,7 +1269,7 @@ class BisWebImage extends BisWebDataObject {
                     data16=new Int16Array(data.buffer,0,newsize);
 
                 }
-                
+
                 if (this.debug>1 || numframes>2000)
                     console.log(`Beginning to store frames ${lastframe}:${f} from ${storeoffset} to ${storeoffset+buffersize} (length in bytes=${buffersize}, ${(f-lastframe+1)*slicebytesize}) newsize=${newsize} `);
 
@@ -1261,12 +1279,12 @@ class BisWebImage extends BisWebDataObject {
                 lastframe=f+1;
             }
         }
-        
-        
+
+
         let headerlen=352;
         internal.singlebuffer=inputbuffer;
         internal.header.parse(inputbuffer,headerlen);
-        
+
         let dt=internal.header.struct.datatype;
 
         let typename=internal.header.getniftitype(dt);
@@ -1291,8 +1309,82 @@ class BisWebImage extends BisWebDataObject {
 
         this.computeIntensityRange();
         this.setFilename(filename);
+        return Promise.resolve('done');
     }
 
+
+
+
+    /** parse color multipage tiff file -- parses multipage tiff document
+     * @param {Uint8Array} input_rawdata -- the raw data
+     * @param {String} filename -- the original filename
+     * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
+     * @returns Promise
+     */
+    async parseColorTIFFStack(rawdata,fname) {
+
+        console.log('Data=',rawdata.constructor.name);
+        const tiff = await geotiff.fromArrayBuffer(rawdata);
+        const count=await tiff.getImageCount();
+        console.log('Tiff=',Object.keys(tiff),count);
+
+        const origImage=await tiff.getImage(0);
+        const height=origImage.getHeight();
+        const width=origImage.getWidth();
+        //        const res=origImage.getResolution();
+        const numbytes=origImage.getBytesPerPixel();
+        const samples=origImage.getSamplesPerPixel();
+
+        console.log('height=',height,width,'r=',samples,numbytes);
+        
+
+        this.createImage( { dimensions : [ width,height,count],
+                            numframes :  1,
+                            numcomponents : samples,
+                            spacing : [ 1.0,1.0,1.0 ],
+                            type : 'uchar',
+                            orientation : 'RAS',
+                          });
+        console.log("Desc=",this.getDescription());
+        let data=this.getImageData();
+        //let offset=0;
+        let numpixels=width*height;
+        let volsize=width*height*count;
+        for (let page=0;page<count;page++) {
+            
+            let frame=origImage;
+            if (page>0) {
+                frame=await tiff.getImage(page);
+            }
+            const components=await frame.readRasters();
+            let offset=page*numpixels;
+            for (let c=0;c<samples;c++) {
+                for (let pixel=0;pixel<numpixels;pixel++) {
+                    data[offset+pixel]=components[c][pixel];
+                }
+                offset=offset+volsize;
+            }
+        }
+        // Eliminate Nan's
+        for (let i=0;i<data.length;i++) {
+            if (data[i]!==data[i])
+                data[i]=0;
+        }
+
+
+        if (fname.name)
+            fname=fname.name;
+        this.setFilename(fname);
+        this.commentlist= [ 'loaded color tiff from '+ fname ];
+        this.computeIntensityRange();
+        return Promise.resolve('Done');
+    }
+
+
+    
+    
+
+    
     /** Legacy Debug Print Function */
     printinfo(comment) {
         const internal=this.internal;
@@ -1307,13 +1399,13 @@ class BisWebImage extends BisWebDataObject {
         return a;
     }
 
-    /** parse nrrd file -- 
+    /** parse nrrd file --
      * @param {Uint8Array} arr -- the raw data
      * @param {String} filename -- the original filename
      * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
      */
     parseNRRD(inputbuffer,filename,forceorient_in) {
-        
+
 
         const dat=nrrd.parse(inputbuffer);
         let keys=Object.keys(dat);
@@ -1325,7 +1417,7 @@ class BisWebImage extends BisWebDataObject {
             }
         }
         obj['data']=dat['data'].length;
-        
+
         //console.log(obj);
 
         if (obj.version !== 4 || obj.type !== 'uint8' || obj.encoding !=='raw' ) {
@@ -1351,28 +1443,28 @@ class BisWebImage extends BisWebDataObject {
             imgdata[i]=dat.data[i];
 
         let internal=this.internal;
-        
+
         internal.header.struct.srow_x[1]=-opts.spacing[0];
         internal.header.struct.srow_x[0]=0.0;
         internal.header.struct.srow_x[2]=0.0;
         internal.header.struct.srow_x[3]=0.0;
-        
+
         internal.header.struct.srow_y[1]=0.0;
         internal.header.struct.srow_y[0]=opts.spacing[1];
         internal.header.struct.srow_y[2]=0.0;
         internal.header.struct.srow_y[3]=0.0;
-        
+
         internal.header.struct.srow_z[0]=0.0;
         internal.header.struct.srow_z[1]=0.0;
         internal.header.struct.srow_z[2]=-opts.spacing[2];
         internal.header.struct.srow_z[3]=0.0;
         internal.header.struct.qform_code=0;
         internal.header.struct.sform_code=1;
-            
+
         BisWebImage.parseHeaderAndComputeOrientation(internal);
-        
+
         let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
-        
+
         if (forceorient !== "None" && forceorient !== internal.orient.name) {
             let debug=true;
             let origdata=dat.data;
@@ -1381,7 +1473,7 @@ class BisWebImage extends BisWebDataObject {
             BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,0,internal.imgdata,forceorient,debug);
             internal.forcedorientationchange=true;
         }
-        
+
         this.computeIntensityRange();
         this.setFilename(filename);
     }
@@ -1390,29 +1482,29 @@ class BisWebImage extends BisWebDataObject {
     /** Adds Quaternion Info to header
      * @param{EmscriptenModule} Module
      */
-    
+
     addQuaternionCode(Module) {
         const internal=this.internal;
-        
+
         if (internal.header.struct.qform_code!==0 ||
             internal.header.struct.sform_code===0)
             return;
-        
+
 
         let mat=new BisWebMatrix();
         mat.allocate(4,4,0);
         mat.setElement(3,3,1.0);
-        
+
         for (let j=0;j<=3;j++) {
             mat.setElement(0,j,internal.header.struct.srow_x[j]);
             mat.setElement(1,j,internal.header.struct.srow_y[j]);
             mat.setElement(2,j,internal.header.struct.srow_z[j]);
         }
 
-        
+
         let quat=Module.niftiMat44ToQuaternionWASM(mat).data;
         console.log('quat=',quat[0],quat[1],quat[2],' ',quat[3],quat[4],quat[5]);
-        
+
         internal.header.struct.qform_code=1;
         internal.header.struct.qoffset_b=quat[0];
         internal.header.struct.qoffset_c=quat[1];
@@ -1426,7 +1518,7 @@ class BisWebImage extends BisWebDataObject {
         internal.header.struct.pixdim[3]=quat[8];
     }
 
-    /** Static Function to change Spacing inside a header 
+    /** Static Function to change Spacing inside a header
      * @param{Dictionary} internal -- thisinternal from a BisWebImage
      */
     static changeSpacing(internal,newspa) {
@@ -1469,8 +1561,8 @@ class BisWebImage extends BisWebDataObject {
     static changeDimensions(internal,newdim) {
 
         let l=newdim.length;
-        if (l<3 || l>5) 
-            throw(new Error('Cannot change dimensions to '+newdim+' bad array'));           
+        if (l<3 || l>5)
+            throw(new Error('Cannot change dimensions to '+newdim+' bad array'));
 
         for (let i=0;i<l;i++) {
             internal.dimensions[i]=newdim[i];
@@ -1479,7 +1571,7 @@ class BisWebImage extends BisWebDataObject {
 
         internal.volsize = internal.dimensions[0] * internal.dimensions[1] * internal.dimensions[2] * internal.dimensions[3]*internal.dimensions[4];
         internal.offsets =   [ 1,
-                               internal.dimensions[0], internal.dimensions[0]*internal.dimensions[1], 
+                               internal.dimensions[0], internal.dimensions[0]*internal.dimensions[1],
                                internal.dimensions[0]*internal.dimensions[1]*internal.dimensions[2],
                                internal.dimensions[0]*internal.dimensions[1]*internal.dimensions[3],
                              ];
@@ -1554,7 +1646,7 @@ class BisWebImage extends BisWebDataObject {
             pixdim[3] = Math.sqrt(sx[2]*sx[2]+sy[2]*sy[2]+sz[2]*sz[2]);
 
         } else if(internal.header.struct.qform_code === 0) {
-            // fill IJKToRAS 
+            // fill IJKToRAS
             simplemat.GMMat4.setRowValues(IJKToRAS, 0, pixdim[1], 0, 0, 0);
             simplemat.GMMat4.setRowValues(IJKToRAS, 1, 0, pixdim[2], 0, 0);
             simplemat.GMMat4.setRowValues(IJKToRAS, 2, 0, 0, pixdim[3], 0);
@@ -1564,7 +1656,7 @@ class BisWebImage extends BisWebDataObject {
 
         }
 
-        // IJK to RAS 
+        // IJK to RAS
         internal.orient.IJKToRAS = IJKToRAS;
         //      console.log("----- internal.IJKTORAS=",simplemat.GMMat4.print(internal.orient.IJKToRAS));
         if (dim[5]===0)
@@ -1573,7 +1665,7 @@ class BisWebImage extends BisWebDataObject {
             pixdim[5]=1.0;
         internal.dimensions= [ dim[1],dim[2],dim[3],dim[4],dim[5] ];
         internal.spacing=    [ pixdim[1], pixdim[2],pixdim[3],pixdim[4],pixdim[5] ];
-        for (let ik=0;ik<=2;ik++) 
+        for (let ik=0;ik<=2;ik++)
             internal.spacing[ik]=Math.round(internal.spacing[ik]*1000.0)*0.001;
 
         internal.volsize = dim[1] * dim[2] * dim[3]*dim[4]*dim[5];
@@ -1603,7 +1695,7 @@ class BisWebImage extends BisWebDataObject {
             console.log('\n OR=\n',numeric.prettyPrint(OR));
         }
 
-            
+
         // Fix * spacing instead of /spacing as dealing with inverse
         let axis=[ 0 ,1, 2 ], flip=[ 0 ,0, 0 ];
         // Find Max Value
@@ -1636,7 +1728,7 @@ class BisWebImage extends BisWebDataObject {
 
             //            if (i<2) console.log('\n Blanked OR=\n',numeric.prettyPrint(OR));
 
-            
+
             for (let col=0;col<=2;col++) {
                 let sum=0.0;
                 for (let row=0;row<=2;row++)  {
@@ -1652,7 +1744,7 @@ class BisWebImage extends BisWebDataObject {
 
             //if (debug && i<2) console.log('\n Normalized OR=\n',numeric.prettyPrint(OR));
 
-            
+
             let ind=left.indexOf(axis[ia]);
             if (ind>=0)
                 left.splice(ind,1);
@@ -1665,7 +1757,7 @@ class BisWebImage extends BisWebDataObject {
 
         if (debug)
             console.log('Final axis=',axis,' flip=',flip);
-        
+
 
         // Done with checking now storing
         internal.orient.axis=axis;
@@ -1736,7 +1828,7 @@ class BisWebImage extends BisWebDataObject {
         let oname="RAS",max=0;
         internal.orient.invaxis=[0,1,2];
 
-        
+
 
         if (forceorient==="LPS") {
             oname="LPS";
@@ -1749,7 +1841,7 @@ class BisWebImage extends BisWebDataObject {
         } else {
             internal.orient.invflip  = [ 0,0,0 ];
         }
-            
+
         if (max>0)  {
             for (let ia=0;ia<max;ia++) {
                 flip[ia]=1-flip[ia];
@@ -1761,17 +1853,17 @@ class BisWebImage extends BisWebDataObject {
         if (debug) {
             console.log('++++ orient=',oname,'flip=',flip,'max=',max);
         }
-        
+
         // Perform Permutation
         for (ia[2]=0;ia[2]<dim[2];ia[2]++) {
             for (ia[1]=0;ia[1]<dim[1];ia[1]++) {
                 for (ia[0]=0;ia[0]<dim[0];ia[0]++) {
                     outindex=0;
                     for (j=0;j<=2;j++) {
-                        if (flip[j]) 
+                        if (flip[j])
                             ib[j]=flipdim[j]-ia[axis[j]];
                         else
-                            ib[j]=ia[axis[j]];              
+                            ib[j]=ia[axis[j]];
                         outindex+=ib[j]*outincr[j];
                     }
                     if (nc>0) {
@@ -1794,7 +1886,7 @@ class BisWebImage extends BisWebDataObject {
         // Reompute matrices
         let A=numeric.identity(4);
         for (let i=0;i<=3;i++)  {
-            for (let j=0;j<=3;j++) 
+            for (let j=0;j<=3;j++)
                 A[i][j]=internal.orient.IJKToRAS[i+j*4];
         }
 
@@ -1803,7 +1895,7 @@ class BisWebImage extends BisWebDataObject {
 
         if (debug)
             console.log('Axis=',axis,' flip=',flip,' dim=',flipdim);
-        
+
         for (let i=0;i<=2;i++) {
             let ax=axis[i];
             if (flip[i]) {
@@ -1827,15 +1919,15 @@ class BisWebImage extends BisWebDataObject {
             s+='];';
             console.log(s);
         };
-        
+
         if (debug) {
             fn(A,'A');
             fn(B,'B');
             fn(C,'C');
 
         }
-        
-        
+
+
         // Store header stuff
         for (let row=0;row<=2;row++)
             simplemat.GMMat4.setRowValues(internal.orient.IJKToRAS, row, C[row][0],C[row][1],C[row][2],C[row][3]);
@@ -1857,24 +1949,24 @@ class BisWebImage extends BisWebDataObject {
     // ------------------------------------------------------------------------------
     /** parses a binary buffer (nifti image) to create the image
      * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
-     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
+     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS.
      * @param {Number} parseMode --  2=normal, 0=header only,1 =data only
      */
     parseNIIModular(_inputbuffer,forceorient_in,parseMode=2) {
 
         let forcecopy = true;
-        
+
         let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
         const debug=this.debug;
         const internal=this.internal;
-        
+
         if (debug)
             console.log('..... in PARSENII Modular BUFFER forceorient='+forceorient,'parseMode='+parseMode+' forcecopy='+forcecopy);
 
         internal.singlebuffer=null;
-        
+
         if (parseMode!==1) {
-            
+
             // First do header stuff
             let tmpfloat=new Float32Array(_inputbuffer,108,1);
             //console.log('tmpfloat=',tmpfloat[0]);
@@ -1893,13 +1985,13 @@ class BisWebImage extends BisWebDataObject {
             }
             if (debug)
                 console.log('Len = ',len,' swap=',swap);
-            
-            
+
+
             if (len<1) {
                 throw new Error('BAD BAD BAD ..... in PARSENII BUFFER len='+len);
             }
-        
-            
+
+
             let tmpheaderdata;
             if (forceorient!=="None" || forcecopy===true) {
                 tmpheaderdata=_inputbuffer.slice(0,len);
@@ -1910,23 +2002,24 @@ class BisWebImage extends BisWebDataObject {
                 if (debug)
                     console.log('Linking data ... not copying');
             }
-            
+
             if (internal.header.struct.dim[1]===0) {
                 throw new Error('BAD dimensions');
             }
-            
+
             if (debug) {
                 console.log('+++++ dims=',internal.header.struct.dim[1],internal.header.struct.dim[2],internal.header.struct.dim[3],internal.header.struct.dim[4]);
                 console.log('+++++ Read header type = ',Object.prototype.toString.call(tmpheaderdata),' off',internal.header.struct.vox_offset);
             }
             tmpheaderdata=null;
-            
+
             // Next get ready for the real thing
             let dt=internal.header.struct.datatype;
             let typename=internal.header.getniftitype(dt);
             if (debug)
                 console.log('+++++++ dt=',dt,' tpname=',typename);
-            
+
+
             internal.imginfo =  {
                 type: typename[1],
                 size: internal.header.struct.bitpix/8,
@@ -1950,27 +2043,29 @@ class BisWebImage extends BisWebDataObject {
             };
         }
 
+
         if (parseMode===0) {
             return;
         }
 
-        let headerlength=this.tmpheaderinfo.headerlength;   
+
+        let headerlength=this.tmpheaderinfo.headerlength;
         let imgend=this.tmpheaderinfo.end;
         let Imginfo=internal.imginfo.type;
         let swap=this.tmpheaderinfo.swap;
-        
+
 
         if (parseMode===1) {
             imgend=this.tmpheaderinfo.end-headerlength;
             headerlength=0;
         }
-        
+
         if (swap) {
-            let _tmp=new Uint8Array(_inputbuffer,headerlength,internal.rawsize);            
+            let _tmp=new Uint8Array(_inputbuffer,headerlength,internal.rawsize);
             let sizeoftype=internal.imginfo.size;
             let half=sizeoftype/2;
             console.log('Byte swapping data',headerlength,internal.rawsize,sizeoftype,half);
-            
+
             for (let i=0;i<internal.rawsize;i++) {
                 let offset=i*sizeoftype;
                 for (let j=0;j<half;j++) {
@@ -1983,7 +2078,9 @@ class BisWebImage extends BisWebDataObject {
             }
         }
 
-        
+
+
+
         if (forceorient === "None" || forceorient === internal.orient.name) {
             if (debug) console.log('++++++ not permuting data');
             internal._rawdata=new Uint8Array(_inputbuffer.slice(headerlength,imgend));
@@ -1999,20 +2096,40 @@ class BisWebImage extends BisWebDataObject {
             BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient,debug);
             internal.forcedorientationchange=true;
         }
-        
-        
+
+
+        if (internal.imginfo.name === 'int64') {
+            console.log('Remapping BigInt ',internal.imginfo.name);
+            let oldd=this.internal.imgdata;
+            internal.rawsize=oldd.length*8;
+            let newbuffer=new ArrayBuffer(internal.rawsize);
+            internal._rawdata=new Uint8Array(newbuffer);
+            internal.imgdata=new Float64Array(newbuffer);
+            console.log('Rawsize=',internal.rawsize,internal.imgdata.constructor.name);
+            for (let i=0;i<internal.imgdata.length;i++)
+                internal.imgdata[i]=parseFloat(oldd[i]);
+            internal.imginfo.type=internal.imgdata.constructor.name;
+            internal.imginfo.size=8;
+            internal.imginfo.name='double';
+            console.log('imginfo=',internal.imginfo);
+            this.computeIntensityRange();
+            console.log('Data = ',this.getImageData().constructor.name,internal.imgdata.constructor.name);
+
+        }
+
+
+
         // Eliminate Nan's
         for (let i=0;i<internal.imgdata.length;i++) {
             if (internal.imgdata[i]!==internal.imgdata[i])
                 internal.imgdata[i]=0;
         }
-        
+
         this.commentlist=internal.header.parseExtensionsToArray();
         this.computeIntensityRange();
-        
     }
 
-    
+
     // ---- Load part of a NIFTI image
     /**
      * Loads part of an image from a filename or file object (Node/Electron)
@@ -2036,7 +2153,7 @@ class BisWebImage extends BisWebDataObject {
 
         if (debug)
             console.log('++++ Reading ',filename,' file size=',filesize);
-        
+
         this.initialize();
         let headerBuffer=null;
         try {
@@ -2045,14 +2162,14 @@ class BisWebImage extends BisWebDataObject {
             console.log('e=',e);
             return Promise.reject(e);
         }
-        
+
         this.parseNIIModular(headerBuffer,false,0);
         this.tmpheaderinfo['headerBuffer']=headerBuffer;
         return Promise.resolve(this.tmpheaderinfo);
     }
 
+    
 
 }
 
 module.exports=BisWebImage;
-

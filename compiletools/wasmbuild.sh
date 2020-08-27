@@ -1,60 +1,151 @@
 #!/bin/bash
 
-BISMAKEJ="-j8"
+if [ "*${1}*" == "**" ]; then
+    DOINSTALL="false"
+else
+    DOINSTALL="true"
+fi
+
+BISMAKEJ="-j4"
+GENERATOR="Unix Makefiles"
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BDIR="$( cd ${IDIR}/../build && pwd )"
 SRCDIR="$( cd ${BDIR}/.. && pwd )"
 
-echo "-----------------------------------------------------------------------"
-echo "SRCDIR=${SRCDIR}, BDIR=${BDIR}"
-echo "-----------------------------------------------------------------------"
+BISWEBOS=`uname | cut -f1 -d_`
+MOCHA=`which mocha`
 
-cd ${BDIR}
-source ${BDIR}/emsdk_portable/emsdk_env.sh
+echo "___"
+echo "___ Beginning WASM build on ${OS} INSTALL=${DOINSTALL}"
+echo "___"
 
+if  [  ${BISWEBOS} == "MINGW64" ] ; then
+    BISMAKEJ=" "
+    MAKE=`which nmake`
+    MOCHA="${MOCHA}.cmd"
+    GENERATOR="NMake Makefiles"
+else
+    MAKE=`which make`
+fi
+
+
+echo "_______________________________________________________________________"
+echo "___ SRCDIR=${SRCDIR}, BDIR=${BDIR}"
+echo "___ OS=${BISWEBOS}"
+echo "___ Make command=${MAKE} ${BISMAKEJ}"
+echo "___ Generator=${GENERATOR}"
+echo "___ MOCHA = ${MOCHA}"
+echo "_______________________________________________________________________"
+
+
+
+# Make standard directories if they do not exist
+echo "___ "
+echo "___ ensuring build directories and necessary js files exist"
+echo "___ "
 mkdir -p ${BDIR}/doc/doxgen
-mkdir -p ${BDIR}/install
-mkdir -p ${BDIR}/install/zips
 mkdir -p ${BDIR}/wasm
 mkdir -p ${BDIR}/wasm/lib
 mkdir -p ${BDIR}/wasm/lib/bin
-mkdir -p ${BDIR}/install
 
-rm -rf ${BDIR}/install/bisweb
+F=${BDIR}/wasm/libbiswasm_wrapper.js
+G=${BDIR}/wasm/biswasmdate.js
 
+if [[ -f $F && -f $G ]]; then
+    echo "___ Found core files ${F}"
+    echo "___              and ${G}"
+else
+    echo "___ "
+    echo "___ file ${F}"
+    echo "___   or ${G} not found"
+    echo "___ copying/creating necessary files to enable the first build"
+    echo "___ "
+    touch ${F}
+    cp ${SRCDIR}/various/wasm/biswasmdate.js ${BDIR}/wasm
+    ls -l ${BDIR}/wasm/*.js
+fi
+
+echo "_______________________________________________________________________"
+echo "___ "
+echo "___ Setting up emscripten paths"
+echo "___ "
+
+cd ${BDIR}
+source ${BDIR}/emsdk_portable/emsdk_env.sh
+echo "CMAKE = `which cmake`"
+echo "EMSDK = ${EMSDK}"
 
 # Now C++ Build for WASM
 cd ${BDIR}/wasm
 touch CMakeCache.txt
 rm CMakeCache.txt
-cmake -DCMAKE_TOOLCHAIN_FILE=${SRCDIR}/compiletools/Emscripten.cmake \
+echo "_______________________________________________________________________"
+echo "___ "
+echo "___ Invoking cmake"
+echo "___ "
+
+cmake -G "${GENERATOR}" \
+      -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
-      -DCMAKE_CXX_FLAGS="-o0 -s WASM=1 -s TOTAL_MEMORY=512MB" \
-      -DCMAKE_EXE_LINKER_FLAGS="--pre-js ${SRCDIR}/cpp/libbiswasm_pre.js --post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
+      -DMOCHA=${MOCHA} \
+      -DCMAKE_CXX_FLAGS="-o2 -s WASM=1 -s TOTAL_MEMORY=512MB -Wint-in-bool-context" \
+      -DCMAKE_EXE_LINKER_FLAGS="__pre-js ${SRCDIR}/cpp/libbiswasm_pre.js __post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
       -DBIS_BUILDSCRIPTS=ON \
-      -DCMAKE_VERBOSE_MAKEFILE=OFF \
+      -DCMAKE_VERBOSE_MAKEFILE=ON \
       -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
+      -DBIS_USECPM=ON \
       ${SRCDIR}/cpp
 
+echo "_______________________________________________________________________"
+echo "___ "
+echo "___ Invoking ${MAKE}"
+echo "___ "
 
-make ${BISMAKEJ} 
-rm -rf ${BDIR}/install/bisweb
-make install
+# Ensure wrappers are up to date
+rm ${F} ${G}
+"${MAKE}" ${BISMAKEJ}
 
-cd ${BDIR}/install/bisweb/
-npm pack
-mv *tgz ${BDIR}/install/zips
-echo "-----------------------------------------------------------------------"
+if [ ${DOINSTALL} == "true" ]; then
 
+    echo "_______________________________________________________________________"
+    echo "___ "
+    echo "___ ensuring install directories exist"
+    echo "___ "
+    
+    mkdir -p ${BDIR}/install/zips
+    mkdir -p ${BDIR}/install/web
+    rm -rf ${BDIR}/install/bisweb
+    mkdir -p ${BDIR}/install/bisweb
 
-cd ${BDIR}/install/zips
-pwd
-ls -lrt
+    echo "_______________________________________________________________________"
+    echo "___ "
+    echo "___ Invoking ${MAKE} install"
+    echo "___ "
+    "${MAKE}" install
 
-echo "-----------------------------------------------------------------------"
+    echo "_______________________________________________________________________"
+    echo "___ "
+    echo "___ Invoking npm pack"
+    echo "___ "
+    
+    cd ${BDIR}/install/bisweb/
+    npm pack
+    mv *tgz ${BDIR}/install/zips
+    
+    cd ${BDIR}/install/zips
+    pwd
+    ls -lrt
+else
+    echo "_______________________________________________________________________"
+    echo "___ "
+    echo "___ not making install"
+    echo "___ "
+fi
+
+echo "_______________________________________________________________________"
 echo " Done with WASM and Command Line JS"
-echo "-----------------------------------------------------------------------"
+echo "_______________________________________________________________________"
 

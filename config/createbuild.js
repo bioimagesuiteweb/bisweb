@@ -4,22 +4,37 @@ const path=require('path');
 const util=require('./bis_createutil');
 const rimraf=require('rimraf');
 
-let pythonexec='python';
+let pythonexec= process.env.PYTHON || 'python';
 
-if (path.sep==='\\') {
+console.log('Using Python=',pythonexec);
+
+
+/*if (path.sep==='\\') {
     console.log('++++ BioImageSuite Web create developer environment \n++++');
     console.log('---- This file will only run on a UNIX OS (Mac or Linux)');
     process.exit(1);
-}
+}*/
 
-let extra=process.argv[2] || 'build';
+let bextra='build';
+let inwindows=false;
+if (path.sep ==='\\') {
+    inwindows=true;
+    bextra='build';
+}
+    
+
+let extra=process.argv[2] || bextra;
 
 let advanced=false;
 
 if (extra === 'advanced') {
     advanced=true;
-    extra='build';
+    extra=bextra;
 }
+
+console.log('Process=',process.argv);
+
+
 
 const main=async function() {
 
@@ -39,26 +54,28 @@ const main=async function() {
         }
     }
 
-    util.initialize(DIR,doexit);
-
+    //util.initialize(DIR,doexit);
+    util.makeDir(DIR,doexit);
     
     console.log("++++");
     console.log("++++ Creating scripts");
     console.log("++++");
-    util.copyFileSync(DIR,'../config/setpaths_build.sh',DIR,'setpaths.sh');
-    util.copyFileSync(DIR,'../compiletools/cmake.sh',DIR,'cmake.sh');
-    util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
-    util.copyFileSync(DIR,'../compiletools/cmake_native.sh',DIR,'cmake_native.sh');
-    util.copyFileSync(DIR,'../compiletools/ccmake_native.sh',DIR,'ccmake_native.sh');
-    util.linkFileSync(DIR,'../compiletools/fullbuild.sh',DIR,'fullbuild.sh');
-    util.linkFileSync(DIR,'../compiletools/wasmbuild.sh',DIR,'wasmbuild.sh');
-    util.linkFileSync(DIR,'../compiletools/webbuild.sh',DIR,'webbuild.sh');
-    util.linkFileSync(DIR,'../compiletools/nativebuild.sh',DIR,'nativebuild.sh');
-    util.linkFileSync(DIR,'../compiletools/testbuild.sh',DIR,'testbuild.sh');
+    if (!inwindows) {
+        util.copyFileSync(DIR,'../config/setpaths_build.sh',DIR,'setpaths.sh');
+        util.copyFileSync(DIR,'../compiletools/cmake.sh',DIR,'cmake.sh');
+        util.copyFileSync(DIR,'../compiletools/ccmake.sh',DIR,'ccmake.sh');
+        util.copyFileSync(DIR,'../compiletools/cmake_native.sh',DIR,'cmake_native.sh');
+        util.copyFileSync(DIR,'../compiletools/ccmake_native.sh',DIR,'ccmake_native.sh');
+        util.linkFileSync(DIR,'../compiletools/fullbuild.sh',DIR,'fullbuild.sh');
+        util.linkFileSync(DIR,'../compiletools/wasmbuild.sh',DIR,'wasmbuild.sh');
+        util.linkFileSync(DIR,'../compiletools/webbuild.sh',DIR,'webbuild.sh');
+        util.linkFileSync(DIR,'../compiletools/nativebuild.sh',DIR,'nativebuild.sh');
+        util.linkFileSync(DIR,'../compiletools/testbuild.sh',DIR,'testbuild.sh');
 
 
-    console.log("++++");
-    await util.executeCommand('chmod +x *make*.sh',DIR);
+        console.log("++++");
+        await util.executeCommand('chmod +x *make*.sh',DIR);
+    }
     
     if (!advanced) {
         console.log("++++");
@@ -85,14 +102,8 @@ const main=async function() {
         console.log('++++ python emsdk:',cmd);
         
         await util.executeCommand(`${cmd} update`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate clang-e1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate node-8.9.1-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install  emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate emscripten-1.38.31`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} install sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
-        await util.executeCommand(`${cmd} activate sdk-1.38.31-64bit`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} install  1.39.7`,`${DIR}/emsdk_portable`,true);
+        await util.executeCommand(`${cmd} activate 1.39.7`,`${DIR}/emsdk_portable`,true);
         await util.executeCommand(`${cmd} list`);
     }
     console.log('++++');

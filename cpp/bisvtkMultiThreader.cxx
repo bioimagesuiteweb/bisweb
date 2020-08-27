@@ -91,12 +91,12 @@ int vtkMultiThreader::GetGlobalDefaultNumberOfThreads()
     }
 #endif
 
-#ifdef _WIN32
-    {
+#ifdef VTK_USE_WIN32_THREADS
+  {
       SYSTEM_INFO sysInfo;
       GetSystemInfo(&sysInfo);
       num = sysInfo.dwNumberOfProcessors;
-    }
+  }
 #endif
 
 #ifndef VTK_USE_WIN32_THREADS
@@ -641,16 +641,18 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
 // Additions for BisWeb
 // ------------------------------------------------
 
-  void runMultiThreader(vtkThreadFunctionType func, void *ds,std::string msg,int NumberOfThreads) {
+void runMultiThreader(vtkThreadFunctionType func, void *ds,std::string msg,int NumberOfThreads,int debug) {
 
 #ifdef BISWASM
-    NumberOfThreads=1;
+    NumberOfThreads=2;
 #endif
                         
     if (NumberOfThreads>1)
       {
-        std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. " << msg << std::endl << "++++" << std::endl;
-        
+#ifndef _WIN32
+        if (debug)
+          std::cout << "++++ \n++++ About to launch " << NumberOfThreads << " threads. " << msg << std::endl << "++++" << std::endl;
+#endif
         vtkMultiThreader* threader=new vtkMultiThreader();
         threader->SetSingleMethod(func,ds);
         threader->SetNumberOfThreads(NumberOfThreads);
@@ -659,7 +661,10 @@ bool vtkMultiThreader::ThreadsEqual(vtkMultiThreaderIDType t1,
       }
     else
       {
-        std::cout << "++++ \n++++ Running in Single Threaded Mode." << msg << std::endl << "++++" << std::endl;
+#ifndef _WIN32
+        if (debug)
+          std::cout << "++++ \n++++ Running in Single Threaded Mode." << msg << std::endl << "++++" << std::endl;
+#endif
         vtkMultiThreader::ThreadInfo data;
         data.UserData=(void*)ds;
         data.ThreadID=0;

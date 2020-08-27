@@ -68,20 +68,50 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  low --tr 1.0 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_low_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "command" : "butterworthFilter -i testdata/newtests/timeseries.csv  --type  low --tr 1.0 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/lowpass.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  high --tr 1.0 --high 0.03 --debug true",
-	    "test"    : "--test_target testdata/newtests/but_high_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "command" : "butterworthFilter -i testdata/newtests/timeseries.csv  --type  high --tr 1.0 --low 0.008 --debug true",
+	    "test"    : "--test_target testdata/newtests/highpass.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  band --tr 1.0 --high 0.03 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_band_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "command" : "butterworthFilter -i testdata/newtests/timeseries.csv --tr 1.0 --type band --low 0.008 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/bandpass.csv --test_type matrix --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  low --tr 1.0 --high 0.2 --debug true --removemean false",
+	    "test"    : "--test_target testdata/newtests/lowpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz  --type  high --tr 1.0 --low 0.008 --debug true --removemean false",
+	    "test"    : "--test_target testdata/newtests/highpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true --removemean false",
+	    "test"    : "--test_target testdata/newtests/bandpass.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/timeseries.csv.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true --removemean true",
+	    "test"    : "--test_target testdata/newtests/bandpass_meanremoved.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilterImage -i testdata/newtests/cropped.nii.gz --tr 1.0 --type band --low 0.008 --high 0.2 --debug true",
+	    "test"    : "--test_target testdata/newtests/cropped_matlab.nii.gz --test_type image --test_comparison ssd --test_threshold 0.4 --debug true" ,
 	    "result"  : true,
 	    "dopython": true
 	},
@@ -97,17 +127,23 @@
 	    "result"  : true,
 	    "dopython": false
 	},
-	{
-	    "command" : "computeROI -i testdata/ras_avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
-	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
-	    "result"  : false,
-	    "dopython": true
+        {
+	    "command" : "computeVolume -i testdata/testvol.nii.gz --keepzero false --debug true",
+	    "test"    : "--test_target testdata/testvol.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
 	},
         {
-	    "command" : "computeROI -i testdata/MNI_6mm.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
-	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "command" : "computeVolume -i testdata/testvol4d.nii.gz --keepzero false --debug true",
+	    "test"    : "--test_target testdata/testvol4d.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "computeVolume -i testdata/testvol4d.nii.gz --keepzero true --debug true",
+	    "test"    : "--test_target testdata/testvol4d.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : false,
-	    "dopython": true
+	    "dopython": false
 	},
 	{
 	    "command" : "thresholdImage -i testdata/MNI_6mm.nii.gz --low 128.0 --high 1000 --debug 1",
@@ -229,6 +265,13 @@
 	    "result"  : true,
 	    "dopython": true
 	},
+        {
+	    "command" : "clusterThreshold  --paramfile testdata/clusterThreshold_2019_10_22.param --input testdata/avg152T1_LR_nifti.nii.gz",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti__biggestcluster.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+
 	{
 	    "command" : "displacementField -i testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --debug true",
 	    "test"    : "--test_target testdata/MNI_6mm_scaleddispfield.nii.gz",
@@ -261,7 +304,7 @@
 	},
 	{
 	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --imagesmoothing 1.0 --optimization ConjugateGradient --stepsize 0.25 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
-	    "test"    : "--test_target testdata/newtests/linear.matr --test_type matrixtransform ",
+	    "test"    : "--test_target testdata/newtests/linear2.matr --test_type matrixtransform ",
 	    "result"  : true,
 	    "dopython": true
 	},
@@ -713,24 +756,6 @@
             "dopython": false
         },
 	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  low --tr 1.0 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_low_out.matr.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
-	    "result"  : true,
-	    "dopython": true
-	},
-	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  high --tr 1.0 --high 0.03 --debug true",
-	    "test"    : "--test_target testdata/newtests/but_high_out.matr.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
-	    "result"  : true,
-	    "dopython": true
-	},
-	{
-	    "command" : "butterworthFilterImage -i testdata/newtests/but_low_inp.matr.nii.gz  --type  band --tr 1.0 --high 0.03 --low 0.15",
-	    "test"    : "--test_target testdata/newtests/but_band.nii.gz --test_type image --test_comparison ssd --test_threshold 16 --debug true" ,
-	    "result"  : true,
-	    "dopython": true
-	},
-	{
 	    "command" : "regressOutImage -i testdata/newtests/drift_input.csv.nii.gz -r testdata/newtests/drift.csv",
 	    "test"    : "--test_target testdata/simpleregress.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.1",
 	    "result"  : true,
@@ -872,7 +897,7 @@
             "result"  : true,
             "skipjs"  : true,
             "noweb"   : true,
-            "dopython" : true
+            "dopython" : false
         },
         {
             "command" : "inflateSurface --input testdata/surface/inp.ply",
@@ -880,7 +905,7 @@
             "result"  : false,
             "skipjs"  : true,
             "noweb"   : true,
-            "dopython" : true
+            "dopython" : false
         },
         {
 
@@ -890,13 +915,59 @@
             "dopython": true
         },
         {
-	          "command" : "computeImageMatrixCorrelation -i testdata/indiv/prep.nii.gz -r testdata/indiv/group.nii.gz",
-	          "test"    : "--test_target testdata/indiv/imcorr.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
-	          "result"  : true,
-	          "dopython": true,
+	    "command" : "computeImageMatrixCorrelation -i testdata/indiv/prep.nii.gz -r testdata/indiv/group.nii.gz",
+	    "test"    : "--test_target testdata/indiv/imcorr.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true,
             "noweb"   : true,
             "skipjs"  : true
-	      }
+	},
+        {
+	    "command" : "imageDistanceMatrix -i testdata/distancematrix/distimage.nii.gz -m testdata/distancematrix/objmap.nii.gz --useradius false --sparsity 0.1 --numthreads 2",
+	    "test"    : "--test_target testdata/distancematrix/double.binmatr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true,
+            "noweb"   : true,
+            "skipjs"  : true
+	},
+        {
+            "command" : "permuteImage --paramfile testdata/permuteImage_2020_01_28.param -i testdata/MNI_6mm.nii.gz",
+            "test"    : "--test_target testdata/MNI_6mm__prm.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "permuteImage --paramfile testdata/permuteImage_2020_01_28_2.param -i testdata/MNI_6mm.nii.gz",
+            "test"    : "--test_target testdata/MNI_6mm__prm_2.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "jacobianImage --input testdata/MNI_2mm_orig.nii.gz -x testdata/jacobian/zscale.grd --nonlinearonly false --debug true",
+            "test"    : "--test_type image --test_target testdata/jacobian/gold_zjac__blk.nii.gz --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" :"linearPointRegistration -r testdata/rpm/brain1.json -t testdata/rpm/brain1_rot.json --initialtemp 10.0 --finaltemp 2.0 --matchmode RPM --dowarp true --mode Rigid",
+            "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated.json --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython" : false
+        },
+        {
+            "command" :"linearPointRegistration -r testdata/rpm/brain1.json -t testdata/rpm/brain1_rot.json --initialtemp 10.0 --finaltemp 2.0 --matchmode ICP --dowarp true --mode Rigid",
+            "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated_icp.json --test_comparison ssd --test_threshold 0.1",
+            "result"  : true,
+            "dopython" : false
+        },
+        {
+            "command" :"linearPointRegistration -r testdata/rpm/brain1.json -t testdata/rpm/brain1_rot.json --initialtemp 10.0 --finaltemp 2.0 --matchmode RPM --dowarp true --mode Rigid",
+            "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated_icp.json --test_comparison ssd --test_threshold 0.1",
+            "result"  : false,
+            "dopython" : false
+        }
+
+        
     ]
 }
 

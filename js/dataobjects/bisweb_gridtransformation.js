@@ -400,7 +400,7 @@ class BisWebGridTransformation extends BisWebBaseTransformation {
         this.internal.dimensions = dims || this.internal.dimensions;
         
         for (var i = 0; i <= 2; i++) {
-            this.internal.dimensions[i] = Math.floor(util.range(this.internal.dimensions[i], 4, 1000));
+            this.internal.dimensions[i] = Math.floor(util.range(this.internal.dimensions[i], 1, 1000));
             this.internal.minusdim[i] = this.internal.dimensions[i] - 1;
         }
         this.internal.slicesize = this.internal.dimensions[0] * this.internal.dimensions[1];

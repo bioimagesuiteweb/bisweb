@@ -87,6 +87,15 @@ void main() {
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;
 }`;
 
+/* test code
+const volume_fragment_shader0=`
+
+      void main() {
+
+         gl_FragColor = vec4( 1.0,0.5,0.2,0.5);
+      }
+`;*/
+
 
 const volume_fragment_shader=`
 // ---------------------------------------------------------------------------------------
@@ -135,6 +144,7 @@ const vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
 const float shininess = 40.0;
 
 void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
+void cast_symmetric_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
 void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
 
 float sample1(vec3 texcoords);
@@ -187,7 +197,9 @@ void main() {
     
     if (u_renderstyle == 0)
         cast_mip(start_loc, step, nsteps, view_ray);
-    else if (u_renderstyle == 1)
+    else if (u_renderstyle == 2)
+        cast_symmetric_mip(start_loc, step, nsteps, view_ray);
+    else 
         cast_iso(start_loc, step, nsteps, view_ray);
 
     if (gl_FragColor.a < 0.05)
@@ -211,7 +223,7 @@ float sample_3d_texture(vec3 texcoords) {
             if (texcoords.y<=u_boundsmax.y)
               if (texcoords.x<=u_boundsmax.x)
                 return texture(u_data, texcoords.xyz).r;
-  return 0.0;
+  return -1.0;
 }
 
 
@@ -223,7 +235,7 @@ vec4 apply_colormap(float val) {
 
 void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
     
-    float max_val = -1e6;
+    float max_val = 0.0;
     int max_i = 100;
     vec3 loc = start_loc;
     
@@ -235,25 +247,60 @@ void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
             break;
         // Sample from the 3D texture
         float val = sample_3d_texture(loc);
-        // Apply MIP operation
-        if (val > max_val) {
-            max_val = val;
-            max_i = iter;
+        if (val>0.001 && val<0.999) {
+          // Apply MIP operation
+          if (val > max_val) {
+              max_val = val;
+              max_i = iter;
+          }
+         // Advance location deeper into the volume
+         loc += step;
         }
-        // Advance location deeper into the volume
-        loc += step;
     }
 
-    // Refine location, gives crispier images
-    vec3 iloc = start_loc + step * (float(max_i) - 0.5);
-    vec3 istep = step / float(REFINEMENT_STEPS);
-    for (int i=0; i<REFINEMENT_STEPS; i++) {
-        max_val = max(max_val, sample_3d_texture(iloc));
-        iloc += istep;
-    }
+   // Refine location, gives crispier images
+   //    vec3 iloc = start_loc + step * (float(max_i) - 0.5);
+   //    vec3 istep = step / float(REFINEMENT_STEPS);
+   //  for (int i=0; i<REFINEMENT_STEPS; i++) {
+   //    max_val = max(max_val, sample_3d_texture(iloc));
+   //  iloc += istep;
+   //     }
 
     // Resolve final color
     gl_FragColor = apply_colormap(max_val);
+}
+
+void cast_symmetric_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
+    
+    float max_val =  0.5;
+    float max_dval = 0.0;
+    int max_i = 100;
+    vec3 loc = start_loc;
+    
+    // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
+    // non-constant expression. So we use a hard-coded max, and an additional condition
+    // inside the loop.
+
+    for (int iter=0; iter<MAX_STEPS; iter++) {
+        if (iter >= nsteps)
+            break;
+        // Sample from the 3D texture
+        float val =  sample_3d_texture(loc);
+        if (val>0.001 && val<0.999) {
+           float dval = pow(val-0.5,2.0);
+           // Apply MIP operation
+           if (dval > max_dval) {
+              max_dval=dval;
+              max_val = val;
+              max_i = iter;
+           }
+           // Advance location deeper into the volume
+          loc += step;
+        }
+    }
+
+    gl_FragColor = apply_colormap(max_val);
+    return;
 }
 
 

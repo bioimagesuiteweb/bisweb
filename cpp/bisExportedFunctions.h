@@ -91,6 +91,9 @@ extern "C" {
   /** @returns Magic Code for Serialized Object Collection */
   BISEXPORT int getCollectionMagicCode();
 
+  /** @returns Magic Code for Serialized Object Collection */
+  BISEXPORT int getSurfaceMagicCode();
+
   // -----------------------------------
   // Functions
   // -----------------------------------
@@ -224,7 +227,7 @@ extern "C" {
   /** Reslice image using \link bisImageAlgorithms::resliceImage \endlink
    * @param input serialized input as unsigned char array 
    * @param transformation serialized transformation as unsigned char array 
-   * @param jsonstring the parameter string for the algorithm  { int interpolation=3, 1 or 0, float backgroundValue=0.0; int ouddim[3], int outspa[3], int bounds[6] = None -- use out image size }
+   * @param jsonstring the parameter string for the algorithm  { int interpolation=3, 1 or 0, float backgroundValue=0.0; int ouddim[3], int outspa[3], int bounds[6] = None, int numthreads=2 -- use out image size }
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
@@ -372,7 +375,8 @@ extern "C" {
 
   /** Compute butterworthFilter Output applied to images
    * @param input the input image to filter
-   * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5 };
+   * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5, 'removeMean' : true };
+   * if removeMean is true, remove mean of time series before filtering it 
    * @param debug if > 0 print debug messages
    * @returns a pointer to the filtered image
    */
@@ -437,7 +441,17 @@ extern "C" {
   // BIS: { 'timeSeriesNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ] } 
   BISEXPORT unsigned char* timeSeriesNormalizeImageWASM(unsigned char* input,int debug);
 
-    
+  /** Transform a surface using a transformation
+   * @param input surface
+   * @param xform the transformation
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a (unsigned char) serialized surface
+   */
+  // BIS: { 'transformSurfaceWASM', 'bisSurface', [ 'bisSurface', 'bisTransformation', 'debug'] }
+  BISEXPORT unsigned char* transformSurfaceWASM(unsigned char* input,unsigned char* xform,int debug);
+
+
+  
 #ifdef __cplusplus
 }
 #endif

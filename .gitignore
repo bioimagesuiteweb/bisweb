@@ -26,3 +26,6 @@ docker/binary/bisweb*tar.gz
 docker/binary/bisweb*zip
 docker/binary/bisweb*tgz
 various/vtk/*
+various/connatlas/*/output/*
+npm-shrinkwrap.json
+    

@@ -31,6 +31,7 @@ const js_types = {
     'bisImage' : [ 'image', 'number' ,true,false],
     'Matrix' : [ 'matrix' ,'number', true,false],
     'Vector' : [ 'vector' , 'number' ,true,false],
+    'bisSurface'  : [ 'surface' ,'number',true,false],
     'bisTransformation' : [ 'transformation' ,'number', true,false],
     'bisLinearTransformation' : [ 'linearxform' ,'number',true,false],
     'bisGridTransformation'   : [ 'gridxform' ,'number',true,false],
@@ -48,6 +49,7 @@ const python_types = {
     'bisImage' : [ 'image', 'ctypes.c_void_p' ,true,false],
     'Matrix' : [ 'matrix' ,'ctypes.c_void_p', true,false],
     'Vector' : [ 'vector' , 'ctypes.c_void_p' ,true,false],
+    'bisSurface'  : [ 'surface' ,'ctypes.c_void_p',true,false],
     'bisTransformation' : [ 'transformation' ,'ctypes.c_void_p', true,false],
     'bisLinearTransformation' : [ 'linearxform' ,'ctypes.c_void_p',true,false],
     'bisGridTransformation'   : [ 'gridxform' ,'ctypes.c_void_p',true,false],
@@ -371,7 +373,7 @@ var parse_function_argument_list=function(lst,var_types,wrapper_mode) {
                 shortname=lst[j].substr(0,ind);
                 opt=true;
             }
-            
+
             let varname=var_types[shortname][0] || false;
             if (varname===false) {
                 console.log('Unknown '+shortname);
@@ -494,8 +496,9 @@ var create_parameter_checking_code=function(extrachecks,names,wrapper_mode) {
 
         let flag=extrachecks.checkorientation || '';
         if (flag === 'all' || flag.indexOf('python')>=0) {
-            outstr=`    if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',True)==False):
-       return False;
+            outstr=`    if (${names[1].variablename} != 0 and ${names[1].variablename} != None ):\n`;
+            outstr+=`        if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',True)==False):
+           return False;
 
 `;
         }

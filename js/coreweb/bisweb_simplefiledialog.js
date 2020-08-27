@@ -777,7 +777,7 @@ class SimpleFileDialog {
                 this.addFavorite(pillsBar,elem);
 
                 this.setFsFavoritesFolder(this.favorites);
-                //userPreferences.setItem('favoriteFolders',this.favorites,true);
+                userPreferences.setItem('favoriteFolders',this.favorites,true);
             }
         });
 
@@ -789,7 +789,7 @@ class SimpleFileDialog {
                     this.favorites.splice(i,1);
                     this.addAllFavorites(pillsBar);
                     this.setFsFavoritesFolder(this.favorites);
-                    //userPreferences.setItem('favoriteFolders',this.favorites,true);
+                    userPreferences.setItem('favoriteFolders',this.favorites,true);
                     this.lastFavorite=null;
                     return;
                 } 

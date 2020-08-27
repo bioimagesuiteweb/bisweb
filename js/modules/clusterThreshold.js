@@ -67,8 +67,8 @@ class ClusterThresholdModule extends BaseModule {
                     "type": "int",
                     "varname": "size",
                     "default": 1000,
-                    "low" : 10,
-                    "high" : 10000,
+                    "low" : 2,
+                    "high" : 1000000,
                 },
                 {
                     "name": "One Connected",
@@ -79,6 +79,16 @@ class ClusterThresholdModule extends BaseModule {
                     "type": "bool",
                     "varname": "oneconnected",
                     "default": true,
+                },
+                {
+                    "name": "Keep Largest Only",
+                    "description": "If true return only largest cluster",
+                    "priority": 30,
+                    "advanced": true,
+                    "gui": "check",
+                    "type": "bool",
+                    "varname": "keeplargest",
+                    "default": false,
                 },
                 {
                     "name": "Frame",
@@ -120,12 +130,17 @@ class ClusterThresholdModule extends BaseModule {
         let input = this.inputs['input'];
 
         console.log('\n ClusterThreshold\n--------------------\ncurrent=',input.getDescription());
+
+        let keeplargest=super.parseBoolean(vals.keeplargest);
+        let sz=parseInt(vals.size);
+        if (keeplargest)
+            sz=-1;
         
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.clusterThresholdImageWASM(input, {
                     "threshold": parseFloat(vals.threshold),
-                    "clustersize": parseInt(vals.size),
+                    "clustersize": sz,
                     "oneconnected" : super.parseBoolean(vals.oneconnected),
                     "outputclusterno" : super.parseBoolean(vals.outclustno),
                     "frame" : parseInt(vals.frame), 

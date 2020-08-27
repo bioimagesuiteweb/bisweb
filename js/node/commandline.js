@@ -30,9 +30,16 @@ const boldoff = "";
 
 //Image processing functions are expected to be templated as Promises.
 let initialError = function (extra) {
-    console.log(`${extra}\nUsage: bisweb modulename [ options ]\n`);
-    console.log(` Type 'node bisweb [modulename] --help' for more information`);
-    let outstring = modules.getModuleNames().join("\n");
+    console.log(`${extra}\nUsage: biswebnode modulename [ options ]\n`);
+    console.log(` Type 'biswebnode [modulename] --help' for more information`);
+    let a=modules.getModuleNames().sort();
+    let outstring='';
+    for (let i=0;i<a.length;i++) {
+        let n=a[i].padEnd(27,' ');
+        outstring=outstring+n;
+        if (i%3==2)
+            outstring+='\n';
+    }
 
     console.log('\tThe list of available modules is :\n\n'+outstring);
 };
@@ -55,15 +62,41 @@ let attachSingleFlag=function(param,cmd) {
         bstr = '<';
         estr = '>';
     }
+
+    let dd=param.description;
+
+    if (param.default!==undefined) {
+        if (param.type==='string') {
+            if (param.default.length>1)
+                dd=dd+' (default value='+param.default+')';
+        } else {
+            dd=dd+' (default value='+param.default+')';
+        }
+    }
+    if (param.type==='boolean') {
+        dd=dd+', (Acceptable values=[true,false])';
+    } else if (param.restrictAnswer) {
+        dd=dd+', (Acceptable values=['+param.restrictAnswer.join(',')+'])';
+    } else {
+        let low=param.low;
+        if (low === undefined)
+            low=param.lowbound;
+        let high=param.high;
+        if (high === undefined)
+            high= param.highbound;
+        if (low !== undefined && high!==undefined) {
+            dd=dd+', (Allowed range='+low+':'+high+')';
+        }
+    }
     
     if (param.type === "float")
-        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseFloat);
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + dd, parseFloat);
     else if (param.type === "int")
-        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseInt);
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + dd, parseInt);
     else if (param.type === "extra")
-        cmd = cmd.option(`filename1 filename2 filename3 ...`, optdesc + param.description, parseInt);
+        cmd = cmd.option(`filename1 filename2 filename3 ...`, optdesc + dd, parseInt);
     else
-        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + param.description);
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + dd);
     return cmd;
 };
 
@@ -100,7 +133,7 @@ let attachFlags = function (module, cmd) {
  * @param{array} args - the argument array to be parsed
  * @alias CommandLine.loadParse
  */
-let loadParse = function (args, toolname,basedirectory='') {
+let loadParse = function (args, toolname,basedirectory='',testmode=false) {
 
     toolname= toolname || "";
 
@@ -241,7 +274,12 @@ let loadParse = function (args, toolname,basedirectory='') {
                         });
                     }).catch((e) => {
                         slicerupd.end();
-                        reject('---- Failed to invoke algorithm'+e);
+                        if (!testmode) {
+                            console.log('---- Failed to invoke module "'+mod.name+'". '+e);
+                            program.help();
+                        } else {
+                            reject('---- testmode: Failed to invoke module "'+mod.name+'". '+e);
+                        }
                     });
                 } else {
                     slicerupd.end();

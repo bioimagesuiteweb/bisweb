@@ -185,7 +185,16 @@ class ParavisionImportElement extends HTMLElement {
                                          save : false,
                                          suffix : ".json",
                                      });
-        
+
+        webutil.createbutton({ type : "default",
+                               name : 'Show Current  Job',
+                               parent : basediv0,
+                               css : { 'width' : '90%' , 'margin' : '3px' },
+                               callback : () => {
+                                   if (this.internal.showpanel)
+                                       this.internal.showpanel.show();
+                               },
+                             });
         
         webfileutil.createFileButton({ type : "primary",
                                        name : "Save",
@@ -215,6 +224,7 @@ class ParavisionImportElement extends HTMLElement {
     
     addTableRow(name,fname,infoname,tagvalue=null) {
 
+        console.log("Adding=",name,'F=',fname,"I=",infoname);
 
         const internal=this.internal;
 
@@ -394,7 +404,7 @@ class ParavisionImportElement extends HTMLElement {
         });
 
         userPreferences.safeGetImageOrientationOnLoad().then( (forceorient) => {
-            bisbruker.readMultiple(f,outpath,forceorient,addT,infoT,false).then( (out) => {
+            bisbruker.readMultiple(f,outpath,forceorient,addT,infoT,true).then( (out) => {
                 let status=out[0];
                 if (status===true)
                     webutil.createAlert('Job saved in '+out[1]);
@@ -496,7 +506,8 @@ class ParavisionImportElement extends HTMLElement {
             for (let ic=0;ic<n;ic++) {
 
                 let details = data[ic].details;
-                if (data[ic].details.length>1 && data[ic].details.indexOf('/')===0) {
+
+                if (data[ic].details.length>1 && data[ic].details.indexOf('/')!==0) {
                     details=bisgenericio.joinFilenames(dirname,data[ic].details);
                 } 
                 
@@ -570,7 +581,7 @@ class ParavisionImportElement extends HTMLElement {
 
         
         if (this.internal.lastfilename) {
-            return this.computeAverageImages(bisgenericio.getDirectoryName.dirname(this.internal.lastfilename));
+            return this.computeAverageImages(bisgenericio.getDirectoryName(this.internal.lastfilename));
         }
 
 

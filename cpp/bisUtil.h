@@ -65,6 +65,17 @@ namespace bisUtil {
    * @param v the vector
    */
   void normalize(double v[3]);
+
+
+  /** make matrix identity 
+   * @param matrix the matrix to make identity
+   */
+  void makeIdentityMatrix(mat44 m);
+
+  /** fill matrix
+   * @param matrix the matrix to fill
+   */
+  void fillMatrix(mat44 m,float value=0.0);
   
 
   /** Prints a 4x4 matrix with a name comment

@@ -21,7 +21,6 @@
 const util=require('bis_util');
 const webutil=require('bis_webutil');
 const $=require('jquery');
-const bootbox=require('bootbox');
 const BisWebImage = require('bisweb_image');
 
 /**
@@ -337,7 +336,7 @@ class BaseViewerElement extends HTMLElement {
 
 
         const renderer=this.internal.layoutcontroller.renderer;
-        renderer.context.canvas.style.visibility='hidden';
+        renderer.getContext().canvas.style.visibility='hidden';
         
         if (msg.length>1)
             webutil.createAlert(msg,true);
@@ -348,7 +347,7 @@ class BaseViewerElement extends HTMLElement {
     enable_renderloop(msg='') {
         this.internal.enable_renderloop_flag=true;
         const renderer=this.internal.layoutcontroller.renderer;
-        renderer.context.canvas.style.visibility='visible';
+        renderer.getContext().canvas.style.visibility='visible';
         if (msg.length>1)
             webutil.createAlert(msg);
     }
@@ -362,13 +361,13 @@ class BaseViewerElement extends HTMLElement {
             this.internal.has_context_callbacks=true;
             
             const renderer=self.internal.layoutcontroller.renderer;
-            renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
+            renderer.getContext().canvas.addEventListener("webglcontextlost", function(event) {
                 console.log('Caught');
                 self.internal.webgl_enabled_flag=false;                
                 event.preventDefault();
             }, false);
             
-            renderer.context.canvas.addEventListener("webglcontextrestored", function(event) {
+            renderer.getContext().canvas.addEventListener("webglcontextrestored", function(event) {
                 console.log('Restored');
                 self.internal.webgl_enabled_flag=true;
                 event.preventDefault();
@@ -651,6 +650,7 @@ class BaseViewerElement extends HTMLElement {
         
         //this.handleresize();
         this.setcoordinates();
+        
         this.updateColormapObservers(input);
         this.drawcolorscale();
     }
@@ -689,19 +689,20 @@ class BaseViewerElement extends HTMLElement {
      */
     updateColormapObservers(input) {
 
+        if (this.internal.colormapobservers.length <1)
+            return;
         const self=this;
 
-        if (this.internal.ignorecolormapobservers)
+        if (this.internal.ignorecolormapobservers ||
+            this.internal.ignoreimageobservers )
             return;
-        
-        this.internal.ignorecolormapobservers = true;
 
+        
+        //console.log('**** Updating observers from=',this);
         this.internal.colormapobservers.forEach(function(f) {
             f.updatecmap(self.internal.cmapcontroller,input);
         });
-        setTimeout( () => {
-            this.internal.ignorecolormapobservers = false;
-        });
+
     }
     
     /** update the transfer functions of this viewer from outside.
@@ -716,8 +717,12 @@ class BaseViewerElement extends HTMLElement {
             return;
 
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
+
+            //console.log('++++++++ Being updated from  observers=',this);
             this.internal.cmapcontroller.setElementState(other.getElementState());
+            this.internal.ignorecolormapobservers = true;
             this.updatetransferfunctions(input);
+            this.internal.ignorecolormapobservers = false;
         }
     }
     
@@ -821,6 +826,7 @@ class BaseViewerElement extends HTMLElement {
             return;
 
         this.internal.ignoreimageobservers=true;
+
         
         this.internal.imagechangedobservers.forEach((f) => {
             f.handleViewerImageChanged(this,mode,this.internal.objectmaptransferinfo.colormode);
@@ -1049,15 +1055,15 @@ class BaseViewerElement extends HTMLElement {
         }
 
         let txt=a+'<BR> <BR>'+b;
-
         let dh=Math.round(this.internal.layoutcontroller.getviewerheight()*0.7);
+        webutil.createLongInfoText(txt,'Viewer Information',dh);
         
-        const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
+        /*const output=`<div style="margin-left:3px; margin-right:3px; margin-top:3px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000; max-height:${dh}px; overflow-y: auto; overflow-x: auto">`+txt+`</div>`;
         
         bootbox.dialog({
             title: 'Viewer Information',
             message: output,
-        });
+        });*/
     }
 
 
@@ -1120,15 +1126,12 @@ class BaseViewerElement extends HTMLElement {
         if (img.length>1) {
             let newimg=new BisWebImage();
             newimg.parseFromJSON(dt['image']);
-            //            console.log('has image',newimg.getDescription());
-                                    
             this.setimage(newimg);
             
             let ovr=dt['overlay'] || '';
             if (ovr.length >1) {
                 let newobj=new BisWebImage();
                 newobj.parseFromJSON(dt['overlay']);
-                //console.log('has overlay',newobj.getDescription());
                 let colortype=dt['colortype'] || 'Overlay';
                 let plainmode= (colortype === "Objectmap");
                 this.setobjectmap(newobj,plainmode,colortype);
@@ -1136,15 +1139,20 @@ class BaseViewerElement extends HTMLElement {
         }
 
 
-        this.internal.ignorecolormapobservers = false;
-        
+        if (!this.is_slave_viewer)
+            this.internal.ignorecolormapobservers = false;
+
         if (this.internal.cmapcontroller) {
             this.internal.cmapcontroller.setElementState(dt['colormap']);
             this.internal.cmapcontroller.updateTransferFunctions(true);
         }
 
+        this.internal.ignorecolormapobservers=false;
+        
         if (this.internal.snapshotcontroller) 
             this.internal.snapshotcontroller.setElementState(dt['snapshotcontroller']);
+        
+        
         
 
 
@@ -1195,9 +1203,14 @@ class BaseViewerElement extends HTMLElement {
     /** remap dimensions to 4D 
      * @param{Array} idim -- input/output 5 dimensional array
      */
-    remapDimensionsTo4D(dim) {
+    remapDimensionsTo4D(dim,volume) {
         // TODO: One day do proper 5D
         // Force everything to 4D for now ...
+        if (volume) {
+            if (dim[4]===3 && volume.getDataType()==='uchar')
+                return;
+        }
+        
         if (dim[4]>1) {
             dim[3]=dim[3]*dim[4];
             dim[4]=1;

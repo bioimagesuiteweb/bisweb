@@ -25,7 +25,7 @@ const xformutil=require('bis_transformationutil.js');
 
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
- * to align the image set to the reference image. Applies only affine (linear) transformations (no stretch/shear). 
+ * to align the image set to the reference image. Applies only affine (linear) transformations.
  */
 class LinearRegistrationModule extends  BaseModule {
     constructor() {

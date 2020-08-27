@@ -22,8 +22,6 @@
 
 namespace bisBiasFieldAlgorithms {
 
-  
-
   static inline int meanFit(std::vector<float>& x,std::vector<float>& y,int ndata,float& a,float& b)
   {
     float sx=0.0,sy=0.0,sxy=0.0,sxx=0.0;
@@ -42,14 +40,14 @@ namespace bisBiasFieldAlgorithms {
     return ndata;
   }
 
-  template<class TT>  std::unique_ptr<bisSimpleImage<float> > createWeightImage(bisSimpleImage<TT>* inp) 
+  template<class TT>  bisSimpleImage<float>* createWeightImage(bisSimpleImage<TT>* inp) 
   {
     int dim[5]; inp->getDimensions(dim);
     float spa[5]; inp->getSpacing(spa);
 
     //    std::cout << "Dims=" << dim[0] << "," << dim[1] << "," << dim[2] << std::endl;
     
-    std::unique_ptr<bisSimpleImage<float> > weightImage(new bisSimpleImage<float>());
+    bisSimpleImage<float>* weightImage=new bisSimpleImage<float>();
     dim[3]=1; dim[4]=1;
     weightImage->allocate(dim,spa);
     weightImage->fill(0.0f);
@@ -65,7 +63,7 @@ namespace bisBiasFieldAlgorithms {
 
     float sigmas[3]={1.0,1.0,1.0};
     float outsigmas[3];
-    std::unique_ptr<bisSimpleImage<float> > smoothed(bisImageAlgorithms::gaussianSmoothImage<float>(weightImage.get(),sigmas,outsigmas,0,1.5));
+    std::unique_ptr<bisSimpleImage<float> > smoothed(bisImageAlgorithms::gaussianSmoothImage<float>(weightImage,sigmas,outsigmas,0,1.5));
 
     //    std::cout << "outsigmas=" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << std::endl;
     
@@ -112,8 +110,7 @@ namespace bisBiasFieldAlgorithms {
 
     //    weightImage->getRange(range);
     //    std::cout << "valley range=" << range[0] << ":" << range[1] << std::endl;
-    
-    return std::move(weightImage);
+    return weightImage;
   }
 
   template<class TT> int computeWeightedImageRatio(TT* data1,TT* data2,float* wgt1, float* wgt2,
@@ -162,26 +159,25 @@ namespace bisBiasFieldAlgorithms {
     return numgood;
   }
 
-  template<class TT> std::unique_ptr<bisSimpleImage<float> > computeSliceBiasField(bisSimpleImage<TT>* input,int in_axis,float in_threshold)
+  template<class TT> bisSimpleImage<float>* computeSliceBiasField(bisSimpleImage<TT>* input,int in_axis,float in_threshold)
   {
     int dim[5]; input->getDimensions(dim);
     float spa[5]; input->getSpacing(spa);
     int axis=bisUtil::irange(in_axis,0,2);
 
     
-    std::unique_ptr<bisSimpleImage<float> > biasField(new bisSimpleImage<float>());
+    bisSimpleImage<float>* biasField=new bisSimpleImage<float>();
     dim[3]=1; dim[4]=1;
     biasField->allocate(dim,spa);
     
-    std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>());
-    output->allocate(dim,spa);
+    //bisSimpleImage<float>* output=new bisSimpleImage<float>();
+    //    output->allocate(dim,spa);
     
     if (dim[axis]<2)
       {
 	biasField->fill(100.0);
-	return std::move(biasField);
+	return biasField;
       }
-
     
     std::unique_ptr<bisSimpleImage<float> > weight_image(createWeightImage(input));
 
@@ -370,10 +366,10 @@ namespace bisBiasFieldAlgorithms {
 	bias[vx]=float(b);
       }
 
-    return std::move(biasField);
+    return biasField;
   }
 
-  template<class TT> std::unique_ptr<bisSimpleImage<float> > biasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<float>* biasField)
+  template<class TT> bisSimpleImage<float>* biasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<float>* biasField)
   {
     int dim[5]; input->getDimensions(dim);
     float spa[5]; input->getSpacing(spa);
@@ -385,11 +381,10 @@ namespace bisBiasFieldAlgorithms {
     if (sum>0)
       {
 	std::cerr << "Can not perform bias field correction, dimensions do not match " << std::endl;
-	std::unique_ptr< bisSimpleImage<float> > tmp( (bisSimpleImage<float>*)(0));
-	return std::move(tmp);
+	return NULL;
       }
     
-    std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>());
+    bisSimpleImage<float>* output=new bisSimpleImage<float>();
     output->allocate(dim,spa);
     output->fill(0.0f);
     
@@ -426,11 +421,11 @@ namespace bisBiasFieldAlgorithms {
 
     std::cout << "Done computing bias field correction " << std::endl;
     
-    return std::move(output);
+    return output;
   }
 
 
-  template<class TT> std::unique_ptr<bisSimpleImage<float> > computeTripleSliceBiasField(bisSimpleImage<TT>* input,float threshold)
+  template<class TT> bisSimpleImage<float>* computeTripleSliceBiasField(bisSimpleImage<TT>* input,float threshold)
   {
     std::unique_ptr<bisSimpleImage<float> > bias_x(computeSliceBiasField(input,0,threshold));
     std::unique_ptr<bisSimpleImage<float> > result_x(biasFieldCorrection(input,bias_x.get()));
@@ -438,8 +433,8 @@ namespace bisBiasFieldAlgorithms {
     std::unique_ptr<bisSimpleImage<float> > bias_y(computeSliceBiasField(result_x.get(),1,threshold));
     std::unique_ptr<bisSimpleImage<float> > result_y(biasFieldCorrection(result_x.get(),bias_y.get()));
     
-    std::unique_ptr<bisSimpleImage<float> > bias_z(computeSliceBiasField(result_y.get(),2,threshold));
-    std::unique_ptr<bisSimpleImage<float> > result_z(biasFieldCorrection(result_y.get(),bias_z.get()));
+    bisSimpleImage<float>*  bias_z=computeSliceBiasField(result_y.get(),2,threshold);
+    std::unique_ptr<bisSimpleImage<float> > result_z(biasFieldCorrection(result_y.get(),bias_z));
 
     int l=bias_z->getLength();
     TT* i_data=input->getData();
@@ -453,11 +448,11 @@ namespace bisBiasFieldAlgorithms {
 	else
 	  bdata[i]=100.0f;
       }
-    return std::move(bias_z);
+    return bias_z;
   }
    
 
-  template<class TT> std::unique_ptr<bisSimpleImage<TT> > computedMaskedBiasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<unsigned char>* mask_in,
+  template<class TT> bisSimpleImage<TT>* computedMaskedBiasFieldCorrection(bisSimpleImage<TT>* input,bisSimpleImage<unsigned char>* mask_in,
 											    double blursigma,
 											    double outputmean)
   {
@@ -494,8 +489,7 @@ namespace bisBiasFieldAlgorithms {
 
     if (numvox<1)
       {
-	std::unique_ptr<bisSimpleImage<TT> > img(0);
-	return img;
+	return NULL;
       }
     
     float in_meanval=sum/numvox;
@@ -525,7 +519,7 @@ namespace bisBiasFieldAlgorithms {
       }
 
 
-    std::unique_ptr<bisSimpleImage<float> > output(biasFieldCorrection<TT>(input,ratio));
+    bisSimpleImage<float>* output=biasFieldCorrection<TT>(input,ratio);
 
     float scale2=(in_meanval/meanval);
     if (fabs(scale2-1.0) > 0.1 ){
@@ -535,7 +529,7 @@ namespace bisBiasFieldAlgorithms {
 	odata[i]=odata[i]*scale2;
     }
     
-    return std::move(output);
+    return output;
   }
   // End of namespace
 }

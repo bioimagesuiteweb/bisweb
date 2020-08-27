@@ -27,7 +27,12 @@
 #include <ctime>
 #include <cctype>      // for isspace() and isdigit()
 #include <cstdarg>     // for functions with variable # of arguments
-#include <unistd.h>
+
+#ifndef _WIN32
+  #ifndef BISWASM
+    #include <unistd.h>
+  #endif
+#endif
 
 using namespace std;
 

@@ -1,0 +1,18 @@
+on: 
+    schedule:
+      - cron: '13 6 * * *'
+
+jobs:
+  docker_test:
+    runs-on: ubuntu-18.04
+    name: Docker test for bisweb
+    steps:
+    - name: Run
+      id: run      
+      uses: bioimagesuiteweb/bisweb/actions/docker@devel
+      env:
+        BIS_FIRST_TEST: 1
+        BIS_LAST_TEST: 1000
+    - name: Results
+      run: echo "${{ steps.run.outputs.result}}"
+

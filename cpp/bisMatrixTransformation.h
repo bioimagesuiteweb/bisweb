@@ -68,7 +68,7 @@ class bisMatrixTransformation : public bisAbstractTransformation {
    * @param name name of output matrix
    * @returns output matrix
    */
-  std::unique_ptr<bisSimpleMatrix<float> > getSimpleMatrix(std::string name="");
+  bisSimpleMatrix<float>* getSimpleMatrix(std::string name="");
 
 
   /** Import the current matrix from a  bisSimpleMatrix<float> 

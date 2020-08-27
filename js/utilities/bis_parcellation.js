@@ -63,13 +63,20 @@ const computemode=function(array,debug) {
     @returns {number} -1,0,1
 */
 const comparerois=function(a,b) {
-    
+
     let computeroivalue=function(r) {
+
+        let v=r.attr.length;
+        if (v>4)
+            v=4;
+        
         let sum=r.index*0.001; // Add a small bias to existing order
-        for (let i=0;i<4;i++)
-            sum+=r.attr[i]*Math.pow(1000,(r.attr.length-i));
+        for (let i=0;i<v;i++)
+            sum+=r.attr[i]*Math.pow(1000,(v-i));
         return sum;
     };
+
+
     
     var a1=computeroivalue(a);
     var b1=computeroivalue(b);
@@ -92,7 +99,7 @@ const comparerois=function(a,b) {
 
 class BisParcellation {
 
-    constructor() {
+    constructor(atlasspec = { }) {
         this.initialized=false;
         this.regions=null;
         
@@ -105,7 +112,12 @@ class BisParcellation {
         this.thickness=20.0;
         
         this.points = [];
-        this.midlobe=11;
+        this.atlasspec = {
+            'name' : atlasspec.name || 'humanmni',
+            'midlobe' : atlasspec.midlobe || 11,
+            'origin'  : atlasspec.origin || [ 90, 126, 72 ],
+        };
+        
         this.maxlobe=-1;
         this.midpoint=-1;
         this.maxpoint=-1;
@@ -330,14 +342,21 @@ class BisParcellation {
             return 0;
         }
 
+        //console.log('Midlobe=',this.atlasspec['midlobe']);
+        
         var i;
         var numpoints=this.rois.length;
 
+        console.log('Attr length=',this.rois[0].attr);
+        
         this.rois.sort(comparerois);
         this.indexmap = { };
         for (i=0;i<numpoints;i++) {
             var idx=this.rois[i].index;
             this.indexmap[idx]=i;
+            if (i < 2 || i %80 === 0) {
+                console.log('i=',i, 'idx=',idx);
+            }
         }
 
         if (DEBUG) console.log("++++ Node definition mapping to lobes: Number of rois="+this.rois.length);
@@ -349,6 +368,9 @@ class BisParcellation {
         }
 
         var numrows=maxv+1;
+
+        //        console.log('Numrows=',numrows);
+        
         this.lobeStats=new Array(numrows);//new BisMatrix<int>(maxv+1,3,-1);
         for (i=0;i<numrows;i++) 
             this.lobeStats[i]=[ -1,-1,-1];
@@ -370,11 +392,26 @@ class BisParcellation {
                 this.lobeStats[i][2]=this.lobeStats[i][1]-this.lobeStats[i][0]+1;
         }
         // This has to do with the number of lobes
-        this.midlobe=11;
-        this.midpoint=this.lobeStats[this.midlobe-1][1];
+        //console.log('Lobestats=',this.lobeStats);
+
+        this.midpoint=0;
+        try {
+            this.midpoint=this.lobeStats[this.atlasspec['midlobe']-1][1];
+        } catch(e) {
+            let found=false;
+            let ia=this.atlasspec['midlobe']-1;
+            while (ia>0 && found===false) {
+                let v=this.lobeStats[ia] || null;
+                if (v) {
+                    found=true;
+                    this.midpoint=this.lobeStats[ia][1];
+                }
+                ia=ia-1;
+            }
+        }
         var count=2;
-        while (this.midpoint==-1 && (this.midlobe-count)>0) {
-            this.midpoint=this.lobeStats[this.midlobe-count][1];
+        while (this.midpoint==-1 && (this.atlasspec['midlobe']-count)>0) {
+            this.midpoint=this.lobeStats[this.atlasspec['midlobe']-count][1];
             count++;
         }
         this.maxpoint=this.lobeStats[this.lobeStats.length-1][1];
@@ -442,15 +479,15 @@ class BisParcellation {
      * @returns {string} color
      */
     getNonSidedLobeColor(lobe) {
-        if (lobe>=this.midlobe)
-            lobe=lobe-this.midlobe+1;
-        var c=util.objectmapcolormap[lobe];
+        if (lobe>=this.atlasspec['midlobe'])
+            lobe=lobe-this.atlasspec['midlobe']+1;
+        var c=util.getobjectmapcolor(lobe);
         return 'rgb(' + Math.floor(c[0])+ ',' + Math.floor(c[1])+ ',' + Math.floor(c[2])+")";
     }
 
     getInverseNonSidedLobeColor(lobe) {
-        if (lobe>=this.midlobe)
-            lobe=lobe-this.midlobe+1;
+        if (lobe>=this.atlasspec['midlobe'])
+            lobe=lobe-this.atlasspec['midlobe']+1;
         if (lobe===1 || lobe===5 || lobe===8 || lobe===10)
             return "#ffffff";
         return "#000000";
@@ -814,10 +851,14 @@ class BisParcellation {
      */
     createParcellationFromImage (parcimage,atlas,description) {
 
+        
         description = description || "unknown";
 
         var dim_p=parcimage.getDimensions();
         var dim_a=atlas.getDimensions();
+
+        console.log('Dim=',dim_p,dim_a);
+        
         var sum=0,i=0,j=0;
         for (i=0;i<=2;i++)
             sum+=Math.abs(dim_p[i]-dim_a[i]);
@@ -838,6 +879,8 @@ class BisParcellation {
         var volsize=dim_a[0]*dim_a[1]*dim_a[2];
         var numattr=dim_a[3];
 
+        //console.log('Number of attributes=',numattr,parcimage.getDimensions(),atlas.getDimensions());
+        
         var cx=new Array(maxvoi+1);
         var cy=new Array(maxvoi+1);
         var cz=new Array(maxvoi+1);
@@ -934,9 +977,11 @@ class BisParcellation {
         obj.numpoints=numvoi;
         obj.numattr=numattr;
         obj.description=description;
+        obj.baseatlas=this.atlasspec['name'];
         obj.rois=[];
 
-        var MNI = [ 90, 126, 72 ];
+        let MNI = this.atlasspec['origin'];
+        
         for (i=1;i<=maxvoi;i++) {
             if (Nv[i]>0) {
                 var elem = { };
@@ -949,6 +994,8 @@ class BisParcellation {
                 obj.rois.push(elem);
             }
         }
+        //console.log('Midlobe=',this.atlasspec['midlobe']);
+        
         return JSON.stringify(obj);
     }
 
@@ -974,17 +1021,15 @@ class BisParcellation {
 
     /** Create json file
      */
-    serialize() {
+    serialize(description=null) {
         var numpoints=this.rois.length;
         var numattr=this.rois[0].attr.length;
-
-
-        
         var obj={};
         obj.bisformat="Parcellation";
         obj.numpoints=numpoints;
         obj.numattr=numattr;
-        obj.description=this.description;
+        obj.description= description || this.description;
+        obj.baseatlas=this.atlasspec['name'];
         obj.rois=[];
 
         for (var i=0;i<numpoints;i++) {
@@ -998,7 +1043,7 @@ class BisParcellation {
                 elem.attr[ia]=this.rois[index].attr[ia];
             obj.rois.push(elem);
         }
-        return JSON.stringify(obj);
+        return JSON.stringify(obj,null,4);
     }
 
     /** Create Parcellation from text file
@@ -1087,6 +1132,7 @@ class BisParcellation {
         obj.numpoints=numpoints;
         obj.numattr=numattr;
         obj.description=description;
+        obj.baseatlas=this.atlasspec['name'];
         obj.rois=[];
 
         for (i=0;i<numpoints;i++) {

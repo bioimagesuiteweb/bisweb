@@ -42,7 +42,11 @@ class BisWebTextObject extends BisWebDataObject{
         this.extension=".bistxt";
         this.data="";
         this.forcetextsave=false;
-        this.setText(txt);
+
+        if (typeof txt === 'string')
+            this.setText(txt);
+        else
+            this.data=txt;
     }
 
 
@@ -116,7 +120,7 @@ class BisWebTextObject extends BisWebDataObject{
         if (ext==='csv' || ext==="txt" || this.forcetextsave===true) {
             output=this.data;
         } else {
-            output = this.serializeToJSON();
+            output = this.serializeToJSON(true);
         }
         return new Promise( function(resolve,reject) {
             genericio.write(filename,output).then( (f) => {

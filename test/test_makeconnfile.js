@@ -27,11 +27,11 @@ const path = require('path');
 const colors = require('colors/safe');
 const sep = path.sep;
 
-let cleanRow = (line) => {
+let cleanString = (line) => {
     return line.trim().replace(/\t/g,' ').replace(/ +/g,' ').replace(/ /g,'').replace(/\n/g,'').replace(/\r/g,'');
 };
 
-describe('Testing make connectivity .csv file (the thing that Dustin asked for)', () => {
+describe('Testing make connectivity .csv file', () => {
 
     it('makes a connectivity file', async () => {
         try {
@@ -50,12 +50,33 @@ describe('Testing make connectivity .csv file (the thing that Dustin asked for)'
         try {
             let indir = ['.', 'testdata', 'sample_csvs'], baseconnfile = ['.', 'testdata', 'sample_csvs', 'sample_connmatrixfile.json'];
             let contents = await connModule.execute({}, { 'indir': indir.join(sep), 'writeout': false });
-            let correctContents = await bis_genericio.read(baseconnfile.join(sep));
-            let cleanContents = cleanRow(JSON.stringify(contents)), cleanCorrectContents = cleanRow(correctContents.data);
+            let correctContents = JSON.parse((await bis_genericio.read(baseconnfile.join(sep))).data);
 
+            //console.log('Contents=',contents,'\n---------------\n');
+            //console.log('Correct=',correctContents,'\n---------------\n');
 
-            console.log('contents', cleanContents, '\n\n', 'correct contents', cleanCorrectContents);
-            assert(cleanContents === cleanCorrectContents);
+            // Remove filenames
+            contents.filenames=undefined;
+
+            let same=true;
+            let keys=Object.keys(contents.file);
+            //console.log('Keys=',keys,' vs',Object.keys(correctContents));
+            for (let i=0;i<keys.length;i++) {
+                let key=keys[i];
+
+                let keys2=Object.keys(contents.file[key]);
+                //console.log('Correct=',key,correctContents[key]);
+                for (let j=0;j<keys2.length;j++) {
+                    let key2=keys2[i];
+                    //console.log('Key=',key,key2);
+                    let a1=cleanString(contents.file[key][key2]);
+                    let a2=cleanString(correctContents[key][key2] || '');
+                    console.log('Comparing',key,key2,'*'+a1+'* vs *'+a2+'*');
+                    if (a1!==a2)
+                        same=false;
+                }
+            }
+            assert(same,true);
         } catch (e) {
             console.log(colors.red('An error occured while making a connectivity file', e));
             assert(false);

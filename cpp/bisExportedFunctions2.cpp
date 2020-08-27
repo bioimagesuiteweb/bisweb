@@ -46,7 +46,7 @@ template <class BIS_TT> unsigned char* addGridToImageTemplate(unsigned char* inp
     std::cout << "Beginning actual addGridToImage : gap=" << gap << " intensity value=" << value << std::endl;
 
   
-  std::unique_ptr<bisSimpleImage<unsigned char> > out_image=bisAdvancedImageAlgorithms::addGridToImage(inp_image.get(),gap,value);
+  std::unique_ptr<bisSimpleImage<unsigned char> > out_image(bisAdvancedImageAlgorithms::addGridToImage(inp_image.get(),gap,value));
   
   if (debug)
     std::cout << "addGridToImage Done" << std::endl;
@@ -110,8 +110,8 @@ template <class BIS_TT> unsigned char* projectImageTemplate(unsigned char* input
   }
 
   if (!usemask) {
-    std::unique_ptr<bisSimpleImage<BIS_TT> > out_image=bisAdvancedImageAlgorithms::projectImage(inp_image.get(),
-                                                                                                domip,axis,flip,lps,sigma,threshold,gradsigma,window);
+    std::unique_ptr<bisSimpleImage<BIS_TT> > out_image(bisAdvancedImageAlgorithms::projectImage(inp_image.get(),
+                                                                                                domip,axis,flip,lps,sigma,threshold,gradsigma,window));
     if (debug)
       std::cout << "Projecting Done" << std::endl;
     
@@ -161,8 +161,10 @@ unsigned char*  projectImageWASM(unsigned char* input,unsigned char* funcinput,c
 // BIS: { 'backProjectImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
 unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* input2d_ptr,const char* jsonstring,int debug) {
 
+  debug=1;
+  
   if (debug)
-    std::cout << "_____ Beginning backProjectImageWASM" << std::endl;
+    std::cout << "_____ Beginning backProjectImageWASM" << jsonstring << std::endl;
   
   std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
   if (!params->parseJSONString(jsonstring)) {
@@ -196,10 +198,64 @@ unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* inp
     std::cout << "Beginning actual Image Back Projecting" << std::endl;
   }
   
-  std::unique_ptr<bisSimpleImage<float> > out_image=bisAdvancedImageAlgorithms::backProjectImage(threed.get(),twod.get(),axis,flipz,flipy,threshold,window);
+  std::unique_ptr<bisSimpleImage<float> > out_image(bisAdvancedImageAlgorithms::backProjectImage(threed.get(),twod.get(),axis,flipz,flipy,threshold,window));
   if (debug)
     std::cout << "Back Projecting Done" << std::endl;
   
   return out_image->releaseAndReturnRawArray();
+
+}
+
+
+
+  // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation',  'ParamObj', 'debug' ] } 
+unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_ptr,unsigned char* xform_ptr,const char* jsonstring,int debug) {
+
+  if (debug)
+    std::cout << "_____ Beginning computeBackProjectAndProjectPointPairsWASM" << std::endl;
+  
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  if (!params->parseJSONString(jsonstring)) {
+    std::cout << "_____ Failed to parse parameters in computeBackProjectAndProjectPointPairsWASM" << std::endl;
+    return 0;
+  }
+  
+  if(debug)
+    params->print("from computeBackProjectAndProjectPointPairsWASM","_____");
+
+  std::unique_ptr<bisSimpleImage<float> > threed(new bisSimpleImage<float>("threed"));
+
+  if (!threed->linkIntoPointer(input_ptr)) {
+    std::cout << "_____ Failed to link into input_ptr in computeBackProjectAndProjectPointPairsWASM" << std::endl;
+    return 0;
+  }
+
+  std::shared_ptr<bisAbstractTransformation> warpXform=bisDataObjectFactory::deserializeTransformation(xform_ptr,"warpxform");
+  if (warpXform.get()==0) {
+    std::cerr << "Failed to deserialize transformation " << std::endl;
+    return 0;
+  }
+
+  int flipz=params->getBooleanValue("flip",0);
+  int flipy=params->getBooleanValue("flipy",0);
+  int axis=params->getIntValue("axis",1);
+  float threshold=params->getFloatValue("threshold",0.05);
+  int sampling=params->getIntValue("sampling",4);
+  int depth=params->getIntValue("depth",2);
+  if (debug) {
+    std::cout << "Beginning actual Image Back Pair Making" << std::endl;
+  }
+
+  std::unique_ptr<bisSimpleMatrix<float> > out_matrix(new bisSimpleMatrix<float>());
+  
+  bisAdvancedImageAlgorithms::computeBackProjectAndProjectPointPairs(threed.get(),
+                                                                     warpXform.get(),
+                                                                     out_matrix.get(),
+                                                                     sampling,
+                                                                     axis,flipz,flipy,threshold,depth);
+if (debug)
+    std::cout << "Back Projecting Pair Done" << std::endl;
+  
+  return out_matrix->releaseAndReturnRawArray();
 
 }
