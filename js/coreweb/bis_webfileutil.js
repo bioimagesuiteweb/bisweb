@@ -260,8 +260,10 @@ const webfileutils = {
             }
         }
 
-        if (!foundall)
+        if (!foundall) {
+            fileopts.filters=fileopts.filer || [];
             fileopts.filters.push({ name: 'All Files', extensions: [ "*"]});
+        }
 
         let os=genericio.getosmodule();
         if (os.platform() === 'darwin') {
@@ -301,7 +303,7 @@ const webfileutils = {
             if (multiple !== '')
                 properties.push(multiple);
                 
-            console.log('Filters=',JSON.stringify(fileopts.filters,null,2), fileopts.defaultpath,JSON.stringify(properties));
+            //console.log('Filters=',JSON.stringify(fileopts.filters,null,2), fileopts.defaultpath,JSON.stringify(properties));
             
             cmd(null, {
                 title: fileopts.title,
