@@ -22,13 +22,10 @@ import ctypes
 import struct
 import json
 import nibabel as nib
-from copy import deepcopy
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.core.bis_baseutils as bis_baseutils;
 import biswebpython.utilities.plyFileTool as plyutil
 import biswebpython.utilities.jsonFileTool as jsonutil
-
-
 
 # --------------------------------------
 # bisBaseObject
@@ -155,8 +152,8 @@ class bisMatrix(bisBaseObject):
             return True;
 
         text=file.read()
-
-
+        
+        
         if (ext==".csv"):
             self.data_array = np.genfromtxt(fname, delimiter= ",")
         elif (ext==".matr"):
@@ -168,7 +165,6 @@ class bisMatrix(bisBaseObject):
     def save(self,fname):
 
         ext=os.path.splitext(fname)[1]
-
         if (ext==".binmatr"):
             return self.saveBinary(fname);
 
@@ -208,13 +204,13 @@ class bisMatrix(bisBaseObject):
 
     def loadBinary(self,fname):
 
-        with open(fname, mode='rb') as file:
+        with open(fname, mode='rb') as file: 
             pointer = file.read()
             hd=np.frombuffer(bytes(pointer[0:16]),dtype=np.uint32);
             if (hd[0]!=1700):
                 print('Bad binmatr file');
                 return False;
-
+            
             dims=[ hd[2],hd[3] ];
             tp=hd[1];
             dt=np.int64;
@@ -234,7 +230,6 @@ class bisMatrix(bisBaseObject):
     def saveBinary(self,fname):
 
         sz=self.data_array.shape;
-
         hd=np.zeros([4],dtype=np.int32);
         hd[0]=1700;
         hd[1]=0;
@@ -242,14 +237,16 @@ class bisMatrix(bisBaseObject):
         hd[3]=sz[1];
 
 
+        
         dat=0;
         tp=str(self.data_array.dtype);
+        
         if (tp=='float32'):
             hd[1]=2;
             dat=np.zeros(hd[2]*hd[3],dtype=np.float32);
         elif (tp=='float64'):
             hd[1]=3;
-            dat=np.zeros(hd[2]*hd[3],type=np.float64);
+            dat=np.zeros(hd[2]*hd[3],dtype=np.float64);
         else:
             hd[1]=1;
             dat=np.zeros(hd[2]*hd[3],dtype=np.int64)
@@ -259,7 +256,6 @@ class bisMatrix(bisBaseObject):
             for j in range(0,hd[3]):
                 dat[index]=self.data_array[i][j];
                 index=index+1;
-
 
         total=hd.tobytes();
         total+=dat.tobytes();
@@ -319,16 +315,6 @@ class bisImage(bisBaseObject):
             self.affine=parent.affine
         biswasm.release_pointer(wasm_pointer);
         return 1;
-
-
-    def cloneImage(self):
-        new_img=bisImage()
-        new_img.spacing=deepcopy(self.spacing)
-        new_img.dimensions=deepcopy(self.dimensions)
-        new_img.affine=deepcopy(self.affine)
-        new_img.data_array=deepcopy(self.data_array)
-        return new_img
-
 
     def load(self,fname):
 
@@ -491,6 +477,14 @@ class bisLinearTransformation(bisMatrix):
             return False;
         return True;
 
+    def getDescription(self):
+        v=str(np.reshape(self.data_array,-1))
+        a=''
+        if (len(self.filename)>0):
+            a=self.filename+', '
+        
+        return a+v
+
 # --------------------------------------
 # bisGridTransformation
 # --------------------------------------
@@ -504,8 +498,9 @@ class bisGridTransformation(bisBaseObject):
         self.grid_spacing=[10,10,10];
         self.grid_origin=[0,0,0];
         self.grid_usebspline=True;
+        
+    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],newdata=None,usebspline=True):
 
-    def create(self,dim=[4,4,4],spa=[10,10,10],ori=[0,0,0],usebspline=True):
         if dim.shape[0]==3:
             self.grid_dimensions=dim;
         if spa.shape[0]==3:
@@ -517,11 +512,47 @@ class bisGridTransformation(bisBaseObject):
         else:
             self.grid_usebspline=False;
 
-        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2];
+        self.data_array=None
 
-        self.data_array=np.zeros([sz*3],dtype=np.float32);
+        sz=self.grid_dimensions[0]*self.grid_dimensions[1]*self.grid_dimensions[2]*3
+
+        if (newdata is not None):
+            s=newdata.shape
+            print('++++ Trying to copy grid displacements from matrix of size=',s, ' need total=',sz)
+            d=s[0]
+            transpose=False
+            if (len(newdata.shape)==2):
+                d=s[0]*s[1]
+                transpose=True
+            
+            if (d==sz):
+                if (transpose):
+                    self.data_array=np.reshape(np.transpose(newdata),-1)
+                else:
+                    self.data_array=np.reshape(newdata,-1)
+            else:
+                raise Exception('Bad data array dimensions',s,' needed', self.grid_dimensions,'*',3)
+
+            print('++++ Final Data Array =',self.data_array.shape)
+        else:
+            self.data_array=np.zeros([sz],dtype=np.float32);
+            
         return self;
-
+    
+    def getDescription(self):
+        
+        tp='none'
+        sh=[0]
+        try:
+            tp=str(self.data_array.dtype)
+            sh=self.data_array.shape
+        finally:       
+            a='';
+            if (len(self.filename)>0):
+                a=self.filename+', '
+        
+        return a+'dims='+str(self.grid_dimensions)+' spa='+str(self.grid_spacing)+' origin='+str(self.grid_origin)+' bspline='+str(self.grid_usebspline)+' dispfield='+str(sh)+','+tp
+        
     def serializeWasm(self):
         s=self.data_array.shape;
         top_header=np.zeros([4],dtype=np.int32);
@@ -543,7 +574,6 @@ class bisGridTransformation(bisBaseObject):
             f_head[ia+3]=self.grid_origin[ia];
 
         return top_header.tobytes()+i_head.tobytes()+f_head.tobytes()+self.data_array.tobytes('F');
-
 
     def deserializeWasm(self,wasm_pointer,offset=0):
 
@@ -726,7 +756,7 @@ class bisComboTransformation(bisBaseObject):
             ng=bisGridTransformation();
             numlines=ng.parse(lines,offset);
             if numlines>0:
-                offset=numlines;
+                offset=offset+numlines;
                 self.grids.append(ng);
             else:
                 return False;
@@ -749,6 +779,15 @@ class bisComboTransformation(bisBaseObject):
 
         return False;
 
+    def getDescription(self):
+        v=str(np.reshape(self.data_array,-1))
+        out=self.filename+' numgrids='+str(len(self.grids))+'\n'
+        if (self.linear!=0):
+            out=out+'\t linear: '+self.linear.getDescription()+'\n'
+        for i in range(0,len(self.grids)):
+            out=out+'\t grid('+str(i+1)+'): '+self.grids[i].getDescription()+'\n'
+        return out
+
 
 # --------------------------------------
 # bisSurface
@@ -758,24 +797,86 @@ class bisSurface(bisBaseObject):
 
     def __init__(self):
         super().__init__();
-        self.vertices=None;
-        self.faces=None;
-        self.labels=None;
+        self.creatematrixlists();
 
-    def create(self,vertices,faces,labels):
-        self.vertices=vertices;
-        self.faces=faces;
-        self.labels=labels;
+    def creatematrixlists(self):
+        self.matrices= {
+            'points' : None,
+            'triangles' : None,
+            'pointData' : None,
+            'triangleData' : None,
+        };
+        self.matrixnames=[ 'points','triangles','pointData','triangleData' ];
 
-    def getRawSize():
-        raise Exception('----- Not Implemented');
+    def getPoints(self):
+        return self.matrices['points'];
 
+    def getTriangles(self):
+        return self.matrices['triangles'];
+
+    def getPointData(self):
+        return self.matrices['pointData'];
+
+    def getTriangleData(self):
+        return self.matrices['triangleData'];
+
+    def create(self,points=None,triangles=None,pointData=None,triangleData=None):
+        self.matrices['points']=points;
+        self.matrices['triangles']=triangles;
+        self.matrices['pointData']=pointData;
+        self.matrices['triangleData']=triangleData;
+        
+    def getRawSize(self):
+        l=32;
+        for i in range(0,len(self.matrixnames)):
+            #print('Begin', i,'=',l);
+            nm=self.matrixnames[i];
+            if (self.matrices[nm] is not None):
+                shp=self.matrices[nm].shape;
+                l=l+24+self.matrices[nm].dtype.itemsize*shp[0]*shp[1];
+        return l;
+    
     def serializeWasm(self):
-        raise Exception('----- Not Implemented');
+        
+        raw=self.getRawSize();
+        #print('Raw=',raw);
+        top_header=np.zeros([8],dtype=np.int32);
+        top_header[0]=biswasm.getSurfaceMagicCode();
+        top_header[1]=biswasm.get_nifti_code(np.float32);
+        top_header[2]=32;
+        top_header[3]=raw-32;
 
-
+        out=None;
+        for i in range(0,len(self.matrixnames)):
+            nm=self.matrixnames[i];
+            if (self.matrices[nm] is not None):
+                if (out==None):
+                    out=biswasm.serialize_simpledataobject(self.matrices[nm]);
+                else:
+                    out+=biswasm.serialize_simpledataobject(self.matrices[nm]);
+                if (i<2):
+                    top_header[i+4]=self.matrices[nm].shape[0];
+                else:
+                    top_header[i+4]=self.matrices[nm].shape[1];
+                    #       print('Added ',nm,len(out));
+        
+        hd=top_header.tobytes();
+        #print('Adding header=',top_header,len(hd));
+        return hd+out;
+    
     def deserializeWasm(self,wasm_pointer,offset=0):
-        raise Exception('----- Not Implemented');
+
+        self.create();
+        header=struct.unpack('iiiiiiii',bytes(wasm_pointer[offset:offset+32]));
+        offset=offset+32;
+        for i in range(0,len(self.matrixnames)):
+            nm=self.matrixnames[i];
+            if (header[i+4]>0):
+                out=biswasm.deserialize_simpledataobject(wasm_pointer,offset);
+                self.matrices[nm]=out['data'];
+                shp=self.matrices[nm].shape;
+                offset=offset+24+(self.matrices[nm].dtype).itemsize*shp[0]*shp[1];
+        return True;
 
     def getString(self):
         raise Exception('----- Not Implemented');
@@ -787,8 +888,8 @@ class bisSurface(bisBaseObject):
         fileExtension = filename.split('.')[-1];
         if fileExtension=='ply' or fileExtension == 'PLY':
             try:
-                vertices, triangles, labels = plyutil.readPlyFile(filename);
-                self.create(vertices,triangles, labels);
+                points, triangles, pointData = plyutil.readPlyFile(filename);
+                self.create(points,triangles, pointData);
                 self.filename=filename;
                 print('+++ Surface loaded ',self.getDescription());
                 return True;
@@ -796,8 +897,8 @@ class bisSurface(bisBaseObject):
                 return False;
 
         try:
-            vertices, triangles, labels = jsonutil.readJsonFile(filename);
-            self.create(vertices,triangles,labels);
+            points, triangles, pointData = jsonutil.readJsonFile(filename);
+            self.create(points,triangles,pointData);
             self.filename=filename;
             print('+++ Surface loaded ',self.getDescription());
             return True;
@@ -811,67 +912,63 @@ class bisSurface(bisBaseObject):
         print('fileExt=',fileExtension);
         if fileExtension=='ply' or fileExtension == 'PLY':
             try:
-                if bool(self.labels.any()):
-                    plyutil.writePlyFileWithLabels(self.vertices, self.faces, self.labels, filename);
+                if bool(self.matrices['pointData'].any()):
+                    plyutil.writePlyFileWithLabels(self.matrices['points'], self.matrices['triangles'], self.matrices['pointData'], filename);
                     self.filename=filename;
-                    print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
+                    print('++++ Saved surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
                 else:
-                    plyutil.writePlyFile(self.vertices, self.faces, filename);
+                    plyutil.writePlyFile(self.matrices['points'], self.matrices['triangles'], filename);
                     self.filename=filename;
-                    print('++++ Saved surface in ',filename,' num verts=',self.vertices.shape[0]);
-            except:
-                print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
-                return False;
-
-        import json
-
-        out=json.dumps(data);
-        try:
-            with open(filename, 'w') as fp:
-                fp.write(out);
-                print('++++\t saved in ',filename,len(out));
+                    print('++++ Saved surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
                 return True
-        except:
-            print('---- Failed to save surface in ',filename,' num verts=',self.vertices.shape[0]);
-            return False;
-
-
+            except:
+                print('---- Failed to save surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
+                return False;
+            
+        print('---- Failed to save surface in ',filename,' num verts=',self.matrices['points'].shape[0]);
+        return False;
+        
+            
         return True;
 
 
     def toDictionary(self):
-
-        sh=self.vertices.shape;
-        th=self.faces.shape;
-        dh=self.labels.shape;
+    
+        sh=self.matrices['points'].shape;
+        th=self.matrices['triangles'].shape;
+        dh=self.matrices['pointData'].shape;
         dz=dh[0];
         if (len(dh)>1):
             dz=dh[0]*dh[1];
-
+            
         data={};
-
-        data['points']=np.reshape(self.vertices,[ sh[0]*sh[1]]).tolist();
-        data['triangles']=np.reshape(self.faces,[ th[0]*th[1]]).tolist();
-        data['indices']=np.reshape(self.labels,[ dz ]).tolist();
+        
+        data['points']=np.reshape(self.matrices['points'],[ sh[0]*sh[1]]).tolist();
+        data['triangles']=np.reshape(self.matrices['triangles'],[ th[0]*th[1]]).tolist();
+        if (data['pointData']!=None):
+            data['pointData']=np.reshape(self.matrices['pointData'],[ dz ]).tolist();
+        if (data['triangleData']!=None):
+            data['triangleData']=np.reshape(self.matrices['triangleData'],[ dz ]).tolist();
 
         return data;
-
+        
     def getDescription(self):
 
         a=self.filename+' '
-        if (self.vertices is None):
-            return a;
-        a=a+'np:'+str(self.vertices.shape);
+        if (self.matrices['points'] is not None):
+            a=a+'np:'+str(self.matrices['points'].shape)+' '+str(self.matrices['points'].dtype);
 
-        if (self.faces is None):
-            return a
+        if (self.matrices['triangles'] is not None):
+            a=a+' nt='+str(self.matrices['triangles'].shape)+' '+str(self.matrices['triangles'].dtype);
 
-        a=a+' nt='+str(self.faces.shape);
+        if (self.matrices['pointData'] is not None):
+            a=a+' pointData='+str(self.matrices['pointData'].shape)+' '+str(self.matrices['pointData'].dtype);
 
-        if (self.labels is None):
-            return a;
-        return a+' nl='+str(self.labels.shape);
+        if (self.matrices['triangleData'] is not None):
+            a=a+' triangleData='+str(self.matrices['triangleData'].shape)+' '+str(self.matrices['triangleData'].dtype);
 
+        return a;
+        
 
 # --------------------------------------
 # bisCollection
@@ -960,3 +1057,5 @@ def loadTransformation(fname):
         return None
 
     return linear;
+
+
