@@ -128,3 +128,14 @@ def cpFile(src, dst=None):
         copy(src, dst)
 
     return dst
+
+
+
+
+def pathChk(inp):
+    oup = None
+    if inp[-1] == '/':
+        return inp
+    else:
+        oup = inp + '/'
+        return oup

@@ -41,8 +41,10 @@ def ifComplete(path, N):
 
 
 
-def bw_dcm2nii(dcm_path, oup_path, debug):
+def bw_dcm2nii(dpath, opath, debug):
     logm = []
+    dcm_path = bids_utils.pathChk(dpath)
+    oup_path = bids_utils.pathChk(opath)
 
     for root, dirs, files in os.walk(dcm_path, topdown=True):
         cmd = ''
@@ -56,7 +58,6 @@ def bw_dcm2nii(dcm_path, oup_path, debug):
         bids_sbj.root = root
         bids_sbj.files = files
 
-
         if 'anat' == bids_sbj.datatype or 'func' == bids_sbj.datatype:
 
             if 'sub-' in bids_sbj.ses:
@@ -66,8 +67,8 @@ def bw_dcm2nii(dcm_path, oup_path, debug):
             else:
                 tmps = '/'
 
-            oup_sbj = oup_path + '/' + bids_sbj.subj
-            oup_ses = oup_path + '/' + bids_sbj.subj + tmps + bids_sbj.ses
+            oup_sbj = oup_path + bids_sbj.subj
+            oup_ses = oup_path + bids_sbj.subj + tmps + bids_sbj.ses
             if not os.path.exists(oup_sbj):
                 os.mkdir(oup_sbj)
             if not os.path.exists(oup_ses):
