@@ -1,4 +1,7 @@
-on:  [ push ]
+on: 
+  schedule:
+    - cron: '33 6 * * *'
+
 
 jobs:
   windows_test:
@@ -11,7 +14,7 @@ jobs:
     - name: Environment Setup
       run: |
         python --version
-        cp /c/hostedtoolcache/windows/Python/3.7.8/x64/python.exe /c/hostedtoolcache/windows/Python/3.7.8/x64/python3.exe
+        cp /c/hostedtoolcache/windows/Python/3.7.9/x64/python.exe /c/hostedtoolcache/windows/Python/3.7.9/x64/python3.exe
         echo "----------------------------------------------------"
         echo "git = `which git` `git --version`"
         echo "python = `which python` `python --version`"
