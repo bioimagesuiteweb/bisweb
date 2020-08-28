@@ -37,6 +37,11 @@ inflateSurface
 regressionTests
 computeImageMatrixCorrelation
 timeseriesNormalizeImage
+ndaElementsGenerator
+timeInterval
+bidsRename
+rotateScaleImage
+dicom2nii
 patchReformatImage
 imageDistanceMatrix
 temporalImageDistanceMatrix
