@@ -1,18 +1,18 @@
 # LICENSE
-# 
+#
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-# 
+#
 # BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # - you may not use this software except in compliance with the License.
 # - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-# 
+#
 # __Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.__
-# 
+#
 # ENDLICENSE
 
 cmake_minimum_required(VERSION 3.5)
@@ -123,7 +123,7 @@ MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 IF (BIS_USEGPL)
 
   OPTION(BIS_BUILDNONGPL "Also Build Non GPL-licensed library" OFF)
-  
+
   FIND_PATH(BIS_GPL_DIR BisWebExtra.cmake  REQUIRED)
   get_filename_component(BIS_GPL_DIR ${BIS_GPL_DIR} ABSOLUTE)
   MESSAGE("-- Using GPL Licensed Code from ${BIS_GPL_DIR}")
@@ -136,12 +136,12 @@ IF (BIS_USEGPL)
       ${KITSRCS}
       nongpl/bisReplacementExportedFunctions.cpp)
   ENDIF (BIS_BUILDNONGPL)
-    
+
   SET (KITSRCS
     ${KITSRCS}
     ${GPLSOURCES}
     )
-  
+
 ELSE (BIS_USEGPL)
   SET (KITSRCS
     ${KITSRCS}
@@ -284,14 +284,14 @@ INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
 IF (BIS_A_EMSCRIPTEN)
 
   install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE.md)
-  
+
   # ---------------------------------------------------------------------------------------------
   # Web Assembly Mode
   # ---------------------------------------------------------------------------------------------
-  
+
   OPTION(BIS_WEB_WASM "Build webassembly instead of asm.js" ON)
   MARK_AS_ADVANCED(BIS_WEB_WASM)
-  
+
   SET (BIS_WEB_OPT "-O2" CACHE STRING "BIS Compiler Optimization")
   MARK_AS_ADVANCED(BIS_WEB_OPT)
 
@@ -300,15 +300,15 @@ IF (BIS_A_EMSCRIPTEN)
 
   # Left over
   MARK_AS_ADVANCED(BIS_EXTRAPATH)
-  
+
   # SET VARIABLES
- 
+
   IF (BIS_WEB_WASM)
     SET(WASM_STRING "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1")
   ELSE(BIS_WEB_WASM)
     SET(WASM_STRING "")
   ENDIF(BIS_WEB_WASM)
-  
+
   SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   IF (BIS_USEINDIV)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
@@ -317,11 +317,11 @@ IF (BIS_A_EMSCRIPTEN)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${PROJECT_SOURCE_DIR}/cpmcode")
   ENDIF (BIS_USECPM)
 
-    
+
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
-  
+
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
 
@@ -335,7 +335,7 @@ IF (BIS_A_EMSCRIPTEN)
   ELSE (BIS_BUILDNONGPL)
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
     SET (LIBLIST ${LIBNAME})
-    
+
   ENDIF (BIS_BUILDNONGPL)
 
   foreach(lib ${LIBLIST})
@@ -345,13 +345,13 @@ IF (BIS_A_EMSCRIPTEN)
     ELSE (BIS_USEGPL)
       SET(GPL 0)
     ENDIF (BIS_USEGPL)
-      
-    
+
+
     SET_TARGET_PROPERTIES(${lib} PROPERTIES LINK_DEPENDS "${POST_JS};${PRE_JS}")
     SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${lib}.js")
     SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${lib}.wasm")
     install (FILES ${FVAR2} DESTINATION bisweb/lib)
-    
+
     SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${lib}_wasm.js")
     # ------------------ create webpack wasm module for web-based tools ---------------
     ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
@@ -363,8 +363,8 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_js.txt")
   install (FILES ${README_FILE} DESTINATION bisweb/)
-  configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY ) 
-  
+  configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY )
+
   # ------------------ create wrapper ---------------------------
   SET (JS_WRAP_OUTPUT ${EXECUTABLE_OUTPUT_PATH}/libbiswasm_wrapper.js)
   SET (JS_WRAP_OUTPUT2 ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
@@ -373,7 +373,7 @@ IF (BIS_A_EMSCRIPTEN)
     PRE_BUILD COMMENT "Creating JS Wrappers"
     COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
-  
+
   # ---- create library for command line  -----------
   FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/[a-zA-z]*.js)
 
@@ -386,15 +386,15 @@ IF (BIS_A_EMSCRIPTEN)
   SET (CONFIGFILE ${WEBPLIBCONFIG})
 
 
-  
-  add_custom_command(OUTPUT ${OUTSCRIPT} 
-    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} 
+
+  add_custom_command(OUTPUT ${OUTSCRIPT}
+    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE}
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE} using ${CONFIGFILE}"
-    COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
+    COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE}
     )
   add_custom_target(${BISWEBLIBFILE} ALL DEPENDS ${OUTSCRIPT})
 
-  
+
   SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${BISWEBLIBFILE})
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -408,7 +408,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-  
+
   # ---- create npm package stuff  -----------
   SET (NPMREADME
     ${LIBRARY_OUTPUT_PATH}/README.md )
@@ -422,7 +422,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   set (NPMPACKAGEFILE2 ${LIBRARY_OUTPUT_PATH}/package.json.tf)
-  add_custom_command(OUTPUT ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} 
+  add_custom_command(OUTPUT ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2}
     DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE} ${LIBNAME}
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
@@ -450,7 +450,7 @@ IF (BIS_A_EMSCRIPTEN)
       DEPENDS ${JSFILES} ${MODULE_SCRIPTS_CREATOR} CMakeLists.txt  ${LIBNAME}
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
       COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
-    
+
     add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME})
 
     install (DIRECTORY ${MODULE_DIR}  DESTINATION bisweb
@@ -467,7 +467,7 @@ IF (BIS_A_EMSCRIPTEN)
       PATTERN "*.xml"
       PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
   ENDIF()
-  
+
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
 
   # ------------------ unit tests ---------------------------
@@ -501,7 +501,7 @@ IF (BIS_A_EMSCRIPTEN)
   # ---------------------------------------------------------------------------------------------
 
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
-  
+
   SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
   install (FILES ${INSCRIPT} DESTINATION bisweb/test
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -525,24 +525,24 @@ IF (BIS_A_EMSCRIPTEN)
   install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/linux/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/linux)
   install (PROGRAMS ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries/mac/dcm2niix DESTINATION bisweb/lib/dcm2nii_binaries/mac)
   install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
-  
+
 ELSE(BIS_A_EMSCRIPTEN)
 
-  
+
   # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
   # ---------------------------------------------------------------------------------------------
-  
+
   OPTION(BIS_A_PYTHON "Build Python Wrappers" ON)
   OPTION(BIS_A_MATLAB "Build Matlab Wrappers" ON)
   OPTION(BIS_A_DEVEL "Install Developer Environment (on make install)" OFF)
   MARK_AS_ADVANCED(BIS_A_DEVEL)
-  
+
   SET(CLIBNAME biswasm)
   SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
-  
+
   # ---------------------------
-  
+
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1 /EHsc" CACHE STRING "" FORCE)
   ELSE (WIN32)
@@ -550,7 +550,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 " CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
-  
+
   # ---------------------------
 
   include_directories (SYSTEM ${EIGEN3_INCLUDE_DIRS} )
@@ -577,7 +577,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   ENDIF(MSVC)
 
   # ---------------------------
-  
+
   IF (BIS_A_PYTHON)
     install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
     IF (BIS_A_DEVEL)
@@ -604,7 +604,7 @@ ELSE(BIS_A_EMSCRIPTEN)
       MESSAGE(FATAL_ERROR "Need Python 3.5 or greater, found ${PYTHON_VERSION_STRING}")
     ENDIF (${PYTHON_VERSION_MAJOR} LESS 3)
 
-  # ------------------ create wrapper ---------------------------    
+  # ------------------ create wrapper ---------------------------
     SET (PYTHON_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.py)
     add_custom_command(OUTPUT ${PYTHON_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
@@ -619,9 +619,9 @@ ELSE(BIS_A_EMSCRIPTEN)
     # ------------------ create module descriptions -------------
 
     FILE (STRINGS ${BISWEBPYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
-    
+
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/bismodules_desc.py)
-    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/[a-zA-Z]*.js)
+    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
 
     IF (WIN32)
       add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
@@ -640,28 +640,29 @@ ELSE(BIS_A_EMSCRIPTEN)
     add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION biswebpython/lib)
 
-    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/[a-zA-Z]*.py)
-    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/[a-zA-Z]*.py)
-    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/[a-zA-Z]*.py)
-    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/[a-zA-Z]*.py)
-    
+    FILE(GLOB PYLIST0 ${BISWEBPYTHON_SOURCE_DIR}/*.py)
+    FILE(GLOB PYLIST1 ${BISWEBPYTHON_SOURCE_DIR}/core/*.py)
+    FILE(GLOB PYLIST2 ${BISWEBPYTHON_SOURCE_DIR}/modules/*.py)
+    FILE(GLOB PYLIST3 ${BISWEBPYTHON_SOURCE_DIR}/utilities/*.py)
+
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION biswebpython)
     install (FILES ${PYLIST0} DESTINATION  biswebpython
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    install (FILES ${PYLIST1} DESTINATION  biswebpython/core)
+    install (FILES ${PYLIST1} DESTINATION biswebpython/core)
     install (FILES ${PYLIST3} DESTINATION biswebpython/utilities)
     install (FILES ${PYLIST2} DESTINATION biswebpython/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    
+
     INSTALL (FILES "${PROJECT_SOURCE_DIR}/../biswebpython/config/biswebpython_readme.md" DESTINATION wheel RENAME README.md  PERMISSIONS OWNER_READ  WORLD_READ)
     INSTALL (FILES ${BISWEBPYTHON_SOURCE_DIR}/core/__init__.py DESTINATION biswebpython/lib PERMISSIONS OWNER_READ  WORLD_READ)
+
 
     configure_file( ${BISWEB_PYTHON_SETUP} "${PROJECT_BINARY_DIR}/setup.py" @ONLY )
     install (FILES ${PROJECT_BINARY_DIR}/setup.py DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_MANIFEST} DESTINATION wheel)
     install (FILES ${BISWEB_PYTHON_REQUIREMENTS} DESTINATION biswebpython)
     install (FILES ${BISWEBPYTHON_MODULE_LIST_FILENAME} DESTINATION biswebpython/modules)
-    
+
     # ------------------ unit tests ---------------------------
     IF(BIS_UNITTEST)
       FILE(GLOB TLIST ${TEST_DIR}/test*.py)
@@ -685,20 +686,20 @@ ELSE(BIS_A_EMSCRIPTEN)
 	MATH (EXPR COUNT "${COUNT}+1")
       ENDFOREACH (item ${PYTHONMODULES})
       MESSAGE("~~~~~ Added ${COUNT} python module tests")
-    
+
     ENDIF(BIS_MODULETEST)
 
 
     # Do not install this just yet
     install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION biswebpython)
-    
+
 
   ENDIF(BIS_A_PYTHON)
 
   # ---------------
   # Matlab
   # ---------------
-  
+
   IF (BIS_A_MATLAB)
     MESSAGE("++ Building Matlab Prerequisites")
 
@@ -711,7 +712,7 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     configure_file( ${PROJECT_SOURCE_DIR}/../matlab/config/bis_package.m.in "${PROJECT_BINARY_DIR}/creatematlab.sh" @ONLY )
     install (FILES ${PROJECT_BINARY_DIR}/creatematlab.sh DESTINATION ".")
-    
+
     SET (MATLAB_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.m)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT}
@@ -719,7 +720,7 @@ ELSE(BIS_A_EMSCRIPTEN)
       COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} --matlab -o ${MATLAB_WRAP_OUTPUT})
     add_custom_target(wrappers_mat ALL DEPENDS ${MATLAB_WRAP_OUTPUT})
     install (FILES ${MATLAB_WRAP_OUTPUT} DESTINATION biswebmatlab)
-    
+
     SET (MATLAB_OUT_HEADER ${LIBRARY_OUTPUT_PATH}/bis_matlab.h)
     add_custom_command(OUTPUT ${MATLAB_OUT_HEADER}
       DEPENDS ${PARSE_HEADERS} ${HEADER_SCRIPT} CMakeLists.txt
@@ -762,7 +763,7 @@ ELSE(BIS_A_EMSCRIPTEN)
       install (FILES ${MACEXTRA} DESTINATION biswebpython/lib)
       install (FILES ${WINEXTRA} DESTINATION biswebpython/lib)
     ENDIF (BIS_A_PYTHON)
-    
+
     IF (BIS_A_MATLAB)
         install (FILES ${MACEXTRA} DESTINATION biswebmatlab)
         install (FILES ${WINEXTRA} DESTINATION biswebmatlab)
@@ -773,7 +774,5 @@ ELSE(BIS_A_EMSCRIPTEN)
   # Common
   # ---------------
   add_custom_target(wrappers ALL DEPENDS ${MATLAB_OUT_HEADER} ${MATLAB_WRAP_OUTPUT} ${PYTHON_WRAP_OUTPUT} ${WRAP_SCRIPT} ${HEADER_SCRIPT} ${PYTHON_MODULE_DESC})
-  
+
 ENDIF(BIS_A_EMSCRIPTEN)
-
-
