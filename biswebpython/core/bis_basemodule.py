@@ -20,7 +20,6 @@ import sys
 import ast
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.core.bis_baseutils as bis_baseutils;
-import biswebpython.utilities.bidsObjects as bids_objects;
 
 class baseModule:
 
@@ -208,21 +207,27 @@ class baseModule:
                 return False;
             return True
         elif (objecttype=='bidsdemogr'):
+            import biswebpython.utilities.bidsObjects as bids_objects;
             self.inputs[key] = bids_objects.bidsDemogr();
             chkobjtype = True
         elif (objecttype=='bidsappx'):
+            import biswebpython.utilities.bidsObjects as bids_objects;
             self.inputs[key] = bids_objects.bidsAppx();
             chkobjtype = True
         elif (objecttype=='bidslut'):
+            import biswebpython.utilities.bidsObjects as bids_objects;
             self.inputs[key] = bids_objects.bidsLUT();
             chkobjtype = True
         elif (objecttype=='bidstext'):
+            import biswebpython.utilities.bidsObjects as bids_objects;
             self.inputs[key] = bids_objects.bidsText();
             chkobjtype = True
         elif (objecttype=='bidssubj'):
+            import biswebpython.utilities.bidsObjects as bids_objects;
             self.inputs[key] = bids_objects.bidsSubj();
             chkobjtype = True
         elif (objecttype=='path'):
+            import biswebpython.utilities.bidsObjects as bids_objects;
             self.inputs[key] = bids_objects.filePath();
             chkobjtype = True
 

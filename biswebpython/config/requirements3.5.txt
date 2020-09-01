@@ -1,10 +1,7 @@
 nibabel==2.1.0
-numpy>=1.13
+numpy==1.13
 pillow>=4.3.0
-scikit-image
-scikit-learn
-scipy
-setuptools
+setuptools==49.6.0
 wheel>=0.31
 wget
 python-dateutil
