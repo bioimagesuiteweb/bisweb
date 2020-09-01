@@ -46,10 +46,13 @@ def bw_dcm2nii(dpath, opath, debug):
     dcm_path = bids_utils.pathChk(dpath)
     oup_path = bids_utils.pathChk(opath)
 
+    
     for root, dirs, files in os.walk(dcm_path, topdown=True):
+
+        print('___ Parsing directory',root)
+        
         cmd = ''
         ok = None
-
         bids_sbj = bids_objects.bidsSubj()
         r_str = root.rsplit('/', 3)
         bids_sbj.subj = r_str[1]
@@ -77,6 +80,7 @@ def bw_dcm2nii(dpath, opath, debug):
             if not os.path.exists(oup_ses + '/' + bids_sbj.datatype):
                 os.mkdir(oup_ses + '/' + bids_sbj.datatype)
                 cmd = 'biswebnode dicomconversion -i ' + bids_sbj.root + ' -o ' + oup_ses + '/' + bids_sbj.datatype
+                print('\t\t Executing ',cmd);
                 os.system(cmd)
                 ok = ifComplete(oup_ses + '/' + bids_sbj.datatype + '/', len(dirs))
                 if not ok:
@@ -96,5 +100,6 @@ def bw_dcm2nii(dpath, opath, debug):
                         logm.append([bids_sbj.subj + '   ' + bids_sbj.ses + '   ' + bids_sbj.datatype + '   Completed!'])
                 else:
                     logm.append([bids_sbj.subj + '   ' + bids_sbj.ses + '   ' + bids_sbj.datatype + '   Completed!'])
-
+        else:
+            print('___\t nothing to do')
     return logm

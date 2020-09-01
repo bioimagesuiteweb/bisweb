@@ -415,7 +415,7 @@ let copyFile=function(url) {
     let splitNames = splitFilenames(url);
     let src = splitNames[0], dest = splitNames[1];
 
-    console.log('Copying ',src,' to',dest);
+    //console.log('Copying ',src,' to',dest);
     
     // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
     let rd = fs.createReadStream(src);

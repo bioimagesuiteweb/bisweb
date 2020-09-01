@@ -203,7 +203,7 @@ class DicomModule extends BaseModule {
         // Temp Dir 
         // --------------------------------------------
         tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
-        console.log('Tmpdir=',tmpdir);
+        console.log('.... dicommodule using temporary directory=',tmpdir);
         
         try {
             fs.mkdirSync(tmpdir);
@@ -265,7 +265,7 @@ class DicomModule extends BaseModule {
             let fileList = await bis_genericio.getMatchingFiles(tmpdir + '/*');
             let filePromiseArray = [];
             
-            console.log('____dicom finished file list=\n\t', fileList.join('\n\t'));
+            console.log('____dicom finished file list=\n___\t'+fileList.join('\n___\t'));
             for (let item of fileList) {
                 let splitItem = bis_genericio.getBaseName(item).split(/__/);
                 

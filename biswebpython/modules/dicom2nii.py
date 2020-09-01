@@ -84,13 +84,12 @@ class dicom2nii(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: dicom2nii with vals', vals);
         debug=self.parseBoolean(vals['debug'])
 
         try:
             log = d2n.bw_dcm2nii(self.inputs['dpath'].path, \
-            self.inputs['npath'].path, debug)
-
+                                 self.inputs['npath'].path, debug)
         except:
             e = sys.exc_info()[0]
             print('---- Failed to invoke algorithm ----',e);
