@@ -79,7 +79,7 @@ def bw_dcm2nii(dpath, opath, debug):
 
             if not os.path.exists(oup_ses + '/' + bids_sbj.datatype):
                 os.mkdir(oup_ses + '/' + bids_sbj.datatype)
-                cmd = 'biswebnode dicomconversion -i ' + bids_sbj.root + ' -o ' + oup_ses + '/' + bids_sbj.datatype
+                cmd = 'biswebnode dicomconversion  -i ' + bids_sbj.root + ' -o ' + oup_ses + '/' + bids_sbj.datatype
                 print('\t\t Executing ',cmd);
                 os.system(cmd)
                 ok = ifComplete(oup_ses + '/' + bids_sbj.datatype + '/', len(dirs))
