@@ -636,9 +636,9 @@ namespace bisfMRIAlgorithms {
 	    
             if (toz)
               {
-                std::cout << " toz " << sum << " --> ";
+                //std::cout << " toz " << sum << " --> ";
                 sum=bisUtil::rhoToZConversion(sum);
-                std::cout  << sum << std::endl;
+                //std::cout  << sum << std::endl;
               }
 			
             output(outrow,outcol)=(float)sum;
