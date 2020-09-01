@@ -20,6 +20,7 @@ import sys
 import ast
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.core.bis_baseutils as bis_baseutils;
+import numpy as np
 
 class baseModule:
 
@@ -235,7 +236,8 @@ class baseModule:
             ok=self.inputs[key].load(filename);
 
             if (ok!=False and not chkobjtype):
-                sz=self.inputs[key].data_array.shape;
+                sz=np.copy(self.inputs[key].data_array.shape);
+                sz=[ sz[0], 1];
                 if (sz[1]==1 and objecttype=='vector'):
                     tmp=self.inputs[key];
                     self.inputs[key]=bis_objects.bisVector();

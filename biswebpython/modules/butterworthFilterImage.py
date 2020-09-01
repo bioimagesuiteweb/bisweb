@@ -33,31 +33,39 @@ class butterworthFilterImage(bis_basemodule.baseModule):
         print('oooo invoking: butterworthFilterImage with vals', vals);
         input = self.inputs['input'];
 
+        removemean=self.parseBoolean(vals['removemean']);
+        
         if (vals['tr']<0.0):
             vals['tr'] = input.spacing[3]
             if (vals['tr']<=0.0):
                 vals['tr']=1.0
         print('+++ Using TR=',vals['tr']);
+        print('+++ Mode=',vals['type'])
 
         libbis=self.getDynamicLibraryWrapper();
         try:
             inp = input;
             out = None;
-            if (vals['type'] == "low" or vals['type'] == "band"):
+            if (vals['type'] == "high" or vals['type'] == "band"):
                 out = libbis.butterworthFilterImageWASM(input, {
-                    "type": "low",
-                    "cutoff": vals['high'],
+                    "type": "high",
+                    "removeMean" : removemean,
+                    "cutoff": vals['low'],
                     "samplerate": vals['tr']
                 }, self.parseBoolean(vals['debug']));
 
-                if (vals['type'] == "low"):
+                
+                if (vals['type'] == "high"):
                     self.outputs['output']=out;
                     return True
+                
                 inp = out;
+                removemean=False;
 
             out= libbis.butterworthFilterImageWASM(inp, {
-                "type": "high",
-                "cutoff": vals['low'],
+                "type": "low",
+                "removeMean" : removemean,
+                "cutoff": vals['high'],
                 "samplerate": vals['tr'],
             }, self.parseBoolean(vals['debug']));
 
