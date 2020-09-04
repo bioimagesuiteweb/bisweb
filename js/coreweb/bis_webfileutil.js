@@ -235,10 +235,11 @@ const webfileutils = {
 
         
         // Clean up filters that begin with a "." as electron does not like that
-
         //console.log("IN=",JSON.stringify(fileopts,null,2));
 
         let foundall=false;
+
+        
         
         if (fileopts.filters !== "DIRECTORY") {
         
@@ -258,16 +259,14 @@ const webfileutils = {
                 }
                 fileopts.filters[i].extensions=newext;
             }
-        }
 
-        if (!foundall) {
             fileopts.filters=fileopts.filer || [];
             fileopts.filters.push({ name: 'All Files', extensions: [ "*"]});
-        }
 
-        let os=genericio.getosmodule();
-        if (os.platform() === 'darwin') {
-            fileopts.filters=[{ name: 'All Files', extensions: [ "*"]} ];
+            let os=genericio.getosmodule();
+            if (os.platform() === 'darwin') {
+                fileopts.filters=[{ name: 'All Files', extensions: [ "*"]} ];
+            }
         }
         
         if (fileopts.initialCallback)
@@ -284,7 +283,8 @@ const webfileutils = {
             ];
 
         let multiple = fileopts.altkeys ? ' multiSelections' : '';
-        var cmd = window.BISELECTRON.dialog.showSaveDialog;
+        
+        let cmd = window.BISELECTRON.dialog.showSaveDialog;
         if (!fileopts.save)
             cmd = window.BISELECTRON.dialog.showOpenDialog;
 
