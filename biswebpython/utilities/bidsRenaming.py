@@ -34,12 +34,14 @@ import biswebpython.utilities.bidsUtils as bids_utils
 import biswebpython.utilities.bidsObjects as bids_objects
 
 
-def anatBidsRename(bsj):
+def anatBidsRename(bsj, oupath, exe = False):
     xx = '_'
+    yy = '/'
     if 'sub-' in bsj.ses.lower():
         bsj.subj = bsj.ses
         bsj.ses = ''
         xx = ''
+        yy = ''
 
     errorm = []
     logm = []
@@ -52,10 +54,6 @@ def anatBidsRename(bsj):
 
     if not splt_f['.nii.gz']:
         errorm.append(['Error: ' + bsj.subj + ' anat folder does not have nifti image. Or .nii images have not been zipped. Please zip all the files to .nii.gz before renaming.'])
-        flag = False
-    elif splt_f['.json'] and len(splt_f['.json']) != len(splt_f['.nii.gz']):
-        errorm.append(['Warning: check ' + bsj.subj + ' anat folder in order to make sure its nifti images and json files matched!'])
-        errorm.append(['Error: all the files in ' + bsj.subj + ' anat folder are not able to be renamed!'])
         flag = False
     else:
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -71,37 +69,47 @@ def anatBidsRename(bsj):
             flag = False
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
-        for st in bsj.scantype:
+        for st in bsj.MRscantype:
             newname = ''
             s_nii=[]
             if len(splt_nii[st]) > 1:
-# T1W, Unkonw need to be coded-------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-                # if st == 'T1w':
-                #     id = 'mprage_?????_defaced'
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-
-                # else:
-                #     id = st.lower() + '_?????_defaced'
                 try:
-                    # s_nii = bsj.sortfiles(splt_nii[st], id)
                     s_nii = bsj.sortfiles(splt_nii[st], '_run-?????_')
 
                     for idx in range(len(s_nii)):
                         run_idx = idx + 1
                         newname = bsj.subj + xx + bsj.ses + '_run-' + str(run_idx).zfill(2) + '_' + st + '.nii.gz'
-                        temp_cmd.append(['mv ' + bsj.root + '/' + s_nii[idx] + ' ' + bsj.root + '/' + newname])
+                        temp_cmd.append([bsj.root + '/' + s_nii[idx] + ' -----> ' + oupath + newname])
+                        if exe:
+                            conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
+                            if not os.path.exists(conp):
+                                os.makedirs(conp)
+                            cmd_str = 'ln ' + bsj.root + '/' + s_nii[idx] + ' ' + conp + '/' + newname
+                            rv = os.system(cmd_str)
+                            if rv:
+                                errorm.append(['Rename failed: ' + bsj.root + '/' + s_nii[idx]])
+
+
                 except:
                     errorm.append(['Error: Cannot recongnize ' + bsj.subj + ' ' + st + ' nifti file and it is not able to be renamed! Please double check the spelling!'])
                     flag = False
             elif len(splt_nii[st]) == 1:
                 newname = bsj.subj + xx + bsj.ses + '_' + st + '.nii.gz'
-                temp_cmd.append(['mv ' + bsj.root + '/' + splt_nii[st][0] + ' ' + bsj.root + '/' + newname])
+                temp_cmd.append([bsj.root + '/' + splt_nii[st][0] + ' -----> ' + oupath + newname])
+                if exe:
+                    conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
+                    if not os.path.exists(conp):
+                        os.makedirs(conp)
+                    cmd_str = 'ln ' + bsj.root + '/' + splt_nii[st][0] + ' ' + conp + '/' + newname
+                    rv = os.system(cmd_str)
+                    if rv:
+                        errorm.append(['Rename failed: ' + bsj.root + '/' + splt_nii[st][0]])
 
 
 
-        if splt_f['.json']:
+        if not splt_f['.json']:
+            errorm.append(['Warning: no json file is found in the ' + bsj.root + ' directory.'])
+        else:
             for jfile in splt_f['.json']:
                 try:
                     run_num = bsj.get_substr(jfile, '_run-?????_')
@@ -124,23 +132,43 @@ def anatBidsRename(bsj):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-            for st in bsj.scantype:
+            for st in bsj.MRscantype:
                 newname = ''
                 s_jf=[]
-                if len(splt_nii[st]) > 1:
+                num_missingjson = len(splt_nii[st]) - len(splt_jf[st])
+                if num_missingjson:
+                    errorm.append(['Warning: ' + str(num_missingjson) + ' json file(s) of ' + st + ' type nifti image cannot be found in the ' + bsj.root + ' directory.'])
+
+                if len(splt_jf[st]) > 1:
                     try:
                         s_jf = bsj.sortfiles(splt_jf[st], '_run-?????_')
 
                         for idx in range(len(s_jf)):
                             run_idx = idx + 1
                             newname = bsj.subj + xx + bsj.ses + '_run-' + str(run_idx).zfill(2) + '_' + st + '.json'
-                            temp_cmd.append(['mv ' + bsj.root + '/' + s_jf[idx] + ' ' + bsj.root + '/' + newname])
+                            temp_cmd.append([bsj.root + '/' + s_jf[idx] + ' -----> ' + oupath + newname])
+                            if exe:
+                                conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
+                                if not os.path.exists(conp):
+                                    os.makedirs(conp)
+                                cmd_str = 'ln ' + bsj.root + '/' + s_jf[idx] + ' ' + conp + '/' + newname
+                                rv = os.system(cmd_str)
+                                if rv:
+                                    errorm.append(['Rename failed: ' + bsj.root + '/' + s_jf[idx]])
                     except:
                         errorm.append(['Error: Cannot recongnize ' + bsj.subj + ' ' + st + ' json file and it is not able to be renamed! Please double check the spelling!'])
                         flag = False
-                elif len(splt_nii[st]) == 1:
+                elif len(splt_jf[st]) == 1:
                     newname = bsj.subj + xx + bsj.ses + '_' + st + '.json'
-                    temp_cmd.append(['mv ' + bsj.root + '/' + splt_jf[st][0] + ' ' + bsj.root + '/' + newname])
+                    temp_cmd.append([bsj.root + '/' + splt_jf[st][0] + ' -----> ' + oupath + newname])
+                    if exe:
+                        conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
+                        if not os.path.exists(conp):
+                            os.makedirs(conp)
+                        cmd_str = 'ln ' + bsj.root + '/' + splt_jf[st][0] + ' ' + conp + '/' + newname
+                        rv = os.system(cmd_str)
+                        if rv:
+                            errorm.append(['Rename failed: ' + bsj.root + '/' + splt_jf[st]][0])
 
     if flag:
         logm = ['ANAT Completed!']
@@ -153,12 +181,14 @@ def anatBidsRename(bsj):
 
 
 
-def funcBidsRename(bsj, bidsDgr):
+def funcBidsRename(bsj, bidsDgr, oupath, exe = False):
     xx = '_'
+    yy = '/'
     if 'sub-' in bsj.ses.lower():
         bsj.subj = bsj.ses
         bsj.ses = ''
         xx = ''
+        yy = ''
 
 
     errorm = []
@@ -195,12 +225,7 @@ def funcBidsRename(bsj, bidsDgr):
                 errorm.append(['Error: ' + bsj.subj + ' func folder does not have nifti image. Or .nii images have not been zipped. Please zip all the files to .nii.gz before renaming.'])
                 flag = False
 
-            elif (splt_f['.json'] and len(splt_f['.json']) != len(splt_f['.nii.gz'])) or (splt_f['.tsv'] and len(splt_f['.tsv']) != len(splt_f['.nii.gz'])):
-                errorm.append(['Warning: check ' + bsj.subj + ' func folder in order to make sure its nifti images, json files / tsv files matched!'])
-                errorm.append(['Error: all the files in ' + bsj.subj + ' func folder are not able to be renamed!'])
-                flag = False
             else:
-
                 N = len(splt_f['.nii.gz'])
 
                 ordl = ord.split( )
@@ -217,7 +242,7 @@ def funcBidsRename(bsj, bidsDgr):
                         taskn = ''
 
                         if int(ordl[idx]) not in tskrg:
-                            cmd_temp.append(['rm ' + bsj.root + '/' + nfile])
+                            pass
                         elif tskrp[ordl[idx]] == 1:
                             taskn = bidsDgr.taskIntpn[int(ordl[idx])]
                             newname = bsj.subj + xx + bsj.ses + '_task-' + taskn + '_bold.nii.gz'
@@ -230,24 +255,43 @@ def funcBidsRename(bsj, bidsDgr):
                             newname = bsj.subj + xx + bsj.ses + '_task-' + taskn + '_run-' + str(tskrn[ordl[idx]]).zfill(2) + '_bold.nii.gz'
 
                         if newname:
-                            cmd_temp.append(['mv ' + bsj.root + '/' + nfile + ' ' + bsj.root + '/' + newname])
+                            cmd_temp.append([bsj.root + '/' + nfile + ' -----> ' + oupath + newname])
+                            if exe:
+                                conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
+                                if not os.path.exists(conp):
+                                    os.makedirs(conp)
+                                cmd_str = 'ln ' + bsj.root + '/' + nfile + ' ' + conp + '/' + newname
+                                rv = os.system(cmd_str)
+                                if rv:
+                                    errorm.append(['Rename failed: ' + bsj.root + '/' + nfile])
 
 
                         for ft in bsj.filetype:
                             if splt_f[ft] and ft != '.nii.gz':
                                 jfile = nfile.replace('.nii.gz', ft)
-                                if not newname:
-                                    cmd_temp.append(['rm ' + bsj.root + '/' + nfile.replace('.nii.gz', ft)])
+                                if not os.path.isfile(bsj.root + '/' + jfile):
+                                    errorm.append(['Warning: ' + ft + ' file of ' + bsj.root + '/' + nfile + ' cannot be found.'])
                                 else:
-                                    cmd_temp.append(['mv ' + bsj.root + '/' + nfile.replace('.nii.gz', ft) + ' ' + bsj.root + '/' + newname.replace('.nii.gz', ft)])
+                                    jnew = newname.replace('.nii.gz', ft)
+                                    if newname:
+                                        cmd_temp.append([bsj.root + '/' + jfile + ' -----> ' + oupath + jnew])
+                                        if exe:
+                                            conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
+                                            if not os.path.exists(conp):
+                                                os.makedirs(conp)
+                                            cmd_str = 'ln ' + bsj.root + '/' + jfile + ' ' + conp + '/' + jnew
+                                            rv = os.system(cmd_str)
+                                            if rv:
+                                                errorm.append(['Rename failed: ' + bsj.root + '/' + jfile])
+                                    if ft == '.json' and not rv:
+                                        try:
+                                            run_num = bsj.get_substr(jfile, '_run-?????_')
+                                            bids_utils.jsonupdate(bsj.root + '/' + jfile, {'run_number': run_num})
+                                            bids_utils.jsonupdate(bsj.root + '/' + jfile, {'TaskName': taskn})
+                                        except:
+                                            errorm.append(['ERROR: cannot update json file! Please double check the filename and the metadata content of ' + conp+ '/'+ jnew+'.'])
+                                            flag = False
 
-                                if ft == '.json':
-                                    try:
-                                        run_num = bsj.get_substr(jfile, '_run-?????_')
-                                        bids_utils.jsonupdate(bsj.root + '/' + jfile, {'run_number': run_num})
-                                    except:
-                                        errorm.append(['ERROR: cannot update'+ bsj.root+ '/'+ jfile+ ' with its run number! Please double check the filename and the metadata content!'])
-                                        flag = False
     if flag:
         logm = ['FUNC Completed!']
 
@@ -259,20 +303,25 @@ def funcBidsRename(bsj, bidsDgr):
 
 
 
-def Rename(dgr, bids_path, debug = True):
+def Rename(dgr, inpath, oupath, exe = False, debug = True):
 
     logm = []
     cmdm = []
     elogm = []
 
 
-    for root, dirs, files in os.walk(bids_path, topdown=True):
+
+    for root, dirs, files in os.walk(inpath, topdown=True):
 
         bids_sbj = bids_objects.bidsSubj()
-        r_str = root.rsplit('/', 3)
-        bids_sbj.subj = r_str[1]
-        bids_sbj.ses = r_str[2]
-        bids_sbj.datatype = r_str[3]
+        try:
+            r_str = root.rsplit('/', 3)
+            bids_sbj.subj = r_str[1]
+            bids_sbj.ses = r_str[2]
+            bids_sbj.datatype = r_str[3]
+        except:
+            continue
+
         bids_sbj.root = root
         bids_sbj.files = files
 
@@ -281,7 +330,7 @@ def Rename(dgr, bids_path, debug = True):
 
         if 'anat' == bids_sbj.datatype:
 
-            cmds, logs, errors = anatBidsRename(bids_sbj)
+            cmds, logs, errors = anatBidsRename(bids_sbj, oupath, exe)
             logm.append(logs)
 
             if cmds != []:
@@ -294,7 +343,7 @@ def Rename(dgr, bids_path, debug = True):
 
         if 'func' == bids_sbj.datatype:
 
-            cmds, logs, errors = funcBidsRename(bids_sbj, dgr)
+            cmds, logs, errors = funcBidsRename(bids_sbj, dgr, oupath, exe)
             logm.append(logs)
 
             if cmds != []:
@@ -303,6 +352,7 @@ def Rename(dgr, bids_path, debug = True):
             if errors != []:
                 for ele2 in errors:
                     elogm.append(ele2)
+
 
 
     return cmdm, elogm, logm
