@@ -110,25 +110,6 @@ class ProjectResliceImageModule extends BaseModule {
             }],
             "params": [
                 {
-                    "name": "Force Float",
-                    "description": "If true, force output to float",
-                    "priority": 100,
-                    "advanced": true,
-                    "type": "boolean",
-                    "default" : false,
-                    "varname": "forcefloat",
-                },
-                {
-                    "name": "Fill Value",
-                    "description": "Value to use for outside the image",
-                    "priority": 2,
-                    "advanced": true,
-                    "gui": "slider",
-                    "type": "float",
-                    "varname": "backgroundvalue",
-                    "default" : 0.0,
-                },
-                {
                     "name": "Flip",
                     "description": "It true project along the increasing axis",
                     "priority": 10,
@@ -272,9 +253,7 @@ class ProjectResliceImageModule extends BaseModule {
         this.outputs['output'] = new BisWebImage();
 
         try {
-            this.outputs['output']=await biswrap.projectMapImage(temp,input,matrix,{
-                'forcefloat' : super.paprseBoolean(vals.forcefloat)
-            },super.parseBoolean(vals.debug));
+            this.outputs['output']=await biswrap.projectMapImageWASM(temp,input,matrix,super.parseBoolean(vals.debug));
             this.outputs['output'].copyOrientationInfo(reference);
         } catch(e) {
             return Promise.reject(e);

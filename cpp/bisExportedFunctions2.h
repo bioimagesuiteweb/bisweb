@@ -63,12 +63,24 @@ extern "C" {
    * @param xform  the transformation from reference to last 3D image (angio)
    * @param xform2  the second transformation from Projected 2D to 2D image 
    * @param jsonstring the parameter string for the algorithm 
-   * { "axis" : -1, "flip" : 0,  'flipy' : 0, 'threshold' : 0.05,  'depth': 2, 'sampling' 4 }
+   * { "axis" : -1, "flip" : 0,  'flipy' : 0, 'threshold' : 0.05,  'depth': 2 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
   // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation','bisTransformation',  'ParamObj', 'debug' ] } 
   BISEXPORT unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input,unsigned char* xform,unsigned char* xform2,const char* jsonstring,int debug);
+
+
+  
+  /** Uses the corresponding 2D points to reslice an image to common space
+   * @param tef the reference image   (2D image)
+   * @param input the input image   (2D+t image)
+   * @param matrix  output of computeBackProjectAndProjectPointPairsWASM
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'projectMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage','Matrix', 'debug' ] } 
+  BISEXPORT unsigned char*  projectMapImageWasm(unsigned char* ref,unsigned char* image,unsigned char* matrix,int debug);
 
 
   

@@ -246,7 +246,6 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
   int flipy=params->getBooleanValue("flipy",0);
   int axis=params->getIntValue("axis",1);
   float threshold=params->getFloatValue("threshold",0.05);
-  int sampling=params->getIntValue("sampling",4);
   int depth=params->getIntValue("depth",2);
   if (debug) {
     std::cout << "Beginning actual Image Back Pair Making" << std::endl;
@@ -258,11 +257,42 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
                                                                      warpXform.get(),
                                                                      rotation.get(),
                                                                      out_matrix.get(),
-                                                                     sampling,
                                                                      axis,flipz,flipy,threshold,depth);
 if (debug)
     std::cout << "Back Projecting Pair Done" << std::endl;
   
   return out_matrix->releaseAndReturnRawArray();
+
+}
+
+  // BIS: { 'projectMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage','Matrix', 'debug' ] }
+BISEXPORT unsigned char*  projectMapImageWasm(unsigned char* ref_ptr,unsigned char* input_ptr,unsigned char* matrix_ptr,int debug) {
+
+  if (debug)
+    std::cout << "_____ Beginning projectMapImageWasm" << std::endl;
+  
+  std::unique_ptr<bisSimpleImage<float> > ref(new bisSimpleImage<float>("ref"));
+  if (!ref->linkIntoPointer(ref_ptr)) {
+    std::cout << "_____ Failed to link into ref_ptr in projectMapImageWasm" << std::endl;
+    return 0;
+  }
+
+  std::unique_ptr<bisSimpleImage<float> > input(new bisSimpleImage<float>("ref"));
+  if (!input->linkIntoPointer(input_ptr)) {
+    std::cout << "_____ Failed to link into input_ptr in projectMapImageWasm" << std::endl;
+    return 0;
+  }
+
+  std::unique_ptr<bisSimpleMatrix<float> > mapmatrix(new bisSimpleMatrix<float>("matr"));
+  if (!mapmatrix->linkIntoPointer(matrix_ptr)) {
+    std::cout << "_____ Failed to link into matrix_ptr in projectMapImageWasm" << std::endl;
+    return 0;
+  }
+
+  std::unique_ptr<bisSimpleImage<float> > out_image(bisAdvancedImageAlgorithms::projectMapImage(ref.get(),
+                                                                                                input.get(),
+                                                                                                mapmatrix.get(),debug));
+                                                                                                
+  return out_image->releaseAndReturnRawArray();
 
 }

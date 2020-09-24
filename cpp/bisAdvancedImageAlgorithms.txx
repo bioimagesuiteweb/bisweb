@@ -734,7 +734,6 @@ namespace bisAdvancedImageAlgorithms {
                                              bisAbstractTransformation* transformation,
                                              bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
-                                             int sampling,
                                              int axis,int flipthird,int flipsecond,
                                              float threshold,int depth) {
 
@@ -764,9 +763,9 @@ namespace bisAdvancedImageAlgorithms {
 
     std::vector<float> newset; // 1-d vector 6 components (x,y,z) of point plus 
     
-    for (int second=0;second<odim[1];second+=sampling)
+    for (int second=0;second<odim[1];second++)
       {
-        for (int first=0;first<odim[0];first+=sampling)
+        for (int first=0;first<odim[0];first++)
           {
             
             // For each pixel in the image
@@ -810,5 +809,70 @@ namespace bisAdvancedImageAlgorithms {
     
     return l;
   }
+
+
+  std::unique_ptr<bisSimpleImage<float> > projectMapImage(bisSimpleImage<float>* threed_reference,
+                                                          bisSimpleImage<float>* optical_input,
+                                                          bisSimpleMatrix<float>* point_pairs,
+                                                          int debug) {
+
+
+    std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>("resliced"));
+
+    int dim[5];    threed_reference->getDimensions(dim);
+    float spa[5];  threed_reference->getSpacing(spa);
+    
+    int dim2[5];  optical_input->getDimensions(dim2);
+    float spa2[5];  optical_input->getSpacing(spa2);
+    dim[3]=dim2[3];
+    dim[4]=dim2[4];
+
+    int nf=dim[3]*dim[4];
+
+    int out_volumesize=dim[0]*dim[1]*dim[2];
+    int in_volumesize=dim2[0]*dim2[1]*dim2[2];
+    
+    output->allocate(dim,spa);
+    output->fill(0.0f);
+
+    float* odata=output->getData();
+    float* idata=optical_input->getData();
+    float* pts=point_pairs->getData();
+
+    int rows=point_pairs->getNumRows();
+
+    for (int row=0;row<rows;row++) {
+
+      int xi[2],xj[2];
+      int good=1;
+      for (int ia=0;ia<=1;ia++) {
+        xi[ia]=int(pts[row*4+ia]/spa[ia]+0.5);
+        xj[ia]=int(pts[row*4+ia+2]/spa2[ia]);
+        if (xi[ia]<0 || xi[ia]>=dim[ia])
+          good=0;
+        if (xj[ia]<0 || xj[ia]>=dim2[ia])
+          good=0;
+      }
+      if (good) {
+        int out_index=xi[0]+dim[0]*xi[1];
+        int in_index=xj[0]+dim2[0]*xj[1];
+        for (int frame=0;frame<nf;frame++) {
+          odata[out_index+out_volumesize*frame]=idata[in_index+frame*in_volumesize];
+        }
+      }
+    }
+
+    return std::move(output);
+  }
+
 }
+      
+                                
+
+    
+    
+
+
+
 #endif
+
