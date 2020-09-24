@@ -80,7 +80,7 @@ extern "C" {
    * @returns a pointer to a serialized image
    */
   // BIS: { 'projectMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage','Matrix', 'debug' ] } 
-  BISEXPORT unsigned char*  projectMapImageWasm(unsigned char* ref,unsigned char* image,unsigned char* matrix,int debug);
+  BISEXPORT unsigned char*  projectMapImageWASM(unsigned char* ref,unsigned char* image,unsigned char* matrix,int debug);
 
 
   

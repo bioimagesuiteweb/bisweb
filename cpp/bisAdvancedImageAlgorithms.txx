@@ -118,11 +118,14 @@ namespace bisAdvancedImageAlgorithms {
 
   // -----------------------------------------------------------------------------------------------
   // Find first
-  template<class T>int find_third(T* idata,int axis,int flip,int idim[5],int v_offset,int increment,float threshold,double& intensity) {
+  template<class T>int find_third(T* idata,int axis,int flip,int idim[5],int v_offset,int increment,float threshold,double& intensity,int debug=0) {
 
+    if (debug)
+      std::cout << "------------" << std::endl;
+    
     intensity=0.0;
     int third=-1;
-    
+
     if (!flip)
       {
         int i_third=idim[axis]-1;
@@ -145,6 +148,10 @@ namespace bisAdvancedImageAlgorithms {
               third=i_third;
             else
               i_third=i_third+1;
+
+            if (debug)
+              std::cout << "intensity = " << intensity << " i_third=" << i_third << " third=" << third << std::endl;
+            
           }
       }
 
@@ -373,6 +380,13 @@ namespace bisAdvancedImageAlgorithms {
             double intensity=0.0;
             // Again this should be the average frame;
             int begin_third=find_third<float>(mean_smoothed_data,axis,flip,idim,v_offset,increment,threshold,intensity);
+
+            /*if (first == 30 && second == 70) { 
+              std::cout << "In =(" << first << "," << second << ") = " << begin_third << std::endl;
+              std::cout << "\t axis=" << axis << ", flips=" << flip << " idm=" << idim[0] << "," << idim[1] << "," << idim[2] << " offset=" << v_offset << std::endl;
+              std::cout << "\t increment=" << increment << ", threshold=" << threshold << ", intensity=" << intensity << std::endl;
+              }*/
+
             
             if (begin_third>=0)
               {
@@ -738,6 +752,8 @@ namespace bisAdvancedImageAlgorithms {
                                              float threshold,int depth) {
 
 
+    std::cout << "Axis=" << axis << " depth=" << depth << std::endl;
+    
     // ----------- Original_input should be done at this point
     int idim[5];   threed_reference->getDimensions(idim);
     float ispa[5];  threed_reference->getSpacing(ispa);
@@ -774,17 +790,39 @@ namespace bisAdvancedImageAlgorithms {
               v_offset=(endsecond-1-second)*offset[1]+first*offset[0];
             // Again this should be the average frame;
             double intensity=0.0;
-            int third=find_third<float>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity)+depth;
+
+            int db=0;
+            if ( (first==30 && second==70 ) || (first==21 && second==22))
+              db=1; 
+            
+            int third=find_third<float>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity,db)+depth;
+
+            if (db>0) {
+
+              std::cout << std::endl;
+              if (first==0 && second==0) 
+                std::cout << "flipthird=" << flipthird << " idim=" << idim[0] << "," << idim[1] << "," << idim[2] << "  v_offset=" << v_offset << " incr=" << increment << " thr=" << threshold << " int=" << intensity << std::endl;
+              std::cout << "In =(" << first << "," << second << ") = " << third << std::endl;
+            }
+            
             if (third>=0)
               {
                 // new coordinates in pixels         (first,second,third)
                 float x[3],y[3],X[2],Y[3],final[3];
+                if (db) {
+                  std::cout << "outaxis=" << outaxis[0] << "," << outaxis[1] << "," << axis << " --> ispa " << ispa[0] << "," << ispa[1] << "," << ispa[2] << std::endl;
+                  std::cout << "first=" << first << "," << second << "," << third;
+                }
                 // Scale to mm
                 x[outaxis[0]]=first*ispa[outaxis[0]];
                 x[outaxis[1]]=second*ispa[outaxis[1]];
-                x[outaxis[2]]=third*ispa[outaxis[2]];
-                X[0]=first*ispa[0];
-                X[1]=second*ispa[0];
+                x[axis]=third*ispa[axis];
+
+                if (db)
+                  std::cout << "x=[ " << x[0] << "," << x[1] << "," << x[2] << "]" << std::endl;
+                
+                X[0]=first;
+                X[1]=second;
                 // transform
                 transformation->transformPoint(x,y);
                 // back to pixels
@@ -792,6 +830,13 @@ namespace bisAdvancedImageAlgorithms {
                 Y[1]=y[outaxis[1]];
                 Y[2]=0.0;
                 second_transformation->transformPoint(Y,final);
+
+                if (db>0) {
+                  std::cout << "\t Points x=(" << x[0] << "," << x[1] << "," << x[2] << ") --> X=[" << X[0] << "," << X[1] << "]" << std::endl;
+                  std::cout << "\t\t y=(" << y[0] << "," << y[1] << "," << y[2] << ") --> Y=[" << Y[0] << "," << Y[1] << "," << Y[2] << "]" << std::endl;
+                  std::cout << "\t\t final=" << final[0] << "," << final[1] << "," << final[2] << std::endl;
+                }
+
                 
                 newset.push_back(X[0]);
                 newset.push_back(X[1]);
@@ -819,45 +864,66 @@ namespace bisAdvancedImageAlgorithms {
 
     std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>("resliced"));
 
-    int dim[5];    threed_reference->getDimensions(dim);
-    float spa[5];  threed_reference->getSpacing(spa);
+    int dim_x[5];    threed_reference->getDimensions(dim_x);
+    float spa_x[5];  threed_reference->getSpacing(spa_x);
     
-    int dim2[5];  optical_input->getDimensions(dim2);
-    float spa2[5];  optical_input->getSpacing(spa2);
-    dim[3]=dim2[3];
-    dim[4]=dim2[4];
+    int dim_y[5];  optical_input->getDimensions(dim_y);
+    float spa_y[5];  optical_input->getSpacing(spa_y);
 
-    int nf=dim[3]*dim[4];
-
-    int out_volumesize=dim[0]*dim[1]*dim[2];
-    int in_volumesize=dim2[0]*dim2[1]*dim2[2];
+    // Map spacing and dimensions over
+    dim_x[3]=dim_y[3];
+    dim_x[4]=dim_y[4];
+    spa_x[2]=spa_y[2];
+    spa_x[3]=spa_y[3];
+    spa_x[4]=spa_y[3];
     
-    output->allocate(dim,spa);
+
+    int numframes=dim_x[3]*dim_x[4];
+    int volumesize_x=dim_x[0]*dim_x[1]*dim_x[2];
+    int volumesize_y=dim_y[0]*dim_y[1]*dim_y[2];
+    
+    output->allocate(dim_x,spa_x);
     output->fill(0.0f);
 
-    float* odata=output->getData();
-    float* idata=optical_input->getData();
-    float* pts=point_pairs->getData();
+    float* data_x=output->getData();
+    float* data_y=optical_input->getData();
+    float* coords_ptr=point_pairs->getData();
 
-    int rows=point_pairs->getNumRows();
+    int numrows=point_pairs->getNumRows();
 
-    for (int row=0;row<rows;row++) {
+    int index=0;
+    for (int row=0;row<numrows;row++) {
 
-      int xi[2],xj[2];
+      int xi[2],yi[2]; float Y[2];
+      xi[0]=int(0.5+coords_ptr[index]); index++;
+      xi[1]=int(0.5+coords_ptr[index]); index++;
+      Y[0]=coords_ptr[index];           index++;
+      Y[1]=coords_ptr[index];           index++;
+
+      int db=0;
+      if ( (xi[0]==30 && xi[1]==70 ) || (xi[0]==21 && xi[1]==22))
+        db=1;
+
+      if (db)
+        std::cout << "row = " << row << ", [ " << xi[0] << "," << xi[1] << "]" << std::endl;
+
       int good=1;
       for (int ia=0;ia<=1;ia++) {
-        xi[ia]=int(pts[row*4+ia]/spa[ia]+0.5);
-        xj[ia]=int(pts[row*4+ia+2]/spa2[ia]);
-        if (xi[ia]<0 || xi[ia]>=dim[ia])
-          good=0;
-        if (xj[ia]<0 || xj[ia]>=dim2[ia])
+        yi[ia]=int(Y[ia]/spa_y[ia]+0.5);
+
+        if (yi[ia]<0 || yi[ia]>=dim_y[ia])
           good=0;
       }
+
+      if (db)
+        std::cout << " xi=" << xi[0] << "," << xi[1] << "--> Out= [ " << yi[0] << "," << yi[1] << "] good=" << good << std::endl;
+      
+      
       if (good) {
-        int out_index=xi[0]+dim[0]*xi[1];
-        int in_index=xj[0]+dim2[0]*xj[1];
-        for (int frame=0;frame<nf;frame++) {
-          odata[out_index+out_volumesize*frame]=idata[in_index+frame*in_volumesize];
+        int voxelindex_x=xi[0]+dim_x[0]*xi[1];
+        int voxelindex_y=yi[0]+dim_y[0]*yi[1];
+        for (int frame=0;frame<numframes;frame++) {
+          data_x[voxelindex_x+volumesize_x*frame]=data_y[voxelindex_y+frame*volumesize_y];
         }
       }
     }

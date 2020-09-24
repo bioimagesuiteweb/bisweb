@@ -180,7 +180,8 @@ class ProjectResliceImageModule extends BaseModule {
         let rotxform = this.inputs['rotxform'] || null;
         let input = this.inputs['input'] || null;
         let reference = this.inputs['reference'] || null;
-        
+        let debug=super.parseBoolean(vals.debug);
+    
         if (xform === null || input===null || rotxform ===null || angioxform === null || reference ===null ) {
             return Promise.reject('Bad Inputs, one of them is null');
         }
@@ -232,11 +233,15 @@ class ProjectResliceImageModule extends BaseModule {
             return Promise.reject(e);
         }
 
+        if (debug)
+            console.log(' Matrix=',matrix.getDescription());
+
+        
         let temp=null;
         try {
-            temp=await biswrap.projectImageWASM(reference,null,
+            temp=await biswrap.projectImageWASM(reference,0,
                                                 {
-                                                    "domip": true,
+                                                    "domip": false,
                                                     "flip":  this.parseBoolean(vals.flip),
                                                     "axis":  parseInt(axis),
                                                     "sigma": 1.0,
@@ -244,20 +249,26 @@ class ProjectResliceImageModule extends BaseModule {
                                                     "lps" : lps,
                                                     "window": 1,
                                                     "threshold": parseFloat(vals.threshold),
-                                                }, super.parseBoolean(vals.debug));
+                                                }, debug);
         } catch(e) {
+            console.log(e);
             return Promise.reject(e);
         }
 
+        if (debug)
+            console.log(' Temp=',temp.getDescription());
         
         this.outputs['output'] = new BisWebImage();
 
         try {
-            this.outputs['output']=await biswrap.projectMapImageWASM(temp,input,matrix,super.parseBoolean(vals.debug));
+            this.outputs['output']=await biswrap.projectMapImageWASM(temp,input,matrix,debug);
             this.outputs['output'].copyOrientationInfo(reference);
         } catch(e) {
             return Promise.reject(e);
         }
+
+        if (debug)
+            console.log(' Output=',this.outputs['output'].getDescription());
 
         return Promise.resolve('All done');
     }

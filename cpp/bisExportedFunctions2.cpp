@@ -246,7 +246,7 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
   int flipy=params->getBooleanValue("flipy",0);
   int axis=params->getIntValue("axis",1);
   float threshold=params->getFloatValue("threshold",0.05);
-  int depth=params->getIntValue("depth",2);
+  int depth=params->getIntValue("depth",0);
   if (debug) {
     std::cout << "Beginning actual Image Back Pair Making" << std::endl;
   }
@@ -266,10 +266,10 @@ if (debug)
 }
 
   // BIS: { 'projectMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage','Matrix', 'debug' ] }
-BISEXPORT unsigned char*  projectMapImageWasm(unsigned char* ref_ptr,unsigned char* input_ptr,unsigned char* matrix_ptr,int debug) {
+BISEXPORT unsigned char*  projectMapImageWASM(unsigned char* ref_ptr,unsigned char* input_ptr,unsigned char* matrix_ptr,int debug) {
 
   if (debug)
-    std::cout << "_____ Beginning projectMapImageWasm" << std::endl;
+    std::cout << "_____ Beginning projectMapImageWASM" << std::endl;
   
   std::unique_ptr<bisSimpleImage<float> > ref(new bisSimpleImage<float>("ref"));
   if (!ref->linkIntoPointer(ref_ptr)) {
