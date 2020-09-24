@@ -873,7 +873,7 @@ namespace bisAdvancedImageAlgorithms {
     // Map spacing and dimensions over
     dim_x[3]=dim_y[3];
     dim_x[4]=dim_y[4];
-    spa_x[2]=spa_y[2];
+    spa_x[2]=1.0;
     spa_x[3]=spa_y[3];
     spa_x[4]=spa_y[3];
     
