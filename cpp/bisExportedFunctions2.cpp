@@ -111,7 +111,7 @@ template <class BIS_TT> unsigned char* projectImageTemplate(unsigned char* input
 
   if (!usemask) {
     std::unique_ptr<bisSimpleImage<BIS_TT> > out_image(bisAdvancedImageAlgorithms::projectImage(inp_image.get(),
-                                                                                                domip,axis,flip,lps,sigma,threshold,gradsigma,window));
+                                                                                                domip,axis,flip,lps,sigma,threshold,gradsigma,window,debug));
     if (debug)
       std::cout << "Projecting Done" << std::endl;
     
@@ -257,7 +257,7 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
                                                                      warpXform.get(),
                                                                      rotation.get(),
                                                                      out_matrix.get(),
-                                                                     axis,flipz,flipy,threshold,depth);
+                                                                     axis,flipz,flipy,threshold,depth,debug);
 if (debug)
     std::cout << "Back Projecting Pair Done" << std::endl;
   

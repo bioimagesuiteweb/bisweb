@@ -207,7 +207,7 @@ namespace bisAdvancedImageAlgorithms {
 
   template<class T> bisSimpleImage<T>*  projectImage(bisSimpleImage<T>* original_input,
                                                      int domip,int axis,int flip,int lps,
-                                                     float sigma,float threshold,float gradsigma,int windowsize) {
+                                                     float sigma,float threshold,float gradsigma,int windowsize,int debug) {
     
     // Smooth image 
     float sigmas[3],gradsigmas[3],outsigmas[3];
@@ -243,7 +243,8 @@ namespace bisAdvancedImageAlgorithms {
     ospa[2]=1.0;
     odim[2]=1;
     output->allocate(odim,ospa);
-    std::cout << "Output Dimensions = " << odim[0] << "," << odim[1] << "," << odim[2] << std::endl;
+    if (debug)
+      std::cout << "Output Dimensions = " << odim[0] << "," << odim[1] << "," << odim[2] << std::endl;
 
     // ----------------------------
     // Get the pointers and set off
@@ -258,7 +259,8 @@ namespace bisAdvancedImageAlgorithms {
     int incrsecond=1;
     
     if (outaxis[1]==2 && lps) {
-      std::cout << "IN LPS MODE" << std::endl;
+      if (debug)
+        std::cout << "IN LPS MODE" << std::endl;
       beginsecond=odim[1]-1;
       endsecond=-1;
       incrsecond=-1;
@@ -268,11 +270,13 @@ namespace bisAdvancedImageAlgorithms {
     
     if (domip)
       {
-        std::cout << "In MIP " << std::endl;
-        std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << ", axis=" << axis << std::endl;
-        std::cout << "Beginning " << odim[0] << "*" << odim[1] << "," << idim[axis] << std::endl;
-        std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
-        std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+        if (debug) {
+          std::cout << "In MIP " << std::endl;
+          std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << ", axis=" << axis << std::endl;
+          std::cout << "Beginning " << odim[0] << "*" << odim[1] << "," << idim[axis] << std::endl;
+          std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
+          std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+        }
 
 
         int index=0;
@@ -315,13 +319,14 @@ namespace bisAdvancedImageAlgorithms {
     float* mean_smoothed_data=mean_smoothed->getData();
     
     int sdim[3]; mean_smoothed->getDimensions(sdim);
-    std::cout << "Smooothed created "<<  sdim[0] << "," << sdim[1] << "," << sdim[2] << " volsize=" << volumesize <<  std::endl;
-    
+    if (debug) {
+      std::cout << "Smooothed created "<<  sdim[0] << "," << sdim[1] << "," << sdim[2] << " volsize=" << volumesize <<  std::endl;
+    }
     for (int voxel=0;voxel<volumesize;voxel++)
       {
         if (numframecomp>0)
           {
-            if (voxel==0)
+            if (voxel==0 && debug>0)
               std::cout << "Computing mean image" << std::endl;
             float sum=0.0;
             for (int framecomp=0;framecomp<numframecomp;framecomp++)
@@ -333,7 +338,7 @@ namespace bisAdvancedImageAlgorithms {
           }
         else
           {
-            if (voxel==0)
+            if (voxel==0 && debug>0)
               std::cout << "Copying mean image" << std::endl;
 
             mean_smoothed_data[voxel]=smoothed_data[voxel];
@@ -349,8 +354,10 @@ namespace bisAdvancedImageAlgorithms {
       {
         gdim[3]=3; gdim[4]=1;
         grad_image->allocate(gdim,gspa);
-        std::cout << "Computing gradient" <<  gradsigmas[0] << "," << gradsigmas[1] << "," << gradsigmas[2] << std::endl;
-        std::cout << "        dims=" << gdim[0] << "," << gdim[1] << "," << gdim[2] << ", nf=" << gdim[3] << std::endl;
+        if (debug) {
+          std::cout << "Computing gradient" <<  gradsigmas[0] << "," << gradsigmas[1] << "," << gradsigmas[2] << std::endl;
+          std::cout << "        dims=" << gdim[0] << "," << gdim[1] << "," << gdim[2] << ", nf=" << gdim[3] << std::endl;
+        }
         bisImageAlgorithms::gradientImage<float>(mean_smoothed.get(),grad_image.get(),gradsigmas,outsigmas,0,2.0);
         grad_data=grad_image->getData();
       }
@@ -359,12 +366,14 @@ namespace bisAdvancedImageAlgorithms {
     if (winradius<1)
       winradius=1;
 
-    std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
-    std::cout << "Beginning " << odim[0] << "*" << odim[1] << "," << idim[axis] << std::endl;
-    std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
-    std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
-    std::cout << "  Winradius= " << winradius << std::endl;
-    std::cout << "  NumFrameComp = " << numframecomp << std::endl;
+    if (debug) {
+      std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
+      std::cout << "Beginning " << odim[0] << "*" << odim[1] << "," << idim[axis] << std::endl;
+      std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
+      std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+      std::cout << "  Winradius= " << winradius << std::endl;
+      std::cout << "  NumFrameComp = " << numframecomp << std::endl;
+    }
     int index=0;
 
     int outframeoffset=odim[0]*odim[1];
@@ -373,9 +382,9 @@ namespace bisAdvancedImageAlgorithms {
       {
         for (int first=0;first<odim[0];first++)
           {
-            int debug=0;
-            if (first==odim[0]/2 && second==odim[1]/2)
-              debug=1;
+            int db=0;
+            if ( (first==odim[0]/2 && second==odim[1]/2) && debug>0)
+              db=1;
             int v_offset=second*offset[1]+first*offset[0];
             double intensity=0.0;
             // Again this should be the average frame;
@@ -408,7 +417,7 @@ namespace bisAdvancedImageAlgorithms {
                 int offset=v_offset+begin_third*increment;
                 float shading=compute_shading(grad_data,axis,flip,offset,volumesize);
 
-                if (debug)
+                if (db)
                   std::cout << " First,Second,Third= " << first << "," << second << "," << begin_third << ":" << end_third << " intensity=" << intensity << std::endl;
                 
                 for (int framecomp=0;framecomp<numframecomp;framecomp++)
@@ -749,10 +758,11 @@ namespace bisAdvancedImageAlgorithms {
                                              bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
                                              int axis,int flipthird,int flipsecond,
-                                             float threshold,int depth) {
+                                             float threshold,int depth,int debug) {
 
 
-    std::cout << "Axis=" << axis << " depth=" << depth << std::endl;
+    if (debug)
+      std::cout << "Axis=" << axis << " depth=" << depth << std::endl;
     
     // ----------- Original_input should be done at this point
     int idim[5];   threed_reference->getDimensions(idim);
@@ -772,10 +782,12 @@ namespace bisAdvancedImageAlgorithms {
 
     float* input_data=threed_reference->getImageData();
     int endsecond=odim[1];
-    
-    std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
-    std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
-    std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+
+    if (debug) {
+      std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
+      std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
+      std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+    }
 
     std::vector<float> newset; // 1-d vector 6 components (x,y,z) of point plus 
     
@@ -792,13 +804,12 @@ namespace bisAdvancedImageAlgorithms {
             double intensity=0.0;
 
             int db=0;
-            if ( (first==30 && second==70 ) || (first==21 && second==22))
+            if ( ( (first==30 && second==70 ) || (first==21 && second==22) ) && debug>0)
               db=1; 
             
             int third=find_third<float>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity,db)+depth;
 
             if (db>0) {
-
               std::cout << std::endl;
               if (first==0 && second==0) 
                 std::cout << "flipthird=" << flipthird << " idim=" << idim[0] << "," << idim[1] << "," << idim[2] << "  v_offset=" << v_offset << " incr=" << increment << " thr=" << threshold << " int=" << intensity << std::endl;
@@ -901,8 +912,10 @@ namespace bisAdvancedImageAlgorithms {
       Y[1]=coords_ptr[index];           index++;
 
       int db=0;
-      if ( (xi[0]==30 && xi[1]==70 ) || (xi[0]==21 && xi[1]==22))
-        db=1;
+      if (debug) {
+        if ( (xi[0]==30 && xi[1]==70 ) || (xi[0]==21 && xi[1]==22))
+          db=1;
+      }
 
       if (db)
         std::cout << "row = " << row << ", [ " << xi[0] << "," << xi[1] << "]" << std::endl;

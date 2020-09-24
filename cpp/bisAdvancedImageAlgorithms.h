@@ -43,11 +43,12 @@ namespace bisAdvancedImageAlgorithms {
    * @param threshold - the threshold for 2d integration
    * @param gradsigma - how much to smooth for gradient computation (if 0 then no shading is applied)
    * @param windowsize - how many voxels to average
+   * @param debug - turn print messages on/off
    * @returns the projected image
    */
   template<class T> bisSimpleImage<T>* projectImage(bisSimpleImage<T>* input,
                                                                       int domip=0,int axis=-1,int flip=0,int lps=0,float sigma=1.0,
-                                                                      float threshold=0.05,float gradsigma=1.0,int windowsize=3);
+                                                    float threshold=0.05,float gradsigma=1.0,int windowsize=3,int debug=0);
 
    /** create and add a grid overlay on an image
    * @param input the input image
@@ -99,6 +100,7 @@ namespace bisAdvancedImageAlgorithms {
    * @param flipthird - flip thirdaxis
    * @param threshold - the threshold for 2d integration
    * @param depth - the offset from the surface to use
+   * @param debug - turn print messages on/off
    * @returns number of points sampled
    */
   int computeBackProjectAndProjectPointPairs(bisSimpleImage<float>* threed_reference,
@@ -106,7 +108,7 @@ namespace bisAdvancedImageAlgorithms {
                                              bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
                                              int axis=2,int flipthird=0,int flipsecond=0,
-                                             float threshold=0.5,int depth=0.0);
+                                             float threshold=0.5,int depth=0.0,int debug=0);
 
     /** creates a set of corresponding 2D points as a result of  2d->3d back projection --> transformation -> 3D->2D projection
    * @param threed_reference the 3d reference input image (atlas)

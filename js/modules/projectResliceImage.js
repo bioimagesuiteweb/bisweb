@@ -155,13 +155,13 @@ class ProjectResliceImageModule extends BaseModule {
                     "step" : 0.1,
                 },
                 {
-                    "name": "Windowsize",
-                    "description": "Number of voxels to average in 'average' or 'project' mode",
+                    "name": "Depth",
+                    "description": "Number of voxels to go below the brain surface",
                     "priority": 20,
                     "advanced": false,
                     "gui": "slider",
-                    "varname": "window",
-                    "default": 3,
+                    "varname": "depth",
+                    "default": 1,
                     "type": 'int',
                     "low": 1,
                     "high": 10,
@@ -218,57 +218,57 @@ class ProjectResliceImageModule extends BaseModule {
 
         let matrix=null;
         try {
+            const obj={"flip":  this.parseBoolean(vals.flip),
+                       "flipy":  this.parseBoolean(vals.flipy),
+                       "axis":  parseInt(axis),
+                       "depth": parseInt(vals.depth),
+                       "threshold": parseFloat(vals.threshold),
+                       "sampling" : 1,
+                      };
+            console.log('oooo\noooo calling computeBackProjectAndProjectPointPairsWASM '+JSON.stringify(obj));
             matrix= await biswrap.computeBackProjectAndProjectPointPairsWASM(reference,
                                                                              coll,
                                                                              rotxform,
-                                                                             {
-                                                                                 "flip":  this.parseBoolean(vals.flip),
-                                                                                 "flipy":  this.parseBoolean(vals.flipy),
-                                                                                 "axis":  parseInt(axis),
-                                                                                 "depth": parseInt(vals.window),
-                                                                                 "threshold": parseFloat(vals.threshold),
-                                                                                 "sampling" : 1,
-                                                                             },this.parseBoolean(vals.debug));
+                                                                             obj,this.parseBoolean(vals.debug));
         } catch(e) {
             return Promise.reject(e);
         }
 
-        if (debug)
-            console.log(' Matrix=',matrix.getDescription());
+        console.log('oooo \t computed pair points=',matrix.getDescription());
 
         
         let temp=null;
         try {
-            temp=await biswrap.projectImageWASM(reference,0,
-                                                {
-                                                    "domip": false,
-                                                    "flip":  this.parseBoolean(vals.flip),
-                                                    "axis":  parseInt(axis),
-                                                    "sigma": 1.0,
-                                                    "gradsigma": 1.0,
-                                                    "lps" : lps,
-                                                    "window": 1,
-                                                    "threshold": parseFloat(vals.threshold),
-                                                }, debug);
+            const obj={
+                "domip": false,
+                "flip":  this.parseBoolean(vals.flip),
+                "axis":  parseInt(axis),
+                "sigma": 1.0,
+                "gradsigma": 1.0,
+                "lps" : lps,
+                "window": 1,
+                "threshold": parseFloat(vals.threshold),
+            };
+            console.log('oooo calling projectImageWASM '+JSON.stringify(obj));
+            temp=await biswrap.projectImageWASM(reference,0,obj,debug);
         } catch(e) {
             console.log(e);
             return Promise.reject(e);
         }
 
-        if (debug)
-            console.log(' Temp=',temp.getDescription());
+        console.log('oooo \t computed template size=',temp.getDescription());
         
         this.outputs['output'] = new BisWebImage();
 
         try {
+            console.log('oooo calling projectMapImageWASM ');
             this.outputs['output']=await biswrap.projectMapImageWASM(temp,input,matrix,debug);
             this.outputs['output'].copyOrientationInfo(reference);
         } catch(e) {
             return Promise.reject(e);
         }
 
-        if (debug)
-            console.log(' Output=',this.outputs['output'].getDescription());
+        console.log('oooo \t final output=',this.outputs['output'].getDescription());
 
         return Promise.resolve('All done');
     }
