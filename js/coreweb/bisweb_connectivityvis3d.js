@@ -569,9 +569,9 @@ var parsebrainsurface = function(surfacedata,filename) {
         if (surfaces[meshindex]!==null) {
             let buf=createBufferGeometry();
 
-            let p0=surfaces[meshindex]['vertices'][0];
+            //let p0=surfaces[meshindex]['vertices'][0];
             //console.log(p0.constructor.name,p0.length);
-            let t0=surfaces[meshindex].indices;
+            //            let t0=surfaces[meshindex].indices;
             //            console.log(t0.constructor.name,t0.length);
             
             buf.setIndex( new THREE.BufferAttribute( surfaces[meshindex].indices, 1));

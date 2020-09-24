@@ -66,6 +66,7 @@ const moduleImports = {
     jacobianimage : require('jacobianImage.js'),
     inverttransformation : require('invertTransformation.js'),
     resliceimage : require('resliceImage.js'),
+    projectresliceimage : require('projectResliceImage.js'),
     permuteimage : require('permuteImage.js'),
     motionreslice : require('motionReslice.js'),
     manualregistration : require('manualRegistration.js'),

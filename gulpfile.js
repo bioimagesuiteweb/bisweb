@@ -159,7 +159,7 @@ let internal = {
         "./node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css",
         "./web/biscommon.css"
     ], // Bright mode
-    lintscripts : ['js/**/[a-z].js','config/[a-z].js','compiletools/[a-z].js','[a-z]*.js','web/**/[a-z]*.js','test/**/[a-z].js','fileserver/[a-z]*.js'],
+    lintscripts : ['js/**/[a-z]*.js','config/[a-z]*.js','compiletools/[a-z]*.js','[a-z]*.js','web/**/[a-z]*.js','test/**/[a-z]*.js','fileserver/[a-z]*.js'],
     toolarray : [ 'index'],
     serveroptions : { },
     setwebpackwatch : 0,

@@ -386,7 +386,7 @@ class PreprocessfMRIModule extends BaseModule {
             current_output=bandpass_mod.getOutputObject('output');
             console.log('Range = ',            current_output.getIntensityRange());
             
-            let imdata=current_output.getImageData();
+            //let imdata=current_output.getImageData();
             current_output.computeIntensityRange();
             console.log('___ Bandpass output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
             this.outputs['bandpassoutput'] = current_output;

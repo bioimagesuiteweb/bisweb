@@ -208,8 +208,8 @@ unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* inp
 
 
 
-  // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation',  'ParamObj', 'debug' ] } 
-unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_ptr,unsigned char* xform_ptr,const char* jsonstring,int debug) {
+  // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation', 'bisTransformation',  'ParamObj', 'debug' ] } 
+unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_ptr,unsigned char* xform_ptr,unsigned char* rotation_ptr,const char* jsonstring,int debug) {
 
   if (debug)
     std::cout << "_____ Beginning computeBackProjectAndProjectPointPairsWASM" << std::endl;
@@ -236,6 +236,12 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
     return 0;
   }
 
+  std::shared_ptr<bisAbstractTransformation> rotation=bisDataObjectFactory::deserializeTransformation(rotation_ptr,"rotation");
+  if (rotation.get()==0) {
+    std::cerr << "Failed to deserialize rotation " << std::endl;
+    return 0;
+  }
+
   int flipz=params->getBooleanValue("flip",0);
   int flipy=params->getBooleanValue("flipy",0);
   int axis=params->getIntValue("axis",1);
@@ -250,6 +256,7 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
   
   bisAdvancedImageAlgorithms::computeBackProjectAndProjectPointPairs(threed.get(),
                                                                      warpXform.get(),
+                                                                     rotation.get(),
                                                                      out_matrix.get(),
                                                                      sampling,
                                                                      axis,flipz,flipy,threshold,depth);

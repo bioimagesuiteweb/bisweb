@@ -104,6 +104,7 @@ namespace bisAdvancedImageAlgorithms {
    */
   int computeBackProjectAndProjectPointPairs(bisSimpleImage<float>* threed_reference,
                                              bisAbstractTransformation* transformation,
+                                             bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
                                              int sampling=4,
                                              int axis=2,int flipthird=0,int flipsecond=0,

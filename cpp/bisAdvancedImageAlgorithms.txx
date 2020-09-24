@@ -732,6 +732,7 @@ namespace bisAdvancedImageAlgorithms {
 
   int computeBackProjectAndProjectPointPairs(bisSimpleImage<float>* threed_reference,
                                              bisAbstractTransformation* transformation,
+                                             bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
                                              int sampling,
                                              int axis,int flipthird,int flipsecond,
@@ -778,7 +779,7 @@ namespace bisAdvancedImageAlgorithms {
             if (third>=0)
               {
                 // new coordinates in pixels         (first,second,third)
-                float x[3],y[3],X[2],Y[2];
+                float x[3],y[3],X[2],Y[3],final[3];
                 // Scale to mm
                 x[outaxis[0]]=first*ispa[outaxis[0]];
                 x[outaxis[1]]=second*ispa[outaxis[1]];
@@ -790,10 +791,13 @@ namespace bisAdvancedImageAlgorithms {
                 // back to pixels
                 Y[0]=y[outaxis[0]];
                 Y[1]=y[outaxis[1]];
+                Y[2]=0.0;
+                second_transformation->transformPoint(Y,final);
+                
                 newset.push_back(X[0]);
                 newset.push_back(X[1]);
-                newset.push_back(Y[0]);
-                newset.push_back(Y[1]);
+                newset.push_back(final[0]);
+                newset.push_back(final[1]);
               }
           }
       }

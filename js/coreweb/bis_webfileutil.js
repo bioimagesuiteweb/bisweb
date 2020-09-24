@@ -237,10 +237,7 @@ const webfileutils = {
         // Clean up filters that begin with a "." as electron does not like that
         //console.log("IN=",JSON.stringify(fileopts,null,2));
 
-        let foundall=false;
-
-        
-        
+        //let foundall=false;
         if (fileopts.filters !== "DIRECTORY") {
         
             let l=fileopts.filters.length || 0;
@@ -254,8 +251,8 @@ const webfileutils = {
                     if (a.indexOf(".")===0)
                         a=a.substr(1,a.length-1);
                     newext.push(a);
-                    if (a==='*')
-                        foundall=true;
+                    //if (a==='*')
+                    //  foundall=true;
                 }
                 fileopts.filters[i].extensions=newext;
             }
