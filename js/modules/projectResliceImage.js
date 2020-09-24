@@ -223,7 +223,6 @@ class ProjectResliceImageModule extends BaseModule {
                        "axis":  parseInt(axis),
                        "depth": parseInt(vals.depth),
                        "threshold": parseFloat(vals.threshold),
-                       "sampling" : 1,
                       };
             console.log('oooo\noooo calling computeBackProjectAndProjectPointPairsWASM '+JSON.stringify(obj));
             matrix= await biswrap.computeBackProjectAndProjectPointPairsWASM(reference,
@@ -255,7 +254,7 @@ class ProjectResliceImageModule extends BaseModule {
             console.log(e);
             return Promise.reject(e);
         }
-
+        await temp.save('2dmap.nii.gz');
         console.log('oooo \t computed template size=',temp.getDescription());
         
         this.outputs['output'] = new BisWebImage();
@@ -263,7 +262,7 @@ class ProjectResliceImageModule extends BaseModule {
         try {
             console.log('oooo calling projectMapImageWASM ');
             this.outputs['output']=await biswrap.projectMapImageWASM(temp,input,matrix,debug);
-            this.outputs['output'].copyOrientationInfo(reference);
+            this.outputs['output'].copyOrientationInfo(input);
         } catch(e) {
             return Promise.reject(e);
         }
