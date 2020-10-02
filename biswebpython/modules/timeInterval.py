@@ -25,7 +25,8 @@ except ImportError:
 
 import biswebpython.core.bis_basemodule as bis_basemodule;
 import biswebpython.core.bis_objects as bis_objects;
-import biswebpython.utilities.dgrTimeInterval as dgrti
+import biswebpython.utilities.dgrTimeInterval as dgrti;
+import biswebpython.utilities.bidsUtils as bids_utils;
 import biswebpython.utilities.bidsObjects as bids_objects;
 
 
@@ -54,23 +55,6 @@ class timeInterval(bis_basemodule.baseModule):
                 }
             ],
             "outputs": [
-                # {
-                #     "type": "bidstext",
-                #     "name": "Output Error Log",
-                #     "description": "Debug logging file",
-                #     "varname": "errorlog",
-                #     "shortname": "elog",
-                #     "required": True,
-                #     "extension": ".txt"
-                # },
-                # {
-                #     "type": "bidstext",
-                #     "name": "Output File",
-                #     "description": "Output file",
-                #     "varname": "output",
-                #     "shortname": "o",
-                #     "required": True,
-                # }
             ],
             "params": [
                 {
@@ -106,7 +90,7 @@ class timeInterval(bis_basemodule.baseModule):
                 },
                 {
                     "name": "identifier",
-                    "description": "display format of time interval",
+                    "description": "what kind of time interval you want to calculate. Default fields: year, month, day",
                     "varname": "identifier",
                     "shortname": "id",
                     "type": "string",
@@ -116,7 +100,7 @@ class timeInterval(bis_basemodule.baseModule):
                 {
                     "type": "string",
                     "name": "Output Path",
-                    "description": "Output Path",
+                    "description": "Output Path. Optional, will save in the same folder as input demographic file if not specified.",
                     "varname": "oupath",
                     "shortname": "o",
                     "required": True,

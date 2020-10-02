@@ -111,12 +111,13 @@ def anatBidsRename(bsj, oupath, exe = False):
             errorm.append(['Warning: no json file is found in the ' + bsj.root + ' directory.'])
         else:
             for jfile in splt_f['.json']:
-                try:
-                    run_num = bsj.get_substr(jfile, '_run-?????_')
-                    bids_utils.jsonupdate(bsj.root + '/' + jfile, {'run_number': run_num})
-                except:
-                    errorm.append(['ERROR: cannot update'+ bsj.root+ '/'+ jfile+ ' with its run number! Please double check the filename and the metadata content!'])
-                    flag = False
+                if exe:
+                    try:
+                        run_num = bsj.get_substr(jfile, '_run-?????_')
+                        bids_utils.jsonupdate(bsj.root + '/' + jfile, {'run_number': run_num})
+                    except:
+                        errorm.append(['ERROR: cannot update'+ bsj.root+ '/'+ jfile+ ' with its run number! Please double check the filename and the metadata content!'])
+                        flag = False
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -283,14 +284,15 @@ def funcBidsRename(bsj, bidsDgr, oupath, exe = False):
                                             rv = os.system(cmd_str)
                                             if rv:
                                                 errorm.append(['Rename failed: ' + bsj.root + '/' + jfile])
-                                    if ft == '.json' and not rv:
-                                        try:
-                                            run_num = bsj.get_substr(jfile, '_run-?????_')
-                                            bids_utils.jsonupdate(bsj.root + '/' + jfile, {'run_number': run_num})
-                                            bids_utils.jsonupdate(bsj.root + '/' + jfile, {'TaskName': taskn})
-                                        except:
-                                            errorm.append(['ERROR: cannot update json file! Please double check the filename and the metadata content of ' + conp+ '/'+ jnew+'.'])
-                                            flag = False
+
+                                            if ft == '.json':
+                                                try:
+                                                    run_num = bsj.get_substr(jfile, '_run-?????_')
+                                                    bids_utils.jsonupdate(bsj.root + '/' + jfile, {'run_number': run_num})
+                                                    bids_utils.jsonupdate(bsj.root + '/' + jfile, {'TaskName': taskn})
+                                                except:
+                                                    errorm.append(['ERROR: cannot update json file! Please double check the filename and the metadata content of ' + conp+ '/'+ jnew+'.'])
+                                                    flag = False
 
     if flag:
         logm = ['FUNC Completed!']
@@ -312,6 +314,9 @@ def Rename(dgr, inpath, oupath, exe = False, debug = True):
 
 
     for root, dirs, files in os.walk(inpath, topdown=True):
+        cmds = None
+        logs = None
+        errors = None
 
         bids_sbj = bids_objects.bidsSubj()
         try:
@@ -342,7 +347,6 @@ def Rename(dgr, inpath, oupath, exe = False, debug = True):
 
 
         if 'func' == bids_sbj.datatype:
-
             cmds, logs, errors = funcBidsRename(bids_sbj, dgr, oupath, exe)
             logm.append(logs)
 
@@ -352,7 +356,6 @@ def Rename(dgr, inpath, oupath, exe = False, debug = True):
             if errors != []:
                 for ele2 in errors:
                     elogm.append(ele2)
-
 
 
     return cmdm, elogm, logm
