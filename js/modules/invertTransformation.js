@@ -136,7 +136,7 @@ class InvertTransformationModule extends BaseModule {
             ]
         };
             
-        
+        des.params = des.params.concat(baseutils.getOptParams({ stepsize: 0.5, steps: 1, iterations: 20, levels: 2, resolution: 2.0 }));        
         return des;
     }
         
@@ -190,6 +190,17 @@ class InvertTransformationModule extends BaseModule {
                 reject('Must specify ref image');
                 return;
             }
+
+            let linear=null;
+            if (xform !== null && xform2 === null && xform3 === null) {
+                console.log("Single xform");
+                console.log('ot=',xform.constructor.name);
+                if (xform.constructor.name === 'BisWebComboTransformation') {
+                    linear=xform.getLinearTransformation();
+                    xform.setLinearTransformation(new BisWebLinearTransformation());
+                    console.log('Added new linear');
+                }
+            }
             
             let dispF=new displacementField();
             dispF.makeInternal();
@@ -212,6 +223,11 @@ class InvertTransformationModule extends BaseModule {
                     tolerance : vals['tolerance'],
                     windowsize : vals['windowsize'],
                     "inverse": true,
+                    "stepsize": vals['stepsize'],
+                    'steps' : vals['steps'],
+                    'levels' : vals['levels'],
+                    'iterations' : vals['iterations'],
+                    'resolution' : vals['resolution'],
                     debug : vals['debug']
                 }).then( () => {
                     this.outputs['output'] = approx.getOutputObject('output');

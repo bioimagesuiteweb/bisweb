@@ -786,7 +786,7 @@ namespace bisAdvancedImageAlgorithms {
     if (debug) {
       std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
       std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
-      std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+      std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << "flipsecond=" << flipsecond << std::endl;
     }
 
     std::vector<float> newset; // 1-d vector 6 components (x,y,z) of point plus 

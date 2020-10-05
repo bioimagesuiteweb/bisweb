@@ -102,10 +102,21 @@ class ProjectResliceImageModule extends BaseModule {
                 'description': 'Save the projectResliced image',
                 'varname': 'output',
                 'shortname' : 'o',
-                'required': false,
+                'required': true,
                 'extension' : '.nii.gz',
                 'guiviewertype' : 'overlay',
                 'guiviewer'  : 'viewer1',
+                'colortype'  : 'Orange'
+            },{
+                'type': 'image',
+                'name': 'Output 2D Atlas Image',
+                'description': 'Save the projected 2D (from ref) image',
+                'varname': 'ref2d',
+                'shortname' : 'f',
+                'required': false,
+                'extension' : '.nii.gz',
+                'guiviewertype' : 'overlay',
+                'guiviewer'  : 'viewer2',
                 'colortype'  : 'Orange'
             }],
             "params": [
@@ -254,7 +265,8 @@ class ProjectResliceImageModule extends BaseModule {
             console.log(e);
             return Promise.reject(e);
         }
-        await temp.save('2dmap.nii.gz');
+
+        this.outputs['ref2d']=temp;
         console.log('oooo \t computed template size=',temp.getDescription());
         
         this.outputs['output'] = new BisWebImage();
