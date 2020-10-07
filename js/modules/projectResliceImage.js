@@ -280,6 +280,7 @@ class ProjectResliceImageModule extends BaseModule {
         }
 
         console.log('oooo \t final output=',this.outputs['output'].getDescription());
+        console.log('oooo \t final atlas=',this.outputs['ref2d'].getDescription());
 
         return Promise.resolve('All done');
     }

@@ -804,7 +804,7 @@ namespace bisAdvancedImageAlgorithms {
             double intensity=0.0;
 
             int db=0;
-            if ( ( (first==23 && second==38 ) || (first==39 && second==38) ) && debug>0)
+            if ( ( first==24 && second==33 ) && debug>0)
               db=1; 
             
             int third=find_third<float>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity,db)+depth;
@@ -823,10 +823,11 @@ namespace bisAdvancedImageAlgorithms {
                 if (db) {
                   std::cout << "outaxis=" << outaxis[0] << "," << outaxis[1] << "," << axis << " --> ispa " << ispa[0] << "," << ispa[1] << "," << ispa[2] << std::endl;
                   std::cout << "first=" << first << "," << second << "," << third;
+                  std::cout << "Odim=" << odim[1]-1 << std::endl;
                 }
                 // Scale to mm
-                //int second_flipped=odim[1]-1-second;
-                int second_flipped=second;
+                int second_flipped=odim[1]-1-second;
+                //int second_flipped=second;
                 
                 x[outaxis[0]]=first*ispa[outaxis[0]];
                 x[outaxis[1]]=second_flipped*ispa[outaxis[1]];
@@ -916,7 +917,7 @@ namespace bisAdvancedImageAlgorithms {
 
       int db=0;
       if (debug) {
-        if ( (xi[0]==23 && xi[1]==38 ) || (xi[0]==39 && xi[1]==38))
+        if ( (xi[0]==24 && xi[1]==33))
           db=1;
       }
 
@@ -937,9 +938,10 @@ namespace bisAdvancedImageAlgorithms {
       
       if (good) {
         //int voxelindex_x=xi[0]+dim_x[0]*(dim_x[1]-1-xi[1]);
+        int voxelindex_y=yi[0]+dim_y[0]*(dim_y[1]-1-yi[1]);
         int voxelindex_x=xi[0]+dim_x[0]*(xi[1]);
         //int voxelindex_y=yi[0]+dim_y[0]*yi[1];
-        int voxelindex_y=yi[0]+dim_y[0]*(dim_y[1]-1-yi[1]);
+
         for (int frame=0;frame<numframes;frame++) {
           data_x[voxelindex_x+volumesize_x*frame]=data_y[voxelindex_y+frame*volumesize_y];
         }
