@@ -63,12 +63,13 @@ extern "C" {
    * @param xform  the transformation from reference to last 3D image (angio)
    * @param xform2  the second transformation from Projected 2D to 2D image 
    * @param jsonstring the parameter string for the algorithm 
-   * { "axis" : -1, "flip" : 0,  'flipy' : 0, 'threshold' : 0.05,  'depth': 2 }
+   * { "axis" : -1, "flip" : 0,  'flipy' : 0, 'threshold' : 0.05,  'depth': 2, '2dheight': 256, '2dspacing' : 0.1 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
   // BIS: { 'computeBackProjectAndProjectPointPairsWASM', 'Matrix', [ 'bisImage', 'bisTransformation','bisTransformation',  'ParamObj', 'debug' ] } 
-  BISEXPORT unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input,unsigned char* xform,unsigned char* xform2,const char* jsonstring,int debug);
+  BISEXPORT unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input,
+                                                                       unsigned char* xform,unsigned char* xform2,const char* jsonstring,int debug);
 
 
   

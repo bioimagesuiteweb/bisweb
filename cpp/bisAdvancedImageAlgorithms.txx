@@ -758,11 +758,11 @@ namespace bisAdvancedImageAlgorithms {
                                              bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
                                              int axis,int flipthird,int flipsecond,
-                                             float threshold,int depth,int debug) {
+                                             float threshold,int depth,int height2d,float spacing2d,int debug) {
 
 
     if (debug)
-      std::cout << "Axis=" << axis << " depth=" << depth << std::endl;
+      std::cout << "Axis=" << axis << " depth=" << depth << " height2d=" << height2d << ", spacing2d=" << spacing2d << std::endl;
     
     // ----------- Original_input should be done at this point
     int idim[5];   threed_reference->getDimensions(idim);
@@ -790,6 +790,9 @@ namespace bisAdvancedImageAlgorithms {
     }
 
     std::vector<float> newset; // 1-d vector 6 components (x,y,z) of point plus 
+
+    //float ysize=(height2d-1)*spacing2d;
+    float ysize=(odim[1]-1)*ispa[outaxis[1]];
     
     for (int second=0;second<odim[1];second++)
       {
@@ -842,16 +845,19 @@ namespace bisAdvancedImageAlgorithms {
                 transformation->transformPoint(x,y);
                 // back to pixels
                 Y[0]=y[outaxis[0]];
-                Y[1]=y[outaxis[1]];
+                Y[1]=ysize-y[outaxis[1]];
                 Y[2]=0.0;
                 second_transformation->transformPoint(Y,final);
-
+                final[1]= final[1];
+                
                 if (db>0) {
                   std::cout << "\t Points x=(" << x[0] << "," << x[1] << "," << x[2] << ") --> X=[" << X[0] << "," << X[1] << "]" << std::endl;
                   std::cout << "\t\t y=(" << y[0] << "," << y[1] << "," << y[2] << ") --> Y=[" << Y[0] << "," << Y[1] << "," << Y[2] << "]" << std::endl;
-                  std::cout << "\t\t final=" << final[0] << "," << final[1] << "," << final[2] << std::endl;
+                  std::cout << "\t\t final=" << final[0] << "," << final[1] << "," << final[2] << "ysize=" << ysize << std::endl;
                 }
 
+
+                
                 
                 newset.push_back(X[0]);
                 newset.push_back(X[1]);
@@ -938,9 +944,9 @@ namespace bisAdvancedImageAlgorithms {
       
       if (good) {
         //int voxelindex_x=xi[0]+dim_x[0]*(dim_x[1]-1-xi[1]);
-        int voxelindex_y=yi[0]+dim_y[0]*(dim_y[1]-1-yi[1]);
+        //int voxelindex_y=yi[0]+dim_y[0]*(dim_y[1]-1-yi[1]);
         int voxelindex_x=xi[0]+dim_x[0]*(xi[1]);
-        //int voxelindex_y=yi[0]+dim_y[0]*yi[1];
+        int voxelindex_y=yi[0]+dim_y[0]*yi[1];
 
         for (int frame=0;frame<numframes;frame++) {
           data_x[voxelindex_x+volumesize_x*frame]=data_y[voxelindex_y+frame*volumesize_y];

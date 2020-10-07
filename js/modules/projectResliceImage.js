@@ -233,6 +233,8 @@ class ProjectResliceImageModule extends BaseModule {
                        "flipy":  this.parseBoolean(vals.flipy),
                        "axis":  parseInt(axis),
                        "depth": parseInt(vals.depth),
+                       "2dheight" : input.getDimensions()[parseInt(axis)],
+                       "2dspacing" : input.getSpacing()[parseInt(axis)],
                        "threshold": parseFloat(vals.threshold),
                       };
             console.log('oooo\noooo calling computeBackProjectAndProjectPointPairsWASM '+JSON.stringify(obj));

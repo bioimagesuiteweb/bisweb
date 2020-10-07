@@ -247,6 +247,9 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
   int axis=params->getIntValue("axis",1);
   float threshold=params->getFloatValue("threshold",0.05);
   int depth=params->getIntValue("depth",0);
+  int height2d=params->getIntValue("2dheight",200);
+  float spacing2d=params->getFloatValue("2dspacing",0.1);  
+  
   if (debug) {
     std::cout << "Beginning actual Image Back Pair Making" << std::endl;
   }
@@ -257,7 +260,7 @@ unsigned char*  computeBackProjectAndProjectPointPairsWASM(unsigned char* input_
                                                                      warpXform.get(),
                                                                      rotation.get(),
                                                                      out_matrix.get(),
-                                                                     axis,flipz,flipy,threshold,depth,debug);
+                                                                     axis,flipz,flipy,threshold,depth,height2d,spacing2d,debug);
 if (debug)
     std::cout << "Back Projecting Pair Done" << std::endl;
   

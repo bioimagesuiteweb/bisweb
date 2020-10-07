@@ -100,6 +100,8 @@ namespace bisAdvancedImageAlgorithms {
    * @param flipthird - flip thirdaxis
    * @param threshold - the threshold for 2d integration
    * @param depth - the offset from the surface to use
+   * @param height2d - the flip axis dimension for the optical image
+   * @param spacing2d - the flip axis spacing for the optical image
    * @param debug - turn print messages on/off
    * @returns number of points sampled
    */
@@ -108,7 +110,7 @@ namespace bisAdvancedImageAlgorithms {
                                              bisAbstractTransformation* second_transformation,
                                              bisSimpleMatrix<float>* point_pairs,
                                              int axis=2,int flipthird=0,int flipsecond=0,
-                                             float threshold=0.5,int depth=0.0,int debug=0);
+                                             float threshold=0.5,int depth=0.0,int height2d=100,float spacing2d=0.1,int debug=0);
 
     /** creates a set of corresponding 2D points as a result of  2d->3d back projection --> transformation -> 3D->2D projection
    * @param threed_reference the 3d reference input image (atlas)
