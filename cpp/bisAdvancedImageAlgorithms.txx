@@ -150,7 +150,7 @@ namespace bisAdvancedImageAlgorithms {
               i_third=i_third+1;
 
             if (debug)
-              std::cout << "intensity = " << intensity << " i_third=" << i_third << " third=" << third << std::endl;
+              std::cout << ",,,, intensity = " << intensity << " i_third=" << i_third << " third=" << third << std::endl;
             
           }
       }
@@ -791,8 +791,8 @@ namespace bisAdvancedImageAlgorithms {
 
     std::vector<float> newset; // 1-d vector 6 components (x,y,z) of point plus 
 
-    //float ysize=(height2d-1)*spacing2d;
-    float ysize=(odim[1]-1)*ispa[outaxis[1]];
+    float ysize=(height2d-1)*spacing2d;
+    //float ysize=(odim[1]-1)*ispa[outaxis[1]];
     
     for (int second=0;second<odim[1];second++)
       {
@@ -807,16 +807,18 @@ namespace bisAdvancedImageAlgorithms {
             double intensity=0.0;
 
             int db=0;
-            if ( ( first==24 && second==33 ) && debug>0)
+            if ( ( first==24 && second==17 ) && debug>0)
               db=1; 
             
             int third=find_third<float>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity,db)+depth;
 
             if (db>0) {
               std::cout << std::endl;
-              if (first==0 && second==0) 
-                std::cout << "flipthird=" << flipthird << " idim=" << idim[0] << "," << idim[1] << "," << idim[2] << "  v_offset=" << v_offset << " incr=" << increment << " thr=" << threshold << " int=" << intensity << std::endl;
-              std::cout << "In =(" << first << "," << second << ") = " << third << std::endl;
+              if (first==0 && second==0)  {
+                std::cout << "\n\n flipthird=" << flipthird << " idim=" << idim[0] << "," << idim[1] << "," << idim[2] << "  v_offset=" << v_offset << " incr=" << increment << " thr=" << threshold << " int=" << intensity << std::endl;
+                std::cout << "outaxis=" << outaxis[0] << "," << outaxis[1] << "," << axis << " --> ispa " << ispa[0] << "," << ispa[1] << "," << ispa[2] << std::endl;
+                std::cout << "Odim=" << odim[1]-1 << std::endl;
+              }
             }
             
             if (third>=0)
@@ -824,36 +826,42 @@ namespace bisAdvancedImageAlgorithms {
                 // new coordinates in pixels         (first,second,third)
                 float x[3],y[3],X[2],Y[3],final[3];
                 if (db) {
-                  std::cout << "outaxis=" << outaxis[0] << "," << outaxis[1] << "," << axis << " --> ispa " << ispa[0] << "," << ispa[1] << "," << ispa[2] << std::endl;
-                  std::cout << "first=" << first << "," << second << "," << third;
-                  std::cout << "Odim=" << odim[1]-1 << std::endl;
+
+                  std::cout << ".... first=" << first << ", second=" << second << " -->" << third << std::endl;
+
                 }
                 // Scale to mm
-                int second_flipped=odim[1]-1-second;
-                //int second_flipped=second;
-                
+                int fixed_second=second;
+                if (flipsecond)
+                  fixed_second=(odim[1]-1)-second;
                 x[outaxis[0]]=first*ispa[outaxis[0]];
-                x[outaxis[1]]=second_flipped*ispa[outaxis[1]];
+                x[outaxis[1]]=fixed_second*ispa[outaxis[1]];
                 x[axis]=third*ispa[axis];
 
-                if (db)
-                  std::cout << "x=[ " << x[0] << "," << x[1] << "," << x[2] << "]" << std::endl;
+                if (db) {
+                  std::cout << "\tijk = [ " << x[0]/ispa[0] << "," << x[1]/ispa[1] << "," << x[2] /ispa[2] << "]" << std::endl;
+                  std::cout << "\tx=[ " << x[0] << "," << x[1] << "," << x[2] << "]";
+                }
                 
-                X[0]=first;
-                X[1]=second;
                 // transform
                 transformation->transformPoint(x,y);
+
+                if(db)
+                  std::cout << " --> y=(" << y[0] << "," << y[1] << "," << y[2] << ") " << std::endl;
                 // back to pixels
                 Y[0]=y[outaxis[0]];
                 Y[1]=ysize-y[outaxis[1]];
                 Y[2]=0.0;
                 second_transformation->transformPoint(Y,final);
-                final[1]= final[1];
                 
+
+                X[0]=first;
+                X[1]=second;
+
                 if (db>0) {
-                  std::cout << "\t Points x=(" << x[0] << "," << x[1] << "," << x[2] << ") --> X=[" << X[0] << "," << X[1] << "]" << std::endl;
-                  std::cout << "\t\t y=(" << y[0] << "," << y[1] << "," << y[2] << ") --> Y=[" << Y[0] << "," << Y[1] << "," << Y[2] << "]" << std::endl;
-                  std::cout << "\t\t final=" << final[0] << "," << final[1] << "," << final[2] << "ysize=" << ysize << std::endl;
+                  std::cout << "\t\t X=[" << X[0] << "," << X[1] << "] --> ";
+                  std::cout << "\t\t Y=[" <<  Y[0] << "," << Y[1] << "]" << std::endl;
+                  std::cout << "\t\t final=" << final[0] << "," << final[1] << "] ysize=" << ysize << std::endl;
                 }
 
 
@@ -923,7 +931,7 @@ namespace bisAdvancedImageAlgorithms {
 
       int db=0;
       if (debug) {
-        if ( (xi[0]==24 && xi[1]==33))
+        if ( (xi[0]==24 && xi[1]==17))
           db=1;
       }
 
@@ -943,8 +951,6 @@ namespace bisAdvancedImageAlgorithms {
       
       
       if (good) {
-        //int voxelindex_x=xi[0]+dim_x[0]*(dim_x[1]-1-xi[1]);
-        //int voxelindex_y=yi[0]+dim_y[0]*(dim_y[1]-1-yi[1]);
         int voxelindex_x=xi[0]+dim_x[0]*(xi[1]);
         int voxelindex_y=yi[0]+dim_y[0]*yi[1];
 

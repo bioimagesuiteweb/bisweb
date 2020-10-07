@@ -66,10 +66,21 @@ class ProjectResliceImageModule extends BaseModule {
                     'description' : 'Load the 3D reference image',
                     'varname' : 'reference',
                     'shortname' : 'r',
-                    'required' : false,
+                    'required' : true,
                     'guiviewertype' : 'image',
                     'guiviewer'  : 'viewer1',
                 },
+                {
+                    'type' : 'image',
+                    'name' : 'Angio Image',
+                    'description' : 'Load the 3D angio image',
+                    'varname' : 'angio',
+                    'shortname' : 'a',
+                    'required' : true,
+                    'guiviewertype' : 'image',
+                    'guiviewer'  : 'viewer2',
+                },
+
                 {
                     'type': 'transformation',
                     'name': '3D Transform 1',
@@ -138,7 +149,7 @@ class ProjectResliceImageModule extends BaseModule {
                     "gui": "check",
                     "varname": "flipy",
                     "type": 'boolean',
-                    "default": false,
+                    "default": true,
                 },
                 {
                     "name": "Axis",
@@ -190,10 +201,11 @@ class ProjectResliceImageModule extends BaseModule {
         let angioxform = this.inputs['angioxform'] || null;
         let rotxform = this.inputs['rotxform'] || null;
         let input = this.inputs['input'] || null;
+        let angio = this.inputs['angio'] || null;
         let reference = this.inputs['reference'] || null;
         let debug=super.parseBoolean(vals.debug);
     
-        if (xform === null || input===null || rotxform ===null || angioxform === null || reference ===null ) {
+        if (xform === null || input===null || rotxform ===null || angioxform === null || reference ===null || angio === null) {
             return Promise.reject('Bad Inputs, one of them is null');
         }
         
@@ -208,12 +220,15 @@ class ProjectResliceImageModule extends BaseModule {
         }
 
         let axis=-1;
+        let extraaxis=1;
         if (vals.axis.indexOf("z")>=0) {
             axis=2;
         } else if (vals.axis.indexOf("y")>=0) {
             axis=1;
+            extraaxis=2;
         } else if (vals.axis.indexOf("x")>=0) {
             axis=0;
+            extraaxis=2;
         }
         
         let orient=input.getOrientationName();
@@ -233,8 +248,8 @@ class ProjectResliceImageModule extends BaseModule {
                        "flipy":  this.parseBoolean(vals.flipy),
                        "axis":  parseInt(axis),
                        "depth": parseInt(vals.depth),
-                       "2dheight" : input.getDimensions()[parseInt(axis)],
-                       "2dspacing" : input.getSpacing()[parseInt(axis)],
+                       "2dheight" : angio.getDimensions()[parseInt(extraaxis)],
+                       "2dspacing" : angio.getSpacing()[parseInt(extraaxis)],
                        "threshold": parseFloat(vals.threshold),
                       };
             console.log('oooo\noooo calling computeBackProjectAndProjectPointPairsWASM '+JSON.stringify(obj));
