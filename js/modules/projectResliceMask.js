@@ -243,7 +243,6 @@ class ProjectResliceMaskModule extends BaseModule {
                 "backgroundValue" : 0.0,
                 "interpolation" : 1
             },vals.debug);
-            await temp_angio_mask.save('06angio.nii.gz');
         } catch(e) {
             return Promise.reject('Failed to reslice mask to angio space '+e);
         }
@@ -264,7 +263,6 @@ class ProjectResliceMaskModule extends BaseModule {
             };
             console.log('oooo calling projectImageWASM '+JSON.stringify(obj));
             temp_projected_mask=await biswrap.projectImageWASM(temp_angio_mask,0,obj,debug);
-            await temp_projected_mask.save('06mask.nii.gz');
         } catch(e) {
             console.log(e);
             return Promise.reject(e);
