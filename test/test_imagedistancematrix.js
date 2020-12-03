@@ -32,9 +32,11 @@ const tmpFname1=path.resolve(tmpDirPath,'matrix1.binmatr');
 const tmpFname2=path.resolve(tmpDirPath,'matrix2.binmatr');
 
 let gold = [ new BisWebMatrix(),
+             new BisWebMatrix(),
              new BisWebMatrix()];
 let matnames = [ 'sparse.matr',
-                 'radius.matr' ];
+                 'radius.matr' ,
+                 'radius2.matr' ];
 
 let img=null,obj=null,indexmap=null;
 
@@ -44,13 +46,14 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
     
     before(function(done){
 
-        for (let i=0;i<=1;i++) 
+        for (let i=0;i<=2;i++) 
             matnames[i]=path.resolve(__dirname, 'testdata/distancematrix/'+matnames[i]);
 
 
         let p = [ libbiswasm.initialize() ,
                   gold[0].load(matnames[0]),
-                  gold[1].load(matnames[1])
+                  gold[1].load(matnames[1]),
+                  gold[2].load(matnames[2])
                 ];
 
         img=new BisWebImage();
@@ -134,8 +137,9 @@ describe('Testing imageDistanceMatrix stuff\n', function() {
             let out3=libbiswasm.computeImageDistanceMatrixWASM(img,obj,{ "useradius" : false,
                                                                          "sparsity" : 0.1,
                                                                          "numthreads" : 1
-                                                                       },0);
-            let result=out3.compareWithOther(gold[1]);
+                                                                       },1);
+
+            let result=out3.compareWithOther(gold[2]);
             console.log('....',result,' type=',out3.data.constructor.name,out3.datatype);
             assert.equal(true,result.testresult);
             resolve();

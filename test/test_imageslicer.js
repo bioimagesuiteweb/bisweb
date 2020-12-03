@@ -1,3 +1,4 @@
+
 /*  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -149,7 +150,7 @@ describe('Testing Image Slice Extraction (BisImageSlicerr from BisImageSlicerr.j
             let cldim=numeric.dim(clarray);
             let newcol = util.zero(cldim[0],cldim[1]);
             for (let i=0;i<cldim[0];i++) {
-                let v=util.objectmapcolormap[grarray[i]];
+                let v=util.getobjectmapcolor(grarray[i]);
                 for (let j=0;j<=3;j++) {
                     newcol[i][j]=v[j];
                 }
