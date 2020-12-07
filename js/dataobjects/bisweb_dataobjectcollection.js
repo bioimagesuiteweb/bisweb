@@ -31,6 +31,7 @@ const BisWebSurface = require('bisweb_surface.js');
 const BisWebMatrix = require('bisweb_matrix.js');
 const BisWebTextObject = require('bisweb_textobject.js');
 const bistransforms = require('bis_transformationutil.js');
+const BisWebElectrodeMultiGrid= require('bisweb_electrodemultigrid.js');
 
 /** Class to store a collection of data objects */
 
@@ -270,6 +271,8 @@ class BisWebDataObjectCollection extends BisWebDataObject {
             obj= new BisWebTextObject();
         } else if (objecttype === "surface" || objecttype === "Surface") {
             obj= new BisWebSurface();
+        } else if (objecttype === "electrodemultigrid") {
+            obj= new BisWebElectrodeMultiGrid();
         }
         
         if (obj===null) {
@@ -334,7 +337,14 @@ class BisWebDataObjectCollection extends BisWebDataObject {
             });
         }
 
-
+        if (objecttype === "electrodemultigrid") { 
+            let obj=new BisWebElectrodeMultiGrid();
+            return new Promise( (resolve,reject) => {
+                obj.load(filename).then( () => {
+                    resolve(obj);
+                }).catch( (e) => {reject(e);});
+            });
+        }   
         
         if (objecttype.indexOf('transform')>=0)  {
             return new Promise((resolve, reject) => {
