@@ -82,7 +82,7 @@ const moduleImports = {
     tfrecon:require('tfRecon.js'),
     individualizedparcellation : require('individualizedParcellation.js'),
     makeconnmatrixfile : require('makeConnectivityMatrixFile.js'),
-
+    transformelectrodes : require('transformElectrodes.js'),
     joinmatrices : require('joinMatrices.js'),
     removematrixcols : require('removeMatrixCols.js'),
 
