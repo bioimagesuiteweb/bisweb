@@ -470,7 +470,7 @@ ${elec.values.length}`;
                     electrode.position[k]=q[k];
                 if (flipxy) {
                     electrode.position[0]= widthmm-electrode.position[0];
-                    electrode.position[1]= heightmm-electrode.position[0];
+                    electrode.position[1]= heightmm-electrode.position[1];
                 }
             }
         }
