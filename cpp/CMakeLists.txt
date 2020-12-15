@@ -103,7 +103,7 @@ SET(KITSRCS
 # ----------------------------------------------------------------------------
 # Configure AFNI build
 # ----------------------------------------------------------------------------
-OPTION(BISWEB_USEAFNI "Include AFNI Code" ON)
+OPTION(BISWEB_USEAFNI "Include AFNI Code" OFF)
 IF (BISWEB_USEAFNI)
   MESSAGE("Using AFNI")
   FIND_PATH(BIS_AFNI_DIR BisWebExtra.cmake  REQUIRED)
@@ -568,7 +568,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1 /EHsc" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    SET( COMPILE_FLAGS "-Wall -Wextra -Wpedantic -Wformat")
+    SET( COMPILE_FLAGS "-Wall -Wextra -Wpedantic -Wformat ${AFNI_COMPILE_FLAGS}")
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 " CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)

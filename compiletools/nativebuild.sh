@@ -72,6 +72,8 @@ cmake -G "${GENERATOR}" \
       -DPYTHON_EXECUTABLE=`which python3` \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
+      -DBISWEB_USEAFNI=ON \
+      -DBIS_AFNI_DIR=${SRCDIR}/../afni/bisweb \
       -DBIS_A_MATLAB=ON \
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
       -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \

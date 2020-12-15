@@ -27,12 +27,12 @@ const BaseModule = require('basemodule.js');
 class AfniBlurModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'smoothImage';
+        this.name = 'afniBlurImage';
     }
 
     createDescription() {
         return {
-            "name": "Smooth",
+            "name": "AFNI Blur Image",
             "description": "This algorithm performs image smoothing using a 2D/3D Gaussian kernel",
             "author": "John Lee, Steph Noble, Box Cox and Xenios Papademetris",
             "version": "1.0",
