@@ -89,6 +89,8 @@ cmake -G "${GENERATOR}" \
       -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DMOCHA=${MOCHA} \
+      -DBISWEB_USEAFNI=ON \
+      -DBIS_AFNI_DIR=${SRCDIR}/../afni/bisweb \
       -DCMAKE_CXX_FLAGS="-o2 -s WASM=1 -s TOTAL_MEMORY=512MB -Wint-in-bool-context" \
       -DCMAKE_EXE_LINKER_FLAGS="__pre-js ${SRCDIR}/cpp/libbiswasm_pre.js __post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \

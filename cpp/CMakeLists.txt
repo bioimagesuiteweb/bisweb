@@ -15,7 +15,7 @@
 #
 # ENDLICENSE
 
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
@@ -103,31 +103,16 @@ SET(KITSRCS
 # ----------------------------------------------------------------------------
 # Configure AFNI build
 # ----------------------------------------------------------------------------
-
 OPTION(BISWEB_USEAFNI "Include AFNI Code" ON)
-
 IF (BISWEB_USEAFNI)
-  INCLUDE(FETCHCONTENT)
   MESSAGE("Using AFNI")
-  set(BUILD_SHARED_LIBS OFF)
-  set(MINI_MRI ON)
-  set(COMP_CORELIBS_ONLY ON)
-  set(USE_SYSTEM_NIFTI OFF)
-  set(USE_SYSTEM_GIFTI OFF)
-  set(REMOVE_BUILD_PARITY_CHECKS ON)
-  FetchContent_Declare(
-    afni
-    GIT_REPOSITORY https://github.com/leej3/afni
-    GIT_TAG bisweb
-    )
-  FetchContent_MakeAvailable(afni)
+  FIND_PATH(BIS_AFNI_DIR BisWebExtra.cmake  REQUIRED)
+  INCLUDE (${BIS_AFNI_DIR}/BisWebExtra.cmake)
+  SET (KITSRCS ${KITSRCS} ${AFNI_SOURCES})
+  MESSAGE(${AFNI_SOURCES})
+ELSE (BISWEB_USEAFNI)
+  SET (AFNI_COMPILE_FLAGS "")
 
-  MESSAGE($<TARGET_OBJECTS:AFNI::blur>)
-  
-  SET (KITSRCS
-    ${KITSRCS}
-    $<TARGET_OBJECTS:AFNI::blur>
-    )
 ENDIF (BISWEB_USEAFNI)
 # ---------------------------------------------------------------------------------------------
 # JS Stuff
@@ -260,6 +245,13 @@ ELSE (BIS_USEGPL)
     )
 ENDIF (BIS_USEGPL)
 
+IF (BISWEB_USEAFNI)
+  SET(PARSE_HEADERS
+    ${PARSE_HEADERS}
+    ${AFNI_HEADERS}
+  )
+ENDIF (BISWEB_USEAFNI)
+
 IF (BIS_USEEXTERNAL)
   SET(PARSE_HEADERS
     ${PARSE_HEADERS}
@@ -339,7 +331,7 @@ IF (BIS_A_EMSCRIPTEN)
     SET(WASM_STRING "")
   ENDIF(BIS_WEB_WASM)
 
-  SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
+  SET( COMPILE_FLAGS "-Wall  -DBISWASM ${AFNI_COMPILE_FLAGS} ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   IF (BIS_USEINDIV)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
   ENDIF (BIS_USEINDIV)

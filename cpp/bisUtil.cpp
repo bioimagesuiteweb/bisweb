@@ -80,7 +80,7 @@ namespace bisUtil {
   
   double gaussian(double x,double m,double sigma2) {
     double t= (x-m)*(x-m)/(-2.0*sigma2);
-    double A= 1.0/sqrt(2.0*PI*sigma2);
+    double A= 1.0/sqrt(2.0*B_PI*sigma2);
     return A*exp(t);
   }
 

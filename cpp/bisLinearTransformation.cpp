@@ -43,7 +43,7 @@ void bisLinearTransformation::eulerXYZRotationMatrix(float* theta,int offset,bis
   
   float rad[3]={0,0,0};
   for (int i=0;i<=2;i++)
-    rad[i]=float((bisUtil::PI*theta[i+offset])/180.0);
+    rad[i]=float((bisUtil::B_PI*theta[i+offset])/180.0);
 
   /*
     float calpha=cosf(rad[2]),salpha=sinf(rad[2]);

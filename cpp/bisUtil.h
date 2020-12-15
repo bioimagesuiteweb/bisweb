@@ -26,7 +26,7 @@
 namespace bisUtil {
 
   /** PI definition */
-  const double PI=3.14159265358979;
+  const double B_PI=3.14159265358979;
   
   /**
    *   A Simple 4x4 float matrix used internally for linear transformation storage
