@@ -63,23 +63,6 @@ SET (BISWEB_PYTHON_REQUIREMENTS ${BISWEBPYTHON_SOURCE_DIR}/config/requirements.t
 SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
 SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
 
-# ---------------------------------------------------------------------------------------------
-# Configure AFNI build
-# ---------------------------------------------------------------------------------------------
-
-set_if_not_defined(BUILD_SHARED_LIBS OFF)
-set_if_not_defined(MINI_MRI ON)
-set_if_not_defined(COMP_CORELIBS_ONLY ON)
-set_if_not_defined(USE_SYSTEM_NIFTI OFF)
-set_if_not_defined(USE_SYSTEM_GIFTI OFF)
-set_if_not_defined(REMOVE_BUILD_PARITY_CHECKS ON)
-FetchContent_Declare(
-  afni
-  GIT_REPOSITORY https://github.com/leej3/afni
-  GIT_TAG bisweb
-  )
-FetchContent_MakeAvailable(afni)
-
 
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
@@ -115,9 +98,33 @@ SET(KITSRCS
   bisImageTransformationJacobian.cpp
   bisPointLocator.cpp
   bisPointRegistrationUtils.cpp
-  $<TARGET_OBJECTS:AFNI::blur>
   )
 
+# ----------------------------------------------------------------------------
+# Configure AFNI build
+# ----------------------------------------------------------------------------
+
+OPTION(BISWEB_USEAFNI "Include AFNI Code" ON)
+
+IF (BISWEB_USEAFNI)
+  set(BUILD_SHARED_LIBS OFF)
+  set(MINI_MRI ON)
+  set(COMP_CORELIBS_ONLY ON)
+  set(USE_SYSTEM_NIFTI OFF)
+  set(USE_SYSTEM_GIFTI OFF)
+  set(REMOVE_BUILD_PARITY_CHECKS ON)
+  FetchContent_Declare(
+    afni
+    GIT_REPOSITORY https://github.com/leej3/afni
+    GIT_TAG bisweb
+    )
+  FetchContent_MakeAvailable(afni)
+
+  SET (KITSRCS
+    ${KITSRCS}
+    $<TARGET_OBJECTS:AFNI::blur>
+    )
+ENDIF (BISWEB_USEAFNI)
 # ---------------------------------------------------------------------------------------------
 # JS Stuff
 # ---------------------------------------------------------------------------------------------
