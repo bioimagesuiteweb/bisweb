@@ -306,7 +306,8 @@ INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
 IF (BIS_A_EMSCRIPTEN)
 
   install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE.md)
-
+  CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/bisConfigure.js.in ${PROJECT_BINARY_DIR}/bisConfigure.js)
+  
   # ---------------------------------------------------------------------------------------------
   # Web Assembly Mode
   # ---------------------------------------------------------------------------------------------
@@ -396,6 +397,9 @@ IF (BIS_A_EMSCRIPTEN)
     COMMAND ${NODE_JS_EXECUTABLE} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH} --bisdate ${EXECUTABLE_OUTPUT_PATH}/biswasmdate.js)
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT} ${JS_WRAP_OUTPUT2})
 
+  
+
+  
   # ---- create library for command line  -----------
   FILE(GLOB JSFILES ${PROJECT_SOURCE_DIR}/../js/*/[a-zA-z]*.js)
 
@@ -551,6 +555,7 @@ IF (BIS_A_EMSCRIPTEN)
 ELSE(BIS_A_EMSCRIPTEN)
 
 
+
   # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
   # ---------------------------------------------------------------------------------------------
@@ -601,6 +606,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   # ---------------------------
 
   IF (BIS_A_PYTHON)
+    CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/bisConfigure.py.in ${PROJECT_BINARY_DIR}/bisConfigure.py)
     install (TARGETS ${CLIBNAME} DESTINATION biswebpython/lib)
     IF (BIS_A_DEVEL)
       install (FILES ${HEADERS} DESTINATION biswebpython/include)
@@ -800,3 +806,6 @@ ELSE(BIS_A_EMSCRIPTEN)
   add_custom_target(wrappers ALL DEPENDS ${MATLAB_OUT_HEADER} ${MATLAB_WRAP_OUTPUT} ${PYTHON_WRAP_OUTPUT} ${WRAP_SCRIPT} ${HEADER_SCRIPT} ${PYTHON_MODULE_DESC})
 
 ENDIF(BIS_A_EMSCRIPTEN)
+
+
+

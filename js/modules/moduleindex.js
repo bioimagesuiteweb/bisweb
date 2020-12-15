@@ -16,6 +16,7 @@
  ENDLICENSE */
 
 "use strict";
+const bisconfig = require('bisConfigure.js');
 
 const moduleImports = {
     
@@ -89,10 +90,12 @@ const moduleImports = {
     // these are here so that can be accessed by electron
     dicomconversion : require('./dicommodule.js'),
     bidsconversion : require('./bidsmodule.js'),
+}
 
-    // Afni
-    afniblurimage : require('afniBlurImage.js')
-};
+// AFNI
+if (bisconfig.usesafni === "ON") {
+    moduleImports['afniblurimage'] = require('afniBlurImage.js')
+}
 
 // --------------------------------------------------------------
 

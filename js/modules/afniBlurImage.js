@@ -33,7 +33,8 @@ class AfniBlurModule extends BaseModule {
     createDescription() {
         return {
             "name": "AFNI Blur Image",
-            "description": "This algorithm performs image smoothing using a 2D/3D Gaussian kernel",
+            "usesafni" : true,
+            "description": "This algorithm performs image smoothing using AFNI's blurImage code",
             "author": "John Lee, Steph Noble, Box Cox and Xenios Papademetris",
             "version": "1.0",
             "inputs": [
@@ -92,7 +93,7 @@ class AfniBlurModule extends BaseModule {
     }
     
     async directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: smoothImage with vals', JSON.stringify(vals));
+        console.log('oooo invoking: afniBlurImage with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
         let mask  = this.inputs['mask'] || 0;
         let s = parseFloat(vals.sigma);

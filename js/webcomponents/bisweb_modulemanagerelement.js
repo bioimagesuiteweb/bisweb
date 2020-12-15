@@ -20,6 +20,7 @@
 const webutil = require('bis_webutil');
 
 const biscustom = require('bisweb_custommodule.js');
+const bisconfig = require('bisConfigure.js');
 const modules = require('moduleindex.js');
 const userPreferences = require('bisweb_userpreferences.js');
 
@@ -261,7 +262,8 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Crop Image',1, false, modules.getModule('cropImage'), moduleoptions);
         this.createModule('Blank Image',1, false, modules.getModule('blankImage'), moduleoptions);
         this.createModule('Extract Frame',1, true, modules.getModule('extractFrame'), moduleoptions);
-        this.createModule('AFNI Blur Image',1, false, modules.getModule('afniBlurImage'), moduleoptions);
+        if (bisconfig.usesafni === "ON") 
+            this.createModule('AFNI Blur Image',1, false, modules.getModule('afniBlurImage'), moduleoptions);
 
         
         let dosep=(this.mode === 'paravision');
