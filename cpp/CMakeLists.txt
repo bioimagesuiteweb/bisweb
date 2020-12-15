@@ -15,7 +15,7 @@
 #
 # ENDLICENSE
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.19)
 
 PROJECT(BISWEB)
 
@@ -107,6 +107,7 @@ SET(KITSRCS
 OPTION(BISWEB_USEAFNI "Include AFNI Code" ON)
 
 IF (BISWEB_USEAFNI)
+  MESSAGE("Using AFNI")
   set(BUILD_SHARED_LIBS OFF)
   set(MINI_MRI ON)
   set(COMP_CORELIBS_ONLY ON)
