@@ -90,6 +90,8 @@ const moduleImports = {
     dicomconversion : require('./dicommodule.js'),
     bidsconversion : require('./bidsmodule.js'),
 
+    // Afni
+    afniblurimage : require('afniBlurImage.js')
 };
 
 // --------------------------------------------------------------
