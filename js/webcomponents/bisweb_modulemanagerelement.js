@@ -261,6 +261,8 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Crop Image',1, false, modules.getModule('cropImage'), moduleoptions);
         this.createModule('Blank Image',1, false, modules.getModule('blankImage'), moduleoptions);
         this.createModule('Extract Frame',1, true, modules.getModule('extractFrame'), moduleoptions);
+        this.createModule('AFNI Blur Image',1, false, modules.getModule('afniBlurImage'), moduleoptions);
+
         
         let dosep=(this.mode === 'paravision');
         
@@ -277,8 +279,9 @@ class ModuleManagerElement extends HTMLElement {
             this.createModule('Deface Head Image',2, true, modules.getModule('defaceImage'), moduleoptions);
         }
         userPreferences.safeGetItem("internal").then( (f) => {
-            if (f)
-                this.createModule('Skull Strip Image (DL)',2, false, modules.getModule('skullStrip'), moduleoptions);
+		if (f) {
+                  this.createModule('Skull Strip Image (DL)',2, false, modules.getModule('skullStrip'), moduleoptions);
+		}
         });
 
         this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);

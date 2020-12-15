@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 'use strict';
 
@@ -58,9 +58,9 @@ class AfniBlurModule extends BaseModule {
                     'guiviewer'  : 'viewer1',
                     'colortype'  : 'Orange'
                 }
-	    ],
-	    "outputs": baseutils.getImageToImageOutputs(),
-	    "buttonName": "AFNI Blur",
+            ],
+            "outputs": baseutils.getImageToImageOutputs(),
+            "buttonName": "AFNI Blur",
             "shortname" : "sm",
             "slicer" : true,
             "params": [
@@ -76,6 +76,16 @@ class AfniBlurModule extends BaseModule {
                     "low":  0.0,
                     "high": 16.0
                 },
+                {
+                    "name": "Use Mask",
+                    "description": "If true only mask within a region",
+                    "priority": 7,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "usemask",
+                    "type": 'boolean',
+                    "default": false,
+                },
                 baseutils.getDebugParam(),
             ],
         };
@@ -84,20 +94,22 @@ class AfniBlurModule extends BaseModule {
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: smoothImage with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
-	let mask  = this.inputs['mask'] || 0;
+        let mask  = this.inputs['mask'] || 0;
         let s = parseFloat(vals.sigma);
+        let usem=super.parseBoolean(vals.usemask);
 
         try {
-	    await biswrap.initialize()
-	} catch(e) {
-	    return Promise.reject(e);
-	}
+            await biswrap.initialize();
+        } catch(e) {
+            return Promise.reject(e);
+        }
 
         this.outputs['output'] = biswrap.afniBlurImageWASM(input, mask, {
             "sigma": s,
+            "usemask" : usem,
         }, super.parseBoolean(vals.debug));
         
-	return Promise.resolve('done');
+        return Promise.resolve('done');
     }
 }
 
