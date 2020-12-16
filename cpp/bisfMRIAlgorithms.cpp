@@ -261,7 +261,7 @@ namespace bisfMRIAlgorithms {
 
         const double ff=frequency/sampleRate;
         
-        const double ita =1.0/ tan(bisUtil::B_PI*ff);
+        const double ita =1.0/ tan(bisUtil::PI*ff);
         const double q=sqrt(2.0);
         this->b0 = 1.0 / (1.0 + q*ita + ita*ita);
         this->b1= 2*b0;
