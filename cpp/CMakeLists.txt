@@ -63,6 +63,7 @@ SET (BISWEB_PYTHON_REQUIREMENTS ${BISWEBPYTHON_SOURCE_DIR}/config/requirements.t
 SET (BISWEB_PYTHON_MANIFEST ${BISWEBPYTHON_SOURCE_DIR}/config/MANIFEST.in)
 SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleList.txt)
 
+SET(LIBNAME libbiswasm)
 
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
@@ -85,6 +86,7 @@ SET(KITSRCS
   bisLinearTransformation.cpp
   bisGridTransformation.cpp
   bisComboTransformation.cpp
+  bisIndividualizedParcellation.cpp
   bisSurface.cpp
   bisDataObjectFactory.cpp
   bisSimpleImageSegmentationAlgorithms.cpp
@@ -98,50 +100,64 @@ SET(KITSRCS
   bisImageTransformationJacobian.cpp
   bisPointLocator.cpp
   bisPointRegistrationUtils.cpp
+
+  )
+
+# ---------------------------------------------------------------------------------------------
+# PARSE HEADERS -- headers containing exported functions for JS/Python/Matlab Wrappers
+# ---------------------------------------------------------------------------------------------
+SET(PARSE_HEADERS
+  ${CPP_SOURCE_DIR}/bisDefinitions.h
+  ${CPP_SOURCE_DIR}/bisExportedFunctions.h
+  ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
+  ${CPP_SOURCE_DIR}/bisTesting.h
+  ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
+  ${CPP_SOURCE_DIR}/bisImageTransformationJacobian.h
+  ${CPP_SOURCE_DIR}/bisPointRegistrationUtils.h
+  ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
   )
 
 # ----------------------------------------------------------------------------
-# Configure AFNI build
+# All Headers
 # ----------------------------------------------------------------------------
+FILE(GLOB H1 ${CPP_SOURCE_DIR}/b*.h)
+FILE(GLOB H2 ${CPP_SOURCE_DIR}/b*.txx)
+SET(HEADERS ${H1} ${H2})
+
+
+# ---------------------------------------------------------------------------------------------
+# External Code
+# ---------------------------------------------------------------------------------------------
+
+#    ------------------------------------------------------------------------
+#    Configure AFNI build
+#    ------------------------------------------------------------------------
 OPTION(BISWEB_USEAFNI "Include AFNI Code" OFF)
 IF (BISWEB_USEAFNI)
-  MESSAGE("Using AFNI")
-  FIND_PATH(BIS_AFNI_DIR BisWebExtra.cmake  REQUIRED)
-  INCLUDE (${BIS_AFNI_DIR}/BisWebExtra.cmake)
+  INCLUDE (${PROJECT_SOURCE_DIR}/afni/BisWebAFNI.cmake)
   SET (KITSRCS ${KITSRCS} ${AFNI_SOURCES})
-  MESSAGE(${AFNI_SOURCES})
+  SET (PARSE_HEADERS ${PARSE_HEADERS} ${AFNI_HEADERS})
 ELSE (BISWEB_USEAFNI)
-  SET (AFNI_COMPILE_FLAGS "")
-
+  SET (AFNI_WASM_COMPILE_FLAGS "")
+  SET (AFNI_NATIVE_COMPILE_FLAGS "")
+  SET (AFNI_INCLUDE_DIRS "")
 ENDIF (BISWEB_USEAFNI)
-# ---------------------------------------------------------------------------------------------
-# JS Stuff
-# ---------------------------------------------------------------------------------------------
-SET(LIBNAME libbiswasm)
-SET (PRE_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_pre.js")
-SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
 
-
-
-
-# ---------------------------------------------------------------------------------------------
-# SOURCE Files and GPL Flags
-# ---------------------------------------------------------------------------------------------
+#    -----------------------------------------------------------------------------------------
+#    SOURCE Files and GPL Flags
+#    -----------------------------------------------------------------------------------------
 
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
-OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
-OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" ON)
-OPTION(BIS_USECPM "Include additional files for the CPM Code" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
-MARK_AS_ADVANCED(BIS_USEEXTERNAL)
+
 
 IF (BIS_USEGPL)
 
   OPTION(BIS_BUILDNONGPL "Also Build Non GPL-licensed library" OFF)
-
+  MESSAGE("-- Using GPL Licensed Code from ${BIS_GPL_DIR}")
+  
   FIND_PATH(BIS_GPL_DIR BisWebExtra.cmake  REQUIRED)
   get_filename_component(BIS_GPL_DIR ${BIS_GPL_DIR} ABSOLUTE)
-  MESSAGE("-- Using GPL Licensed Code from ${BIS_GPL_DIR}")
   INCLUDE (${BIS_GPL_DIR}/BisWebExtra.cmake)
 
   # Build also a library without the gpl code
@@ -151,19 +167,23 @@ IF (BIS_USEGPL)
       ${KITSRCS}
       nongpl/bisReplacementExportedFunctions.cpp)
   ENDIF (BIS_BUILDNONGPL)
-
-  SET (KITSRCS
-    ${KITSRCS}
-    ${GPLSOURCES}
-    )
+  SET (KITSRCS ${KITSRCS} ${GPLSOURCES})
+  SET(PARSE_HEADERS ${PARSE_HEADERS} ${GPLHEADERS})
 
 ELSE (BIS_USEGPL)
-  SET (KITSRCS
-    ${KITSRCS}
-    nongpl/bisReplacementExportedFunctions.cpp
-    )
+
+  SET (KITSRCS ${KITSRCS} nongpl/bisReplacementExportedFunctions.cpp)
+  SET(PARSE_HEADERS ${PARSE_HEADERS} ${CPP_SOURCE_DIR}/nongpl/bisReplacementExportedFunctions.h )
+
 ENDIF (BIS_USEGPL)
 
+
+#    ---------------
+#    External Plugin
+#    ---------------
+
+OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
+MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 
 IF (BIS_USEEXTERNAL)
   #
@@ -176,43 +196,15 @@ IF (BIS_USEEXTERNAL)
   get_filename_component(BIS_EXTERNAL_DIR ${BIS_EXTERNAL_DIR} ABSOLUTE)
   MESSAGE("-- Using EXTERNAL Licensed Code from ${BIS_EXTERNAL_DIR}")
   INCLUDE (${BIS_EXTERNAL_DIR}/BisWebExtra.cmake)
-  SET (KITSRCS
-    ${KITSRCS}
-    ${EXTERNALSOURCES}
-    )
+  SET (KITSRCS ${KITSRCS} ${EXTERNALSOURCES})
+  SET(PARSE_HEADERS ${PARSE_HEADERS} ${EXTERNALHEADERS})
 ENDIF (BIS_USEEXTERNAL)
 
-FILE(GLOB H1 ${CPP_SOURCE_DIR}/b*.h)
-FILE(GLOB H2 ${CPP_SOURCE_DIR}/b*.txx)
-SET(HEADERS ${H1} ${H2})
+#    ---------------
+#    CPM Plugin
+#    ---------------
 
-# ---------------------------------------------------------------------------------------------
-# PARSE HEADERS
-# ---------------------------------------------------------------------------------------------
-SET(PARSE_HEADERS
-  ${CPP_SOURCE_DIR}/bisDefinitions.h
-  ${CPP_SOURCE_DIR}/bisExportedFunctions.h
-  ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
-  ${CPP_SOURCE_DIR}/bisTesting.h
-  ${CPP_SOURCE_DIR}/bisImageDistanceMatrix.h
-  ${CPP_SOURCE_DIR}/bisImageTransformationJacobian.h
-  ${CPP_SOURCE_DIR}/bisPointRegistrationUtils.h
-  )
-
-
-IF (BIS_USEINDIV)
-  MESSAGE("-- Also Building Individualized Parcellation Code and Sparse Image Distance Matrix Code")
-  SET (PARSE_HEADERS
-    ${PARSE_HEADERS}
-    ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
-    )
-  SET (KITSRCS
-    ${KITSRCS}
-    bisIndividualizedParcellation.cpp
-    )
-  FIND_PACKAGE(IGL REQUIRED)
-ENDIF (BIS_USEINDIV)
-
+OPTION(BIS_USECPM "Include additional files for the CPM Code" OFF)
 
 IF (BIS_USECPM)
   SET (KITSRCS
@@ -225,42 +217,13 @@ IF (BIS_USECPM)
     cpmcode/tools.cpp
     cpmcode/bisCPM.cpp
     )
-
   SET (PARSE_HEADERS
     ${PARSE_HEADERS}
     ${CPP_SOURCE_DIR}/cpmcode/bisCPM.h
     )
 
+  include_directories( "${PROJECT_SOURCE_DIR}/cpmcode")
 ENDIF (BIS_USECPM)
-
-IF (BIS_USEGPL)
-  SET(PARSE_HEADERS
-    ${PARSE_HEADERS}
-    ${GPLHEADERS}
-    )
-ELSE (BIS_USEGPL)
-  SET(PARSE_HEADERS
-    ${PARSE_HEADERS}
-    ${CPP_SOURCE_DIR}/nongpl/bisReplacementExportedFunctions.h
-    )
-ENDIF (BIS_USEGPL)
-
-IF (BISWEB_USEAFNI)
-  SET(PARSE_HEADERS
-    ${PARSE_HEADERS}
-    ${AFNI_HEADERS}
-  )
-ENDIF (BISWEB_USEAFNI)
-
-IF (BIS_USEEXTERNAL)
-  SET(PARSE_HEADERS
-    ${PARSE_HEADERS}
-    ${EXTERNALHEADERS}
-  )
-ENDIF (BIS_USEEXTERNAL)
-
-
-STRING(REGEX REPLACE ";" "," PARSE_LIST "${PARSE_HEADERS}")
 
 # ---------------------------------------------------------------------------------------------
 # Global Configuration flags
@@ -268,18 +231,14 @@ STRING(REGEX REPLACE ";" "," PARSE_LIST "${PARSE_HEADERS}")
 
 INCLUDE(CTest)
 FIND_PACKAGE(Eigen3 REQUIRED)
+FIND_PACKAGE(IGL REQUIRED)
+
 SET (CMAKE_VERBOSE_MAKEFILE ON)
-
-IF (WIN32)
-  OPTION(BIS_A_EMSCRIPTEN "Use Emscripten" OFF)
-ELSE (WIN32)
-  OPTION(BIS_A_EMSCRIPTEN "Use Emscripten" ON)
-ENDIF (WIN32)
-
-
+OPTION(BIS_A_EMSCRIPTEN "Use Emscripten" ON)
 OPTION(BIS_UNITTEST "Enable Unit Tests" ON)
-MARK_AS_ADVANCED(BIS_UNITTEST)
 OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
+
+MARK_AS_ADVANCED(BIS_UNITTEST)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
 # ---------------------------------------------------------------------------------------------
@@ -300,11 +259,28 @@ ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJEC
 
 INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
 
+# ----------------------------------------------------------
+# List of files to parse
+# ----------------------------------------------------------
+STRING(REGEX REPLACE ";" "," PARSE_LIST "${PARSE_HEADERS}")
 
 
+# -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
+#
+#
+#  Webassembly Build
+#
+#
+# -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
 
 IF (BIS_A_EMSCRIPTEN)
 
+  SET (PRE_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_pre.js")
+  SET (POST_JS "${PROJECT_SOURCE_DIR}/js/libbiswasm_post.js")
+
+  
   install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE.md)
   CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/bisConfigure.js.in ${PROJECT_BINARY_DIR}/bisConfigure.js)
   
@@ -332,10 +308,13 @@ IF (BIS_A_EMSCRIPTEN)
     SET(WASM_STRING "")
   ENDIF(BIS_WEB_WASM)
 
-  SET( COMPILE_FLAGS "-Wall  -DBISWASM ${AFNI_COMPILE_FLAGS} ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
-  IF (BIS_USEINDIV)
-    SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
-  ENDIF (BIS_USEINDIV)
+  SET( COMPILE_FLAGS "-Wall  -DBISWASM  ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
+  SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
+  
+  IF (BISWEB_USEAFNI)
+    SET (COMPILE_FLAGS "${COMPILE_FLAGS} ${AFNI_WASM_COMPILE_FLAGS} -isystem ${AFNI_INCLUDE_DIRS}")
+  ENDIF (BISWEB_USEAFNI)
+  
   IF (BIS_USECPM)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${PROJECT_SOURCE_DIR}/cpmcode")
   ENDIF (BIS_USECPM)
@@ -443,7 +422,7 @@ IF (BIS_A_EMSCRIPTEN)
     PRE_BUILD COMMENT "Creating npm README.md"
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md" ${NPMREADME}
     )
-  add_custom_target(npmreadme ALL DEPENDS ${NPMREADME})
+  add_custom_target(npmreadme ALL DEPENDS ${NPMREADME} ${BISWEBLIBFILE})
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
@@ -453,7 +432,7 @@ IF (BIS_A_EMSCRIPTEN)
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
     )
-  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} )
+  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE} ${NPMPACKAGEFILE2} ${BISWEBLIBFILE})
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
   install (FILES ${NPMPACKAGEFILE2} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
@@ -477,7 +456,7 @@ IF (BIS_A_EMSCRIPTEN)
       PRE_BUILD COMMENT "Creating JS Wrappers Scripts (Windows)"
       COMMAND ${NODE_JS_EXECUTABLE} ${MODULE_SCRIPTS_CREATOR} -o ${MODULE2_DIR} -m 1)
 
-    add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME})
+    add_custom_target(modulescripts ALL DEPENDS ${MODULE_LIST_FILENAME} ${MODULE_LIST_FILENAME2} ${LIBNAME} ${BISWEBLIBFILE})
 
     install (DIRECTORY ${MODULE_DIR}  DESTINATION bisweb
       PATTERN "*.txt" EXCLUDE
@@ -554,8 +533,6 @@ IF (BIS_A_EMSCRIPTEN)
 
 ELSE(BIS_A_EMSCRIPTEN)
 
-
-
   # ---------------------------------------------------------------------------------------------
   # Native C++ Mode
   # ---------------------------------------------------------------------------------------------
@@ -573,7 +550,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   IF (WIN32)
     SET( CMAKE_CXX_FLAGS "/DEIGEN_HAS_C99_MATH /W1 /EHsc" CACHE STRING "" FORCE)
   ELSE (WIN32)
-    SET( COMPILE_FLAGS "-Wall -Wextra -Wpedantic -Wformat ${AFNI_COMPILE_FLAGS}")
+    SET( COMPILE_FLAGS "-Wall -Wextra -Wpedantic -Wformat ${AFNI_NATIVE_COMPILE_FLAGS}")
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11 " CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
@@ -581,13 +558,11 @@ ELSE(BIS_A_EMSCRIPTEN)
   # ---------------------------
 
   include_directories (SYSTEM ${EIGEN3_INCLUDE_DIRS} )
-  IF (BIS_USEINDIV)
-    include_directories (SYSTEM ${IGL_INCLUDE_DIRS} )
-  ENDIF (BIS_USEINDIV)
+  include_directories (SYSTEM ${IGL_INCLUDE_DIRS} )
+  IF (BISWEB_USEAFNI)
+    include_directories (SYSTEM ${AFNI_INCLUDE_DIRS})
+  ENDIF (BISWEB_USEAFNI)
 
-  IF (BIS_USECPM)
-    include_directories( "${PROJECT_SOURCE_DIR}/cpmcode")
-  ENDIF (BIS_USECPM)
   include_directories (${PROJECT_SOURCE_DIR})
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})
