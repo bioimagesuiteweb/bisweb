@@ -7,11 +7,35 @@ import sys
 import importlib
 
 
+
 my_path=os.path.dirname(os.path.realpath(__file__));
 
 # Make sure biswebpython is in your path
 n=os.path.abspath(my_path+'/..')
 sys.path.insert(0,n);
+
+
+
+try:
+    import biswebpython.bisConfigure as bisConfigure
+except ImportError:
+    print('+++ looking for bisConfigure');
+    my_path=os.path.dirname(os.path.realpath(__file__));
+    n=my_path+'/../build/native';
+    l=sys.path;
+    if (n not in l):
+        sys.path.append(n);
+        
+    n=my_path+'/../build/native';
+    l=sys.path;
+    if (n not in l):
+        sys.path.append(n);
+        
+    import bisConfigure
+            
+
+
+
 
 # ----------------------------------------------------------------------------------------
 # Function to print error message
@@ -33,6 +57,8 @@ def initialError(extra):
     print(a+'\n')
 
 
+
+    
 # ----------------------------------------------------------------------------------------
 # Read Modulelist file and clean it up
 with open(my_path+os.path.sep+"modules"+os.path.sep+"PythonModuleList.txt", "r") as fh:
@@ -45,8 +71,20 @@ for l in mlist:
         l=l.strip();
         modulelist.append(l);
         modulelistlower.append(l.lower());
+        
+if bisConfigure.usesafni == "ON":
+    with open(my_path+os.path.sep+"modules"+os.path.sep+"PythonModuleListAFNI.txt", "r") as fh2:
+        mlist2 = list(fh2.read().splitlines())
 
+    for l in mlist2:
+        if l.strip():
+            l=l.strip();
+            modulelist.append(l);
+            modulelistlower.append(l.lower());
 
+modulelist.sort();
+modulelistlower.sort();
+            
 # ----------------------------------------------------------------------------------------
 # Argument checking
 #

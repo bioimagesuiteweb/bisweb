@@ -48,5 +48,3 @@ temporalImageDistanceMatrix
 computeImageEigenvectors
 eigenvectorDenoiseImage
 extractImagePatches
-afniBlurImage
-

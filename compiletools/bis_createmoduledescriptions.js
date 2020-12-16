@@ -39,6 +39,7 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-i, --input  <s>','module list file')
+    .option('--afni  <s>','second module list file')
     .option('-o, --output  <s>','output python module')
     .option('-m, --modulelist  <s>','output python module list')
     .on('--help',function() {
@@ -48,19 +49,37 @@ program.version('1.0.0')
 
 let outputname = program.output || null;
 let modulelistname = program.modulelist || null;
+
 if (program.output===null ) {
     help();
     process.exit();
 }
 
 let inputname = program.input || path.join(__dirname,"../cpp/ModuleList.txt");
-console.log('++++ Reading module list from',inputname,'\n++++');
+let secondname = program.afni || null;
+
+if (secondname === "None")
+    secondname=null;
+
+
+console.log('++++ Reading module list from',inputname)
 let mtext = fs.readFileSync(inputname, 'utf-8').trim();
 let modulelist = "";
 mtext = mtext.replace(/\r/g, '');
 modulelist=mtext.split('\n');
 
+if (secondname!==null) {
+    let mtext2 = fs.readFileSync(secondname, 'utf-8').trim();
+    let modulelist2 = "";
+    mtext2 = mtext2.replace(/\r/g, '');
+    modulelist2=mtext2.split('\n');
+    console.log("++++ Reading second module list from",secondname,'\n++++');
+    modulelist=modulelist.concat(modulelist2);
+} else {
+    console.log("---- Not including second module list")
+}
 
+console.log('++++');
 
 let outobj={ };
 let lst=[];
