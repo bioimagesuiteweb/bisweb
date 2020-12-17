@@ -89,7 +89,7 @@ namespace bisAFNIUtils {
     float spa[5];   input_image->getSpacing(spa);
 
     // Get the type
-    T a=0; MRI_TYPE tp=getAFNIType<T>(a);
+    MRI_TYPE tp=getAFNIType<T>((T)0);
     
     // Create the image
     MRI_IMAGE *linked_afni_image ;
