@@ -71,7 +71,7 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
 
   // Create a 3D AFNI Image Pointer that links into Output
   // Uses same raw storage
-  MRI_IMAGE *afni_linked_output_image = bisAFNIUtils::bisSimpleImageToAFNIMRIImage<float>(output.get(),0);
+  MRI_IMAGE *afni_linked_output_image = bisAFNIUtils::bisSimpleImageToAFNIMRIImage<float>(output.get());
 
   // Get Number of Volumes
   int dims[5]; output->getDimensions(dims);
