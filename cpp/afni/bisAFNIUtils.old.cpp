@@ -53,15 +53,7 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
 
   // Create the output and copy input into it to allocate new memory
   std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>("result"));
-  int out_dim[5];
-  out_dim[0]= dims[0];
-  out_dim[1]= dims[1];
-  out_dim[2]= dims[2];
-  out_dim[3]=1;
-  out_dim[4]=1;
-  // Allocates the memory
-  output->allocate(out_dim,spa);
-
+  output->allocate(dims,spa);
   // Copy intensities from input to output
   float *outP=output->getData();
   float *inpP=input->getData();
@@ -69,18 +61,27 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
   for (int i=0;i<nvox;i++)
     outP[i]=inpP[i];
 
-  // Create AFNI Image
+  // Create a 3D AFNI Image
   MRI_IMAGE *my_image ;
   my_image = mri_new_vol_empty( dims[0],dims[1],dims[2] , MRI_float ) ;
-  mri_fix_data_pointer( output->getData() , my_image ) ;
-  // If creating new afni image copy
-  //memcpy( MRI_FLOAT_PTR(my_image) , input->getData() , my_image->nvox*my_image->pixel_size ) ;
   my_image->dx = spa[0];
   my_image->dy = spa[1];
   my_image->dz = spa[2];
 
-  // Calls the AFNI Function which overwrites my_image which shares memory with output
-  mri_blur3D_addfwhm( my_image , mask , sigma ) ;
+  // Loop over frames/components
+  int numvolumes=dims[3]*dims[4];
+  for (int volumeindex=0;volumeindex<numvolumes;volumeindex++) {
+    if (debug && numvolumes>0)
+      std::cout << "\t processing volume " << volumeindex+1 << "/" << numvolumes << std::endl;
+    int offset=volumeindex*dims[0]*dims[1]*dims[2];
+    float *newp=&outP[offset];
+    mri_fix_data_pointer( newp , my_image ) ;
+    // If creating new afni image copy
+    //memcpy( MRI_FLOAT_PTR(my_image) , input->getData() , my_image->nvox*my_image->pixel_size ) ;
+    
+    // Calls the AFNI Function which overwrites my_image which shares memory with output
+    mri_blur3D_addfwhm( my_image , mask , sigma ) ;
+  }
 
   // Release MRI_IMAGE without releasing pointer which we own
   mri_clear_and_free(my_image);

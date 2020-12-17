@@ -20,37 +20,55 @@
 
 //#include "../src/debugtrace.h"  /* 26 Jan 2001 addition */
 
+#include "mrilib.h"
 #include "bisDataTypes.h"
 #include "bisSimpleDataStructures.h"
-#include "bisDefinitions.h"
-
-#include "math.h"
-#include <vector>
 
 /** @file bisAfniUtils.h
 
-    Attemps to access afni functionality
+    Utility code to support access to AFNI
 
 */
 
-#ifndef _bis_AFNI_h
-#define _bis_AFNI_h
+#ifndef _bis_AFNIUtils_h
+#define _bis_AFNIUtils_h
 
 
-extern "C" {
+namespace bisAFNIUtils {
 
-  /** Smooth image using afni code
-   * @param input serialized input as unsigned char array 
-   * @param mask serialized input as unsigned char array  (optional)
-   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "usemask" :  true },
-   * @param debug if > 0 print debug messages
-   * @returns a pointer to a serialized image
+  /** Get AFNI Type from c type
+   * a -- dummy value
+   * @return the MRI_TYPE from afni
+  */
+  template<class T> MRI_TYPE getAFNIType(T a);
+
+  // Next two functions probably should move into bisSimpleImage
+  /** CopyImage
+   * input -input image
+   * @return copy
    */
-  // BIS: { 'afniBlurImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt', 'ParamObj', 'debug' ] } 
-  BISEXPORT unsigned char*  afniBlurImageWASM(unsigned char* input,unsigned char* mask,const char* jsonstring,int debug);
+  template<class T> bisSimpleImage<T>* copyImage(bisSimpleImage<T>* inputimage,std::string name="copy");
+
+  /** get pointer to start of frame 
+   * input - input image
+   * frame - the frame number (checked for range) 
+   * @returns pointer to raw data starting at frame
+   */
+  template<class T> T* getDataAtFrame(bisSimpleImage<T>* inputimage,int frame=0);
 
   
+  /** Convert bisSimpleImage<T> to afni MRI_Image
+   * input - input bisSimpleImage<T>
+   * frame - frame to map (for 4D Images)
+   *   @return the output MRI_Image (ANI)
+   */
+  template<class T> MRI_IMAGE* bisSimpleImageToAFNIMRIImage(bisSimpleImage<T>* input,int frame=0);
+  
 }
+
+#ifndef BIS_MANUAL_INSTANTIATION
+#include "bisAFNIUtils.txx"
+#endif
 
 
 #endif

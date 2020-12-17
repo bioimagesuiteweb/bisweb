@@ -15,14 +15,14 @@ SET (AFNI_NATIVE_COMPILE_FLAGS "-DMRILIB_MINI -DREPLACE_XT")
 SET(AFNI_INCLUDE_DIRS ${BISWEB_AFNI_DIR})
 
 # List of header files
-SET (AFNI_HEADERS ${PROJECT_SOURCE_DIR}/afni/bisAFNIUtils.h)
+SET (AFNI_HEADERS ${PROJECT_SOURCE_DIR}/afni/bisAFNIExportedFunctions.h)
 
 SET(AFNI_SOURCES
   ${BISWEB_AFNI_DIR}/mri_blur3d_variable.c
   ${BISWEB_AFNI_DIR}/mri_new.c
   ${BISWEB_AFNI_DIR}/mri_free.c
   ${BISWEB_AFNI_DIR}/debugtrace.c
-  ${PROJECT_SOURCE_DIR}/afni/bisAFNIUtils.cpp
+  ${PROJECT_SOURCE_DIR}/afni/bisAFNIExportedFunctions.cpp
   )
 
 SET (AFNI_SOURCES2
