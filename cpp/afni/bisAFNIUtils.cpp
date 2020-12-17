@@ -54,7 +54,11 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
   // Create the output and copy input into it to allocate new memory
   std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>("result"));
   int out_dim[5];
-  out_dim[0]= dims[0];    out_dim[1]= dims[1];    out_dim[2]= dims[2];    out_dim[3]=1;    out_dim[4]=1;
+  out_dim[0]= dims[0];
+  out_dim[1]= dims[1];
+  out_dim[2]= dims[2];
+  out_dim[3]=1;
+  out_dim[4]=1;
   // Allocates the memory
   output->allocate(out_dim,spa);
 
@@ -78,6 +82,9 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
   // Calls the AFNI Function which overwrites my_image which shares memory with output
   mri_blur3D_addfwhm( my_image , mask , sigma ) ;
 
+  // Release MRI_IMAGE without releasing pointer which we own
+  mri_clear_and_free(my_image);
+  
   // Return the output object back
   return output->releaseAndReturnRawArray();
 }
