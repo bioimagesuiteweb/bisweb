@@ -14,8 +14,13 @@
 #include "bisImageAlgorithms.h"
 #include <memory>
 
+/** AFNI Notes
+    // If creating new afni image copy
+    memcpy( MRI_FLOAT_PTR(afni_linked_output_image) , input->getData() , afni_linked_output_image->nvox*afni_linked_output_image->pixel_size ) ;
+*/
+
 unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_ptr,
-				  const char* jsonstring,int debug)
+                                  const char* jsonstring,int debug)
 {
 
   if (debug)
@@ -67,7 +72,7 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
   // -------------------------------- Convert image to MRI_IMAGE ------------------------------------
   // Create the output and copy input into it to allocate new memory as AFNI blur overwrites
   // The .get() part converts from smart pointer to real pointer
-  std::unique_ptr<bisSimpleImage<float> > output(bisAFNIUtils::copyImage<float>(input.get(),"copyfloat"));
+  std::unique_ptr<bisSimpleImage<float> > output(input->copyImage("copyfloat"));
 
   // Create a 3D AFNI Image Pointer that links into Output
   // Uses same raw storage
@@ -84,9 +89,7 @@ unsigned char*  afniBlurImageWASM(unsigned char* input_ptr,unsigned char* mask_p
       std::cout << "\t processing volume " << volumeindex+1 << "/" << numvolumes << std::endl;
 
     // Change the pointer in my_umage
-    mri_fix_data_pointer( bisAFNIUtils::getDataAtFrame<float>(output.get(),volumeindex) , afni_linked_output_image ) ;
-    // If creating new afni image copy
-    //memcpy( MRI_FLOAT_PTR(afni_linked_output_image) , input->getData() , afni_linked_output_image->nvox*afni_linked_output_image->pixel_size ) ;
+    mri_fix_data_pointer( output->getPointerAtStartOfFrame(volumeindex) , afni_linked_output_image ) ;
     
     // Calls the AFNI Function which overwrites afni_linked_output_image which shares memory with output
     mri_blur3D_addfwhm( afni_linked_output_image , mask , sigma ) ;

@@ -526,6 +526,30 @@ template<class T> void bisSimpleImage<T>::getImageSpacing(float spacing[3]) {
 }
 
 
+/** CopyImage -- new memory is allocated here */
+template<class T> bisSimpleImage<T>* bisSimpleImage<T>::copyImage(std::string name) {
+
+  bisSimpleImage<T> *output_image=new bisSimpleImage<float>(name.c_str());
+  output_image->copyStructure(this);
+  // Copy intensities from input to output
+  float *outP=output_image->getData();
+  float *inpP=this->getData();
+  int nvox=output_image->getLength();
+  for (int i=0;i<nvox;i++)
+    outP[i]=inpP[i];
+  
+  return output_image;
+}
+  
+
+/** get pointer to start of frame */
+template<class T> T* bisSimpleImage<T>::getPointerAtStartOfFrame(int frame) {
+    
+  int actualframe=bisUtil::irange(frame,0,this->dimensions[3]*this->dimensions[4]-1);
+  T* inp=this->getData();
+  int offset=this->dimensions[0]*this->dimensions[1]*this->dimensions[2]*actualframe;
+  return &inp[offset];
+}
 
 // --------------------------------------------------------------------------------
 

@@ -354,6 +354,21 @@ public:
   T* getImageData() {    return this->getData(); }
   
 
+  /** Next two functions probably should move into bisSimpleImage
+   * CopyImage
+   * input -input image
+   * @return copy
+   */
+  bisSimpleImage<T>* copyImage(std::string name="copy");
+
+  /** get pointer to start of frame 
+   * input - input image
+   * frame - the frame number (checked for range) 
+   * @returns pointer to raw data starting at frame
+   */
+  T* getPointerAtStartOfFrame(int frame=0);
+
+
 protected:
 
 #ifndef DOXYGEN_SKIP    

@@ -51,36 +51,6 @@ namespace bisAFNIUtils {
   }
 
 
-  /** CopyImage -- new memory is allocated here */
-  template<class T> bisSimpleImage<T>* copyImage(bisSimpleImage<T>* input_image,std::string name) {
-
-    // Create the output and copy input into it to allocate new memory
-    int dims[5];    input_image->getDimensions(dims);
-    float spa[5];   input_image->getSpacing(spa);
-
-    bisSimpleImage<T> *output_image=new bisSimpleImage<float>(name.c_str());
-    output_image->allocate(dims,spa);
-    // Copy intensities from input to output
-    float *outP=output_image->getData();
-    float *inpP=input_image->getData();
-    int nvox=output_image->getLength();
-    for (int i=0;i<nvox;i++)
-      outP[i]=inpP[i];
-
-    return output_image;
-  }
-  
-
-  /** get pointer to start of frame */
-  template<class T> T* getDataAtFrame(bisSimpleImage<T>* input_image,int frame) {
-    
-    int dims[5];    input_image->getDimensions(dims);
-    int actualframe=bisUtil::irange(frame,0,dims[3]*dims[4]-1);
-    T* inp=input_image->getData();
-    int offset=dims[0]*dims[1]*dims[2]*actualframe;
-    return &inp[offset];
-  }
-
   
   /** Convert bisSimpleImage<T> to afni MRI_IMAGE */
   template<class T> MRI_IMAGE* bisSimpleImageToAFNIMRIImage(bisSimpleImage<T>* input_image,int frame) {
@@ -99,7 +69,7 @@ namespace bisAFNIUtils {
     linked_afni_image->dz = spa[2];
 
     // Link the pointer
-    mri_fix_data_pointer( getDataAtFrame<T>(input_image,frame) , linked_afni_image ) ;
+    mri_fix_data_pointer( input_image->getPointerAtStartOfFrame(frame) , linked_afni_image ) ;
     return linked_afni_image;
   }
 

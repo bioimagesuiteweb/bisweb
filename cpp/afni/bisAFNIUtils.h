@@ -42,20 +42,6 @@ namespace bisAFNIUtils {
   */
   template<class T> MRI_TYPE getAFNIType(T a);
 
-  // Next two functions probably should move into bisSimpleImage
-  /** CopyImage
-   * input -input image
-   * @return copy
-   */
-  template<class T> bisSimpleImage<T>* copyImage(bisSimpleImage<T>* inputimage,std::string name="copy");
-
-  /** get pointer to start of frame 
-   * input - input image
-   * frame - the frame number (checked for range) 
-   * @returns pointer to raw data starting at frame
-   */
-  template<class T> T* getDataAtFrame(bisSimpleImage<T>* inputimage,int frame=0);
-
   
   /** Convert bisSimpleImage<T> to afni MRI_Image
    * input - input bisSimpleImage<T>
