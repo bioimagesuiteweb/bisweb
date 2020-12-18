@@ -41,9 +41,18 @@ extern "C" {
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
+  // BIS: { 'afniBlurFloatImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt', 'ParamObj', 'debug' ], {"checkorientation" : "all"} }
+  BISEXPORT unsigned char*  afniBlurFloatImageWASM(unsigned char* input,unsigned char* mask,const char* jsonstring,int debug);
+
+  /** Smooth image using afni code -- templated version (uses float if input is neither float nor double)
+   * @param input serialized input as unsigned char array 
+   * @param mask serialized input as unsigned char array  (optional) -- must have same spatial dimensions and orientation as input
+   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "usemask" :  true },
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
   // BIS: { 'afniBlurImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt', 'ParamObj', 'debug' ], {"checkorientation" : "all"} }
   BISEXPORT unsigned char*  afniBlurImageWASM(unsigned char* input,unsigned char* mask,const char* jsonstring,int debug);
-
   
 }
 

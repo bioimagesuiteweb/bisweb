@@ -487,8 +487,10 @@ var create_parameter_checking_code=function(extrachecks,names,wrapper_mode) {
     if (wrapper_mode=='js') {
         let flag=extrachecks.checkorientation || '';
         if (flag === 'all' || flag.indexOf('js')>=0) {
-            outstr=`    if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',true)===false)
-       return false;
+            outstr=`   if (${names[1].variablename}!==0) {  
+        if (${names[0].variablename}.hasSameOrientation(${names[1].variablename},'${names[0].variablename}','${names[1].variablename}',true)===false)
+              return false; 
+    }
 
 `;
         }

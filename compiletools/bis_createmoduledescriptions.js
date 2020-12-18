@@ -62,7 +62,7 @@ if (secondname === "None")
     secondname=null;
 
 
-console.log('++++ Reading module list from',inputname)
+console.log('++++ Reading module list from',inputname);
 let mtext = fs.readFileSync(inputname, 'utf-8').trim();
 let modulelist = "";
 mtext = mtext.replace(/\r/g, '');
@@ -76,7 +76,7 @@ if (secondname!==null) {
     console.log("++++ Reading second module list from",secondname,'\n++++');
     modulelist=modulelist.concat(modulelist2);
 } else {
-    console.log("---- Not including second module list")
+    console.log("---- Not including second module list");
 }
 
 console.log('++++');

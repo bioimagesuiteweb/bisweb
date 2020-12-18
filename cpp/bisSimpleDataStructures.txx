@@ -529,11 +529,11 @@ template<class T> void bisSimpleImage<T>::getImageSpacing(float spacing[3]) {
 /** CopyImage -- new memory is allocated here */
 template<class T> bisSimpleImage<T>* bisSimpleImage<T>::copyImage(std::string name) {
 
-  bisSimpleImage<T> *output_image=new bisSimpleImage<float>(name.c_str());
+  bisSimpleImage<T> *output_image=new bisSimpleImage<T>(name.c_str());
   output_image->copyStructure(this);
   // Copy intensities from input to output
-  float *outP=output_image->getData();
-  float *inpP=this->getData();
+  T *outP=output_image->getData();
+  T *inpP=this->getData();
   int nvox=output_image->getLength();
   for (int i=0;i<nvox;i++)
     outP[i]=inpP[i];
