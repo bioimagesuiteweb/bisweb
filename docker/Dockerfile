@@ -4,13 +4,12 @@ FROM ubuntu:18.04
 MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 
 # install system-wide deps for python and node
-RUN apt-get -yqq update
-RUN apt-get install -yqq python-pip python-dev python3 python3-pip
-RUN apt-get install -yqq unzip g++ gcc 
-RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
+RUN apt-get -yqq update && apt-get install -yqq python-pip python-dev python3 python3-pip
+RUN apt-get -yqq update && apt-get install -yqq unzip g++ gcc 
+RUN apt-get -yqq update && apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
-RUN apt-get install -yq nodejs
-RUN apt-get install -yqq doxygen graphviz gosu
+RUN apt-get -yqq update && apt-get install -yq nodejs
+RUN apt-get -yqq update && apt-get install -yqq doxygen graphviz gosu
 
 ENV CMAKE_VER=3.14.7
 RUN curl -sL -o /opt/cmake.tgz  https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}-Linux-x86_64.tar.gz \
