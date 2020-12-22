@@ -1,0 +1,6 @@
+# CMake Config File for Python
+
+usesgpl = "@BIS_USEGPL@";
+usesafni = "@BISWEB_USEAFNI@";
+usecpm = "@BIS_USECPM@";
+

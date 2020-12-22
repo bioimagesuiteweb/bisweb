@@ -25,6 +25,16 @@
  */
 namespace bisUtil {
 
+// These are needed when linking to AFNI which defines PI and mat44
+// ----------------------------------------------------------------
+#ifdef PI
+#undef PI
+#endif
+  
+#ifdef mat44
+#undef mat44
+#endif
+
   /** PI definition */
   const double PI=3.14159265358979;
   

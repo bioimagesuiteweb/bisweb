@@ -27,13 +27,29 @@ else
     MAKE=`which make`
 fi
 
+BISUSEAFNI="OFF"
+BISUSEGPL="OFF"
+
+if [ -d ${SRCDIR}/../afni/src  ]
+then
+    BISUSEAFNI="ON"
+fi
+
+if [ -d ${SRCDIR}/../gpl  ]
+then
+    BISUSEGPL="ON"
+fi
+
 
 echo "_______________________________________________________________________"
 echo "___ SRCDIR=${SRCDIR}, BDIR=${BDIR}"
 echo "___ OS=${BISWEBOS}"
 echo "___ Make command=${MAKE} ${BISMAKEJ}"
 echo "___ Generator=${GENERATOR}"
-echo "___"
+echo "___ BISUSEAFNI=${BISUSEAFNI}"
+echo "___ BISUSEGPL=${BISUSEGPL}"
+echo "_______________________________________________________________________"
+
 
 
 F=${BDIR}/wasm/libbiswasm_wrapper.js
@@ -72,10 +88,12 @@ cmake -G "${GENERATOR}" \
       -DPYTHON_EXECUTABLE=`which python3` \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DCMAKE_VERBOSE_MAKEFILE=OFF \
+      -DBISWEB_USEAFNI=${BISUSEAFNI} \
+      -DBISWEB_AFNI_DIR=${SRCDIR}/../afni/src \
       -DBIS_A_MATLAB=ON \
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
-      -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
-      -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
+      -DBIS_USEGPL=${BISUSEGPL} -DBIS_GPL_DIR=${SRCDIR}/../gpl \
+      -DIGL_DIR=${BDIR}/igl \
       ${SRCDIR}/cpp
 
 echo "_______________________________________________________________________"

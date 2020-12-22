@@ -6,7 +6,7 @@ else
     DOINSTALL="true"
 fi
 
-BISMAKEJ="-j4"
+BISMAKEJ="-j2"
 GENERATOR="Unix Makefiles"
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -29,6 +29,18 @@ else
     MAKE=`which make`
 fi
 
+BISUSEAFNI="OFF"
+BISUSEGPL="OFF"
+
+if [ -d ${SRCDIR}/../afni/src  ]
+then
+    BISUSEAFNI="ON"
+fi
+
+if [ -d ${SRCDIR}/../gpl  ]
+then
+    BISUSEGPL="ON"
+fi
 
 echo "_______________________________________________________________________"
 echo "___ SRCDIR=${SRCDIR}, BDIR=${BDIR}"
@@ -36,6 +48,8 @@ echo "___ OS=${BISWEBOS}"
 echo "___ Make command=${MAKE} ${BISMAKEJ}"
 echo "___ Generator=${GENERATOR}"
 echo "___ MOCHA = ${MOCHA}"
+echo "___ BISUSEAFNI=${BISUSEAFNI}"
+echo "___ BISUSEGPL=${BISUSEGPL}"
 echo "_______________________________________________________________________"
 
 
@@ -89,13 +103,15 @@ cmake -G "${GENERATOR}" \
       -DCMAKE_TOOLCHAIN_FILE=${BDIR}/emsdk_portable/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DEigen3_DIR=${BDIR}/eigen3/share/eigen3/cmake \
       -DMOCHA=${MOCHA} \
+      -DBISWEB_USEAFNI=${BISUSEAFNI} \
+      -DBISWEB_AFNI_DIR=${SRCDIR}/../afni/src \
       -DCMAKE_CXX_FLAGS="-o2 -s WASM=1 -s TOTAL_MEMORY=512MB -Wint-in-bool-context" \
       -DCMAKE_EXE_LINKER_FLAGS="__pre-js ${SRCDIR}/cpp/libbiswasm_pre.js __post-js ${SRCDIR}/cpp/libbiswasm_post.js" \
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
       -DBIS_BUILDSCRIPTS=ON \
       -DCMAKE_VERBOSE_MAKEFILE=ON \
-      -DBIS_USEGPL=ON -DBIS_GPL_DIR=${SRCDIR}/../gpl \
-      -DBIS_USEINDIV=ON -DIGL_DIR=${BDIR}/igl \
+      -DBIS_USEGPL=${BISUSEGPL} -DBIS_GPL_DIR=${SRCDIR}/../gpl \
+      -DIGL_DIR=${BDIR}/igl \
       -DBIS_USECPM=ON \
       ${SRCDIR}/cpp
 
