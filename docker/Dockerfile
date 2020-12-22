@@ -6,11 +6,19 @@ MAINTAINER Xenios Papademetris <xpapademetris@gmail.com>
 # install system-wide deps for python and node
 RUN apt-get -yqq update
 RUN apt-get install -yqq python-pip python-dev python3 python3-pip
-RUN apt-get install -yqq unzip g++ gcc cmake cmake-curses-gui
+RUN apt-get install -yqq unzip g++ gcc 
 RUN apt-get install -yqq curl openjdk-8-jdk git make dos2unix
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash
 RUN apt-get install -yq nodejs
 RUN apt-get install -yqq doxygen graphviz gosu
+
+ENV CMAKE_VER=3.14.7
+RUN curl -sL -o /opt/cmake.tgz  https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}-Linux-x86_64.tar.gz \
+  ; cd /opt \
+  ; tar xzvf cmake.tgz \
+  ;rm -f cmake.tgz \
+  && chmod a+x cmake*/bin/*
+ENV PATH="/opt/cmake-${CMAKE_VER}-Linux-x86_64/bin:$PATH"
 
 # python packages
 RUN pip3 install --upgrade pip

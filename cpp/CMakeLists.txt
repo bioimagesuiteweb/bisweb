@@ -133,13 +133,15 @@ SET(HEADERS ${H1} ${H2})
 #    ------------------------------------------------------------------------
 OPTION(BISWEB_USEAFNI "Include AFNI Code" OFF)
 IF (BISWEB_USEAFNI)
-  INCLUDE (${PROJECT_SOURCE_DIR}/afni/BisWebAFNI.cmake)
-  SET (KITSRCS ${KITSRCS} ${AFNI_SOURCES})
-  SET (PARSE_HEADERS ${PARSE_HEADERS} ${AFNI_HEADERS})
-ELSE (BISWEB_USEAFNI)
-  SET (AFNI_WASM_COMPILE_FLAGS "")
-  SET (AFNI_NATIVE_COMPILE_FLAGS "")
-  SET (AFNI_INCLUDE_DIRS "")
+    include(FetchContent)
+    set(COMP_MINI_MRI ON)
+    FetchContent_Declare(
+      afni
+      GIT_REPOSITORY https://github.com/leej3/afni
+      GIT_TAG bisweb
+      )
+    SET(FETCHCONTENT_SOURCE_DIR_AFNI ../../afni)
+    FetchContent_MakeAvailable(afni)
 ENDIF (BISWEB_USEAFNI)
 
 #    -----------------------------------------------------------------------------------------
@@ -309,10 +311,6 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET( COMPILE_FLAGS "-Wall  -DBISWASM  ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
-  
-  IF (BISWEB_USEAFNI)
-    SET (COMPILE_FLAGS "${COMPILE_FLAGS} ${AFNI_WASM_COMPILE_FLAGS} -isystem ${AFNI_INCLUDE_DIRS}")
-  ENDIF (BISWEB_USEAFNI)
   
   IF (BIS_USECPM)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${PROJECT_SOURCE_DIR}/cpmcode")
@@ -558,13 +556,10 @@ ELSE(BIS_A_EMSCRIPTEN)
 
   include_directories (SYSTEM ${EIGEN3_INCLUDE_DIRS} )
   include_directories (SYSTEM ${IGL_INCLUDE_DIRS} )
-  IF (BISWEB_USEAFNI)
-    include_directories (SYSTEM ${AFNI_INCLUDE_DIRS})
-  ENDIF (BISWEB_USEAFNI)
-
   include_directories (${PROJECT_SOURCE_DIR})
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})
+  TARGET_LINK_LIBRARIES( ${CLIBNAME} PRIVATE AFNI::mri_mini)
 
   # ---------------------------
 
