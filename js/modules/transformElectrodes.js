@@ -54,7 +54,6 @@ class TransformElectrodesModule extends BaseModule {
                     'description' : 'Load the reference image (if not specified use input)',
                     'type': 'image',
                     'varname' : 'reference',
-                    'type' : 'image',
                     'shortname' : 'r',
                     'required' : false,
                     'guiviewertype' : 'image',
