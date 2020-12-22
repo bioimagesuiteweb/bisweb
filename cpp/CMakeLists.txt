@@ -65,7 +65,6 @@ SET (BISWEBPYTHON_MODULE_LIST_FILENAME ${BISWEBPYTHON_SOURCE_DIR}/modules/Python
 SET (BISWEBPYTHON_MODULE_LIST_FILENAME_AFNI ${BISWEBPYTHON_SOURCE_DIR}/modules/PythonModuleListAFNI.txt)
 
 SET(LIBNAME libbiswasm)
-
 # ---------------------------------------------------------------------------------------------
 # C++ Sources Core
 # ---------------------------------------------------------------------------------------------
@@ -101,7 +100,6 @@ SET(KITSRCS
   bisImageTransformationJacobian.cpp
   bisPointLocator.cpp
   bisPointRegistrationUtils.cpp
-
   )
 
 # ---------------------------------------------------------------------------------------------
