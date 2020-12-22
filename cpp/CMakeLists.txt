@@ -133,17 +133,14 @@ SET(HEADERS ${H1} ${H2})
 #    ------------------------------------------------------------------------
 OPTION(BISWEB_USEAFNI "Include AFNI Code" OFF)
 IF (BISWEB_USEAFNI)
-    include(FetchContent)
-    set(COMP_MINI_MRI ON)
-    FetchContent_Declare(
-      afni
-      GIT_REPOSITORY https://github.com/leej3/afni
-      GIT_TAG bisweb
-      )
-    SET(FETCHCONTENT_SOURCE_DIR_AFNI ${PROJECT_SOURCE_DIR}/../../afni)
-    FetchContent_MakeAvailable(afni)
+  INCLUDE (${PROJECT_SOURCE_DIR}/afni/BisWebAFNI.cmake)
+  SET (KITSRCS ${BISWEBAFNI_SOURCES} ${KITSRCS})
+  SET (PARSE_HEADERS ${PARSE_HEADERS} ${BISWEBAFNI_HEADERS})
+ELSE (BISWEB_USEAFNI)
+  SET (BISWEBAFNI_INCLUDE_DIRS "")
 ENDIF (BISWEB_USEAFNI)
 
+  
 #    -----------------------------------------------------------------------------------------
 #    SOURCE Files and GPL Flags
 #    -----------------------------------------------------------------------------------------
@@ -311,6 +308,11 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET( COMPILE_FLAGS "-Wall  -DBISWASM  ${BIS_WEB_OPT} ${WASM_STRING} -isystem ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   SET( COMPILE_FLAGS "${COMPILE_FLAGS} -isystem ${IGL_INCLUDE_DIRS}")
+
+  IF (BISWEB_USEAFNI)
+    SET (COMPILE_FLAGS "${COMPILE_FLAGS} ${AFNI_WASM_COMPILE_FLAGS} -isystem ${BISWEBAFNI_INCLUDE_DIRS}")
+  ENDIF (BISWEB_USEAFNI)
+ 
   
   IF (BIS_USECPM)
     SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${PROJECT_SOURCE_DIR}/cpmcode")
@@ -319,7 +321,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
-  SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
+  SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS})" CACHE STRING "" FORCE)
 
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
@@ -332,9 +334,10 @@ IF (BIS_A_EMSCRIPTEN)
     ADD_EXECUTABLE (${LIBNAME2} ${NONGPLSRCS})
     SET (LIBLIST ${LIBNAME} ${LIBNAME2})
   ELSE (BIS_BUILDNONGPL)
+    MESSAGE("HERE 2")
     ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
+    TARGET_LINK_LIBRARIES(${LIBNAME} ${PROJECT_BINARY_DIR}/lib/libmri_mini.a)
     SET (LIBLIST ${LIBNAME})
-
   ENDIF (BIS_BUILDNONGPL)
 
   foreach(lib ${LIBLIST})
@@ -344,7 +347,6 @@ IF (BIS_A_EMSCRIPTEN)
     ELSE (BIS_USEGPL)
       SET(GPL 0)
     ENDIF (BIS_USEGPL)
-
 
     SET_TARGET_PROPERTIES(${lib} PROPERTIES LINK_DEPENDS "${POST_JS};${PRE_JS}")
     SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${lib}.js")
@@ -558,6 +560,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   include_directories (SYSTEM ${IGL_INCLUDE_DIRS} )
   include_directories (${PROJECT_SOURCE_DIR})
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
+  
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})
   TARGET_LINK_LIBRARIES( ${CLIBNAME} PRIVATE AFNI::mri_mini)
 

@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-#include "mrilib.h"
 #include "bisDataTypes.h"
 #include "bisSimpleDataStructures.h"
 
