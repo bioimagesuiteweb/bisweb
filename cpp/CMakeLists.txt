@@ -140,7 +140,7 @@ IF (BISWEB_USEAFNI)
       GIT_REPOSITORY https://github.com/leej3/afni
       GIT_TAG bisweb
       )
-    SET(FETCHCONTENT_SOURCE_DIR_AFNI ../../afni)
+    SET(FETCHCONTENT_SOURCE_DIR_AFNI ${PROJECT_SOURCE_DIR}/../../afni)
     FetchContent_MakeAvailable(afni)
 ENDIF (BISWEB_USEAFNI)
 
