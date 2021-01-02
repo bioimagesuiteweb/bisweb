@@ -193,12 +193,9 @@ Next Install Prerequisites: Open a command line and type
 This is similar to Linux. First install Xcode and [homebrew](https://brew.sh/)
 if you do not already have these installed.
 
-Then install the pre-requisite packages using brew -- the instructions below
-are for Node V.10.
+Also install node v12 or v14.
 
-    brew install python2 python3 nodejs cmake node@10 doxygen graphviz
-    brew link python2
-    brew link --force node@10
+    brew install cmake doxygen graphviz
     brew cask install java
 
 
