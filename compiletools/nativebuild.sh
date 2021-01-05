@@ -6,8 +6,20 @@ else
     DOINSTALL="true"
 fi
 BISWEBOS=`uname | cut -f1 -d_`
+
+ARM=`uname -a | cut -f2 -d/ | cut -f2 -d_`
+ARMARCH=""
+if [ ${ARM} == "ARM64" ]; then
+    ARM="TRUE"
+    ARMARCH=-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+else
+    ARM="FALSE"
+fi
+
+
+
 echo "___"
-echo "___ Beginning Native C++ build on ${OS}, INSTALL=${DOINSTALL}"
+echo "___ Beginning Native C++ build on ${OS} ( ARM=${ARM} ${ARMARCH}), INSTALL=${DOINSTALL}"
 echo "___"
 
 
@@ -82,7 +94,7 @@ echo "___ Invoking cmake"
 echo "___ "
 
 
-cmake -G "${GENERATOR}" \
+cmake -G "${GENERATOR}" ${ARMARCH}\
       -DBIS_A_EMSCRIPTEN=OFF \
       -DCMAKE_BUILD_TYPE=Release \
       -DPYTHON_EXECUTABLE=`which python3` \
