@@ -19,7 +19,6 @@ sys.path.insert(0,n);
 try:
     import biswebpython.bisConfigure as bisConfigure
 except ImportError:
-    print('+++ looking for bisConfigure');
     my_path=os.path.dirname(os.path.realpath(__file__));
     n=my_path+'/../build/native';
     l=sys.path;
@@ -70,7 +69,6 @@ for l in mlist:
     if l.strip():
         l=l.strip();
         modulelist.append(l);
-        modulelistlower.append(l.lower());
         
 if bisConfigure.usesafni == "ON":
     with open(my_path+os.path.sep+"modules"+os.path.sep+"PythonModuleListAFNI.txt", "r") as fh2:
@@ -80,11 +78,13 @@ if bisConfigure.usesafni == "ON":
         if l.strip():
             l=l.strip();
             modulelist.append(l);
-            modulelistlower.append(l.lower());
 
 modulelist.sort();
-modulelistlower.sort();
-            
+l=len(modulelist)
+for i in range(0,l):
+    modulelistlower.append(modulelist[i].lower());
+
+
 # ----------------------------------------------------------------------------------------
 # Argument checking
 #
