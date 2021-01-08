@@ -549,7 +549,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         
         
-        let eversion ="7.1.10";
+        let eversion ="10.2.0";
         let ep=getToolPath('electron-packager');
         
         let cmdline=ep+' '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
@@ -570,7 +570,6 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         // Cleanup useless files before we electron package
         let todelete =  [
-            path.resolve(path.join(newappdir,'node_modules/@tensorflow/tfjs-node/deps')),
             path.resolve(path.join(newappdir,'*.map')),
             path.resolve(path.join(newappdir,'server.zip')),
             path.resolve(path.join(newappdir,'mni2tal')),

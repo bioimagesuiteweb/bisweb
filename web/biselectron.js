@@ -46,6 +46,7 @@ require('electron-debug')({showDevTools: false,
 const path=require('path');
 const fs=require('fs');
 const app=electron.app;  // Module to control application life.
+const globalShortcut=electron.globalShortcut;
 
 app.commandLine.appendSwitch('auto-detect', 'false');
 app.commandLine.appendSwitch('no-proxy-server');
@@ -111,6 +112,31 @@ if (state.mainfilename!=='') {
     }
 }
 
+var biswebTerminate=function(code=0) {
+    app.quit();
+    process.exit(code);
+};
+
+var macExitQuestion=function(ask=false) {
+
+    return new Promise( (resolve,reject) => setTimeout( async () => {
+        const dialog = electron.dialog;
+        
+        const response=await dialog.showMessageBox({
+            title : "Are you sure?",
+            type  : "question",
+            buttons : [ "Cancel", "Quit" ],
+            defaultId : 0,
+            message : "This will terminate BioImage Suite Web. Are you sure?",
+        });
+        
+        if (response.response===1)
+            resolve('done');
+        else
+            reject('Quit event cancelled');
+    }));
+};                
+
 // ----------------------------------------------------------------------------------------
 var getHeightWidth= function(name) {
 
@@ -162,7 +188,7 @@ var getHeightWidth= function(name) {
     return obj;
 };
 
-var createWindow=function(index,fullURL) {
+var createWindow=async function(index,fullURL) {
 
     fullURL = fullURL || state.toolname;
     let i0=fullURL.lastIndexOf("\\");
@@ -271,54 +297,12 @@ var createWindow=function(index,fullURL) {
     
     state.winlist[index].on('closed', function() {
         state.winlist[index] = null;
-        
-        var anyalive=false;
-        state.winlist.forEach(function(e) {
-            if (e!==null)
-                anyalive=true;
-        });
-        
-        if (process.platform === 'darwin')  {
-            if (!anyalive)
-                macExit(true);
-            return;
-        }
-
-        if (anyalive===false) {
-            if (state.console) {
-                state.console.hide();
-            }
-            state.console=null;
-            process.exit(0);
-        }
     });
+
     state.winlist[index].loadURL(fullURL);
     return index;
 };
 
-var macExit=function(ask=false) {
-
-    let anyalive=false;
-    state.winlist.forEach(function(e) {
-        if (e!==null)
-            anyalive=true;
-    });
-
-    if (anyalive===false && ask===false)
-        process.exit();
-
-    const dialog = electron.dialog;
-    dialog.showMessageBox({
-        title : "Are you sure?",
-        type  : "question",
-        buttons : [ "Cancel", "Quit" ],
-        defaultId : 0,
-        message : "This will close all open BioImage Suite Web Applications",
-    }, (f) => { 
-        if (f===1)
-            process.exit();
-    });
-};
 
 var createConsole=function() {
 
@@ -393,13 +377,17 @@ var createNewWindow = function(url) {
     attachWindow(index);
 };
 
-var createOrShowMainWindow = function() {
+var createOrShowMainWindow = function(hide=false) {
     if (state.winlist[0]!==null) {
         state.winlist[0].show();
         return;
     }
     createWindow(0);
     attachWindow(0);
+    if (hide) {
+        console.log('Minimizing');
+        state.winlist[0].minimize();
+    }
 };
 
 
@@ -412,10 +400,19 @@ var createOrShowMainWindow = function() {
 app.on('window-all-closed', function() {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        app.quit();
+    if (process.platform !== 'darwin')  {
+        biswebTerminate();
+        return;
     }
-    
+
+    if (process.platform === 'darwin')  {
+        macExitQuestion(true).then( () => {
+            biswebTerminate(0);
+        }).catch( (e) => {
+            console.log('Anyalive'+e);
+            createOrShowMainWindow(true); 
+        });
+    }
 });
 
 
@@ -423,7 +420,7 @@ app.on('window-all-closed', function() {
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
-app.on('ready', function() {
+app.on('ready', async function() {
 
     var setup=toolfile;
     var keys=Object.keys(setup.tools);
@@ -487,12 +484,15 @@ app.on('ready', function() {
         var menu2=Menu.buildFromTemplate([
             {  label: 'Main',  
                submenu : [
-                   {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
+                   {  label: "Application Selector ⌘M ", click: () => { createOrShowMainWindow(); }},
                    {   type: 'separator'},
                    { 
-                       label : 'Exit', 
-                       click: () => { 
-                           macExit();
+                       label : 'Exit ⌘Q', click: () => {
+                           macExitQuestion().then( () => {
+                               biswebTerminate();
+                           }).catch( (e) => {
+                               console.log(e);
+                           });
                        }
                    }
                ]
@@ -503,6 +503,17 @@ app.on('ready', function() {
         ]);
         app.dock.setMenu(menu);
         Menu.setApplicationMenu(menu2);
+    }
+
+    if (process.platform === 'darwin')  {
+        globalShortcut.register('CommandOrControl+Q', () => {
+            macExitQuestion(true).then( () => {
+                biswebTerminate(0);
+            }).catch( (e) => {
+                console.log('Anyalive'+e);
+                createOrShowMainWindow(); 
+            });
+        });
     }
 });
 
