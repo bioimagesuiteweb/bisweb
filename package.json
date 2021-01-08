@@ -116,16 +116,9 @@
             "jquery": "jQuery",
             "three": "THREE",
             "d3": "d3",
-            "libbiswasm": "./bis_dummy",
-            "@tensorflow/tfjs": "./bis_dummy",
-            "@tensorflow/tfjs-node": "./bis_dummy",
-            "@tensorflow/tfjs-node-gpu": "./bis_dummy",
-            "bis_tfjs": "./bis_dummy"
+            "libbiswasm": "./bis_dummy"
         },
         "workerexternals": {
-            "@tensorflow/tfjs": "console.log",
-            "@tensorflow/tfjs-node": "console.log",
-            "@tensorflow/tfjs-node-gpu": "console.log",
             "crypto": "console.log",
             "path": "console.log",
             "fs": "console.log"

@@ -3,7 +3,7 @@
 const bisutil = require('bis_util');
 const genericio = require('bis_genericio');
 const moduleindex=require('moduleindex');
-const bistfutil=require('bis_tfutil');
+//const bistfutil=require('bis_tfutil');
 const bisxformutil = require('bis_transformationutil.js');
 const BisWebDataObject = require('bisweb_dataobject');
 const BisWebImage = require('bisweb_image');
@@ -95,7 +95,7 @@ module.exports= {
     // Transformation Utilities
     bisxformutil : bisxformutil,
     // Tensor Flow
-    bistfutil: bistfutil,
+    //    bistfutil: bistfutil,
     // WASM build time,
     biswasmdate : biswasmdate,
 };

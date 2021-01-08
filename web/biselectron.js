@@ -82,6 +82,7 @@ if (major!==12) {
     process.exit(1);
 }
 
+console.log('Indev=',state.indev,major);
 
 if (state.indev) {
     state.commandargs= process.argv.slice(3) || [];
@@ -232,6 +233,7 @@ var createWindow=async function(index,fullURL) {
         yval=undefined;
     }  
 
+    
     let opts= { width: i_width,
                 height: i_height,
                 maxwidth: state.screensize.width,
@@ -339,7 +341,7 @@ var createConsole=function() {
 };
 
 var attachWindow=function(index) {
-
+    
     state.winlist[index].webContents.on('new-window',function(event,url/*,frameName,disposition,options*/) {
 
         event.preventDefault(); 
@@ -366,7 +368,9 @@ var attachWindow=function(index) {
             index=0;
         
         createWindow(index,url);
-        attachWindow(index);
+        setTimeout( () => {
+            attachWindow(index)
+        },100);
     });
 };
 
@@ -374,7 +378,9 @@ var attachWindow=function(index) {
 var createNewWindow = function(url) {
 
     var index=createWindow(-2,url);
-    attachWindow(index);
+    setTimeout( () => {
+        attachWindow(index);
+    },100);
 };
 
 var createOrShowMainWindow = function(hide=false) {
@@ -383,11 +389,13 @@ var createOrShowMainWindow = function(hide=false) {
         return;
     }
     createWindow(0);
-    attachWindow(0);
-    if (hide) {
-        console.log('Minimizing');
-        state.winlist[0].minimize();
-    }
+    setTimeout( () => {
+        attachWindow(0)
+        if (hide) {
+            console.log('Minimizing');
+            state.winlist[0].minimize();
+        }
+    },100);
 };
 
 
@@ -484,7 +492,7 @@ app.on('ready', async function() {
         var menu2=Menu.buildFromTemplate([
             {  label: 'Main',  
                submenu : [
-                   {  label: "Application Selector ⌘M ", click: () => { createOrShowMainWindow(); }},
+                   {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
                    {   type: 'separator'},
                    { 
                        label : 'Exit ⌘Q', click: () => {
