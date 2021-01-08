@@ -609,27 +609,6 @@
             "dopython": false
         },
         {
-            "command"  : "tfrecon -i testdata/tfjs64/sample1.nii.gz --modelname testdata/tfjs64 --padding 8 --batchsize 1 --transpose false",
-            "test"     : "--test_target testdata/tfjs64/sampleout.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.5",
-            "result"   : true,
-            "dopython" : false,
-            "webworker": false
-        },
-        {
-            "command"  : "tfrecon -i testdata/sanitytf/0001_1_Y__crp.nii.gz --modelname testdata/sanitytf --padding 16 --batchsize 4",
-            "test"     : "--test_target testdata/sanitytf/0001_1_Y__shsc__crp.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.01",
-            "result"   : true,
-            "dopython" : false,
-            "webworker": false
-        },
-        {
-            "command"  : "tfrecon -i testdata/sanitytf/0001_1_Y__crp.nii.gz --modelname testdata/sanitytf --padding 16 --batchsize 4 --transpose false",
-            "test"     : "--test_target testdata/sanitytf/0001_1_Y__shsc__crp.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.01",
-            "result"   : true,
-            "dopython" : false,
-            "webworker": false
-        },
-        {
 	    "command" : "inverttransformation -r testdata/MNI_6mm.nii.gz -i testdata/MNI_2mm_scaled.grd --spacing 12 --lambda 0.01",
 	    "test"    : "--test_target testdata/inv.grd --test_type gridtransform",
 	    "result"  : true,
