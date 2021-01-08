@@ -82,8 +82,6 @@ if (major!==12) {
     process.exit(1);
 }
 
-console.log('Indev=',state.indev,major);
-
 if (state.indev) {
     state.commandargs= process.argv.slice(3) || [];
     state.mainfilename=process.argv[2];
@@ -113,13 +111,15 @@ if (state.mainfilename!=='') {
     }
 }
 
-var biswebTerminate=function(code=0) {
-    app.quit();
-    process.exit(code);
+const biswebTerminate=function(code=0) {
+    app.quit(code);
 };
 
-var macExitQuestion=function(ask=false) {
+const macExitQuestion=function(ask=false) {
 
+    if (state.indev)
+        return Promise.resolve('indev');
+    
     return new Promise( (resolve,reject) => setTimeout( async () => {
         const dialog = electron.dialog;
         
@@ -132,14 +132,14 @@ var macExitQuestion=function(ask=false) {
         });
         
         if (response.response===1)
-            resolve('done');
+            resolve('exiting');
         else
-            reject('Quit event cancelled');
+            reject('quit event cancelled');
     }));
 };                
 
 // ----------------------------------------------------------------------------------------
-var getHeightWidth= function(name) {
+const getHeightWidth= function(name) {
 
     let tools=toolfile.tools;
     
@@ -189,7 +189,7 @@ var getHeightWidth= function(name) {
     return obj;
 };
 
-var createWindow=async function(index,fullURL) {
+const createWindow=async function(index,fullURL) {
 
     fullURL = fullURL || state.toolname;
     let i0=fullURL.lastIndexOf("\\");
@@ -215,8 +215,8 @@ var createWindow=async function(index,fullURL) {
     let i_width= state.dimensions.width;
     let i_height= state.dimensions.height;
 
-    var xval=100;
-    var yval=100;
+    let xval=100;
+    let yval=100;
     
     if (index==-2) {
         index=state.winlist.length;
@@ -256,23 +256,14 @@ var createWindow=async function(index,fullURL) {
             yval=undefined;
     }
 
-/*    let i=fullURL.indexOf('biswebtest');
-    if (i>=0) {
-        xval=0;
-        yval=0;
-        opts.width=state.screensize.width;
-        opts.height=state.screensize.height;
-    }*/
-    
-   
     if (state.queryargs!=='') {
         fullURL=fullURL+'?'+state.queryargs;
         state.queryargs='';
     }
     
-    var preload=  path.resolve(__dirname, 'bispreload.js');
+    let preload=  path.resolve(__dirname, 'bispreload.js');
     console.log(getTime()+' Creating new window '+fullURL + ', index='+index+' dims='+JSON.stringify(opts));
-    //    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
+
     state.winlist[index]=new BrowserWindow({width: opts.width,
                                             height: opts.height,
                                             maxWidth: opts.maxwidth,
@@ -308,10 +299,10 @@ var createWindow=async function(index,fullURL) {
 
 var createConsole=function() {
 
-    var opts= {width: 800, height: 500};
-    var fullURL='file://' + path.resolve(__dirname , 'console.html');
+    let opts= {width: 800, height: 500};
+    let fullURL='file://' + path.resolve(__dirname , 'console.html');
 
-    var preload=  path.resolve(__dirname, 'bispreload.js');
+    let preload=  path.resolve(__dirname, 'bispreload.js');
     state.console=new BrowserWindow({width: opts.width,
                                      height: opts.height,
                                      webPreferences: {
@@ -345,7 +336,7 @@ var attachWindow=function(index) {
     state.winlist[index].webContents.on('new-window',function(event,url/*,frameName,disposition,options*/) {
 
         event.preventDefault(); 
-        var lm=url.split("/"), fname=lm[lm.length-1], domain=false;
+        let lm=url.split("/"), fname=lm[lm.length-1], domain=false;
         if (fname==="index.html") {
             domain=true;
             if (state.winlist[0]!==null) {
@@ -363,12 +354,12 @@ var attachWindow=function(index) {
         }
 
         
-        var index=state.winlist.length;
+        let index=state.winlist.length;
         if (domain===true)
             index=0;
-        
-        createWindow(index,url);
+
         setTimeout( () => {
+            createWindow(index,url);
             attachWindow(index)
         },100);
     });
@@ -377,8 +368,8 @@ var attachWindow=function(index) {
 
 var createNewWindow = function(url) {
 
-    var index=createWindow(-2,url);
     setTimeout( () => {
+        let index=createWindow(-2,url);
         attachWindow(index);
     },100);
 };
@@ -388,8 +379,11 @@ var createOrShowMainWindow = function(hide=false) {
         state.winlist[0].show();
         return;
     }
-    createWindow(0);
+
     setTimeout( () => {
+        console.log("Creating");
+        createWindow(0);
+        console.log("Attaching");
         attachWindow(0)
         if (hide) {
             console.log('Minimizing');
@@ -414,10 +408,11 @@ app.on('window-all-closed', function() {
     }
 
     if (process.platform === 'darwin')  {
-        macExitQuestion(true).then( () => {
+        macExitQuestion(true).then( (m) => {
+            console.log('.... exiting',m);
             biswebTerminate(0);
         }).catch( (e) => {
-            console.log('Anyalive'+e);
+            console.log('.... not exiting',e);
             createOrShowMainWindow(true); 
         });
     }
@@ -430,8 +425,8 @@ app.on('window-all-closed', function() {
 // initialization and is ready to create browser windows.
 app.on('ready', async function() {
 
-    var setup=toolfile;
-    var keys=Object.keys(setup.tools);
+    let setup=toolfile;
+    let keys=Object.keys(setup.tools);
     let fullURL='';
     if (state.mainfilename.length>1) {
         console.log(getTime()+' Testing starting file=',state.mainfilename);
@@ -460,21 +455,15 @@ app.on('ready', async function() {
     if (state.screensize.height<700)
         state.screensize.height=700;
 
-    if (state.mainfilename === '') {
-        createOrShowMainWindow();
-    } else {
-        createNewWindow("file://"+fullURL);
-    }
-
-    var tools=setup.tools;
+    let tools=setup.tools;
     const Menu=electron.Menu;
-    var mitems=[];
-    var i=0;
+    let mitems=[];
+    let i=0;
     
     if (process.platform === 'darwin') {
         for (i=0;i<keys.length;i++)  {
-            var key=keys[i]; 
-            var a='file://'+path.resolve(__dirname , tools[key].url+'.html'); // jshint ignore:line
+            let key=keys[i]; 
+            let a='file://'+path.resolve(__dirname , tools[key].url+'.html'); // jshint ignore:line
             /* jshint ignore:start */
             (function outer(a){
                 mitems.push({ label: tools[key].title, click: () =>{
@@ -484,12 +473,12 @@ app.on('ready', async function() {
             /* jshint ignore:end */
         }
         
-        var menu=Menu.buildFromTemplate([
+        let menu=Menu.buildFromTemplate([
             {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
             {  label: 'Tools', submenu : mitems }
         ]);
 
-        var menu2=Menu.buildFromTemplate([
+        let menu2=Menu.buildFromTemplate([
             {  label: 'Main',  
                submenu : [
                    {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
@@ -523,6 +512,16 @@ app.on('ready', async function() {
             });
         });
     }
+
+    setTimeout( () => {
+        if (state.mainfilename === '') {
+            createOrShowMainWindow();
+        } else {
+            createNewWindow("file://"+fullURL);
+        }
+    },500);
+
+
 });
 
 app.on('activate', () => { createOrShowMainWindow();});
@@ -533,7 +532,7 @@ ipcMain.on('ping', function (event, arg) {
 });
 
 ipcMain.on('showdevtools', function () {
-    var win = BrowserWindow.getFocusedWindow();
+    let win = BrowserWindow.getFocusedWindow();
     if (win) {
         win.webContents.openDevTools();
     }
