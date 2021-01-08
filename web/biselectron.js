@@ -40,6 +40,7 @@ let getTime = function() {
 // -------------------------------------------------------------------------------
 
 const electron = require('electron');
+require('@electron/remote/main').initialize()
 require('electron-debug')({showDevTools: false,
                            enabled : true});
 
@@ -117,9 +118,6 @@ const biswebTerminate=function(code=0) {
 
 const macExitQuestion=function(ask=false) {
 
-    if (state.indev)
-        return Promise.resolve('indev');
-    
     return new Promise( (resolve,reject) => setTimeout( async () => {
         const dialog = electron.dialog;
         
@@ -189,7 +187,7 @@ const getHeightWidth= function(name) {
     return obj;
 };
 
-const createWindow=async function(index,fullURL) {
+const createWindow=function(index,fullURL) {
 
     fullURL = fullURL || state.toolname;
     let i0=fullURL.lastIndexOf("\\");
@@ -275,6 +273,7 @@ const createWindow=async function(index,fullURL) {
                                                 nodeIntegration: false,
                                                 preload: preload,
                                                 contextIsolation: false,
+                                                enableRemoteModule : true,
                                             },
                                             autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});
@@ -292,7 +291,18 @@ const createWindow=async function(index,fullURL) {
         state.winlist[index] = null;
     });
 
-    state.winlist[index].loadURL(fullURL);
+
+    console.log('Loading URL',fullURL);
+    state.winlist[index].loadURL(fullURL).then( () => {
+        console.log('.... Loaded URL=',fullURL);
+    }).catch( (e) => {
+        console.log('.... Failed to load ',fullURL,', error=',e);
+        setTimeout( () => {
+            console.log('... Trying to load again',fullURL);
+            state.winlist[index].loadURL(fullURL);
+        },1000);
+    });
+
     return index;
 };
 
@@ -331,16 +341,21 @@ var createConsole=function() {
 
 };
 
-var attachWindow=function(index) {
+var trapOpenNewWindowEvent=function(index) {
+
+    console.log('Attaching',index);
     
     state.winlist[index].webContents.on('new-window',function(event,url/*,frameName,disposition,options*/) {
 
+        console.log('webcontents url=',url);
+        
         event.preventDefault(); 
-        let lm=url.split("/"), fname=lm[lm.length-1], domain=false;
+        let lm=url.split("/"), fname=lm[lm.length-1], ismainwindow=false;
         if (fname==="index.html") {
-            domain=true;
+            ismainwindow=true;
             if (state.winlist[0]!==null) {
                 state.winlist[0].show();
+                console.log('.... link was to index.html showing main window');
                 return;
             }
         }
@@ -348,30 +363,29 @@ var attachWindow=function(index) {
         if (url.indexOf('http://')===0 ||
             url.indexOf('https://')===0 
            ) {
-            //      console.log(getTime()+' Electron opening ' + url + ' in browser.');
+            console.log(getTime()+' Electron opening ' + url + ' in browser.');
             shell.openExternal(url);
             return;
         }
 
         
         let index=state.winlist.length;
-        if (domain===true)
+        if (ismainwindow)
             index=0;
 
-        setTimeout( () => {
-            createWindow(index,url);
-            attachWindow(index)
-        },100);
+        console.log('....\n.... creating new window from webpage ... loading url=',index,url);
+        createWindow(index,url);
+        trapOpenNewWindowEvent(index);
+        
     });
 };
 
 
 var createNewWindow = function(url) {
 
-    setTimeout( () => {
-        let index=createWindow(-2,url);
-        attachWindow(index);
-    },100);
+    console.log('....\n..... create new window',url);
+    const index=createWindow(-2,url);
+    trapOpenNewWindowEvent(index);
 };
 
 var createOrShowMainWindow = function(hide=false) {
@@ -379,17 +393,12 @@ var createOrShowMainWindow = function(hide=false) {
         state.winlist[0].show();
         return;
     }
-
-    setTimeout( () => {
-        console.log("Creating");
-        createWindow(0);
-        console.log("Attaching");
-        attachWindow(0)
-        if (hide) {
-            console.log('Minimizing');
-            state.winlist[0].minimize();
-        }
-    },100);
+    console.log('....\n..... create or show main window');
+    createWindow(0);
+    trapOpenNewWindowEvent(0)
+    if (hide) {
+        state.winlist[0].minimize();
+    }
 };
 
 
@@ -519,12 +528,16 @@ app.on('ready', async function() {
         } else {
             createNewWindow("file://"+fullURL);
         }
-    },500);
+    },100);
 
 
 });
 
-app.on('activate', () => { createOrShowMainWindow();});
+app.on('activate', () => {
+    setTimeout( () => {
+        createOrShowMainWindow();
+    },500);
+});
 
 
 ipcMain.on('ping', function (event, arg) {

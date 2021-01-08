@@ -539,6 +539,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         
         if (dopackage) {
             cmdlist.push(`${rimrafname} ${path.resolve(idir,'node_modules')}`);
+            cmdlist.push(`${rimrafname} ${path.resolve(idir,'manifest.json')}`);
             cmdlist.push('npm install -d');
             let modclean=getToolPath('modclean');
             cmdlist.push(modclean+' -r -a *.ts ');
@@ -549,7 +550,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         
         
-        let eversion ="10.2.0";
+        let eversion ="11.1.1";
         let ep=getToolPath('electron-packager');
         
         let cmdline=ep+' '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
