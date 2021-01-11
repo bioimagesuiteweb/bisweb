@@ -40,7 +40,7 @@ let getTime = function() {
 // -------------------------------------------------------------------------------
 
 const electron = require('electron');
-require('@electron/remote/main').initialize()
+require('@electron/remote/main').initialize();
 require('electron-debug')({showDevTools: false,
                            enabled : true});
 
@@ -116,7 +116,7 @@ const biswebTerminate=function(code=0) {
     app.quit(code);
 };
 
-const macExitQuestion=function(ask=false) {
+const macExitQuestion=function() {
 
     return new Promise( (resolve,reject) => setTimeout( async () => {
         const dialog = electron.dialog;
@@ -395,7 +395,7 @@ var createOrShowMainWindow = function(hide=false) {
     }
     console.log('....\n..... create or show main window');
     createWindow(0);
-    trapOpenNewWindowEvent(0)
+    trapOpenNewWindowEvent(0);
     if (hide) {
         state.winlist[0].minimize();
     }
@@ -417,7 +417,7 @@ app.on('window-all-closed', function() {
     }
 
     if (process.platform === 'darwin')  {
-        macExitQuestion(true).then( (m) => {
+        macExitQuestion().then( (m) => {
             console.log('.... exiting',m);
             biswebTerminate(0);
         }).catch( (e) => {
@@ -513,7 +513,7 @@ app.on('ready', async function() {
 
     if (process.platform === 'darwin')  {
         globalShortcut.register('CommandOrControl+Q', () => {
-            macExitQuestion(true).then( () => {
+            macExitQuestion().then( () => {
                 biswebTerminate(0);
             }).catch( (e) => {
                 console.log('Anyalive'+e);
