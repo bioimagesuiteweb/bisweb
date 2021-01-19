@@ -27,6 +27,8 @@ import biswebpython.core.bis_basemodule as bis_basemodule;
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.utilities.bw_dcm2nii as d2n
 import biswebpython.utilities.bidsObjects as bids_objects;
+import biswebpython.utilities.bidsUtils as bids_utils
+
 
 
 
@@ -43,33 +45,8 @@ class dicom2nii(bis_basemodule.baseModule):
             "author": "An Qu",
             "version": "1.0",
             "inputs": [
-                {
-                    "type": "path",
-                    "name": "DICOM File Path",
-                    "description": "Path of the DICOM FILES.",
-                    "varname": "dpath",
-                    "shortname": "dp",
-                    "required": True
-                },
-                {
-                    "type": "path",
-                    "name": "Output NIFTI File Path",
-                    "description": "Path of the output NIFTI files.",
-                    "varname": "npath",
-                    "shortname": "np",
-                    "required": True
-                }
             ],
             "outputs": [
-                {
-                    "type": "bidstext",
-                    "name": "Output Log",
-                    "description": "Debug logging file",
-                    "varname": "log",
-                    "shortname": "l",
-                    "required": True,
-                    "extension": ".txt"
-                }
             ],
             "params": [
                 {
@@ -78,6 +55,24 @@ class dicom2nii(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": True
+                },
+                {
+                    "type": "string",
+                    "name": "DICOM File Path",
+                    "description": "Path of the DICOM FILES.",
+                    "varname": "dpath",
+                    "shortname": "dp",
+                    "required": True,
+                    "default": ""
+                },
+                {
+                    "type": "string",
+                    "name": "Output NIFTI File Path",
+                    "description": "Path of the output NIFTI files.",
+                    "varname": "npath",
+                    "shortname": "np",
+                    "required": True,
+                    "default": ""
                 }
             ]
         }
@@ -86,10 +81,14 @@ class dicom2nii(bis_basemodule.baseModule):
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: dicom2nii with vals', vals);
         debug=self.parseBoolean(vals['debug'])
+        dicompath = vals['dpath']
+        niipath = vals['npath']
+
+        dicompath = bids_utils.pathChk(dicompath)
+        niipath = bids_utils.pathChk(niipath)
 
         try:
-            log = d2n.bw_dcm2nii(self.inputs['dpath'].path, \
-                                 self.inputs['npath'].path, debug)
+            log = d2n.bw_dcm2nii(dicompath, niipath, debug)
         except:
             e = sys.exc_info()[0]
             print('---- Failed to invoke algorithm ----',e);
@@ -98,6 +97,7 @@ class dicom2nii(bis_basemodule.baseModule):
 
         self.outputs['log'] = bids_objects.bidsText();
         self.outputs['log'].create(log)
+        self.outputs['log'].save(niipath + 'log.txt')
 
         return True
 

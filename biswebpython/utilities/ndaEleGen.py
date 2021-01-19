@@ -24,7 +24,6 @@
 #             {an.qu} <at> yale.edu
 #
 
-
 import os
 import csv
 import sys
@@ -43,34 +42,42 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
     appx_c = appx.constant
     appx_v = appx.variable
     errorm = []
+    chklist = []
+
+    jfile = imgSubj.file_path.replace('.nii.gz', '.json')
+    if not os.path.isfile(jfile):
+        if imgSubj.datatype == 'anat':
+            if 'ses-' in imgSubj.filename and 'run-' in imgSubj.filename:
+                cname = imgSubj.filename.split('_')[3].replace('.nii.gz', '.json')
+            elif 'ses-' not in imgSubj.filename and 'run-' not in imgSubj.filename:
+                cname = imgSubj.filename.split('_')[1].replace('.nii.gz', '.json')
+            else:
+                cname = imgSubj.filename.split('_')[2].replace('.nii.gz', '.json')
+            jfile = imgSubj.root + cname
+        elif imgSubj.datatype == 'func':
+            if 'run-' not in imgSubj.filename:
+                cname = imgSubj.filename[imgSubj.filename.index('task-'):].replace('.nii.gz', '.json')
+            else:
+                cname = imgSubj.filename[imgSubj.filename.index('task-'):imgSubj.filename.index('run-')] + 'bold.json'
+            jfile = imgSubj.root  + cname
+        else:
+            errorm.append(['Error: scan type of  ' + imgSubj.file_path + ' is not in coded field, therefore all the elements cannot be written.'])
+            return None, errorm, []
+
+        if not os.path.isfile(jfile):
+            jfile = imgSubj.root + imgSubj.subj + '/' + imgSubj.subj + '_' + cname
+
+            if not os.path.isfile(jfile):
+                errorm.append(['Warning: cannot find the json file of : ' + imgSubj.file_path])
+
+    if os.path.isfile(jfile):
+        temp_sen = imgSubj.filename + ' ---> '+ jfile.replace(imgSubj.root, '')
+        chklist.append(temp_sen)
+
 
     for ele in LUT:
         temp_var = None
         if 'ALL' in ele[1] or ele[1] in imgSubj.scan_type:
-
-            jfile = imgSubj.file_path.replace('.nii.gz', '.json')
-            if not os.path.exists(jfile):
-                if imgSubj.datatype == 'anat':
-                    cname = imgSubj.filename.split('_')[2].replace('.nii.gz', '.json')
-                    jfile = imgSubj.root + '/' + cname
-                elif imgSubj.datatype == 'func':
-                    cname = imgSubj.filename[imgSubj.filename.index('task-'):].replace('.nii.gz', '.json')
-                    jfile = imgSubj.root + '/' + cname
-                else:
-                    errorm.append(['Not able to write all the required elements of : ' + imgSubj.file_path + ' to the output file as its scan_type is not in coded field.'])
-                    return None, errorm
-
-                if not os.path.exists(jfile):
-                    jfile = imgSubj.root + '/' + imgSubj.subj + '/' + imgSubj.subj + '_' + cname
-
-                    if not os.path.exists(jfile):
-                        errorm.append(['Not able to write all the required elements of : ' + imgSubj.file_path + ' to the output file as its json file cannot be found.'])
-                        return None, errorm
-
-
-
-
-
 
             if 'appx' in ele[3]:
                 if ele[0] in appx_c:
@@ -98,15 +105,16 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
 
 
             elif 'json' in ele[3]:
-                if ele[2] == 'NULL':
-                    print("The matched-element: ", ele[0], " of the subject: ", imgSubj.subj, " in the look up table is missing! Please correct it and then run again!")
-                    sys.exit()
+                if os.path.isfile(jfile):
+                    if ele[2] == 'NULL':
+                        print("The matched-element: ", ele[0], " of the subject: ", imgSubj.subj, " in the look up table is missing! Please correct it and then run again!")
+                        sys.exit()
 
-                jdict = bids_utils.jsonread(jfile)
-                try:
-                    temp_var = jdict[ele[2]]
-                except:
-                    errorm.append(['Failed to write element: ' + ele[0] + ' of the file: ' + imgSubj.file_path + ' into the output file! '])
+                    jdict = bids_utils.jsonread(jfile)
+                    try:
+                        temp_var = jdict[ele[2]]
+                    except:
+                        errorm.append(['Failed to write element: ' + ele[0] + ' of the file: ' + imgSubj.file_path + ' into the output file! '])
 
 
 
@@ -127,7 +135,7 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
                     errorm.append(['Failed to write element: ' + ele[0] + ' of the file: ' + imgSubj.file_path + ' into the output file!'])
 
             else:
-                print("Finding-source of the subject: ", imgSubj.subj, " element: ", ele[0], " in look up table is wrong! Please double check!")
+                print("Source file of the subject: ", imgSubj.subj, " element: ", ele[0], " in look up table is wrong! Please double check!")
                 sys.exit()
 
 
@@ -149,7 +157,7 @@ def getLUTele(imgSubj, demogrC, tpl, LUT, appx):
             if '&demogr' in ele[3]:
                 demogrkey = ele[2]
 
-    return f_row, errorm
+    return f_row, errorm, chklist
 
 
 
@@ -164,27 +172,39 @@ def eleGenarator(TPL, LUT, appx, dgr, BIDS_path, debug):
     tpl = TPL.rawdata[1]
     oup_data = dp(TPL.rawdata)
     oup_elog = []
+    oup_chkl = []
 
     for root, dirs, files in os.walk(BIDS_path, topdown=True):
         if dirs == [] and files != []:
             for file in files:
                 if '.nii.gz' in file:
                     animg = bids_objects.imgSubj()
-                    r_str = root.rsplit('/', 3)
-                    animg.root = r_str[0]
-                    animg.subj = r_str[1]
-                    animg.ses = r_str[2]
-                    animg.datatype = r_str[3]
+                    try:
+                        r_str = root.rsplit('/', 3)
+                        animg.subj = r_str[1]
+                        animg.ses = r_str[2]
+                        animg.datatype = r_str[3]
+                    except:
+                        continue
+
+                    animg.root = BIDS_path
+                    if 'sub-' in animg.ses:
+                        animg.subj = animg.ses
+                        animg.ses = ''
                     animg.img03_path = root.replace(BIDS_path, '') + '/' + file
                     animg.file_path = root + '/' +file
                     animg.filename = file
 
                     animg.basicParas()
 
-                    f_row, errorm = getLUTele(animg, dgr, tpl, LUT, appx)
+                    f_row, errorm, chklist = getLUTele(animg, dgr, tpl, LUT, appx)
 
                     if f_row:
                         oup_data.append(f_row)
+
+                    if chklist:
+                        oup_chkl.append(chklist)
+
                     if errorm:
                         for ele in errorm:
                             oup_elog.append(ele)
@@ -192,4 +212,4 @@ def eleGenarator(TPL, LUT, appx, dgr, BIDS_path, debug):
                 else:
                     continue
 
-    return oup_data, oup_elog
+    return oup_data, oup_elog, oup_chkl

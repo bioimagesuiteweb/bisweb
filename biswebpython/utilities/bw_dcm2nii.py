@@ -41,26 +41,25 @@ def ifComplete(path, N):
 
 
 
-def bw_dcm2nii(dpath, opath, debug):
+def bw_dcm2nii(dcm_path, oup_path, debug):
     logm = []
-    dcm_path = bids_utils.pathChk(dpath)
-    oup_path = bids_utils.pathChk(opath)
 
-    
     for root, dirs, files in os.walk(dcm_path, topdown=True):
 
         print('___ Parsing directory',root)
-        
         cmd = ''
         ok = None
         bids_sbj = bids_objects.bidsSubj()
-        r_str = root.rsplit('/', 3)
-        bids_sbj.subj = r_str[1]
-        bids_sbj.ses = r_str[2]
-        bids_sbj.datatype = r_str[3]
+        try:
+            r_str = root.rsplit('/', 3)
+            bids_sbj.subj = r_str[1]
+            bids_sbj.ses = r_str[2]
+            bids_sbj.datatype = r_str[3]
+        except:
+            continue
+
         bids_sbj.root = root
         bids_sbj.files = files
-
         if 'anat' == bids_sbj.datatype or 'func' == bids_sbj.datatype:
 
             if 'sub-' in bids_sbj.ses:

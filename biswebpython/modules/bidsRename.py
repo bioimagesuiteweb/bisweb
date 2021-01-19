@@ -16,7 +16,7 @@
 # ENDLICENSE
 
 
-
+import os
 import sys
 try:
     import bisweb_path;
@@ -27,6 +27,7 @@ import biswebpython.core.bis_basemodule as bis_basemodule;
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.utilities.bidsRenaming as bidsRn
 import biswebpython.utilities.bidsObjects as bids_objects
+import biswebpython.utilities.bidsUtils as bids_utils
 
 
 
@@ -41,7 +42,7 @@ class bidsRename(bis_basemodule.baseModule):
             "name": "bidsRename",
             "description": "Renaming files into bids format",
             "author": "An Qu",
-            "version": "1.0",
+            "version": "2.0",
             "inputs": [
                 {
                     "type": "bidsdemogr",
@@ -51,43 +52,9 @@ class bidsRename(bis_basemodule.baseModule):
                     "shortname": "dgr",
                     "required": True,
                     "extension": ".txt"
-                },
-                {
-                    "type": "path",
-                    "name": "Input file path",
-                    "description": "File path of BIDS format dataset",
-                    "varname": "bidspath",
-                    "shortname": "bp",
-                    "required": True
                 }
             ],
             "outputs": [
-                {
-                    "type": "bidstext",
-                    "name": "Output Error Log",
-                    "description": "Debug logging file",
-                    "varname": "errorlog",
-                    "shortname": "elog",
-                    "required": True,
-                    "extension": ".txt"
-                },
-                {
-                    "type": "bidstext",
-                    "name": "Output Log",
-                    "description": "Debug logging file",
-                    "varname": "log",
-                    "shortname": "log",
-                    "required": True,
-                    "extension": ".txt"
-                },
-                {
-                    "type": "bidstext",
-                    "name": "Output File Path",
-                    "description": "Output file",
-                    "varname": "output",
-                    "shortname": "o",
-                    "required": True,
-                }
             ],
             "params": [
                 {
@@ -96,6 +63,33 @@ class bidsRename(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": True
+                },
+                {
+                    "name": "Execute",
+                    "description": "Whether or not to create a new dataset that is orgnized in bids format.",
+                    "varname": "execute",
+                    "required": False,
+                    "shortname": "exe",
+                    "type": "boolean",
+                    "default": False
+                },
+                {
+                    "type": "string",
+                    "name": "Output Directory",
+                    "description": "Output directory for the BIDS dataset. Optional, saves in the parent folder of input directory if not specified.",
+                    "required": False,
+                    "varname": "oupath",
+                    "shortname" : "o",
+                    "default": ""
+                },
+                {
+                    "type": "string",
+                    "name": "Input Directory",
+                    "description": "Input File path",
+                    "required": True,
+                    "varname": "inpath",
+                    "shortname": "i",
+                    "default": ""
                 }
             ]
         }
@@ -103,25 +97,45 @@ class bidsRename(bis_basemodule.baseModule):
 
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
-        debug=self.parseBoolean(vals['debug'])
+        debug = self.parseBoolean(vals['debug'])
+        exe = self.parseBoolean(vals['execute'])
+        inpath = vals['inpath']
+        oupath = vals['oupath']
+
+        inpath = bids_utils.pathChk(inpath)
+        if not oupath:
+            tp = inpath.rsplit('/', 2)
+            oupath = tp[0] + '/' + tp[1] + '_biswebpy_bidsRename/'
+            if not os.path.exists(oupath):
+                os.mkdir(oupath)
+            else:
+                print ('Output directory: ', oupath, ' already exists. Please move/delete that directory in advance to avoid conflicts.')
+                sys.exit(0)
+        else:
+            oupath = bids_utils.pathChk(oupath)
 
 
         try:
-            odata, elog, log = bidsRn.Rename(self.inputs['demographics'], self.inputs['bidspath'].path, \
-            debug)
+            odata, elog, log = bidsRn.Rename(self.inputs['demographics'], inpath, oupath, \
+            exe, debug)
 
         except:
             e = sys.exc_info()[0]
             print('---- Failed to invoke algorithm ----',e);
             return False
 
-        self.outputs['output'] = bids_objects.bidsText();
+
+        self.outputs['ren_lut'] = bids_objects.bidsText();
         self.outputs['errorlog'] = bids_objects.bidsText();
         self.outputs['log'] = bids_objects.bidsText();
 
-        self.outputs['output'].create(odata)
+        self.outputs['ren_lut'].create(odata)
         self.outputs['errorlog'].create(elog)
         self.outputs['log'].create(log)
+
+        self.outputs['ren_lut'].save(oupath  + 'checklist.txt')
+        self.outputs['errorlog'].save(oupath + 'errorlog.txt')
+        self.outputs['log'].save(oupath + 'log.txt')
 
         return True
 

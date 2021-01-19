@@ -16,7 +16,7 @@
 # ENDLICENSE
 
 
-
+import os
 import sys
 try:
     import bisweb_path;
@@ -27,6 +27,7 @@ import biswebpython.core.bis_basemodule as bis_basemodule;
 import biswebpython.core.bis_objects as bis_objects;
 import biswebpython.utilities.ndaEleGen as eleGen
 import biswebpython.utilities.bidsObjects as bids_objects
+import biswebpython.utilities.bidsUtils as bids_utils
 
 
 
@@ -78,34 +79,9 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
                     "shortname": "dgr",
                     "required": True,
                     "extension": ".txt"
-                },
-                {
-                    "type": "path",
-                    "name": "Input file path",
-                    "description": "File path of BIDS format dataset",
-                    "varname": "bidspath",
-                    "shortname": "bp",
-                    "required": True
                 }
             ],
             "outputs": [
-                {
-                    "type": "bidstext",
-                    "name": "Output Error Log",
-                    "description": "Debug logging file",
-                    "varname": "errorlog",
-                    "shortname": "elog",
-                    "required": True,
-                    "extension": ".txt"
-                },
-                {
-                    "type": "bidstext",
-                    "name": "Output File",
-                    "description": "Output file",
-                    "varname": "output",
-                    "shortname": "o",
-                    "required": True,
-                }
             ],
             "params": [
                 {
@@ -114,6 +90,24 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": True
+                },
+                {
+                    "type": "string",
+                    "name": "Output Directory",
+                    "description": "Output directory. Optional, saves in the parent folder of input directory if not specified.",
+                    "required": False,
+                    "varname": "oupath",
+                    "shortname" : "o",
+                    "default": ""
+                },
+                {
+                    "type": "string",
+                    "name": "Input path of bids dataset",
+                    "description": "File path of BIDS format dataset",
+                    "varname": "bidspath",
+                    "shortname": "bp",
+                    "required": True,
+                    "default": ""
                 }
             ]
         }
@@ -122,12 +116,23 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
         debug=self.parseBoolean(vals['debug'])
+        bidspath = vals['bidspath']
+        oupath = vals['oupath']
+
+        bidspath = bids_utils.pathChk(bidspath)
+        if not oupath:
+            tp = bidspath.rsplit('/', 2)
+            oupath = tp[0] + '/' + tp[1] + '_biswebpy_ndaElementsGenerator/'
+            if not os.path.exists(oupath):
+                os.mkdir(oupath)
+        else:
+            oupath = bids_utils.pathChk(oupath)
 
 
         try:
 
-            odata, elog = eleGen.eleGenarator(self.inputs['template'], self.inputs['lookuptable'].data, self.inputs['appendix'], \
-            self.inputs['demographics'], self.inputs['bidspath'].path, \
+            odata, elog, ochk = eleGen.eleGenarator(self.inputs['template'], self.inputs['lookuptable'].data, self.inputs['appendix'], \
+            self.inputs['demographics'], bidspath, \
             debug)
 
         except:
@@ -135,11 +140,18 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
             print('---- Failed to invoke algorithm ----',e);
             return False
 
-        self.outputs['output'] = bids_objects.bidsText();
+        self.outputs['outputfile'] = bids_objects.bidsText();
         self.outputs['errorlog'] = bids_objects.bidsText();
+        self.outputs['checklist'] = bids_objects.bidsText();
 
-        self.outputs['output'].create(odata)
+        self.outputs['outputfile'].create(odata)
         self.outputs['errorlog'].create(elog)
+        self.outputs['checklist'].create(ochk)
+
+        self.outputs['outputfile'].save(oupath + 'data_dictionary_file.txt')
+        self.outputs['errorlog'].save(oupath + 'errors.txt')
+        self.outputs['checklist'].save(oupath + 'checklist.txt')
+
 
         return True
 
