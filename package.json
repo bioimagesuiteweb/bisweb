@@ -51,6 +51,7 @@
         "jszip": "3.2.1",
         "localforage": "1.7.3",
         "moment": "2.22.1",
+        "node-fetch": "2.6.1",
         "numeric": "1.2.6",
         "otplib": "10.0.1",
         "pako": "1.0.7",

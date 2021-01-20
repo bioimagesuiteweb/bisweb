@@ -169,10 +169,8 @@ namespace bisAdvancedImageAlgorithms {
       threshold=0.9*range[1];
 
     float spa[5];   input->getSpacing(spa);
-    if (sigma<0.01)
-      sigma=0.01;
-    else if (sigma>5.0)
-      sigma=0.0;
+    if (sigma>5.0)
+      sigma=5.0;
     
     for (int ia=0;ia<=2;ia++)
       {
@@ -363,8 +361,8 @@ namespace bisAdvancedImageAlgorithms {
       }
     
     int winradius=windowsize-1;
-    if (winradius<1)
-      winradius=1;
+    if (winradius<0)
+      winradius=0;
 
     if (debug) {
       std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
@@ -679,8 +677,8 @@ namespace bisAdvancedImageAlgorithms {
       }
 
     int winradius=windowsize-1;
-    if (winradius<1)
-      winradius=1;
+    if (winradius<0)
+      winradius=0;
         
 
     std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;

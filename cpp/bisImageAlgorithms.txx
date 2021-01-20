@@ -249,10 +249,23 @@ namespace bisImageAlgorithms {
                                              bisSimpleImage<T>* output,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor,int vtkboundary)
   {
 
-
-    
     int dim[5];    input->getDimensions(dim);
     float spa[5];    input->getSpacing(spa);
+
+    if (sigmas[0]<0.000000001 &&
+        sigmas[1]<0.000000001 &&
+        sigmas[2]<0.000000001 ) {
+      std::cout << "Just copying, no smoothing ... " << sigmas[0] << "," << sigmas[1] << "," << sigmas[2] << std::endl;
+      output->copyStructure(input);
+      T* inp=input->getData();
+      T* out=output->getData();
+      int l=dim[0]*dim[1]*dim[2]*dim[3]*dim[3];
+      for (int i=0;i<l;i++)
+        out[i]=inp[i];
+      return;
+    }
+        
+        
 
     std::unique_ptr<bisSimpleImage<T> > temp(new bisSimpleImage<T>("temporary_smooth_image"));
     temp->copyStructure(input);
@@ -263,32 +276,32 @@ namespace bisImageAlgorithms {
 
     for(int ia=0;ia<=2;ia++)
       {
-	if (inmm) 
-	  outsigmas[ia]=sigmas[ia]/spa[ia];
-	else
-	  outsigmas[ia]=sigmas[ia];
+        if (inmm) 
+          outsigmas[ia]=sigmas[ia]/spa[ia];
+        else
+          outsigmas[ia]=sigmas[ia];
       }
-
+    
     int radii[3] = { 1,1,1 };
     for (int i=0;i<=2;i++) {
       radii[i]=int(outsigmas[i]*radiusfactor);
       if (radii[i]<1)
-	radii[i]=1;
+        radii[i]=1;
     }
-
+    
     std::vector<float> kernelx=internal::generateSmoothingKernel(outsigmas[0],radii[0]);
     std::vector<float> kernely=internal::generateSmoothingKernel(outsigmas[1],radii[1]);
 
     oneDConvolution(input_data,temp_data,dim,kernelx,0,vtkboundary);
     oneDConvolution(temp_data,output_data,dim,kernely,1,vtkboundary);
-
+    
     if (dim[2]>1)
       {
-	std::vector<float> kernelz=internal::generateSmoothingKernel(outsigmas[2],radii[2]);
-	int len=input->getLength();
-	for(int j=0;j<len;j++)
-	  temp_data[j]=output_data[j];
-	oneDConvolution(temp_data,output_data,dim,kernelz,2,vtkboundary);
+        std::vector<float> kernelz=internal::generateSmoothingKernel(outsigmas[2],radii[2]);
+        int len=input->getLength();
+        for(int j=0;j<len;j++)
+          temp_data[j]=output_data[j];
+        oneDConvolution(temp_data,output_data,dim,kernelz,2,vtkboundary);
       }
 
   }

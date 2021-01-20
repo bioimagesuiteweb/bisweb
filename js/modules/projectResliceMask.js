@@ -155,6 +155,16 @@ class ProjectResliceMaskModule extends BaseModule {
                     "high": 100000,
                     "step" : 0.1,
                 },
+                {
+                    "name": "Objectmap",
+                    "description": "If set treat image as object map and do not interpolate",
+                    "priority": 101,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "isobjectmap",
+                    "type": 'boolean',
+                    "default": false,
+                },
                 baseutils.getDebugParam(),
             ]
         };
@@ -170,6 +180,10 @@ class ProjectResliceMaskModule extends BaseModule {
         let angioimage = this.inputs['angio'] || null;
         let maskimage = this.inputs['mask'] || null;
         let debug=super.parseBoolean(vals.debug);
+        let isobjectmap=super.parseBoolean(vals.isobjectmap);
+        let interp=1;
+        if (isobjectmap)
+            interp=0;
 
         if (angioxform===null || rotxform ===null) {
             return Promise.reject('Bad Transformations, one of them is null');
@@ -241,7 +255,7 @@ class ProjectResliceMaskModule extends BaseModule {
                 "spacing" : [ spa[0],spa[1],spa[2] ],
                 "dimensions" : [ dim[0],dim[1],dim[2] ],
                 "backgroundValue" : 0.0,
-                "interpolation" : 1
+                "interpolation" : interp
             },vals.debug);
         } catch(e) {
             return Promise.reject('Failed to reslice mask to angio space '+e);
@@ -250,15 +264,21 @@ class ProjectResliceMaskModule extends BaseModule {
         // 2. Project mask to 2d space
         // ------------------------------------------------------------------
         let temp_projected_mask=null;
+        let window=1,sigma=1.0,gradsigma=1.0;
+        if (isobjectmap) {
+            window=0;
+            sigma=-1.0;
+            gradsigma=-1.0;
+        }
         try {
             const obj={
                 "domip": true,
                 "flip":  this.parseBoolean(vals.flip),
                 "axis":  parseInt(axis),
-                "sigma": 1.0,
-                "gradsigma": 1.0,
+                "sigma": sigma,
+                "gradsigma": gradsigma,
                 "lps" : lps,
-                "window": 1,
+                "window": window,
                 "threshold": parseFloat(vals.threshold),
             };
             console.log('oooo calling projectImageWASM '+JSON.stringify(obj));
@@ -279,20 +299,24 @@ class ProjectResliceMaskModule extends BaseModule {
                 "spacing" : [ spa[0],spa[1],spa[2] ],
                 "dimensions" : [ dim[0],dim[1],dim[2] ],
                 "backgroundValue" : 0.0,
-                "interpolation" : 1
+                "interpolation" : interp
             },vals.debug);
 
             let range=temp_image.getIntensityRange();
-            
-            this.outputs['output']= biswrap.thresholdImageWASM(temp_image, {
-                "low": 0.1,
-                "high": range[1]+1,
-                "replacein" : true,
-                "replaceout" : true,
-                "invalue" : 1,
-                "outvalue" : 0,
-                "datatype" : 'uchar'
-            },vals.debug);
+
+            if (!isobjectmap) {
+                this.outputs['output']= biswrap.thresholdImageWASM(temp_image, {
+                    "low": 0.1,
+                    "high": range[1]+1,
+                    "replacein" : true,
+                    "replaceout" : true,
+                    "invalue" : 1,
+                    "outvalue" : 0,
+                    "datatype" : 'uchar'
+                },vals.debug);
+            } else {
+                this.outputs['output']= temp_image;
+            }
             
         } catch(e) {
             return Promise.reject('Failed to reslice mask to angio space '+e);
