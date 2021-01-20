@@ -133,9 +133,9 @@ def cpFile(src, dst=None):
 
 
 def pathChk(inp):
-    oup = None
-    if inp[-1] == '/':
-        return inp
+    oup = os.path.abspath(inp)
+    if oup[-1] == '/':
+        return oup
     else:
-        oup = inp + '/'
+        oup = oup + '/'
         return oup

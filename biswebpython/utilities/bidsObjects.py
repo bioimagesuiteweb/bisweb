@@ -322,7 +322,7 @@ class bidsSubj:
         self.datatype = ''
         self.files = []
         self.filetype = ['.nii.gz', '.json', '.tsv']
-        self.scantype = ['T1w', 'T2w', 'FLASH']
+        self.MRscantype = ['T1w', 'T2w', 'FLASH']
 
 
     def splitfiles(self, type, f_l=None):
@@ -341,9 +341,9 @@ class bidsSubj:
         return sf
 
 
-    def splitfilesbyscantype(self):
+    def splitfilesbyMRscantype(self):
         sf = {}
-        for ft in self.scantype:
+        for ft in self.MRscantype:
             sf[ft] = [f for f in self.files if ft in f]
         return sf
 
