@@ -206,6 +206,9 @@ namespace bisAdvancedImageAlgorithms {
   template<class T> bisSimpleImage<T>*  projectImage(bisSimpleImage<T>* original_input,
                                                      int domip,int axis,int flip,int lps,
                                                      float sigma,float threshold,float gradsigma,int windowsize,int debug) {
+
+
+    std::cout << ".... Project Image (no mask) thr=" << threshold << " domip=" << domip  << std::endl;
     
     // Smooth image 
     float sigmas[3],gradsigmas[3],outsigmas[3];
@@ -576,6 +579,9 @@ namespace bisAdvancedImageAlgorithms {
                                              bisSimpleImage<float>* output,
                                              int axis,int flip,int lps,
                                              float gradsigma,int windowsize) {
+
+
+    std::cout << ".... Project Image with Mask" << std::endl;
     
     // Get Axis
     int idim[5];    input->getDimensions(idim);

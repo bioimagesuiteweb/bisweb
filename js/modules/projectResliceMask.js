@@ -264,15 +264,16 @@ class ProjectResliceMaskModule extends BaseModule {
         // 2. Project mask to 2d space
         // ------------------------------------------------------------------
         let temp_projected_mask=null;
-        let window=1,sigma=1.0,gradsigma=1.0;
+        let window=1,sigma=1.0,gradsigma=1.0,domip=true;
         if (isobjectmap) {
             window=0;
             sigma=-1.0;
             gradsigma=-1.0;
+            domip=false;
         }
         try {
             const obj={
-                "domip": true,
+                "domip": domip,
                 "flip":  this.parseBoolean(vals.flip),
                 "axis":  parseInt(axis),
                 "sigma": sigma,
@@ -315,7 +316,15 @@ class ProjectResliceMaskModule extends BaseModule {
                     "datatype" : 'uchar'
                 },vals.debug);
             } else {
-                this.outputs['output']= temp_image;
+                this.outputs['output']= biswrap.thresholdImageWASM(temp_image, {
+                    "low": 1,
+                    "high": range[1]+1,
+                    "replacein" : false,
+                    "replaceout" : true,
+                    "invalue" : 1,
+                    "outvalue" : 0,
+                    "datatype" : 'short'
+                },vals.debug);
             }
             
         } catch(e) {
