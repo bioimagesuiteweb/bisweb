@@ -186,6 +186,10 @@ let loadParse = function (args, toolname,basedirectory='',testmode=false) {
 
         program.parse(outargs);
 
+        if (mod.getExtraArgument()===null && program.args.length>0) {
+            console.log('----- extra arguments specified on the commandline that are not usable',program.args);
+            process.exit(1);
+        }
         
         let objinputs=mod.getDescription().inputs;
         let max=3;
