@@ -124,6 +124,29 @@ class BisWebPanel {
      */
     getFooter() { return this.footer; }
 
+    /** returns the state of the widget (empty, sidebar, docked) */
+    getVisibilityState() {
+        return this.state;
+    }
+
+    /** set the visibility state */
+    setVisibilityState(st) {
+
+        if (st===this.state)
+            return;
+
+        if (st!=='docked' && st!=='sidebar') {
+            this.hide();
+            return;
+        }
+        
+        if (st==='docked') {
+            this.addToDock();
+        } else {
+            this.addToSidebar();
+        }
+        this.addDisplayHelpCallback();
+    }
 
     /** Shows the dialog and disables any drag and drop elements while it is open */
     show() {
@@ -473,6 +496,8 @@ class BisWebPanel {
         bootbox.alert(this.helpModalMessage);
     }
 
+    
+
     /** Sets the help modal for this context. */
     setHelpModalMessage(message) {
         this.helpModalMessage = message;
@@ -486,7 +511,60 @@ class BisWebPanel {
         return globalDockedPanels.concat(permanentPanels);
     }
 
+    // -------------------------------------------------------------
+    /** Element State stuff */
     
+    getElementState() {
+        
+        return {
+            'visibilityState' : this.getVisibilityState(),
+            'isOpen' : this.isOpen(),
+        };
+    }
+
+    setElementState(dt=null) {
+        if (!dt)
+            return;
+        
+        this.setVisibilityState(dt['visibilityState']);
+    }
+   
 }
+
+
+
+
+/**
+ * Creates a custom module and adds it to the frame as a child of parent. 
+ * Custom Module Class. 
+ * @alias bisWebCustomModule.createCustom
+ * @param {Node} parent - DOM Node to append the custom module frame to
+ * @param {bisweb_algorithm} algorithmcontroller-  Algorithm controller associated with the viewers on the page
+ * @param {Object} mod - Object containing a module that specifies how it should be displayed and run.
+ * @param {object} opts - the options object 
+ * @param {Boolean} opts.numViewers - Number of Image Viewers attached
+ */
+/*
+let createCustom = function (parent, algorithmcontroller, mod, opts = {}) {
+    return new CustomModule(parent, mod, algorithmcontroller, opts);
+};*/
+
+/** Update open Modules */
+/*
+let updateModules = function() {
+
+    let panels=BisWebPanel.getActivePanels();
+    for (let i=0;i<panels.length;i++) {
+        if (panels[i]) {
+            let mod=ModuleList[panels[i].options.name];
+            if (mod) {
+                mod.createOrUpdateGUI();
+            }
+        }
+    }
+
+    
+    
+}*/
 
 module.exports=BisWebPanel;

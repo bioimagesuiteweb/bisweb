@@ -98,8 +98,9 @@ class ViewerApplicationElement extends HTMLElement {
         
         this.applicationInitializedPromiseList= [ ];
         this.oldgraphtool=null;
-        
-            
+
+        // List of all components (e.g. module manegr, snapshot controller etc.)
+        this.componentDictionary={};
     }
 
     // ----------------------------------------------------------------------------
@@ -208,7 +209,6 @@ class ViewerApplicationElement extends HTMLElement {
         obj.sidetools={};
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
-        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         
         if (atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
@@ -221,12 +221,34 @@ class ViewerApplicationElement extends HTMLElement {
                 obj.sidetools.clustertool=true;
         }
 
-        
-        if (landmarkcontrolid) {
-            let landmarkcontrol=document.querySelector(landmarkcontrolid);
-            obj['landmarkcontrol']=landmarkcontrol.getElementState();
-        }
+        obj['components']={};
 
+        let keys=Object.keys(this.componentDictionary);
+        for (let i=0;i<keys.length;i++) {
+            
+            let compid=this.componentDictionary[keys[i]];
+            let comp=document.querySelector(compid) || null;
+            if (comp) {
+                console.log('Working on ',keys[i],compid);
+                if ( (typeof comp.getElementState === "function")) {
+                    console.log('has getElementState');
+                    obj['components'][keys[i]]= {
+                        '_isdialog' : false,
+                        'state' : comp.getElementState()
+                    };
+                    console.log('State=',obj['components'][keys[i]]);
+                } else if ( (typeof comp.isOpen === "function")) {
+                    console.log('has isOpen');
+                    obj['components'][keys[i]]={
+                        '_isdialog' : true,
+                        'isopen' : comp.isOpen()
+                    };
+                } else {
+                    console.log('has nothing');
+                    obj['components'][keys[i]]=null;
+                }
+            }
+        }
         
         return obj;
     }
@@ -251,11 +273,33 @@ class ViewerApplicationElement extends HTMLElement {
             this.VIEWERS[1].setDualViewerMode(this.VIEWERS[1].internal.viewerleft);
         }
 
-        let sidetools=dt.sidetools || {};
 
+        const components=dt['components'] || {};
+        const keys=Object.keys(components);
+        for (let i=0;i<keys.length;i++) {
+            const key=keys[i];
+            const payload=components[key] || null;
+            const internal=this.componentDictionary[key] || null;
+            if (payload && internal) {
+                const element=document.querySelector(internal);
+                let isdialog=payload['_isdialog'];
+                if (isdialog) {
+                    if (payload['isopen'])
+                        element.show();
+                    else
+                        element.hide();
+                } else {
+                    element.setElementState(payload['state']);
+                }
+            } else if (payload) {
+                // stuff we have to create on the fly
+                console.log('should create',key);
+            }
+        }
+
+        let sidetools=dt.sidetools || {};
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
-        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         
         if (sidetools.atlascontrol && atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
@@ -269,11 +313,6 @@ class ViewerApplicationElement extends HTMLElement {
             setTimeout( ()=> {
                 blobcontrol.show();
             },500);
-        }
-
-        if (landmarkcontrolid) {
-            let landmarkcontrol=document.querySelector(landmarkcontrolid);
-            landmarkcontrol.setElementState(dt['landmarkcontrol'] || null);
         }
 
     }
@@ -472,7 +511,10 @@ class ViewerApplicationElement extends HTMLElement {
                                        width :300,
                                        dual : dual,
                                    });
-
+        $(newdlg).attr('id',webutil.getuniqueid());
+        this.componentDictionary['transferTool']='#'+$(newdlg).attr('id');
+        console.log('Comp=',this.componentDictionary);
+        
         var bbar=webutil.createbuttonbar({ parent: newdlg.getWidget(),
                                            css : { 'margin-top' : '10px' ,
                                                    'margin-left' : '4px' }
@@ -789,11 +831,11 @@ class ViewerApplicationElement extends HTMLElement {
                                            () => {
                                                if (self.oldgraphtool===null)  {
                                                    self.oldgraphtool=document.createElement('bisweb-oldgrapherelement');
+                                                   $(self.oldgraphtool).attr('id',webutil.getuniqueid());
                                                    document.body.appendChild(self.oldgraphtool);
+                                                   self.componentDictionary['graphTool']='#'+$(self.oldgraphtool).attr('id');
                                                }
-                                               console.log('Old=',self.oldgraphtool,viewerno);
                                                self.oldgraphtool.parseViewer(self.VIEWERS[paintviewerno]);
-
                                            });
                 } else {
                     
@@ -1688,16 +1730,35 @@ class ViewerApplicationElement extends HTMLElement {
 
         const self = this;
         const menubarid = this.getAttribute('bis-menubarid');
-        const painttoolid = this.getAttribute('bis-painttoolid') || null;
-        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
+
+        // These are handled separately for state purposes
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
+
+        const painttoolid = this.getAttribute('bis-painttoolid') || null;
+        if (painttoolid)
+            this.componentDictionary['paintTool']=painttoolid;
+
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
+        if (landmarkcontrolid)
+            this.componentDictionary['landmarkControl']=landmarkcontrolid;
+        
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
+        console.log('manag=',managerid);
+        if (managerid)
+            this.componentDictionary['moduleManager']=managerid;
+
         const graphtoolid = this.getAttribute('bis-graphtoolid') || null;
+        if (graphtoolid)
+            this.componentDictionary['graphTool']=graphtoolid;
+        
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         this.findViewers();
         this.createExtraComponents();
+
+                                    
+        
 
 
         let menubar = document.querySelector(menubarid).getMenuBar();

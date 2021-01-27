@@ -462,7 +462,7 @@ class CollectionElement extends HTMLElement {
 
     }
 
-    show() {
+    show(trulyshow=true) {
 
         if (!this.panel) {
             let layoutid=this.getAttribute('bis-layoutwidgetid');
@@ -478,10 +478,37 @@ class CollectionElement extends HTMLElement {
             this.panel.getWidget().append(this.internal.parentDomElement);
         }
 
-        this.panel.show();
+        if (trulyshow)
+            this.panel.show();
     }
 
+    // -------------------------------------------------------------
+    /** Element State stuff */
+    
+
+    getElementState() {
+
+        if (!this.panel)
+            return null;
         
+        return {
+            'current' : this.internal.currentIndex,
+            'data' : this.dataCollection.serializeToDictionary(),
+            'panelState' : this.panel.getElementState()
+        };
+    }
+    
+    setElementState(dt=null) {
+        if (!dt)
+            return;
+
+        this.dataCollection.parseFromDictionary(dt['data']);
+        if (!this.panel) 
+            this.show(false);
+        this.setCurrentItem(dt['current'],true);
+        this.updateGUI(true);
+        this.panel.setElementState(dt['panelState']);
+    }
 }
 
 module.exports=CollectionElement;

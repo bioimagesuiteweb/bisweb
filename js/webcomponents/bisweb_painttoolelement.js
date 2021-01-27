@@ -130,6 +130,7 @@ class PaintToolElement extends HTMLElement {
             thresholdModule : null,
             defaceModule : null,
             internalUpdate : false,
+            moduleDictionary : {},
         };
 
     }
@@ -1095,6 +1096,7 @@ class PaintToolElement extends HTMLElement {
                                                              this.internal.algocontroller,
                                                              modules.getModule('binaryThresholdImage'),
                                                              moduleoptions);
+        this.internal.moduleDictionary['thresholdModule']=this.internal.thresholdModule;
         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
             self.internal.thresholdModule.show();
         });
@@ -1109,6 +1111,7 @@ class PaintToolElement extends HTMLElement {
                                                               this.internal.algocontroller,
                                                               mod,
                                                               moduleoptions);
+            this.internal.moduleDictionary['defaceModule']=this.internal.defaceModule;
             webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                 self.internal.defaceModule.show();
             });
@@ -1119,6 +1122,7 @@ class PaintToolElement extends HTMLElement {
                                                                   this.internal.algocontroller,
                                                                   modules.getModule('morphologyFilter'),
                                                                   moduleoptions);
+            this.internal.moduleDictionary['morphologyModule']=this.internal.morphologyModule;
             webutil.createMenuItem(tmenu, moduleoptions.name, () => {
                 self.internal.morphologyModule.show();
             });
@@ -1128,6 +1132,7 @@ class PaintToolElement extends HTMLElement {
                                                                   this.internal.algocontroller,
                                                                   modules.getModule('regularizeObjectmap'),
                                                                   moduleoptions);
+            this.internal.moduleDictionary['regularizeModule']=this.internal.regularizeModule;
             webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                 self.internal.regularizeModule.show();
             });
@@ -1138,6 +1143,7 @@ class PaintToolElement extends HTMLElement {
                                                             this.internal.algocontroller,
                                                             modules.getModule('maskImage'),
                                                             moduleoptions);
+            this.internal.moduleDictionary['maskModule']=this.internal.maskModule;
             webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                 self.internal.maskModule.show();
             });
@@ -1157,6 +1163,55 @@ class PaintToolElement extends HTMLElement {
                 webutil.createAlert(e,true);
         });
     }
+
+
+        // -------------------------------------------------------------
+    /** Element State stuff */
+    
+    getElementState() {
+
+        const obj={
+            'modules' : {
+            }
+        };
+
+        if (this.panel)
+            obj['panelState']=this.panel.getElementState();
+        else
+            obj['panelState']=null;
+        
+        
+        let keys=Object.keys(this.internal.moduleDictionary);
+        for (let i=0;i<keys.length;i++) {
+            let key=keys[i];
+            let module=this.internal.moduleDictionary[key];
+            if (module) {
+                obj['modules'][key] = module.getElementState();
+            }
+        }
+        return obj;
+    }
+
+    setElementState(dt=null) {
+
+        if (!dt)
+            return;
+        
+        if (this.panel)
+            this.panel.setElementState(dt['panelState']);
+
+        const modules_out=dt['modules'];
+        const names=Object.keys(modules_out);
+        for (let i=0;i<names.length;i++) {
+            const name=names[i];
+            const current=this.internal.moduleDictionary[name] || null;
+            if (current) {
+                current.setElementState(modules_out[name]);
+            } 
+        }
+
+    }
+
 }
 
 webutil.defineElement('bisweb-painttoolelement', PaintToolElement);

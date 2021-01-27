@@ -75,6 +75,7 @@ class ModuleManagerElement extends HTMLElement {
         }
         this.customs = [];
         this.modules = {};
+        this.moduleExtra= {};
         this.moduleMenu = [ null,null,null,null];
         this.viewers = [];
     }
@@ -101,6 +102,10 @@ class ModuleManagerElement extends HTMLElement {
     createModule(name, index,dosep , module, moduleoptions = {}) {
 
         this.modules[name] = null;
+        this.moduleExtra[name]= {
+            'module' : module,
+            'moduleoptions' : moduleoptions
+        };
         const self=this;
         webutil.createMenuItem(this.moduleMenu[index], name,
                                function () {
@@ -312,6 +317,58 @@ class ModuleManagerElement extends HTMLElement {
 
     getAlgorithmController() {
         return this.algorithmController;
+    }
+
+    // -------------------------------------------------------------
+    /** Element State stuff */
+    
+    getElementState() {
+
+        const names=Object.keys(this.modules);
+        const modules_out={};
+        for (let i=0;i<names.length;i++) {
+            let name=names[i];
+            if (this.modules[name]) {
+                console.log('Looking at',name);
+                modules_out[name]=this.modules[name].getElementState();
+            }
+        }
+        const output = {
+            'modules' : modules_out,
+        };
+        if (this.algorithmController.getTransformController())
+            output['transformController']=this.algorithmController.getTransformController().getElementState();
+
+        if (this.algorithmController.getMatrixController())
+            output['matrixController']=this.algorithmController.getMatrixController().getElementState();
+
+        return output;
+    }
+
+    setElementState(dt=null) {
+
+        if (!dt)
+            return;
+        
+        const modules_out=dt['modules'];
+        const names=Object.keys(modules_out);
+        for (let i=0;i<names.length;i++) {
+            const name=names[i];
+            const current=this.modules[name] || null;
+            if (!current) {
+                this.createModuleOnDemandAndShow(name,
+                                                 this.moduleExtra[name]['module'],
+                                                 this.moduleExtra[name]['moduleoptions']);
+            }
+            this.modules[name].setElementState(modules_out[name]);
+        }
+
+        if (this.algorithmController.getTransformController())
+            this.algorithmController.getTransformController().setElementState(dt['transformController'] || null);
+
+        if (this.algorithmController.getMatrixController())
+            this.algorithmController.getMatrixController().setElementState(dt['matrixController'] || null);
+
     }
 }
 

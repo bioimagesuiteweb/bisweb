@@ -696,7 +696,31 @@ class CustomModule {
         });
         return false;
     }
+
+    // -------------------------------------------------------------
+    /** Element State stuff */
+    
+    getElementState() {
+
+        const out={};
+        if (!this.panel)
+            return;
+        out['panelState']=this.panel.getElementState();
+        out['params']=this.guiVars;
+        return out;
+    }
+
+    setElementState(dt=null) {
+        if (!dt)
+            return;
+
+        this.updateParams(dt['params']);
+        this.updateModuleGUIFromInputObjects();
+        this.panel.setElementState(dt['panelState']);
+    }
+   
 }
+
 
 
 

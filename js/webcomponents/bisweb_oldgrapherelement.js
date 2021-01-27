@@ -782,6 +782,12 @@ class OldGrapherModule extends HTMLElement {
         this.rePlotGraph(self.lastShowVolume).then( () => { }).catch( () => { });
     }
 
+    getElementState() {
+        const obj={};
+        if (this.graphWindow)
+            obj['isOpen']=this.graphWindow.isVisible();
+        return obj;
+    }
         
 }
 
