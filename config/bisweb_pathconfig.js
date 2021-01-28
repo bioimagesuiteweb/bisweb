@@ -29,12 +29,10 @@ let ok=false;
 
 if (major === 10 && minor >= 11) {
     ok=true;
-} else if (major === 12 && minor >= 2 ) {
-    ok=true;
-} else if (major === 14 && minor >= 2 ) {
+} else if (major > 12) {
     ok=true;
 } else {
-    console.log(`----\n---- You are using an incompatible version of node (either 8.9 or newer, or 10.13 or newer) (actual version=${v})\n`);
+    console.log(`----\n---- You are using an incompatible version of node (either 10.11 or newer) (actual version=${v})\n`);
     process.exit(1);
 }
 
