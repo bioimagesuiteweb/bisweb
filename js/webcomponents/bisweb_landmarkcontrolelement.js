@@ -66,7 +66,6 @@ class LandmarkControlElement extends HTMLElement {
         this.internal = {
             
             // global stuff
-            initialized : false,
             this : null,
             subviewers : null,
             volume : null,
@@ -1078,19 +1077,19 @@ class LandmarkControlElement extends HTMLElement {
      */
     getElementState() {
 
+        if (!this.internal.parentDomElement)
+            return {};
         
-        let obj = { };
+        const obj = { };
         obj.data = this.internal.data;
         obj.currentpoint= this.internal.currentpoint;
         obj.currentset=this.internal.currentsetindex;
-        console.log(JSON.stringify(obj,null,1), this.internal.currentsetindex);
         let sets=[];
         for (let i=0;i<this.internal.landmarkset.length;i++) {
             sets.push(this.internal.landmarkset[i].serialize());
         }
         obj.sets=sets;
         obj.isopen=this.panel.isOpen();
-        
         return obj;
     }
 
