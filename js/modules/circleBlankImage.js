@@ -25,9 +25,9 @@ const BaseModule = require('basemodule.js');
  */
 
 const defaultMin=0;
-const defaultMax=10001;
+const defaultMax=500;
 
-class BlankImageModule extends BaseModule {
+class circleBlankImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'blankImage';
@@ -36,49 +36,44 @@ class BlankImageModule extends BaseModule {
 
     createDescription() {
         
-        let createParam=function(axis,name,shortname,value,p,adv=false) {
-
-            let fname=axis.toUpperCase()+'-'+name;
+        let createParam=function(name,shortname,value,p,adv=false) {
 
             return {
-                "name": fname,
-                "description": `The ${name} along the ${axis} axis.`,
+                "name": name,
+                "description": `The ${name} of the circular region to keep`,
                 "priority": p,
                 "advanced": adv,
                 "gui": "slider",
                 "varname": shortname,
-                "type": 'int',
+                "type": 'float',
                 "default" : value,
             };
         };
         
 
         return {
-            "name": "Blank Image",
-            "description": "This algorithm performs image blanking, i.e. zeros values outside the specified region. It is similar to crop but maintains the original image dimensions.",
+            "name": "Circle Blank Image",
+            "description": "This algorithm performs image blanking, i.e. zeros values outside the specified circular region.",
             "author": "Xenios Papdemetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
-            "shortname" : "blk",
+            "shortname" : "cblk",
             "params": [
-                createParam('i','Start','i0',defaultMin,1),
-                createParam('i','End','i1',defaultMax,2),
-                createParam('j','Start','j0',defaultMin,4),
-                createParam('j','End','j1',defaultMax,5),
-                createParam('k','Start','k0',defaultMin,7),
-                createParam('k','End','k1',defaultMax,8),
+                createParam('centeri','Center-I','i0',128,1);
+                createParam('centerj','Center-J','i1',128,2),
+                createParam('radius','Radius','j0',128,3),
                 {
                     "name": "Minvalue",
-                    "description": "If true the blanked output image regions will have value equal to the minimum intensity of the image, instead of zero",
-                    "priority": 20,
-                    "advanced": true,
+                    "description": "If true the masked output image regions will have value equal to the minimum intensity of the image, instead of zero",
+                    "priority": 3,
+                    "advanced": false,
                     "gui": "check",
                     "varname": "minvalue",
                     "type": 'boolean',
-                    "default": true,
-                },
+                    "default": false,
+                }
                 baseutils.getDebugParam(),
             ],
             
@@ -90,15 +85,19 @@ class BlankImageModule extends BaseModule {
         
         let dim=input.getDimensions();
         console.log('oooo invoking: blankImage with vals', JSON.stringify(vals));
-
-        const minvalue=super.parseBoolean(vals.minvalue);
-        let replace=0;
-        if (minvalue) {
-            const imagerange = input.getIntensityRange();
-            replace=imagerange[0];
-        }
         
-        let names = ['i0','i1','j0','j1','k0','k1' ];
+        const cx=parseFloat(vals['centeri']);
+        const cy=parseFloat(vals['centerj']);
+        const r=parseFloat(vals['radius']);
+
+        let output=new BisWebImage();
+        output.cloneImage( input);
+
+        let odata=output.getImageData();
+
+        for (let i=0;i<dim[0];i++) {
+            for (let j=0;j<dim[1];j++) {
+                
         
         for (let ia=0;ia<=2;ia++) {
             let n0=names[2*ia];
@@ -110,7 +109,7 @@ class BlankImageModule extends BaseModule {
             if (v1===defaultMax)
                 vals[n1]=dim[ia]-1;
         }
-        console.log('oooo \t parameters fixed=', JSON.stringify(vals), 'replace=',replace);
+        console.log('oooo \t parameters fixed=', JSON.stringify(vals));
         return new Promise( (resolve, reject) => {
 
             biswrap.initialize().then(() => {
@@ -121,7 +120,6 @@ class BlankImageModule extends BaseModule {
                     "j1": parseInt(vals.j1),
                     "k0": parseInt(vals.k0),
                     "k1": parseInt(vals.k1),
-                    "outside": replace
                 }, super.parseBoolean(vals.debug));
                 resolve();
             }).catch( (e) => {
@@ -139,29 +137,24 @@ class BlankImageModule extends BaseModule {
             return newDes;
 
         let dim = img.getDimensions();
-        let bounds = [ 'i0','i1', 'j0','j1', 'k0','k1' ];
-
         if (this.compareArrays(dim,this.lastInputDimensions,0,2)<1) {
             return;
         }
         this.lastInputDimensions=dim;
-
-
-        for (let i = 0; i < newDes.params.length; i++) {
+        
+        for (let i = 0; i < =2; i++) {
             let name = newDes.params[i].varname;
-            let index=bounds.indexOf(name);
             if (index>=0) {
                 let axis=Math.floor(index/2);
-                let high=index-2*axis;
-
-                newDes.params[i].low = 0;
-                newDes.params[i].high = dim[axis]-1;
-                
-                if (high>0) {
-                    newDes.params[i].default=dim[axis]-1;
+                let value=0.0;
+                if (i<2) {
+                    value=dim[i]-1;
                 } else {
-                    newDes.params[i].default=0;
+                    value=Math.sqrt(dim[0]*dim[0]+dim[1]*dim[1]);
                 }
+                newDes.params[index].low = 0;
+                newDes.params[index].high = value;
+                newDes.params[index].default=0.5*value;
                 if (guiVars)
                     guiVars[name]=newDes.params[i].default;                                
             }
@@ -172,4 +165,4 @@ class BlankImageModule extends BaseModule {
 
 }
 
-module.exports = BlankImageModule;
+module.exports = circleBlankImageModule;

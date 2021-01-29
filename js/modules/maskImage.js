@@ -86,7 +86,16 @@ class maskModule extends BaseModule {
                     "type": 'boolean',
                     "default": false,
                 },
-
+                {
+                    "name": "Minvalue",
+                    "description": "If true the masked output image regions will have value equal to the minimum intensity of the image, instead of zero",
+                    "priority": 3,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "minvalue",
+                    "type": 'boolean',
+                    "default": true,
+                },
                 baseutils.getDebugParam(),
             ]
         };
@@ -95,28 +104,39 @@ class maskModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: maskImage', JSON.stringify(vals));
 
-        let input = this.inputs['input'];
-        let mask = this.inputs['mask'];
+        const input = this.inputs['input'];
+        const mask = this.inputs['mask'];
 
         if (!input.hasSameSizeAndOrientation(mask,0.01,true))
             return Promise.reject("Images have different sizes");
 
-        let inverse=super.parseBoolean(vals.inverse);
+        const inverse=super.parseBoolean(vals.inverse);
+        const minvalue=super.parseBoolean(vals.minvalue);
+        let replace=0;
+        if (minvalue) {
+            const imagerange = input.getIntensityRange();
+            replace=imagerange[0];
+        }
         
-        let dim=input.getDimensions();
-        let numvoxels=dim[0]*dim[1]*dim[2];
-        let numframes=dim[3]*dim[4];
 
-        let output=new BisWebImage();
+        
+        const dim=input.getDimensions();
+        const numvoxels=dim[0]*dim[1]*dim[2];
+        const numframes=dim[3]*dim[4];
+
+        const output=new BisWebImage();
         output.cloneImage(input);
         
-        let idata=input.getImageData();
-        let mdata=mask.getImageData();
+        const idata=input.getImageData();
+        const mdata=mask.getImageData();
         let odata=output.getImageData();
-        let thr=parseFloat(vals.threshold);
+        const thr=parseFloat(vals.threshold);
 
-        console.log('oooo Beginning ',numvoxels,' thr=',thr);
+        console.log('oooo Beginning ',numvoxels,' thr=',thr, 'inverse=',inverse);
+        console.log('oooo using replace=',replace);
+
         if (!inverse) {
+            console.log('oooo starting mdata >=',thr);
             for (let i=0;i<numvoxels;i++) {
                 if (mdata[i]>=thr) {
                     for (let f=0;f<numframes;f++) {
@@ -124,11 +144,12 @@ class maskModule extends BaseModule {
                     }
                 } else {
                     for (let f=0;f<numframes;f++) {
-                        odata[i+f*numvoxels]=0;
+                        odata[i+f*numvoxels]=replace;
                     }
                 }
             }
         } else {
+            console.log('oooo starting mdata < ',thr);           
            for (let i=0;i<numvoxels;i++) {
                 if (mdata[i]<thr) {
                     for (let f=0;f<numframes;f++) {
@@ -136,7 +157,7 @@ class maskModule extends BaseModule {
                     }
                 } else {
                     for (let f=0;f<numframes;f++) {
-                        odata[i+f*numvoxels]=0;
+                        odata[i+f*numvoxels]=replace;
                     }
                 }
             }

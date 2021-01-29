@@ -385,9 +385,10 @@ namespace bisImageAlgorithms {
   /** blank an image -- set values outside bbox to 0
    * @param input the input image
    * @param bounds an integer array[6] contain mini:maxi, minj:maxj, mink:maxk 
+   * @param outside -- value to fill outside part of the image
    * @returns the blanked image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<T> >  blankImage(bisSimpleImage<T>* input,int bounds[6]);
+  template<class T> std::unique_ptr<bisSimpleImage<T> >  blankImage(bisSimpleImage<T>* input,int bounds[6],float outside);
 
   /** median normalize an image -- set values so that median = 0 and interquartile range = 1
    * @param input the input image

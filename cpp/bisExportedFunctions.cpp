@@ -1408,16 +1408,17 @@ template <class BIS_TT> unsigned char* blankImageTemplate(unsigned char* input,b
   bounds[3]=params->getIntValue("j1",100);
   bounds[4]=params->getIntValue("k0",0);
   bounds[5]=params->getIntValue("k1",100);
+  float outside=params->getFloatValue("outside",0.0);
   
   if (debug) {
     std::cout << "Beginning actual Image Blanking" << std::endl;
     std::cout << "Blank Regions : ";
     for (int i=0;i<=2;i++) 
       std::cout << bounds[2*i] << ":" << bounds[2*i+1] << "  ";
-    std::cout << std::endl;
+    std::cout << " outside=" << outside << std::endl;
   }
   
-  std::unique_ptr<bisSimpleImage<BIS_TT> > out_image=bisImageAlgorithms::blankImage(inp_image.get(),bounds);
+  std::unique_ptr<bisSimpleImage<BIS_TT> > out_image=bisImageAlgorithms::blankImage(inp_image.get(),bounds,outside);
 
   if (debug)
     std::cout << "Blanking Done" << std::endl;

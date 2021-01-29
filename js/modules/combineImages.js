@@ -100,6 +100,18 @@ class CombineImageModule extends BaseModule {
                     "high": 100,
                     "step" : 0.1,
                 },
+                {
+                    "name": "Output Type",
+                    "description": "Output Type",
+                    "priority": 3,
+                    "advanced": false,
+                    "type": "string",
+                    "gui": "dropdown",
+                    "fields" : [ "UChar","Short", "Float", "Double" ],
+                    "restrictAnswer" : [  "UChar", "Short", "Float", "Double" ],
+                    "default" : "Float",
+                    "varname": "outtype",
+                },
                 baseutils.getDebugParam(),
             ]
         };
@@ -118,13 +130,26 @@ class CombineImageModule extends BaseModule {
         let w1=parseFloat(vals.weight1);
         let w2=parseFloat(vals.weight2);
 
+        let datatype='float';
+        if (vals.outtype==="UChar")
+            datatype="uchar";
+        else if (vals.outtype === "Short")
+            datatype="short";
+        else if (vals.outtype === "Float")
+            datatype="float";
+        else if (vals.outtype === "Double")
+            datatype="double";
+
+        console.log('oooo mode=',mode,' datatype=',datatype);
+        
         if (mode !== "append" && mode!=="scaledappend") {
         
             if (!first.hasSameSizeAndOrientation(second,0.01))
                 return Promise.reject("Images have different sizes or orientations.");
-            
+
+
             let output=new BisWebImage();
-            output.cloneImage(first, { "type" : "float" });
+            output.cloneImage(first, { "type" : datatype });
             
             let odata=output.getImageData();
             
@@ -156,7 +181,7 @@ class CombineImageModule extends BaseModule {
             let numframes=dim[3]*dim[4]+dim2[3]*dim2[4];
             
             let output=new BisWebImage();
-            output.cloneImage(first, { "type" : "float",
+            output.cloneImage(first, { "type" : datatype,
                                        "numframes" : numframes
                                      });
             

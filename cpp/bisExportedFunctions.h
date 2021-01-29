@@ -262,7 +262,7 @@ extern "C" {
   /** Blank an image using \link bisImageAlgorithms::blankImage \endlink
    * @param input serialized input as unsigned char array 
    * @param jsonstring the parameter string for the algorithm 
-   * { "i0" : 0: ,"i1" : 100, "j0" : 0: ,"j1" : 100,"k0" : 0: ,"k1" : 100, }
+   * { "i0" : 0: ,"i1" : 100, "j0" : 0: ,"j1" : 100,"k0" : 0: ,"k1" : 100, "outside" : 0 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */

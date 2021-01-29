@@ -1,0 +1,13 @@
+{
+    "module": "blankImage",
+    "params": {
+        "i0": 18,
+        "i1": 45,
+        "j0": 20,
+        "j1": 54,
+        "k0": 18,
+        "k1": 45,
+        "minvalue": false,
+        "debug": false
+    }
+}

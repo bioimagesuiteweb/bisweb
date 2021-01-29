@@ -1856,11 +1856,11 @@ namespace bisImageAlgorithms {
   }
 
     // ---------------------- -------------------
-  template<class T> std::unique_ptr<bisSimpleImage<T> >  blankImage(bisSimpleImage<T>* input,int bounds[6])
+  template<class T> std::unique_ptr<bisSimpleImage<T> >  blankImage(bisSimpleImage<T>* input,int bounds[6],float outside)
   {
     int dim[5]; input->getDimensions(dim);
     float spa[5];  input->getSpacing(spa);
-    
+
     for (int i=0;i<=2;i++) {
 
       int mina=bounds[i*2];
@@ -1886,7 +1886,7 @@ namespace bisImageAlgorithms {
 
     int total=dim[0]*dim[1]*dim[2]*dim[3]*dim[4];
     for (int i=0;i<total;i++)
-      odata[i]=0;
+      odata[i]=outside;
     
     int numcf=dim[4]*dim[3];
     
