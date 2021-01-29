@@ -35,6 +35,8 @@ class ThresholdImageModule extends BaseModule {
 
 
     createDescription() {
+        console.log('Hello THR2');
+        
         return {
             "name": "Threshold",
             "description": "This element will threshold an image -- values between the thresholds will be considered 'input' and values outside will be considered 'out'",
@@ -54,6 +56,7 @@ class ThresholdImageModule extends BaseModule {
                     "gui": "slider",
                     "type": "float",
                     "varname": "low",
+                    "gui": "slider",
                     "default" : 1,
                 },
                 {
@@ -63,6 +66,7 @@ class ThresholdImageModule extends BaseModule {
                     "advanced": false,
                     "gui": "slider",
                     "type": "float",
+                    "gui": "slider",
                     "default" : 2,
                     "varname": "high",
                 },
@@ -88,26 +92,26 @@ class ThresholdImageModule extends BaseModule {
                 },
                 {
                     "name": "'in' Value",
-                    "description": "Value to replace 'in' values with",
+                    "description": "Value to replace 'in' values with, -1 is mapped to the maximum value in the image",
                     "priority": 5,
                     "gui": "dropdown",
                     "advanced": true,
                     "default" : 1,
                     "type": "int",
                     "varname": "inval",
-                    "fields" : [ 0,1,100 ],
-                    "restrictAnswer" : [ 0,1,100 ],
+                    "fields" : [ 0,1,100,-1 ],
+                    "restrictAnswer" : [ 0,1,100,-1 ],
                     
                 },
                 {
                     "name": "'out' Value",
-                    "description": "Value to replace 'out' values with",
+                    "description": "Value to replace 'out' values with, -1 is mapped to the minimum value in the image",
                     "priority": 6,
                     "advanced": true,
                     "type": "int",
                     "gui": "dropdown",
-                    "fields" : [ 0,1,100 ],
-                    "restrictAnswer" : [ 0,1,100 ],
+                    "fields" : [ 0,1,100,-1 ],
+                    "restrictAnswer" : [ 0,1,100,-1 ],
                     "default" : 0,
                     "varname": "outval",
                 },
@@ -131,7 +135,7 @@ class ThresholdImageModule extends BaseModule {
     
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: thresholdImage with vals', JSON.stringify(vals));
-        let input = this.inputs['input'];
+        const input = this.inputs['input'];
 
         let datatype = -1;
         if (vals.outtype==="UChar")
@@ -139,8 +143,17 @@ class ThresholdImageModule extends BaseModule {
         else if (vals.outtype === "Short")
             datatype="short";
 
-        console.log("DataType=",datatype,vals.outtype,'low=',vals.low,'high=',vals.high);
-        
+        let inval=parseFloat(vals.inval);
+        let outval=parseFloat(vals.outval);
+
+        if (inval<0 || outval<0) {
+            const range = input.getIntensityRange();
+            if (inval<0)
+                inval=range[1];
+            if (outval<0)
+                outval=range[0];
+        }
+
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.thresholdImageWASM(input, {
@@ -148,8 +161,8 @@ class ThresholdImageModule extends BaseModule {
                     "high": parseFloat(vals.high),
                     "replacein" : super.parseBoolean(vals.replacein),
                     "replaceout" : super.parseBoolean(vals.replaceout),
-                    "invalue" : parseFloat(vals.inval), 
-                    "outvalue" : parseFloat(vals.outval),
+                    "invalue" : inval, 
+                    "outvalue" : outval,
                     "datatype" : datatype,
                 },vals.debug);
 

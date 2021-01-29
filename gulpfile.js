@@ -29,7 +29,8 @@ const gulp = require('gulp'),
       colors=require('colors/safe'),
       bis_gutil=require('./config/bis_gulputils'),
       rimraf=require('rimraf'),
-      es = require('event-stream');
+      es = require('event-stream'),
+      glob = require('glob');
 
 
 const getTime=bis_gutil.getTime;
@@ -149,12 +150,11 @@ let internal = {
         "./node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css",
         "./web/biscommon.css"
     ], // Bright mode
-    lintscripts : ['js/**/[a-z]*.js','config/[a-z]*.js','compiletools/[a-z]*.js','[a-z]*.js','web/**/[a-z]*.js','test/**/[a-z]*.js','fileserver/[a-z]*.js'],
+    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/*.js','test/**/*.js'],
     toolarray : [ 'index'],
     serveroptions : { },
     setwebpackwatch : 0,
 };
-
 
 // Define server options
 internal.serveroptions = {
@@ -176,15 +176,29 @@ if (options.internal>=2 || options.external>0)  {
 
 
 if (options.internal) {
-    internal.lintscripts.push('../internal/js/*/[a-z]*.js');
-    internal.lintscripts.push('../internal/js/[a-z]*.js');
+    internal.lintscripts.push('../internal/js/*/*.js');
+    internal.lintscripts.push('../internal/js/*.js');
 }
 
 if (options.external) {
-    internal.lintscripts.push('../external/js/*/[a-z]*.js');
-    internal.lintscripts.push('../external/js/[a-z]*.js');
+    internal.lintscripts.push('../external/js/*/*.js');
+    internal.lintscripts.push('../external/js/*.js');
 }
 
+
+const oldlst=internal.lintscripts;
+internal.lintscripts=[];
+
+oldlst.forEach( (nm) => {
+    const nmlist=glob.sync(nm);
+    nmlist.forEach( (fname) => {
+        if (fname.indexOf(".#")<0) {
+            internal.lintscripts.push(fname);
+            console.log(fname);
+        }
+    });
+});
+        
 
 // ---------------------------
 // Get Tool List
@@ -563,7 +577,6 @@ gulp.task('serve',
               'setwebpackwatch',
               'webserver',
               gulp.parallel(
-                  'watch',
                   'webpack')
           ));
 
