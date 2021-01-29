@@ -65,6 +65,18 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
                     "default" : 1000,
                     "varname": "high",
                 },
+                {
+                    "name": "value",
+                    "description": "The value of the binary mask",
+                    "priority": 20,
+                    "advanced": true,
+                    "gui": "slider",
+                    "varname": "inval",
+                    "type": 'int',
+                    "default" : 1,
+                    "low" :  1,
+                    "high" : 20,
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -74,7 +86,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
 
         vals['replacein']=true;
         vals['replaceout']=true;
-        vals['inval']=1;
+        vals['inval']=parseInt(vals.inval);
         vals['outval']=0;
         vals['outtype']='UChar';
         return super.directInvokeAlgorithm(vals);
