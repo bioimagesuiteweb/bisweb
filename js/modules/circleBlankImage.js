@@ -20,6 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
+const BisWebImage = require('bisweb_image.js');
 /**
  * blanks an image along 
  */
@@ -30,26 +31,11 @@ const defaultMax=500;
 class circleBlankImageModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'blankImage';
+        this.name = 'circleBlankImage';
         this.lastInputDimensions=[0,0,0];
     }
 
     createDescription() {
-        
-        let createParam=function(name,shortname,value,p,adv=false) {
-
-            return {
-                "name": name,
-                "description": `The ${name} of the circular region to keep`,
-                "priority": p,
-                "advanced": adv,
-                "gui": "slider",
-                "varname": shortname,
-                "type": 'float',
-                "default" : value,
-            };
-        };
-        
 
         return {
             "name": "Circle Blank Image",
@@ -61,9 +47,36 @@ class circleBlankImageModule extends BaseModule {
             "buttonName": "Execute",
             "shortname" : "cblk",
             "params": [
-                createParam('centeri','Center-I','i0',128,1);
-                createParam('centerj','Center-J','i1',128,2),
-                createParam('radius','Radius','j0',128,3),
+                {
+                    "name": "Center-I",
+                    "description": `The ith coordinate of the center of the circular region to keep`,
+                    "priority": 0,
+                    "advanced": false,
+                    "gui": "slider",
+                    "varname": "centeri",
+                    "type": 'float',
+                    "default" : 128,
+                },
+                {
+                    "name": "Center-J",
+                    "description": `The jth coordinate of the center of the circular region to keep`,
+                    "priority": 0,
+                    "advanced": false,
+                    "gui": "slider",
+                    "varname": "centerj",
+                    "type": 'float',
+                    "default" : 128,
+                },
+                {
+                    "name": "Radius",
+                    "description": `The radius of the center of the circular region to keep`,
+                    "priority": 0,
+                    "advanced": false,
+                    "gui": "slider",
+                    "varname": "radius",
+                    "type": 'float',
+                    "default" : 128,
+                },
                 {
                     "name": "Minvalue",
                     "description": "If true the masked output image regions will have value equal to the minimum intensity of the image, instead of zero",
@@ -72,8 +85,8 @@ class circleBlankImageModule extends BaseModule {
                     "gui": "check",
                     "varname": "minvalue",
                     "type": 'boolean',
-                    "default": false,
-                }
+                    "default": true,
+                },
                 baseutils.getDebugParam(),
             ],
             
@@ -88,44 +101,51 @@ class circleBlankImageModule extends BaseModule {
         
         const cx=parseFloat(vals['centeri']);
         const cy=parseFloat(vals['centerj']);
-        const r=parseFloat(vals['radius']);
+        const radius=parseFloat(vals['radius']);
 
-        let output=new BisWebImage();
-        output.cloneImage( input);
+        const output=new BisWebImage();
+        output.cloneImage(input);
 
-        let odata=output.getImageData();
+        const odata=output.getImageData();
+        const idata=input.getImageData();
 
-        for (let i=0;i<dim[0];i++) {
-            for (let j=0;j<dim[1];j++) {
-                
-        
-        for (let ia=0;ia<=2;ia++) {
-            let n0=names[2*ia];
-            let n1=names[2*ia+1];
-            let v0=parseInt(vals[n0]);
-            let v1=parseInt(vals[n1]);
-            if (v0===-defaultMin)
-                vals[n0]=0;
-            if (v1===defaultMax)
-                vals[n1]=dim[ia]-1;
+        const minvalue=super.parseBoolean(vals.minvalue);
+        let replace=0;
+        if (minvalue) {
+            const imagerange = input.getIntensityRange();
+            replace=imagerange[0];
         }
-        console.log('oooo \t parameters fixed=', JSON.stringify(vals));
-        return new Promise( (resolve, reject) => {
 
-            biswrap.initialize().then(() => {
-                this.outputs['output'] = biswrap.blankImageWASM(input, {
-                    "i0": parseInt(vals.i0),
-                    "i1": parseInt(vals.i1),
-                    "j0": parseInt(vals.j0),
-                    "j1": parseInt(vals.j1),
-                    "k0": parseInt(vals.k0),
-                    "k1": parseInt(vals.k1),
-                }, super.parseBoolean(vals.debug));
-                resolve();
-            }).catch( (e) => {
-                reject(e.stack);
-            });
-        });
+        const d2=radius*radius;
+        const slicesize=dim[0]*dim[1];
+        const volumesize=slicesize*dim[2];
+        console.log('Beginning circle blank at ('+[cx,cy]+') radius='+radius+' replace=',replace);
+        for (let j=0;j<dim[1];j++) {
+            for (let i=0;i<dim[0];i++) {
+                let index=j*dim[0]+i;
+                let dist=Math.pow(i-cx,2.0)+Math.pow(j-cy,2.0);
+                if (dist<=d2) {
+                    for (let f=0;f<dim[3]*dim[4];f++) {
+                        for (let k=0;k<dim[2];k++) {
+                            odata[index]=idata[index];
+                            index+=slicesize;
+                        }
+                        index+=volumesize;
+                    }
+                } else {
+                    for (let f=0;f<dim[3]*dim[4];f++) {
+                        for (let k=0;k<dim[2];k++) {
+                            odata[index]=replace;
+                            index+=slicesize;
+                        }
+                        index+=volumesize;
+                    }
+                }
+                ++index;
+            }
+        }
+        this.outputs['output']=output;
+        return Promise.resolve('done');
     }
 
     updateOnChangedInput(inputs,guiVars) {
@@ -142,19 +162,18 @@ class circleBlankImageModule extends BaseModule {
         }
         this.lastInputDimensions=dim;
         
-        for (let i = 0; i < =2; i++) {
+        for (let i = 0; i <= 2; i++) {
             let name = newDes.params[i].varname;
-            if (index>=0) {
-                let axis=Math.floor(index/2);
+            if (i>=0) {
                 let value=0.0;
                 if (i<2) {
                     value=dim[i]-1;
                 } else {
                     value=Math.sqrt(dim[0]*dim[0]+dim[1]*dim[1]);
                 }
-                newDes.params[index].low = 0;
-                newDes.params[index].high = value;
-                newDes.params[index].default=0.5*value;
+                newDes.params[i].low = 0;
+                newDes.params[i].high = value;
+                newDes.params[i].default=0.5*value;
                 if (guiVars)
                     guiVars[name]=newDes.params[i].default;                                
             }

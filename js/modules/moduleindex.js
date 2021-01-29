@@ -40,6 +40,7 @@ const moduleImports = {
     cropimage : require('cropImage.js'),
     morphologyfilter : require('morphologyFilter.js'),
     blankimage : require('blankImage.js'),
+    circleblankimage : require('circleBlankImage.js'),
     process4dimage : require('process4DImage.js'),
     slicebiascorrect : require('sliceBiasFieldCorrect.js'),
     segmentimage : require('segmentImage.js'),

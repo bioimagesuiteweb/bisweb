@@ -410,6 +410,12 @@
 	        "dopython": false
         },
         { 
+	        "command" : "circleBlankImage --paramfile testdata/minus/circleBlankImage_2021_01_29.param --debug true   -i testdata/minus/4mm_inverse.nii.gz",
+	        "test"    : "--test_target testdata/minus/4mm_inverse__cblk.nii.gz",
+	        "result"  : true,
+	        "dopython": false
+        },
+        { 
 	        "command" : "binaryThresholdImage --low 250 --high 256 --debug true --input testdata/morphology/morphology_base.nii.gz",
 	        "test"    : "--test_target testdata/morphology/mask_250.nii.gz",
 	        "result"  : true,

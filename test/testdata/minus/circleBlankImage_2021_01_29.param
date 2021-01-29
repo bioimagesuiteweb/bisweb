@@ -1,0 +1,10 @@
+{
+    "module": "circleBlankImage",
+    "params": {
+        "centeri": 22.5,
+        "centerj": 27,
+        "radius": 20.881319380810798,
+        "minvalue": true,
+        "debug": false
+    }
+}

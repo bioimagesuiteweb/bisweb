@@ -270,6 +270,11 @@ class ModuleManagerElement extends HTMLElement {
         if (bisconfig.usesafni === "ON") 
             this.createModule('AFNI Blur Image',1, false, modules.getModule('afniBlurImage'), moduleoptions);
 
+        userPreferences.safeGetItem("internal").then( (f) => {
+            if (f) {
+                this.createModule('Circle Blank Image',1, false, modules.getModule('circleBlankImage'), moduleoptions);
+            }
+        });
         
         let dosep=(this.mode === 'paravision');
         
