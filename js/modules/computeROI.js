@@ -55,6 +55,16 @@ class ComputeROIModule extends BaseModule {
                     "default": false,
                 },
                 {
+                    "name": "Output Volumes instead",
+                    "description": "If true output the volumes of the vois instead of the mean value",
+                    "priority": 8,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "storevolume",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
                     "name": "UseJS",
                     "description": "Use the pure JS implementation of the algorithm",
                     "priority": 28,
@@ -88,14 +98,19 @@ class ComputeROIModule extends BaseModule {
         if (!input.hasSameOrientation(this.inputs['roi'],'input image','roi image',true))
             return Promise.reject('Failed');
 
+        const storevolume=super.parseBoolean(vals.storevolume);
+        console.log('Store volume=',storevolume);
 
-        if (super.parseBoolean(vals.usejs)) {
+        if (super.parseBoolean(vals.usejs) || storevolume) {
             console.log('____ Using the JS Implementation of computeROI');
             let out=fmrimatrix.roimean(input,this.inputs['roi']);
 
             this.outputs['output']=new BisWebMatrix();
             try {
-                this.outputs['output'].setFromNumericMatrix(out['means']);
+                if (storevolume)
+                    this.outputs['output'].setFromNumericMatrix(out['numvoxels']);
+                else
+                    this.outputs['output'].setFromNumericMatrix(out['means']);
             } catch(e) {
                 console.log(e);
             }
