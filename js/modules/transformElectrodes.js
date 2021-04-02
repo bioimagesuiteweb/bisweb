@@ -62,7 +62,7 @@ class TransformElectrodesModule extends BaseModule {
                 {
                     'type': 'transformation',
                     'name': 'Reslice Transform',
-                    'description': 'Load the transformation used to reslice the image',
+                    'description': 'Load the transformation used to map the electrodes',
                     'varname': 'xform',
                     'shortname' : 'x',
                     'required' : true,

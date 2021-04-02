@@ -167,9 +167,8 @@ unsigned char*  projectImageWASM(unsigned char* input,unsigned char* funcinput,c
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
-  // BIS: { 'projectAverageImageWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ] } 
 
-unsigned char*  projectImageAverageWASM(unsigned char* input_ptr,unsigned char* mask_ptr,const char* jsonstring,int debug)
+unsigned char*  projectAverageImageWASM(unsigned char* input_ptr,unsigned char* mask_ptr,const char* jsonstring,int debug)
 {
   std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
   int ok=params->parseJSONString(jsonstring);

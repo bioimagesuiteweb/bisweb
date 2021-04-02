@@ -807,7 +807,7 @@ namespace bisAdvancedImageAlgorithms {
     ospa[2]=1.0;
     odim[2]=1;
     output->allocate(odim,ospa);
-    std::cout << "Output Dimensions = " << odim[0] << "," << odim[1] << "," << odim[2] << std::endl;
+    std::cout << "Output Dimensions = " << odim[0] << "," << odim[1] << "," << odim[2] << " " << odim[3] << " " << odim[4] << std::endl;
 
     // ----------------------------
     // Get the pointers and set off
@@ -829,15 +829,19 @@ namespace bisAdvancedImageAlgorithms {
     }
     
 
-
+    int outvolumesize=odim[0]*odim[1];
+    
     std::cout << "Original " << idim[0] << "*" << idim[1] << "," << idim[2] << "," << idim[3] << "," << idim[4] << " axis=" << axis << std::endl;
     std::cout << "Beginning " << odim[0] << "*" << odim[1] << "," << idim[axis] << std::endl;
     std::cout << "  Axes = " << outaxis[0] << "," << outaxis[1] << "," << axis << std::endl;
     std::cout << "  Offsets=" << offset[0] << "," << offset[1] << ",  incr=" << increment << std::endl;
+    std::cout << "  Ourframe = " << numframecomp << std::endl;
     std::cout << "  NumFrameComp = " << numframecomp << std::endl;
+
     int index=0;
 
-    int outframeoffset=odim[0]*odim[1];
+    
+
     
     for (int second=beginsecond;second!=endsecond;second=second+incrsecond)
       {
@@ -847,23 +851,27 @@ namespace bisAdvancedImageAlgorithms {
             if (first==odim[0]/2 && second==odim[1]/2)
               debug=1;
             int v_offset=second*offset[1]+first*offset[0];
-
+            
             for (int framecomp=0;framecomp<numframecomp;framecomp++) {
               double sum=0.0;
               int nsum=0;
-              for (int i_third=0;i_third<idim[axis];i_third++)
+              for (int third=0;third<idim[axis];third++)
                 {
-                  int vindex=v_offset+i_third*increment+framecomp*volumesize;
-                  if (mask_data[vindex]>0) {
+
+                  int mindex=v_offset+third*increment;
+                  int vindex=mindex+framecomp*volumesize;
+                  if (mask_data[mindex]>0) {
                     nsum+=1;
                     sum+=input_data[vindex];
                   }
                 }
 
+              int outindex=index+framecomp*outvolumesize;
+              
               if (nsum>0)
-                output_data[index+framecomp*outframeoffset]=sum/float(nsum);
+                output_data[outindex]=sum/float(nsum);
               else
-                output_data[index+framecomp*outframeoffset]=0.0f;
+                output_data[outindex]=0.0f;
             }
             index=index+1;
           }

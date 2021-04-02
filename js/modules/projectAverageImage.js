@@ -93,7 +93,7 @@ class ProjectAverageImageModule extends BaseModule {
         };
     }
 
-    directInvokeAlgorithm(vals) {
+    async directInvokeAlgorithm(vals) {
 
         console.log('oooo invoking: projectAverageImage with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
@@ -101,40 +101,43 @@ class ProjectAverageImageModule extends BaseModule {
         if (!input.hasSameOrientation(mask,'image','mask',true))
             return Promise.reject('Failed');
 
-        return new Promise( (resolve, reject) => {
-            
-            let axis=-1;
-            if (vals.axis.indexOf("z")>=0) {
-                axis=2;
-            } else if (vals.axis.indexOf("y")>=0) {
-                axis=1;
-            } else if (vals.axis.indexOf("x")>=0) {
-                axis=0;
-            }
+        let axis=-1;
+        if (vals.axis.indexOf("z")>=0) {
+            axis=2;
+        } else if (vals.axis.indexOf("y")>=0) {
+            axis=1;
+        } else if (vals.axis.indexOf("x")>=0) {
+            axis=0;
+        }
+        
+        let orient=input.getOrientationName();
+        let lps=false;
+        if (orient==='LPS') {
+            lps=true;
+            if (vals.flip)
+                vals.flip=false;
+            else
+                vals.flip=true;
+        }
 
-            let orient=input.getOrientationName();
-            let lps=false;
-            if (orient==='LPS') {
-                lps=true;
-                if (vals.flip)
-                    vals.flip=false;
-                else
-                    vals.flip=true;
-            }
-            
-            biswrap.initialize().then(() => {
+        try {
+            await biswrap.initialize();
+        } catch(e) {
+            return Promise.reject(e);
+        }
 
-                this.outputs['output'] = biswrap.projectImageAverageWASM(input,mask, {
-                    "flip":  this.parseBoolean(vals.flip),
-                    "axis":  parseInt(axis),
-                    "lps" : lps,
-                }, super.parseBoolean(vals.debug));
-                resolve();
-            }).catch( (e) => {
-                console.log(e.stack);
-                reject(e);
-            });
-        });
+        try{
+            this.outputs['output'] = biswrap.projectAverageImageWASM(input,mask, {
+                "flip":  this.parseBoolean(vals.flip),
+                "axis":  parseInt(axis),
+                "lps" : lps,
+            }, super.parseBoolean(vals.debug));
+        } catch(e) {
+            console.log(e);
+            return Promise.reject(e);
+        }
+        
+        return Promise.resolve('done');
     }
     
 }
