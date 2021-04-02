@@ -975,6 +975,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                         connectvis3d.transferfunction.hue<=1.0 &&
                         !internal.parameters.customhue) {
                         internal.parameters['huevalue']=connectvis3d.transferfunction.hue;
+                        internal.parameters['huevalue2']=connectvis3d.transferfunction.hue2;
+                        internal.parameters['mode']=connectvis3d.transferfunction.mode;
                     }
                 }
                 setTimeout( () => { controllers[i].updateDisplay(); },100);
@@ -1746,16 +1748,24 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
         context.fillStyle="#ffffff";
-        context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,3.0*ht);
+        context.fillRect(x0-20,y0-ht,wd*(numsteps+1)+23,4.0*ht);
 
         if (connectvis3d.transferfunction.map===null)
             return;
 
         let minv=connectvis3d.transferfunction.minth;
         let maxv=connectvis3d.transferfunction.maxth;
+
+        if (connectvis3d.transferfunction.mode==='dual') {
+            maxv=Math.max(Math.abs(maxv),Math.abs(minv));
+            minv=-maxv;
+            
+        }
+
         let dvalue=maxv-minv;
         let dv=dvalue/numsteps;
-
+        
+        
         let power=10.0;
         if (dvalue>100)
             power=1.0;

@@ -6,15 +6,18 @@ const $=require('jquery');
 const numeric=require('numeric');
 const atlasutils=require('bisweb_atlasutilities');
 
-let lasttexturehue=-100000.0;
-const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ,'Parcels'];
+let lasttexturehue=-100000.0,lasttexturehue2=-100000.0,lasttexturemode='none';
+const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ,'Parcels','CombinedDegree'];
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
 const displayimg= $('<img>');
 const transferfunction = {
     map : null,
+    map2 : null,
     minth : null,
     maxth : null,
     hue : null,
+    hue2 : null,
+    mode : 'single',
     showlabels : true,
 };
 
@@ -62,18 +65,33 @@ const brain_vertexshader_text = `
       attribute float parcels;
       uniform float minValue;
       uniform float maxValue;      
+      uniform float dual;      
       uniform sampler2D cmTexture;
       uniform float opacity;
 
       void main() {
 
-           if (parcels<0.0) {
-              vColor=vec4(0,0,0,0);
+           if (dual<0.5) {
+              if (parcels<0.0) {
+                vColor=vec4(0,0,0,0);
+              } else {
+                 float c=(parcels)/maxValue;           
+                 if (c>=0.999)
+                   c=0.999;
+                 vColor= texture2D(cmTexture, vec2(c, 0));
+              }
            } else {
-              float c=(parcels)/maxValue;           
-              if (c>=0.999)
-                 c=0.999;
-              vColor= texture2D(cmTexture, vec2(c, 0));
+              if (parcels>0.0)  {
+                 float c=0.5+0.5*(parcels/maxValue);
+                 if (c>=0.999)
+                   c=0.999;
+                 vColor= texture2D(cmTexture, vec2(c, 0));
+              } else {
+                  float c=0.5-0.5*(abs(parcels)/maxValue);
+                  if (c<0.001)
+                    c=0.001;
+                 vColor= texture2D(cmTexture, vec2(c, 0));                     
+              }
            }
            vNormal = normalize( normalMatrix * normal );
            vec3 transformed = vec3( position );
@@ -140,18 +158,22 @@ var initialize=function(internal) {
 let createTexture=function(hue) {
 
 
-    if (Math.abs(hue-lasttexturehue)<0.01 && globalParams.brainTexture!==null)
+    if (Math.abs(hue-lasttexturehue)<0.01 && globalParams.brainTexture!==null &&  lasttexturemode==='single') {
+        console.log('Not creating texture');
         return 0;
+    }
     
     // Colormap texture
     lasttexturehue=hue;
+    lasttexturemode='single';
     let canvas = document.createElement( 'canvas' );
     canvas.width=256;
     canvas.height=1;
     let canvasdata=canvas.getContext("2d").createImageData(256,1);
 
     transferfunction.hue=hue;
-
+    transferfunction.mode='single';
+    
     if (hue>0.0 && hue<=1.0) {
 
         let cmap=util.mapconstanthuecolormap(0.0,255.0,1.0,hue,1.0);
@@ -217,6 +239,82 @@ let createTexture=function(hue) {
     return 1;
 };
 
+// ---------------------------------------------------------------------------------------------------
+let createDualTexture=function(hue,hue2) {
+
+    if (Math.abs(hue-lasttexturehue)<0.01 
+        && Math.abs(hue2-lasttexturehue2)<0.01
+        && lasttexturemode==='dual'
+        && globalParams.brainTexture!==null)
+        return 0;
+
+    hue=util.range(hue,0.0,1.0);
+    hue2=util.range(hue2,0.0,1.0);
+//    console.log('Dual Texture',hue,hue2);
+    
+    // Colormap texture
+    lasttexturehue=hue;
+    lasttexthrehue2=hue2;
+    lasttexturemode='dual';
+    let canvas = document.createElement( 'canvas' );
+    canvas.width=256;
+    canvas.height=1;
+    let canvasdata=canvas.getContext("2d").createImageData(256,1);
+
+    transferfunction.hue=hue;
+    transferfunction.hue2=hue2;
+    transferfunction.mode='dual';
+
+
+    let  cmap=  util.mapconstanthuecolormap(0.0,127.0,1.0,hue,1.0,true);
+    let  cmap2=util.mapconstanthuecolormap(0.0,127.0,1.0,hue2,1.0,true);
+    transferfunction.map=cmap;
+    transferfunction.map2=cmap2;
+    transferfunction.minth=0;
+    transferfunction.maxth=1;
+    transferfunction.showlabels=true;
+    let map=[0,0,0,0];
+    let data=[0];
+        
+    for (let i=0;i<=127;i++)  {
+        data[0]=i;
+        cmap(data,0,map);
+        for (let j=0;j<=3;j++)
+            canvasdata.data[(i+128)*4+j]=map[j];
+    }
+    
+    for (let i=0;i<=127;i++)  {
+        data[0]=127-i;
+        cmap2(data,0,map);
+        for (let j=0;j<=3;j++)
+            canvasdata.data[i*4+j]=map[j];
+    }
+
+    for (let i=127;i<=128;i++) {
+        let j=i*4;
+        canvasdata.data[j+3]=255;
+        //console.log(i,'=',canvasdata.data[j],canvasdata.data[j+1],canvasdata.data[j+2],canvasdata.data[j+3]);
+        
+    }
+        
+    
+    canvas.getContext("2d").putImageData(canvasdata,0,0);
+    let outimg=canvas.toDataURL("image/png");
+    displayimg.attr('src', outimg);
+    displayimg.width(256);
+    displayimg.height(16);
+    
+    if  (globalParams.braintexture)
+        globalParams.braintexture.dispose();
+    
+    let cmtexture = new THREE.Texture(canvas);
+    cmtexture.needsUpdate = true;
+    cmtexture.minFilter = cmtexture.magFilter = THREE.LinearFilter;
+    globalParams.braintexture=cmtexture;
+    return 1;
+};
+
+
 // Parses Brain Surface
 // @alias BisWebConnectivityVis3D1~createAndDisplayBrainSurface from json file
 // @param {Number} index - 0=left, 1=right
@@ -267,11 +365,44 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
             attributes[i]=1;
         }
         attributeIndex=-1;
-    } else if (attributeIndex!==4) {
-        // Regular Stuff
+    } else if (attributeIndex===5) {
         //console.log('Parcels=',parcels.length);
-        //let mdim=numeric.dim(matrix);
-        //        console.log('Mdim=',mdim);
+        for (let i=0;i<parcels.length;i++) {
+            if (parcels[i]>0) {
+                try {
+                    let pos=Math.abs(matrix[parcels[i]-1][0]);
+                    let neg=Math.abs(matrix[parcels[i]-1][1]);
+                    if (pos>neg)
+                        attributes[i]=pos;
+                    else
+                        attributes[i]=-neg;
+                    
+                } catch(e) {
+                    console.log('Failed',i,parcels[i]);
+                    attributes[i]=0;
+                }
+            } else {
+                attributes[i]=0;
+            }
+            
+        }
+        
+        if (useAttributeMax) {
+            maxa=attributeMax;
+            mina=-attributeMax;
+        } else {
+            maxa=1;
+            let dim=numeric.dim(matrix);
+            for (let i=0;i<dim[0];i++) {
+                let a=Math.max(Math.abs(matrix[i][0]),Math.abs(matrix[i][1]));
+                if (a>maxa) maxa=a;
+            }
+            mina=-maxa;
+        }
+
+        
+    } else if (attributeIndex!==4) {
+        // Single Texture
         
         for (let i=0;i<parcels.length;i++) {
             if (parcels[i]>0) {
@@ -281,15 +412,12 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
                     console.log('Failed',i,parcels[i]);
                     attributes[i]=0;
                 }
-            } else {
-                attributes[i]=0;
             }
-
         }
-
+        
         if (useAttributeMax) {
             maxa=attributeMax;
-            mina=0;
+            mina=-attributeMax;
         } else {
             mina=matrix[0][attributeIndex];
             maxa=matrix[0][attributeIndex];
@@ -310,9 +438,6 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
                 attributes[i]=0;
             } else {
                 attributes[i]= ((parcels[i]-1) % COLORSCALE)+1.5;
-                //if (i%107===0) {
-                //                    console.log('parcels=',parcels[i],'--->',attributes[i]);
-                //}
             }
         }
     }
@@ -366,18 +491,26 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         color[1]=0.1;
         color[2]=0.1;
         opacity=1.0;
+    } else if (attributeIndex===5) {
+        createDualTexture(0.02,0.58);
     } else {
         createTexture(-1.0);
     }
     
     transferfunction.minth=0;
     transferfunction.maxth=maxa;
-
+    let dual=0;
+    if (transferfunction.mode === 'dual')
+        dual=1;
+    
+    //    console.log('Mina=',mina,maxa,'dual=',dual);
+    
     let material = new THREE.ShaderMaterial({
         transparent : true,
         "uniforms": {
             "minValue" : { "type": "f", "value" : mina },
             "maxValue" : { "type": "f", "value" : maxa },
+            "dual" : { "type": "f", "value" : dual },
             "cmTexture" : { "value" : globalParams.braintexture },
             "diffuse": {  "type":"c","value":
                           {"r":color[0],
@@ -962,4 +1095,4 @@ module.exports = {
     update3DMeshes :     update3DMeshes,
     createSurfaceLabels:    createSurfaceLabels,
 };
- 
+
