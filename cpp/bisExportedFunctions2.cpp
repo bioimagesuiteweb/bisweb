@@ -158,6 +158,54 @@ unsigned char*  projectImageWASM(unsigned char* input,unsigned char* funcinput,c
 
 }
 
+
+  /** Projects and averages a 3D image (inside a mask) to 2D 
+   * @param input serialized input as unsigned char array 
+   * @param functional_input serialized functional input (optional) as unsigned char array 
+   * @param jsonstring the parameter string for the algorithm 
+   * { "axis" : -1,  lps = 0 }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'projectAverageImageWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ] } 
+
+unsigned char*  projectImageAverageWASM(unsigned char* input_ptr,unsigned char* mask_ptr,const char* jsonstring,int debug)
+{
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+  
+  if(debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > inp_image(new bisSimpleImage<float>("inp_image"));
+  if (!inp_image->linkIntoPointer(input_ptr)) 
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<float> > mask_input(new bisSimpleImage<float>("mask_json"));
+  if (!mask_input->linkIntoPointer(mask_ptr))
+    return 0;
+  
+  int lps=params->getBooleanValue("lps",0);
+  int axis=params->getIntValue("axis",1);
+  
+  if (debug) 
+    std::cout << "Beginning actual Image Project+Averaging" << std::endl;
+
+  std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("output_proj"));
+  int flag=bisAdvancedImageAlgorithms::projectAverageImageWithMask(inp_image.get(),mask_input.get(),out_image.get(),
+                                                                   axis,lps);
+  if (debug)
+    std::cout << "Mask Projecting+Averaging Done ok=" << flag << std::endl;
+  if (!flag)
+    return 0;
+    
+  return out_image->releaseAndReturnRawArray();
+}
+
+
+
 // BIS: { 'backProjectImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
 unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* input2d_ptr,const char* jsonstring,int debug) {
 

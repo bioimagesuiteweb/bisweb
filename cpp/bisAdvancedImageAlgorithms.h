@@ -123,7 +123,22 @@ namespace bisAdvancedImageAlgorithms {
                                                           bisSimpleImage<float>* optical_input,
                                                           bisSimpleMatrix<float>* point_pairs,
                                                           int debug=0);
-  
+
+
+
+    /** compute  unshaded average projection of 3D image to a 2d image by averaging inside a mask
+   * @param input - the input image
+   * @param mask - the mask image
+   * @param output - the output image
+   * @param axis - the axis to integrate/project along
+   * @param lps - if true y-axis needs to be flipped ....
+   * @returns the projected image
+   */
+  template<class T> int projectAverageImageWithMask(bisSimpleImage<T>* input,
+                                                    bisSimpleImage<T>* mask,
+                                                    bisSimpleImage<float>* output,
+                                                    int axis=-1,int lps=0);
+
 }
 
 

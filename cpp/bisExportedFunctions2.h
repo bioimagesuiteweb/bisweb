@@ -46,6 +46,17 @@ extern "C" {
   // BIS: { 'projectImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt', 'ParamObj', 'debug' ] } 
   BISEXPORT unsigned char*  projectImageWASM(unsigned char* input,unsigned char* functional_input,const char* jsonstring,int debug);
 
+  /** Projects and averages a 3D image (inside a mask) to 2D 
+   * @param input serialized input as unsigned char array 
+   * @param functional_input serialized functional input (optional) as unsigned char array 
+   * @param jsonstring the parameter string for the algorithm 
+   * { "axis" : -1, 'lps' : 1 }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'projectAverageImageWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ] } 
+  BISEXPORT unsigned char*  projectAverageImageWASM(unsigned char* input,unsigned char* mask_input,const char* jsonstring,int debug);
+
   /** Back Projects a 2D image to a 3D image
    * @param input serialized input as unsigned char array   (3D image)
    * @param input2d serialized input as unsigned char array  (2D image)
