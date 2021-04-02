@@ -815,9 +815,10 @@ const util = {
      * @param {number} intensity - any intensity value
      * @param {number} hue - positive hue
      * @param {number} opacity - a value from 0 to 255 to set the opacity
+     * @param {number} showzero - if true make 0 value opaque else transparent
      * @returns {BisF.ColorMapperFunction} - function to perform colormapping
      */
-    mapconstanthuecolormap : function(minint,maxint,intensity,hue,opacity=1.0) {
+    mapconstanthuecolormap : function(minint,maxint,intensity,hue,opacity=1.0,showzero=false) {
         
         opacity=util.range(opacity,0,255);
         hue=util.range(hue,0,1);
@@ -837,7 +838,8 @@ const util = {
             scale : 255.0/(maxint-minint),
             opacity : opacity,
             hue : hue,
-            intensity : intensity
+            intensity : intensity,
+            showzero : showzero,
         };
 
 
@@ -884,7 +886,7 @@ const util = {
             }
 
             map[0]=Math.round(255*r); map[1]=Math.round(255*g); map[2]=Math.round(255*b); map[3]=Math.round(opacity*255.0);
-            if (s<0.0001)
+            if (!params.showzero && s<0.001)
                 map[3]=0.0;
             
         };
