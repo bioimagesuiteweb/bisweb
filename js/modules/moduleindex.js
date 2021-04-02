@@ -46,6 +46,7 @@ const moduleImports = {
     segmentimage : require('segmentImage.js'),
     regularizeobjectmap : require('regularizeObjectmap.js'),
     projectimage : require('projectImage.js'),
+    projectaverageimage : require('projectAverageImage.js'),
     preprocessoptical : require('preprocessOptical.js'),
     diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
