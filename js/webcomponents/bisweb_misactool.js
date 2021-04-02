@@ -42,6 +42,7 @@ class MisacTool extends HTMLElement {
                 'Optical'  : { obj : null, filename : '' },
                 'OpticalParcellation'  : { obj : null, filename : '' },
                 'StimROI'  : { obj : null, filename : '' },
+                'PET'  : { obj : null, filename : '' },
             },
             transforms : {
                 'Ref2Anat' : {
@@ -99,6 +100,13 @@ class MisacTool extends HTMLElement {
                     reference : 'ProjAngio',
                     target : 'Optical'
                 },
+                'Pet2Anatomical' : {
+                    obj : null,
+                    filename : '',
+                    reference : 'Anatomical',
+                    target : 'PET',
+                },
+
             }
         };
 
