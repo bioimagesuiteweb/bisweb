@@ -50,12 +50,11 @@ const create_matrix=function(paramlist,numframes=-1) {
     let sums=new Float32Array(numcols);
     let sums2=new Float32Array(numcols);
     let bad=new Array(numcols);
-    let good=new Array(numcols);
     for (let i=0;i<numcols;i++) {
         sums[i]=0.0;
         sums2[i]=0.0;
         bad[i]=false;
-        good[i]=i;
+
     }
 
     
@@ -86,22 +85,23 @@ const create_matrix=function(paramlist,numframes=-1) {
         if (sums2[i]<0.01 && sums[i]<0.001) {
             bad[i]=true;
             numbad=numbad+1;
-            console.log('---- Column ',i,' is bad mean=',sums[i],' std=',sums2[i]);
+            console.log('---- Column ',i,' is bad mean=',sums[i],' std=',sums2[i], bad);
         }
     }
 
     for (let i=0;i<numcols-1;i++) {
         if (bad[i]===false) {
-            for (let j=0;j<numcols;j++) {
+            for (let j=i+1;j<numcols;j++) {
                 if (bad[j]===false) {
                     let sum=0.0;
                     for (let k=0;k<numframes;k++) {
                         sum+=mat[k][i]*mat[k][j];
                     }
                     console.log('Checking for parallel parameters dot(',i,',',j,')=',sum);
-                    if (sum<0.001) {
+                    if (Math.abs(sum)<0.001) {
                         bad[j]=true;
                         console.log(' Marking column',j,' as bad ... ');
+                        numbad+=1;
                     }
                 }
             }
@@ -118,17 +118,27 @@ const create_matrix=function(paramlist,numframes=-1) {
     if (numbad>0) {
         let numgood=numcols-numbad;
         let newmat=util.zero(numframes,numgood);
-        let i=0;
-        let nexti=0;
-        let nextj=0;
-        while(i<numcols) {
-            if (bad[i]===false) {
-                good[nextj]=i;
-                nextj=nextj+1;
-            }
-            i=i+1;
+        console.log('Beginning to remove columns total=',numcols,' numbad=',numbad,' numgood=',numgood);
+        let good=new Array(numgood);
+        for (let i=0;i<numgood;i++) {
+            good[i]=-1;
         }
-        console.log('Mapping to remove bad columns numgood=',good,' numbad=',numbad);
+
+        for (let i=0;i<numgood;i++) {
+            let nextj=0;
+            //console.log('Starting',i,' nj=',nextj, 'bad=',bad);
+            while (good[i]<0) {
+                if (bad[nextj]===false) {
+                    good[i]=nextj;
+                    bad[nextj]=true;
+                } else {
+                    nextj=nextj+1;
+                }
+            }
+            //console.log('Done i=',i,good);
+        }
+
+        console.log('Mapping to remove bad columns numgood=',good,' numbad=',numbad,' mapping=',good);
         for (let i=0;i<numgood;i++) {
             let j=good[i];
             console.log('copying column ',j,' to column ',i);
