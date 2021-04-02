@@ -47,7 +47,18 @@ const create_matrix=function(paramlist,numframes=-1) {
     let numcols=obj.parameters.length;
     
     let mat=util.zero(numframes,numcols);
+    let sums=new Float32Array(numcols);
+    let sums2=new Float32Array(numcols);
+    let bad=new Array(numcols);
+    let good=new Array(numcols);
+    for (let i=0;i<numcols;i++) {
+        sums[i]=0.0;
+        sums2[i]=0.0;
+        bad[i]=false;
+        good[i]=i;
+    }
 
+    
     for (let frame=0;frame<numframes;frame++) {
 
         let inframe=frame;
@@ -56,13 +67,81 @@ const create_matrix=function(paramlist,numframes=-1) {
 
         //console.log(paramlist[frame]);
         let obj=JSON.parse(paramlist[inframe].data);
-        for (let col=0;col<numcols;col++)
-            mat[frame][col]=obj.parameters[col]+0.00000001;
-
+        for (let col=0;col<numcols;col++) {
+            let v=obj.parameters[col];
+            if (isNaN(v))
+                v=0.0;
+            mat[frame][col]=v;
+            sums[col]+=v;
+            sums2[col]+=v*v;
+        }
     }
 
+    let numbad=0;
+
+    for (let i=0;i<numcols;i++) {
+        sums[i]=sums[i]/numframes;
+        sums2[i]=Math.sqrt(sums2[i]/numframes-sums[i]*sums[i]);
+
+        if (sums2[i]<0.01 && sums[i]<0.001) {
+            bad[i]=true;
+            numbad=numbad+1;
+            console.log('---- Column ',i,' is bad mean=',sums[i],' std=',sums2[i]);
+        }
+    }
+
+    for (let i=0;i<numcols-1;i++) {
+        if (bad[i]===false) {
+            for (let j=0;j<numcols;j++) {
+                if (bad[j]===false) {
+                    let sum=0.0;
+                    for (let k=0;k<numframes;k++) {
+                        sum+=mat[k][i]*mat[k][j];
+                    }
+                    console.log('Checking for parallel parameters dot(',i,',',j,')=',sum);
+                    if (sum<0.001) {
+                        bad[j]=true;
+                        console.log(' Marking column',j,' as bad ... ');
+                    }
+                }
+            }
+        }
+    }
+            
     
-    let output=new BisWebMatrix('matrix',mat);
+
+    if (numbad===numcols) {
+        console.log('All motion parameters are bad. Not regressing motion');
+        return null;
+    }
+
+    if (numbad>0) {
+        let numgood=numcols-numbad;
+        let newmat=util.zero(numframes,numgood);
+        let i=0;
+        let nexti=0;
+        let nextj=0;
+        while(i<numcols) {
+            if (bad[i]===false) {
+                good[nextj]=i;
+                nextj=nextj+1;
+            }
+            i=i+1;
+        }
+        console.log('Mapping to remove bad columns numgood=',good,' numbad=',numbad);
+        for (let i=0;i<numgood;i++) {
+            let j=good[i];
+            console.log('copying column ',j,' to column ',i);
+            for (let frame=0;frame<numframes;frame++) {
+                newmat[frame][i]=mat[frame][j];
+            }
+        }
+
+        let output=new BisWebMatrix('matrix',newmat);
+        return output;
+    }
+
+    output=new BisWebMatrix('matrix',mat);
     return output;
 };
 
@@ -266,6 +345,7 @@ class PreprocessfMRIModule extends BaseModule {
         console.log('PreprocessfMRI invoking with vals', JSON.stringify(vals));
 
         let input = this.inputs['input'];
+        let idata=input.getImageData();
         let debug=vals['debug'];
         let current_output=input;
 
@@ -344,19 +424,24 @@ class PreprocessfMRIModule extends BaseModule {
                 }
                 this.outputs['outmotionmat']=create_matrix(mparam,input.getDimensions()[3]);
             }
-            let regress_1=new regressOutImage();
-            try {
-                await regress_1.execute({
-                    'input' : current_output,
-                    'regressor' : this.outputs['outmotionmat'],
-                }, {
-                    'debug' : debug
-                });
-            } catch(e) {
-                return Promise.reject('Failed to regress motion parameters'+e);
+            if (this.outputs['outmotionmat']===null) {
+                this.outputs['outmotionmat'] = new BisWebMatrix();
+            } else {
+                let regress_1=new regressOutImage();
+                try {
+                    console.log('Regress matrix=',this.outputs['outmotionmat'].getDescription());
+                    await regress_1.execute({
+                        'input' : current_output,
+                        'regressor' : this.outputs['outmotionmat'],
+                    }, {
+                        'debug' : debug
+                    });
+                } catch(e) {
+                    return Promise.reject('Failed to regress motion parameters'+e);
+                }
+                current_output=regress_1.getOutputObject('output');
+                console.log('___ Motion regress output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
             }
-            current_output=regress_1.getOutputObject('output');
-            console.log('___ Motion regress output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
         } else {
             this.outputs['outmotionmat'] = new BisWebMatrix();
         }
