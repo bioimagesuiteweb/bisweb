@@ -82,10 +82,12 @@ const create_matrix=function(paramlist,numframes=-1) {
         sums[i]=sums[i]/numframes;
         sums2[i]=Math.sqrt(sums2[i]/numframes-sums[i]*sums[i]);
 
-        if (sums2[i]<0.01 && sums[i]<0.001) {
+        if (sums2[i]<0.01) {
             bad[i]=true;
             numbad=numbad+1;
-            console.log('---- Column ',i,' is bad mean=',sums[i],' std=',sums2[i], bad);
+            console.log('---- Column ',i,' is bad mean=',sums[i],' std=',sums2[i]);
+        } else {
+            console.log('++++ Column ',i,' is good mean=',sums[i],' std=',sums2[i]);
         }
     }
 
@@ -100,7 +102,7 @@ const create_matrix=function(paramlist,numframes=-1) {
                     console.log('Checking for parallel parameters dot(',i,',',j,')=',sum);
                     if (Math.abs(sum)<0.001) {
                         bad[j]=true;
-                        console.log(' Marking column',j,' as bad ... ');
+                        console.log('---- Marking column',j,' as bad ... ');
                         numbad+=1;
                     }
                 }
