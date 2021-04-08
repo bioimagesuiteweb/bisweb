@@ -51,11 +51,11 @@ class TransformElectrodesModule extends BaseModule {
                 },
                 {
                     'name' : 'Reference Image',
-                    'description' : 'Load the reference image (if not specified use input)',
+                    'description' : 'Load the patient preop MRI image',
                     'type': 'image',
                     'varname' : 'reference',
                     'shortname' : 'r',
-                    'required' : false,
+                    'required' : true,
                     'guiviewertype' : 'image',
                     'guiviewer'  : 'viewer1',
                 },
@@ -96,16 +96,7 @@ class TransformElectrodesModule extends BaseModule {
                     'extension' : '.mgrid',
                 }
             ],
-            params: [
-                {
-                    "name": "flipxy",
-                    "description": "If true, flip image xy coordinates (using ref image to set space)",
-                    "priority": 100,
-                    "advanced": true,
-                    "type": "boolean",
-                    "default" : false,
-                    "varname": "flipxy",
-                },
+            params: 
                 baseutils.getDebugParam(),
             ]
         };
@@ -121,10 +112,6 @@ class TransformElectrodesModule extends BaseModule {
             return Promise.reject('Either no image or no transformation specified');
         }
 
-        let flipxy=super.parseBoolean(vals.flipxy);
-        if (flipxy && reference===null) {
-            return Promise.reject('No reference image specified for flipping');
-        }
         
         // Copy first
         this.outputs['output']=new BisWebElectrodeMultiGrid();
@@ -145,14 +132,24 @@ class TransformElectrodesModule extends BaseModule {
 
         let widthmm=0.0,heightmm=0.0;
 
-        if (flipxy) {
-            let spa=reference.getSpacing();
-            let dim=reference.getDimensions();
-            widthmm=spa[0]*(dim[0]-1);
-            heightmm=spa[1]*(dim[1]-1);
-        }
+        let orient=reference.getOrientationName();
+
+        let flipx=false,flipy=false;
         
-        this.outputs['output'].transformElectrodes(xform,flipxy,widthmm,heightmm);
+        if (orient==='RAS') {
+            flipx=true
+            flipy=true;
+        } else if (oreint==='LAS') {
+            flipx=false;
+            flipy=true;
+        }
+            
+        let spa=reference.getSpacing();
+        let dim=reference.getDimensions();
+        widthmm=spa[0]*(dim[0]-1);
+        heightmm=spa[1]*(dim[1]-1);
+        console.log('Reference Orientation = ',orient,' flipping x=',flipx,'flipping y=',flipy);
+        this.outputs['output'].transformElectrodes(xform,flipx,flipy,widthmm,heightmm);
         return Promise.resolve();
     }
 }

@@ -21,6 +21,7 @@ const biswasm = require('bis_wasmutils');
 const BisWebDataObject=require('bisweb_dataobject');
 const BisWebMatrix=require('bisweb_matrix');
 const genericio=require('bis_genericio');
+const util=require('bis_util');
 
 /** A class to model a combo transfomration which is a linear transformations and a list of grid transformations. */
 
@@ -31,7 +32,7 @@ class BisWebSurface extends BisWebDataObject {
         super();
         this.jsonformatname='BisSurface';
         this.matrices={};
-        this.matrixnames=[ "points", "triangles", "pointData", "triangleData" ];        
+        this.matrixnames=[ "points", "triangles", "pointData", "triangleData", 'lookupTable' ];
         this.initialize();
         this.legacyextension="vtk";
 
@@ -73,6 +74,10 @@ class BisWebSurface extends BisWebDataObject {
 
     /** return triangleData */
     getTriangleData() { return this.matrices['triangleData'];}
+
+    /** return points */
+    getLookupTable() { return this.matrices['lookupTable'];}
+
     
     /** compute hash 
      * @returns {String} - hash string identifying the object
@@ -275,7 +280,7 @@ class BisWebSurface extends BisWebDataObject {
     }
 
     /** set from raw arrays */
-    setFromRawArrays(points,triangles=null,pointData=null,triangleData=null) {
+    setFromRawArrays(points,triangles=null,pointData=null,triangleData=null,lookupTable=null) {
         let np=0,nt=0;
         
         this.initialize();
@@ -315,6 +320,15 @@ class BisWebSurface extends BisWebDataObject {
                 dat[i]=triangleData[i];
         }
 
+        if (lookupTable) {
+            let numc=Math.round(points.length/np);
+            this.matrices['lookupTable']=new BisWebMatrix();
+            this.matrices['lookupTable'].zero(nt,numc);
+            let dat=this.matrices['lookupTable'].getDataArray();
+            for (let i=0;i<nt*numc;i++)
+                dat[i]=lookupTable[i];
+        }
+
         console.log('Legacy parsing=',this.getDescription());
         
     }
@@ -350,7 +364,8 @@ class BisWebSurface extends BisWebDataObject {
                         this.setFromRawArrays(obj.points,
                                               obj.triangles,
                                               obj.pointData || null,
-                                              obj.triangleData || null);
+                                              obj.triangleData || null,
+                                              obj.lookupTable || null);
                         this.filename=contents.filename;
                         resolve('loaded from (legacy) '+contents.filename);
                         return;
@@ -389,6 +404,217 @@ class BisWebSurface extends BisWebDataObject {
                 resolve(f);
             }).catch( (e) => { reject(e);});
         });
+    }
+
+    /** read vtk text file 
+     * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
+     * @return {Promise} a promise that is fuilfilled when the image is loaded
+     */
+
+    async readVTKASCII(fobj) {
+
+        let contents=null;
+        try {
+            contents=await genericio.read(fobj, false);
+        } catch (e) {
+            return Promise.reject(e);
+        }
+        this.filename=contents.filename;
+        
+        let lines=contents.data.split('\n');
+
+        if (lines[0].indexOf('vtk DataFile')<0 || lines[2].indexOf('ASCII')<0 || lines[3].indexOf('POLYDATA')<0)
+            return Promise.reject('Bad file');
+
+        let pointlines=lines[4].split(' ');
+        let np=parseInt(pointlines[1]);
+        this.initialize();
+        
+        console.log('Number of Points=',np);
+        this.matrices['points']=new BisWebMatrix();
+        this.matrices['points'].zero(np,3);
+        let lineindex=5;
+
+        let index=0;
+        let dat=this.matrices['points'].getDataArray();
+        for (let pt=0;pt<np;pt+=3) {
+            let coords=lines[lineindex].trim().split(' ');
+            lineindex++;
+            if (pt===0 || pt>np-3)
+                console.log('Coords=',coords,coords.length,' lindex=',lineindex-1);
+
+            for (let i=0;i<coords.length;i++) {
+                dat[index]=coords[i];
+                index++;
+            }
+        }
+
+        console.log('First=',lines[lineindex]);
+        let polylines=lines[lineindex].split(' ');
+        lineindex++;
+        if (polylines[0]!=='POLYGONS') {
+            return Promise.reject('No Polygons');
+        }
+
+        
+        let ntri=parseInt(polylines[1]);
+        let total=parseInt(polylines[2]);
+        if (ntri*4!==total) 
+            return Promise.reject('Bad Polygons'+lines[lineindex]);
+
+        console.log('Number of Triangles=',ntri);
+        this.matrices['triangles']=new BisWebMatrix();
+        this.matrices['triangles'].zero(ntri,3);
+        let tridat=this.matrices['triangles'].getDataArray();
+        console.log('Lines=',lines[lineindex]);
+        index=0;
+        for (let i=0;i<ntri;i++) {
+            let indices=lines[lineindex].split(' ');
+            lineindex++;
+            if (i===0 || i>ntri-2)
+                console.log('Indices=',indices,indices.length,' lindex=',lineindex-1);
+
+
+            for (let k=0;k<=2;k++) {
+                tridat[index]=indices[k+1];
+                index++;
+            }
+        }
+
+
+        lineindex++;
+        console.log('lines=',lines[lineindex]);
+        let pdatalines=lines[lineindex].split(' ');
+        lineindex++;
+        lineindex++;
+        lineindex++;
+
+        console.log(pdatalines,lineindex);
+        if (pdatalines[0]!=='POINT_DATA') {
+            return Promise.resolve('All set');
+        }
+
+        let numdata=parseInt(pdatalines[1]);
+        if (numdata!==np) 
+            return Promise.reject('Bad Point Data');
+
+        console.log('Number of Points=',np);
+        this.matrices['pointData']=new BisWebMatrix('short');
+        this.matrices['pointData'].zero(np,1);
+        index=0;
+        let ptdat=this.matrices['pointData'].getDataArray();
+        for (let pt=0;pt<np;pt+=9) {
+            let values=lines[lineindex].trim().split(' ');
+            lineindex++;
+            if (pt<2 || pt> np-10)
+                console.log('values=',values,values.length,' index=',lineindex);
+            for (let i=0;i<values.length;i++) {
+                ptdat[index]=values[i];
+                index++;
+            }
+        }
+        
+
+        let lkpuplines=lines[lineindex].split(' ');
+        lineindex++;
+        if (lkpuplines[0]!=='LOOKUP_TABLE') 
+            return Promise.resolve();
+
+        let numc=parseInt(lkpuplines[2]);
+        this.matrices['lookupTable']=new BisWebMatrix();
+        this.matrices['lookupTable'].zero(numc,4);
+        index=0;
+        let lkdat=this.matrices['lookupTable'].getDataArray();
+        for (let i=0;i<numc;i++) {
+            let colors=lines[lineindex].split(' ');
+            lineindex++;
+            if (i<2 || i > numc-2)
+                console.log(colors,lineindex);
+            for (let j=0;j<=3;j++) {
+                lkdat[index]=colors[j];
+                index++;
+            }
+        }
+
+        return Promise.resolve('all set');
+    }
+
+    /*
+     * save an surface to vtk ASCII file from a filename or file object
+     * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
+     * @return {Promise} a promise that is fuilfilled when the image is loaded
+     */
+    async writeVTKASCII(fobj) {
+
+        const points=this.getPoints() || null;
+        const triangles=this.getTriangles() || null;
+        const pointData=this.getPointData() || null;
+        const lookupTable=this.getLookupTable() || null;
+        if (points===null || triangles===null || pointData===null || lookupTable === null)
+            return Promise.reject('Bad Surface');
+
+        let numpoints=points.getDimensions()[0];
+        let numtri=triangles.getDimensions()[0];
+        let numptdata=pointData.getDimensions()[1];
+        let numcolors=lookupTable.getDimensions()[0];
+
+        console.log('Number of Points=',numpoints,' triangles=',numtri,' ptdata=',numptdata,' numcolors=',numcolors);
+        
+        let contents='# vtk DataFile Version 3.0\nvtk output\nASCII\nDATASET POLYDATA\nPOINTS '+numpoints+' float\n';
+        let dat=this.matrices['points'].getDataArray();
+        for (let i=0;i<dat.length;i+=9) {
+            let min=i;
+            let max=i+9;
+            if (max>dat.length)
+                max=dat.length;
+            let ln='';
+            for (let j=min;j<max;j++) {
+                ln=ln+(100+Math.round(dat[j]*10000.0)/10000.0)+' ';
+            }
+            contents=contents+ln+'\n';
+        }
+
+        contents=contents+'POLYGONS '+numtri+' '+numtri*4+'\n';
+        let tridata=this.matrices['triangles'].getDataArray();
+        for (let j=0;j<tridata.length;j+=3) {
+            contents+='3 '+tridata[j]+' '+tridata[j+1]+' '+tridata[j+2]+'\n';
+        }
+
+
+
+        contents+='\nPOINT_DATA '+numpoints+'\nSCALARS scalars short\nLOOKUP_TABLE lookup_table\n';
+        let ptdat=this.matrices['pointData'].getDataArray();
+        for (let pt=0;pt<ptdat.length;pt+=9) {
+            let min=pt;
+            let max=pt+9;
+            if (max>ptdat.length)
+                max=ptdat.length;
+            let ln='';
+            for (let j=min;j<max;j++) {
+                ln=ln+ptdat[j]+' ';
+            }
+            contents=contents+ln+'\n';
+        }
+
+
+        
+        contents+='LOOKUP_TABLE lookup_table '+numcolors+'\n';
+        let lkdat=this.matrices['lookupTable'].getDataArray();
+
+        
+        for (let j=0;j<lkdat.length;j+=4) {
+            contents+=util.scaledround(lkdat[j],1000)+' '+util.scaledround(lkdat[j+1],1000)+' '+util.scaledround(lkdat[j+2],1000)+' '+lkdat[j+3]+'\n';
+        }
+
+        try {
+            console.log('Saving',contents.length);
+            await genericio.write(fobj,contents);
+            console.log('++++\t Saved Surface in '+fobj);
+            this.filename=fobj;
+            return 'All set '+fobj;
+        } catch(e) {
+            return Promise.reject(e);
+        }
     }
 }
 
