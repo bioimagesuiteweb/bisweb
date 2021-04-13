@@ -96,7 +96,7 @@ class TransformElectrodesModule extends BaseModule {
                     'extension' : '.mgrid',
                 }
             ],
-            params: 
+            params: [
                 baseutils.getDebugParam(),
             ]
         };

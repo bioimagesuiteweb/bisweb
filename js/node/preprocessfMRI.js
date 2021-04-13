@@ -99,7 +99,7 @@ const create_matrix=function(paramlist,numframes=-1) {
                     for (let k=0;k<numframes;k++) {
                         sum+=mat[k][i]*mat[k][j];
                     }
-                    console.log('Checking for parallel parameters dot(',i,',',j,')=',sum);
+                    console.log('\t\t checking for parallel parameters dot(',i,',',j,')=',sum);
                     if (Math.abs(sum)<0.001) {
                         bad[j]=true;
                         console.log('---- Marking column',j,' as bad ... ');
@@ -149,11 +149,11 @@ const create_matrix=function(paramlist,numframes=-1) {
             }
         }
 
-        let output=new BisWebMatrix('matrix',newmat);
+        const output=new BisWebMatrix('matrix',newmat);
         return output;
-    }
+    } 
 
-    output=new BisWebMatrix('matrix',mat);
+    const output=new BisWebMatrix('matrix',mat);
     return output;
 };
 
