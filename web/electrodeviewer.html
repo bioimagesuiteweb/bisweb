@@ -53,6 +53,8 @@
     <script src="../build/web/bootstrap.min.js"></script>
     <script src="../build/web/libbiswasm_wasm.js"></script>
     <script src="../build/web/bislib.js"></script>
+    <script src="./bisweb_newcomponent.js"></script>
+    
     <!-- endbuild -->
     <!-- end webpack/gulp modifications -->
 
@@ -94,7 +96,6 @@
       bis-viewerid="#viewer">
     </bisweb-electrodegridcontrolelement>
 
-
     <bisweb-modulemanager
       id="modulemanager"
       bis-mode="single"
@@ -102,18 +103,11 @@
       bis-viewerid="#viewer">
     </bisweb-modulemanager>
 
-<!--    <bisweb-studypanel
-      id="dicom_import"
-      bis-layoutwidgetid="#viewer_layout" 
-      bis-viewerid="#viewer"
-      bis-viewerapplicationid="#viewer_application"
-      bis-painttoolid="#painttool">
-    </bisweb-studypanel>
 
-    <bisweb-filetreepipeline
-      id="filetreepipeline"
-      bis-modulemanagerid="#modulemanager">
-    </bisweb-filetreepipeline> -->
+    <bisweb-newcomponent
+       bis-layoutwidgetid="#viewer_layout"
+       bis-viewerid="#viewer">
+    </bisweb-newcomponent>
 
     <bisweb-viewerapplication
       id="viewer_application"
