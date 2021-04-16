@@ -341,10 +341,14 @@ class BisWebSurface extends BisWebDataObject {
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
     load(fobj) {
+        let ext = fobj.name ? fobj.name.split('.').pop() : fobj.split('.').pop();
+        if (ext==='vtk' || ext==='vtk')
+            return this.readVTKASCII(fobj);
+
+
         return new Promise((resolve, reject) => {
             
             genericio.read(fobj, false).then((contents) => {
-
                 
                 try {
                     let obj=JSON.parse(contents.data);
@@ -390,7 +394,12 @@ class BisWebSurface extends BisWebDataObject {
      * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
-    save(filename) { 
+    save(filename) {
+
+        let ext = filename.name ? filename.name.split('.').pop() : filename.split('.').pop();
+        if (ext==='vtk' || ext==='vtk')
+            return this.writeVTKASCII(filename);
+        
         let txt=this.serializeToJSON();
         
         let fname=filename;
@@ -569,7 +578,7 @@ class BisWebSurface extends BisWebDataObject {
                 max=dat.length;
             let ln='';
             for (let j=min;j<max;j++) {
-                ln=ln+(100+Math.round(dat[j]*10000.0)/10000.0)+' ';
+                ln=ln+(Math.round(dat[j]*10000.0)/10000.0)+' ';
             }
             contents=contents+ln+'\n';
         }

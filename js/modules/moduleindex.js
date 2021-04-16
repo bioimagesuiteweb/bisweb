@@ -84,6 +84,7 @@ const moduleImports = {
     individualizedparcellation : require('individualizedParcellation.js'),
     makeconnmatrixfile : require('makeConnectivityMatrixFile.js'),
     transformelectrodes : require('transformElectrodes.js'),
+    transformsurface : require('transformSurface.js'),
     joinmatrices : require('joinMatrices.js'),
     removematrixcols : require('removeMatrixCols.js'),
 
