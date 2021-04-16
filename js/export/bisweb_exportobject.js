@@ -14,6 +14,8 @@ const BisWebComboTransformation=require('bisweb_combotransformation');
 const BisWebLinearTransformation=require('bisweb_lineartransformation');
 const BisWebGridTransformation=require('bisweb_gridtransformation');
 const BisWebTransformationCollection=require('bisweb_transformationcollection');
+const BisWebSurface=require('bisweb_surface.js');
+const BisWebElectrodeMultiGrid = require('bisweb_electrodemultigrid');
 const userPreferences = require('bisweb_userpreferences.js');
 const biswasmdate=require('biswasmdate.js');
 const basemodule = require('basemodule.js');
@@ -92,6 +94,8 @@ module.exports= {
     BisWebComboTransformation : BisWebComboTransformation,
     BisWebDataObjectCollection :     BisWebDataObjectCollection,
     BisWebTransformationCollection :     BisWebTransformationCollection,
+    BisWebSurface : BisWebSurface,
+    BisWebElectrodeMultiGrid : BisWebElectrodeMultiGrid,
     // Transformation Utilities
     bisxformutil : bisxformutil,
     // Tensor Flow
