@@ -166,7 +166,7 @@ class MosaicViewerElement extends BaseViewerElement {
     createsliceview(renderer,vol,orthoslice,index,width,depth) {
         
         let plane=orthoslice.getplane();
-        let subviewer=new BisWebSubViewer(renderer,plane,
+        let subviewer=new BisWebSubViewer(this,renderer,plane,
                                           this.computeviewport(index),
                                           orthoslice,
                                           {
@@ -320,6 +320,7 @@ class MosaicViewerElement extends BaseViewerElement {
             }
         }
         context.restore();
+        this.informToRender();
         this.drawcolorscale();
     }
     
@@ -363,7 +364,7 @@ class MosaicViewerElement extends BaseViewerElement {
         if (this.internal.overlayslices!==null)
             hasoverlay=true;
         this.ensureviewersexist(hasoverlay);
-
+        
         let objmapframe=this.internal.frame;
         if (objmapframe>=this.internal.objectmapnumframes)
             objmapframe=this.internal.objectmapnumframes-1;
@@ -382,6 +383,7 @@ class MosaicViewerElement extends BaseViewerElement {
             }
         }
         this.drawlabels();
+        this.informToRender();
         this.updateFrameChangedObservers();
     }
     
@@ -390,7 +392,8 @@ class MosaicViewerElement extends BaseViewerElement {
         
         if (this.internal.subviewers===null)
             return;
-        
+
+        this.informToRender();
         var n=util.range(Math.round(rows||0),1,MAXROWS);
         var c=util.range(Math.round(cols||0),1,MAXCOLS);
         

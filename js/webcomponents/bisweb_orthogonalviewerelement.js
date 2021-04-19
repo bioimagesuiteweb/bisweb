@@ -216,7 +216,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             zs = 0.5;
 
 
-        let subviewer=new BisWebSubViewer(renderer,plane,this.internal.viewports[1][plane],
+        let subviewer=new BisWebSubViewer(this,renderer,plane,this.internal.viewports[1][plane],
                                           orthoslice,
                                           {
                                               width : width,
@@ -254,7 +254,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.simplemode)
             zoom = 3.0;
 
-        let subviewer=new BisWebSubViewer(ren,3,this.internal.viewports[1][3],
+        let subviewer=new BisWebSubViewer(this,ren,3,this.internal.viewports[1][3],
                                           cardslice,
                                           {
                                               width : width,
@@ -424,6 +424,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.updateDatGUIControllers();
         }
         this.drawtext();
+        this.informToRender();        
         //this.drawcolorscale();
     }
 
@@ -1036,6 +1037,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.updateResizeObservers();
         this.drawtext();
         this.drawcolorscale();
+
+
     }
     
     // ------------------------------------------------------------------------
@@ -1055,6 +1058,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.subviewers[0] === null)
             return;
 
+        this.informToRender();
         var invorientaxis = [ 0,1,2];
         if (this.internal.volume!==null)
             invorientaxis= this.internal.volume.getOrientation().invaxis;

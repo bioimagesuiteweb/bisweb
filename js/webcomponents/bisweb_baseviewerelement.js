@@ -32,8 +32,13 @@ class BaseViewerElement extends HTMLElement {
     constructor() {
         
         super();
+
+        this.needsrendering=true;
         
         this.internal = {
+
+            numrender : 0,
+
             
             // CORE as core goes
             this : null,
@@ -111,6 +116,15 @@ class BaseViewerElement extends HTMLElement {
     }
 
 
+    informToRender() {
+        
+        if (this.is_slave_viewer && this.master_viewer)
+            this.master_viewer.needsrendering=true;
+        else
+            this.needsrendering=true;
+    }
+
+    
     // ------------------------------------------------------------------------------------
     /* set the viewer name 
      * @param{String} name 
@@ -314,6 +328,7 @@ class BaseViewerElement extends HTMLElement {
     savenextrender(controller) {
         this.internal.preservesnapshot=true;
         this.internal.snapshotcontroller=controller;
+        this.informToRender();
         return true;
     }
 
@@ -379,18 +394,23 @@ class BaseViewerElement extends HTMLElement {
         
         if (this.internal.enable_renderloop_flag || this.slave_viewer!==null)  {
             if (!this.is_slave_viewer) {
-                var fn=function() {
-                    self.renderloop();
-                };
                 this.internal.pending_render=true;
-                window.requestAnimationFrame(fn);
+                window.requestAnimationFrame( () => {
+                    this.renderloop();
+                });
             }
         }
         
         if (this.internal.enable_renderloop_flag &&
-            this.internal.webgl_enabled_flag) {
+            this.internal.webgl_enabled_flag &&
+            ( this.needsrendering || this.is_slave_viewer)) {
             let subviewers=this.internal.subviewers;
             let renderer=this.internal.layoutcontroller.renderer;
+
+            this.internal.numrender++;
+            if ( this.internal.numrender % 4 === 0)
+                console.log('Rendering',this.internal.numrender);
+            
             if (!this.is_slave_viewer)
                 renderer.clear();
             for (let i=0;i<subviewers.length;i++) {
@@ -402,6 +422,11 @@ class BaseViewerElement extends HTMLElement {
                     }
                 }
             }
+
+            if (this.slave_viewer!==null && this.internal.webgl_enabled_flag)
+                this.slave_viewer.renderloop();
+            this.needsrendering=false;
+        
         }
         
         if (this.internal.preservesnapshot===true && this.internal.snapshotcontroller!==null)  {
@@ -416,8 +441,6 @@ class BaseViewerElement extends HTMLElement {
             this.internal.snapshotcontroller.update(t,hasColorbar);//this.internal.ismosaic);
         }
         
-        if (this.slave_viewer!==null && this.internal.webgl_enabled_flag)
-            this.slave_viewer.renderloop();
         
         return 0;
     }
@@ -585,6 +608,7 @@ class BaseViewerElement extends HTMLElement {
         if (!this.internal.enable_renderloop_flag)
             return;
 
+        this.informToRender();
         let width=this.internal.layoutcontroller.getviewerwidth();
         if (width<2 || width===undefined)
             return;
@@ -613,6 +637,8 @@ class BaseViewerElement extends HTMLElement {
 
         if (!input)
             return;
+
+        this.informToRender();
         
         this.internal.colormapControllerPayload=input;
 
@@ -746,7 +772,8 @@ class BaseViewerElement extends HTMLElement {
         
         if (this.internal.mouseobservers.length===0)
             return;
-        
+
+        this.informToRender();
         this.internal.ignoremouseobservers = true;
         this.internal.mouseobservers.forEach(function(f) {
             f.updatemousecoordinates(mm,plane,mousestate);
@@ -841,6 +868,7 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.ignoreimageobservers === true)
             return;
 
+        this.informToRender();
         
         let img=null;
         if (source==="overlay")
@@ -899,10 +927,11 @@ class BaseViewerElement extends HTMLElement {
 
     /** this class can also be an framechangedobserver */
     handleFrameChanged(frame) {
-        
+
         if (this.internal.ignoreframeobservers || !this.internal.volume)
             return;
 
+        this.informToRender();
         this.setframe(frame);
     }
 

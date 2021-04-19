@@ -102,9 +102,10 @@ class BisWebSubviewer {
        * @param{Number} width - the default size of the biggest object (used to set initial zoom)
        * @param{Number} depth - the maximum depth of the viewer (used to set initial clip planes)
        */
-    constructor(renderer,plane,viewport,positioner,opts={}) {
+    constructor(parentviewer,renderer,plane,viewport,positioner,opts={}) {
 
         // The renderer
+        this.parentviewer=parentviewer;
         this.renderer=renderer;
         this.domElement = this.renderer.domElement;
 
@@ -372,8 +373,14 @@ class BisWebSubviewer {
         this.screen.top = box.top;
         this.screen.width = box.width;
         this.screen.height = box.height;
+        this.informParentToRender();
     }
 
+    informParentToRender() {
+        this.parentviewer.informToRender();
+    }
+
+    
 
     /** Render -- invokes render on the subviewer  */
     render() {
@@ -468,6 +475,8 @@ class BisWebSubviewer {
 
         if (this.flipmode)
             this.camera.projectionMatrix.elements[0]=-this.camera.projectionMatrix.elements[0];
+
+        this.informParentToRender();
         return true;
     }
 
@@ -492,6 +501,7 @@ class BisWebSubviewer {
 
         this.lastPosition.copy( this.camera.position );
         this.zoomCamera(1.0/(this.internal._zoomFactor||1.0));
+        this.informParentToRender();
     }
 
     // ---------------------------------------------------------------------
@@ -696,7 +706,7 @@ class BisWebSubviewer {
         parameters are lastcoordinates [ x,y,z], the plane and the state
     */
     sendCoordinatesChangedEvent(state) {
-
+        this.informParentToRender();
         if (this.plane>=0 && this.plane<=2) {
             if ( typeof this.coordinateChangeCallback == 'function' ) {
                 this.coordinateChangeCallback(this.lastCoordinates,
@@ -713,7 +723,8 @@ class BisWebSubviewer {
     }
 
     sendMouseMovedEvent(state) {
-
+        this.informParentToRender();
+        
         if ( typeof this.mouseMovedCallback == 'function' ) {
             this.mouseMovedCallback(state,this.callbackIndex);
         }
