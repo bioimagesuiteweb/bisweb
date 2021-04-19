@@ -37,9 +37,6 @@ class BaseViewerElement extends HTMLElement {
         
         this.internal = {
 
-            numrender : 0,
-
-            
             // CORE as core goes
             this : null,
             name : 'viewer',
@@ -407,10 +404,6 @@ class BaseViewerElement extends HTMLElement {
             let subviewers=this.internal.subviewers;
             let renderer=this.internal.layoutcontroller.renderer;
 
-            this.internal.numrender++;
-            if ( this.internal.numrender % 4 === 0)
-                console.log('Rendering',this.internal.numrender);
-            
             if (!this.is_slave_viewer)
                 renderer.clear();
             for (let i=0;i<subviewers.length;i++) {
