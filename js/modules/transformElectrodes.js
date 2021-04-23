@@ -139,7 +139,7 @@ class TransformElectrodesModule extends BaseModule {
         if (orient==='RAS') {
             flipx=true
             flipy=true;
-        } else if (oreint==='LAS') {
+        } else if (orient==='LAS') {
             flipx=false;
             flipy=true;
         }

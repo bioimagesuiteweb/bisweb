@@ -265,8 +265,9 @@ class ResliceImageModule extends BaseModule {
                     "backgroundValue" : parseFloat(vals.backgroundvalue),
                     "interpolation" : parseInt(vals.interpolation)
                 },vals.debug);
-
+                
                 this.outputs['output'].copyOrientationInfo(reference);
+
                 resolve();
             }).catch( (e) => {
                 reject(e.stack);

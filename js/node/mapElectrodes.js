@@ -91,7 +91,7 @@ class MapElectrodesModule extends BaseModule {
                     "advanced": true,
                     "gui": "slider",
                     "type": 'int',
-                    "default": 5,
+                    "default": 4,
                     "lowbound": 1,
                     "highbound": 200,
                     "varname": "maxradius"
@@ -109,31 +109,39 @@ class MapElectrodesModule extends BaseModule {
         for (let j=0;j<=2;j++) 
             ivox[j]=util.range(Math.round(vox[j]),0,dims[j]-1);
         let val=reference.getVoxel(ivox);
-        
+
         if (debug)
-            console.log('vox=',vox,' ivox=',ivox, 'val=',val, ' thr=',thr, dims)
+            console.log('vox=',vox,'--> ivox=',ivox, 'val=',val, ' thr=',thr)
 
         if (val>=thr)
-            return val;
+            return [ val ,0.0 ];
 
+        
         let offset=1;
         val=-1.0;
+        let mindist=10000.0;
+        
         while (val<1 && offset<radius) {
             let mink=util.range(ivox[2]-offset,0,dims[2]-1);
             let maxk=util.range(ivox[2]+offset,0,dims[2]-1);
-            let minj=util.range(ivox[1]+offset,0,dims[1]-1);
+            let minj=util.range(ivox[1]-offset,0,dims[1]-1);
             let maxj=util.range(ivox[1]+offset,0,dims[1]-1);
-            let mini=util.range(ivox[0]+offset,0,dims[0]-1);
+            let mini=util.range(ivox[0]-offset,0,dims[0]-1);
             let maxi=util.range(ivox[0]+offset,0,dims[0]-1);
-
-            let mindist=10000.0;
             
-            for (let k=-mink;k<=maxk;k++) {
-                for (let j=-minj;j<=maxj;j++) {
-                    for (let i=-mini;i<=maxi;i++) {
-                        let v=reference.getVoxel([ i,j,k,0]);
+            if (debug)
+                console.log('... continuing',offset,'/',radius,[ mini,maxi],[minj,maxj],[mink,maxk]);
+
+            for (let k=mink;k<=maxk;k++) {
+                for (let j=minj;j<=maxj;j++) {
+                    for (let i=mini;i<=maxi;i++) {
+                        const v=reference.getVoxel([ i,j,k,0]);
                         if (v>=thr) {
-                            let dist=Math.pow(i-vox[0],2.0)+Math.abs(j-vox[1],2.0)+Math.abs(k-vox[2],2.0);
+                            const dist=Math.pow(i-vox[0],2.0)+Math.abs(j-vox[1],2.0)+Math.abs(k-vox[2],2.0);
+                            //                            if (debug)
+                            //console.log('   ',[i,j,k],' = ',v,' dist=',dist,' vs min=',mindist);
+                            
+
                             if (dist<mindist) {
                                 mindist=dist;
                                 val=v;
@@ -144,36 +152,49 @@ class MapElectrodesModule extends BaseModule {
             }
             offset+=1;
         }
-        return val;
+        if (debug)
+            console.log('... mindist=',mindist, 'val=',val);
+        
+        return [ val, util.scaledround(mindist,100.0) ];
     }
         
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: mapElectrodes with vals', JSON.stringify(vals));
-        let input = this.inputs['input'];
-        let reference = this.inputs['reference'];
-        let radius=parseInt(vals.maxradius);
-        let threshold=parseInt(vals.minvalue);
+        const input = this.inputs['input'];
+        const reference = this.inputs['reference'];
+        const radius=parseInt(vals.maxradius);
+        const threshold=parseInt(vals.minvalue);
         const debug=super.parseBoolean(vals.debug);
 
         if (reference === null || input===null) {
             return Promise.reject('Either no image or no grid to map specified');
         }
 
-        let spa=reference.getSpacing();
-        
-        let numgrids=input.getNumGrids();
-        let outputtext=[];
-        outputtext.push('Grid Name, Gridi,Gridj, Voxi,Voxj,Voxk,Value');
+        const spa=reference.getSpacing();
+        const numgrids=input.getNumGrids();
+        const outputtext=[];
+        let numbad=0;
+        outputtext.push('Grid Name, ElecNumber, (Gridi Gridj), Voxi,Voxj,Voxk,Distance,Value');
         for (let i=0;i<numgrids;i++) {
             let grid=input.getGrid(i);
             const gname=grid.description.trim();
             const dimensions=grid.dimensions;
             const electrodes=grid.electrodes;
             console.log('___ Mapping grid',gname,'Dimensions=',dimensions);
-            let index=0;
-            for (let ja=0;ja<dimensions[1];ja++) {
-                for (let ia=0;ia<dimensions[0];ia++) {
+
+            for (let ia=0;ia<dimensions[0];ia++) {
+                for (let ja=dimensions[1]-1;ja>=0;ja=ja-1) {
                     {
+                        let elecnumber=0;
+                        if (dimensions[0]===1) {
+                            elecnumber=`${dimensions[1]-1-ja+1},(${ia} ${ja})`
+                        } else if (dimensions[1]===1) {
+                            elecnumber=`${dimensions[0]-1-ia+1},(${ia} ${ja})`;
+                        } else {
+                            elecnumber=`${(ia)*dimensions[1]+(dimensions[1]-1-ja)+1},(${ia} ${ja})`;
+                        }
+
+                        let index=ia+ja*dimensions[0];
                         const elec=electrodes[index];
                         const present=parseInt(elec.props['ElectrodePresent']) || 0;
                         if (present) {
@@ -181,14 +202,21 @@ class MapElectrodesModule extends BaseModule {
                             for (let j=0;j<=2;j++) {
                                 vox[j]=elec.position[j]/spa[j];
                             }
-                            let val=this.findLabel(reference,vox,radius,threshold,( (i==0) && (ia+ja<4) && debug));
-                            outputtext.push(`${gname},${ia},${ja},${vox[0]}, ${vox[1]}, ${vox[2]}, ${val}`);
+                            if (ia+ja<1)
+                                console.log('Electrode=',elec.position,'-->',vox);
+                            let val=this.findLabel(reference,vox,radius,threshold,( (ia===0) && (ja===0)));
+                            if (val[0]<1)
+                                numbad++;
+                            for (let r=0;r<=2;r++)
+                                vox[r]=util.scaledround(vox[r],100.0);
+                            outputtext.push(`${gname},${elecnumber},${vox[0]},${vox[1]},${vox[2]},${val[1]},${val[0]}`);
                         }
-                        ++index;
                     }
                 }
             }
         }
+
+        console.log('... done ',numbad,' electrodes were more than',threshold,' voxels away from any region');
 
         try {
             await genericio.write(vals['output'],outputtext.join('\n'));
