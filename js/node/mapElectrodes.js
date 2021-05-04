@@ -174,7 +174,7 @@ class MapElectrodesModule extends BaseModule {
         const numgrids=input.getNumGrids();
         const outputtext=[];
         let numbad=0;
-        outputtext.push('Grid Name, ElecNumber, (Gridi Gridj), Voxi,Voxj,Voxk,Distance,Value');
+        outputtext.push('Grid Name, ElecNumber, (Gridi Gridj), Vox-x,Vox-y,Vox-z,Distance,Value');
         for (let i=0;i<numgrids;i++) {
             let grid=input.getGrid(i);
             const gname=grid.description.trim();
@@ -208,7 +208,7 @@ class MapElectrodesModule extends BaseModule {
                             if (val[0]<1)
                                 numbad++;
                             for (let r=0;r<=2;r++)
-                                vox[r]=util.scaledround(vox[r],100.0);
+                                vox[r]=util.scaledround(vox[r]*spa[r],100.0);
                             outputtext.push(`${gname},${elecnumber},${vox[0]},${vox[1]},${vox[2]},${val[1]},${val[0]}`);
                         }
                     }

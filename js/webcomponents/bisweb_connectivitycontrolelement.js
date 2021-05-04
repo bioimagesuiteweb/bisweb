@@ -986,6 +986,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (drawcolorscale) {
             setTimeout( () => { drawColorScale(); },200);
         }
+
+        internal.orthoviewer.informToRender();
+        
     };
 
     
