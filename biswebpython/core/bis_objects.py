@@ -319,7 +319,8 @@ class bisImage(bisBaseObject):
         return 1;
 
     def load(self,fname):
-        
+        import pdb
+
         try:
             # Jackson to add
             # to add tif or anything
@@ -340,9 +341,26 @@ class bisImage(bisBaseObject):
                 for i in range(len(imgl)):
                     movie[:,:,i] = np.array(imgl[i])
                 self.create(movie,[1,1,1,1,1],np.eye(4)); # spacing 5-array affine=4x4
-            else :
+            else:
                tmp = nib.load(fname);
-               self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
+
+               orient = ''.join(list(nib.aff2axcodes(tmp.affine))).lower()
+
+               if orient == 'rpi':
+                   self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
+               elif orient == 'lps':
+                   tmp = tmp.slicer[::-1,:,::-1]
+                   self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine)
+               elif orient == 'ras':
+                   tmp = tmp.slicer[:,::-1,::-1]
+                   self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine)
+
+               else:
+                   raise Exception('Orientation not set to rpi or lps, may load data array in mis-oriented')
+
+
+               orientNew = ''.join(list(nib.aff2axcodes(tmp.affine))).lower()
+               assert orientNew == 'rpi'
 
 
             self.filename=fname;
