@@ -21,7 +21,10 @@ import sys
 import pdb
 import os
 
-sys.path.append('/ca2data/biswebCalcium/')
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+sys.path.append(dir_path.replace('biswebpython/modules/',''))
 
 try:
     import bisweb_path;
@@ -843,86 +846,97 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileManageDict['WLNoise1']['smooth4']['data'] = self.processDictEntry(fileManageDict['WLNoise1']['smooth4'], loadData = True, opFold = workdir)
 
 
+
+
+
+
             #### Motion correction of raw data for comparison ####
        
 
-            fileManageDict['WLSignal1']['mocoraw'] = {}
-            fileManageDict['WLSignal1']['mocoraw']['precursor'] = ['rawsignl','moco']
-            fileManageDict['WLSignal1']['mocoraw']['refimg'] = {}
-            fileManageDict['WLSignal1']['mocoraw']['refimg']['precursor'] = ['rawsignl','moco','refimg']
-            fileManageDict['WLSignal1']['mocoraw']['transform'] = {}
-            fileManageDict['WLSignal1']['mocoraw']['transform']['precursor'] = ['rawsignl','moco','xfm']
+            #fileManageDict['WLSignal1']['mocoraw'] = {}
+            #fileManageDict['WLSignal1']['mocoraw']['precursor'] = ['rawsignl','moco']
+            #fileManageDict['WLSignal1']['mocoraw']['refimg'] = {}
+            #fileManageDict['WLSignal1']['mocoraw']['refimg']['precursor'] = ['rawsignl','moco','refimg']
+            #fileManageDict['WLSignal1']['mocoraw']['transform'] = {}
+            #fileManageDict['WLSignal1']['mocoraw']['transform']['precursor'] = ['rawsignl','moco','xfm']
 
 
-            fileManageDict['WLNoise1']['mocoraw'] = {}
-            fileManageDict['WLNoise1']['mocoraw']['precursor'] = ['rawnoise','moco']
-            fileManageDict['WLNoise1']['mocoraw']['refimg'] = {}
-            fileManageDict['WLNoise1']['mocoraw']['refimg']['precursor'] = ['rawnoise','moco','refimg']
-            fileManageDict['WLNoise1']['mocoraw']['transform'] = {}
-            fileManageDict['WLNoise1']['mocoraw']['transform']['precursor'] = ['rawnoise','moco','xfm']
+            #fileManageDict['WLNoise1']['mocoraw'] = {}
+            #fileManageDict['WLNoise1']['mocoraw']['precursor'] = ['rawnoise','moco']
+            #fileManageDict['WLNoise1']['mocoraw']['refimg'] = {}
+            #fileManageDict['WLNoise1']['mocoraw']['refimg']['precursor'] = ['rawnoise','moco','refimg']
+            #fileManageDict['WLNoise1']['mocoraw']['transform'] = {}
+            #fileManageDict['WLNoise1']['mocoraw']['transform']['precursor'] = ['rawnoise','moco','xfm']
 
      
 
-            rawMocoFileCheck = all([self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], opFold = workdir), 
-                                    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], opFold = workdir), 
-                                    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')])
+            #rawMocoFileCheck = all([self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], opFold = workdir), 
+            #                        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], opFold = workdir), 
+            #                        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')])
 
 
-            if not rawMocoFileCheck:
+            #if not rawMocoFileCheck:
 
-                fileManageDict['WLSignal1']['mocoraw']['data'], \
-                fileManageDict['WLSignal1']['mocoraw']['refimg']['data'], \
-                fileManageDict['WLSignal1']['mocoraw']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['raw']['data'])
-
-
-
-                self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
-                self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
-                self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')
+            #    fileManageDict['WLSignal1']['mocoraw']['data'], \
+            #    fileManageDict['WLSignal1']['mocoraw']['refimg']['data'], \
+            #    fileManageDict['WLSignal1']['mocoraw']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['raw']['data'])
 
 
-            else:
-                fileManageDict['WLSignal1']['mocoraw']['data'] = \
-                    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], loadData = True, opFold = workdir)
 
-                fileManageDict['WLSignal1']['mocoraw']['refimg']['data'] = \
-                    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], loadData = True, opFold = workdir)
+            #    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
+            #    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
+            #    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')
 
-                fileManageDict['WLSignal1']['mocoraw']['transform']['data'] = \
-                    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
+
+            #else:
+            #    fileManageDict['WLSignal1']['mocoraw']['data'] = \
+            #        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], loadData = True, opFold = workdir)
+
+            #    fileManageDict['WLSignal1']['mocoraw']['refimg']['data'] = \
+            #        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], loadData = True, opFold = workdir)
+
+            #    fileManageDict['WLSignal1']['mocoraw']['transform']['data'] = \
+            #        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
 
             #del blueMovieMC
 
-            rawMocoFileCheck = all([self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], opFold = workdir), 
-                                    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], opFold = workdir), 
-                                    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')])
+            #rawMocoFileCheck = all([self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], opFold = workdir), 
+            #                        self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], opFold = workdir), 
+            #                        self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')])
 
 
-            if not rawMocoFileCheck:
+            #if not rawMocoFileCheck:
 
-                fileManageDict['WLNoise1']['mocoraw']['data'], \
-                fileManageDict['WLNoise1']['mocoraw']['refimg']['data'], \
-                fileManageDict['WLNoise1']['mocoraw']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['raw']['data'])
-
-
-
-                self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
-                self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
-                self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')
+            #    fileManageDict['WLNoise1']['mocoraw']['data'], \
+            #    fileManageDict['WLNoise1']['mocoraw']['refimg']['data'], \
+            #    fileManageDict['WLNoise1']['mocoraw']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['raw']['data'])
 
 
-            else:
-                fileManageDict['WLNoise1']['mocoraw']['data'] = \
-                    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], loadData = True, opFold = workdir)
 
-                fileManageDict['WLNoise1']['mocoraw']['refimg']['data'] = \
-                    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], loadData = True, opFold = workdir)
+            #    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
+            #    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
+            #    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')
 
-                fileManageDict['WLNoise1']['mocoraw']['transform']['data'] = \
-                    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
+
+            #else:
+            #    fileManageDict['WLNoise1']['mocoraw']['data'] = \
+            #        self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], loadData = True, opFold = workdir)
+
+           #     fileManageDict['WLNoise1']['mocoraw']['refimg']['data'] = \
+           #         self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], loadData = True, opFold = workdir)
+
+           #     fileManageDict['WLNoise1']['mocoraw']['transform']['data'] = \
+           #         self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
 
 
             #del uvMovieMC
+
+
+            #Memory management: Remove raw data from dict
+            del fileManageDict['WLNoise1']['raw']['data']
+            del fileManageDict['WLSignal1']['raw']['data']
+
+
 
 
             #### Motion correction  calculation on smooth 16 data ####
@@ -1109,6 +1123,13 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileManageDict['WLSignal1']['refcombo']['transform']['data'] = fileManageDict['WLSignal1']['moco16']['transform']['data']
                 fileManageDict['WLNoise1']['refcombo']['transform']['data'] = fileManageDict['WLNoise1']['moco16']['transform']['data']
 
+            #Memory management: Remove smooth16 from dict
+            del fileManageDict['WLSignal1']['smooth16']['data']
+            del fileManageDict['WLNoise1']['smooth16']['data']
+
+
+
+
             ##### Apply motion correction to smooth 4 data with reslice and downsample x 2 ####
 
 
@@ -1171,6 +1192,12 @@ class calciumPreprocess(bis_basemodule.baseModule):
             else:
                 fileManageDict['WLNoise1']['mocoSmthXfm']['data'] = \
                     self.processDictEntry(fileManageDict['WLNoise1']['mocoSmthXfm'], loadData = True, opFold = workdir)  
+
+
+            #Memory management: Remove smooth4 from dict
+            del fileManageDict['WLSignal1']['smooth4']['data']
+            del fileManageDict['WLNoise1']['smooth4']['data']
+
 
 
             if runoption == 'spatial':
