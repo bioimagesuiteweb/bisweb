@@ -24,7 +24,7 @@ import json
 import nibabel as nib
 import biswebpython.core.bis_wasmutils as biswasm
 import biswebpython.core.bis_baseutils as bis_baseutils;
-import biswebpython.utilities.surface_utils as surutil
+#import biswebpython.utilities.surface_utils as surutil
 
 
 
