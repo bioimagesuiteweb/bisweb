@@ -42,13 +42,16 @@ def topHatFilter(blueMovie,uvMovie,mask,topHat=300):
 def expRegression(blueMovie,uvMovie,mask):
 
     # Import bis_objects and drift correction script
-    from biswebpython.modules.driftCorrectImage import driftCorrectImage
-    import biswebpython.core.bis_objects as bis_objects
+    #from biswebpython.modules.driftCorrectImage import driftCorrectImage
+    #import biswebpython.core.bis_objects as bis_objects
     
+
     # Make sure we have a time dimension in the input data
     blueShape = blueMovie.shape
     uvShape = uvMovie.shape
     maskShape = mask.shape
+
+    
 
     if (len(blueShape) == 3) and (len(uvShape) == 3):
         print('Both input images are 3D, assuming third dimension is time and reshaping')
@@ -71,6 +74,7 @@ def expRegression(blueMovie,uvMovie,mask):
     else:
         raise Exception('Mask array is wrong shape')
 
+    
 
     meanTsBlue = np.mean(blueMovie[maskRes,:],axis=0)
     meanTsUv = np.mean(uvMovie[maskRes,:],axis=0)
@@ -85,20 +89,26 @@ def expRegression(blueMovie,uvMovie,mask):
     exptrendUv=np.squeeze(np.exp(lintrendUv))
 
     # Blue Regress
+
+    
+
     poptBlue,pcovBlue=curve_fit(exponential_func,exptrendBlue,meanTsBlue,p0=(1,1e-6,1),maxfev=10000)
     yfitBlue=exponential_func(exptrendBlue,*poptBlue)
     yfitBlueMin=yfitBlue/np.min(yfitBlue)
-    blueMovieRegress=blueMovie
+    blueMovieRegress=blueMovie.copy()
     blueMovieRegress[maskRes,:]=blueMovie[maskRes,:]/yfitBlueMin
+    blueMovieRegress[~maskRes,:] = 0
 
 
     # Blue Regress
     poptUv,pcovUv=curve_fit(exponential_func,exptrendUv,meanTsUv,p0=(1,1e-6,1),maxfev=10000)
     yfitUv=exponential_func(exptrendUv,*poptUv)
     yfitUvMin=yfitUv/np.min(yfitUv)
-    uvMovieRegress=uvMovie
+    uvMovieRegress=uvMovie.copy()
     uvMovieRegress[maskRes,:]=uvMovie[maskRes,:]/yfitUvMin
+    uvMovieRegress[~maskRes,:] = 0
 
+    
 
     blueMovieRegress=np.reshape(blueMovieRegress,blueShape)
     uvMovieRegress=np.reshape(uvMovieRegress,uvShape)
@@ -112,36 +122,48 @@ def expRegression(blueMovie,uvMovie,mask):
 def twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,mask):
     from scipy import linalg
 
+
+    # Flatten mask and find nonzero indices
     mask = mask.reshape((mask.shape[0]*mask.shape[1]))
     mask = mask>0
     mask_indices = np.squeeze(np.argwhere(mask))
 
+    # Get shapes of images
     blueShape = blueMovie.shape
     uvShape = uvMovie.shape
     blueFiltShape = blueMovieFiltered.shape
     uvFiltShape = uvMovieFiltered.shape
 
-
+    # Reshape images to 2D,  space x time
     blueMovie = blueMovie.reshape((blueShape[0]*blueShape[1], blueShape[2]))
     uvMovie = uvMovie.reshape((uvShape[0]*uvShape[1], uvShape[2]))
     blueMovieFiltered = blueMovieFiltered.reshape((blueFiltShape[0]*blueFiltShape[1], blueFiltShape[2]))
     uvMovieFiltered = uvMovieFiltered.reshape((uvFiltShape[0]*uvFiltShape[1], uvFiltShape[2]))
 
+    # Get base(?), which is the images (pre photobleach correction)
+    # minus the image after photobleack correction
     blueBase = blueMovie - blueMovieFiltered
     uvBase = uvMovie - uvMovieFiltered
    
     del blueMovie
     del uvMovie
 
+    # Add the mean of the base onto each timepoint, to reconstruct pre photobleach images
     blueRec = blueMovieFiltered + np.tile(blueBase.mean(axis=1)[:,np.newaxis],(1,blueFiltShape[2]))
     uvRec = uvMovieFiltered + np.tile(uvBase.mean(axis=1)[:,np.newaxis],(1,uvFiltShape[2]))
 
+    # Define empty arrays
     beta = np.zeros((len(mask_indices)))
     blueReg = np.zeros(blueBase.shape,dtype = np.float32)
 
     del blueBase
     del uvBase
 
+
+    # If UV is different length than blue
+    # Shorten it to the length of blue or
+    # Duplicate last UV timepoint up to the 
+    # same length of blue    
     if uvRec.shape[1] != blueRec.shape[1]:
         diffUv=uvRec.shape[1] - blueRec.shape[1]
         if diffUv > 0:
@@ -157,9 +179,15 @@ def twoWavelengthRegression(blueMovieFiltered,uvMovieFiltered,blueMovie,uvMovie,
                 uvMovieFiltAdd = np.expand_dims(uvMovieFiltered[:,-1], axis=1)
                 uvMovieFiltered = np.append(uvMovieFiltered,uvMovieFiltAdd,axis=1)
 
+    # For each timeseries in the mask, fit "uvRec" to "blueRec" and keep residuals
+    # So the fit is calculated on the "reconstructed" (non photobleach corrected) uv and blue, but beta
+    # is then applied to the corrected uv and subtracted from the corrected blue
     for i in range(mask.sum()):
         beta[i] = linalg.lstsq(uvRec[mask_indices[i],:][:,np.newaxis], blueRec[mask_indices[i],:][:,np.newaxis])[0][0][0]
         blueReg[mask_indices[i],:] = blueMovieFiltered[mask_indices[i],:] - beta[i]*uvMovieFiltered[mask_indices[i],:]
+
+
+    blueReg = np.reshape(blueReg,blueShape)
 
     return blueReg
 
@@ -176,9 +204,37 @@ def dFF(blueMovie,uvMovieFiltered,blueReg,mask):
     blueF = blueMovie[mask,:].mean(axis=1)
     blueDFF = np.zeros(blueMovie.shape,dtype = np.float32)
     blueDFF[mask,:] = np.divide(blueReg[mask,:],np.tile(blueF[:,np.newaxis],(1,blueShape[2])))
+    blueDFF = np.reshape(blueDFF,[512,500,-1])
 
     #uv
     uvF = uvMovieFiltered[mask,:].mean(axis=1)
     uvDFF = np.zeros(uvMovieFiltered.shape,dtype = np.float32)
     uvDFF[mask,:] = np.divide(uvMovieFiltered[mask,:],np.tile(uvF[:,np.newaxis],(1,uvShape[2])))
+    uvDFF = np.reshape(uvDFF,[512,500,-1])
+    
+
     return blueDFF,uvDFF
+
+
+def bandpassFilt(ipMat,mask):
+    from scipy import signal
+
+    sampFreq = 10
+    bpVals = np.array([0.08, 0.2])/(sampFreq/2)
+
+    sos = signal.butter(10, bpVals, btype='bandpass', output='sos')
+    
+    matShape = ipMat.shape
+    mask = mask.reshape((mask.shape[0]*mask.shape[1]))
+    mask = mask>0
+
+    ipMatRes = ipMat.reshape((matShape[0]*matShape[1], matShape[2]))
+    
+    filtMat = ipMatRes.copy()
+    filtMat[mask,:] = signal.sosfilt(sos,ipMatRes[mask,:],axis=1)
+
+    filtMat = np.reshape(filtMat, matShape)
+
+    return filtMat
+
+
