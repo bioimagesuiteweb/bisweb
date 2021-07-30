@@ -284,7 +284,6 @@ const createWindow=function(index,fullURL) {
                                                 nodeIntegration: false,
                                                 preload: preload,
                                                 contextIsolation: false,
-                                                enableRemoteModule : true,
                                             },
                                             autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});
