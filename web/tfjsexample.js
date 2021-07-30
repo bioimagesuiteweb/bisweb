@@ -68,7 +68,7 @@ let run_tf_module=async function(img) {
 window.onload = function() {
 
     if (bisweb.getEnvironment() === "electron") {
-        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+        window.BISELECTRON.toggleDevTools();
         $('.navbar-fixed-bottom').remove();
     }
     

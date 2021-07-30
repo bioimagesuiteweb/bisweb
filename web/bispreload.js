@@ -20,7 +20,6 @@
 "use strict";
 
 const electron= require('electron');
-const remote  = require('@electron/remote');
 
 window.BISELECTRON = {
     // ----------------------------------------------------
@@ -37,8 +36,17 @@ window.BISELECTRON = {
     child_process : require('child_process'),
     colors : require('colors/safe'),
     ipc : electron.ipcRenderer,
-    dialog : remote.dialog,
-    remote : remote,
+    dialog : {
+        showSaveDialog: (_unused, options) => {
+            return electron.ipcRenderer.invoke('SHOW_SAVE_DIALOG', options)
+        },
+        showOpenDialog: (_unused, options) => {
+            return electron.ipcRenderer.invoke('SHOW_OPEN_DIALOG', options)
+        }
+    },
+    toggleDevTools: () => {
+        electron.ipcRenderer.send('TOGGLE_DEV_TOOLS')
+    },
     Buffer : Buffer,
     electron : electron,
 };

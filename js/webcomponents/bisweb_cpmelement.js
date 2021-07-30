@@ -165,7 +165,7 @@ class CPMElement extends HTMLElement {
             bis_webutil.createMenuItem(topmenu, ''); // separator
             bis_webutil.createMenuItem(topmenu, 'Show JavaScript Console',
                                        function () {
-                                           window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                           window.BISELECTRON.toggleDevTools();
                                        });
         } else {
             bis_webfileutil.createFileSourceSelector(topmenu);
