@@ -35,6 +35,7 @@ const bisheader = require("bis_header.js");
 const simplemat=require('bis_simplemat');
 const numeric=require('numeric');
 const nrrd=require('nrrd');
+const pako = require('pako');
 
 /** Class representing a medical image */
 class BisWebImage extends BisWebDataObject {
@@ -178,7 +179,13 @@ class BisWebImage extends BisWebDataObject {
             try {
                 self.parseNIIModular(obj.data.buffer,forceorient);
             } catch(e) {
-                return Promise.reject('Failed to load from '+fobj + '('+e+')');
+                console.log('Trying to force gunzip uncompression');
+                let dt = pako.ungzip(obj.data);
+                try {
+                    self.parseNIIModular(dt.buffer,forceorient);
+                } catch(e) {
+                    return Promise.reject('Failed to load from '+fobj + '('+e+')');
+                }
             }
         }
         
