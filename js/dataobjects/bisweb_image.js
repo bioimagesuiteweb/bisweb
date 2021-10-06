@@ -515,7 +515,6 @@ class BisWebImage extends BisWebDataObject {
         if (newspacing !== 'same')
             BisWebImage.changeSpacing(internal,newspacing);
 
-
         if (newnumframes!==0 || newnumcomponents!==0) {
             if (newnumframes!==0) {
                 newnumframes=util.range(newnumframes,1,9999);
@@ -1536,26 +1535,23 @@ class BisWebImage extends BisWebDataObject {
 
         if (internal.header.struct.sform_code > 0) {
             let sx = internal.header.struct.srow_x, sy = internal.header.struct.srow_y, sz = internal.header.struct.srow_z;
-            let magn = [
+            /* This was a bug -- transpose!!!
+              let magn = [
                 Math.sqrt(sx[0]*sx[0]+sx[1]*sx[1]+sx[2]*sx[2]),
                 Math.sqrt(sy[0]*sy[0]+sy[1]*sy[1]+sy[2]*sy[2]),
                 Math.sqrt(sz[0]*sz[0]+sz[1]*sz[1]+sz[2]*sz[2]),
+                ];*/
+            let magn = [
+                Math.sqrt(sx[0]*sx[0]+sy[0]*sy[0]+sz[0]*sz[0]),
+                Math.sqrt(sx[1]*sx[1]+sy[1]*sy[1]+sz[1]*sz[1]),
+                Math.sqrt(sx[2]*sx[2]+sy[2]*sy[2]+sz[2]*sz[2]),
             ];
-
-            //      console.log('sx=',sx[0],sx[1],sx[2]);
-            //      console.log('sy=',sy[0],sy[1],sy[2]);
-            //      console.log('sz=',sz[0],sz[1],sz[2]);
-            //      console.log('magn=',magn);
 
             for (let ia=0;ia<=2;ia++) {
                 sx[ia]*=newspa[0]/magn[0];
                 sy[ia]*=newspa[1]/magn[1];
                 sz[ia]*=newspa[2]/magn[2];
             }
-
-            //      console.log('sx=',sx[0],sx[1],sx[2]);
-            //      console.log('sy=',sy[0],sy[1],sy[2]);
-            //      console.log('sz=',sz[0],sz[1],sz[2]);
 
         }
 
@@ -1642,8 +1638,9 @@ class BisWebImage extends BisWebDataObject {
 
         } else if(internal.header.struct.sform_code > 0) {
 
-            //      console.log('using s_form');
+            //console.log('using s_form');
             let sx = internal.header.struct.srow_x, sy = internal.header.struct.srow_y, sz = internal.header.struct.srow_z;
+            //console.log('__ sx=',sx,'sy=',sy,'sz=',sz);
             // fill IJKToRAS
             simplemat.GMMat4.setRowValues(IJKToRAS, 0, sx[0], sx[1], sx[2], sx[3]);
             simplemat.GMMat4.setRowValues(IJKToRAS, 1, sy[0], sy[1], sy[2], sy[3]);

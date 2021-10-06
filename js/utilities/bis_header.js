@@ -540,9 +540,9 @@ class BisHeader {
             if (this.struct.sform_code > 0) {
                 let sx = this.struct.srow_x, sy = this.struct.srow_y, sz = this.struct.srow_z;
                 let magn = [
-                    Math.sqrt(sx[0]*sx[0]+sx[1]*sx[1]+sx[2]*sx[2]),
-                    Math.sqrt(sy[0]*sy[0]+sy[1]*sy[1]+sy[2]*sy[2]),
-                    Math.sqrt(sz[0]*sz[0]+sz[1]*sz[1]+sz[2]*sz[2]),
+                    Math.sqrt(sx[0]*sx[0]+sy[0]*sy[0]+sz[0]*sz[0]),
+                    Math.sqrt(sx[1]*sx[1]+sy[1]*sy[1]+sz[1]*sz[1]),
+                    Math.sqrt(sx[2]*sx[2]+sy[2]*sy[2]+sz[2]*sz[2]),
                 ];
 
                 for (let ia=0;ia<=2;ia++) {
