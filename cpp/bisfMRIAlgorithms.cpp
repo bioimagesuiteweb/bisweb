@@ -413,6 +413,8 @@ namespace bisfMRIAlgorithms {
                              std::string passType,float frequency,float sampleRate,int removeMean,int debug) {
 
 
+    std::cout << "Begin FILTER IMage TR=" << sampleRate << ", removeMean=" << removeMean << std::endl;
+    
     int dim[5]; input_image->getDimensions(dim);
     Eigen::MatrixXf temp;
     Eigen::VectorXf w;
@@ -430,22 +432,29 @@ namespace bisfMRIAlgorithms {
     for (int i=0;i<numvoxels;i++)
       {
         double mean=0.0;
-        
-        if (removeMean) {
-          double sum=0.0;
-          for (int f=0;f<dim[3];f++)  
-            sum+=indata[numvoxels*f+i];
-          mean=sum/double(dim[3]);
-        }
-          
-        for (int f=0;f<dim[3];f++)  
-          input(f,0)=indata[numvoxels*f+i]-mean;
-        
         int d=debug;
         if (i>0)
           d=0;
+        
+        double sum=0.0;
+        for (int f=0;f<dim[3];f++)  
+          sum+=indata[numvoxels*f+i];
+        mean=sum/double(dim[3]);
+        
         if (d>0) 
-          std::cout << "___ Mean removed=" << mean << std::endl;
+          std::cout << "___ Computed  value of mean=" << mean << std::endl;
+
+        if (!removeMean) {
+          if (d>0)
+            std::cout << "___ Not removing" << std::endl;
+          mean=0;
+        } else {
+          if (d>0)
+            std::cout << "___ Removing mean" << std::endl;
+        }
+        
+        for (int f=0;f<dim[3];f++)  
+          input(f,0)=indata[numvoxels*f+i]-mean;
         
         ok*=butterworthFilter(input,output,w,temp,passType,frequency,sampleRate,d);
 

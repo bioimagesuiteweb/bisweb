@@ -903,10 +903,12 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
   if(debug)
     params->print("from butterworthFilterImage","_____");
 
-
+  if (debug)
+    std::cout << "--------- Extracting Parameters ------------- " << std::endl;
+  
   std::string ftype=params->getValue("type","low");
   float cutoff=params->getFloatValue("cutoff",0.15f);
-  float samplerate=params->getFloatValue("sampleRate",1.0f);
+  float samplerate=params->getFloatValue("samplerate",1.0f);
   int removeMean=params->getBooleanValue("removeMean",1);
  
   if (debug)

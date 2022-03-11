@@ -535,12 +535,12 @@ class PreprocessfMRIModule extends BaseModule {
                 rdata[i]=0;
         }
         
-        console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-        console.log(' = = = GSR. Using '+name+' mask. Threshold='+threshold);
-        
         this.outputs['outputmask'] = roiimage;
-        
+
         if (vals['dogsr']) {
+            console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+            console.log(' = = = GSR. Using '+name+' mask. Threshold='+threshold);
+        
             let roi=new computeROI();
             try {
                 await roi.execute({ 'input' : current_output,
@@ -572,6 +572,8 @@ class PreprocessfMRIModule extends BaseModule {
             current_output=regress_2.getOutputObject('output');
             console.log('___ GSR regress output=',current_output.getDescription(),'range=',current_output.getIntensityRange());
         } else {
+            console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+            console.log(' = = = Not running GSR.');
             this.outputs['outgsrvector'] =  new BisWebMatrix();
         }
         
