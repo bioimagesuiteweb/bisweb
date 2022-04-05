@@ -449,6 +449,8 @@ class ColormapControllerElement extends HTMLElement {
                         this.olddata.clustersize=this.internal.maxclustersize;
                     }
                     this.internal.clusterslider.max(this.internal.maxclustersize);
+                    this.internal.clusterslider.step(1);
+                    
                     this.internal.clusterslider.updateDisplay();
                     this.internal.clusterinfo.maskarray=imagealgo.clusterFilter(this.internal.objectmap,
                                                                                 this.internal.clusterinfo.

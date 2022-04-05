@@ -1,19 +1,19 @@
 /*  LICENSE
 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 'use strict';
 
@@ -43,7 +43,7 @@ class ManualRegistrationModule extends BaseModule {
             "buttonName": "Apply",
             "shortname" : "mrg",
             "params": [ 
-		{
+		        {
                     "name": "Rotate First",
                     "description": "rotate first",
                     "priority": 5,
@@ -51,7 +51,17 @@ class ManualRegistrationModule extends BaseModule {
                     "type": "boolean",
                     "default": false,
                     "varname": "rotatefirst"
-                },               {
+                },
+                {
+                    "name": "Shiftx10",
+                    "description": "If true then multiply shifts by a factor of 10 (for large images)",
+                    "priority": 50,
+                    "advanced": true,
+                    "type": "boolean",
+                    "default": false,
+                    "varname": "shiftxten"
+                },            
+                {
                     "name": "Shift I (vx)",
                     "description": "I - translation (voxels)",
                     "priority": 10,
@@ -169,7 +179,7 @@ class ManualRegistrationModule extends BaseModule {
                     "default": false,
                     "varname": "usefullheaderxy"
                 },
-		{
+		        {
                     "name": "Do Reslice",
                     "description": "dummy option ignored",
                     "priority": 100,
@@ -195,7 +205,7 @@ class ManualRegistrationModule extends BaseModule {
             ]
         };
     }
-    
+
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: manualRegistration with vals', JSON.stringify(vals));
         
@@ -204,10 +214,15 @@ class ManualRegistrationModule extends BaseModule {
 
         let dim=reference.getDimensions();
         let spa=reference.getSpacing();
+
+        let shift10=this.parseBoolean(vals.shiftxten);
+        let scalet=1.0;
+        if (shift10)
+            scalet=10.0;
         
-        let tx=parseFloat(vals.shifti)*spa[0];
-        let ty=parseFloat(vals.shiftj)*spa[1];
-        let tz=parseFloat(vals.shiftk)*spa[2];
+        let tx=parseFloat(vals.shifti*scalet)*spa[0];
+        let ty=parseFloat(vals.shiftj*scalet)*spa[1];
+        let tz=parseFloat(vals.shiftk*scalet)*spa[2];
         let rx=parseFloat(vals.rotatei);
         let ry=parseFloat(vals.rotatej);
         let rz=parseFloat(vals.rotatek);
@@ -272,7 +287,7 @@ class ManualRegistrationModule extends BaseModule {
             
             if (mode>0) {
                 let l=xformutil.computeCombinedTransformation(linear2,linear);
-            
+                
                 //console.log('Linear2 =',linear2.legacySerialize("\n"));
                 this.outputs['output']=xformutil.computeCombinedTransformation(l,headertransform);
                 linear=this.outputs['output'];
