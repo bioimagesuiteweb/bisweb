@@ -1484,11 +1484,9 @@ class BisWebImage extends BisWebDataObject {
         this.setFilename(filename);
     }
 
-
-    /** Adds Quaternion Info to header
+       /** Adds Quaternion Info to header
      * @param{EmscriptenModule} Module
      */
-
     addQuaternionCode(Module) {
         const internal=this.internal;
 
@@ -1634,8 +1632,6 @@ class BisWebImage extends BisWebDataObject {
             simplemat.GMMat4.setRowValues(IJKToRAS,  1,  2*(b*c+a*d)*xd,  (a*a+c*c-b*b-d*d)*yd,  2*(c*d-a*b)*zd,  qy );
             simplemat.GMMat4.setRowValues(IJKToRAS,  2,  2*(b*d-a*c )*xd,  2*(c*d+a*b)*yd,  (a*a+d*d-c*c-b*b)*zd,  qz );
 
-
-
         } else if(internal.header.struct.sform_code > 0) {
 
             //console.log('using s_form');
@@ -1663,6 +1659,19 @@ class BisWebImage extends BisWebDataObject {
         // IJK to RAS
         internal.orient.IJKToRAS = IJKToRAS;
         //      console.log("----- internal.IJKTORAS=",simplemat.GMMat4.print(internal.orient.IJKToRAS));
+        if(internal.header.struct.sform_code === 0) {
+            let M=internal.orient.IJKToRAS;
+            for (let col=0;col<=3;col++) {
+                internal.header.struct.srow_x[col]=M[col*4];
+                internal.header.struct.srow_y[col]=M[col*4+1];
+                internal.header.struct.srow_z[col]=M[col*4+2];
+            }
+            console.log("Created srow");
+            console.log(internal.header.struct.srow_x);
+            console.log(internal.header.struct.srow_y);
+            console.log(internal.header.struct.srow_z);
+        }
+        
         if (dim[5]===0)
             dim[5]=1;
         if (pixdim[5]===0.0)
@@ -1692,7 +1701,7 @@ class BisWebImage extends BisWebDataObject {
         }
         let OR=numeric.dot(A,S);
 
-//        debug=0;
+        //debug=0;
 
         if (debug) {
             console.log('\n A=\n',numeric.prettyPrint(A));
@@ -1785,6 +1794,8 @@ class BisWebImage extends BisWebDataObject {
             internal.orient.name+=names[internal.orient.invaxis[i]][1-internal.orient.invflip[i]];
         }
 
+        
+        
     }
 
     /** Function to permute the header to yield a RAS image. Still incomplete.
@@ -1804,8 +1815,6 @@ class BisWebImage extends BisWebDataObject {
         BisWebImage.changeDimensions(internal,newdim);
         BisWebImage.changeSpacing(internal,newspa);
     }
-
-
     /** Function to permute the image data to yield a RAS oriented image. Works but header is incomplete
         @alias BisImageUtilities~permuteDataToMatchDesiredOrientation
     */
