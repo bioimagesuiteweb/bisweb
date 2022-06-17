@@ -1,5 +1,5 @@
 nibabel==2.1.0
-numpy==1.13
+numpy==1.21.0
 pillow>=4.3.0
 setuptools==49.6.0
 wheel>=0.31
