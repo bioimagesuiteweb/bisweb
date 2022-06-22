@@ -44,6 +44,8 @@ from biswebpython.modules.resliceImage import *
 import nibabel as nb
 from skimage.transform import resize as skresize
 from skimage import img_as_bool
+import yaml
+from matplotlib import pyplot as plt
 
 class calciumPreprocess(bis_basemodule.baseModule):
 
@@ -116,45 +118,6 @@ class calciumPreprocess(bis_basemodule.baseModule):
             ],
             "params": [
                 {
-                    "type": "str",
-                    "name": "Input optical trigger",
-                    "description": "The order of the different wavelength images specified in signal",
-                    "varname": "opticalorder",
-                    "required": True,
-                    "default" : 0
-                },
-                {
-                    "type": "int",
-                    "name": "Image segment number",
-                    "description": "Whether the image is part 1 2 or 3 etc.",
-                    "varname": "segnum",
-                    "required": True,
-                    "default" : 1
-                },
-                {
-                    "name": "Dual Channel?",
-                    "description": "Is the input dual channel?",
-                    "varname": "dual",
-                    "type": "boolean",
-                    "default": True
-                },
-                {
-                    "name": "Downsample Ratio",
-                    "description": "Downsample ratio. 1=same size, 0.1=smaller, 10=larger",
-                    "varname": "downsample",
-                    "type": "float",
-                    "default": 1,
-                    "low": 0,
-                    "high": 10
-                },
-                {
-                    "name": "Debug",
-                    "description": "Toggles debug logging. Will also output intermediate steps (similar name to Xilin's MATLAB code)",
-                    "varname": "debug",
-                    "type": "boolean",
-                    "default": False
-                },
-                {
                     "name": "Working Directory",
                     "description": "",
                     "varname": "workdir",
@@ -165,13 +128,6 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     "name": "Create Motion Reference",
                     "description": "Whether or not to use own motion reference or accept input",
                     "varname": "createmcref",
-                    "type": "boolean",
-                    "default": True
-                },
-                {
-                    "name": "Create mask",
-                    "description": "Whether or not to create own mask or accept input",
-                    "varname": "createmask",
                     "type": "boolean",
                     "default": True
                 },
@@ -189,6 +145,14 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     "varname": "runoption",
                     "required": True,
                     "default": 'Both'
+                },
+                {
+                    "type": "str",
+                    "name": "config file",
+                    "description": "Path to preprocessing configuration file",
+                    "varname": "configfile",
+                    "required": True,
+                    "default": ''
                 }
 
 
@@ -199,7 +163,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
         
     
 
-    def computeMotionCorrection(self,image,regFrame='middle'):
+    def computeMotionCorrection(self,image,paramSpec, regFrame='middle'):
         '''
         Expects an image in the form of an np array of size X x Y x T
         '''
@@ -239,22 +203,6 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileSpec={ 'reference' : ipRef,                                    
                     'target' :  ipTar,
                     'initial' : initial }
-
-   
-                paramSpec={'intscale' : 1,
-                'numbins' :  32,
-                'levels' :   1,
-                'optimization' : 'gradientdescent', # 0 hillclimb, 1 gradient descent, 2 conjugate descent
-                'normalize' : True, # True? 
-                'steps' : 4,
-                'iterations' : 32,
-                'mode' : 'rigid', # rigid
-                'resolution' : 1.5,
-                'return_vector' : "false",
-                'metric' : 'NMI', # 1=CC 0,=SSD 3=NMI, 2=MI
-                'debug' : True,
-                'doreslice' : True}
-
         
                 LinRegister.execute(fileSpec,paramSpec);
     
@@ -308,7 +256,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         return opImg,targetFrame,opTransform
 
-    def applyMotionCorrection(self,image,transform,ref=None):
+    def applyMotionCorrection(self,image,transform,ref=None,downsample = 2):
         '''
         Expects an image in the form of an np array of size X x Y x T
         '''
@@ -317,12 +265,11 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         ipImageShape=image.shape
         xDim,yDim,numFrames=ipImageShape
-        #xDimRes = round(xDim/2)
-        #yDimRes = round(yDim/2)
+
         if type(ref) == np.ndarray:
             xDimRes,yDimRes = ref.shape
             opImg=np.zeros([xDimRes,yDimRes,numFrames],dtype='float32')
-            ref = bis_objects.bisImage().create(ref,[2,2,2,1,1],np.eye(4))
+            ref = bis_objects.bisImage().create(ref,[downsample,downsample,downsample,1,1],np.eye(4))
         else:
             opImg=np.zeros([xDim,yDim,numFrames],dtype='float32')
 
@@ -346,156 +293,6 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
         return opImg
 
-           
-    def checkTriggers(ipMovie,expectedStructure=[0,1],ipTriggerFile=None):
-        
-        import numpy as np
-        from matplotlib import pyplot as plt
-        from sklearn.cluster import AgglomerativeClustering
-
-        
-        meanSpace=allMovieData.mean(axis=1).mean(axis=0)
-        #plt.scatter(np.arange(0,meanSpace.shape[0]),meanSpace)
-        #plt.show()
-        timeArr=np.arange(0,meanSpace.shape[0]/10000,1/10000)
-        timeArr=np.expand_dims(timeArr,axis=1)
-        meanSpace=np.expand_dims(meanSpace,axis=1)
-        meanSpaceTimeArr=np.stack([meanSpace,timeArr]).squeeze()
-        clustering = AgglomerativeClustering(n_clusters=2).fit(meanSpaceTimeArr.T)
-        #plt.scatter(np.arange(0,meanSpace.shape[0]),meanSpace,c=clustering.labels_)
-        #plt.show()
-
-        nFrames=ipMovie.shape[2]
-        nChannels=len(expectedStructure)
-        exepectedSeq=np.tile(expectedStructure,nFrame/nChannels)
-
-        clusterLabels=clustering.labels_
-
-        if np.array_equal(expectedSeq,clusterLabels):
-            pass
-        else:
-            raise Exception('Misaligned triggers')
-
-
-
-
-    def makeMask(self,ipdata):
-
-        def dilateIter(img,sem,iters):
-            for iter in range(0,iters):
-                img = morphology.binary_dilation(img,selem=sem)
-            return img
-
-        def erodeIter(img,sem,iters):
-            for iter in range(0,iters):
-                img = morphology.binary_erosion(img,selem=sem)
-            return img
-
-
-        from skimage import filters, morphology
-        val = filters.threshold_otsu(ipdata[~np.isnan(ipdata)])  
-        blobImg = ipdata > val
-        blobImg = ~blobImg
-
-        sem=morphology.disk(1)
-        op = morphology.area_opening(blobImg, area_threshold = 2000, connectivity = 1)
-        op1 = morphology.area_closing(op, connectivity = 2)
-        op2 = erodeIter(op1,sem,4)
-        op3 = morphology.area_opening(op2, area_threshold = 2000, connectivity = 1)
-        sem=morphology.disk(1)
-        op4 = erodeIter(op3,None,10)
-        op5 = dilateIter(op4,None,20)
-        
-
-        return op5
-
-    
-    def MSEDiffImg(self, ipimg, numFramesToUse = 500, medianFilter = 4, dilationIters = 4):
-
-        '''
-        Accepts 3D image, X x Y x Time
-
-        numFramesToUse => How many frames to use in MSE calculation
-
-        medianfilter => cutoff for mask, how many mulitples of the median spatial
-        value in the mean image to use
-
-        dilationIters => How many pixels to add onto the blobs created by the median filter
-        '''
-
-        from scipy.optimize import curve_fit 
-        from scipy.ndimage import morphology
-        from sklearn.linear_model import LinearRegression as LinReg
-        from skimage import feature
-
-        # Num frames
-        dimx,dimy,tslength=ipimg.shape
-        
-        if numFramesToUse > tslength:
-            numFramesToUse = tslength
-
-
-        # Reshape to space by time
-        imgDataBeforeFlat=np.reshape(ipimg,[dimx*dimy,tslength])
-
-        # Shorten image
-        meanTSOrig=imgDataBeforeFlat.mean(axis=0)
-        imgDataBeforeFlat=imgDataBeforeFlat[:,:numFramesToUse]
-
-        # Mean timeseries before MSE   
-        meanTS=imgDataBeforeFlat.mean(axis=0)
-
-        # Spatial mean before MSE
-        meanImg=np.mean(imgDataBeforeFlat,axis=1)
-
-        # Standard deviation of image
-        stdImg=imgDataBeforeFlat.std(axis=1)
-
-        # Median filter based on mean image to remove beads
-        spatialMask=meanImg > np.median(meanImg)*medianFilter
-
-        # Dilate these structures
-        struct1 = morphology.generate_binary_structure(2, 2)
-        spatialMaskSq = np.reshape(spatialMask,[dimx,dimy])
-        spatialMaskSq= morphology.binary_dilation(spatialMaskSq,iterations=dilationIters,structure=struct1)
-        spatialMask=spatialMaskSq.flatten()
-
-        # Mask mean image
-        meanImgMask=meanImg*~spatialMask
-
-        # Mask all data
-        spatialMaskRep=np.tile(np.vstack(spatialMask),numFramesToUse)
-        imgDataBeforeFlat=imgDataBeforeFlat*~spatialMaskRep
-
-        # Standard deviation of image
-        stdImgMask=imgDataBeforeFlat.std(axis=1)
-
-        # Create normalized timeseries
-        imgNormTs=(imgDataBeforeFlat-np.vstack(meanImgMask))/np.vstack(stdImgMask)
-        tsmask=np.sum(np.isnan(imgNormTs),axis=1) < 1
-
-        # Mean normalized timeseries
-        meantsNorm=np.mean(imgNormTs,axis=0)
-        meantsNorm=np.mean(imgNormTs[tsmask,:],axis=0)
-
-        # Look at difference between mean normalized timeseries and 
-        # other normalized timeseries
-        imgNormDemean=imgNormTs-meantsNorm
-
-        # Mean square error of those differences
-        imgNormMSE=np.mean(imgNormDemean**2,axis=1)
-
-        # Reshape to "square" image for display
-        meanImgSq=np.reshape(meanImg,[dimx,dimy])
-        meanImgMaskSq=np.reshape(meanImgMask,[dimx,dimy])
-        imgNormMSESq=np.reshape(imgNormMSE,[dimx,dimy])
-        stdImgSq=np.reshape(stdImg,[dimx,dimy])
-
-
-        # Automated mask
-        imgMask = self.makeMask(imgNormMSESq)
-
-        return meanImgSq,imgNormMSESq, spatialMaskSq, meanImgMaskSq, stdImgSq, meanTSOrig, imgMask
 
     def smoothImage(self, ipImg, width=16):
         import skimage as ski
@@ -607,56 +404,224 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     return True
 
 
+    def makeQcPlotImg(self,img1,img2,opname,stitle):
+        # Raw Data 
+
+        blueData = img1.squeeze()
+
+        if type(img2) != bool:
+            uvData = img2.squeeze()
+        else:
+            uvData = np.zeros(blueData.shape)
+            uvData[uvData == 0] = np.nan
+
+        blueShape = blueData.shape
+        uvShape = uvData.shape
+
+        blueTS = blueData.reshape([blueShape[0]*blueShape[1],blueShape[2]]).mean(axis=0)
+        uvTS = uvData.reshape([uvShape[0]*uvShape[1],uvShape[2]]).mean(axis=0)
+
+        fig = plt.figure(figsize=[10,8])
+        plt.suptitle(stitle)
+        gs = fig.add_gridspec(2,3)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.imshow(blueData.mean(axis=2))
+        ax2 = fig.add_subplot(gs[0, 1])
+        ax2.imshow(blueData.std(axis=2))
+        ax3 = fig.add_subplot(gs[0, 2])
+        ax3.imshow(uvData.mean(axis=2))
+        ax4 = fig.add_subplot(gs[1, 0])
+        ax4.imshow(uvData.std(axis=2))
+        ax5 = fig.add_subplot(gs[1, 1:])
+
+        ax5.scatter(np.linspace(1,blueShape[2],blueShape[2]),blueTS,c='b',alpha=0.3, marker = '.')
+        ax5.scatter(np.linspace(1,uvShape[2],uvShape[2]),uvTS,c='y',alpha=0.3, marker = '.')
+
+
+        plt.savefig(opname)
+        plt.close()
+        plt.clf()
+
+
+    def makeQcPlotMotion(self,blueTransform,uvTransform,opname,stitle):
+
+        blueLen = blueTransform.shape[2]
+        uvLen = uvTransform.shape[2]
+
+        blueXmot = blueTransform[0,3,:]
+        blueYmot = blueTransform[1,3,:]
+
+        blueAbs = np.sqrt(blueXmot**2 + blueYmot**2)
+
+        blueAbsMean = blueAbs.mean()
+        blueAbsMax = blueAbs.max()
+        blueFrm2Frm = np.diff(blueAbs)
+        blueFrm2FrmMean = blueFrm2Frm.mean()
+        blueFrm2FrmMax = blueFrm2Frm.max()
+
+        uvXmot = uvTransform[0,3,:]
+        uvYmot = uvTransform[1,3,:]
+
+        uvAbs = np.sqrt(uvXmot**2 + uvYmot**2)
+
+        uvAbsMean = uvAbs.mean()
+        uvAbsMax = uvAbs.max()
+        uvFrm2Frm = np.diff(uvAbs)
+        uvFrm2FrmMean = uvFrm2Frm.mean()
+        uvFrm2FrmMax = uvFrm2Frm.max()
+
+        if blueLen == uvLen:
+            blueUvCorr =np.corrcoef(blueAbs,uvAbs)[0,1]
+        elif blueLen > uvLen:
+            blueUvCorr =np.corrcoef(blueAbs[:uvLen],uvAbs)[0,1]
+        elif blueLen < uvLen:
+            blueUvCorr =np.corrcoef(blueAbs,uvAbs[:blueLen])[0,1]
+
+        dfArray = np.vstack([blueAbsMean,blueAbsMax,blueFrm2FrmMean,blueFrm2FrmMax,uvAbsMean,uvAbsMax,uvFrm2FrmMean,uvFrm2FrmMax,blueUvCorr]).T
+
+
+        opDf = pd.DataFrame(dfArray,columns=['blueAbsMean','blueAbsMax','blueFrm2FrmMean','blueFrm2FrmMax','uvAbsMean','uvAbsMax','uvFrm2FrmMean','uvFrm2FrmMax','blueUvCorr'],index=[0])
+        opDf.to_csv(opname.split('.')[0]+'.csv')
+
+        plt.figure(figsize = [8,16])
+
+        plt.suptitle(stitle)
+        plt.subplot(9,1,1)
+        plt.title('Blue X Displacement')
+        plt.scatter(np.linspace(1,blueLen,blueLen),blueXmot, marker = '.',s=0.5)
+
+        plt.subplot(9,1,2)
+        plt.title('Blue Y Displacement')
+        plt.scatter(np.linspace(1,blueLen,blueLen),blueYmot, marker = '.',s=0.5)
+
+        plt.subplot(9,1,3)
+        plt.title('Blue Abs Displacement')
+        plt.scatter(np.linspace(1,blueLen,blueLen),blueAbs, marker = '.',s=0.5)
+
+        plt.subplot(9,1,4)
+        plt.title('Blue Frame to Frame Displacement')
+        plt.scatter(np.linspace(1,blueLen-1,blueLen-1),blueFrm2Frm, marker = '.',s=0.5)
+
+        plt.subplot(9,1,5)
+        plt.title('UV X Displacement')
+        plt.scatter(np.linspace(1,uvLen,uvLen),uvXmot, marker = '.',s=0.5)
+
+        plt.subplot(9,1,6)
+        plt.title('UV X Displacement')
+        plt.scatter(np.linspace(1,uvLen,uvLen),uvYmot, marker = '.',s=0.5)
+
+        plt.subplot(9,1,7)
+        plt.title('UV Abs Displacement')
+        plt.scatter(np.linspace(1,uvLen,uvLen),uvAbs, marker = '.',s=0.5)
+
+        plt.subplot(9,1,8)
+        plt.title('UV Frame to Frame Displacement')
+        plt.scatter(np.linspace(1,uvLen-1,uvLen-1),uvFrm2Frm, marker = '.',s=0.5)
+
+
+        plt.subplot(9,1,9)
+
+        iptext=''
+
+        for col in opDf.columns:
+            iptext = iptext + col + ': \t\t\t'.expandtabs() + str(round(opDf[col].values[0],5)) + '\n'
+
+        plt.axis('off')
+        plt.text(0.1, 0.9,iptext, ha='left', va='center')
+
+        plt.tight_layout()
+
+        plt.savefig(opname)
+        plt.close()
+        plt.clf()
+
+
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
 
         ######## Parsing Parameters
-        dualChannel = self.parseBoolean(vals['dual'])
-        debug=self.parseBoolean(vals['debug'])
+
+        # Currently the switch for outputing intermediate steps
+        outputEveryStep=True
+
+
+        # Where to output data
         workdir=vals['workdir']
-        createMask=self.parseBoolean(vals['createmask'])
+
+        # directory to output qc figs
+        figDir = os.path.join(workdir,'qcFigs')
+
+        # If the qc fig directory doesnt exist create it
+        if not os.path.isdir(figDir):
+            os.makedirs(figDir)
+
+        # Switch for whether or not to motion correct within current data only, or some other scan
         createMCRef=self.parseBoolean(vals['createmcref'])
-        segnum = vals['segnum']
+
+        # Run only start of pipeline, for debug, should delete
         startOnly = self.parseBoolean(vals['startonly'])
+
+        # Switch for running spatial preproc, temporal preproc, or both
         runoption = vals['runoption'].lower()
-        outputEveryStep = debug
+
+        # load config file with some options specified
+        configPath = vals['configfile']
+
+        with open(configPath) as f:
+            configDct = yaml.load(f,Loader = yaml.Loader)
+
+        # Assign motion correction parameters
+        mocoParamSpec = configDct['mocoParams']
+
+        # How big a kernel to use for smoothing for moco calculation
+        mocoSmooth = configDct['smooth']['mocoSmooth']
+        # How big a kernel to use for actually smoothing the data which will be output
+        downsampleSmooth = configDct['smooth']['downsampleSmooth']
+
+        # Assign downsample factor, one value, applied to both dimensions
+        downsampleFactor = configDct['downsample']
+
+        ### Moco parameters usually used
+        #mocoParamSpec = {'intscale' : 1,
+        #        'numbins' :  32,
+        #        'levels' :   1,
+        #        'optimization' : 'gradientdescent', # 0 hillclimb, 1 gradient descent, 2 conjugate descent
+        #        'normalize' : True, # True? 
+        #        'steps' : 4,
+        #        'iterations' : 32,
+        #        'mode' : 'rigid', # rigid
+        #        'resolution' : 1.5,
+        #        'return_vector' : "false",
+        #        'metric' : 'NMI', # 1=CC 0,=SSD 3=NMI, 2=MI
+        #        'debug' : True,
+        #        'doreslice' : True}
+
+
 
         assert runoption in ['spatial','temporal','both']
 
-        #### Desired output nifti configs for data prior to downsampling, would be good to have as input alongside tiff files
-        #### Input nifti files can keep the same parameters
-        dimsOp = [0.025,0.025,0.025,1]
-        aff = np.eye(4)
-        aff[1,1] = -1
-        aff[2,2] = -1
-        aff = aff * 0.025
-        aff[3,3] = 1
 
-
-        dimsOpDs = [0.05,0.05,0.05,1]
-        affDs = np.eye(4)
-        affDs[1,1] = -1
-        affDs[2,2] = -1
-        affDs = affDs * 0.05
-        affDs[3,3] = 1
         
-        #### Ideal Future setup
-        ## We may have different neural sensitive wavelengths in future
-        ## We wanna do spatial stuff on separate parts, smoothing and moco and d/sampling
-        ## We wanna group together image parts for temproal processing
 
-
+        # These are the preproc steps that will be applied to the signal sensitive cyan wavelength
         preprocStepsBlue = ['raw','smooth16','moco','smooth4','photob','wvlthreg']
+        # These are the preproc steps that will be applied to the signal insensitive photobleach wavelength
         preproceStepsUV = ['raw','smooth16','moco','smooth4','photob']
 
+
+        # This dictionary, "fileManageDict", will be used in conjunction with "processDictEntry" function
+        # to read/write different intermediate steps
         fileManageDict = {}
 
 
+        # Define parent keys for signl sensitive and insensitive data streams
         fileManageDict['WLSignal1'] = {}
         fileManageDict['WLNoise1'] = {}
 
 
-        if not createMCRef and runoption != 'temporal':
+
+        # Define moco reference files in file manage dict
+        if runoption == 'spatial' and createMCRef == False:
             fileManageDict['WLSignal1']['mcref'] = {}
             fileManageDict['WLSignal1']['mcref']['data'] = self.inputs['mcrefsignal'].get_data()
             fileManageDict['WLSignal1']['mcref']['precursor'] = ['raw','mcref']
@@ -664,10 +629,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLNoise1']['mcref'] = {}
             fileManageDict['WLNoise1']['mcref']['data'] = self.inputs['mcrefnoise'].get_data()
             fileManageDict['WLNoise1']['mcref']['precursor'] = ['raw','mcref']
-
-
         else:
-        
             fileManageDict['WLSignal1']['mcref'] = {}
             fileManageDict['WLSignal1']['mcref']['precursor'] = ['raw','mcref']
 
@@ -675,8 +637,8 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLNoise1']['mcref']['precursor'] = ['raw','mcref']
 
 
-
-        if (not createMask) and (self.inputs['mask'] != None):
+        # Define mask in file manage dict
+        if self.inputs['mask'] != None:
             fileManageDict['WLSignal1']['mask'] = {}
             fileManageDict['WLNoise1']['mask'] = {}
             
@@ -684,64 +646,47 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLSignal1']['mask']['precursor'] = ['mask']
 
             fileManageDict['WLNoise1']['mask']['data'] = np.squeeze(self.inputs['mask'].get_data().astype(int))
-
-
-        elif (not createMask) and ('mask' not in self.inputs) and (runoption != 'spatial'):
-            raise Exception('If createMask != True you must give the path to a mask')
-
+        elif 'mask' not in self.inputs and runoption == 'temporal':
+            raise Exception('If run option is "temporal" you must give the path to a mask')
         elif runoption == 'spatial':
             pass
 
 
 
-         # Load inputs
+        # Load inputs to file manage dict
 
-        if self.inputs['noise'] == None:
+        fileManageDict['WLSignal1']['raw'] = {}
+        fileManageDict['WLNoise1']['raw'] = {}
+        
+        fileManageDict['WLSignal1']['raw']['precursor'] = ['rawsignl']
+        fileManageDict['WLNoise1']['raw']['precursor'] = ['rawnoise']
 
+        fileManageDict['WLSignal1']['raw']['data'] = self.inputs['signal'].get_data().astype(np.float32).squeeze()
+        fileManageDict['WLNoise1']['raw']['data'] = self.inputs['noise'].get_data().astype(np.float32).squeeze()
 
-            inputTrigs = vals['opticalorder']
-            inputTrigs=pd.read_csv(inputTrigs,index_col=0)
-            opticalOrder=inputTrigs['opticalOrder'].values
+        # Make qc fig for input data
+        self.makeQcPlotImg(fileManageDict['WLSignal1']['raw']['data'],fileManageDict['WLNoise1']['raw']['data'],os.path.join(figDir,'rawdata.png'),'Raw Data')
+        
 
-            inputMovie = self.inputs['signal'].get_data().astype(np.float32)
+        #### Desired output nifti configs for data prior to downsampling, would be good to have as input alongside tiff files
+        #### Input nifti files can keep the same parameters
+        aff = self.inputs['signal'].affine
 
-            inputShape = inputMovie.shape
-            inputLen = inputShape[-1]
+        affDs = aff.copy()
+        for itr in range(0,3):
+            affDs[itr,itr] = affDs[itr,itr]*downsampleFactor
 
-            opticalOrder = opticalOrder[:inputLen]
-
-            # Check triggers!
-            fileManageDict['WLSignal1']['raw'] = {}
-            fileManageDict['WLNoise1']['raw'] = {}
-
-            fileManageDict['WLSignal1']['raw']['data'] = inputMovie[:,:,opticalOrder == 1]
-            fileManageDict['WLNoise1']['raw']['data'] = inputMovie[:,:,opticalOrder == 2]
-
-            
-            fileManageDict['WLSignal1']['raw']['precursor'] = ['rawsignl']
-            fileManageDict['WLNoise1']['raw']['precursor'] = ['rawnoise']
-
-
-            del inputMovie
+        dimsOp = self.inputs['signal'].spacing.copy()
+        dimsOpDs = self.inputs['signal'].spacing.copy()
+        dimsOpDs[:3] =  list(map(lambda x : x * downsampleFactor,dimsOpDs[:3]))
 
 
-        else:
-
-            fileManageDict['WLSignal1']['raw'] = {}
-            fileManageDict['WLNoise1']['raw'] = {}
-            
-            fileManageDict['WLSignal1']['raw']['precursor'] = ['rawsignl']
-            fileManageDict['WLNoise1']['raw']['precursor'] = ['rawnoise']
-
-            fileManageDict['WLSignal1']['raw']['data'] = self.inputs['signal'].get_data().astype(np.float32).squeeze()
-            fileManageDict['WLNoise1']['raw']['data'] = self.inputs['noise'].get_data().astype(np.float32).squeeze()
-
-
-
-
+        # Keep input image sizes
         signalMovieSize = fileManageDict['WLSignal1']['raw']['data'].shape
         noiseMovieSize = fileManageDict['WLNoise1']['raw']['data'].shape
 
+        # Legacy code which will output raw data, from when we split the data inside the pipeline
+        # can prob delete
         if outputEveryStep and self.inputs['noise'] == None:
 
             self.processDictEntry(fileManageDict['WLSignal1']['raw'], opFold = workdir,dimsOp = dimsOp, aff = aff, reshape4D=True)
@@ -765,7 +710,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
             #### Smooth Data 16 Filt ######
 
-            
+            # Setup file manage dict keys for smoothing & moco
             fileManageDict['WLSignal1']['smooth16'] = {}
             fileManageDict['WLSignal1']['smooth16']['precursor'] = ['rawsignl','smooth16']
 
@@ -781,17 +726,13 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLNoise1']['moco16'] = {}
             fileManageDict['WLNoise1']['moco16']['precursor'] = ['rawnoise','smooth16','moco']
 
-
-
-
-
-
-
+       
+            ### Run spatial smoothing with larger kernel
             if not self.processDictEntry(fileManageDict['WLSignal1']['moco16'], opFold = workdir):
 
                 if not self.processDictEntry(fileManageDict['WLSignal1']['smooth16'], opFold = workdir):
 
-                    fileManageDict['WLSignal1']['smooth16']['data'] = self.smoothImage(fileManageDict['WLSignal1']['raw']['data'])
+                    fileManageDict['WLSignal1']['smooth16']['data'] = self.smoothImage(fileManageDict['WLSignal1']['raw']['data'], width=mocoSmooth)
 
 
                     self.processDictEntry(fileManageDict['WLSignal1']['smooth16'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
@@ -803,7 +744,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                 if not self.processDictEntry(fileManageDict['WLNoise1']['smooth16'], opFold = workdir):
 
-                    fileManageDict['WLNoise1']['smooth16']['data'] = self.smoothImage(fileManageDict['WLNoise1']['raw']['data'])
+                    fileManageDict['WLNoise1']['smooth16']['data'] = self.smoothImage(fileManageDict['WLNoise1']['raw']['data'], width=mocoSmooth)
 
                     self.processDictEntry(fileManageDict['WLNoise1']['smooth16'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
 
@@ -811,14 +752,14 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                     fileManageDict['WLNoise1']['smooth16']['data'] = self.processDictEntry(fileManageDict['WLNoise1']['smooth16'], loadData = True, opFold = workdir)
 
+                self.makeQcPlotImg(fileManageDict['WLSignal1']['smooth16']['data'],fileManageDict['WLNoise1']['smooth16']['data'],os.path.join(figDir,'mocoSmooth.png'),'Pre Moco Smoothing')
+
             else:
                 fileManageDict['WLSignal1']['smooth16']['data'] = self.processDictEntry(fileManageDict['WLSignal1']['smooth16'], loadData = True, opFold = workdir)
                 fileManageDict['WLNoise1']['smooth16']['data'] = self.processDictEntry(fileManageDict['WLNoise1']['smooth16'], loadData = True, opFold = workdir)
 
 
-            #### Smooth Data 4 Filt ######
-
-            
+            #Setup keys in file manage dict for smaller kernel smoothing       
             fileManageDict['WLSignal1']['smooth4'] = {}
             fileManageDict['WLSignal1']['smooth4']['precursor'] = ['rawsignl','smooth4']
 
@@ -826,9 +767,10 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLNoise1']['smooth4'] = {}
             fileManageDict['WLNoise1']['smooth4']['precursor'] = ['rawnoise','smooth4']
 
+            # Perform smoothing with smaller kernel
             if not self.processDictEntry(fileManageDict['WLSignal1']['smooth4'], opFold = workdir):
 
-                fileManageDict['WLSignal1']['smooth4']['data'] = self.smoothImage(fileManageDict['WLSignal1']['raw']['data'], width = 4)
+                fileManageDict['WLSignal1']['smooth4']['data'] = self.smoothImage(fileManageDict['WLSignal1']['raw']['data'], width = downsampleSmooth)
 
                 self.processDictEntry(fileManageDict['WLSignal1']['smooth4'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
      
@@ -838,7 +780,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
             if not self.processDictEntry(fileManageDict['WLNoise1']['smooth4'], opFold = workdir):
 
-                fileManageDict['WLNoise1']['smooth4']['data'] = self.smoothImage(fileManageDict['WLNoise1']['raw']['data'], width = 4)
+                fileManageDict['WLNoise1']['smooth4']['data'] = self.smoothImage(fileManageDict['WLNoise1']['raw']['data'], width = downsampleSmooth)
 
                 self.processDictEntry(fileManageDict['WLNoise1']['smooth4'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
      
@@ -846,93 +788,12 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileManageDict['WLNoise1']['smooth4']['data'] = self.processDictEntry(fileManageDict['WLNoise1']['smooth4'], loadData = True, opFold = workdir)
 
 
+            # create qc figs for smaller kernel smoothing
+            self.makeQcPlotImg(fileManageDict['WLSignal1']['smooth4']['data'],fileManageDict['WLNoise1']['smooth4']['data'],os.path.join(figDir,'smooth.png'),'Lighter smooth')
 
 
 
-
-            #### Motion correction of raw data for comparison ####
-       
-
-            #fileManageDict['WLSignal1']['mocoraw'] = {}
-            #fileManageDict['WLSignal1']['mocoraw']['precursor'] = ['rawsignl','moco']
-            #fileManageDict['WLSignal1']['mocoraw']['refimg'] = {}
-            #fileManageDict['WLSignal1']['mocoraw']['refimg']['precursor'] = ['rawsignl','moco','refimg']
-            #fileManageDict['WLSignal1']['mocoraw']['transform'] = {}
-            #fileManageDict['WLSignal1']['mocoraw']['transform']['precursor'] = ['rawsignl','moco','xfm']
-
-
-            #fileManageDict['WLNoise1']['mocoraw'] = {}
-            #fileManageDict['WLNoise1']['mocoraw']['precursor'] = ['rawnoise','moco']
-            #fileManageDict['WLNoise1']['mocoraw']['refimg'] = {}
-            #fileManageDict['WLNoise1']['mocoraw']['refimg']['precursor'] = ['rawnoise','moco','refimg']
-            #fileManageDict['WLNoise1']['mocoraw']['transform'] = {}
-            #fileManageDict['WLNoise1']['mocoraw']['transform']['precursor'] = ['rawnoise','moco','xfm']
-
-     
-
-            #rawMocoFileCheck = all([self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], opFold = workdir), 
-            #                        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], opFold = workdir), 
-            #                        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')])
-
-
-            #if not rawMocoFileCheck:
-
-            #    fileManageDict['WLSignal1']['mocoraw']['data'], \
-            #    fileManageDict['WLSignal1']['mocoraw']['refimg']['data'], \
-            #    fileManageDict['WLSignal1']['mocoraw']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['raw']['data'])
-
-
-
-            #    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
-            #    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
-            #    self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')
-
-
-            #else:
-            #    fileManageDict['WLSignal1']['mocoraw']['data'] = \
-            #        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw'], loadData = True, opFold = workdir)
-
-            #    fileManageDict['WLSignal1']['mocoraw']['refimg']['data'] = \
-            #        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['refimg'], loadData = True, opFold = workdir)
-
-            #    fileManageDict['WLSignal1']['mocoraw']['transform']['data'] = \
-            #        self.processDictEntry(fileManageDict['WLSignal1']['mocoraw']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
-
-            #del blueMovieMC
-
-            #rawMocoFileCheck = all([self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], opFold = workdir), 
-            #                        self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], opFold = workdir), 
-            #                        self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')])
-
-
-            #if not rawMocoFileCheck:
-
-            #    fileManageDict['WLNoise1']['mocoraw']['data'], \
-            #    fileManageDict['WLNoise1']['mocoraw']['refimg']['data'], \
-            #    fileManageDict['WLNoise1']['mocoraw']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['raw']['data'])
-
-
-
-            #    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
-            #    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
-            #    self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], opFold = workdir, fsuffix = '.npy')
-
-
-            #else:
-            #    fileManageDict['WLNoise1']['mocoraw']['data'] = \
-            #        self.processDictEntry(fileManageDict['WLNoise1']['mocoraw'], loadData = True, opFold = workdir)
-
-           #     fileManageDict['WLNoise1']['mocoraw']['refimg']['data'] = \
-           #         self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['refimg'], loadData = True, opFold = workdir)
-
-           #     fileManageDict['WLNoise1']['mocoraw']['transform']['data'] = \
-           #         self.processDictEntry(fileManageDict['WLNoise1']['mocoraw']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
-
-
-            #del uvMovieMC
-
-
-            #Memory management: Remove raw data from dict
+            #Memory management: Remove raw data from file manage dict
             del fileManageDict['WLNoise1']['raw']['data']
             del fileManageDict['WLSignal1']['raw']['data']
 
@@ -940,8 +801,8 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
 
             #### Motion correction  calculation on smooth 16 data ####
-
-
+         
+            # Setup keys in file manage dict for moco corrected data and reference images
             fileManageDict['WLSignal1']['moco16'] = {}
             fileManageDict['WLSignal1']['moco16']['precursor'] = ['rawsignl','smooth16','moco']
             fileManageDict['WLSignal1']['moco16']['refimg'] = {}
@@ -958,7 +819,9 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLNoise1']['moco16']['transform']['precursor'] = ['rawnoise','smooth16','moco','xfm']
 
 
+            # perform motion corrected on data smoothed with larger kernel
 
+            # CHeck if steps run already and run if no, load if yes
             smth16MocoFileCheck = all([self.processDictEntry(fileManageDict['WLSignal1']['moco16'], opFold = workdir), 
                                     self.processDictEntry(fileManageDict['WLSignal1']['moco16']['refimg'], opFold = workdir), 
                                     self.processDictEntry(fileManageDict['WLSignal1']['moco16']['transform'], opFold = workdir, fsuffix = '.npy')])
@@ -968,9 +831,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                 fileManageDict['WLSignal1']['moco16']['data'], \
                 fileManageDict['WLSignal1']['moco16']['refimg']['data'], \
-                fileManageDict['WLSignal1']['moco16']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['smooth16']['data'])
-
-
+                fileManageDict['WLSignal1']['moco16']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['smooth16']['data'], mocoParamSpec)
 
                 self.processDictEntry(fileManageDict['WLSignal1']['moco16'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
                 self.processDictEntry(fileManageDict['WLSignal1']['moco16']['refimg'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = False)
@@ -998,7 +859,8 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                 fileManageDict['WLNoise1']['moco16']['data'], \
                 fileManageDict['WLNoise1']['moco16']['refimg']['data'], \
-                fileManageDict['WLNoise1']['moco16']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['smooth16']['data'])
+                fileManageDict['WLNoise1']['moco16']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['smooth16']['data'], mocoParamSpec)
+
 
 
 
@@ -1019,9 +881,16 @@ class calciumPreprocess(bis_basemodule.baseModule):
                     self.processDictEntry(fileManageDict['WLNoise1']['moco16']['transform'], loadData = True, fsuffix = '.npy', opFold = workdir)
 
 
+            # qc fig for data smooth with large kernel & moco applied            
+            self.makeQcPlotMotion(fileManageDict['WLSignal1']['moco16']['transform']['data'], \
+                            fileManageDict['WLNoise1']['moco16']['transform']['data'], \
+                            os.path.join(figDir,'mocoParams.png'), \
+                            'Motion Correction Parameters')
 
 
 
+            # If another motion correction reference is provide, co register the current ref img to that one
+            # and then concat the transforms and apply to current dara
             if not createMCRef:
 
                 fileManageDict['WLSignal1']['refcombo'] = {}
@@ -1043,7 +912,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                     fileManageDict['WLSignal1']['refcombo']['data'], \
                     _, \
-                    fileManageDict['WLSignal1']['refcombo']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['moco16']['refimg']['data'], \
+                    fileManageDict['WLSignal1']['refcombo']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLSignal1']['moco16']['refimg']['data'],mocoParamSpec, \
                                                                                     regFrame = fileManageDict['WLSignal1']['mcref']['data'])
 
                     self.processDictEntry(fileManageDict['WLSignal1']['refcombo'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
@@ -1069,7 +938,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                     fileManageDict['WLNoise1']['refcombo']['data'], \
                     _, \
-                    fileManageDict['WLNoise1']['refcombo']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['moco16']['refimg']['data'], \
+                    fileManageDict['WLNoise1']['refcombo']['transform']['data'] = self.computeMotionCorrection(fileManageDict['WLNoise1']['moco16']['refimg']['data'],mocoParamSpec, \
                                                                                     regFrame = fileManageDict['WLNoise1']['mcref']['data'])
 
                     self.processDictEntry(fileManageDict['WLNoise1']['refcombo'], opFold = workdir, dimsOp = dimsOp, aff = aff, reshape4D = True)
@@ -1146,12 +1015,12 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                 MCRefComboX, MCRefComboY = fileManageDict['WLSignal1']['refcombo']['data'].shape
 
-                MCRefComboDS = calcium_image.resize(fileManageDict['WLSignal1']['refcombo']['data'],[round(MCRefComboX/2),round(MCRefComboY/2)])
+                MCRefComboDS = calcium_image.resize(fileManageDict['WLSignal1']['refcombo']['data'],[round(MCRefComboX/downsampleFactor),round(MCRefComboY/downsampleFactor)])
 
                 fileManageDict['WLSignal1']['mocoSmthXfm']['data'] = \
                     self.applyMotionCorrection(fileManageDict['WLSignal1']['smooth4']['data'], \
                     fileManageDict['WLSignal1']['refcombo']['transform']['data'], \
-                    ref = MCRefComboDS)
+                    ref = MCRefComboDS, downsample = downsampleFactor)
 
                 self.processDictEntry(fileManageDict['WLSignal1']['mocoSmthXfm'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
 
@@ -1167,7 +1036,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                 MCRefComboX, MCRefComboY = fileManageDict['WLSignal1']['refcombo']['data'].shape
 
-                MCRefComboDS = calcium_image.resize(fileManageDict['WLSignal1']['refcombo']['data'],[round(MCRefComboX/2),round(MCRefComboY/2)])
+                MCRefComboDS = calcium_image.resize(fileManageDict['WLSignal1']['refcombo']['data'],[round(MCRefComboX/downsampleFactor),round(MCRefComboY/downsampleFactor)])
 
                 xfmToApply = fileManageDict['WLSignal1']['refcombo']['transform']['data']
 
@@ -1184,7 +1053,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileManageDict['WLNoise1']['mocoSmthXfm']['data'] = \
                     self.applyMotionCorrection(fileManageDict['WLNoise1']['smooth4']['data'], \
                     xfmToApply, \
-                    ref = MCRefComboDS)
+                    ref = MCRefComboDS, downsample = downsampleFactor)
 
                 self.processDictEntry(fileManageDict['WLNoise1']['mocoSmthXfm'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
 
@@ -1193,6 +1062,8 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileManageDict['WLNoise1']['mocoSmthXfm']['data'] = \
                     self.processDictEntry(fileManageDict['WLNoise1']['mocoSmthXfm'], loadData = True, opFold = workdir)  
 
+
+            self.makeQcPlotImg(fileManageDict['WLSignal1']['mocoSmthXfm']['data'],fileManageDict['WLNoise1']['mocoSmthXfm']['data'],os.path.join(figDir,'postMoco.png'),'Motion Corrected & Downsampled Data')
 
             #Memory management: Remove smooth4 from dict
             del fileManageDict['WLSignal1']['smooth4']['data']
@@ -1226,28 +1097,28 @@ class calciumPreprocess(bis_basemodule.baseModule):
                 fileManageDict['WLNoise1']['mocoSmthXfm']['data'] = fileManageDict['WLNoise1']['raw']['data']
 
         
-            if createMask:
+            #if createMask:
 
-                fileManageDict['WLSignal1']['mask'] = {}
-                fileManageDict['WLSignal1']['mask']['precursor'] = ['mask']
+            #    fileManageDict['WLSignal1']['mask'] = {}
+            #    fileManageDict['WLSignal1']['mask']['precursor'] = ['mask']
 
-                # Create Mask
-                meanImgSq,imgNormMSESq, spatialMaskSq, meanImgMaskSq, stdImgSq, meanTSOrig, fileManageDict['WLSignal1']['mask']['data'] = \
-                    self.MSEDiffImg(fileManageDict['WLSignal1']['mocoSmthXfm']['data'], numFramesToUse = 1500, medianFilter = 8, dilationIters = 4)
+            #    # Create Mask
+            #    meanImgSq,imgNormMSESq, spatialMaskSq, meanImgMaskSq, stdImgSq, meanTSOrig, fileManageDict['WLSignal1']['mask']['data'] = \
+            #        self.MSEDiffImg(fileManageDict['WLSignal1']['mocoSmthXfm']['data'], numFramesToUse = 1500, medianFilter = 8, dilationIters = 4)
 
                 # Save images
                  
-                out = bis_objects.bisImage().create(fileManageDict['WLSignal1']['mask']['data'].astype('int'),dimsOp,aff)
-                out.save(os.path.join(workdir,'MSEMask.nii.gz'))
-                out = bis_objects.bisImage().create(imgNormMSESq,dimsOp,aff)
-                out.save(os.path.join(workdir,'MSEImage.nii.gz'))
+            #    out = bis_objects.bisImage().create(fileManageDict['WLSignal1']['mask']['data'].astype('int'),dimsOp,aff)
+            #    out.save(os.path.join(workdir,'MSEMask.nii.gz'))
+            #    out = bis_objects.bisImage().create(imgNormMSESq,dimsOp,aff)
+            #    out.save(os.path.join(workdir,'MSEImage.nii.gz'))
 
 
 
-            if not createMask:
-                maskX, maskY = fileManageDict['WLSignal1']['mask']['data'].shape
+            #if not createMask:
+            maskX, maskY = fileManageDict['WLSignal1']['mask']['data'].shape
 
-                fileManageDict['WLSignal1']['mask']['data'] = img_as_bool(skresize(fileManageDict['WLSignal1']['mask']['data'].astype(bool),(round(maskX/2),round(maskY/2))))
+            fileManageDict['WLSignal1']['mask']['data'] = img_as_bool(skresize(fileManageDict['WLSignal1']['mask']['data'].astype(bool),(round(maskX/downsampleFactor),round(maskY/downsampleFactor))))
 
            
             # Photobleach correction
@@ -1259,13 +1130,15 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLNoise1']['photob'] = {}
             fileManageDict['WLNoise1']['photob']['precursor'] = ['rawnoise','smooth4','mococombo','photob']
 
-
+           
 
 
             fileManageDict['WLSignal1']['photob']['data'], fileManageDict['WLNoise1']['photob']['data'] = \
                 calcium_analysis.expRegression(fileManageDict['WLSignal1']['mocoSmthXfm']['data'], \
                                                 fileManageDict['WLNoise1']['mocoSmthXfm']['data'], \
                                                 fileManageDict['WLSignal1']['mask']['data'])
+
+            self.makeQcPlotImg(fileManageDict['WLSignal1']['photob']['data'],fileManageDict['WLNoise1']['photob']['data'],os.path.join(figDir,'photobleach.png'),'Photobleach corrected data')
 
             if outputEveryStep:
                 self.processDictEntry(fileManageDict['WLSignal1']['photob'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
@@ -1285,6 +1158,8 @@ class calciumPreprocess(bis_basemodule.baseModule):
                                                         fileManageDict['WLSignal1']['mocoSmthXfm']['data'], \
                                                         fileManageDict['WLNoise1']['mocoSmthXfm']['data'], \
                                                         fileManageDict['WLSignal1']['mask']['data'])
+
+            self.makeQcPlotImg(fileManageDict['WLSignal1']['wvlthreg']['data'],False,os.path.join(figDir,'wavelengthReg.png'),'Wavelength regressed data')
 
 
             if outputEveryStep:
