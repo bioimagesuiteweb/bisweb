@@ -1666,10 +1666,10 @@ class BisWebImage extends BisWebDataObject {
                 internal.header.struct.srow_y[col]=M[col*4+1];
                 internal.header.struct.srow_z[col]=M[col*4+2];
             }
-            console.log("Created srow");
-            console.log(internal.header.struct.srow_x);
-            console.log(internal.header.struct.srow_y);
-            console.log(internal.header.struct.srow_z);
+            //console.log("Created srow");
+            //            console.log(internal.header.struct.srow_x);
+            //          console.log(internal.header.struct.srow_y);
+            //        console.log(internal.header.struct.srow_z);
         }
         
         if (dim[5]===0)
