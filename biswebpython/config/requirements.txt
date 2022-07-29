@@ -1,4 +1,4 @@
-nibabel==2.1.0
+nibabel==3.2.2
 numpy>=1.13
 pillow>=4.3.0
 scikit-image
