@@ -581,6 +581,17 @@ class calciumPreprocess(bis_basemodule.baseModule):
         # Assign downsample factor, one value, applied to both dimensions
         downsampleFactor = configDct['downsample']
 
+
+        # Whether or not to do photobleach correction
+        photoBleachCorrect = configDct['photoBleachCorrect']
+
+        # If true apply moco params from cyan to uv, else apply uv to uv
+        cyanMocoToUv = configDct['correctUVMotionWithCyan']
+
+
+
+
+
         ### Moco parameters usually used
         #mocoParamSpec = {'intscale' : 1,
         #        'numbins' :  32,
@@ -1031,14 +1042,25 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
 
 
+
             
             if not self.processDictEntry(fileManageDict['WLNoise1']['mocoSmthXfm'], opFold = workdir):
 
-                MCRefComboX, MCRefComboY = fileManageDict['WLSignal1']['refcombo']['data'].shape
 
-                MCRefComboDS = calcium_image.resize(fileManageDict['WLSignal1']['refcombo']['data'],[round(MCRefComboX/downsampleFactor),round(MCRefComboY/downsampleFactor)])
 
-                xfmToApply = fileManageDict['WLSignal1']['refcombo']['transform']['data']
+                if not cyanMocoToUv:
+                    MCRefComboX, MCRefComboY = fileManageDict['WLNoise1']['refcombo']['data'].shape
+
+                    MCRefComboDS = calcium_image.resize(fileManageDict['WLNoise1']['refcombo']['data'],[round(MCRefComboX/downsampleFactor),round(MCRefComboY/downsampleFactor)])
+
+                    xfmToApply = fileManageDict['WLNoise1']['refcombo']['transform']['data']
+
+                else:
+                    MCRefComboX, MCRefComboY = fileManageDict['WLSignal1']['refcombo']['data'].shape
+
+                    MCRefComboDS = calcium_image.resize(fileManageDict['WLSignal1']['refcombo']['data'],[round(MCRefComboX/downsampleFactor),round(MCRefComboY/downsampleFactor)])
+
+                    xfmToApply = fileManageDict['WLSignal1']['refcombo']['transform']['data']
 
 
                 while xfmToApply.shape[2] != fileManageDict['WLNoise1']['smooth4']['data'].shape[2]:
@@ -1052,8 +1074,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
                 fileManageDict['WLNoise1']['mocoSmthXfm']['data'] = \
                     self.applyMotionCorrection(fileManageDict['WLNoise1']['smooth4']['data'], \
-                    xfmToApply, \
-                    ref = MCRefComboDS, downsample = downsampleFactor)
+                    xfmToApply, ref = MCRefComboDS, downsample = downsampleFactor)
 
                 self.processDictEntry(fileManageDict['WLNoise1']['mocoSmthXfm'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
 
@@ -1121,28 +1142,53 @@ class calciumPreprocess(bis_basemodule.baseModule):
             fileManageDict['WLSignal1']['mask']['data'] = img_as_bool(skresize(fileManageDict['WLSignal1']['mask']['data'].astype(bool),(round(maskX/downsampleFactor),round(maskY/downsampleFactor))))
 
            
-            # Photobleach correction
+
+            if photoBleachCorrect:
+                # Photobleach correction
 
 
-            fileManageDict['WLSignal1']['photob'] = {}
-            fileManageDict['WLSignal1']['photob']['precursor'] = ['rawsignl','smooth4','mococombo','photob']
+                fileManageDict['WLSignal1']['photob'] = {}
+                fileManageDict['WLSignal1']['photob']['precursor'] = ['rawsignl','smooth4','mococombo','photob']
 
-            fileManageDict['WLNoise1']['photob'] = {}
-            fileManageDict['WLNoise1']['photob']['precursor'] = ['rawnoise','smooth4','mococombo','photob']
+                fileManageDict['WLNoise1']['photob'] = {}
+                fileManageDict['WLNoise1']['photob']['precursor'] = ['rawnoise','smooth4','mococombo','photob']
 
-           
+               
 
 
-            fileManageDict['WLSignal1']['photob']['data'], fileManageDict['WLNoise1']['photob']['data'] = \
-                calcium_analysis.expRegression(fileManageDict['WLSignal1']['mocoSmthXfm']['data'], \
-                                                fileManageDict['WLNoise1']['mocoSmthXfm']['data'], \
-                                                fileManageDict['WLSignal1']['mask']['data'])
+                fileManageDict['WLSignal1']['photob']['data'], fileManageDict['WLNoise1']['photob']['data'] = \
+                    calcium_analysis.expRegression(fileManageDict['WLSignal1']['mocoSmthXfm']['data'], \
+                                                    fileManageDict['WLNoise1']['mocoSmthXfm']['data'], \
+                                                    fileManageDict['WLSignal1']['mask']['data'])
 
-            self.makeQcPlotImg(fileManageDict['WLSignal1']['photob']['data'],fileManageDict['WLNoise1']['photob']['data'],os.path.join(figDir,'photobleach.png'),'Photobleach corrected data')
+                self.makeQcPlotImg(fileManageDict['WLSignal1']['photob']['data'],fileManageDict['WLNoise1']['photob']['data'],os.path.join(figDir,'photobleach.png'),'Photobleach corrected data')
 
-            if outputEveryStep:
-                self.processDictEntry(fileManageDict['WLSignal1']['photob'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
-                self.processDictEntry(fileManageDict['WLNoise1']['photob'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
+                if outputEveryStep:
+                    self.processDictEntry(fileManageDict['WLSignal1']['photob'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
+                    self.processDictEntry(fileManageDict['WLNoise1']['photob'], opFold = workdir, dimsOp = dimsOpDs, aff = affDs, reshape4D = True)
+
+            else:
+                
+                # Insert motion corrected data as "photobleached" to skip step
+
+
+                fileManageDict['WLSignal1']['photob'] = {}
+                fileManageDict['WLSignal1']['photob']['precursor'] = ['rawsignl','smooth4','mococombo','photob']
+
+                fileManageDict['WLNoise1']['photob'] = {}
+                fileManageDict['WLNoise1']['photob']['precursor'] = ['rawnoise','smooth4','mococombo','photob']
+
+               
+
+
+                fileManageDict['WLSignal1']['photob']['data'], fileManageDict['WLNoise1']['photob']['data'] = \
+                                                    fileManageDict['WLSignal1']['mocoSmthXfm']['data'], \
+                                                    fileManageDict['WLNoise1']['mocoSmthXfm']['data']
+
+
+
+
+            #### Two-wavelength Regression
 
 
 
@@ -1151,7 +1197,6 @@ class calciumPreprocess(bis_basemodule.baseModule):
 
 
 
-            #### Two-wavelength Regression
             fileManageDict['WLSignal1']['wvlthreg']['data'] = \
                 calcium_analysis.twoWavelengthRegression(fileManageDict['WLSignal1']['photob']['data'], \
                                                         fileManageDict['WLNoise1']['photob']['data'], \
