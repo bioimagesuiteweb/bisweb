@@ -17,7 +17,7 @@
 
 'use strict';
 
-const biswrap = require('libbiswasm_wrapper');
+
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebImage = require('bisweb_image.js');
@@ -25,8 +25,6 @@ const BisWebImage = require('bisweb_image.js');
  * blanks an image along 
  */
 
-const defaultMin=0;
-const defaultMax=500;
 
 class circleBlankImageModule extends BaseModule {
     constructor() {

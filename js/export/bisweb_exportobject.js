@@ -20,7 +20,7 @@ const userPreferences = require('bisweb_userpreferences.js');
 const biswasmdate=require('biswasmdate.js');
 const basemodule = require('basemodule.js');
 const basemoduleutils = require('baseutils.js');
-
+const biswrap = require('libbiswasm_wrapper');
 
 
 
@@ -102,6 +102,8 @@ module.exports= {
     //    bistfutil: bistfutil,
     // WASM build time,
     biswasmdate : biswasmdate,
+    // WASM Stuff
+    biswrap : biswrap
 };
 
 

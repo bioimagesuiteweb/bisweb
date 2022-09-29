@@ -30,7 +30,8 @@ const moduleImports = {
     'headerinfo' : require('./bis_headerinfo.js'),
     'computeroilarge' : require('./computeROILarge.js'),
     'mapelectrodes' : require('./mapElectrodes.js'),
-    'preprocessfmri' : require('./preprocessfMRI.js')
+    'preprocessfmri' : require('./preprocessfMRI.js'),
+    'splitimageintoframes' : require('./splitImageIntoFrames.js')
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

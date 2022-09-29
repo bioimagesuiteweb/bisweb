@@ -56,7 +56,6 @@ class ThresholdImageModule extends BaseModule {
                     "gui": "slider",
                     "type": "float",
                     "varname": "low",
-                    "gui": "slider",
                     "default" : 1,
                 },
                 {
@@ -64,7 +63,6 @@ class ThresholdImageModule extends BaseModule {
                     "description": "The value above which values will be classified as 'out'",
                     "priority": 2,
                     "advanced": false,
-                    "gui": "slider",
                     "type": "float",
                     "gui": "slider",
                     "default" : 2,
