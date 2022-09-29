@@ -103,14 +103,15 @@ class SplitImageIntoFramesModule extends BaseModule {
         const dim=input.getDimensions();
         const volsize=dim[0]*dim[1]*dim[2];
         const input_data= input.getImageData();
+        const numframes=dim[3]*dim[4];
         
-        for (let frame=0;frame<dim[3];frame++) {
+        for (let frame=0;frame<numframes;frame++) {
             let offset=frame*volsize;
             let output_data = output.getImageData();
             for (let i=0;i<volsize;i++)
                 output_data[i]=input_data[i+offset];
 
-            let framename=outname+'_'+this.getFrameString(frame+1,dim[3])+'.nii.gz';
+            let framename=outname+'_'+this.getFrameString(frame+1,numframes)+'.nii.gz';
             console.log('+++ Saving frame ',frame+1,' in ',framename);
             try {
                 await output.save(framename);
