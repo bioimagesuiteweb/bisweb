@@ -98,7 +98,8 @@ class SplitImageIntoFramesModule extends BaseModule {
         }
 
         const output=new BisWebImage();
-        output.cloneImage(input, { numframes : 1 });
+        output.cloneImage(input, { numframes : 1 ,
+                                   numcomponents : 1});
         
         const dim=input.getDimensions();
         const volsize=dim[0]*dim[1]*dim[2];
