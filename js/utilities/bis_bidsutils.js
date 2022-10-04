@@ -70,17 +70,21 @@ let dicom2BIDS = async function (opts) {
 
         //determine position of protocol name by position of timestamp (which should be a number)
         console.log('_________________________________________________');
-
         
         if (!isNaN(splitImageFile[2])) {
             //extract subject name (pa, pb, pc plus a number) 
-            let matchstring = /(p[A-z]\d*)/g;
+            let matchstring = /([pP][A-Za-z]\d*)/g;
             subjectName = matchstring.exec(splitImageFile[0]) || [ 'unknown','01' ];
             subjectName=subjectName[1];
             console.log('____Subjectname=',subjectName);
         } 
 
 
+        console.log('__ ImageFile=',imageFile);
+        console.log('__ Split',splitImageFile);
+        console.log('__ Name=',subjectName);
+        
+        
         let outputdirectory = bis_genericio.joinFilenames(outdir, sourceDirectoryName);
         let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, `sub-${subjectName}`);
 
