@@ -457,12 +457,17 @@ class BisWebSurface extends BisWebDataObject {
                 index++;
             }
         }
+        console.log('last=',dat[np*3-3],dat[np*3-2],dat[np*3-1]);
 
         console.log('First=',lines[lineindex]);
         let polylines=lines[lineindex].split(' ');
-        lineindex++;
+        
         if (polylines[0]!=='POLYGONS') {
-            return Promise.reject('No Polygons');
+            lineindex++;
+            polylines=lines[lineindex].split(' ');
+            if (polylines[0]!=='POLYGONS') {
+                return Promise.reject('No Polygons');
+            }
         }
 
         
