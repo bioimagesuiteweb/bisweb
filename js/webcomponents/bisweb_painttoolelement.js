@@ -232,6 +232,7 @@ class PaintToolElement extends HTMLElement {
             val=arr[i+usethis];
             this.internal.objectmapdata[index]=val;
         }
+        this.internal.orthoviewer.informToRender();
         this.internal.orthoviewer.updateobjectmapdisplay();
     }
 
@@ -527,6 +528,9 @@ class PaintToolElement extends HTMLElement {
         this.internal.objectmap.computeIntensityRange();
 
         this.setnewobjectmap(null,true);
+        this.internal.orthoviewer.informToRender();
+        this.internal.orthoviewer.updateobjectmapdisplay();
+
     }
 
     /** set new objectmap to this tool and optionally update the viewer
@@ -547,6 +551,8 @@ class PaintToolElement extends HTMLElement {
         const self=this;
         const fn=function() {
             self.setViewerObjectmap(self.internal.objectmap,true,false);
+            self.internal.orthoviewer.informToRender();
+            self.internal.orthoviewer.updateobjectmapdisplay();
             self.updategui();
         };
 
@@ -735,9 +741,14 @@ class PaintToolElement extends HTMLElement {
         var r=this.internal.volume.getIntensityRange();
         this.internal.data.minth=r[0];
         this.internal.data.maxth=r[1];
-
-        this.internal.minthreshold=c1.add(this.internal.data,'minth',r[0],r[1]).name("Min Threshold");
-        this.internal.maxthreshold=c1.add(this.internal.data,'maxth',r[0],r[1]).name("Max Threshold");
+        let step=1.0;
+        while ((r[1]-r[0])*0.1 < step)
+            step=step*0.1;
+        r[0]=r[0]-step;
+        r[1]=r[1]+step;
+        
+        this.internal.minthreshold=c1.add(this.internal.data,'minth',r[0],r[1]).name("Min Threshold").step(step);
+        this.internal.maxthreshold=c1.add(this.internal.data,'maxth',r[0],r[1]).name("Max Threshold").step(step);
         c1.open();
         var elem1=webutil.creatediv({ parent : basediv,
                                       css : {'margin-top':'20px', 'margin-left':'10px'}});
@@ -933,7 +944,9 @@ class PaintToolElement extends HTMLElement {
         }
 
         const self=this;
-        const clb=function() { self.internal.orthoviewer.updateobjectmapdisplay(); };
+        const clb=function() {
+            self.internal.orthoviewer.updateobjectmapdisplay();
+        };
 
         if (good) {
             this.dobrushoperation(x,plane);
