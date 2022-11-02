@@ -339,7 +339,8 @@ exportobj.create2dslice=function(volume,in_plane,decorationmode,objectmap,transp
             fr = fr || 0;
             force = force || false;
 
-            var sl=Math.floor(slmm/internal.imagespa[internal.plane]);
+            var sl=Math.floor(slmm/internal.imagespa[internal.plane]+0.1);
+
             
             if (internal.imageslicer.doineedtoupdate(sl,fr) || force === true) {
                 // We have a new slice
