@@ -34,7 +34,7 @@ require('bisweb_keylistener.js');
 require('bisweb_popoverhandler.js');
 require('bisweb_cardbar.js');
 require('bisweb_cpmelement.js');
-
+require("bisweb_lightapplication.js");
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
@@ -71,6 +71,7 @@ const Elements = {
     MainViewerApplicationElement : require("bisweb_mainviewerapplication.js"),
     ConnectivityApplicationElement : require("bisweb_connectivityapplicationelement.js"),
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),
+
     WebWorkerControllerElement : require("bisweb_webworkercontroller.js"),
     DiffSPECTElement2 : require("bisweb_diffspectelement2.js"),
     ConnectivityControlElement:    ConnectivityControlElement,
