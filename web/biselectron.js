@@ -40,7 +40,6 @@ let getTime = function() {
 // -------------------------------------------------------------------------------
 
 const electron = require('electron');
-require('@electron/remote/main').initialize();
 require('electron-debug')({showDevTools: false,
                            enabled : true});
 
@@ -56,6 +55,18 @@ const BrowserWindow = electron.BrowserWindow;  // Module to create native browse
 const ipcMain = electron.ipcMain;
 const shell=electron.shell;
 const toolfile=require('./images/tools.json');
+
+ipcMain.on('TOGGLE_DEV_TOOLS', (e) => {
+    e.sender.toggleDevTools();
+})
+
+ipcMain.handle('SHOW_SAVE_DIALOG', (e, opts) => {
+    return electron.dialog.showSaveDialog(null, opts)
+})
+
+ipcMain.handle('SHOW_OPEN_DIALOG', (e, opts) => {
+    return electron.dialog.showOpenDialog(null, opts)
+})
 
 const state = {
     winlist : [null],
@@ -273,7 +284,6 @@ const createWindow=function(index,fullURL) {
                                                 nodeIntegration: false,
                                                 preload: preload,
                                                 contextIsolation: false,
-                                                enableRemoteModule : true,
                                             },
                                             autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});

@@ -1087,7 +1087,7 @@ class ViewerApplicationElement extends HTMLElement {
             webutil.createMenuItem(hmenu, ''); // separator
             webutil.createMenuItem(hmenu, 'Show JavaScript Console',
                                    function () {
-                                       window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                       window.BISELECTRON.toggleDevTools();
                                    });
             userPreferences.safeGetItem('electonzoom').then( (v) => {
                 let z=v || 1.0;

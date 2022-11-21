@@ -535,7 +535,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     oldTestDataRootDirectory=testDataRootDirectory;
     
     if (webutil.inElectronApp()) {
-        window.BISELECTRON.remote.getCurrentWindow().openDevTools();
+        window.BISELECTRON.toggleDevTools();
     }
     let url=window.document.URL;
     let index=url.indexOf('.html');
