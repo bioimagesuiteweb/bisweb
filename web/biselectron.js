@@ -78,7 +78,7 @@ let v=process.versions.node;
 let s=v.split(".");
 let major=parseInt(s[0]);
 
-if (major!==12) {
+if (major>16) {
     console.log(`----\n---- You are using a version of node older than 12.0 (actual version=${v}). You need to update to electron v2.0.\n`);
     process.exit(1);
 }

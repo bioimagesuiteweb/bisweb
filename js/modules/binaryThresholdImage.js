@@ -75,7 +75,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
                     "type": 'int',
                     "default" : 1,
                     "low" :  1,
-                    "high" : 20,
+                    "high" : 100,
                 },
                 baseutils.getDebugParam()
             ]
