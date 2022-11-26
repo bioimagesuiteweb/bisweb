@@ -2181,8 +2181,53 @@ class BisWebImage extends BisWebDataObject {
         return Promise.resolve(this.tmpheaderinfo);
     }
 
-    
+    /** get intensity value at mm coords (frame is integer)
+     * @param {coords} - array of size 4 x,y,z,t
+     * @returns {number} - intensity
+     */
+    getMMVoxel(coords) {
+        //console.log('Coords=',coords);
+        const internal=this.internal;
+        let frame=Math.round(coords[3] || 0);
+        let offset=util.range(frame*internal.offsets[3],0,internal.dimensions[3]-1);
+        
+        let W= [ [ 0.0, 0.0], [0.0,0.0],[0.0,0.0 ] ];
+        let X= [ [ 0,0],[0,0],[0,0 ] ];
 
+        let TX=[0.0,0.0,0.0];
+        for (let ia=0;ia<=2;ia++) {
+            TX[ia]=coords[ia]/internal.spacing[ia];
+            TX[ia]=util.range(TX[ia],0.0,internal.dimensions[ia]-1);
+            X[ia][0]=Math.floor(TX[ia]);
+	        X[ia][1]=X[ia][0]+1;
+	        if (X[ia][1]>=internal.dimensions[ia])
+	            X[ia][1]=internal.dimensions[ia]-1;
+
+	        W[ia][0]=X[ia][1]-TX[ia];
+	        W[ia][1]=1.0-W[ia][0];
+        }
+
+        let B= [ [ 0,0],[0,0],[0,0 ] ];
+        for (let ib=0;ib<=1;ib++) {
+            B[0][ib]=X[0][ib];
+            B[1][ib]=X[1][ib]*internal.offsets[1];
+            B[2][ib]=X[2][ib]*internal.offsets[2]+offset;
+        }
+
+        let sum=0.0;
+        for (let i=0;i<=1;i++) {
+            for (let j=0;j<=1;j++) {
+	            for (let k=0;k<=1;k++) {
+                    let index=B[2][k]+B[1][j]+B[0][i];
+                    let v=internal.imgdata[ index];
+                    let w=W[2][k]*W[1][j]*W[0][i];
+                    sum+=v*w;
+                    //console.log('X=',[X[0][i],X[1][j],X[2][k]] ,'W=', [ W[0][i],W[1][j], W[2][k]],'index=',index,' W=',w,'v=',v,'sum=',sum);
+	            }
+            }
+        }
+        return sum;
+    }
 }
 
 module.exports=BisWebImage;
