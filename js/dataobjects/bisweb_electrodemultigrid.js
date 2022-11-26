@@ -261,17 +261,24 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
         lineno+=9;
         let props={};
         for (let i=0;i<PROPERTIES.length;i++) {
+            //console.log('Compare',txt[lineno-1],'with',PROPERTIES[i]);
             props[PROPERTIES[i]]=txt[lineno].trim();
             lineno+=2;
         }
-        
+
+        let a=txt[lineno-1].trim();
         let values=[];
-        let numvalues=parseInt(txt[lineno]);
-        for (let i=0;i<numvalues;i++) {
-            lineno+=1;
-            values.push(parseFloat(txt[lineno].trim()));
+        if (a==='#Values') {
+            let numvalues=parseInt(txt[lineno]);
+            for (let i=0;i<numvalues;i++) {
+                lineno+=1;
+                values.push(parseFloat(txt[lineno].trim()));
+            }
+        } else {
+            //            console.log('No VALUES',lineno);
+            lineno=lineno-2;
         }
-        
+            
         elec.push({
             'position' : pos,
             'normal' : norm,
@@ -284,7 +291,8 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
     }
     
     static parsegrid(txt,lineno,egrid) {
-        
+
+        //        console.log('Reading=',lineno+5,txt[lineno+5]);
         let description=txt[lineno+5];
         let dimensions=txt[lineno+7].trim();
         let spacing=txt[lineno+9].trim();
