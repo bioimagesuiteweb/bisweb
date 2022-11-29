@@ -3,48 +3,40 @@ import asyncio
 import websockets
 import sys
 import json
+from IPython.display import IFrame
 
-print('importing viewer')
 
 class Viewer:
 
     wsport=9000;
-    websocket=None;
-    lastindex=0;
+    lastIndex=0;
     baseurl="http://localhost:8080/web/lightviewer.html";
+    url='';
     
-    def __init__(self):
+    def __init__(self,port=None):
         super().__init__();
-        
-    async def connect(self,port=None):
         if (port!=None):
             Viewer.wsport=port;
-
-        if (Viewer.websocket==None):
-            url="ws://localhost:"+str(Viewer.wsport);
-            print("Initializing",url);
-            await websockets.connect(url);
-            Viewer.websocket=websocket;
-            await Viewer.websocket.send('Initializing Connection');
-        else:
-            print("Websocket already exists")
-
+        Viewer.url="ws://localhost:"+str(Viewer.wsport);
+        print('Port=',Viewer.url)
         
-    async def createViewer(self,width=800,height=800,port=22222):
-
-        await self.connect(port);
+    async def sendMessage(self,msg,port=None):
+        async with websockets.connect(Viewer.url) as websocket:
+            Viewer.websocket=websocket;
+            await Viewer.websocket.send(msg);
+                
+    async def createViewer(self,width=800,height=800):
 
         self.index=Viewer.lastIndex;
-        
         url=Viewer.baseurl
         url=url+"?port="+str(Viewer.wsport);
         print('++++ creating viewer with URL=',url);
-        url=url+str(self.wsport)
         url=url+"&index="+str(Viewer.lastIndex);
         print(url)
-        m='IFrame('+url+', width='+str(width)+', height='+str(height);
-        print(m);
+        m='from IPython.display import IFrame; IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
         Viewer.lastIndex+=1;
+            
+        #IFrame("http://localhost:8080/web/lightviewer.html?port=9000&index=3", width=1000, height=1000)
         return m
 
     async def setImage(self,filename,overlay=False):
@@ -53,11 +45,12 @@ class Viewer:
             "index" : self.index,
             "payload": {
                 "command" : "load",
-                "filename" : "http://localhost:8083/web/images/"+filename,
+                "filename" : "http://localhost:8080/web/images/"+filename,
                 "overlay" : overlay
             }
         }
-        await self.connections[index].send(json.dumps(a));
+        await self.sendMessage(json.dumps(a));
+
 
     async def setCoordinates(self,coords):
         c= {
@@ -65,9 +58,19 @@ class Viewer:
             "index" : self.index,
             "payload": {
                 "command" : "crosshairs",
-                "coords"  : [ 20+index*10,20+index*20,20+index*30 ],
+                "coords"  : coords,
             }
         }
-        await self.websocket.send(json.dumps(c));
+        await self.sendMessage(json.dumps(c));
+
+
         
                    
+if __name__ == '__main__':
+    v=Viewer(9000);
+
+    m=asyncio.run(v.createViewer(800,800));
+    print(m)
+    str=input('Press enter to continue');
+    asyncio.run(v.setCoordinates([20,24,32 ]));
+    

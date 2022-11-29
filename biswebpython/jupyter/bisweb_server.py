@@ -1,7 +1,3 @@
-import http.server
-import socketserver
-import threading
-import tempfile
 import os
 import asyncio
 import websockets
@@ -10,13 +6,17 @@ import json
 
 class Server:
 
-    def __init__(self):
+    def __init__(self,port=None):
         self.connections={}
         self.wsport=9000
+        if (port != None):
+            self.wsport=port;
+        
         self.lastIndex=0
         self.connections={}
          
     async def listen(self,websocket):
+        
         async for message in websocket:
             try:
                 b=json.loads(message);
@@ -42,12 +42,17 @@ class Server:
                     await self.setCoordinates(index,coords,0)
 
                 if (command == 'forward'):
+                    payload=json.dumps(b['payload']);
                     try:
-                        payload=b['payload'];
                         await self.connections[index].send(payload)
                     except:
+                        print('Failed')
                         e = sys.exc_info()[0]
                         print(sys.exc_info())
+                                
+            except websockets.exceptions.ConnectionClosed:
+                print("Client disconnected.  Do cleanup")
+
             except:
                 e = sys.exc_info()[0]
                 print(sys.exc_info())
@@ -79,19 +84,23 @@ class Server:
         await self.connections[index].send(json.dumps(c));
         
                    
-def main():
+def main(port=None):
     print('.... Starting main function')
-    v=Server()
+    v=Server(port)
     asyncio.run(v.createServer())
 
-async def start():
+async def start(port=None):
     print('.... Starting main function')
-    v=Server()
+    v=Server(port)
     await v.createServer()
     
 
 if __name__ == '__main__':
-    main()
+    a=sys.argv[1];
+    if (a==None):
+        a="9000"
+    
+    main(int(sys.argv[1]))
     
 
 
