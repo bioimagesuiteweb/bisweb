@@ -1,18 +1,26 @@
+import http.server
+import socketserver
+import threading
 import os
 import asyncio
 import websockets
 import sys
 import json
+import tempfile
 
 class Server:
 
     def __init__(self,port=None):
         self.connections={}
         self.wsport=9000
+        self.httpport=None
         if (port != None):
             self.wsport=port;
-        
+
+
         self.lastIndex=0
+        self.httpd=None
+        self.tempdir=None
         self.connections={}
          
     async def listen(self,websocket):
@@ -49,7 +57,14 @@ class Server:
                         print('Failed')
                         e = sys.exc_info()[0]
                         print(sys.exc_info())
-                                
+
+                if (command=='exit'):
+                    self.httpd.server_close();
+                    try:
+                        sys.exit(0);
+                    except:
+                        print(sys.exc_info())
+                        
             except websockets.exceptions.ConnectionClosed:
                 print("Client disconnected.  Do cleanup")
 
@@ -61,15 +76,42 @@ class Server:
     def print(self):
         print('---- Connections=',self.connections);
 
-    async def createServer(self):
+    async def createWSServer(self,dowait=True):
         async with websockets.serve(self.listen, "localhost", self.wsport):
             print('---- Websocket server started on port',self.wsport);
             await asyncio.Future()  # run forever
-                
+
+
+    def createTemp(self):
+        tmp=tempfile.TemporaryDirectory(dir=os.getcwd());
+        print('Created temp directory:',tmp.name);
+        self.tempdir=tmp.name;
+            
+    def createHTTPServer(self,dir=None):
+
+        if (self.httpport==None):
+            self.httpport=self.wsport+1;
+
+        if (dir!=None):
+            os.chdir(dir)
+
+        self.createTemp();
+        Handler = http.server.SimpleHTTPRequestHandler
+        self.httpd=http.server.ThreadingHTTPServer(("127.0.0.1", self.httpport), Handler);
+        print("---- HTTP Server started at port",self.httpport,' root=',os.getcwd())
+        server_thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        server_thread.start()
+
+            
     async def setImage(self,filename,index=0,viewer=0,overlay=False):
+        port="8080";
+        if (self.httpport!=None):
+            port=str(self.httpport)
+        
+        
         a= {
             "command" : "load",
-            "filename" : "http://localhost:8080/web/images/"+filename,
+            "filename" : "http://localhost:"+port+"/web/images/"+filename,
             "viewer" : viewer,
             "overlay" : overlay
         };
@@ -84,15 +126,18 @@ class Server:
         await self.connections[index].send(json.dumps(c));
         
                    
-def main(port=None):
+def main(port=None,dir=None):
     print('.... Starting main function')
     v=Server(port)
-    asyncio.run(v.createServer())
+    v.createHTTPServer(dir)
+    asyncio.run(v.createWSServer(dowait=False))
 
-async def start(port=None):
+
+async def start(port=None,dir=None):
     print('.... Starting main function')
     v=Server(port)
-    await v.createServer()
+    v.createHTTPServer(dir)
+    await v.createWSServer()
     
 
 if __name__ == '__main__':
@@ -100,7 +145,8 @@ if __name__ == '__main__':
     if (a==None):
         a="9000"
     
-    main(int(sys.argv[1]))
+    
+    main(int(sys.argv[1]),sys.argv[2])
     
 
 
