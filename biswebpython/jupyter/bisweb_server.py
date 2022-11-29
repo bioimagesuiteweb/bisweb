@@ -17,9 +17,7 @@ class Server:
         self.connections={}
          
     async def listen(self,websocket):
-        print('--- Waiting for messages')
         async for message in websocket:
-            print('---- Received',message);
             try:
                 b=json.loads(message);
 
@@ -33,7 +31,7 @@ class Server:
                 except:
                     index=0
 
-                print('Command=',command,'index=',index)
+                print('___ server received command=',command,'index=',index)
                     
                 if (command == 'hello'):
                     self.connections[index]=websocket;
@@ -81,14 +79,20 @@ class Server:
         await self.connections[index].send(json.dumps(c));
         
                    
-                
-
-if __name__ == '__main__':
-        
+def main():
     print('.... Starting main function')
     v=Server()
     asyncio.run(v.createServer())
 
+async def start():
+    print('.... Starting main function')
+    v=Server()
+    await v.createServer()
+    
+
+if __name__ == '__main__':
+    main()
+    
 
 
 

@@ -1,18 +1,14 @@
-import http.server
-import socketserver
-import threading
-import tempfile
 import os
 import asyncio
 import websockets
 import sys
 import json
-from IPython.display import IFrame
 
+print('importing viewer')
 
 class Viewer:
 
-    wsport=22222;
+    wsport=9000;
     websocket=None;
     lastindex=0;
     baseurl="http://localhost:8080/web/lightviewer.html";
@@ -46,25 +42,32 @@ class Viewer:
         url=url+str(self.wsport)
         url=url+"&index="+str(Viewer.lastIndex);
         print(url)
-        IFrame(url, width=width, height=height);
+        m='IFrame('+url+', width='+str(width)+', height='+str(height);
+        print(m);
         Viewer.lastIndex+=1;
-
+        return m
 
     async def setImage(self,filename,overlay=False):
         a= {
-            "command" : "load",
+            "command" : "forward",
             "index" : self.index,
-            "filename" : "http://localhost:8083/web/images/"+filename,
-            "overlay" : overlay
-        };
+            "payload": {
+                "command" : "load",
+                "filename" : "http://localhost:8083/web/images/"+filename,
+                "overlay" : overlay
+            }
+        }
         await self.connections[index].send(json.dumps(a));
 
     async def setCoordinates(self,coords):
         c= {
-            "command" : "crosshairs",
+            "command" : "forward",
             "index" : self.index,
-            "coords"  : [ 20+index*10,20+index*20,20+index*30 ],
-        };
+            "payload": {
+                "command" : "crosshairs",
+                "coords"  : [ 20+index*10,20+index*20,20+index*30 ],
+            }
+        }
         await self.websocket.send(json.dumps(c));
         
                    
