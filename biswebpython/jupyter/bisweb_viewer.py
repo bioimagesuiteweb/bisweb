@@ -3,7 +3,7 @@ import asyncio
 import websockets
 import sys
 import json
-from IPython.display import IFrame
+import IPython.display 
 import webbrowser
 
 
@@ -15,12 +15,14 @@ class Viewer:
 
     url='';
     
-    def __init__(self,port=None,httpport=8080):
+    def __init__(self,port=None,httpport=None):
         super().__init__();
         if (port!=None):
             Viewer.wsport=port;
         if (httpport!=None):
             Viewer.httpport=httpport;
+        else:
+            Viewer.httpport=Viewer.wsport+1;
         Viewer.url="ws://localhost:"+str(Viewer.wsport);
         self.hasViewer=False;
         
@@ -29,7 +31,7 @@ class Viewer:
             Viewer.websocket=websocket;
             await Viewer.websocket.send(msg);
                 
-    def createViewer(self,width=800,height=800,external=True):
+    def createViewer(self,width=800,height=800,external=False):
 
         if (self.hasViewer):
             print('Viewer already created');
@@ -45,11 +47,10 @@ class Viewer:
         if (external):
             webbrowser.open(url);
         else:
-            m='from IPython.display import IFrame; IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
-            IFrame("http://localhost:8080/web/lightviewer.html?port=9000&index="+str(self.index), width=1000, height=1000)
-            print(m)
+            m='IPython.display.IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
+            eval(m)
         Viewer.lastIndex+=1;
-
+        self.hasViewer=True
         return m
 
     async def setImage(self,filename,overlay=False):
@@ -62,9 +63,9 @@ class Viewer:
                 "overlay" : overlay
             }
         }
-        await self.sendMessage(json.dumps(a));
+        await self.sendMessage(json.dumps(a))
 
-
+        
     async def setCoordinates(self,coords):
         c= {
             "command" : "forward",
@@ -74,7 +75,7 @@ class Viewer:
                 "coords"  : coords,
             }
         }
-        await self.sendMessage(json.dumps(c));
+        await self.sendMessage(json.dumps(c))
 
 
         
