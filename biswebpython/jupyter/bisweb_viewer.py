@@ -4,39 +4,52 @@ import websockets
 import sys
 import json
 from IPython.display import IFrame
+import webbrowser
 
 
 class Viewer:
 
     wsport=9000;
+    httpport=8080
     lastIndex=0;
-    baseurl="http://localhost:8080/web/lightviewer.html";
+
     url='';
     
-    def __init__(self,port=None):
+    def __init__(self,port=None,httpport=8080):
         super().__init__();
         if (port!=None):
             Viewer.wsport=port;
+        if (httpport!=None):
+            Viewer.httpport=httpport;
         Viewer.url="ws://localhost:"+str(Viewer.wsport);
-        print('Port=',Viewer.url)
+        self.hasViewer=False;
         
     async def sendMessage(self,msg,port=None):
         async with websockets.connect(Viewer.url) as websocket:
             Viewer.websocket=websocket;
             await Viewer.websocket.send(msg);
                 
-    async def createViewer(self,width=800,height=800):
+    def createViewer(self,width=800,height=800,external=True):
 
+        if (self.hasViewer):
+            print('Viewer already created');
+            return
+        
         self.index=Viewer.lastIndex;
-        url=Viewer.baseurl
+        url="http://localhost:"+str(Viewer.httpport)+"/web/lightviewer.html";
         url=url+"?port="+str(Viewer.wsport);
         print('++++ creating viewer with URL=',url);
         url=url+"&index="+str(Viewer.lastIndex);
-        print(url)
-        m='from IPython.display import IFrame; IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
+        m=url;
+        
+        if (external):
+            webbrowser.open(url);
+        else:
+            m='from IPython.display import IFrame; IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
+            IFrame("http://localhost:8080/web/lightviewer.html?port=9000&index="+str(self.index), width=1000, height=1000)
+            print(m)
         Viewer.lastIndex+=1;
-            
-        #IFrame("http://localhost:8080/web/lightviewer.html?port=9000&index=3", width=1000, height=1000)
+
         return m
 
     async def setImage(self,filename,overlay=False):
@@ -45,7 +58,7 @@ class Viewer:
             "index" : self.index,
             "payload": {
                 "command" : "load",
-                "filename" : "http://localhost:8080/web/images/"+filename,
+                "filename" : "http://localhost:"+str(Viewer.httpport)+"/web/images/"+filename,
                 "overlay" : overlay
             }
         }
@@ -67,10 +80,16 @@ class Viewer:
         
                    
 if __name__ == '__main__':
-    v=Viewer(9000);
 
-    m=asyncio.run(v.createViewer(800,800));
-    print(m)
-    str=input('Press enter to continue');
-    asyncio.run(v.setCoordinates([20,24,32 ]));
+    ws=9000;
+    hp=8080;
+    if (sys.argv[1]!=None):
+        ws=int(sys.argv[1])
+    if (sys.argv[2]!=None):
+        hp=int(sys.argv[2])
+
+    Viewer.lastIndex=10;
+    v=Viewer(ws,hp);
+    m=asyncio.run(v.createViewer(external=True));
+
     
