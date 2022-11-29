@@ -1,10 +1,23 @@
 import asyncio
 import websockets
+import sys
 
-async def hello():
-    async with websockets.connect("ws://localhost:8766") as websocket:
-        str=input('message');
-        await websocket.send(str);
-        
+async def hello(port,message):
+    print('Testing',port,message);
+    url="ws://localhost:"+port;
+    print('Url=',url);
+    try:
+        async with websockets.connect(url) as websocket:
+            print('W=',websocket)
+            await websocket.send('{ "command" : '+'"'+message+'"}');
+    except:
+        e = sys.exc_info()[0]
+        print(e)
+        return 0
 
-asyncio.run(hello())
+
+
+    
+
+print('sys.argv=',sys.argv)
+asyncio.run(hello(sys.argv[1],sys.argv[2]))

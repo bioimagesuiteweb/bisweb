@@ -184,7 +184,7 @@ class LightApplicationElement extends HTMLElement {
 
     //  ---------------------------------------------------------------------------
     connectWebSocket(port,index) {
-        let str="ws://127.0.0.1:"+port+"/";
+        let str="ws://127.0.0.1:"+port;
         console.log('Connecting to',str);
         this.websocket = new WebSocket(str);
         this.websocketindex=index;
@@ -194,7 +194,10 @@ class LightApplicationElement extends HTMLElement {
             if (cmd.command==='load') {
                 this.loadImage(cmd.filename).then( () => {
                     setTimeout( () => {
-                        this.websocket.send(JSON.stringify({ "command" : "done"}));
+                        this.websocket.send(JSON.stringify({
+                            "command" : "done",
+                            "index" : this.websocketindex
+                        }));
                     },100);
                 });
             }
@@ -258,20 +261,6 @@ class LightApplicationElement extends HTMLElement {
         webcss.setAutoColorMode();
     }
 
-    /** Toggle color mode */
-    toggleColorMode(save=true) {
-
-        webcss.toggleColorMode().then( (m) => {
-            for (let i=0;i<this.VIEWERS.length;i++) {
-                this.VIEWERS[i].handleColorModeChange(m);
-            }
-            if (save)
-                userPreferences.setItem('darkmode', m,true);
-        }).catch( (m) => {
-            console.log("Failed to switch colors, staying with",m);
-        });
-    }
-    
    
     fixMobileMouseHandling() {
         new FastClick(document.body);

@@ -8,83 +8,62 @@ import websockets
 import sys
 import json
 
+class Server:
 
-singleton=None;
-print('Here')
-
-class Viewer:
-    
     def __init__(self):
-        super().__init__();
-        self.httpd=None
         self.connections={}
-        self.tempname=''
-        self.httpport=8083
-        self.wsport=8889
+        self.wsport=9000
         self.lastIndex=0
-        os.chdir('/Users/xenios/bisweb/src/')
-        self.baseurl="http://localhost:8080/web/lightviewer.html";
-        print("Base=",self.baseurl)
-
-    # Temporary Directory
-    # -------------------
-    def createTemp(self):
-         tmp=tempfile.TemporaryDirectory(dir='/Users/xenios/bisweb/src');
-         print('---- Created temp directory:',tmp.name);
-         self.tempname=tmp.name;
+        self.connections={}
          
-    def createServer(self):
-        Handler = http.server.SimpleHTTPRequestHandler
-        httpd=http.server.ThreadingHTTPServer(("127.0.0.1", self.httpport), Handler);
-        print("---- Serving at port",self.httpport,' root=',os.getcwd())
-        server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-        server_thread.start()
-        self.httpd=httpd;
-        
     async def listen(self,websocket):
+        print('--- Waiting for messages')
         async for message in websocket:
             print('---- Received',message);
-            b=json.loads(message);
-            
-            if (b['command'] == 'hello'):
-                index=b['index'];
-                self.connections[index]=websocket;
-                await self.setImage("MNI_T1_2mm_stripped_ras.nii.gz",0,False);
+            try:
+                b=json.loads(message);
 
-            if (b['command'] == 'done'):
-                index=b['index'];
-                coords = [ 20+index*10,20+index*20,20+index*30];
-                await self.setCoordinates(index,coords,0)
+                try:
+                    command=b['command'];
+                except:
+                    command='';
+                
+                try:
+                    index=b['index'];
+                except:
+                    index=0
+
+                print('Command=',command,'index=',index)
+                    
+                if (command == 'hello'):
+                    self.connections[index]=websocket;
+                    await self.setImage("MNI_T1_2mm_stripped_ras.nii.gz",index,0,False);
+
+                if (command == 'done'):
+                    coords = [ 50+index,50+index*2,20+index*3];
+                    await self.setCoordinates(index,coords,0)
+
+                if (command == 'forward'):
+                    try:
+                        payload=b['payload'];
+                        await self.connections[index].send(payload)
+                    except:
+                        e = sys.exc_info()[0]
+                        print(sys.exc_info())
+            except:
+                e = sys.exc_info()[0]
+                print(sys.exc_info())
 
 
     def print(self):
-        print('---- Connections=',selfconnections);
+        print('---- Connections=',self.connections);
 
-    async def createWebsocket(self):
+    async def createServer(self):
         async with websockets.serve(self.listen, "localhost", self.wsport):
             print('---- Websocket server started on port',self.wsport);
-
-
-    async def initializeWebSocket(self):
-        self.createTemp();
-        await self.createWebsocket();
-
-    def exit(self):
-        if (self.httpd!=None):
-            self.httpd.shutdown()
+            await asyncio.Future()  # run forever
                 
-#    def createViewer(self,width=800,height=800):
-#        url=self.baseurl
-#        url=url+"?port=";
-#        print('++++ creating viewer with URL=',url);
-#        url=url+str(self.wsport)
-#        url=url+"&index="+str(self.lastIndex);
-#        IFrame(url, width=width, height=height);
-#        a=self.lastIndex;
-#        self.lastIndex+=1;
-#        return a
-
-    async def setImage(self,index,filename,viewer=0,overlay=False):
+    async def setImage(self,filename,index=0,viewer=0,overlay=False):
         a= {
             "command" : "load",
             "filename" : "http://localhost:8080/web/images/"+filename,
@@ -98,29 +77,19 @@ class Viewer:
             "command" : "crosshairs",
             "coords"  : [ 20+index*10,20+index*20,20+index*30 ],
             "viewer"  : viewer
-            
         };
-        await selfconnections[index].send(json.dumps(c));
+        await self.connections[index].send(json.dumps(c));
         
                    
-    def getTempDirectory(self):
-        return self.tempname
                 
 
-async def main():
-
-    print('Singleton=',singleton);
-    
-    if (singleton==None):
-        singleton=Viewer()
-        print('Hello');
-        await singleton.initializeWebSocket()
-        await singleton.createServer()
-        print('---- ',singleton.getTempDirectory())
-        
-    return singleton;
-    
 if __name__ == '__main__':
+        
     print('.... Starting main function')
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    v=Server()
+    asyncio.run(v.createServer())
+
+
+
+
+
