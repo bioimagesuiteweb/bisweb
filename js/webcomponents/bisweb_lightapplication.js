@@ -211,7 +211,7 @@ class LightApplicationElement extends HTMLElement {
 
         this.websocket.addEventListener('open', (event) => {
             this.websocket.send(JSON.stringify({
-                "command" : "hello",
+                "command" : "viewerReady",
                 "index" : index
             },null,2));
         });

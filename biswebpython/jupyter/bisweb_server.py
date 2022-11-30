@@ -39,24 +39,7 @@ class Server:
                 except:
                     index=0
 
-                print('___ server received command=',command,'index=',index)
-                    
-                if (command == 'hello'):
-                    self.connections[index]=websocket;
-                    await self.setImage("MNI_T1_2mm_stripped_ras.nii.gz",index,0,False);
-
-                if (command == 'done'):
-                    coords = [ 50+index,50+index*2,20+index*3];
-                    await self.setCoordinates(index,coords,0)
-
-                if (command == 'forward'):
-                    payload=json.dumps(b['payload']);
-                    try:
-                        await self.connections[index].send(payload)
-                    except:
-                        print('Failed')
-                        e = sys.exc_info()[0]
-                        print(sys.exc_info())
+                print('\n___\n___\n___ server received command=',b,'index=',index)
 
                 if (command=='exit'):
                     self.httpd.server_close();
@@ -65,17 +48,43 @@ class Server:
                     except:
                         print(sys.exc_info())
 
+
                 if (command=='getInfo'):
-                    self.lastIndex=self.lastIndex+1;
                     out = {
                         'index' : self.lastIndex,
                         'temp'  : self.tempdir,
-                        'url'   : "http://localhost:"+str(self.httpport)+'/'
+                        'url'   : "http://localhost:"+str(self.httpport)+'/',
+                        'path' : os.path.basename(self.tempdir)
                     }
-                    print('Responding',out);
+                    self.lastIndex=self.lastIndex+1;
+                    print('___ Responding',out,'\n___');
                     await websocket.send(json.dumps(out));
+
+
+                if (command == 'viewerReady'):
+                    self.connections[index]=websocket;
                     
-                        
+                    
+                try:
+                    a=self.connections[index];
+                except:
+                    self.connections[index]=None;
+
+                if (self.connections[index]!=None):
+                    if (command == 'done'):
+                        coords = [ 50+index,50+index*2,20+index*3];
+                        await self.setCoordinates(index,coords,0)
+
+                    if (command == 'forward' and self.connections[index]!=None):
+                        payload=json.dumps(b['payload']);
+                        try:
+                            await self.connections[index].send(payload)
+                        except:
+                            print('Failed here')
+                            e = sys.exc_info()[0]
+                            print(sys.exc_info())
+                else:
+                    print('___ viewer',index,'not connected yet')
                         
             except websockets.exceptions.ConnectionClosed:
                 print("Client disconnected.  Do cleanup")
@@ -116,7 +125,7 @@ class Server:
         server_thread.start()
 
             
-    async def setImage(self,filename,index=0,viewer=0,overlay=False):
+    async def setImage(self,url,index=0,viewer=0,overlay=False):
         port="8080";
         if (self.httpport!=None):
             port=str(self.httpport)
@@ -124,10 +133,11 @@ class Server:
         
         a= {
             "command" : "load",
-            "filename" : "http://localhost:"+port+"/web/images/"+filename,
+            "filename" : url,
             "viewer" : viewer,
             "overlay" : overlay
         };
+        print(a,index);
         await self.connections[index].send(json.dumps(a));
 
     async def setCoordinates(self,index,coords,viewer=0):

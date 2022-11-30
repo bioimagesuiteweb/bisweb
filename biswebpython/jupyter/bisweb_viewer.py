@@ -5,7 +5,7 @@ import sys
 import json
 import IPython.display 
 import webbrowser
-
+import time
 
 class Viewer:
 
@@ -56,9 +56,9 @@ class Viewer:
         
         if (external):
             webbrowser.open(url);
+            time.sleep(2.0);
         else:
             m='IPython.display.IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
-            exec(m)
 
         self.hasViewer=True
         return m
@@ -69,7 +69,7 @@ class Viewer:
             "index" : self.index,
             "payload": {
                 "command" : "load",
-                "filename" : "http://localhost:"+str(Viewer.httpport)+"/web/images/"+filename,
+                "filename" : self.info['url']+filename,
                 "overlay" : overlay
             }
         }
@@ -97,6 +97,9 @@ if __name__ == '__main__':
         ws=int(sys.argv[1])
 
     v=Viewer(ws);
-    m=asyncio.run(v.createViewer(external=True));
+    asyncio.run(v.createViewer(external=True));
+    time.sleep(5.0);
+    asyncio.run(v.setImage("web/images/MNI_T1_2mm_stripped_ras.nii.gz",False));
+                        
 
     
