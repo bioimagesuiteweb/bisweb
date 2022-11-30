@@ -10,46 +10,56 @@ import webbrowser
 class Viewer:
 
     wsport=9000;
-    httpport=8080
-    lastIndex=0;
 
     url='';
     
-    def __init__(self,port=None,httpport=None):
+    def __init__(self,port=None):
         super().__init__();
         if (port!=None):
             Viewer.wsport=port;
-        if (httpport!=None):
-            Viewer.httpport=httpport;
-        else:
-            Viewer.httpport=Viewer.wsport+1;
         Viewer.url="ws://localhost:"+str(Viewer.wsport);
         self.hasViewer=False;
+        self.info=None;
         
-    async def sendMessage(self,msg,port=None):
+    async def sendMessage(self,msg,respond=False):
         async with websockets.connect(Viewer.url) as websocket:
             Viewer.websocket=websocket;
             await Viewer.websocket.send(msg);
-                
-    def createViewer(self,width=800,height=800,external=False):
+            if (respond):
+                result = await Viewer.websocket.recv()
+                return result;
+            else:
+                return 'done'
+
+    async def createViewer(self,width=800,height=800,external=False):
 
         if (self.hasViewer):
             print('Viewer already created');
             return
-        
-        self.index=Viewer.lastIndex;
-        url="http://localhost:"+str(Viewer.httpport)+"/web/lightviewer.html";
+
+        tmp=await self.sendMessage('{"command" : "getInfo"}',respond=True);
+
+        try:
+            self.info=json.loads(tmp)
+        except:
+            print(sys.exc_info())
+            self.info=None;
+            print('Failed to connect to server');
+            return 
+
+        self.index=self.info['index']
+        url=self.info['url']+"web/lightviewer.html";
         url=url+"?port="+str(Viewer.wsport);
         print('++++ creating viewer with URL=',url);
-        url=url+"&index="+str(Viewer.lastIndex);
+        url=url+"&index="+str(self.index);
         m=url;
         
         if (external):
             webbrowser.open(url);
         else:
             m='IPython.display.IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
-            eval(m)
-        Viewer.lastIndex+=1;
+            exec(m)
+
         self.hasViewer=True
         return m
 
@@ -83,14 +93,10 @@ class Viewer:
 if __name__ == '__main__':
 
     ws=9000;
-    hp=8080;
     if (sys.argv[1]!=None):
         ws=int(sys.argv[1])
-    if (sys.argv[2]!=None):
-        hp=int(sys.argv[2])
 
-    Viewer.lastIndex=10;
-    v=Viewer(ws,hp);
+    v=Viewer(ws);
     m=asyncio.run(v.createViewer(external=True));
 
     

@@ -64,6 +64,18 @@ class Server:
                         sys.exit(0);
                     except:
                         print(sys.exc_info())
+
+                if (command=='getInfo'):
+                    self.lastIndex=self.lastIndex+1;
+                    out = {
+                        'index' : self.lastIndex,
+                        'temp'  : self.tempdir,
+                        'url'   : "http://localhost:"+str(self.httpport)+'/'
+                    }
+                    print('Responding',out);
+                    await websocket.send(json.dumps(out));
+                    
+                        
                         
             except websockets.exceptions.ConnectionClosed:
                 print("Client disconnected.  Do cleanup")
@@ -79,7 +91,8 @@ class Server:
     async def createWSServer(self,dowait=True):
         async with websockets.serve(self.listen, "localhost", self.wsport):
             print('---- Websocket server started on port',self.wsport);
-            await asyncio.Future()  # run forever
+            if (dowait):
+                await asyncio.Future()  # run forever
 
 
     def createTemp(self):
@@ -125,19 +138,20 @@ class Server:
         };
         await self.connections[index].send(json.dumps(c));
         
-                   
+
+        # Commandline
 def main(port=None,dir=None):
     print('.... Starting main function')
     v=Server(port)
     v.createHTTPServer(dir)
-    asyncio.run(v.createWSServer(dowait=False))
+    asyncio.run(v.createWSServer(dowait=True))
 
 
 async def start(port=None,dir=None):
     print('.... Starting main function')
     v=Server(port)
     v.createHTTPServer(dir)
-    await v.createWSServer()
+    await v.createWSServer(dowait=False)
     
 
 if __name__ == '__main__':
