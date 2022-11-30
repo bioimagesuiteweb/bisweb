@@ -50,7 +50,7 @@ class LightApplicationElement extends HTMLElement {
         super();
         this.syncmode = false;
         this.VIEWERS=[];
-        this.num_independent_viewers = 0;
+        this.num_independent_viewers = 2;
         this.applicationURL=webutil.getWebPageURL();
         this.applicationName=webutil.getWebPageName();
         this.websocket=null;
@@ -120,8 +120,6 @@ class LightApplicationElement extends HTMLElement {
         const viewerid = this.getAttribute('bis-viewerid');
         const viewerid2 = this.getAttribute('bis-viewerid2') || null;
 
-        console.log('v=',viewerid,viewerid2);
-        
         this.VIEWERS = [document.querySelector(viewerid)];
         this.VIEWERS[0].setName('viewer1');
         if (viewerid2 !== null) {
@@ -191,8 +189,17 @@ class LightApplicationElement extends HTMLElement {
         this.websocket.onmessage = (event) => {
             let cmd=JSON.parse(event.data);
             console.log("Received",cmd);
+            
             if (cmd.command==='load') {
-                this.loadImage(cmd.filename).then( () => {
+                let v=cmd.viewer || 0;
+                let ov=cmd.overlay || false;
+
+                let p=null;
+                if (ov)
+                    p=this.loadOverlay(cmd.filename,v);
+                else
+                    p=this.loadImage(cmd.filename,v);
+                p.then( () => {
                     setTimeout( () => {
                         this.websocket.send(JSON.stringify({
                             "command" : "done",
@@ -204,7 +211,21 @@ class LightApplicationElement extends HTMLElement {
 
             if (cmd.command==='crosshairs') {
                 setTimeout( () => {
-                    this.getViewer(0).setcoordinates(cmd.coords);
+                    let v=cmd.viewer || 0;
+                    this.getViewer(v).setcoordinates(cmd.coords);
+                },10);
+            }
+
+            if (cmd.command==='show') {
+                setTimeout( () => {
+                    let md=cmd['mode'];
+                    console.log(' V=',this.getViewer(0));
+                    if (md==='Left')
+                        this.getViewer(1).setDualViewerMode(1.0);
+                    else if (md==='Right')
+                        this.getViewer(1).setDualViewerMode(0.0);
+                    else
+                        this.getViewer(1).setDualViewerMode(0.5);
                 },10);
             }
         };
@@ -281,7 +302,7 @@ class LightApplicationElement extends HTMLElement {
         // Find other items
         // -----------------------------------------------------------------------
         this.findViewers();
-        
+        console.log(this.VIEWERS);
         // ----------------------------------------------------------
         // Mouse Issues on mobile and final cleanup
         // ----------------------------------------------------------
@@ -289,7 +310,7 @@ class LightApplicationElement extends HTMLElement {
         this.fixColors();
         
         if (this.num_independent_viewers > 1)
-            this.VIEWERS[1].setDualViewerMode(0.5);
+            this.VIEWERS[1].setDualViewerMode(0.75);
 
         this.parseQueryParameters();
     }

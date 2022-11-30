@@ -805,7 +805,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                          'z-index' : 641,
                                        });
 
-            this.internal.midlinemessage = $(`<div align="center" style="padding:2px; width:50vw; left:25vw; top:${top}px; height:40px;border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff"><H4>Drag the line to adjust the relative width of the two viewers</H4></div>`);
+            try {
+                this.internal.midlinemessage = $(`<div align="center" style="padding:2px; width:50vw; left:25vw; top:${top}px; height:40px;border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff"><H4>Drag the line to adjust the relative width of the two viewers</H4></div>`);
+            } catch(e) {
+
+            }
 
             
             modifyCallbacks(0);
@@ -824,7 +828,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
 
         //        let tp=$(parentcanvas).parent().parent().parent().css(['top']);
-        let tp=this.internal.layoutcontroller.getviewertop();
+        let tp=this.internal.layoutcontroller.getviewertop() || 0;
+
         this.internal.midline.css({
             'height' : `${dh}px`,
             'top' : `${tp}px`,

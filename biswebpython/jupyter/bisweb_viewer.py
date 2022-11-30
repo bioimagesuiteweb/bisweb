@@ -63,32 +63,41 @@ class Viewer:
         self.hasViewer=True
         return m
 
-    async def setImage(self,filename,overlay=False):
+    async def setImage(self,filename,viewer=0,overlay=False):
         a= {
             "command" : "forward",
             "index" : self.index,
             "payload": {
                 "command" : "load",
                 "filename" : self.info['url']+filename,
+                "viewer" : viewer,
                 "overlay" : overlay
             }
         }
         await self.sendMessage(json.dumps(a))
 
         
-    async def setCoordinates(self,coords):
+    async def setCoordinates(self,coords,viewer=0):
         c= {
             "command" : "forward",
             "index" : self.index,
             "payload": {
                 "command" : "crosshairs",
                 "coords"  : coords,
+                "viewer"  : viewer
             }
         }
         await self.sendMessage(json.dumps(c))
 
-
-        
+    async def setMode(self,md='Both'):
+        await self.sendMessage(json.dumps({
+            "command" : "forward",
+            "index" : self.index,
+            "payload": {
+                "command" : "show",
+                "mode"  : md,
+            }
+        }))
                    
 if __name__ == '__main__':
 
