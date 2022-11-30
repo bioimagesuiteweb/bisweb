@@ -9,7 +9,8 @@ async def hello(port,message):
     try:
         async with websockets.connect(url) as websocket:
             print('W=',websocket)
-            await websocket.send('{ "command" : '+'"'+message+'"}');
+            print('Sending=',message);
+            await websocket.send(message);
     except:
         e = sys.exc_info()[0]
         print(e)

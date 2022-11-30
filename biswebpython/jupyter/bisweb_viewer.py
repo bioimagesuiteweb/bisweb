@@ -20,6 +20,7 @@ class Viewer:
         Viewer.url="ws://localhost:"+str(Viewer.wsport);
         self.hasViewer=False;
         self.info=None;
+        self.counter=0;
         
     async def sendMessage(self,msg,respond=False):
         async with websockets.connect(Viewer.url) as websocket:
@@ -48,7 +49,10 @@ class Viewer:
             return 
 
         self.index=self.info['index']
-        url=self.info['url']+"web/lightviewer.html";
+        if (external):
+            url=self.info['url']+"web/lightviewer2.html";
+        else:
+            url=self.info['url']+"web/lightviewer.html";
         url=url+"?port="+str(Viewer.wsport);
         print('++++ creating viewer with URL=',url);
         url=url+"&index="+str(self.index);
@@ -98,7 +102,19 @@ class Viewer:
                 "mode"  : md,
             }
         }))
-                   
+
+    async def setImageData(self,img,viewer=0,overlay=False):
+        self.counter+=1;
+        fname='tmp_'+str(self.index)+'_'+str(self.counter)+'.nii.gz';
+        print(fname);
+        d=self.info['temp']+'/'+fname
+        print('Saving image in',d);
+        img.save(d)
+        fname=self.info['path']+'/'+fname;
+        print('loading from ',fname)
+        await self.setImage(fname,viewer,overlay)
+        
+
 if __name__ == '__main__':
 
     ws=9000;

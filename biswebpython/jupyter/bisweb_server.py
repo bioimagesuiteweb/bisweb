@@ -10,7 +10,7 @@ import tempfile
 
 class Server:
 
-    def __init__(self,port=None):
+    def __init__(self,port=None,tempname=None):
         self.connections={}
         self.wsport=9000
         self.httpport=None
@@ -20,7 +20,9 @@ class Server:
 
         self.lastIndex=0
         self.httpd=None
-        self.tempdir=None
+        print('__ Created temp directory:',tempname);
+        self.tempdir=tempname;
+  
         self.connections={}
          
     async def listen(self,websocket):
@@ -105,17 +107,14 @@ class Server:
 
 
     def createTemp(self):
+        print('__in dir=',os.getcwd())
         tmp=tempfile.TemporaryDirectory(dir=os.getcwd());
-        print('Created temp directory:',tmp.name);
-        self.tempdir=tmp.name;
-            
-    def createHTTPServer(self,dir=None):
+          
+    def createHTTPServer(self):
 
         if (self.httpport==None):
             self.httpport=self.wsport+1;
 
-        if (dir!=None):
-            os.chdir(dir)
 
         self.createTemp();
         Handler = http.server.SimpleHTTPRequestHandler
@@ -149,27 +148,27 @@ class Server:
         await self.connections[index].send(json.dumps(c));
         
 
-        # Commandline
-def main(port=None,dir=None):
-    print('.... Starting main function')
-    v=Server(port)
-    v.createHTTPServer(dir)
-    asyncio.run(v.createWSServer(dowait=True))
+# Commandline Version
+def main(port=None,dir=None,doWait=True):
+    print('__ switching to directory',dir);
+    os.chdir(dir)
+    with tempfile.TemporaryDirectory(dir=dir) as tempdname:
+        print('.... Starting main function',tempdname)
+        v=Server(port,tempdname)
+        v.createHTTPServer()
+        asyncio.run(v.createWSServer(dowait=doWait))
 
 
+# Jupyter Version        
 async def start(port=None,dir=None):
-    print('.... Starting main function')
-    v=Server(port)
-    v.createHTTPServer(dir)
-    await v.createWSServer(dowait=False)
+    main(port,dir,False);
     
 
 if __name__ == '__main__':
     a=sys.argv[1];
     if (a==None):
         a="9000"
-    
-    
+
     main(int(sys.argv[1]),sys.argv[2])
     
 
