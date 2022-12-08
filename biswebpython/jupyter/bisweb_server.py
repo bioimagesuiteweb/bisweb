@@ -99,24 +99,17 @@ class Server:
     def print(self):
         print('---- Connections=',self.connections);
 
-    async def createWSServer(self,dowait=True):
+    async def createWSServer(self):
         async with websockets.serve(self.listen, "localhost", self.wsport):
             print('---- Websocket server started on port',self.wsport);
-            if (dowait):
-                await asyncio.Future()  # run forever
+            await asyncio.Future()  # run forever
+                        
 
-
-    def createTemp(self):
-        print('__in dir=',os.getcwd())
-        tmp=tempfile.TemporaryDirectory(dir=os.getcwd());
-          
     def createHTTPServer(self):
 
         if (self.httpport==None):
             self.httpport=self.wsport+1;
 
-
-        self.createTemp();
         Handler = http.server.SimpleHTTPRequestHandler
         self.httpd=http.server.ThreadingHTTPServer(("127.0.0.1", self.httpport), Handler);
         print("---- HTTP Server started at port",self.httpport,' root=',os.getcwd())
@@ -149,21 +142,21 @@ class Server:
         
 
 # Commandline Version
-def main(port=None,dir=None,doWait=True):
+def main(port=None,dir=None):
     print('__ switching to directory',dir);
     os.chdir(dir)
     with tempfile.TemporaryDirectory(dir=dir) as tempdname:
         print('.... Starting main function',tempdname)
         v=Server(port,tempdname)
         v.createHTTPServer()
-        asyncio.run(v.createWSServer(dowait=doWait))
+        asyncio.run(v.createWSServer())
 
 
-# Jupyter Version        
-async def start(port=None,dir=None):
-    main(port,dir,False);
-    
-
+def start(port=None,dir=None):
+    import subprocess;
+    my_path=os.path.dirname(os.path.realpath(__file__));
+    subprocess.Popen(["python",__file__,str(port), dir]);
+        
 if __name__ == '__main__':
     a=sys.argv[1];
     if (a==None):

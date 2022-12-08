@@ -6,7 +6,7 @@ else
     DOINSTALL="true"
 fi
 
-BISMAKEJ="-j2"
+BISMAKEJ="-j4"
 GENERATOR="Unix Makefiles"
 
 IDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

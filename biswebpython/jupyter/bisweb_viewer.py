@@ -5,7 +5,8 @@ import sys
 import json
 import IPython.display 
 import webbrowser
-import time
+from time import sleep
+
 
 class Viewer:
 
@@ -60,7 +61,7 @@ class Viewer:
         
         if (external):
             webbrowser.open(url);
-            time.sleep(2.0);
+            sleep(2);
         else:
             m='IPython.display.IFrame('+'"'+url+'", width='+str(width)+', height='+str(height)+")";
 
@@ -106,25 +107,19 @@ class Viewer:
     async def setImageData(self,img,viewer=0,overlay=False):
         self.counter+=1;
         fname='tmp_'+str(self.index)+'_'+str(self.counter)+'.nii.gz';
-        print(fname);
         d=self.info['temp']+'/'+fname
-        print('Saving image in',d);
         img.save(d)
         fname=self.info['path']+'/'+fname;
-        print('loading from ',fname)
         await self.setImage(fname,viewer,overlay)
-        
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':        
     ws=9000;
     if (sys.argv[1]!=None):
         ws=int(sys.argv[1])
-
-    v=Viewer(ws);
-    asyncio.run(v.createViewer(external=True));
-    time.sleep(5.0);
-    asyncio.run(v.setImage("web/images/MNI_T1_2mm_stripped_ras.nii.gz",False));
-                        
-
-    
+        
+        v=Viewer(ws);
+        asyncio.run(v.createViewer(external=True));
+        asyncio.run(v.setImage("web/images/MNI_T1_2mm_stripped_ras.nii.gz",False));
+        
+        
