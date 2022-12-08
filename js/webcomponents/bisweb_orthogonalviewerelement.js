@@ -1441,6 +1441,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             return;
         
         this.deleteoldobjectmap();
+        this.informToRender();
         this.internal.cmapcontroller.removeobjectmap();
         this.internal.objectmaptransferinfo={ showcolorbar : false, 'colormode' : 'Objectmap' };
         this.drawtext();
