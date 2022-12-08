@@ -1068,13 +1068,15 @@ template <class BIS_IT,class BIS_OT> unsigned char* thresholdImageTemplate(unsig
   float thresholds[2];
   thresholds[0]=params->getFloatValue("low",0.0);
   thresholds[1]=params->getFloatValue("high",1000.0);
-  int replace[2];
+  int replace[3];
   replace[0]=params->getBooleanValue("replaceout",1);
   replace[1]=params->getBooleanValue("replacein",0);
+  replace[2]=params->getBooleanValue("saturate",0);
 
   BIS_OT replacevalue[2];
   replacevalue[0]=(BIS_OT)params->getFloatValue("outvalue",0);
   replacevalue[1]=(BIS_OT)params->getFloatValue("invalue",1);
+
   
 
 
@@ -1082,6 +1084,7 @@ template <class BIS_IT,class BIS_OT> unsigned char* thresholdImageTemplate(unsig
     std::cout << "Beginning actual Image Thresholding" << std::endl;
     std::cout << "Thresholding between : " << thresholds[0] << ":" << thresholds[1] << std::endl;
     std::cout << "Replace in =" << replace[1] << " replace out=" << replace[0] << std::endl;
+    std::cout << "Saturate =" << replace[2] << std::endl;
     
     if (replace[1])
       std::cout << "Replacing in values with " << replacevalue[1] << std::endl; 

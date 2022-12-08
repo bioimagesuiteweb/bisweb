@@ -56,6 +56,7 @@ namespace bisImageAlgorithms {
   /** thresholds an image.
    * to perform a simple threshold where the values are set to 0 if lower than 50 or higher than 100 and stay the same otherwise use
    *   thresholds={50,100}, replace={1,0}, replacevalues={0, anyvalue } where replacevalues[1] can be any value as it will not be used.
+   *    if replace[2]>0 then saturate above instead
    *  to perform a threshold where the values are set to 0 if lower than 50 or higher than 100 and 1 otherwise use
    *   thresholds={50,100}, replace={1,1}, replacevalues={0, 1 } 
    * @param input the input image
@@ -64,7 +65,7 @@ namespace bisImageAlgorithms {
    * @param replacevalues values to replace out and in cases respectively
    * @returns thresholded image
    */
-  template<class IT,class OT> std::unique_ptr<bisSimpleImage<OT> >  thresholdImage(bisSimpleImage<IT>* input,float thresholds[2],int replace[2],OT replacevalues[2]);
+  template<class IT,class OT> std::unique_ptr<bisSimpleImage<OT> >  thresholdImage(bisSimpleImage<IT>* input,float thresholds[2],int replace[3],OT replacevalues[2]);
 
   /** Shifts Scales and Casts an image. Essentially out = (input+shift)*scale and then cast to desired type
    * @param input the input image

@@ -114,6 +114,15 @@ class ThresholdImageModule extends BaseModule {
                     "varname": "outval",
                 },
                 {
+                    "name": "Saturate",
+                    "description": "If true then if > threshold saturate to threshold instead of out value",
+                    "priority": 7,
+                    "advanced": false,
+                    "type": "boolean",
+                    "default" : false,
+                    "varname": "saturate"
+                },
+                {
                     "name": "Output Type",
                     "description": "Output Type",
                     "priority": 10,
@@ -159,6 +168,7 @@ class ThresholdImageModule extends BaseModule {
                     "high": parseFloat(vals.high),
                     "replacein" : super.parseBoolean(vals.replacein),
                     "replaceout" : super.parseBoolean(vals.replaceout),
+                    "saturate" : super.parseBoolean(vals.saturate),
                     "invalue" : inval, 
                     "outvalue" : outval,
                     "datatype" : datatype,
