@@ -1,7 +1,7 @@
 nibabel==2.1.0
 numpy==1.13
 pillow>=4.3.0
-setuptools==49.6.0
+setuptools==65.5.1
 wheel>=0.31
 wget
 python-dateutil
