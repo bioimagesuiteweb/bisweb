@@ -80,12 +80,12 @@ class ComputeROILargeModule extends BaseModule {
         return des;
     }
 
-    computeROI(params,inpdata) {
+    processFrame(params,inpdata) {
 
         let frame=params['frame'];
         console.log('Computing ROI for frame',frame);
         
-        let roidata= this.inputs['roi'].getImageData();
+        let roidata= this.roi.getImageData();
         let numrois=this.num.length;
 
         if (frame % 50 ===0) 
@@ -138,7 +138,7 @@ class ComputeROILargeModule extends BaseModule {
 
         let debug=super.parseBoolean(vals.debug);
         let loadall=super.parseBoolean(vals.loadall);        
-        let roi=this.inputs['roi'];
+        this.roi=this.inputs['roi'];
         let inputname = vals['input'];
         let input=new BisWebImage();
 
@@ -150,12 +150,12 @@ class ComputeROILargeModule extends BaseModule {
         }
         
         
-        if (!input.hasSameOrientation(roi,'input image','roi image',true))
+        if (!input.hasSameOrientation(this.roi,'input image','roi image',true))
             return Promise.reject('Failed');
         
         
-        roi.computeIntensityRange();
-        let r=roi.getIntensityRange();
+        this.roi.computeIntensityRange();
+        let r=this.roi.getIntensityRange();
 
         if (r[1]>999 || r[0] < -3 ) 
             throw new Error('Bad ROI Image. It has largest value > 999 (max='+r[1]+') or min value <-3 ( min='+r[0]+')');
@@ -168,14 +168,14 @@ class ComputeROILargeModule extends BaseModule {
         this.outputs['output']=new BisWebMatrix();
         this.matrix=util.zero(numframes,numrois);
         this.num=new Int32Array(numrois);
-
+        const self=this;
         
         if (loadall) {
-            await this.computeROIArray(inputname,roi,numrois);
+            await this.computeROIArray(inputname,this.roi,numrois);
         } else {
             try {
                 console.log('\n\n calling baseLargeImage.readAndProcessLargeImage',inputname);
-                await baseLargeImage.readAndProcessLargeImage(inputname,this.computeROI);
+                await baseLargeImage.readAndProcessLargeImage(inputname,self);
             } catch(e) {
                 return Promise.reject(e);
             }
