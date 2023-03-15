@@ -80,14 +80,12 @@ class ComputeROILargeModule extends BaseModule {
         return des;
     }
 
-    processFrame(params,inpdata) {
+    processFrame(frame,frameImage) {
 
-        let frame=params['frame'];
-        console.log('Computing ROI for frame',frame);
-        
         let roidata= this.roi.getImageData();
         let numrois=this.num.length;
-
+        let inpdata=frameImage.getImageData();
+        
         if (frame % 50 ===0) 
             console.log('++++ Computing Streaming ROI: frame=',frame);
 
@@ -168,14 +166,13 @@ class ComputeROILargeModule extends BaseModule {
         this.outputs['output']=new BisWebMatrix();
         this.matrix=util.zero(numframes,numrois);
         this.num=new Int32Array(numrois);
-        const self=this;
         
         if (loadall) {
             await this.computeROIArray(inputname,this.roi,numrois);
         } else {
             try {
                 console.log('\n\n calling baseLargeImage.readAndProcessLargeImage',inputname);
-                await baseLargeImage.readAndProcessLargeImage(inputname,self);
+                await baseLargeImage.readAndProcessLargeImage(inputname,this);
             } catch(e) {
                 return Promise.reject(e);
             }

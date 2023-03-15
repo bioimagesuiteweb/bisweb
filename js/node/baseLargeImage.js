@@ -19,7 +19,6 @@
 
 const baseutils=require("baseutils");
 const BisWebImage = require('bisweb_image.js');
-const util=require('bis_util');
 const fs=require('fs');
 const zlib=require('zlib');
 
@@ -64,7 +63,7 @@ const processFrame = (params,buffer) => {
         let extraneeded=params['volumebytesize']-params['added'];
 
         if (extraneeded<1) {
-            params['processFrameCallbackObject'].processFrame(params,new params['arraytype'](params['temp'].buffer));
+            params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
             params['frame']+=1;
             params['added']=0;
         }
@@ -140,12 +139,9 @@ const readAndProcessFile = (params) => {
 const readAndProcessLargeImage = async (inputname,callbackObject) => {
 
     let input=new BisWebImage();
-    console.log('input=',input.getDescription());
     let headerinfo=null;
     try {
-        console.log('Trying to read',inputname);
         headerinfo=await input.loadHeaderOnly(inputname,true);
-        console.log('Here');
     } catch(e) {
         return Promise.reject('Failed to read header of '+inputname);
     }
@@ -156,9 +152,6 @@ const readAndProcessLargeImage = async (inputname,callbackObject) => {
         numframes : dims[3]*dims[4],
         voxelsize : headerinfo.type.size,
         volumesize : dims[0]*dims[1]*dims[2],
-        dims : input.getDimensions(),
-        spacing : input.getSpacing(),
-        arraytype : headerinfo.type.type,
         headersize : headerinfo.headerlength,
         swap : headerinfo.swap,
         processFrameCallbackObject : callbackObject,
@@ -166,7 +159,6 @@ const readAndProcessLargeImage = async (inputname,callbackObject) => {
         input : input
     };
 
-    console.log(params.processFrameCallbackObject);
     
     if (params.swap) {
         return Promise.reject('Can not handle byte swapped data');
@@ -174,7 +166,15 @@ const readAndProcessLargeImage = async (inputname,callbackObject) => {
     
     params['volumebytesize']=params.volumesize*params.voxelsize;
     params['temp']=new Uint8Array(params['volumebytesize']);
+    params['tmpImage']=new BisWebImage();
+    params['tmpImage'].cloneImage(params['input'],
+                                  {
+                                      "numframes" : 1,
+                                      "numcomponents" : 1,
+                                      "buffer" : params['temp'].buffer
+                                  }, true);
     
+
     
     try {
         await readAndProcessFile(params);

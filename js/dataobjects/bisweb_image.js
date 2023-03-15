@@ -458,6 +458,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {string} opts.numcomponents - number of components in frame in clone (null or 0->same)
      * @param {array} opts.dimensions - new dimensions (null or 'same' ->same). This can be a 3 or a 4-array to also change frames. opts.numframes overrides this.
      * @param {array} opts.spacing - new spacing (null or 'same' ->same)
+     * @param {buffer} opts.buffer - raw data buffer or null
      * @param {Boolean} force - if true ignore lack of pixeldata
      */
     cloneImage(inputimage,opts={},force=false) {
@@ -469,7 +470,8 @@ class BisWebImage extends BisWebDataObject {
         let newnumcomponents = opts.numcomponents || 0;
         let newdims = opts.dimensions || 'same';
         let newspacing = opts.spacing || 'same';
-
+        let input_buffer=opts.buffer || null;
+        
         if (inputimage.getRawData()===null && !force) {
             console.log('bad image, can not clone');
             return null;
@@ -541,7 +543,20 @@ class BisWebImage extends BisWebDataObject {
         internal.rawsize=internal.volsize*headerstruct.bitpix/8;
         let Imginfo=internal.imginfo.type;
 
-        let newbuffer=new ArrayBuffer(internal.rawsize);
+        let newbuffer=null;
+
+        if (input_buffer) {
+            if (input_buffer.byteLength>=internal.rawsize) {
+                newbuffer=input_buffer;
+            }
+        }
+
+
+
+        
+        if (!newbuffer) {
+            newbuffer=new ArrayBuffer(internal.rawsize);
+        }
         internal._rawdata=new Uint8Array(newbuffer);
         internal.imgdata=new Imginfo(newbuffer);
     }
@@ -555,6 +570,7 @@ class BisWebImage extends BisWebDataObject {
      overrides this.
      * @param {array} opts.spacing - new spacing (null or 'same' -> [1.0,1.0,1.0])
      * @param {string} opts.orientation - LPS or RAS -- (if not specified, RAS)
+     * @param {buffer} opts.buffer - raw data buffer or null
      */
     createImage(opts={}) {
 
@@ -565,6 +581,7 @@ class BisWebImage extends BisWebDataObject {
         let newdims = opts.dimensions || [ 10,10,10 ];
         let newspacing = opts.spacing || [ 1.0,1.0,1.0 ];
         let orientation =opts.orientation || "RAS";
+        let input_buffer=opts.buffer || null;
 
         // Create header
         this.initialize();
@@ -624,7 +641,17 @@ class BisWebImage extends BisWebDataObject {
         internal.rawsize=internal.volsize*headerstruct.bitpix/8;
         let Imginfo=internal.imginfo.type;
 
-        let newbuffer=new ArrayBuffer(internal.rawsize);
+        let newbuffer=null;
+        
+        if (input_buffer) {
+            if (input_buffer.byteLength>=internal.rawsize) {
+                console.log('Using existing data');
+                newbuffer=input_buffer;
+            }
+        }
+        if (!newbuffer)
+            newbuffer=new ArrayBuffer(internal.rawsize);
+        
         internal._rawdata=new Uint8Array(newbuffer);
         internal.imgdata=new Imginfo(newbuffer);
 
