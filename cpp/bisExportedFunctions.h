@@ -277,6 +277,16 @@ extern "C" {
   // BIS: { 'medianNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ] } 
   BISEXPORT unsigned char*  medianNormalizeImageWASM(unsigned char* input,int debug);
 
+  /** Median Filter an Image an image using \link bisImageAlgorithms::medianNormalizeImage \endlink
+   * @param input serialized input as unsigned char array
+      * @param jsonstring the parameter string for the algorithm { "radius" : 3, "3d" :  true }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'medianImageFilterWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
+  BISEXPORT unsigned char*  medianImageFilterWASM(unsigned char* input,const char* jsonstring, int debug);
+
+  
   /** Resample image using \link bisImageAlgorithms::resampleImage \endlink
    * @param input serialized input as unsigned char array 
    * @param jsonstring the parameter string for the algorithm  { int dim[3], float spacing[3], int interpolation; 3, 1 or 0, float backgroundValue=0.0 };

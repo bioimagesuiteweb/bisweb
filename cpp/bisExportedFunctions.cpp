@@ -1823,3 +1823,58 @@ unsigned char* transformSurfaceWASM(unsigned char* input,unsigned char* xform,in
   unsigned char* outstr=output->serialize();
   return outstr;
 }
+
+// -----------
+
+// -------------------------------------------------------------------
+// Median Filter
+// -------------------------------------------------------------------
+template <class BIS_TT> unsigned char* medianImageFilterTemplate(unsigned char* input,bisJSONParameterList* params,int debug,BIS_TT*) {
+  std::unique_ptr<bisSimpleImage<BIS_TT> > inp_image(new bisSimpleImage<BIS_TT>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  int radius=params->getIntValue("radius",0);
+  int do3d=params->getBooleanValue("3d",1);
+
+  if (debug) {
+    std::cout << "Beginning actual Image Median Filter" << std::endl;
+    std::cout << "Parsed parameters radius=" << radius << " do3d=" << do3d << std::endl << "\t";
+    std::cout << "-----------------------------------" << std::endl;
+  }
+  
+  std::unique_ptr<bisSimpleImage<BIS_TT> > out_image=bisImageAlgorithms::medianImageFilter(inp_image.get(),
+                                                                                           radius,do3d);
+  if (debug)
+    std::cout << "Median Filter Done" << std::endl;
+
+  return out_image->releaseAndReturnRawArray();
+}
+
+  /** Median Filter an Image an image using \link bisImageAlgorithms::medianNormalizeImage \endlink
+   * @param input serialized input as unsigned char array
+   * @param jsonstring the parameter string for the algorithm { "radius" : 3, "3d" :  true }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'medianImageFilterWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
+unsigned char* medianImageFilterWASM(unsigned char* input,
+				 const char* jsonstring,int debug)
+{
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+
+  if(debug)
+    params->print();
+
+  int* header=(int*)input;
+  int target_type=header[1];
+
+  switch (target_type)
+    {
+      bisvtkTemplateMacro( return medianImageFilterTemplate(input,params.get(),debug, static_cast<BIS_TT*>(0)));
+    }
+  return 0;
+}

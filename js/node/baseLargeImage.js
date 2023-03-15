@@ -61,11 +61,15 @@ const processFrame = (params,buffer) => {
         storeData(in_offset,params['added'],length);
         params['added']=params['added']+length;
         let extraneeded=params['volumebytesize']-params['added'];
-
+        
         if (extraneeded<1) {
-            params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
+            let finished=params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
             params['frame']+=1;
             params['added']=0;
+            if (finished) {
+                return true;
+            }
+            
         }
         
         available=available-length;
@@ -73,7 +77,10 @@ const processFrame = (params,buffer) => {
             params['offset']=0;
             done=true;
         }
+
     }
+
+    return false;
 };
 
 
@@ -95,6 +102,7 @@ const readAndProcessFile = (params) => {
         return Promise.reject('error'+e);
     });
 
+    let finished=false;
     
     return new Promise( (resolve,reject) => {
         
@@ -105,7 +113,13 @@ const readAndProcessFile = (params) => {
             });
             
             gunzip.on('data', (chunk) => {
-                processFrame(params,chunk);
+                if (!finished) {
+                    if (processFrame(params,chunk)) {
+                        finished=true;
+                        resolve('Done');
+                        return;
+                    }
+                }
             });
             gunzip.on('error', () => {
                 reject('Done');
@@ -120,8 +134,12 @@ const readAndProcessFile = (params) => {
                 let done=false;
                 while (!done) {
                     let chunk = readstream.read();
-                    if (chunk) {
-                        processFrame(params,chunk);
+                    if (chunk && !finished) {
+                        if (processFrame(params,chunk)) {
+                            finished=true;
+                            resolve('Done');
+                            return;
+                        }
                     } else {
                         done=true;
                     }

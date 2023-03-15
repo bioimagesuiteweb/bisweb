@@ -104,6 +104,8 @@ class ComputeROILargeModule extends BaseModule {
             if (this.num[region]>0)
                 this.matrix[frame][region]=this.matrix[frame][region]/this.num[region];
         }
+
+        return false;
     }
     
 
@@ -161,7 +163,7 @@ class ComputeROILargeModule extends BaseModule {
         let dims=input.getDimensions();
         
         let numrois=Math.floor(r[1]);
-        let numframes = dims[3];
+        let numframes = dims[3]*dims[4];
         
         this.outputs['output']=new BisWebMatrix();
         this.matrix=util.zero(numframes,numrois);
