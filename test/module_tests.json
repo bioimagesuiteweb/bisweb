@@ -20,6 +20,12 @@
 	        "dopython": true
 	    },
 	    {
+	        "command" : "medianFilterImage --radius 2 --input testdata/MNI_2mm_orig.nii.gz",
+	        "test"    : "--test_target testdata/MNI_2mm_orig_med5.nii.gz",
+	        "result"  : true,
+	        "dopython": true
+	    },
+	    {
 	        "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false",
 	        "test"    : "--test_target testdata/newtests/goldcorrelation.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	        "result"  : true,

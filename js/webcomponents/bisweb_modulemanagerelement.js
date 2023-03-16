@@ -241,6 +241,7 @@ class ModuleManagerElement extends HTMLElement {
         let usesgpl=window.bioimagesuitewasmpack.usesgpl;
 
         this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
+        this.createModule('Median Filter',1, false, modules.getModule('medianFilterImage'),moduleoptions);
         
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
