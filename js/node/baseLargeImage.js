@@ -21,7 +21,9 @@ const baseutils=require("baseutils");
 const BisWebImage = require('bisweb_image.js');
 const fs=require('fs');
 const zlib=require('zlib');
-
+const bisgenericio=require('bis_genericio.js');
+const rimraf=require('rimraf');
+const tmpPackage=require('tmp');
 
 /**
  * A set of utility functions to handle large image load and process
@@ -64,6 +66,7 @@ const processFrame = (params,buffer) => {
         
         if (extraneeded<1) {
             let finished=params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
+            console.log('Finished=',finished,params['frame']);
             params['frame']+=1;
             params['added']=0;
             if (finished) {
@@ -203,6 +206,124 @@ const readAndProcessLargeImage = async (inputname,callbackObject) => {
     return Promise.resolve('Done');
 };
 
+
+const createInitialImageOutput =  (firstImage,dt=null,numframes=0,numcomponents=0) =>{
+
+
+    let tempImage=new BisWebImage();
+    tempImage.cloneImage(firstImage,
+                         {
+                             "numframes" : numframes,
+                             "numcomponents" : numcomponents,
+                             "onlyheader" : true,
+                             "newniftytype" : dt
+                         },true);
+
+    return tempImage;
+};
+
+const saveInitialImageHeader =  (tempImage) => { 
+    
+    let headerdata=tempImage.getHeaderData(true);
+    let tempfname=tmpPackage.tmpNameSync();
+
+    console.log('Initial=',headerdata.length,tempfname);
+    
+    let fd=null;
+    try {
+        fd = fs.openSync(tempfname, 'w');
+        let buf = bisgenericio.createBuffer(headerdata);
+        fs.writeSync(fd, buf);
+    } catch(e) {
+        return [ null,e ];
+    }
+
+    return [ fd, tempfname ];
+};
+
+const writeSubsequentFrame =(filehandle,imageFrame,last=false) => {
+
+    let rawdata=imageFrame.getRawData();
+    try {
+        let buf = bisgenericio.createBuffer(rawdata);
+        fs.writeSync(filehandle,buf);
+    } catch(e) {
+        console.log(e);
+        return 0;
+    }
+
+    console.log('Frame written',last,rawdata.length);
+    
+    if (last)
+        fs.closeSync(filehandle);
+    
+    return rawdata.length;
+};
+
+const compressFile=  (infilename,outname,deleteold=true)  => {
+
+    try {
+        const inp = fs.createReadStream(infilename);
+        
+        // Creating writable stream
+        const out = fs.createWriteStream(outname);
+        
+        // Calling createGzip method
+        const gzip = zlib.createGzip();
+        
+        // Piping
+        inp.pipe(gzip).pipe(out);
+        console.log("Gzip created!");
+        
+        if (deleteold)
+            rimraf.sync(infilename);
+        return true;
+    } catch(e) {
+        console.log(e);
+        return false;
+    }
+};
+                                       
+
+const writeOutput=(frame,numframes,outputname,imageToSave,fileHandle) => {
+
+    console.log('--------- write',frame,'/',numframes);
+    
+    if (frame===0) {
+        
+        console.log('First Frame',outputname,imageToSave.getDescription());
+        let tmp=createInitialImageOutput(imageToSave);
+        let fh=saveInitialImageHeader(tmp);
+        fileHandle['fd']=fh[0];
+        fileHandle['filename']=fh[1];
+        
+    }
+    
+    let last=false;
+    if (frame === numframes-1)
+        last=true;
+
+    console.log('Is last=',last, frame,'/',numframes);
+    
+    writeSubsequentFrame(fileHandle['fd'],imageToSave,last);
+
+    if (last) {
+        console.log('Calling Compress',fileHandle['filename'],outputname);
+        compressFile(fileHandle['filename'],outputname,true);
+    }
+
+    console.log('Last=',last);
+
+    return last;
+
+};
+
+
 module.exports = {
-    readAndProcessLargeImage : readAndProcessLargeImage
+    readAndProcessLargeImage : readAndProcessLargeImage,
+    createInitialImageOutput : createInitialImageOutput,
+    saveInitialImageHeader : saveInitialImageHeader,
+    writeSubsequentFrame : writeSubsequentFrame,
+    compressFile : compressFile,
+    writeOutput : writeOutput,
 };

@@ -31,6 +31,7 @@ const moduleImports = {
     'computeroilarge' : require('./computeROILarge.js'),
     'largemotioncorrection' : require('./largeMotionCorrection.js'),
     'largeextractframe' : require('./largeExtractFrame.js'),
+    'largemedianfilter' : require('./largeMedianFilter.js'),
     'mapelectrodes' : require('./mapElectrodes.js'),
     'preprocessfmri' : require('./preprocessfMRI.js'),
     'splitimageintoframes' : require('./splitImageIntoFrames.js')

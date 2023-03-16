@@ -459,6 +459,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {array} opts.dimensions - new dimensions (null or 'same' ->same). This can be a 3 or a 4-array to also change frames. opts.numframes overrides this.
      * @param {array} opts.spacing - new spacing (null or 'same' ->same)
      * @param {buffer} opts.buffer - raw data buffer or null
+     * @param {buffer} opts.headeronly - if true create only the header and leave data blank
      * @param {Boolean} force - if true ignore lack of pixeldata
      */
     cloneImage(inputimage,opts={},force=false) {
@@ -471,16 +472,19 @@ class BisWebImage extends BisWebDataObject {
         let newdims = opts.dimensions || 'same';
         let newspacing = opts.spacing || 'same';
         let input_buffer=opts.buffer || null;
+        let onlyheader = opts.headeronly || false;
         
         if (inputimage.getRawData()===null && !force) {
             console.log('bad image, can not clone');
             return null;
         }
 
+
+        
         this.initialize();
         let headerdata=inputimage.getHeaderData(true);
         this.parseNIIModular(headerdata.data.buffer);
-
+        
 
         let headerstruct=internal.header.struct;
 
@@ -511,6 +515,7 @@ class BisWebImage extends BisWebDataObject {
         // If needed alter number of frames
         // -------------------------------------------------------
 
+        
         if (newdims !== 'same')
             BisWebImage.changeDimensions(internal,newdims);
 
@@ -543,22 +548,25 @@ class BisWebImage extends BisWebDataObject {
         internal.rawsize=internal.volsize*headerstruct.bitpix/8;
         let Imginfo=internal.imginfo.type;
 
-        let newbuffer=null;
-
-        if (input_buffer) {
-            if (input_buffer.byteLength>=internal.rawsize) {
-                newbuffer=input_buffer;
+        if (!onlyheader) {
+            let newbuffer=null;
+            
+            if (input_buffer) {
+                if (input_buffer.byteLength>=internal.rawsize) {
+                    newbuffer=input_buffer;
+                }
             }
+            
+            if (!newbuffer) {
+                newbuffer=new ArrayBuffer(internal.rawsize);
+            }
+            internal._rawdata=new Uint8Array(newbuffer);
+            internal.imgdata=new Imginfo(newbuffer);
+        } else {
+            internal._rawdata=null;
+            internal.imgdata=null;
         }
 
-
-
-        
-        if (!newbuffer) {
-            newbuffer=new ArrayBuffer(internal.rawsize);
-        }
-        internal._rawdata=new Uint8Array(newbuffer);
-        internal.imgdata=new Imginfo(newbuffer);
     }
 
     /** creates an image (allocate data etc.)
