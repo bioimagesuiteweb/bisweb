@@ -488,14 +488,30 @@ const webfileutils = {
 
         let multiple = fileopts.altkeys ? 'multiple' : ''; //enables shift and ctrl in native file select
         if (!genericio.inIOS()) {
-            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}" ${multiple}/>`);
-            fileInputElements.push(loadelement);
+            if (!window.showOpenFilePicker) {
+                let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}" ${multiple}/>`);
+                fileInputElements.push(loadelement);
 
-            loadelement[0].addEventListener('change', function (f) {
-                callback(f.target.files[0]);
-            });
-            $('body').append(loadelement);
-            loadelement[0].click();
+                loadelement[0].addEventListener('change', function (f) {
+                    callback(f.target.files[0]);
+                });
+                $('body').append(loadelement);
+                loadelement[0].click();
+            } else {
+                let acceptlist=[];
+                console.log(fileopts.filters);
+                let ext=[ '.nii' ];
+                /*for (let i=0;i<fileopts.filters[0].extensions.length;i++) {
+                  ext.push('.'+fileopts.filters[0].extensions[i]);
+                  }*/
+                window.showOpenFilePicker({
+                    "types" : [ {
+                        "description" : fileopts.filters[0].name,
+                    }]
+                }).then( (fileHandle) => {
+                    fileHandle[0].getFile().then( (m) => { callback(m); });
+                });
+            }
         } else {
             if (!iosFileDialog)
                 iosFileDialog=webutil.createmodal('Select Input File');
