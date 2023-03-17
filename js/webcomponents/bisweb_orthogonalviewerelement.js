@@ -1445,6 +1445,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.objectmaptransferinfo={ showcolorbar : false, 'colormode' : 'Objectmap' };
         this.drawtext();
         this.updateImageChangedObservers('overlay');
+        this.needsrendering=true;
     }
     
     
