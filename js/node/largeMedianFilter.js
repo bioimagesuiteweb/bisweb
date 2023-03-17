@@ -83,7 +83,7 @@ class LargeMedianFilterModule extends BaseModule {
                     "advanced": false,
                     "gui": "slider",
                     "type": 'int',
-                    "default": 3,
+                    "default": 1,
                     "lowbound": 1,
                     "highbound": 20,
                     "varname": "radius"
@@ -132,9 +132,9 @@ class LargeMedianFilterModule extends BaseModule {
 
         let output=null;
 
-        //if (frame % 50===0) {
+        if (frame % 50===0) {
             console.log('--- filtering frame ',frame);
-//        }
+        }
         
         try {
             output =  biswrap.medianImageFilterWASM(frameImage, {
@@ -146,7 +146,7 @@ class LargeMedianFilterModule extends BaseModule {
             return false;
         }
 
-  //      console.log('Output=',output.getDescription(),frame,this.numframes);
+
         
         if (frame===0) {
             this.fileHandleObject={
@@ -155,11 +155,10 @@ class LargeMedianFilterModule extends BaseModule {
             };
         }
 
-        //    console.log('Now save ...');
+
         
         let done=baseLargeImage.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject);
 
-        console.log('.... Done Process Frame=',frame,done, this.fileHandleObject);
 
         return false;
         

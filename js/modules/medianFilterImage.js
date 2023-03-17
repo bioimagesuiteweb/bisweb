@@ -22,7 +22,7 @@ const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const smreslice=require('bis_imagesmoothreslice');
 /**
- * Applies median smoothing to an image using a given sigma (kernel size and strength) and radius factor. 
+ * Applies median smoothing to an image using a given radius to determine the filter
  */
 class MedianImageModule extends BaseModule {
     constructor() {
@@ -60,7 +60,7 @@ class MedianImageModule extends BaseModule {
                     "advanced": false,
                     "gui": "slider",
                     "type": 'int',
-                    "default": 3,
+                    "default": 1,
                     "lowbound": 1,
                     "highbound": 20,
                     "varname": "radius"

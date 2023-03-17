@@ -223,16 +223,15 @@ const createInitialImageOutput =  (firstImage,dt=null,numframes=0,numcomponents=
 };
 
 const saveInitialImageHeader =  (tempImage) => { 
-    
+
+    let hd=tempImage.getHeader();
     let headerdata=tempImage.getHeaderData(true);
     let tempfname=tmpPackage.tmpNameSync();
-
-    console.log('Initial=',headerdata.length,tempfname);
     
     let fd=null;
     try {
         fd = fs.openSync(tempfname, 'w');
-        let buf = bisgenericio.createBuffer(headerdata);
+        let buf = bisgenericio.createBuffer(headerdata.data);
         fs.writeSync(fd, buf);
     } catch(e) {
         return [ null,e ];
@@ -252,15 +251,13 @@ const writeSubsequentFrame =(filehandle,imageFrame,last=false) => {
         return 0;
     }
 
-    console.log('Frame written',last,rawdata.length);
-    
     if (last)
         fs.closeSync(filehandle);
     
     return rawdata.length;
 };
 
-const compressFile=  (infilename,outname,deleteold=true)  => {
+const compressFile= async (infilename,outname,deleteold=true)  => {
 
     try {
         const inp = fs.createReadStream(infilename);
@@ -272,7 +269,7 @@ const compressFile=  (infilename,outname,deleteold=true)  => {
         const gzip = zlib.createGzip();
         
         // Piping
-        inp.pipe(gzip).pipe(out);
+        await inp.pipe(gzip).pipe(out);
         console.log("Gzip created!");
         
         if (deleteold)
