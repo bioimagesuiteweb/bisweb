@@ -33,7 +33,7 @@ const tmpPackage=require('tmp');
 /**
  * Code to load and stream large images
  */
-const processFrame = (params,buffer) => {
+const processFrame = async (params,buffer) => {
 
     let newbuf=new Uint8Array(buffer);
     let len=newbuf.length;
@@ -65,8 +65,7 @@ const processFrame = (params,buffer) => {
         let extraneeded=params['volumebytesize']-params['added'];
         
         if (extraneeded<1) {
-            let finished=params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
-            console.log('Finished=',finished,params['frame']);
+            let finished=await params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
             params['frame']+=1;
             params['added']=0;
             if (finished) {
@@ -88,7 +87,7 @@ const processFrame = (params,buffer) => {
 
 
 
-const readAndProcessFile = (params) => {
+const readAndProcessFile = async (params) => {
 
     let gzip=false;
     if (params.inputname.split('.').pop()==='gz') {
@@ -106,18 +105,24 @@ const readAndProcessFile = (params) => {
     });
 
     let finished=false;
+    let processing=false;
     
     return new Promise( (resolve,reject) => {
         
         if (gzip) {
             const gunzip = zlib.createGunzip();
             readstream.pipe(gunzip).on('finish', () => {
-                resolve('Done');
+                if (!processing) {
+                    resolve('Done');
+                }
             });
             
-            gunzip.on('data', (chunk) => {
+            gunzip.on('data', async (chunk) => {
                 if (!finished) {
-                    if (processFrame(params,chunk)) {
+                    processing=true;
+                    let ok=await processFrame(params,chunk);
+                    processing=false;
+                    if (ok) {
                         finished=true;
                         resolve('Done');
                         return;
@@ -133,12 +138,13 @@ const readAndProcessFile = (params) => {
                 resolve('Done');
             });
             
-            readstream.on('readable',  () => {
+            readstream.on('readable', async () => {
                 let done=false;
                 while (!done) {
                     let chunk = readstream.read();
                     if (chunk && !finished) {
-                        if (processFrame(params,chunk)) {
+                        let ok=await processFrame(params,chunk);
+                        if (ok) {
                             finished=true;
                             resolve('Done');
                             return;
@@ -232,7 +238,7 @@ const saveInitialImageHeader =  (tempImage) => {
     try {
         fd = fs.openSync(tempfname, 'w');
         let buf = bisgenericio.createBuffer(headerdata.data);
-        fs.writeSync(fd, buf);
+        //console.log('_____ writing ',fs.writeSync(fd, buf),'bytes '+tempfname+' '+fd);
     } catch(e) {
         return [ null,e ];
     }
@@ -240,12 +246,14 @@ const saveInitialImageHeader =  (tempImage) => {
     return [ fd, tempfname ];
 };
 
-const writeSubsequentFrame =(filehandle,imageFrame,last=false) => {
+const writeSubsequentFrame =(filehandle,imageFrame,last=false,debug=false) => {
 
     let rawdata=imageFrame.getRawData();
     try {
         let buf = bisgenericio.createBuffer(rawdata);
-        fs.writeSync(filehandle,buf);
+        let l=fs.writeSync(filehandle,buf)
+        if (debug)
+            console.log('_____ writing ',l,'bytes');
     } catch(e) {
         console.log(e);
         return 0;
@@ -257,61 +265,75 @@ const writeSubsequentFrame =(filehandle,imageFrame,last=false) => {
     return rawdata.length;
 };
 
-const compressFile= async (infilename,outname,deleteold=true)  => {
+const compressFile= (infilename,outname,deleteold=true)  => {
 
-    try {
-        const inp = fs.createReadStream(infilename);
-        
-        // Creating writable stream
-        const out = fs.createWriteStream(outname);
-        
-        // Calling createGzip method
-        const gzip = zlib.createGzip();
-        
-        // Piping
-        await inp.pipe(gzip).pipe(out);
-        console.log("Gzip created!");
-        
-        if (deleteold)
-            rimraf.sync(infilename);
-        return true;
-    } catch(e) {
-        console.log(e);
-        return false;
+    let success=false;
+    let index=outname.lastIndexOf('.gz');
+    if (index<2) {
+        return new Promise( (resolve,reject) => {
+            try {
+                console.log('_____ executing copy '+infilename+' '+outname);
+                fs.copyFileSync(infilename,outname);
+                success=true;
+            } catch(e) {
+                console.log(e);
+            }
+            if (deleteold)
+                rimraf.sync(infilename);
+            if (success)
+                resolve(true);
+            else
+                reject(false);
+        })
     }
+
+    console.log('_____ executing gzip '+infilename+' '+outname);
+    return new Promise( (resolve,reject) => {
+        try {
+            fs.createReadStream(infilename)
+                .pipe(zlib.createGzip())
+                .pipe(fs.createWriteStream(outname))
+                .on('finish', () => {
+                    rimraf.sync(infilename);
+                    resolve(true);
+                })
+                .on('error', () => {
+                    reject(false);
+                });
+        } catch(e) {
+            console.log('Error=',e);
+            reject(false);
+        }
+    });
 };
                                        
 
-const writeOutput=(frame,numframes,outputname,imageToSave,fileHandle) => {
+const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug=false) => {
 
-    console.log('--------- write',frame,'/',numframes);
-    
     if (frame===0) {
-        
-        console.log('First Frame',outputname,imageToSave.getDescription());
+        console.log('_____ writing header to',outputname,imageToSave.getDescription());
         let tmp=createInitialImageOutput(imageToSave);
         let fh=saveInitialImageHeader(tmp);
         fileHandle['fd']=fh[0];
         fileHandle['filename']=fh[1];
-        
     }
     
     let last=false;
     if (frame === numframes-1)
         last=true;
 
-    console.log('Is last=',last, frame,'/',numframes);
+    if (debug || last)
+        console.log('_____ writing frame (last=',last,')', frame,'/',numframes);
+
+
     
-    writeSubsequentFrame(fileHandle['fd'],imageToSave,last);
+    writeSubsequentFrame(fileHandle['fd'],imageToSave,last, false);
 
     if (last) {
-        console.log('Calling Compress',fileHandle['filename'],outputname);
-        compressFile(fileHandle['filename'],outputname,true);
-    }
+        return compressFile(fileHandle['filename'],outputname,true);
+    } 
 
-    console.log('Last=',last);
-
-    return last;
+    return Promise.resolve(last);
 
 };
 

@@ -642,7 +642,7 @@ var readPartialDataFromStartOfFile=function(filename,end=1024) {
         gzip=true;
     }
     
-    console.log('++++ Reading '+filename+' end='+end+' gzip='+gzip);
+    //console.log('++++ Reading '+filename+' end='+end+' gzip='+gzip);
     const gunzip = zlib.createGunzip();
     const bufs=[];
     return new Promise( (resolve,reject) => {

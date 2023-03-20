@@ -162,7 +162,7 @@ class LargeMotionCorrectionModule extends BaseModule {
         this.outputs['output'] = this.matrices;
     }
 
-    processFrame(frame,frameImage) {
+    async processFrame(frame,frameImage) {
         
         let debug=false;
         /*if (frame===1)

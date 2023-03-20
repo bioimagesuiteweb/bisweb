@@ -2200,7 +2200,7 @@ class BisWebImage extends BisWebDataObject {
         }
 
         if (debug)
-            console.log('++++ Reading ',filename,' file size=',filesize);
+            console.log('++++ Reading '+filename+', file size=',filesize);
 
         this.initialize();
         let headerBuffer=null;

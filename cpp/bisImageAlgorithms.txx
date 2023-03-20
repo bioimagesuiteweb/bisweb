@@ -2160,8 +2160,8 @@ namespace bisImageAlgorithms {
       zradius=radius;
     }
 
-    int middle=int(windowsize/2);
-    std::cout << "Windowsize=" << windowsize << " Middle=" << middle << " do3d=" << do3d << std::endl;
+    //int middle=int(windowsize/2);
+    //std::cout << "... median filter windowsize=" << windowsize << " Middle=" << middle << " do3d=" << do3d << std::endl;
 
     T* data=new T[windowsize];
     

@@ -80,7 +80,7 @@ class ComputeROILargeModule extends BaseModule {
         return des;
     }
 
-    processFrame(frame,frameImage) {
+    async processFrame(frame,frameImage) {
 
         let roidata= this.roi.getImageData();
         let numrois=this.num.length;

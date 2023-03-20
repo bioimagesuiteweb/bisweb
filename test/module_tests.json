@@ -23,7 +23,15 @@
 	        "command" : "medianFilterImage --radius 2 --input testdata/MNI_2mm_orig.nii.gz",
 	        "test"    : "--test_target testdata/MNI_2mm_orig_med5.nii.gz",
 	        "result"  : true,
-	        "dopython": true
+	        "dopython": false,
+            "noweb"   : true
+	    },
+	    {
+	        "command" : "largeMedianFilter --radius 2 --input testdata/MNI_2mm_orig.nii.gz",
+	        "test"    : "--test_target testdata/MNI_2mm_orig_med5.nii.gz",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
 	    },
 	    {
 	        "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false",
@@ -180,6 +188,14 @@
 	        "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
 	        "result"  : true,
 	        "dopython": false
+	    },
+	    {
+	        "command" : "largeExtractFrame -i testdata/simple4dtest.nii.gz --frame 3 --debug true",
+	        "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
+	        "result"  : true,
+	        "dopython": true,
+            "noweb"   : true
+            
 	    },
 	    {
 	        "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",

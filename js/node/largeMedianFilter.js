@@ -35,7 +35,7 @@ class LargeMedianFilterModule extends BaseModule {
 
     createDescription() {
         return {
-            "name": "Median Filter Image",
+            "name": "Large Median Filter Image",
             "description": "This element will perform median filtering (one frame at a time) from a time-series using a streaming algorithm.",
             "author": "Xenios Papademetris",
             "version": "1.0",
@@ -117,8 +117,6 @@ class LargeMedianFilterModule extends BaseModule {
 
         let dims=input.getDimensions();
 
-        console.log('Dims=',dims);
-        
         if (dims[4]<1)
             dims[4]=1;
 
@@ -128,14 +126,14 @@ class LargeMedianFilterModule extends BaseModule {
         await baseLargeImage.readAndProcessLargeImage(inputname,this);
     }
 
-    processFrame(frame,frameImage) {
+    async processFrame(frame,frameImage) {
 
         let output=null;
-
-        if (frame % 50===0) {
-            console.log('--- filtering frame ',frame);
+        let debug=false;
+        if (frame % 50===0 || frame < 10) {
+            debug=true;
         }
-        
+
         try {
             output =  biswrap.medianImageFilterWASM(frameImage, {
                 "radius": this.radius,
@@ -157,8 +155,8 @@ class LargeMedianFilterModule extends BaseModule {
 
 
         
-        let done=baseLargeImage.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject);
-
+        let done=await baseLargeImage.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug);
+        console.log('ooooo large Median Filter frame=',frame,' done=',done);
 
         return false;
         

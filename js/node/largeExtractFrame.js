@@ -26,16 +26,16 @@ const baseLargeImage=require('baseLargeImage');
  * Extracts a single frame from a time series image, potentially with multiple components.
  */
 
-class ExtractFrameModule extends BaseModule {
+class LargeExtractFrameModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'extractFrame';
+        this.name = 'largeExtractFrame';
         this.lastInputDimensions=[0,0,0,0,0];
     }
 
     createDescription() {
         return {
-            "name": "Extract Frame",
+            "name": "Large Extract Frame",
             "description": "This element will extract a single frame from a time-series using a streaming algorithm.",
             "author": "Xenios Papademetris",
             "version": "1.0",
@@ -82,7 +82,7 @@ class ExtractFrameModule extends BaseModule {
     }
 
     async directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: extractFrame with vals', JSON.stringify(vals));
+        console.log('oooo invoking: largeExtractFrame with vals', JSON.stringify(vals));
 
         let frame= parseInt(vals.frame, 10);
         let component=parseInt(vals.component, 10);
@@ -99,8 +99,6 @@ class ExtractFrameModule extends BaseModule {
 
         let dims=input.getDimensions();
 
-        console.log('Dims=',dims);
-        
         if (dims[4]<1)
             dims[4]=1;
         
@@ -112,10 +110,10 @@ class ExtractFrameModule extends BaseModule {
         await baseLargeImage.readAndProcessLargeImage(inputname,this);
     }
 
-    processFrame(frame,frameImage) {
+    async processFrame(frame,frameImage) {
 
-        if (frame%50===0) 
-            console.log('-- processing frame',frame);
+        if (frame%50===0 || frame===this.frame) 
+            console.log('ooooo processing frame',frame, 'looking for ',this.frame);
         
         if (frame<this.frame)
             return false;
@@ -127,4 +125,4 @@ class ExtractFrameModule extends BaseModule {
     }
 }
 
-module.exports = ExtractFrameModule;
+module.exports = LargeExtractFrameModule;
