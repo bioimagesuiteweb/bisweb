@@ -384,6 +384,13 @@
 	        "dopython": false
 	    },
 	    {
+	        "command" : "largeMotionCorrection  -t testdata/test_motion_correction.nii.gz  -r testdata/test_motion_correction.nii.gz --doreslice true",
+	        "test"    : "--test_target testdata/motioncorrection_result.nii.gz --test_type registration",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
+	    },
+	    {
 	        "command" : "flipImage --flipi 1 --debug true -i testdata/MNI_6mm.nii.gz",
 	        "test"    : "--test_target testdata/MNI_6mm_flipx.nii.gz",
 	        "result"  : true,

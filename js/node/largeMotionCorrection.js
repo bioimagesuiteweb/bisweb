@@ -84,10 +84,10 @@ class LargeMotionCorrectionModule extends BaseModule {
             "inputs": [
                 {
                     'type': 'image',
-                    'name': 'Input Image',
+                    'name': 'Reference Image',
                     'description': 'The image frame to register to',
                     'varname': 'reference',
-                    'shortname': 't',
+                    'shortname': 'r',
                     'required': true,
                 }
             ],
@@ -107,17 +107,26 @@ class LargeMotionCorrectionModule extends BaseModule {
 
         des.params.push({
             "name": "input",
-            "description": "This is the input time series filename",
+            "description": "This is the input (target) time series filename",
             "priority": 0,
             "advanced": false,
-            "varname": "input",
-            "shortname" : "i",
+            "varname": "target",
+            "shortname" : "t",
+            "type": 'string',
+            "default": '',
+        });
+
+        des.params.push({
+            "name": "resliced",
+            "description": "This is the output motion corrected time series filename",
+            "priority": 0,
+            "advanced": false,
+            "varname": "resliced",
             "type": 'string',
             "default": '',
         });
 
         
-        des['inputs'][0]['type']='string'
         baseutils.setParamDefaultValue(des.params,'metric','CC');
         baseutils.setParamDefaultValue(des.params,'numbins',1024);
         baseutils.setParamDefaultValue(des.params,'steps',4);
@@ -137,7 +146,13 @@ class LargeMotionCorrectionModule extends BaseModule {
         
         let reference = this.inputs['reference'];
         let debug=super.parseBoolean(vals.debug);
-        let inputname=vals['input'];
+
+        this.reslicename=vals['resliced'];
+        this.doreslice=super.parseBoolean(vals['doreslice']);
+        if (this.reslicename.length<2)
+            this.doreslice=false;
+        
+        let inputname=vals['target'];
         let input=new BisWebImage();
 
         this.matrices=new BisWebDataObjectCollection();
@@ -154,21 +169,23 @@ class LargeMotionCorrectionModule extends BaseModule {
 
         let dims=input.getDimensions();
         this.numframes=dims[3]*dims[4];
+
         
         this.RefFrameImage = smoothreslice.imageExtractFrame(reference,vals['refno']);
         await biswrap.initialize();
+        console.log('---------------------------',this.doreslice,inputname,this.reslicename);
         await baseLargeImage.readAndProcessLargeImage(inputname,this);
-
+        console.log('---------');
+        console.log('Storing output');
         this.outputs['output'] = this.matrices;
     }
 
     async processFrame(frame,frameImage) {
         
         let debug=false;
-        /*if (frame===1)
-            debug=true;*/
         let vals=this.vals;
 
+        
         let xform = biswrap.runLinearRegistrationWASM(this.RefFrameImage, frameImage, 0, {
             'intscale' : parseInt(vals.intscale),
             'numbins' : parseInt(vals.numbins),
@@ -189,9 +206,35 @@ class LargeMotionCorrectionModule extends BaseModule {
         console.log('++++ Done with frame',frame,' p=('+xform.getParameterVector({scale:true}).join(" ")+')');
         
         this.matrices.addItem(xform, { "frame": frame});
-        return false;
-    }
 
+        if (!this.doreslice) {
+            return false;
+        }
+        
+        if (frame===0) {
+            this.fileHandleObject={
+                'fd' : null,
+                'filename' : ''
+            };
+            this.resldimensions=this.RefFrameImage.getDimensions();
+            this.reslspacing=this.RefFrameImage.getSpacing();
+        }
+
+        
+            
+        let resliceW = biswrap.resliceImageWASM(frameImage, xform, {
+            "interpolation": 3,
+            "dimensions": this.resldimensions,
+            "spacing": this.reslspacing
+        }, true);
+
+        debug=true;
+        let done=await baseLargeImage.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
+        console.log('ooooo motion resliced frame=',frame,' done=',done);
+
+
+        return done;
+    }
 }
 
 module.exports = LargeMotionCorrectionModule;

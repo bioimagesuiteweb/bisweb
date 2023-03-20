@@ -95,7 +95,7 @@ class LargeMedianFilterModule extends BaseModule {
     }
 
     async directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: extractFrame with vals', JSON.stringify(vals));
+        console.log('oooo invoking: largeMedianFilter with vals', JSON.stringify(vals));
 
         this.radius = parseInt(vals.radius);
         this.do3d = super.parseBoolean(vals.do3d);

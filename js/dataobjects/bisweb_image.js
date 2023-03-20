@@ -761,7 +761,7 @@ class BisWebImage extends BisWebDataObject {
      * @param {keepextensions} boolean - if true keep header extensions, else disgard.
      * @returns {Uint8Array}
      */
-    getHeaderData(keepextensions=false)  { return this.internal.header.createHeaderRawData(keepextensions);}
+    getHeaderData(keepextensions=false,numframes=-1)  { return this.internal.header.createHeaderRawData(keepextensions,numframes);}
 
     /** Copy location/orientation info from other image
      * @param{BisWebImage} otherimage - often the reference in a reslicing operations

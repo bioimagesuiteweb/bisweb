@@ -228,22 +228,23 @@ const createInitialImageOutput =  (firstImage,dt=null,numframes=0,numcomponents=
     return tempImage;
 };
 
-const saveInitialImageHeader =  (tempImage) => { 
+const saveInitialImageHeader =  (tempImage,numframes=1) => { 
 
     let hd=tempImage.getHeader();
-    let headerdata=tempImage.getHeaderData(true);
+    let headerdata=tempImage.getHeaderData(true,numframes);
+    console.log(headerdata);
     let tempfname=tmpPackage.tmpNameSync();
-    
+    let numbytes=0;
     let fd=null;
     try {
         fd = fs.openSync(tempfname, 'w');
         let buf = bisgenericio.createBuffer(headerdata.data);
-        //console.log('_____ writing ',fs.writeSync(fd, buf),'bytes '+tempfname+' '+fd);
+        let l=fs.writeSync(fd, buf);
     } catch(e) {
         return [ null,e ];
     }
 
-    return [ fd, tempfname ];
+    return [ fd, tempfname, numbytes ];
 };
 
 const writeSubsequentFrame =(filehandle,imageFrame,last=false,debug=false) => {
@@ -251,7 +252,8 @@ const writeSubsequentFrame =(filehandle,imageFrame,last=false,debug=false) => {
     let rawdata=imageFrame.getRawData();
     try {
         let buf = bisgenericio.createBuffer(rawdata);
-        let l=fs.writeSync(filehandle,buf)
+        let l=fs.writeSync(filehandle['fd'],buf)
+        filehandle['numbytes']+=l;
         if (debug)
             console.log('_____ writing ',l,'bytes');
     } catch(e) {
@@ -259,9 +261,6 @@ const writeSubsequentFrame =(filehandle,imageFrame,last=false,debug=false) => {
         return 0;
     }
 
-    if (last)
-        fs.closeSync(filehandle);
-    
     return rawdata.length;
 };
 
@@ -313,26 +312,32 @@ const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug
     if (frame===0) {
         console.log('_____ writing header to',outputname,imageToSave.getDescription());
         let tmp=createInitialImageOutput(imageToSave);
-        let fh=saveInitialImageHeader(tmp);
+        let fh=saveInitialImageHeader(tmp,numframes);
         fileHandle['fd']=fh[0];
         fileHandle['filename']=fh[1];
+        fileHandle['numbytes']=fh[2];
     }
     
     let last=false;
     if (frame === numframes-1)
         last=true;
+    debug=true;
 
     if (debug || last)
         console.log('_____ writing frame (last=',last,')', frame,'/',numframes);
 
 
     
-    writeSubsequentFrame(fileHandle['fd'],imageToSave,last, false);
+    await writeSubsequentFrame(fileHandle,imageToSave,last, false);
 
+    
+    
     if (last) {
-        return compressFile(fileHandle['filename'],outputname,true);
+        fs.closeSync(fileHandle['fd']);
+        console.log('_____ File ',fileHandle['filename'],'closed numbytes=',fileHandle['numbytes']);
+        return await compressFile(fileHandle['filename'],outputname,true);
     } 
-
+                        
     return Promise.resolve(last);
 
 };
