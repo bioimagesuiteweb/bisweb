@@ -30,6 +30,7 @@ const moduleImports = {
     'headerinfo' : require('./bis_headerinfo.js'),
     'computeroilarge' : require('./computeROILarge.js'),
     'largemotioncorrection' : require('./largeMotionCorrection.js'),
+    'largemotionreslice' : require('./largeMotionReslice.js'),
     'largeextractframe' : require('./largeExtractFrame.js'),
     'largemedianfilter' : require('./largeMedianFilter.js'),
     'mapelectrodes' : require('./mapElectrodes.js'),

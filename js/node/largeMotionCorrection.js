@@ -67,7 +67,7 @@ console.log("Gzip created!");
 class LargeMotionCorrectionModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'motionCorrection';
+        this.name = 'largeMotionCorrection';
         this.JSOnly=true;
         this.useworker=true;
     }
@@ -161,7 +161,7 @@ class LargeMotionCorrectionModule extends BaseModule {
         try {
             headerinfo=await input.loadHeaderOnly(inputname,debug);
         } catch(e) {
-            return Promise.reject('Failed to read the header in computeROILarge '+inputname);
+            return Promise.reject('Failed to read the header in largeMotionCorrection '+inputname);
         }
         
         if (!input.hasSameOrientation(reference,'input image','reference image',true))

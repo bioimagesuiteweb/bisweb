@@ -232,7 +232,7 @@ const saveInitialImageHeader =  (tempImage,numframes=1) => {
 
     let hd=tempImage.getHeader();
     let headerdata=tempImage.getHeaderData(true,numframes);
-    console.log(headerdata);
+
     let tempfname=tmpPackage.tmpNameSync();
     let numbytes=0;
     let fd=null;
@@ -317,7 +317,7 @@ const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug
         fileHandle['filename']=fh[1];
         fileHandle['numbytes']=fh[2];
     }
-    
+
     let last=false;
     if (frame === numframes-1)
         last=true;

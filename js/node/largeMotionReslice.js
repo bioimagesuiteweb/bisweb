@@ -1,4 +1,4 @@
-/*  LICENSE
+2/*  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
@@ -24,49 +24,72 @@ const smoothreslice = require("bis_imagesmoothreslice.js");
 const BisWebImage = require("bisweb_image.js");
 const BisWebTransformCollection = require('bisweb_transformationcollection');
 const BisWebLinearTransformation = require('bisweb_lineartransformation');
+const baseLargeImage=require('baseLargeImage');
+
+/*
+  const zlib = require("zlib");
+  const fs = require('fs');
+
+
+  const rimraf=require('rimraf');
+  const tmpDir=require('tmp');
+
+
+
+// Including zlib and fs module
+
+let cleanupAndExit=function(code=0) {
+    console.log('.... -------------------------------------------------------');
+    console.log('.... removing tmp directory',tmpDirectory.name);
+    rimraf.sync(tmpDirectory.name);
+    process.exit(code);
+};
+
+  
+// Creating readable Stream
+const inp = fs.createReadStream('input.txt');
+  
+// Creating writable stream
+const out = fs.createWriteStream('input.txt.gz');
+  
+// Calling createGzip method
+const gzip = zlib.createGzip();
+  
+// Piping
+inp.pipe(gzip).pipe(out);
+console.log("Gzip created!");
+*/
+
 
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
  * to align the image set to the reference image. Applies only affine (linear) transformations (no stretch/shear).
  */
-class MotionResliceModule extends BaseModule {
+class LargeMotionReslicingModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'motionReslice';
+        this.name = 'largeMotionReslicing';
         this.JSOnly=true;
         this.useworker=true;
     }
 
     getDescription() {
-        return {
-            "name": "Motion Reslices data",
-            "description": "Reslices following motion correction",
+        let des={
+            "name": "Motion Reslicing",
+            "description": "Runs motion correction",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Execute",
+            "shortname" : "mot",
             "slicer" : true,
-            "shortname" : "motresl",
             "inputs": [
                 {
                     'type': 'image',
-                    'name': 'Image to Reslice',
-                    'description': 'Load the image to reslice',
-                    'varname': 'input',
-                    'shortname' : 'i',
-                    'required' : true,
-                    'guiviewertype' : this.targetGUIInput,
-                    'guiviewer'  : this.targetGUIViewer,
-                    'colortype'  : 'Orange'
-                },
-                {
-                    'type' : 'image',
-                    'name' : 'Reference Image',
-                    'description' : 'Load the reference image (if not specified use input)',
-                    'varname' : 'reference',
-                    'shortname' : 'r',
-                    'required' : false,
-                    'guiviewertype' : 'image',
-                    'guiviewer'  : 'viewer1',
+                    'name': 'Reference Image',
+                    'description': 'The image frame to register to',
+                    'varname': 'reference',
+                    'shortname': 'r',
+                    'required': true,
                 },
                 {
                     'type': 'transformation',
@@ -102,18 +125,7 @@ class MotionResliceModule extends BaseModule {
                     'shortname' : 'm'
                 }
             ],
-            "outputs":[{
-                'type': 'image',
-                'name': 'Output Image',
-                'description': 'Save the motion resliced image',
-                'varname': 'output',
-                'shortname' : 'o',
-                'required': false,
-                'extension' : '.nii.gz',
-                'guiviewertype' : 'overlay',
-                'guiviewer'  : 'viewer1',
-                'colortype'  : 'Orange'
-            }],
+            "outputs" : [],
             "params": [
                 {
                     "name": "Interpolation",
@@ -161,134 +173,136 @@ class MotionResliceModule extends BaseModule {
                 baseutils.getDebugParam(),
             ]
         };
+        
+        des.params.push({
+            "name": "input",
+            "description": "This is the input (target) time series filename",
+            "priority": 0,
+            "advanced": false,
+            "varname": "input",
+            "shortname" : "i",
+            "type": 'string',
+            "default": '',
+        });
+
+        des.params.push({
+            "name": "output",
+            "description": "This is the output motion corrected time series filename",
+            "priority": 0,
+            "advanced": false,
+            "varname": "output",
+            "shortname" : "o",
+            "type": 'string',
+            "default": '',
+        });
+
+        
+        return des;
+    }
+
+    async directInvokeAlgorithm(vals) {
+        console.log('LargeMotionReslicing invoking with vals', JSON.stringify(vals));
+
+        this.vals=vals;
+        this.matrices = this.inputs['motionparam'] || null;
+        if (this.matrices===null)
+            return Promise.reject('No Matrices specified');
+        
+        let reference = this.inputs['reference'];
+        let debug=super.parseBoolean(vals.debug);
+
+        this.reslicename=vals['output'];
+        if (this.reslicename.length<2)
+            return Promise.reject('No output name specified');
+        
+        let inputname=vals['input'];
+        let input=new BisWebImage();
+
+        let headerinfo=null;
+        try {
+            headerinfo=await input.loadHeaderOnly(inputname,debug);
+        } catch(e) {
+            return Promise.reject('Failed to read the header in largemotionReslice '+inputname);
+        }
+        
+        if (!input.hasSameOrientation(reference,'input image','reference image',true))
+            return Promise.reject('Failed');
+
+        let dims=input.getDimensions();
+        this.numframes=dims[3]*dims[4];
+
+        this.resldimensions=reference.getDimensions();
+        this.reslspacing = reference.getSpacing();
+        let res=parseFloat(vals.res);
+        if (res<0.5)
+            res=0.5;
+        
+        console.log('oooo Original dimensions:',this.resldimensions,' spacing:', this.reslspacing);
+        for (let i=0;i<=2;i++) {
+            this.resldimensions[i]=Math.round(this.resldimensions[i]/res);
+            this.reslspacing[i]=this.reslspacing[i]*res;
+        }
+
+        let xform=this.inputs['xform'] || null;
+        let xform2=this.inputs['xform2'] || null;
+        let xform3=this.inputs['xform3'] || null;
+        
+        this.combinedXform=new BisWebTransformCollection();
+        
+        if (xform)
+            this.combinedXform.addTransformation(xform);
+        if (xform2)
+            this.combinedXform.addTransformation(xform2);
+        if (xform3)
+            this.combinedXform.addTransformation(xform3);
+
+        // This is a placeholder for the motion
+        this.combinedXform.addTransformation(new BisWebLinearTransformation());
+        this.motionindex=this.combinedXform.getNumberOfTransformations()-1;
+
+        this.dt="same";
+        if (vals.forcefloat) {
+            this.dt="float";
+        }
+        
+        await biswrap.initialize();
+        console.log('---------------------------',this.doreslice,inputname,this.reslicename);
+        await baseLargeImage.readAndProcessLargeImage(inputname,this);
+        console.log('---------');
+        console.log('Storing output');
 
     }
 
-    directInvokeAlgorithm(vals) {
-        console.log('oooo MotionReslice invoking with vals', JSON.stringify(vals));
-        return new Promise( (resolve, reject) => {
-            let input_image = this.inputs['input'] || null;
-            let reference = this.inputs['reference'] || input_image;
-            let matrices = this.inputs['motionparam'] || null;
+    async processFrame(frame,frameImage) {
 
-            if (!reference.hasSameOrientation(input_image,'reference image','input image',true)) {
-                reject('Failed');
-                return;
-            }
-            
-            
-            if (!input_image || !matrices ) {
-                reject("Either input or motion params is not specified");
-                return;
-            }
+        let debug=false;
+        if (frame %50===0)
+            debug=true;
+        debug=true;
+        this.combinedXform.setTransformation(this.motionindex,this.matrices.getItemData(frame));
+        
+        if (debug)
+            console.log(' In Frame',frame,this.combinedXform.getDescription());
 
-            let numframes=matrices.getNumberOfItems();
-            
-            if (input_image.getDimensions()[3]!==numframes) {
-                reject("Either input has different number of frames than motion parameters");
-                return;
-            }
+        if (frame===0) {
+            this.fileHandleObject={
+                'fd' : null,
+                'filename' : ''
+            };
+        }
+        
+        let resliceW = biswrap.resliceImageWASM(frameImage, this.combinedXform, {
+            "interpolation": parseInt(this.vals.interpolation),
+            "datatype" : this.dt,
+            "backgroundValue" : parseFloat(this.vals.backgroundvalue),
+            "dimensions": this.resldimensions,
+            "spacing": this.reslspacing
+        }, debug);
 
-            console.log('oooo Motion Parameters=',matrices.getDescription());
-
-            let output_image = new BisWebImage();
-
-            let dt="same";
-            if (vals.forcefloat) {
-                dt="float";
-            }
-
-            
-            let dimensions=reference.getDimensions();
-            let spacing = reference.getSpacing();
-            let res=parseFloat(vals.res);
-            if (res<0.5)
-                res=0.5;
-            
-            console.log('oooo Original dimensions:',dimensions,' spacing:', spacing);
-            for (let i=0;i<=2;i++) {
-                dimensions[i]=Math.round(dimensions[i]/res);
-                spacing[i]=spacing[i]*res;
-            }
-
-            console.log('oooo Scaled (',res,') dimensions:',dimensions,' spacing:', spacing);
-
-            
-            output_image.cloneImage(input_image,
-                                    { dimensions : dimensions,
-                                      spacing : spacing,
-                                      numframes : numframes,
-                                      type : dt,
-                                    });
-
-            // Different signalling for WASM
-            if (dt!=="float")
-                dt=-1;
-
-            let volumesize = dimensions[0] * dimensions[1] * dimensions[2];
-            let outdata = output_image.getImageData();
-
-            let xform=this.inputs['xform'] || null;
-            let xform2=this.inputs['xform2'] || null;
-            let xform3=this.inputs['xform3'] || null;
-
-            let combinedXform=new BisWebTransformCollection();
-
-            if (xform)
-                combinedXform.addTransformation(xform);
-            if (xform2)
-                combinedXform.addTransformation(xform2);
-            if (xform3)
-                combinedXform.addTransformation(xform3);
-
-            // This is a placeholder for the motion
-            combinedXform.addTransformation(new BisWebLinearTransformation());
-            let motionindex=combinedXform.getNumberOfTransformations()-1;
-
-            console.log('oooo Using ', combinedXform.getNumberOfTransformations(), ' transformations to reslice');
-
-            biswrap.initialize().then(() => {
-                
-                for (let frame = 0; frame < numframes; frame++) {
-                    
-                    let debug=false;
-                    if (vals.debug && frame===1)
-                        debug=true;
-                    
-                    let InputFrame = smoothreslice.imageExtractFrame(input_image,frame);
-                    
-                    combinedXform.setTransformation(motionindex,matrices.getItemData(frame));
-                    if (debug)
-                        console.log(' In Frame',frame,combinedXform.getDescription());
-                    
-                    let resliceW = biswrap.resliceImageWASM(InputFrame, combinedXform, {
-                        "interpolation": parseInt(vals.interpolation),
-                        "datatype" : dt,
-                        "backgroundValue" : parseFloat(vals.backgroundvalue),
-                        "dimensions": dimensions,
-                        "spacing": spacing
-                    }, debug);
-
-                    if (debug)
-                        console.log(' Resliced Frame',frame,resliceW.getDescription());
-                    
-                    let inp_data = resliceW.getImageData();
-                    let offset = frame * volumesize;
-                    
-                    for (let i = 0; i < volumesize; i++)
-                        outdata[i + offset] = inp_data[i];
-                    if (frame%25 ===0 && vals.debug) 
-                        console.log('++++ Resliced frame',frame);
-                }
-                
-                this.outputs['output']=output_image;
-                resolve();
-            }).catch( (e) => {
-                console.log(e.stack);
-                reject(e);
-            });
-        });
+        let done=await baseLargeImage.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
+        console.log('ooooo motion resliced frame=',frame,' done=',done);
+        return done;
     }
 }
 
-module.exports = MotionResliceModule;
+module.exports = LargeMotionReslicingModule;

@@ -601,6 +601,12 @@
 	        "dopython": false
 	    },
         {
+	        "command" : "largeMotionReslice -r testdata/MNI_2mm_orig.nii.gz -i testdata/test_motion_correction.nii.gz -x testdata/2dreslice.matr --res 1.0 -m testdata/motionparams.json --debug true",
+	        "test"    : "--test_target testdata/atlasmotion.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	        "result"  : true,
+	        "dopython": false
+	    },
+        {
             "command" : "regularizeObjectmap --smoothness 16 --convergence 0.2 --iterations 8 --internaliterations 4 --debug true -i testdata/thr_obj.nii.gz",
             "test"    : "--test_target testdata/thr_regobj.nii.gz --test_threshold 30.0 --test_comparison ssd",
             "result"  : true,
