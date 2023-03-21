@@ -354,7 +354,6 @@ const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug
     let last=false;
     if (frame === numframes-1)
         last=true;
-    debug=true;
 
     if (debug || last)
         console.log('_____ writing frame (last=',last,')', frame+1,'/',numframes);

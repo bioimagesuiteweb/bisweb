@@ -130,7 +130,6 @@ class ConcatenateImageModule extends BaseModule {
         let debug=false;
         if (frame %50===0)
             debug=true;
-        debug=true;
         
         if (debug)
             console.log('_____ Concatenating In Frame',frame+1);

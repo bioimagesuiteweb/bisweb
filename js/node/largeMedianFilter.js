@@ -154,8 +154,6 @@ class LargeMedianFilterModule extends BaseModule {
         }
 
         let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug);
-        console.log('ooooo large Median Filter frame=',frame,' done=',done);
-        
         return done;
         
         
