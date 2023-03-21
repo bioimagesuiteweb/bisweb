@@ -2137,6 +2137,75 @@ namespace bisImageAlgorithms {
     return output;
   }
 
+  
+  template<class T> std::unique_ptr<bisSimpleImage<T> >  medianImageFilter(bisSimpleImage<T>* input,int radius,int do3d)
+  {
+    int dim[5];    input->getDimensions(dim);
+    radius=bisUtil::irange(radius,1,32);
+
+    int volsize=dim[0]*dim[1]*dim[2];
+    int slicesize=dim[0]*dim[1];
+    int numframes=dim[3]*dim[4];
+    
+    std::unique_ptr<bisSimpleImage<T> > output(new bisSimpleImage<T>("median_filter"));
+    output->copyStructure(input);
+    T* input_data= input->getImageData();
+    T* output_data = output->getImageData();
+
+    int width=radius*2+1;
+    int windowsize=width*width;
+    int zradius=0;
+    if (do3d) {
+      windowsize=windowsize*width;
+      zradius=radius;
+    }
+
+    //int middle=int(windowsize/2);
+    //std::cout << "... median filter windowsize=" << windowsize << " Middle=" << middle << " do3d=" << do3d << std::endl;
+
+    T* data=new T[windowsize];
+    
+    for (int frame=0;frame<numframes;frame++) {
+      int frameoffset=frame*volsize;
+
+      for (int k=0;k<dim[2];k++) {
+        int km=bisUtil::irange(k-zradius,0,dim[2]-1);
+        int kp=bisUtil::irange(k+zradius,0,dim[2]-1);
+
+        for (int j=0;j<dim[1];j++) {
+          int jm=bisUtil::irange(j-radius,0,dim[1]-1);
+          int jp=bisUtil::irange(j+radius,0,dim[1]-1);
+
+          for (int i=0;i<dim[1];i++) {
+            int im=bisUtil::irange(i-radius,0,dim[0]-1);
+            int ip=bisUtil::irange(i+radius,0,dim[0]-1);
+
+            int added=0;
+            
+            for (int inK=km;inK<=kp;inK++) {
+              for (int inJ=jm;inJ<=jp;inJ++) {
+                for (int inI=im;inI<=ip;inI++) {
+
+                  
+                  data[added]=input_data[inI+inJ*dim[0]+inK*slicesize+frameoffset];
+                  added++;
+                }
+              }
+
+              int mymiddle=int(added/2);
+              std::nth_element(data,data+mymiddle,data+added);
+              output_data[i+j*dim[0]+k*slicesize+frameoffset]=data[mymiddle];
+            }
+          }
+        }
+      }
+    }
+      
+    return std::move(output);
+  }
+
+
+  
 
     // ---------------------- -------------------
 

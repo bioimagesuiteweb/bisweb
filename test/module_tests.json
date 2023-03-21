@@ -20,6 +20,20 @@
 	        "dopython": true
 	    },
 	    {
+	        "command" : "medianFilterImage --radius 2 --input testdata/MNI_2mm_orig.nii.gz",
+	        "test"    : "--test_target testdata/MNI_2mm_orig_med5.nii.gz",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
+	    },
+	    {
+	        "command" : "largeMedianFilter --radius 2 --input testdata/MNI_2mm_orig.nii.gz",
+	        "test"    : "--test_target testdata/MNI_2mm_orig_med5.nii.gz",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
+	    },
+	    {
 	        "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false",
 	        "test"    : "--test_target testdata/newtests/goldcorrelation.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	        "result"  : true,
@@ -174,6 +188,14 @@
 	        "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
 	        "result"  : true,
 	        "dopython": false
+	    },
+	    {
+	        "command" : "largeExtractFrame -i testdata/simple4dtest.nii.gz --frame 3 --debug true",
+	        "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
+	        "result"  : true,
+	        "dopython": true,
+            "noweb"   : true
+            
 	    },
 	    {
 	        "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",
@@ -360,6 +382,13 @@
 	        "test"    : "--test_target testdata/test_motion_correction.nii.gz --test_type registration",
 	        "result"  : false,
 	        "dopython": false
+	    },
+	    {
+	        "command" : "largeMotionCorrection  -t testdata/test_motion_correction.nii.gz  -r testdata/test_motion_correction.nii.gz --doreslice true",
+	        "test"    : "--test_target testdata/motioncorrection_result.nii.gz --test_type registration",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
 	    },
 	    {
 	        "command" : "flipImage --flipi 1 --debug true -i testdata/MNI_6mm.nii.gz",
@@ -567,6 +596,12 @@
 	    },
         {
 	        "command" : "motionReslice -r testdata/MNI_2mm_orig.nii.gz -i testdata/test_motion_correction.nii.gz -x testdata/2dreslice.matr --res 1.0 -m testdata/motionparams.json --debug true",
+	        "test"    : "--test_target testdata/atlasmotion.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	        "result"  : true,
+	        "dopython": false
+	    },
+        {
+	        "command" : "largeMotionReslice -r testdata/MNI_2mm_orig.nii.gz -i testdata/test_motion_correction.nii.gz -x testdata/2dreslice.matr --res 1.0 -m testdata/motionparams.json --debug true",
 	        "test"    : "--test_target testdata/atlasmotion.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
 	        "result"  : true,
 	        "dopython": false

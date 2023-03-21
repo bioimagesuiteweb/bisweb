@@ -629,7 +629,7 @@ let splitFilenames = (url) => {
  *  @returns{Promise} -- payload is an arraybuffer with the uncompressed (if gzipped) data
  */
 var readPartialDataFromStartOfFile=function(filename,end=1024) {
-    
+
     const zlib=biscoreio.getzlibmodule();
     
     if (bisgenericio.getmode() ==='browser') {
@@ -642,7 +642,7 @@ var readPartialDataFromStartOfFile=function(filename,end=1024) {
         gzip=true;
     }
     
-    console.log('++++ Reading '+filename+' end='+end+' gzip='+gzip);
+    //console.log('++++ Reading '+filename+' end='+end+' gzip='+gzip);
     const gunzip = zlib.createGunzip();
     const bufs=[];
     return new Promise( (resolve,reject) => {
@@ -660,6 +660,7 @@ var readPartialDataFromStartOfFile=function(filename,end=1024) {
             
             readstream.pipe(gunzip).on('finish', () => {
                 let headerBuffer = new Uint8Array(Buffer.concat(bufs)).buffer;
+                readstream.close();
                 resolve(headerBuffer);
             });
             
@@ -673,6 +674,7 @@ var readPartialDataFromStartOfFile=function(filename,end=1024) {
             
             readstream.on('end', async () => {
                 let headerBuffer = new Uint8Array(Buffer.concat(bufs)).buffer;
+                readstream.close();
                 resolve(headerBuffer);
             });
             
@@ -683,6 +685,7 @@ var readPartialDataFromStartOfFile=function(filename,end=1024) {
                     if (chunk) {
                         bufs.push(chunk);
                     } else {
+                        readstream.close();
                         done=true;
                     }
                 }
