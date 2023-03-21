@@ -27,7 +27,7 @@ const tmpPackage=require('tmp');
 
 /**
  * A set of utility functions to handle large image load and process
- * @namespace baseLargeImage
+ * @namespace largeImageUtil
  */
 
 /**
@@ -35,6 +35,8 @@ const tmpPackage=require('tmp');
  */
 const processFrame = async (params,buffer) => {
 
+    //console.log('+++ In largeImageUtil.processFrame',buffer.length);
+    
     let newbuf=new Uint8Array(buffer);
     let len=newbuf.length;
     
@@ -52,6 +54,9 @@ const processFrame = async (params,buffer) => {
         let maxneeded=params['volumebytesize']-params['added'];
         let length=available;
         let in_offset=params['offset'];
+
+        // console.log('+++ In  loop ',available, maxneeded);
+
         
         if (maxneeded<available) {
             length=maxneeded;
@@ -65,10 +70,13 @@ const processFrame = async (params,buffer) => {
         let extraneeded=params['volumebytesize']-params['added'];
         
         if (extraneeded<1) {
+            // console.log('Calling object.framecallback',params['frame']);
             let finished=await params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
             params['frame']+=1;
             params['added']=0;
+            // console.log('____ done calling processFrameCallbackObject',params['frame'],params['added'],finished);
             if (finished) {
+                // console.log('I am finished, returning true');
                 return true;
             }
             
@@ -76,12 +84,15 @@ const processFrame = async (params,buffer) => {
         
         available=available-length;
         if (available<1) {
+            // console.log('Checking for available',available);
             params['offset']=0;
             done=true;
         }
 
     }
 
+    // console.log('Done with processFrame');
+    
     return false;
 };
 
@@ -94,7 +105,7 @@ const readAndProcessFile = async (params) => {
         gzip=true;
     }
     
-    params['frame']=0;
+    params['frame']=params['frameoffset'];
     params['offset']=params['headersize'];
     params['added']=0;
     params['leftover']=0;
@@ -106,6 +117,7 @@ const readAndProcessFile = async (params) => {
 
     let finished=false;
     let processing=false;
+
     
     return new Promise( (resolve,reject) => {
         
@@ -113,19 +125,26 @@ const readAndProcessFile = async (params) => {
             const gunzip = zlib.createGunzip();
             readstream.pipe(gunzip).on('finish', () => {
                 if (!processing) {
+                    // console.log('finish Done Reading Image');
                     resolve('Done');
                 }
             });
+
+            // console.log('___Waiting for gzip');
             
             gunzip.on('data', async (chunk) => {
+                // console.log('++ Read chunk finished=',finished);
                 if (!finished) {
                     processing=true;
+                    // console.log('+++ Calling processed frame',params['frame']);
                     let ok=await processFrame(params,chunk);
                     processing=false;
+                    // console.log('+++\n+++\n++++ \t done processed frame',params['frame'],ok);
+
                     if (ok) {
+                        // console.log('Finished resolving');
                         finished=true;
                         resolve('Done');
-                        return;
                     }
                 }
             });
@@ -163,7 +182,7 @@ const readAndProcessFile = async (params) => {
  * String inputname -- name of largeimage
  * Function callbackObject -- function to call with new frames
  */
-const readAndProcessLargeImage = async (inputname,callbackObject) => {
+const readAndProcessLargeImage = async (inputname,callbackObject,totalframes=-1,frameoffset=-1) => {
 
     let input=new BisWebImage();
     let headerinfo=null;
@@ -174,9 +193,16 @@ const readAndProcessLargeImage = async (inputname,callbackObject) => {
     }
 
     let dims=input.getDimensions();
-    
+
+    if (totalframes<0)
+        totalframes=dims[3]*dims[4];
+    if (frameoffset<0)
+        frameoffset=0;
+
     let params= {
         numframes : dims[3]*dims[4],
+        totalframes : totalframes,
+        frameoffset : frameoffset,
         voxelsize : headerinfo.type.size,
         volumesize : dims[0]*dims[1]*dims[2],
         headersize : headerinfo.headerlength,
@@ -204,10 +230,14 @@ const readAndProcessLargeImage = async (inputname,callbackObject) => {
 
     
     try {
+        // console.log('Calling readAndProcessFile',params['inputname']);
         await readAndProcessFile(params);
     } catch(e) {
+        console.log('Failed',e);
         return Promise.reject(e);
     }
+
+    // console.log('Waiting');
     
     return Promise.resolve('Done');
 };
@@ -307,8 +337,11 @@ const compressFile= (infilename,outname,deleteold=true)  => {
 };
                                        
 
-const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug=false) => {
+const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug=false,partialframes=-1) => {
 
+    if (partialframes<0)
+        partialframes=numframes;
+    
     if (frame===0) {
         console.log('_____ writing header to',outputname,imageToSave.getDescription());
         let tmp=createInitialImageOutput(imageToSave);
@@ -324,21 +357,26 @@ const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug
     debug=true;
 
     if (debug || last)
-        console.log('_____ writing frame (last=',last,')', frame,'/',numframes);
+        console.log('_____ writing frame (last=',last,')', frame+1,'/',numframes);
 
 
     
     await writeSubsequentFrame(fileHandle,imageToSave,last, false);
 
-    
-    
     if (last) {
         fs.closeSync(fileHandle['fd']);
         console.log('_____ File ',fileHandle['filename'],'closed numbytes=',fileHandle['numbytes']);
-        return await compressFile(fileHandle['filename'],outputname,true);
-    } 
-                        
-    return Promise.resolve(last);
+        await compressFile(fileHandle['filename'],outputname,true);
+    }
+
+    let piecelast=last;
+    
+    if (frame+1 === partialframes)
+        piecelast=true;
+
+    //console.log('_____ Last=',last,' frame=',frame+1,'/',numframes,'(p=',partialframes,') piecelast=',piecelast);
+    
+    return Promise.resolve(piecelast);
 
 };
 

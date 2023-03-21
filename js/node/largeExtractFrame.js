@@ -21,7 +21,7 @@ const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebImage = require('bisweb_image.js');
-const baseLargeImage=require('baseLargeImage');
+const largeImageUtil=require('largeImageUtil');
 /**
  * Extracts a single frame from a time series image, potentially with multiple components.
  */
@@ -107,7 +107,7 @@ class LargeExtractFrameModule extends BaseModule {
             this.frame=0;
         else if (this.frame>dims[3]*dims[4])
             this.frame=dims[3]*dims[4]-1;
-        await baseLargeImage.readAndProcessLargeImage(inputname,this);
+        await largeImageUtil.readAndProcessLargeImage(inputname,this);
     }
 
     async processFrame(frame,frameImage) {

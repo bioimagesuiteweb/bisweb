@@ -20,6 +20,7 @@
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const BisWebImage = require('bisweb_image.js');
+const largeImageUtil=require('largeImageUtil');
 /**
  * Concatenates images
  */
@@ -38,10 +39,20 @@ class ConcatenateImageModule extends BaseModule {
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs" : [],
-            "outputs": baseutils.getImageToImageOutputs("The concatenated image"),
+            "outputs" : [],
             "buttonName": "Execute",
             "shortname" : "concat",
             "params" : [
+                {
+                    "name": "output",
+                    "description": "This is the output concatenated series filename",
+                    "priority": 0,
+                    "advanced": false,
+                    "varname": "output",
+                    "shortname" : "o",
+                    "type": 'string',
+                    "default": '',
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -56,61 +67,85 @@ class ConcatenateImageModule extends BaseModule {
         };
     }
 
-    directInvokeAlgorithm(vals) {
+    async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: combineImages with vals', JSON.stringify(vals));
 
+        let debug=super.parseBoolean(vals['debug']);
+        
         let inputlist=vals.extraArgs;
         if (inputlist.length<2) {
             return Promise.reject('Need at least two input images');
         }
-        
-        
-        return new Promise( (resolve,reject) => {
-            
-            let imagelist=[],promiselist=[];
-            for (let i=0;i<inputlist.length;i++) {
-                let img=new BisWebImage();
-                imagelist.push(img);
-                promiselist.push(img.load(inputlist[i]));
-            }
-            
-            Promise.all(promiselist).then( (obj) => {
-                console.log('++++ A total of ',obj.length,' images has been loaded.');
-                
-                let numframes=0;
-                let first = imagelist[0];
-                let dim=first.getDimensions();
-                numframes+=dim[3]*dim[4];
 
-                for (let j=1;j<imagelist.length;j++) {
-                    let second = imagelist[j];
-                    let dim2=second.getDimensions();
-                    numframes+=dim2[3]*dim2[4];
-                    
-                    if (!first.hasSameSizeAndOrientation(second,0.01,true) ||
-                        first.getOrientationName()!==second.getOrientationName() || 
-                        first.getImageType()!==second.getImageType()) {
-                        reject(": Images have different sizes or types or orientations\n\t "+first.getDescription()+'\n\t '+second.getDescription());
-                        return;
-                    }
-                }
-                let output=new BisWebImage();
-                output.cloneImage(first, { "numframes" : numframes, "numcomponents" : 1 });
+        this.outputname=vals['output'];
+        if (this.outputname.length<2) {
+            return Promise.reject('Need at least two input images');
+        }
+        
+        let imagelist=[];
+        for (let i=0;i<inputlist.length;i++) {
+            let img=new BisWebImage();
+            console.log('___ Reading', inputlist[i]);
+            await img.loadHeaderOnly(inputlist[i],debug);
+            imagelist.push(img);
+            console.log('___ \t\t Read ',img.getDescription());
+        }
+        console.log('___ A total of ',imagelist.length,' images has been loaded.');
                 
-                let odata=output.getImageData();
-                let lastpos=0;
-                for (let i=0;i<imagelist.length;i++) {
-                    let fdata=imagelist[i].getImageData();
-                    odata.set(fdata,lastpos);
-                    lastpos+=fdata.length;
-                }
-                this.outputs['output']=output;
-                console.log('++++ Concatenated image '+this.outputs['output'].getDescription());
-                resolve("Concatenated");
-            }).catch( (e) => { reject(e); });
-        });
+        this.numframes=0;
+        let first = imagelist[0];
+        let dim=first.getDimensions();
+        this.numframes+=dim[3]*dim[4];
+        this.imageframes= [ dim[3]*dim[4] ];
+        this.frameoffsets=[ 0 ];
+
+        for (let j=1;j<imagelist.length;j++) {
+            let second = imagelist[j];
+            let dim2=second.getDimensions();
+            this.numframes+=dim2[3]*dim2[4];
+            this.imageframes.push(dim2[3]*dim2[4]);
+            this.frameoffsets.push(this.imageframes[j]+this.frameoffsets[j-1]);
+
+            if (!first.hasSameSizeAndOrientation(second,0.01,true) ||
+                first.getOrientationName()!==second.getOrientationName() || 
+                first.getImageType()!==second.getImageType()) {
+                return Promise.reject(": Images have different sizes or types or orientations\n\t "+first.getDescription()+'\n\t '+second.getDescription());
+            }
+        }
+
+        console.log('___ Total num frames=',this.numframes, 'offsets=',this.frameoffsets,' frames=',this.imageframes);
+        console.log('_____________________________');
+        console.log('___                       ___');
+        console.log('___  Concatenating Images ___');
+        console.log('_____________________________');
+        for (let i=0;i<imagelist.length;i++) {
+            this.currentpiece=i;
+            console.log('_____\n_____ parsing ',inputlist[i],' frameoffset=',this.frameoffsets[i]);
+            let done=await largeImageUtil.readAndProcessLargeImage(inputlist[i],this,this.numframes,this.frameoffsets[i]);
+        }
     }
-                                         
+
+    async processFrame(frame,frameImage) {
+
+        let debug=false;
+        if (frame %50===0)
+            debug=true;
+        debug=true;
+        
+        if (debug)
+            console.log('_____ Concatenating In Frame',frame+1);
+
+        if (frame===0) {
+            this.fileHandleObject={
+                'fd' : null,
+                'filename' : ''
+            };
+        }
+        
+        let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,frameImage,this.fileHandleObject,debug,this.frameoffsets[this.currentpiece]+this.imageframes[this.currentpiece]);
+        return done;
+    }
 }
+
 
 module.exports = ConcatenateImageModule;

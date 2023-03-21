@@ -24,7 +24,7 @@ const smoothreslice = require("bis_imagesmoothreslice.js");
 const BisWebImage = require("bisweb_image.js");
 const BisWebTransformCollection = require('bisweb_transformationcollection');
 const BisWebLinearTransformation = require('bisweb_lineartransformation');
-const baseLargeImage=require('baseLargeImage');
+const largeImageUtil=require('largeImageUtil');
 
 /*
   const zlib = require("zlib");
@@ -267,7 +267,7 @@ class LargeMotionReslicingModule extends BaseModule {
         
         await biswrap.initialize();
         console.log('---------------------------',this.doreslice,inputname,this.reslicename);
-        await baseLargeImage.readAndProcessLargeImage(inputname,this);
+        await largeImageUtil.readAndProcessLargeImage(inputname,this);
         console.log('---------');
         console.log('Storing output');
 
@@ -299,7 +299,7 @@ class LargeMotionReslicingModule extends BaseModule {
             "spacing": this.reslspacing
         }, debug);
 
-        let done=await baseLargeImage.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
+        let done=await largeImageUtil.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
         console.log('ooooo motion resliced frame=',frame,' done=',done);
         return done;
     }

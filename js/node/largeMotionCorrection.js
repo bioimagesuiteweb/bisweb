@@ -23,7 +23,7 @@ const baseutils = require('baseutils.js');
 const smoothreslice = require("bis_imagesmoothreslice.js");
 const BisWebImage = require("bisweb_image.js");
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
-const baseLargeImage=require('baseLargeImage');
+const largeImageUtil=require('largeImageUtil');
 
 /*
   const zlib = require("zlib");
@@ -174,7 +174,7 @@ class LargeMotionCorrectionModule extends BaseModule {
         this.RefFrameImage = smoothreslice.imageExtractFrame(reference,vals['refno']);
         await biswrap.initialize();
         console.log('---------------------------',this.doreslice,inputname,this.reslicename);
-        await baseLargeImage.readAndProcessLargeImage(inputname,this);
+        await largeImageUtil.readAndProcessLargeImage(inputname,this);
         console.log('---------');
         console.log('Storing output');
         this.outputs['output'] = this.matrices;
@@ -229,7 +229,7 @@ class LargeMotionCorrectionModule extends BaseModule {
         }, true);
 
         debug=true;
-        let done=await baseLargeImage.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
+        let done=await largeImageUtil.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
         console.log('ooooo motion resliced frame=',frame,' done=',done);
 
 

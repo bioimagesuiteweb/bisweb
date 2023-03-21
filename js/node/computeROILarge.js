@@ -24,7 +24,7 @@ const BisWebImage = require('bisweb_image.js');
 const util=require('bis_util');
 const imageutils=require('bis_imageutils');
 const fmrimatrix   =require('bis_fmrimatrixconnectivity');
-const baseLargeImage=require('baseLargeImage');
+const largeImageUtil=require('largeImageUtil');
 /**
  * Takes an input time series and object map detailing regions of interest (ROIs) and returns the mean activation for the region.
  */
@@ -173,8 +173,8 @@ class ComputeROILargeModule extends BaseModule {
             await this.computeROIArray(inputname,this.roi,numrois);
         } else {
             try {
-                console.log('\n\n calling baseLargeImage.readAndProcessLargeImage',inputname);
-                await baseLargeImage.readAndProcessLargeImage(inputname,this);
+                console.log('\n\n calling largeImageUtil.readAndProcessLargeImage',inputname);
+                await largeImageUtil.readAndProcessLargeImage(inputname,this);
             } catch(e) {
                 return Promise.reject(e);
             }
