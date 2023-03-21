@@ -20,7 +20,7 @@
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebImage = require('bisweb_image.js');
-const baseLargeImage=require('baseLargeImage');
+const largeImageUtil=require('largeImageUtil');
 const biswrap = require('libbiswasm_wrapper');
 
 /**
@@ -123,7 +123,7 @@ class LargeMedianFilterModule extends BaseModule {
         this.numframes=dims[4]*dims[3];
 
         await biswrap.initialize();
-        await baseLargeImage.readAndProcessLargeImage(inputname,this);
+        await largeImageUtil.readAndProcessLargeImage(inputname,this);
     }
 
     async processFrame(frame,frameImage) {
@@ -153,12 +153,10 @@ class LargeMedianFilterModule extends BaseModule {
             };
         }
 
-
-        
-        let done=await baseLargeImage.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug);
+        let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug);
         console.log('ooooo large Median Filter frame=',frame,' done=',done);
-
-        return false;
+        
+        return done;
         
         
     }
