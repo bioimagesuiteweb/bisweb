@@ -21,6 +21,7 @@ const bisconfig = require('bisConfigure.js');
 const moduleImports = {
     
     smoothimage : require('smoothImage.js'),
+    medianfilterimage : require('medianFilterImage.js'),
 //    qualitymeasures : require('qualityMeasures.js'),
     gradientimage : require('gradientImage.js'),
     thresholdimage : require('thresholdImage.js'),

@@ -297,7 +297,17 @@ class BisHeader {
     /** 
      * create binary buffer from header values. Do this before saving or cloning the header etc.
      */
-    createHeaderRawData(keepextensions=false) {
+    createHeaderRawData(keepextensions=false,numframes=-1) {
+
+        let oldframes=this.struct.dim[3];
+        let olddim0=this.struct.dim[0];
+
+        if (numframes>0) {
+            this.struct.dim[4]=numframes;
+            this.struct.dim[0]=4;
+        }
+            
+            
         
         let totallength=352;
         if (keepextensions === true && this.extensions !==null) {
@@ -342,6 +352,11 @@ class BisHeader {
 
             for (kk=0;kk<diff;kk++)
                 bdata[kk+offset]=this.extensions[kk];
+        }
+
+        if (numframes>0) {
+            this.struct.dim[4]=oldframes;
+            this.struct.dim[0]=olddim0;
         }
 
         return { length : totallength,

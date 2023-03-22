@@ -84,7 +84,16 @@ namespace bisImageAlgorithms {
    */
   template<class T> std::unique_ptr<bisSimpleImage<T> >  imageExtractFrame(bisSimpleImage<T>* input,int frame=0,int component=0);
 
+  /** medianFilter Image
+   * @param input the input image
+   * @param radius the radius of the filter
+   * @param 3d if >0 do this in 3D
+   * @returns the final image
+   */
+  template<class T> std::unique_ptr<bisSimpleImage<T> >  medianImageFilter(bisSimpleImage<T>* input,int radius=3,int do3d=0);
 
+
+  
   /** extract single 2D slice (fixed slice, frame and component from Image[i][j][j][frame][component]
    * @param input the input image
    * @param output the output image -- if this has correct spacing and dimensions it will be kept as we use bisSimpleImage::allocate
