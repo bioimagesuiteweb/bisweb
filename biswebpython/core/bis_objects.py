@@ -329,13 +329,22 @@ class bisImage(bisBaseObject):
 
                 from PIL import Image, ImageSequence #for TIFF support
                 img = Image.open(fname)
+                print('.... Reading tif image',str(img),str(img.format))
                 imgl = []
+                c=0
                 for page in ImageSequence.Iterator(img):
                     imgl.append(page.convert(mode='F'))
-
-                movie = np.empty((imgl[0].size[1], imgl[0].size[0], len(imgl))) #np arrays have 1st index as rows
+                    c=c+1
+                    if (c%400 < 1 and c>0):
+                        print('...Read page',str(c),' from',fname)
+                    
+                movie = np.empty((imgl[0].size[1], imgl[0].size[0], len(imgl)),dtype=np.uint16) #np arrays have 1st index as rows
                 for i in range(len(imgl)):
-                    movie[:,:,i] = np.array(imgl[i])
+                    v=np.array(imgl[i])
+                    movie[:,:,i] = np.array(imgl[i],dtype=np.uint16)
+                    if (i%200<1 and i>0):
+                        print('... appending frame',str(i))
+                    
                 self.create(movie,[1,1,1,1,1],np.eye(4)); # spacing 5-array affine=4x4
             else :
                tmp = nib.load(fname);
