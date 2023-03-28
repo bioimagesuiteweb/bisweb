@@ -48,3 +48,4 @@ temporalImageDistanceMatrix
 computeImageEigenvectors
 eigenvectorDenoiseImage
 extractImagePatches
+initializeCalciumStudy
