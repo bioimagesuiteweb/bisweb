@@ -21,8 +21,10 @@ import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
 import biswebpython.utilities.calcium_analysis as calcium_analysis;
-from PIL import Image
+from PIL import Image, ImageSequence #for TIFF support
 import json
+
+DUMMY_MODE=False
 
 class initializeCalciumStudy(bis_basemodule.baseModule):
 
@@ -54,14 +56,8 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
                     "varname": "outdir",
                     "default" : "",
                     "required": True
-                },
-                {
-                    "name": "Debug",
-                    "description": "Toggles debug logging. Will also output intermediate steps (similar name to Xilin's MATLAB code)",
-                    "varname": "debug",
-                    "type": "boolean",
-                    "default": False
                 }
+
             ]
         }
         return des;
@@ -69,7 +65,6 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
     def directInvokeAlgorithm(self,vals):
         print('oooo invoking: something with vals', vals);
 
-        debug=self.parseBoolean(vals['debug'])
         setupname=vals['setupname'];
         outdir=vals['outdir'];
         self.data={};
@@ -81,7 +76,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         except:
             e = sys.exc_info()[0]
             print(e)
-            print('---- Bad setup file ('+args['setupname']+')')
+            print('---- Bad setup file (',setupname)
             return 0
 
         try:
@@ -90,50 +85,171 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             e = sys.exc_info()[0]
             print(e)
             print('---- Failed to make directory',outdir)
-            return 0
+            #            return 0
         
-        self.convertRuns(self.data,outdir);
-
+        output=self.convertRuns(self.data,outdir);
+        out=json.dumps(output,sort_keys=False,indent=4);
+        fname=os.path.abspath(os.path.join(outdir,self.data['subjectname']+'_step1.json'))
+        try:
+            with open(fname, 'w') as fp:
+                fp.write(out);
+                print('++++\n++++\t saved in ',fname,len(out));
+        except:
+            e = sys.exc_info()[0]
+            print('----\t failed to save image',e);
+            return False
         
         return True
 
+    # --------------------------------------
+    # Load Image Data
+    # --------------------------------------
+
+    def loadChannels(self,infilename,movies,usedframes,mat,spacing,triggers):
+
+        expected_num_frames=len(triggers);
+        img = Image.open(infilename)
+        print('... Current number of frames stored for each channel=',usedframes)
+        print('... Reading tiff image',str(img),'\n...\t expected num frames='+str(expected_num_frames))
+
+        c=0
+        for page in ImageSequence.Iterator(img):
+
+            # This 'F' needs to be investigated (Fortran Mode transposition)
+            imgl=page.convert(mode='F')
+            v=np.array(imgl)
+            channel=triggers[c][1]-1
+            
+            movies[channel][:,:,0,usedframes[channel]] = np.array(imgl,dtype=np.uint16)
+            if (c%225==0 or c<4 or c>(expected_num_frames-4)):
+                s='...\t added frame {:5d}/{:5d} to channel {:d} as new frame {:5d} based on trigger {:s}'.format(c+1,expected_num_frames,channel+1,usedframes[channel]+1,str(triggers[c]))
+                print(s)
+
+            c=c+1;
+            usedframes[channel]=usedframes[channel]+1
+            if (c>100 and DUMMY_MODE):
+                break
+
+        print('... Read',c,'frames from', infilename,'vs.',len(triggers),'trigger timepoints')
+        print('...')
+        return
+        
+
+    # --------------------------------------
+    # Convert Runs
+    # --------------------------------------
+
+        
     def convertRuns(self,data,outdir):
 
-        n=len(data['runs'])
-        r=data['resolution'];
+        numruns=len(data['runs'])
+        if (DUMMY_MODE and numruns>2):
+            numruns=2
+        
+        resol=data['resolution'];
         TR=data['TR']
         orient=data['orientation']
         mat=np.zeros((4,4));
-        spa=[ r,r,1.0,TR,1.0 ];
+        spa=[ resol,resol,1.0,TR,1.0 ];
         if (orient[0]=='L'):
-            mat[0][0]=-r
+            mat[0][0]=-resol
         else:
-            mat[0][0]=r
+            mat[0][0]=resol
 
         if (orient[1]=='P'):
-            mat[1][1]=-r
+            mat[1][1]=-resol
         else:
-            mat[1][1]=r
+            mat[1][1]=resol
         mat[2][2]=1
         mat[3][3]=1
 
+        numchannels=len(data['channelnames'])
+        trigdata=[];
+        outputs={
+            "subjectname" : data['subjectname'],
+            "numchannels" : numchannels,
+            "channelnames" : data['channelnames'],
+            "runs" : [],
+        };
 
-
-        for i in range(0,n):
-            run=data['runs'][i]
+        for acquisition_run in range(0,numruns):
+            run=data['runs'][acquisition_run]
             parts=run['parts']
-            m=len(parts)
-            for j in range(0,m):
-                oname='{:s}_run{:02d}_part{:02d}.nii.gz'.format(data['subjectname'],i+1,j+1)
+            numparts=len(parts)
+            channelspec=data['runs'][acquisition_run]['triggerfile']
+
+            tmpimg = Image.open(parts[0])
+            print('...')
+            print('..............................................................................')
+            print('...')
+            print('... B e g i n n i n g   r u n =',acquisition_run+1);
+            print('...')
+            print('... Parsing image',str(tmpimg),'\n...\tsize=',tmpimg.size,str(tmpimg.format))
+            print('...')
+            print('...',parts)
+            print('...')
+
+
+            # Read trigger file
+            try:
+                file = open(channelspec)
+                text=file.read()
+                trigdata.append(json.loads(text))
+                print('.... imported triggers from',channelspec)
+            except:
+                e = sys.exc_info()[0]
+                print(e)
+                print('---- Bad setup file ',channelspec)
+                return 0
+
+            # Figure out how many frames per channe;
+            numframes=np.zeros( numchannels,dtype=np.uint32);
+            for part in range(0,numparts):
+                nm='Tiff_order'+str(part+1)
+                triggers=trigdata[acquisition_run][nm]
+                lt=len(triggers)
+                for k in range(0,lt):
+                    v=triggers[k][1]-1;
+                    numframes[v]=numframes[v]+1;
+                print('...\t processing', nm, 'cumulative numframes per channel=',numframes)
+                
+
+            # Initialize empty channel movies
+            print('...')
+            movies=[];
+            for channel in range(0,numchannels):
+                v=[tmpimg.size[1],tmpimg.size[0],1,numframes[channel-1]];
+                tmp=np.zeros(v,dtype=np.uint16)
+                print('... Creating empty channel image',v,'for channel:', data['channelnames'][channel])
+                movies.append(tmp)
+
+            usedframes=np.zeros( numchannels,dtype=np.uint32);
+
+                
+            # Read each part and append in channels
+            for part in range(0,numparts):
+                print('...')
+                nm='Tiff_order'+str(part+1)
+                print('... Importing run',acquisition_run+1,'part', part+1, 'from', parts[part])
+                self.loadChannels(parts[part],movies,usedframes,mat,spa,trigdata[acquisition_run][nm]);
+
+                
+            # Create Outputs
+            desc={};
+            for channel in range(0,numchannels):
+                cn=data['channelnames'][channel]
+                oname='{:s}_run{:02d}_channel_{:d}_{:s}.nii.gz'.format(data['subjectname'],acquisition_run+1,channel+1,cn)
                 oname=os.path.abspath(os.path.join(outdir,oname))
-                print('.... Importing run',i+1,' part', j+1, 'from', parts[j],' to',oname)
+                print('... Storing combined run channel',cn,'in',oname)
                 img=bis_objects.bisImage();
-                img.load(parts[j])
-                img.spacing=spa
-                img.affine=mat
-                img.save(oname);
-                print('+++ saved in',img.getDescription())
-        
-        
+                img.create(movies[channel],spa,mat);
+                if (not DUMMY_MODE):
+                    img.save(oname);
+                desc[cn]=oname;
+                
+            outputs['runs'].append(desc)
 
-
+        print('...')
+        print('..............................................................................')
+        print('...')
+        return outputs
