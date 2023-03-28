@@ -1,7 +1,7 @@
 const fs=require('fs');
 const path=require('path');
 const child_process=require('child_process');
-const unzip=require('unzip');
+const unzip=require('unzipper');
 const rimraf=require('rimraf');
 
 const makeDir=function(f1,exit=true) {
