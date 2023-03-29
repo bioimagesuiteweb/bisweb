@@ -194,7 +194,6 @@ oldlst.forEach( (nm) => {
     nmlist.forEach( (fname) => {
         if (fname.indexOf(".#")<0) {
             internal.lintscripts.push(fname);
-            console.log(fname);
         }
     });
 });
