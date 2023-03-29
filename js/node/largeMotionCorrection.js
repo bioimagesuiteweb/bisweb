@@ -202,8 +202,8 @@ class LargeMotionCorrectionModule extends BaseModule {
             'return_vector' : "true",
             'debug' : debug,
         }, debug);
-        //        if (frame%25 ===0) 
-        console.log('++++ Done with frame',frame,' p=('+xform.getParameterVector({scale:true}).join(" ")+')');
+        if (frame%25 ===0) 
+            console.log('++++ Done with frame',frame,' p=('+xform.getParameterVector({scale:true}).join(" ")+')');
         
         this.matrices.addItem(xform, { "frame": frame});
 

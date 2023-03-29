@@ -128,7 +128,7 @@ class LargeMedianFilterModule extends BaseModule {
 
         let output=null;
         let debug=false;
-        if (frame % 50===0 || frame < 10) {
+        if (frame % 50===0 || frame < 4) {
             debug=true;
         }
 
