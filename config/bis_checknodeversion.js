@@ -19,14 +19,18 @@
 
 let v=process.versions.node;
 let n=parseFloat(v);
+let s=v.split(".");
+let major=parseInt(s[0]);
+let minor=parseInt(s[1]);
 
-if (n<4.2) {
-    console.log(`----\n---- You are probably an ancient emscripten version of node (version ${v}). Open a new console and try again.\n----`);
-    process.exit(1);
-}
+let ok=false;
 
-if (n<8.0) {
-    console.log(`----\n---- You are using a version of node older than 8.0 (actual version=${v}). Open a new console and try again.\n----`);
+if (major === 10 && minor >= 11) {
+    ok=true;
+} else if (major <= 16) {
+    ok=true;
+} else {
+    console.log(`----\n---- You are using an incompatible version of node (either newer than 10.11 or older than 17.0 ) (actual version=${v})\n`);
     process.exit(1);
 }
 
