@@ -160,9 +160,8 @@ class LargeResampleImageModule extends BaseModule {
 
         let output=null;
         let debug=false;
-        if (frame % 50===0 || frame < 10) {
+        if (frame % 200===0 || frame < 2) {
             debug=true;
-            this.vals.debug=true;
         }
         
         try {
@@ -171,8 +170,6 @@ class LargeResampleImageModule extends BaseModule {
                 "interpolation" : this.vals.interpolation,
                 "backgroundValue" : this.vals.backgroundvalue
             };
-            console.log(p,this.vals.debug);
-            
             output = biswrap.resampleImageWASM(frameImage, p,this.vals.debug);
         } catch(e) {
             console.log(e.stack);
@@ -185,8 +182,6 @@ class LargeResampleImageModule extends BaseModule {
                 'filename' : ''
             };
         }
-
-        console.log(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug)
 
         let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug);
         return done;
