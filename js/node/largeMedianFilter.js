@@ -100,9 +100,7 @@ class LargeMedianFilterModule extends BaseModule {
         this.radius = parseInt(vals.radius);
         this.do3d = super.parseBoolean(vals.do3d);
         this.debug=this.parseBoolean(vals.debug);
-        this.outputname=vals['output'];
-
-        
+        this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'med','.nii.gz');
         
         let inputname = vals['input'];
         let input=new BisWebImage();

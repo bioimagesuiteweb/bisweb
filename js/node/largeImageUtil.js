@@ -380,6 +380,30 @@ const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug
 };
 
 
+// TODO: Implement logic for naming images intelligently
+const createOutputFilename= function(existingname,inputname,extra,extension='.nii.gz')  {
+
+    existingname=existingname || '';
+    if (existingname.length>3)
+        return existingname;
+
+    let outputname='';
+    let fn=inputname || 'something.nii.gz';
+    if (fn.length>1) {
+        let ext = fn.split('.').pop();
+        if (ext==="gz") {
+            fn=fn.substr(0,fn.length-3);
+            ext = fn.split('.').pop();
+        }
+        outputname=fn.substr(0,fn.length-(ext.length+1));
+    }
+    
+    let nm=extra || 'extra';
+    nm=nm.toLowerCase();
+
+    return outputname+'__'+nm+extension;
+};
+
 module.exports = {
     readAndProcessLargeImage : readAndProcessLargeImage,
     createInitialImageOutput : createInitialImageOutput,
@@ -387,4 +411,5 @@ module.exports = {
     writeSubsequentFrame : writeSubsequentFrame,
     compressFile : compressFile,
     writeOutput : writeOutput,
+    createOutputFilename :     createOutputFilename
 };

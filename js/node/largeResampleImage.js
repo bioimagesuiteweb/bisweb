@@ -135,7 +135,8 @@ class LargeResampleImageModule extends BaseModule {
             "debug" : this.parseBoolean(vals.debug)
         };
 
-        this.outputname=vals['output'];
+        this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'rsp','.nii.gz');
+        
         let inputname = vals['input'];
         let input=new BisWebImage();
         let headerinfo=null;

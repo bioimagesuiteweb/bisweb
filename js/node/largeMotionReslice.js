@@ -211,9 +211,7 @@ class LargeMotionReslicingModule extends BaseModule {
         let reference = this.inputs['reference'];
         let debug=super.parseBoolean(vals.debug);
 
-        this.reslicename=vals['output'];
-        if (this.reslicename.length<2)
-            return Promise.reject('No output name specified');
+        this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'motresl','.nii.gz');
         
         let inputname=vals['input'];
         let input=new BisWebImage();
@@ -266,7 +264,7 @@ class LargeMotionReslicingModule extends BaseModule {
         }
         
         await biswrap.initialize();
-        console.log('---------------------------',this.doreslice,inputname,this.reslicename);
+        console.log('---------------------------',this.doreslice,inputname,this.outputname);
         await largeImageUtil.readAndProcessLargeImage(inputname,this);
         console.log('---------');
         console.log('Storing output');
@@ -299,7 +297,7 @@ class LargeMotionReslicingModule extends BaseModule {
             "spacing": this.reslspacing
         }, debug);
 
-        let done=await largeImageUtil.writeOutput(frame,this.numframes,this.reslicename,resliceW,this.fileHandleObject,debug);
+        let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,resliceW,this.fileHandleObject,debug);
         console.log('ooooo motion resliced frame=',frame,' done=',done);
         return done;
     }
