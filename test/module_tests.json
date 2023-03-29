@@ -756,8 +756,15 @@
 	        "result"  : true,
 	        "dopython": false
 	    },
-        
-	    {
+        {
+	        "command" : "largeResampleImage -i testdata/avg152T1_LR_nifti.nii.gz --interpolation 1 --debug false --backgroundvalue 0.0 --xsp 2.5 --ysp 4.5 --zsp 6.5",
+	        "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
+            
+	    },
+       	{
 	        "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 1 --debug true --backgroundvalue 0.0 --usejs true",
 	        "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
 	        "result"  : true,
