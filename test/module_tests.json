@@ -195,7 +195,13 @@
 	        "result"  : true,
 	        "dopython": true,
             "noweb"   : true
-            
+	    },
+        {
+	        "command" : "largeExtractFrame -i testdata/simple4dtest.nii.gz --frame 4 --endframe 6 --debug true",
+	        "test"    : "--test_target testdata/simple4dtest__frames_4_6.nii.gz",
+	        "result"  : true,
+	        "dopython": true,
+            "noweb"   : true
 	    },
 	    {
 	        "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",

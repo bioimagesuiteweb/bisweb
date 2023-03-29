@@ -40,7 +40,7 @@ class LargeExtractFrameModule extends BaseModule {
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": [],
-            "outputs": baseutils.getImageToImageOutputs(),
+            "outputs": [],
             "buttonName": "Extract",
             "shortname" : "fr",
             "slicer" : true,
@@ -56,9 +56,19 @@ class LargeExtractFrameModule extends BaseModule {
                     "default": '',
                 },
                 {
-                    "name": "Frame",
-                    "description": "Which frame in the time series to extract (fourth dimension)",
+                    "name": "output",
+                    "description": "This is the output filename",
                     "priority": 1,
+                    "advanced": false,
+                    "varname": "output",
+                    "shortname" : "o",
+                    "type": 'string',
+                    "default": '',
+                },
+                {
+                    "name": "Frame",
+                    "description": "Which frame (or first frame) in the time series to extract (fourth dimension, first component only)",
+                    "priority": 2,
                     "advanced": false,
                     "gui": "slider",
                     "type": "int",
@@ -66,13 +76,13 @@ class LargeExtractFrameModule extends BaseModule {
                     "default" : 1,
                 },
                 {
-                    "name": "Component",
-                    "description": "Which component to extract a frame from (fifth dimension)",
-                    "priority": 2,
+                    "name": "Endframe",
+                    "description": "Last frame to extract (default=0 single frame)",
+                    "priority": 3,
                     "advanced": true,
                     "gui": "slider",
                     "type": "int",
-                    "varname": "component",
+                    "varname": "endframe",
                     "default" : 0,
                 },
                 baseutils.getDebugParam()
@@ -84,11 +94,15 @@ class LargeExtractFrameModule extends BaseModule {
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: largeExtractFrame with vals', JSON.stringify(vals));
 
-        let frame= parseInt(vals.frame, 10);
-        let component=parseInt(vals.component, 10);
+        let frame= parseInt(vals.frame, 0);
+        let endframe=parseInt(vals.endframe ,0);
+        console.log('vals.endframe=',vals.endframe,endframe);
+
+        
         let inputname = vals['input'];
         let input=new BisWebImage();
         let debug=this.parseBoolean(vals.debug);
+        this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'frcrp','.nii.gz');
         
         let headerinfo=null;
         try {
@@ -98,29 +112,52 @@ class LargeExtractFrameModule extends BaseModule {
         }
 
         let dims=input.getDimensions();
-
+        this.numframes=dims[3]*dims[4];
+        
         if (dims[4]<1)
             dims[4]=1;
         
-        this.frame=frame+component*dims[3];
+        this.frame=frame;
         if (this.frame<0)
             this.frame=0;
-        else if (this.frame>dims[3]*dims[4])
-            this.frame=dims[3]*dims[4]-1;
+        else if (this.frame>=dims[3])
+            this.frame=dims[3]-1;
+
+        this.endframe=endframe;
+        if (this.endframe<this.frame)
+            this.endframe=this.frame;
+        else if (this.endframe>=dims[3])
+            this.endframe=dims[3]-1;
+
+        console.log('____ Extracting frames',this.frame,":",this.endframe,' of ',dims[3]);
         await largeImageUtil.readAndProcessLargeImage(inputname,this);
     }
 
     async processFrame(frame,frameImage) {
 
-        if (frame%50===0 || frame===this.frame) 
-            console.log('ooooo processing frame',frame, 'looking for ',this.frame);
-        
-        if (frame<this.frame)
-            return false;
+        let output=null;
+        let debug=false;
 
-        if (frame===this.frame)
-            this.outputs['output'] = frameImage;
+        if (frame===0) {
+            this.fileHandleObject={
+                'fd' : null,
+                'filename' : ''
+            };
+        }
+
+        if (frame%50===0 || frame===this.frame)
+            console.log('ooooo processing frame',frame, 'looking for ',this.frame,this.endframe);
         
+        if (frame<this.frame) {
+            return false;
+        }
+
+
+        
+        if (frame>=this.frame && frame<=this.endframe) {
+            return await largeImageUtil.writeOutput(frame-this.frame,this.endframe-this.frame+1,this.outputname,frameImage,this.fileHandleObject,debug);
+        }
+
         return true;
     }
 }
