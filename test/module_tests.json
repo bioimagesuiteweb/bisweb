@@ -210,6 +210,13 @@
 	        "dopython": false,
             "noweb"   : true
 	    },
+        {
+	        "command" : "largeSmoothFilter -i testdata/simple4dtest.nii.gz --sigma 1.0 --inmm false",
+	        "test"    : "--test_target testdata/simple4dtest__sm.nii.gz",
+	        "result"  : true,
+	        "dopython": false,
+            "noweb"   : true
+	    },
 	    {
 	        "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",
 	        "test"    : "--test_target testdata/ras152_slicek18.nii.gz",

@@ -33,6 +33,7 @@ const moduleImports = {
     'largemotionreslice' : require('./largeMotionReslice.js'),
     'largeextractframes' : require('./largeExtractFrames.js'),
     'largemedianfilter' : require('./largeMedianFilter.js'),
+    'largesmoothfilter' : require('./largeSmoothFilter.js'),
     'largeresampleimage' : require('./largeResampleImage.js'),
     'mapelectrodes' : require('./mapElectrodes.js'),
     'preprocessfmri' : require('./preprocessfMRI.js'),
