@@ -26,17 +26,17 @@ const largeImageUtil=require('largeImageUtil');
  * Extracts a single frame from a time series image, potentially with multiple components.
  */
 
-class LargeExtractFrameModule extends BaseModule {
+class LargeExtractFramesModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'largeExtractFrame';
+        this.name = 'largeExtractFrames';
         this.lastInputDimensions=[0,0,0,0,0];
     }
 
     createDescription() {
         return {
             "name": "Large Extract Frame",
-            "description": "This element will extract a single frame from a time-series using a streaming algorithm.",
+            "description": "This element will extract a range of frames from a time-series using a streaming algorithm.",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": [],
@@ -66,24 +66,34 @@ class LargeExtractFrameModule extends BaseModule {
                     "default": '',
                 },
                 {
-                    "name": "Frame",
-                    "description": "Which frame (or first frame) in the time series to extract (fourth dimension, first component only)",
+                    "name": "BeginFrame",
+                    "description": "The first frame in the time series to extract (fourth dimension, first component only)",
                     "priority": 2,
                     "advanced": false,
                     "gui": "slider",
                     "type": "int",
-                    "varname": "frame",
+                    "varname": "beginframe",
                     "default" : 1,
                 },
                 {
                     "name": "Endframe",
-                    "description": "Last frame to extract (default=0 single frame)",
+                    "description": "Last frame to extract (default=-1 last frame)",
                     "priority": 3,
                     "advanced": true,
                     "gui": "slider",
                     "type": "int",
                     "varname": "endframe",
-                    "default" : 0,
+                    "default" : -1,
+                },
+                {
+                    "name": "Increment",
+                    "description": "If >1 then skip frames, i.e. extract every increment frame (default=1 every frame)",
+                    "priority": 4,
+                    "advanced": true,
+                    "gui": "slider",
+                    "type": "int",
+                    "varname": "increment",
+                    "default" : 1,
                 },
                 baseutils.getDebugParam()
             ],
@@ -92,13 +102,12 @@ class LargeExtractFrameModule extends BaseModule {
     }
 
     async directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: largeExtractFrame with vals', JSON.stringify(vals));
+        console.log('oooo invoking: largeExtractFrames with vals', JSON.stringify(vals));
 
-        let frame= parseInt(vals.frame, 0);
-        let endframe=parseInt(vals.endframe ,0);
-        console.log('vals.endframe=',vals.endframe,endframe);
+        let beginframe= parseInt(vals.beginframe);
+        let endframe=parseInt(vals.endframe);
+        let increment=parseInt(vals.increment);
 
-        
         let inputname = vals['input'];
         let input=new BisWebImage();
         let debug=this.parseBoolean(vals.debug);
@@ -112,25 +121,44 @@ class LargeExtractFrameModule extends BaseModule {
         }
 
         let dims=input.getDimensions();
-        this.numframes=dims[3]*dims[4];
+
+        if (endframe<0)
+            endframe=dims[3]-1;
         
         if (dims[4]<1)
             dims[4]=1;
         
-        this.frame=frame;
-        if (this.frame<0)
-            this.frame=0;
-        else if (this.frame>=dims[3])
-            this.frame=dims[3]-1;
+        this.beginframe=beginframe;
+        if (this.beginframe<0)
+            this.beginframe=0;
+        else if (this.beginframe>=dims[3])
+            this.beginframe=dims[3]-1;
 
         this.endframe=endframe;
-        if (this.endframe<this.frame)
-            this.endframe=this.frame;
+        if (this.endframe<this.beginframe)
+            this.endframe=this.beginframe;
         else if (this.endframe>=dims[3])
             this.endframe=dims[3]-1;
 
-        console.log('____ Extracting frames',this.frame,":",this.endframe,' of ',dims[3]);
-        await largeImageUtil.readAndProcessLargeImage(inputname,this);
+        this.increment=increment;
+        if (this.increment<1)
+            this.increment=1;
+
+        this.numframes=0;
+        let f=this.beginframe;
+        while (f<=this.endframe) {
+            this.numframes+=1;
+            f+=this.increment
+        }
+        this.endframe=this.beginframe+(this.numframes-1)*this.increment;
+
+        console.log('____ Extracting frames',this.beginframe,":",this.endframe,' at increment ',
+                    this.increment,'of ',dims[3]);
+        this.writeframe=0;
+        let done=await largeImageUtil.readAndProcessLargeImage(inputname,this);
+
+
+        return done;
     }
 
     async processFrame(frame,frameImage) {
@@ -138,28 +166,32 @@ class LargeExtractFrameModule extends BaseModule {
         let output=null;
         let debug=false;
 
-        if (frame===0) {
-            this.fileHandleObject={
-                'fd' : null,
-                'filename' : ''
-            };
-        }
-
-        if (frame%50===0 || frame===this.frame)
-            console.log('ooooo processing frame',frame, 'looking for ',this.frame,this.endframe);
-        
-        if (frame<this.frame) {
+        if (frame<this.beginframe) {
             return false;
         }
 
+        let step=(frame-this.beginframe) % this.increment;
 
         
-        if (frame>=this.frame && frame<=this.endframe) {
-            return await largeImageUtil.writeOutput(frame-this.frame,this.endframe-this.frame+1,this.outputname,frameImage,this.fileHandleObject,debug);
-        }
+        if (frame>=this.beginframe && frame<=this.endframe && step === 0 ) {
+            
+            if (this.writeframe===0) {
+                this.fileHandleObject={
+                    'fd' : null,
+                    'filename' : ''
+                };
+            }
 
-        return true;
+            if (this.writeframe%5===0 || this.writeframe===this.numframes-1)
+                debug=true;
+            if (debug)
+                console.log('oooo processing frame',frame, 'looking for frames in ',this.beginframe,'to',this.endframe,'every',this.increment,' as ',this.writeframe)
+            let d=await largeImageUtil.writeOutput(this.writeframe,this.numframes,this.outputname,frameImage,this.fileHandleObject,debug);
+            this.writeframe+=1;
+            return d;
+        } 
+        return false;
     }
 }
 
-module.exports = LargeExtractFrameModule;
+module.exports = LargeExtractFramesModule;
