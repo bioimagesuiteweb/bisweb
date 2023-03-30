@@ -190,17 +190,24 @@
 	        "dopython": false
 	    },
 	    {
-	        "command" : "largeExtractFrame -i testdata/simple4dtest.nii.gz --frame 3 --debug true",
+	        "command" : "largeExtractFrames -i testdata/simple4dtest.nii.gz --beginframe 3 --endframe 3 --debug true",
 	        "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
 	        "result"  : true,
-	        "dopython": true,
+	        "dopython": false,
             "noweb"   : true
 	    },
         {
-	        "command" : "largeExtractFrame -i testdata/simple4dtest.nii.gz --frame 4 --endframe 6 --debug true",
+	        "command" : "largeExtractFrames -i testdata/simple4dtest.nii.gz --beginframe 4 --endframe 6 --debug true",
 	        "test"    : "--test_target testdata/simple4dtest__frames_4_6.nii.gz",
 	        "result"  : true,
-	        "dopython": true,
+	        "dopython": false,
+            "noweb"   : true
+	    },
+        {
+	        "command" : "largeExtractFrames -i testdata/simple4dtest.nii.gz --beginframe 1 --endframe 8 --increment 3 --debug true",
+	        "test"    : "--test_target testdata/simple4dtest__frame_2_8_3.nii.gz",
+	        "result"  : true,
+	        "dopython": false,
             "noweb"   : true
 	    },
 	    {
@@ -610,7 +617,8 @@
 	        "command" : "largeMotionReslice -r testdata/MNI_2mm_orig.nii.gz -i testdata/test_motion_correction.nii.gz -x testdata/2dreslice.matr --res 1.0 -m testdata/motionparams.json --debug true",
 	        "test"    : "--test_target testdata/atlasmotion.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
 	        "result"  : true,
-	        "dopython": false
+	        "dopython": false,
+            "noweb"   : true
 	    },
         {
             "command" : "regularizeObjectmap --smoothness 16 --convergence 0.2 --iterations 8 --internaliterations 4 --debug true -i testdata/thr_obj.nii.gz",
@@ -768,7 +776,6 @@
 	        "result"  : true,
 	        "dopython": false,
             "noweb"   : true
-            
 	    },
        	{
 	        "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 1 --debug true --backgroundvalue 0.0 --usejs true",
