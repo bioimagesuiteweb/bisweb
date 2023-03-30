@@ -23,7 +23,6 @@ require("__BISWEB_EXTERNAL");
 require("bisweb_regressiontestelement.js");
 require("bisweb_displayregressionelement.js");
 require("bisweb_components.js");
-require("bisweb_awsmodule.js");
 require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_studypanel.js");

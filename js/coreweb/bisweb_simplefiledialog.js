@@ -305,11 +305,7 @@ class SimpleFileDialog {
                 let newtitle=opts.title;
                 if (newtitle) {
                     let title = this.modal.header.find('.modal-title');
-                    if (opts.server === 'amazonaws') {
-                        title.text(newtitle+ ' (using Amazon S3)');
-                    } else {
-                        title.text(newtitle + ' (using bisweb fileserver)');
-                    }
+                    title.text(newtitle + ' (using bisweb fileserver)');
                 }
             }
 
@@ -908,9 +904,7 @@ class SimpleFileDialog {
         return new Promise( (resolve, reject) => {
             userPreferences.safeGetItem('filesource').then( (obj) => {
                 let folderPromise;
-                if (obj === 'amazonaws') {
-                    folderPromise = userPreferences.safeGetItem('s3Folders');
-                } else if (obj === 'server') {
+                if (obj === 'server') {
                     folderPromise = userPreferences.safeGetItem('favoriteFolders');
                 }
 
@@ -927,9 +921,7 @@ class SimpleFileDialog {
      */
     setFsFavoritesFolder() {
         userPreferences.safeGetItem('filesource').then((obj) => {
-            if (obj === 'amazonaws') {
-                userPreferences.setItem('s3Folders', this.favorites);
-            } else if (obj === 'server') {
+            if (obj === 'server') {
                 userPreferences.setItem('favoriteFolder', this.favorites);
             }
         });

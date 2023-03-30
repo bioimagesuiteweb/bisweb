@@ -26,10 +26,7 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
-const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
-const amazonaws=require('bisweb_awsmodule.js');
-let bisweb_awsmodule = null;// new amazonaws();
 
 
 const genericio=require('bis_genericio');
@@ -38,7 +35,7 @@ const userPreferences = require('bisweb_userpreferences.js');
 const keystore=require('bis_keystore');
 const dkey=keystore.DropboxAppKey || "";
 const gkey=keystore.GoogleDriveKey || "";
-const mkey=keystore.OneDriveKey || "";
+
 
 
 // Ensure that these get initialized
@@ -53,9 +50,6 @@ const mkey=keystore.OneDriveKey || "";
 
 const enableserver=true;
 const BisWebFileServerClient=require('bisweb_fileserverclient');
-
-// This is an option
-let enableaws=false;
 
 
 // ------------------------
@@ -75,7 +69,7 @@ let iosFileDialog=null;
 const webfileutils = {
 
     /**
-     * Checks whether one of Google Drive, Dropbox, or OneDrive has usable keys in the current configuration.
+     * Checks whether one of Google Drive, Dropbox  has usable keys in the current configuration.
      * These keys live in the 'internal' directory outside of the rest of the codebase.
      *
      * TODO: Revert this to normal!
@@ -83,13 +77,13 @@ const webfileutils = {
     needModes : function() {
         if (dkey.length>0 || gkey.length>0 || mkey.length>0)
             return true;
-        if (enableaws || enableserver)
+        if (enableserver)
             return true;
         return false;
     },
 
     /**
-     * Returns the current file mode of the application. May be one of Google Drive, Dropbox, OneDrive, Amazon AWS, Local Server, or standard File I/O (<input type='file'>)
+     * Returns the current file mode of the application. May be one of Google Drive, Dropbox,  Local Server, or standard File I/O (<input type='file'>)
      */
     getMode: function() {
         return fileMode;
@@ -106,22 +100,18 @@ const webfileutils = {
         //localserver requires its HTML element to be present in the document
         if (bisweb_fileserverclient)
             s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
-        if (enableaws)
-            s.push({ value : 'amazonaws', text: 'Amazon S3'});
 
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox (Load Only)" });
         if (gkey.length>1)
             s.push({ value: "googledrive", text: "Google Drive (Load Only)" });
-        //  if (mkey.length>1)
-        //     s.push({ value: "onedrive", text: "Microsoft OneDrive (Load Only)" });
 
         return s;
     },
 
     /**
      * Changes the file source of the application.
-     * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'onedrive', 'amazonaws', 'server', or 'local'
+     * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'server', or 'local'
      * @param {Boolean} save - If true -- save preferences on change
      */
 
@@ -129,7 +119,7 @@ const webfileutils = {
 
         fileMode='local';
 
-      // TODO: Check if fileserver and aws are enabled else disable
+      // TODO: Check if fileserver is enabled else disable
         switch(m)
         {
             case 'dropbox' : {
@@ -142,16 +132,7 @@ const webfileutils = {
                     fileMode = 'googledrive';
                 break;
             }
-            case 'onedrive' :  {
-                if (mkey)
-                    fileMode = 'onedrive';
-                break;
-            }
-            case 'amazonaws' : {
-                if (enableaws)
-                    fileMode = 'amazonaws';
-                break;
-            }
+
             case 'server' : {
                 if (enableserver)
                     fileMode = 'server';
@@ -161,8 +142,6 @@ const webfileutils = {
 
         if (fileMode === 'server') {
             genericio.setFileServerObject(bisweb_fileserverclient);
-        } else if (fileMode === 'amazonaws') {
-            genericio.setFileServerObject(bisweb_awsmodule);
         } else {
             genericio.setFileServerObject(null);
         }
@@ -188,9 +167,6 @@ const webfileutils = {
             return true;
 
         if (fileMode==='server')
-            return true;
-
-        if (fileMode==='amazonaws' && serveronly===false)
             return true;
 
         if (serveronly)
@@ -385,8 +361,8 @@ const webfileutils = {
             if (fileopts.serveronly && fmode !== 'server') {
                 webutil.createAlert('You need to connect to a local fileserver before this operation.',true);
                 return false;
-            } else if (fmode !== 'server' && fmode !== 'amazonaws') {
-                webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+            } else if (fmode !== 'server') {
+                webutil.createAlert('You need to connect to a local fileserver before this operation.',true);
                 return false;
             }
         }
@@ -394,9 +370,9 @@ const webfileutils = {
         // -------------------- End of Part IA -------------
 
         if (fileopts.save) {
-            // We are now saving only server, aws or local
+            // We are now saving only server or local
 
-            if (fmode === 'server' || fmode === 'amazonaws') {
+            if (fmode === 'server') {
 
                 let initialDir=null;
                 let initialFilename=null;
@@ -428,10 +404,8 @@ const webfileutils = {
 
                 cbopts.initialFilename=initialFilename || '';
                 cbopts.mode='save';
-                if (fmode === 'server')
-                    bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
-                else
-                    bisweb_awsmodule.wrapInAuth('uploadfile', cbopts);
+                bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
+                
                 return;
             }
 
@@ -469,10 +443,6 @@ const webfileutils = {
             return;
         }
 
-        if (fmode==="amazonaws") {
-            bisweb_awsmodule.wrapInAuth('showfiles', cbopts);
-            return;
-        }
 
         if (fmode==="server") {
             bisweb_fileserverclient.requestFileList(null,true,cbopts);
@@ -722,31 +692,18 @@ const webfileutils = {
         }
     },
 
-    createAWSMenu : function() {
-        if (enableaws) {
-            if  (bisweb_awsmodule===null) {
-                bisweb_awsmodule = new amazonaws();
-            }
-            bisweb_awsmodule.createAWSBucketMenu();
-        }
-    },
+
 
     initializeFromUserPrefs : function () {
         if (!webutil.inElectronApp() ) {
 
-            Promise.all( [ userPreferences.safeGetItem('filesource'),
-                           userPreferences.safeGetItem('enables3') ]).then( (lst) => {
-                               let f=lst[0];
-                               enableaws=lst[1] || false;
-                               f= f || fileMode;
-                               console.log('++++ Initial File Source=',f); //, 's3enabeled=',enableaws);
-                               if (enableaws && bisweb_awsmodule===null) {
-                                   bisweb_awsmodule = new amazonaws();
-                               }
-                               this.setMode(f,false);
-                           }).catch( () => {
-                               this.setMode('local',false);
-                           });
+            userPreferences.safeGetItem('filesource').then( (f) => {
+                f= f || fileMode;
+                console.log('++++ Initial File Source=',f); 
+                this.setMode(f,false);
+            }).catch( () => {
+                this.setMode('local',false);
+            });
         } else {
             this.setMode('local',true);
         }
