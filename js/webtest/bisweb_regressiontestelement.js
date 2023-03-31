@@ -491,7 +491,7 @@ var run_memory_test=function() {
             });
         };
 
-        let max=22;
+        let max=23;
         main.append(`<HR><H4>Running Test</H4><OL>`);
         for (let k=1;k<=max;k++) {
             let delay=10;
