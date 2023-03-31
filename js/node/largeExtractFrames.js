@@ -112,6 +112,8 @@ class LargeExtractFramesModule extends BaseModule {
         let input=new BisWebImage();
         let debug=this.parseBoolean(vals.debug);
         this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'frcrp','.nii.gz');
+        this.vals=vals;
+        this.vals['output']=this.outputname;
         
         let headerinfo=null;
         try {
@@ -155,6 +157,7 @@ class LargeExtractFramesModule extends BaseModule {
         console.log('____ Extracting frames',this.beginframe,":",this.endframe,' at increment ',
                     this.increment,'of ',dims[3]);
         this.writeframe=0;
+        this.done=false;
         let done=await largeImageUtil.readAndProcessLargeImage(inputname,this);
 
 
@@ -166,29 +169,44 @@ class LargeExtractFramesModule extends BaseModule {
         let output=null;
         let debug=false;
 
+        
+        if (this.done)
+            return false;
+
         if (frame<this.beginframe) {
             return false;
         }
 
-        let step=(frame-this.beginframe) % this.increment;
+        if (frame===this.endframe)
+            this.done=true;
 
+        let step=(frame-this.beginframe) % this.increment;
+        
+        if (frame===this.beginframe) {
+            this.storeCommentsInObject(frameImage,
+                                       process.argv.join(" "),
+                                       this.vals, baseutils.getSystemInfo(biswrap));
+        }
+        
         
         if (frame>=this.beginframe && frame<=this.endframe && step === 0 ) {
             
             if (this.writeframe===0) {
                 this.fileHandleObject={
                     'fd' : null,
-                    'filename' : ''
+                    'filename' : '',
+                    'done' : false
                 };
             }
 
             if (this.writeframe%5===0 || this.writeframe===this.numframes-1)
                 debug=true;
+
             if (debug)
-                console.log('oooo processing frame',frame, 'looking for frames in ',this.beginframe,'to',this.endframe,'every',this.increment,' as ',this.writeframe)
-            let d=await largeImageUtil.writeOutput(this.writeframe,this.numframes,this.outputname,frameImage,this.fileHandleObject,debug);
+                console.log('ooooo processing frame',frame, 'looking for frames in ',this.beginframe,'to',this.endframe,'every',this.increment,' as ',this.writeframe)
+            this.done=await largeImageUtil.writeOutput(this.writeframe,this.numframes,this.outputname,frameImage,this.fileHandleObject,debug);
             this.writeframe+=1;
-            return d;
+            return this.done;
         } 
         return false;
     }

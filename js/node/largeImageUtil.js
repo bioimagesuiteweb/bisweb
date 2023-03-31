@@ -55,7 +55,7 @@ const processChunk = async (params,buffer) => {
         let length=available;
         let in_offset=params['offset'];
 
-        // console.log('+++ In  loop ',available, maxneeded);
+
 
         
         if (maxneeded<available) {
@@ -68,9 +68,11 @@ const processChunk = async (params,buffer) => {
         storeData(in_offset,params['added'],length);
         params['added']=params['added']+length;
         let extraneeded=params['volumebytesize']-params['added'];
+
+        //console.log('+++ In  loop ',extraneeded);
         
         if (extraneeded<1) {
-            // console.log('Calling object.framecallback',params['frame']);
+            //console.log('Calling object.framecallback',params['frame']);
             let finished=await params['processFrameCallbackObject'].processFrame(params['frame'],params['tmpImage']);
             params['frame']+=1;
             params['added']=0;
@@ -83,14 +85,14 @@ const processChunk = async (params,buffer) => {
         
         available=available-length;
         if (available<1) {
-            // console.log('Checking for available',available);
+            //console.log('Checking for available',available);
             params['offset']=0;
             done=true;
         }
 
     }
 
-    //console.log('Done with processChunk');
+    //console.log('Done with processChunk',params['offset'],params['frame']);
     return Promise.resolve(false);
 };
 
@@ -116,7 +118,6 @@ const readAndProcessFile = async (params) => {
     let finished=false;
     let processing=false;
 
-    
     return new Promise( (resolve,reject) => {
         
         if (gzip) {
@@ -130,13 +131,13 @@ const readAndProcessFile = async (params) => {
                     //console.log('+++\n+++\n+++ Calling processed frame',params['frame']);
                     processChunk(params,chunk).then( (ok) => {
                         processing=false;
-                        //console.log('+++\n+++\n++++ \t done processed frame',params['frame'],ok);
+                        //console.log('++++ \t done processed frame',params['frame'],ok);
                         
                         if (ok) {
                             //console.log('____ Finished with processChunk');
                             finished=true;
-                            gunzip.on('end', () => {});
-                            gunzip.on('data', () => {});
+                            /*gunzip.on('end', () => {});
+                              gunzip.on('data', () => {});*/
                             resolve('Done processChunk');
                         }
                     }).catch( (e) => {
@@ -146,6 +147,8 @@ const readAndProcessFile = async (params) => {
                 }
             });
             gunzip.on('error', () => {
+                console.log('Error gunzip');
+                process.exit(0);
                 reject('Done');
             });
             gunzip.on('end', () => {
@@ -217,7 +220,7 @@ const readAndProcessLargeImage = async (inputname,callbackObject,totalframes=-1,
     if (params.swap) {
         return Promise.reject('Can not handle byte swapped data');
     }
-    
+
     params['volumebytesize']=params.volumesize*params.voxelsize;
     params['temp']=new Uint8Array(params['volumebytesize']);
     params['tmpImage']=new BisWebImage();
@@ -254,13 +257,15 @@ const createInitialImageOutput =  (firstImage,dt=null,numframes=0,numcomponents=
                              "onlyheader" : true,
                              "newniftytype" : dt
                          },true);
-
+    tempImage.setCommentList(firstImage.getCommentList());
+    //console.log(JSON.stringify(tempImage.getCommentList(),null,2));
     return tempImage;
 };
 
 const saveInitialImageHeader =  (tempImage,numframes=1) => { 
 
     let hd=tempImage.getHeader();
+    hd.setExtensionsFromArray(tempImage.getCommentList());
     let headerdata=tempImage.getHeaderData(true,numframes);
 
     let tempfname=tmpPackage.tmpNameSync();
@@ -332,7 +337,7 @@ const compressFile= (infilename,outname,deleteold=true)  => {
         
         w.on('finish', () => {
             rimraf.sync(infilename);
-            //console.log('Done with gzip');
+            console.log('____ gzip completed');
             resolve(true);
         }).on('error', (e) => {
             console.log('w error',e);
@@ -346,10 +351,16 @@ const compressFile= (infilename,outname,deleteold=true)  => {
 
 const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug=false,partialframes=-1) => {
 
+    fileHandle['done']= fileHandle['done'] || false;
+    
+    if (fileHandle['done'])
+        return false;
+        
+   
     if (partialframes<0)
         partialframes=numframes;
 
-    //console.log('Write Output',frame,numframes,partialframes);
+    //console.log('________________ Write Output',frame,'/',numframes,' done=',fileHandle['done']);
     
 
     
@@ -360,15 +371,20 @@ const writeOutput=async (frame,numframes,outputname,imageToSave,fileHandle,debug
         fileHandle['fd']=fh[0];
         fileHandle['filename']=fh[1];
         fileHandle['numbytes']=fh[2];
+        fileHandle['done']=false;
     }
 
     let last=false;
-    if (frame === numframes-1)
+    if (frame === numframes-1) {
         last=true;
+        fileHandle['done']=true;
+        //console.log('Last =',last,frame,numframes-1,fileHandle['done']);
+    }
     
     
     if (debug || last)
         console.log('____ writing frame (last=',last,')', frame+1,'/',numframes);
+
 
     await writeSubsequentFrame(fileHandle,imageToSave,last, false);
 

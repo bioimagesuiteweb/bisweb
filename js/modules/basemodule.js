@@ -493,6 +493,18 @@ class BaseModule {
         });
     }
 
+    /** Store Comment in Object 
+     * Adds the command line options to an object */
+    storeCommentsInObject(obj,commandlineargs,vars=null,systeminfo=null) {
+        let cmt= { 'command ' : commandlineargs };
+        if (vars) 
+            cmt['parameters']=JSON.parse(JSON.stringify(vars));
+        if (systeminfo)
+            cmt['systeminfo']=JSON.parse(JSON.stringify(systeminfo));
+        obj.addComment({ "ModuleOutput" : cmt});
+    }
+        
+        
     /** Store Comments in Outputs 
      * Adds the command line options to each output */
     storeCommentsInOutputs(commandlineargs,vars=null,systeminfo=null) {

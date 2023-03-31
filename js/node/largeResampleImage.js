@@ -126,7 +126,7 @@ class LargeResampleImageModule extends BaseModule {
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: largeResampleImage with vals', JSON.stringify(vals));
 
-        this.vals= {
+        this.algoparams= {
             "xsp": parseFloat(vals.xsp),
             "ysp": parseFloat(vals.ysp),
             "zsp": parseFloat(vals.zsp),
@@ -135,7 +135,9 @@ class LargeResampleImageModule extends BaseModule {
             "debug" : this.parseBoolean(vals.debug)
         };
 
+        this.vals=vals;
         this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'rsp','.nii.gz');
+        this.vals['output']=this.outputname;
         
         let inputname = vals['input'];
         let input=new BisWebImage();
@@ -147,6 +149,20 @@ class LargeResampleImageModule extends BaseModule {
         }
 
         let dims=input.getDimensions();
+        let spa=input.getSpacing();
+        if (this.algoparams.xsp < 0) {
+            this.algoparams.xsp=spa[0];
+            this.vals['xsp']=spa[0];
+        }
+        if (this.algoparams.ysp < 0) {
+            this.algoparams.ysp=spa[1];
+            this.vals['ysp']=spa[1];
+        }
+        
+        if (this.algoparams.zsp < 0) {
+            this.algoparams.zsp=spa[2];
+            this.vals['zsp']=spa[2];
+        }
 
         if (dims[4]<1)
             dims[4]=1;
@@ -167,11 +183,18 @@ class LargeResampleImageModule extends BaseModule {
         
         try {
             const p={
-                "spacing" : [ this.vals.xsp, this.vals.ysp, this.vals.zsp],
-                "interpolation" : this.vals.interpolation,
-                "backgroundValue" : this.vals.backgroundvalue
+                "spacing" : [ this.algoparams.xsp, this.algoparams.ysp, this.algoparams.zsp],
+                "interpolation" : this.algoparams.interpolation,
+                "backgroundValue" : this.algoparams.backgroundvalue
             };
-            output = biswrap.resampleImageWASM(frameImage, p,this.vals.debug);
+
+            output = biswrap.resampleImageWASM(frameImage, p,this.algoparams.debug);
+            if (frame===0) {
+                this.storeCommentsInObject(output,
+                                           process.argv.join(" "),
+                                           this.vals, baseutils.getSystemInfo(biswrap));
+            }
+
         } catch(e) {
             console.log(e.stack);
             return false;
@@ -183,6 +206,7 @@ class LargeResampleImageModule extends BaseModule {
                 'filename' : ''
             };
         }
+
 
         let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,output,this.fileHandleObject,debug);
         return done;

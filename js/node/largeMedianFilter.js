@@ -97,10 +97,13 @@ class LargeMedianFilterModule extends BaseModule {
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: largeMedianFilter with vals', JSON.stringify(vals));
 
+        this.vals=vals;
         this.radius = parseInt(vals.radius);
         this.do3d = super.parseBoolean(vals.do3d);
         this.debug=this.parseBoolean(vals.debug);
         this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'med','.nii.gz');
+        if (vals['output'].length<1) 
+            this.vals['output']=this.outputname;
         
         let inputname = vals['input'];
         let input=new BisWebImage();
@@ -137,6 +140,14 @@ class LargeMedianFilterModule extends BaseModule {
                 "radius": this.radius,
                 "do3d" : this.do3d,
             }, this.debug);
+
+            if (frame===0) {
+                console.log('Storing comments');
+                this.storeCommentsInObject(output,
+                                           process.argv.join(" "),
+                                           this.vals, baseutils.getSystemInfo(biswrap));
+            }
+            
         } catch(e) {
             console.log(e.stack);
             return false;

@@ -136,7 +136,10 @@ class LargeSmoothFilterModule extends BaseModule {
             s=s*0.4247;
         }
 
-        this.vals={
+        
+        
+        
+        this.algoparameters={
             "sigmas": [s, s, s],
             "inmm": super.parseBoolean(vals.inmm),
             "radiusfactor": parseFloat(vals.radiusfactor),
@@ -145,6 +148,9 @@ class LargeSmoothFilterModule extends BaseModule {
         this.debug=super.parseBoolean(vals.debug);        
 
         this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'sm','.nii.gz');
+        this.vals=vals;
+        this.vals['output']=this.outputname;
+        
         let inputname = vals['input'];
         let input=new BisWebImage();
         let headerinfo=null;
@@ -174,7 +180,13 @@ class LargeSmoothFilterModule extends BaseModule {
         }
 
         try {
-            output =  biswrap.gaussianSmoothImageWASM(frameImage, this.vals,this.debug);
+            output =  biswrap.gaussianSmoothImageWASM(frameImage, this.algoparameters,this.debug);
+            if (frame===0) {
+                this.storeCommentsInObject(output,
+                                           process.argv.join(" "),
+                                           this.vals, baseutils.getSystemInfo(biswrap));
+            }
+
         } catch(e) {
             console.log(e.stack);
             return false;

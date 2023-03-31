@@ -197,6 +197,7 @@ class LargeMotionReslicingModule extends BaseModule {
         });
 
         
+        
         return des;
     }
 
@@ -212,6 +213,7 @@ class LargeMotionReslicingModule extends BaseModule {
         let debug=super.parseBoolean(vals.debug);
 
         this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'motresl','.nii.gz');
+        this.vals['output']=this.outputname;
         
         let inputname=vals['input'];
         let input=new BisWebImage();
@@ -289,14 +291,28 @@ class LargeMotionReslicingModule extends BaseModule {
             };
         }
         
-        let resliceW = biswrap.resliceImageWASM(frameImage, this.combinedXform, {
-            "interpolation": parseInt(this.vals.interpolation),
-            "datatype" : this.dt,
-            "backgroundValue" : parseFloat(this.vals.backgroundvalue),
-            "dimensions": this.resldimensions,
-            "spacing": this.reslspacing
-        }, debug);
+        let resliceW =null;
 
+        try {
+            resliceW=biswrap.resliceImageWASM(frameImage, this.combinedXform, {
+                "interpolation": parseInt(this.vals.interpolation),
+                "datatype" : this.dt,
+                "backgroundValue" : parseFloat(this.vals.backgroundvalue),
+                "dimensions": this.resldimensions,
+                "spacing": this.reslspacing
+            }, debug);
+            
+            if (frame===0) {
+                this.storeCommentsInObject(resliceW,
+                                           process.argv.join(" "),
+                                           this.vals, baseutils.getSystemInfo(biswrap));
+            }
+        } catch(e) {
+            console.log(e.stack);
+            return false;
+        }
+
+        
         let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,resliceW,this.fileHandleObject,debug);
         console.log('ooooo motion resliced frame=',frame,' done=',done);
         return done;
