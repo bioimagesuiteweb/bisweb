@@ -256,10 +256,11 @@ var execute_test=function(test,usethread=false) {
 
         if (test_type==="tfjs")
             test_type="image";
-        
-        let doworker = test.webworker;
+
+        let doworker=false;
+        /*let doworker = test.webworker;
         if (doworker!==false)
-            doworker=true;
+            doworker=true;*/
 
         if (test_type==='registration')
             params['doreslice']=true;
@@ -270,7 +271,7 @@ var execute_test=function(test,usethread=false) {
         
         loadparamfile(paramfile,module.name,params).then( () => {
 
-            console.log('oooo usethread=',usethread);
+            //console.log('oooo usethread=',usethread);
             console.log('oooo Loading Inputs ',JSON.stringify(inputs));
             
             module.loadInputs(inputs).then( () => {
@@ -548,10 +549,10 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     if (usefileserver)
         fileserverflag=1;
             
-    if (thread && threadController===null) { 
+/*    if (thread && threadController===null) { 
         threadController=document.createElement('bisweb-webworkercontroller');
         $('body').append($(threadController));
-    }
+    }*/
 
     
     if (!usefileserver) {
@@ -610,8 +611,8 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
 
             run=run+1;
             main.append(`<a name="${tname}"></a><H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
-            if (usethread)
-                main.append(`<P> Running in WebWorker </P>`);
+//            if (usethread)
+//                main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
 
             try {
@@ -664,7 +665,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
             }
 
 
-            main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
+            main.append(`<details><summary><U>Details (Click to Open)</U></summary><PRE>${logtext}</PRE></details><HR>`);
             window.scrollTo(0,document.body.scrollHeight-100);
 
             
@@ -774,14 +775,14 @@ let initialize=function(data) {
             testname='None';
     }
     
-    let usethread=parseInt(webutil.getQueryParameter('webworker') || 0);
+    let usethread=false;//parseInt(webutil.getQueryParameter('webworker') || 0);
     let usefileserver=parseInt(webutil.getQueryParameter('fileserver') || 0);
     let dorun=parseInt(webutil.getQueryParameter('run') || 0);
     
-    if (usethread)
+    /*    if (usethread)
         usethread=true;
     else
-        usethread=false;
+        usethread=false;*/
     
     if (usefileserver)
         usefileserver=true;
@@ -792,7 +793,7 @@ let initialize=function(data) {
     $('#first').val(firsttest);
     $('#last').val(lasttest);
     $('#testselect').val(testname);
-    $('#usethread').prop("checked", usethread);
+    //$('#usethread').prop("checked", usethread);
     if (!webutil.inElectronApp()) {
         $('#usefileserver').prop("checked", usefileserver);
     } else  {
@@ -827,7 +828,7 @@ let initialize=function(data) {
         let last=parseInt($("#last").val());
         let testname=$('#testselect').val() || 'All';
 
-        let usethread= $('#usethread').is(":checked") || false;
+        let usethread= false;//$('#usethread').is(":checked") || false;
         let usefileserver=false;
         if (!webutil.inElectronApp()) {
             usefileserver= $('#usefileserver').is(":checked") || false;

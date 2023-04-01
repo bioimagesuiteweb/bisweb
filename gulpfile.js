@@ -236,7 +236,7 @@ if (options.inpfilename === "" || options.inpfilename === "all") {
 
 if (mainoption==="build") {
     options.sworker=1;
-    options.webworker=1;
+    options.webworker=0;
 }
 
 
