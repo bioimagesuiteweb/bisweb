@@ -49,3 +49,4 @@ computeImageEigenvectors
 eigenvectorDenoiseImage
 extractImagePatches
 initializeCalciumStudy
+dualImageRegression

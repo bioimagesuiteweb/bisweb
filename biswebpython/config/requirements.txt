@@ -6,3 +6,4 @@ setuptools
 wheel>=0.31
 wget
 python-dateutil
+scikit-learn
