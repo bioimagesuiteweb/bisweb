@@ -1036,9 +1036,15 @@
             "test"    : "--test_type surfaceregistration --test_target testdata/rpm/true_rotated_icp.json --test_comparison ssd --test_threshold 0.1",
             "result"  : false,
             "dopython" : false
-        }
-
-        
+        },
+        {
+	        "command" : "dualImageRegression -i testdata/dualchannel/blue_test.nii.gz -r testdata/dualchannel/uv_test.nii.gz",
+	        "test"    : "--test_target testdata/dualchannel/res_test.nii.gz",
+	        "result"  : true,
+	        "dopython": true,
+            "noweb"   : true,
+            "skipjs"  : true
+	    }
     ]
 }
 
