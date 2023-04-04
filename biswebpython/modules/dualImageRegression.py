@@ -114,13 +114,28 @@ class dualImageRegression(bis_basemodule.baseModule):
 
     def dualRegress(self,idata,rdata,debug=False):
         
-        from sklearn.preprocessing import normalize
-        norm_data=normalize(idata,axis=0,norm='l2');
-        norm_data2=normalize(rdata,axis=0,norm='l2');
-        dot=np.sum(norm_data*norm_data2,axis=0)
-        z=norm_data-dot*norm_data2;
-        final=(idata/norm_data)*z;
-        return final
+        #from sklearn.preprocessing import normalize
+        #norm_data=normalize(idata,axis=0,norm='l2');
+        #norm_data2=normalize(rdata,axis=0,norm='l2');
+        #dot=np.sum(norm_data*norm_data2,axis=0)
+        #z=norm_data-dot*norm_data2;
+        #final=(idata/norm_data)*z;
+
+        
+        #alpha = (transpose(uv)*blue)/(transpose(uv)*uv);
+        #residual = blue-uv*alpha.
+
+        output=np.zeros(idata.shape,idata.dtype)
+        numvoxels=idata.shape[0]
+        for voxel in range(0,numvoxels):
+            blue=idata[voxel,:];
+            uv=rdata[voxel,:];
+            alpha=np.dot(uv,blue)/np.dot(uv,uv)
+            residual=blue-alpha*uv
+            output[voxel,:]=residual
+
+                
+        return output
     
     def normalizeTimeSeries(self,idata,debug=False):
         return idata
