@@ -19,13 +19,7 @@ import sys
 import numpy as np
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_objects as bis_objects
-import biswebpython.utilities.calcium_image as calcium_image;
-import biswebpython.utilities.calcium_analysis as calcium_analysis;
 
-
-# from PIL import Image
-
-import pdb
 
 class dualImageRegression(bis_basemodule.baseModule):
 
@@ -75,13 +69,6 @@ class dualImageRegression(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": False
-                },
-                {
-                    "name": "Df/F",
-                    "description": "If true also normalizes output by mean of each timeseries",
-                    "varname": "df",
-                    "type": "boolean",
-                    "default": False
                 }
 
             ],
@@ -92,7 +79,6 @@ class dualImageRegression(bis_basemodule.baseModule):
         print('oooo invoking: something with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
-        df=self.parseBoolean(vals['df']);
         input=self.inputs['input'];
         sz=input.get_data().shape;
         
@@ -101,10 +87,6 @@ class dualImageRegression(bis_basemodule.baseModule):
         print(idata.shape,rdata.shape);
         
         outdata=self.dualRegress(idata,rdata,debug);
-
-        if (df):
-            outdata=normalizeTimeSeries(outdata,debug);
-
         outdata=np.reshape(outdata,sz);
 
         self.outputs['output'] = bis_objects.bisImage().create(outdata,input.spacing,input.affine);
@@ -113,18 +95,9 @@ class dualImageRegression(bis_basemodule.baseModule):
 
 
     def dualRegress(self,idata,rdata,debug=False):
-        
-        #from sklearn.preprocessing import normalize
-        #norm_data=normalize(idata,axis=0,norm='l2');
-        #norm_data2=normalize(rdata,axis=0,norm='l2');
-        #dot=np.sum(norm_data*norm_data2,axis=0)
-        #z=norm_data-dot*norm_data2;
-        #final=(idata/norm_data)*z;
 
+        print('Regressing');
         
-        #alpha = (transpose(uv)*blue)/(transpose(uv)*uv);
-        #residual = blue-uv*alpha.
-
         output=np.zeros(idata.shape,idata.dtype)
         numvoxels=idata.shape[0]
         for voxel in range(0,numvoxels):
@@ -137,5 +110,3 @@ class dualImageRegression(bis_basemodule.baseModule):
                 
         return output
     
-    def normalizeTimeSeries(self,idata,debug=False):
-        return idata
