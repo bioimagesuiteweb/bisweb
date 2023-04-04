@@ -420,8 +420,13 @@ var readbinarydatanode = function (filename, loadedcallback, errorcallback) {
                             loadedcallback(dt, filename);
                             dt = null;
                         } catch(e) {
-                            console.log(' failed to read binary data error=' + err+' '+err.toString);
-                            errorcallback(' failed to read binary data error=' + err.toString);
+                            // Check if not compressed
+                            console.log('.....\t not compressed trying uncompressed',filename);
+                            let dt = new Uint8Array(d1);//.buffer;
+                            loadedcallback(dt, filename);
+                            dt = null;
+                            //console.log(' failed to read binary data error=' + err+' '+err);
+                            //errorcallback(' failed to read binary data error=' + err.toString);
                         }
                     } else {
                         var dt = new Uint8Array(data);
@@ -492,10 +497,18 @@ var readbinarydatabrowser = function (file, loadedcallback, errorcallback) {
             return;
         }
 
-        var a = pako.ungzip(dat);
-        loadedcallback(a, url);
-        a = null;
-        dat = null;
+        try {
+            var a = pako.ungzip(dat);
+            loadedcallback(a, url);
+            a = null;
+            dat = null;
+        } catch(e) {
+            console.log('..... not compressed trying uncompressed',url);
+            let dt = new Uint8Array(dat);//.buffer;
+            loadedcallback(dt, url);
+            dt = null;
+        }
+
     };
 
     reader.readAsArrayBuffer(file);
