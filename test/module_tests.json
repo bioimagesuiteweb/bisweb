@@ -1044,6 +1044,14 @@
 	        "dopython": true,
             "noweb"   : true,
             "skipjs"  : true
+	    },
+        {
+	        "command" : "dualImageRegression -i testdata/dualchannel/blue.nii.gz -r testdata/dualchannel/uv.nii.gz --dff true --doregress true",
+	        "test"    : "--test_target testdata/dualchannel/res_uv_dff.nii.gz",
+	        "result"  : true,
+	        "dopython": true,
+            "noweb"   : true,
+            "skipjs"  : true
 	    }
     ]
 }

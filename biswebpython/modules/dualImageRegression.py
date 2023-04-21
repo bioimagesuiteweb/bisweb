@@ -31,7 +31,7 @@ class dualImageRegression(bis_basemodule.baseModule):
         return {
             "name": "dual Image Regression Preprocess",
             "description": "Regresses out a regressor image from an input image. This was designed as part of the preprocessing of dual channel calcium images. Optionally also computes dF/F",
-            "author": "Jackson Zhaoxiong Ding",
+            "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": [
                 {
@@ -69,8 +69,21 @@ class dualImageRegression(bis_basemodule.baseModule):
                     "varname": "debug",
                     "type": "boolean",
                     "default": False
+                },
+                {
+                    "name": "df over f",
+                    "description": "Computes df/f normalization",
+                    "varname": "dff",
+                    "type": "boolean",
+                    "default": False
+                },
+                {
+                    "name": "regress",
+                    "description": "if true regress out second image from first else just normalization",
+                    "varname": "doregress",
+                    "type": "boolean",
+                    "default": True
                 }
-
             ],
         }
         
@@ -79,16 +92,50 @@ class dualImageRegression(bis_basemodule.baseModule):
         print('oooo invoking: something with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
+        df=self.parseBoolean(vals['dff'])
+        doregress=self.parseBoolean(vals['doregress'])
         input=self.inputs['input'];
         sz=input.get_data().shape;
+
+        if len(sz)==3:
+            sz=[ sz[0],sz[1],1,sz[2] ];
+            print('Fixed shape to',sz);
+    
+        
         
         idata = np.reshape(self.inputs['input'].get_data(),[ sz[0]*sz[1]*sz[2],sz[3] ]);
-        rdata = np.reshape(self.inputs['regressor'].get_data(),[ sz[0]*sz[1]*sz[2],sz[3] ]);
-        print(idata.shape,rdata.shape);
-        
-        outdata=self.dualRegress(idata,rdata,debug);
-        outdata=np.reshape(outdata,sz);
 
+        if (doregress):
+            rdata = np.reshape(self.inputs['regressor'].get_data(),[ sz[0]*sz[1]*sz[2],sz[3] ]);
+
+        if (debug):
+            print('Input Shape=',sz,' Reshaped=', idata.shape)
+
+        if (df):
+            mean=np.mean(idata,axis=1)
+            if (debug):
+                print('Mean shape=',mean.shape);
+                print('Mean=',mean[0:5]);
+                print('Pre mean:',idata[0,0:5])
+            idata=np.transpose(np.transpose(idata)-mean)
+            if (debug):
+                print('Post mean',idata[0,0:5])
+
+            if (doregress):
+                rmean=np.mean(rdata,axis=1);
+                rdata=np.transpose(np.transpose(rdata)-rmean)
+                if (debug):
+                    print('R-Mean shape=',rmean.shape);
+
+        if (doregress):
+            print('.... computing dual image regression')
+            outdata=self.dualRegress(idata,rdata,debug);
+
+        if (df):
+            print('.... computing df/f')
+            outdata=np.transpose((np.transpose(outdata)+mean)/mean)
+
+        outdata=np.reshape(outdata,sz);
         self.outputs['output'] = bis_objects.bisImage().create(outdata,input.spacing,input.affine);
         
         return True
@@ -96,8 +143,6 @@ class dualImageRegression(bis_basemodule.baseModule):
 
     def dualRegress(self,idata,rdata,debug=False):
 
-        print('Regressing');
-        
         output=np.zeros(idata.shape,idata.dtype)
         numvoxels=idata.shape[0]
         for voxel in range(0,numvoxels):
