@@ -66,7 +66,6 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         print('oooo invoking: something with vals', vals);
 
         setupname=vals['setupname'];
-        print(setupname)
         indir=os.path.abspath(os.path.dirname(setupname))
         outdir=vals['outdir'];
         self.data={};
@@ -179,14 +178,9 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
 
             run=data['runs'][acquisition_run]
             number=run['runnumber']
-<<<<<<< HEAD
             if (number==None):
                 number='{$:s}'.format(acquisition_run+1)
-=======
->>>>>>> e24ea253468aa6cdf4ffb0b81c55e8dfc288d632
             parts=run['parts']
-            if (number==None):
-                number='{$:s}'.format(acquisition_run+1)
             numparts=len(parts)
             channelspec=data['runs'][acquisition_run]['triggerfile']
 
@@ -194,11 +188,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             print('...')
             print('..............................................................................')
             print('...')
-<<<<<<< HEAD
-            print('... B e g i n n i n g   r u n =',acquisition_run+1, 'actual =',number);
-=======
             print('... B e g i n n i n g   r u n =',acquisition_run+1,' actual=',number);
->>>>>>> e24ea253468aa6cdf4ffb0b81c55e8dfc288d632
             print('...')
             print('... Parsing image',str(tmpimg),'\n...\tsize=',tmpimg.size,str(tmpimg.format))
             print('...')
