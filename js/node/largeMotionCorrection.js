@@ -178,6 +178,7 @@ class LargeMotionCorrectionModule extends BaseModule {
         console.log('---------');
         console.log('Storing output');
         this.outputs['output'] = this.matrices;
+        
     }
 
     async processFrame(frame,frameImage) {
@@ -208,7 +209,9 @@ class LargeMotionCorrectionModule extends BaseModule {
         this.matrices.addItem(xform, { "frame": frame});
 
         if (!this.doreslice) {
-            return false;
+            if (frame===this.numframes-1)
+                return Promise.resolve(true);
+            return Promise.resolve(false);
         }
         
         if (frame===0) {
