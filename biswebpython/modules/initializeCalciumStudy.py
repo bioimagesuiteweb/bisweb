@@ -66,6 +66,8 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         print('oooo invoking: something with vals', vals);
 
         setupname=vals['setupname'];
+        print(setupname)
+        indir=os.path.abspath(os.path.dirname(setupname))
         outdir=vals['outdir'];
         self.data={};
         
@@ -87,7 +89,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             print('---- Failed to make directory',outdir)
             #            return 0
         
-        output=self.convertRuns(self.data,outdir);
+        output=self.convertRuns(self.data,indir,outdir);
         out=json.dumps(output,sort_keys=False,indent=4);
         fname=os.path.abspath(os.path.join(outdir,self.data['subjectname']+'_step1.json'))
         try:
@@ -121,7 +123,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             channel=triggers[c][1]-1
             
             movies[channel][:,:,0,usedframes[channel]] = np.array(imgl,dtype=np.uint16)
-            if (c%225==0 or c<4 or c>(expected_num_frames-4)):
+            if (c%125==0 or c<4 or c>(expected_num_frames-4)):
                 s='...\t added frame {:5d}/{:5d} to channel {:d} as new frame {:5d} based on trigger {:s}'.format(c+1,expected_num_frames,channel+1,usedframes[channel]+1,str(triggers[c]))
                 print(s)
 
@@ -140,17 +142,18 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
     # --------------------------------------
 
         
-    def convertRuns(self,data,outdir):
+    def convertRuns(self,data,indir,outdir):
 
         numruns=len(data['runs'])
         if (DUMMY_MODE and numruns>2):
             numruns=2
+        numchannels=len(data['channelnames'])
         
         resol=data['resolution'];
         TR=data['TR']
         orient=data['orientation']
         mat=np.zeros((4,4));
-        spa=[ resol,resol,1.0,TR,1.0 ];
+        spa=[ resol,resol,1.0,TR*numchannels,1.0 ];
         if (orient[0]=='L'):
             mat[0][0]=-resol
         else:
@@ -163,7 +166,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         mat[2][2]=1
         mat[3][3]=1
 
-        numchannels=len(data['channelnames'])
+
         trigdata=[];
         outputs={
             "subjectname" : data['subjectname'],
@@ -182,7 +185,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             numparts=len(parts)
             channelspec=data['runs'][acquisition_run]['triggerfile']
 
-            tmpimg = Image.open(parts[0])
+            tmpimg = Image.open(os.path.join(indir,parts[0]))
             print('...')
             print('..............................................................................')
             print('...')
@@ -196,7 +199,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
 
             # Read trigger file
             try:
-                file = open(channelspec)
+                file = open(os.path.join(indir,channelspec))
                 text=file.read()
                 trigdata.append(json.loads(text))
                 print('.... imported triggers from',channelspec)
@@ -234,8 +237,6 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             for part in range(0,numparts):
                 print('...')
                 nm='Tiff_order'+str(part+1)
-                print('... Importing run',number,'( order=',acquisition_run+1,') part', part+1, 'from', parts[part])
-                self.loadChannels(parts[part],movies,usedframes,mat,spa,trigdata[acquisition_run][nm]);
 
                 
             # Create Outputs
