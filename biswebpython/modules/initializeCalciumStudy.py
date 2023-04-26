@@ -173,8 +173,12 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         };
 
         for acquisition_run in range(0,numruns):
+
             run=data['runs'][acquisition_run]
+            number=run['runnumber']
             parts=run['parts']
+            if (number==None):
+                number='{$:s}'.format(acquisition_run+1)
             numparts=len(parts)
             channelspec=data['runs'][acquisition_run]['triggerfile']
 
@@ -182,7 +186,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             print('...')
             print('..............................................................................')
             print('...')
-            print('... B e g i n n i n g   r u n =',acquisition_run+1);
+            print('... B e g i n n i n g   r u n =',acquisition_run+1,' actual=',number);
             print('...')
             print('... Parsing image',str(tmpimg),'\n...\tsize=',tmpimg.size,str(tmpimg.format))
             print('...')
@@ -230,7 +234,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             for part in range(0,numparts):
                 print('...')
                 nm='Tiff_order'+str(part+1)
-                print('... Importing run',acquisition_run+1,'part', part+1, 'from', parts[part])
+                print('... Importing run',number,'( order=',acquisition_run+1,') part', part+1, 'from', parts[part])
                 self.loadChannels(parts[part],movies,usedframes,mat,spa,trigdata[acquisition_run][nm]);
 
                 
@@ -238,7 +242,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             desc={};
             for channel in range(0,numchannels):
                 cn=data['channelnames'][channel]
-                oname='{:s}_run{:02d}_channel_{:d}_{:s}.nii.gz'.format(data['subjectname'],acquisition_run+1,channel+1,cn)
+                oname='{:s}_run{:s}_channel_{:02d}_{:s}.nii.gz'.format(data['subjectname'],number,channel+1,cn)
                 oname=os.path.abspath(os.path.join(outdir,oname))
                 print('... Storing combined run channel',cn,'in',oname)
                 img=bis_objects.bisImage();
