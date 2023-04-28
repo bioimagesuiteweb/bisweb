@@ -177,9 +177,10 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         for acquisition_run in range(0,numruns):
 
             run=data['runs'][acquisition_run]
-            number=run['runnumber']
-            if (number==None):
-                number='{$:s}'.format(acquisition_run+1)
+            if 'runnumber' in run:
+                number=run['runnumber']
+            else:
+                number='{:02d}'.format(acquisition_run+1)
             parts=run['parts']
             numparts=len(parts)
             channelspec=data['runs'][acquisition_run]['triggerfile']
