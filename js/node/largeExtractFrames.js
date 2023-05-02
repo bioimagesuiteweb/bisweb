@@ -158,7 +158,11 @@ class LargeExtractFramesModule extends BaseModule {
                     this.increment,'of ',dims[3]);
         this.writeframe=0;
         this.done=false;
-        let done=await largeImageUtil.readAndProcessLargeImage(inputname,this);
+        let spa=input.getSpacing();
+        this.temporalSpacing=spa[3]*this.increment;
+        console.log('____ Corrected Temporal Spacing=',spa[3],' ---> ',this.temporalSpacing);
+        
+        let done=await largeImageUtil.readAndProcessLargeImage(inputname,this,-1,-1,spa);
 
 
         return done;
@@ -183,6 +187,9 @@ class LargeExtractFramesModule extends BaseModule {
         let step=(frame-this.beginframe) % this.increment;
         
         if (frame===this.beginframe) {
+            frameImage.internal.spacing[3]=this.temporalSpacing;
+            frameImage.internal.header.struct.pixdim[4]=this.temporalSpacing;
+            
             this.storeCommentsInObject(frameImage,
                                        process.argv.join(" "),
                                        this.vals, baseutils.getSystemInfo(biswrap));
