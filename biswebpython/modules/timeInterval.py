@@ -112,7 +112,7 @@ class timeInterval(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: timeInterval with vals', vals);
         debug=self.parseBoolean(vals['debug'])
         oupath = vals['oupath']
         if oupath:

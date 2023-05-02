@@ -122,7 +122,7 @@ class imageDistanceMatrix(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: imageDistanceMatrix with vals', vals);
 
 
         if (vals['numpatches']>0):

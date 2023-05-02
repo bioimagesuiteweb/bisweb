@@ -123,7 +123,7 @@ class computeImageEigenvectors(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: computeImageEigenvectors with vals', vals);
         paramobj= {
             'maxeigen' : vals['maxeigen'],
             'lambda' : vals['lambda'],

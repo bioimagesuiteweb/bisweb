@@ -40,7 +40,7 @@ class patchReformatImage(bis_basemodule.baseModule):
         return obj;
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: patchReformatImage with vals', vals);
         paramobj= {
             'numthreads' : vals['numthreads'],
             'increment' : vals['increment'],

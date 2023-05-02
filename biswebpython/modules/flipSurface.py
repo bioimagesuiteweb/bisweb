@@ -72,7 +72,7 @@ class flipSurface(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: flipSurface with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
         flip=self.parseBoolean(vals['flip'])

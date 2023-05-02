@@ -63,7 +63,7 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
         return des;
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: initializeCalciumStudy with vals', vals);
 
         setupname=vals['setupname'];
         indir=os.path.abspath(os.path.dirname(setupname))

@@ -28,7 +28,7 @@ class timeseriesNormalizeImage(bis_basemodule.baseModule):
         return self.getModuleDescriptionFromFile('timeSeriesNormalizeImage');
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: timeSeriesNormalization with vals', vals);
         self.outputs['output']=bis_baseutils.getDynamicLibraryWrapper().timeSeriesNormalizeImageWASM(self.inputs['input'],
                                                                                                      self.parseBoolean(vals['debug']));
         return True

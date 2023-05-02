@@ -68,7 +68,7 @@ class temporalImageDistanceMatrix(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: temporalImageDistanceMatrix with vals', vals);
         paramobj= {
             'numthreads' : vals['numthreads'],
             'sparsity' : vals['sparsity'],
