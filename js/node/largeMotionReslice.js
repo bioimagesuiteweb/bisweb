@@ -240,6 +240,8 @@ class LargeMotionReslicingModule extends BaseModule {
         console.log('oooo Original dimensions:',this.resldimensions,' spacing:', this.reslspacing);
         for (let i=0;i<=2;i++) {
             this.resldimensions[i]=Math.round(this.resldimensions[i]/res);
+	    if (this.resldimensions[i]<1)
+		this.resldimensions[i]=1;
             this.reslspacing[i]=this.reslspacing[i]*res;
         }
 
@@ -278,7 +280,7 @@ class LargeMotionReslicingModule extends BaseModule {
         let debug=false;
         if (frame %50===0)
             debug=true;
-        debug=true;
+
         this.combinedXform.setTransformation(this.motionindex,this.matrices.getItemData(frame));
         
         if (debug)
@@ -293,6 +295,10 @@ class LargeMotionReslicingModule extends BaseModule {
         
         let resliceW =null;
 
+	if (frame===0) {
+	    console.log('Output dimensions=',this.resldimensions, ' spa=', this.reslspacing, ' input=', frameImage.getDescription());
+	}
+	
         try {
             resliceW=biswrap.resliceImageWASM(frameImage, this.combinedXform, {
                 "interpolation": parseInt(this.vals.interpolation),
