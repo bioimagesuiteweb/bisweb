@@ -83,7 +83,7 @@ class inflateSurface(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: inflateSurface with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
         inflate=self.parseBoolean(vals['inflate'])

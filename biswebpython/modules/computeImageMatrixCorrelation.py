@@ -67,7 +67,7 @@ class computeImageMatrixCorrelation(bis_basemodule.baseModule):
         
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: computeimageMatrixCorrelation with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
         input = self.inputs['input'];

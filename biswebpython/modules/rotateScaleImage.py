@@ -124,7 +124,7 @@ class rotateScaleImage(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: rotateScaleImage with vals', vals);
 
         debug = self.parseBoolean(vals['debug'])
         rotations = vals['rotate']

@@ -67,7 +67,7 @@ class eigenvectorDenoiseImage(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: eigenvectorDenoiseImage with vals', vals);
         paramobj= {
             'scale' : vals['scale'],
         };

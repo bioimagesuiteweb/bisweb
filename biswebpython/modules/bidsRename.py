@@ -96,7 +96,7 @@ class bidsRename(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: bidsRename with vals', vals);
         debug = self.parseBoolean(vals['debug'])
         exe = self.parseBoolean(vals['execute'])
         inpath = vals['inpath']

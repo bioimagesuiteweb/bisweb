@@ -129,7 +129,7 @@ class calciumPreprocess(bis_basemodule.baseModule):
         
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: calicumPreprocess with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
         # blueMovie = self.inputs['blue'].get_data()

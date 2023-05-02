@@ -89,7 +89,7 @@ class dualImageRegression(bis_basemodule.baseModule):
         
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: dualImageRegression with vals', vals);
 
         debug=self.parseBoolean(vals['debug'])
         df=self.parseBoolean(vals['dff'])

@@ -114,7 +114,7 @@ class ndaElementsGenerator(bis_basemodule.baseModule):
 
 
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: ndaElementsGenerator with vals', vals);
         debug=self.parseBoolean(vals['debug'])
         bidspath = vals['bidspath']
         oupath = vals['oupath']

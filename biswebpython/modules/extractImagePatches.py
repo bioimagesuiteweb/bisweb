@@ -266,7 +266,7 @@ class extractImagePatches(bis_basemodule.baseModule):
 
     
     def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: something with vals', vals);
+        print('oooo invoking: extractImagePatches with vals', vals);
 
         psize=vals['patchsize'];
         numpatches=vals['numpatches'];
