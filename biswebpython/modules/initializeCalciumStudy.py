@@ -120,12 +120,11 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             imgl=page.convert(mode='F')
             v=np.array(imgl)
             channel=triggers[c][1]-1
-            
-            movies[channel][:,:,0,usedframes[channel]] = np.array(imgl,dtype=np.uint16)
-            if (c%125==0 or c<4 or c>(expected_num_frames-4)):
-                s='...\t added frame {:5d}/{:5d} to channel {:d} as new frame {:5d} based on trigger {:s}'.format(c+1,expected_num_frames,channel+1,usedframes[channel]+1,str(triggers[c]))
+            if (channel>0):
+                movies[channel][:,:,0,usedframes[channel]] = np.array(imgl,dtype=np.uint16)
+                if (c%125==0 or c<4 or c>(expected_num_frames-4)):
+                    s='...\t added frame {:5d}/{:5d} to channel {:d} as new frame {:5d} based on trigger {:s}'.format(c+1,expected_num_frames,channel+1,usedframes[channel]+1,str(triggers[c]))
                 print(s)
-
             c=c+1;
             usedframes[channel]=usedframes[channel]+1
             if (c>100 and DUMMY_MODE):
