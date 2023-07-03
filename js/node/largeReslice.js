@@ -229,7 +229,9 @@ class LargeReslicingModule extends BaseModule {
         for (let i=0;i<=2;i++) {
             this.resldimensions[i]=Math.round(this.resldimensions[i]/res);
 	    if (this.resldimensions[i]<1)
-		this.resldimensions[i]=1;
+		    this.resldimensions[i]=1;
+        
+        if (this.resldimensions[i]>1)
             this.reslspacing[i]=this.reslspacing[i]*res;
         }
 
