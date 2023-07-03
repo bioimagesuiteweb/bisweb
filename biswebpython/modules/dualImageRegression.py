@@ -44,11 +44,11 @@ class dualImageRegression(bis_basemodule.baseModule):
                 },
                 {
                     "type": "image",
-                    "name": "Input Image",
+                    "name": "Regressor Image",
                     "description": "The input image (uv) to preprocess",
                     "varname": "regressor",
                     "shortname" : "r",
-                    "required": False
+                    "required": True
                 }
             ],
             "outputs": [
@@ -130,10 +130,15 @@ class dualImageRegression(bis_basemodule.baseModule):
         if (doregress):
             print('.... computing dual image regression')
             outdata=self.dualRegress(idata,rdata,debug);
+        else:   
+            print('.... not computing dual image regression')
+            outdata=idata;
 
         if (df):
             print('.... computing df/f')
             outdata=np.transpose((np.transpose(outdata)+mean)/mean)
+        else:
+            print('.... not computing df/f')
 
         outdata=np.reshape(outdata,sz);
         self.outputs['output'] = bis_objects.bisImage().create(outdata,input.spacing,input.affine);

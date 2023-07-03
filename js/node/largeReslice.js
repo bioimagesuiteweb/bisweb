@@ -252,7 +252,7 @@ class LargeReslicingModule extends BaseModule {
         }
         
         await biswrap.initialize();
-        console.log('---------------------------',this.doreslice,inputname,this.outputname);
+        console.log('---------------------------',inputname,this.outputname);
         await largeImageUtil.readAndProcessLargeImage(inputname,this);
         console.log('---------');
         console.log('Storing output');
@@ -302,7 +302,8 @@ class LargeReslicingModule extends BaseModule {
 
         
         let done=await largeImageUtil.writeOutput(frame,this.numframes,this.outputname,resliceW,this.fileHandleObject,debug);
-        console.log('ooooo motion resliced frame=',frame,' done=',done);
+        if (debug)
+            console.log('ooooo resliced frame=',frame,' done=',done);
         return done;
     }
 }

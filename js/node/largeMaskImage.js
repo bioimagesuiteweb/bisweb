@@ -99,7 +99,7 @@ class LargeMaskImageModule extends BaseModule {
     }
 
     async directInvokeAlgorithm(vals) {
-        console.log('LargeMotionReslicing invoking with vals', JSON.stringify(vals));
+        console.log('Large Mask Image invoking with vals', JSON.stringify(vals));
 
         this.vals=vals;
         
@@ -119,8 +119,12 @@ class LargeMaskImageModule extends BaseModule {
             return Promise.reject('Failed to read the header in largemotionReslice '+inputname);
         }
         
-        if (!input.hasSameSizeAndOrientation(this.mask,'input image','reference image',true))
+        if (!input.hasSameSizeAndOrientation(this.mask,'input image','reference image',true)) {
+            console.log('Mask does not have the same size or orientation as the input');
+            console.log('Mask=',this.mask.getDescription());
+            console.log('Input=',input.getDescription());
             return Promise.reject('Failed');
+        }
 
         let dims=input.getDimensions();
         this.numframes=dims[3]*dims[4];
