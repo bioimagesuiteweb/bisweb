@@ -33,6 +33,7 @@ const moduleImports = {
     'largemotionreslice' : require('./largeMotionReslice.js'),
     'largereslice' : require('./largeReslice.js'),
     'largeextractframes' : require('./largeExtractFrames.js'),
+    'largemaskimage' : require('./largeMaskImage.js'),
     'largemedianfilter' : require('./largeMedianFilter.js'),
     'largesmoothfilter' : require('./largeSmoothFilter.js'),
     'largeresampleimage' : require('./largeResampleImage.js'),
