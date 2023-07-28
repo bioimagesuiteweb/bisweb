@@ -387,7 +387,7 @@ class CalciumPreprocessModule extends BaseModule {
             step3.push(outname4);
             outtext+=outname4+' : '+f1+' '+f2+'\n\t'+pythoncommand+` dualImageRegression --input ${f2} `;
             outtext+=` -o ${outname4}`;
-            outtext+=` --doregress ${doregress} --dff ${dff} --regress ${f2}`;
+            outtext+=` --doregress ${doregress} --dff ${dff} --regress ${f1}`;
             if (!debug) outtext+=` > ${outname4}.log 2>&1`;
             outtext+=`\n\n`;
             
