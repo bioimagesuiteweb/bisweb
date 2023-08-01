@@ -867,6 +867,7 @@ var createlines = function() {
                   attribcomponent : attribcomponent,
                   filter: filter,
                   radius : globalParams.internal.parameters.radius,
+                  maxdegree : globalParams.internal.parameters.maxdegree,
                   matrixthreshold : matrixthreshold};
 
     if (globalParams.internal.hadlinesonce)
@@ -885,6 +886,7 @@ var drawlines=function(state) {
                                                            state.attribcomponent, // attribcomponent
                                                            state.degreethreshold, // metric threshold
                                                            state.filter); // sum
+
 
     if (ok===0) {
         bootbox.alert('Failed to create flag matrix for connectivity data!');

@@ -805,11 +805,11 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     if (!doNotUpdateFlagMatrix) {
         console.log('.... Updating Flag Matrix\n');
         let ok=globalParams.internal.conndata.createFlagMatrix(globalParams.internal.parcellation,
-                                                  state.mode, // mode
-                                                  state.singlevalue, // singlevalue
-                                                  state.attribcomponent, // attribcomponent
-                                                  state.degreethreshold, // metric threshold
-                                                  state.filter); // sum
+                                                               state.mode, // mode
+                                                               state.singlevalue, // singlevalue
+                                                               state.attribcomponent, // attribcomponent
+                                                               state.degreethreshold, // metric threshold
+                                                               state.filter); // sum
         
         if (ok===0) {
             bootbox.alert('Failed to create flag matrix for 3D connectivity data!');
@@ -820,7 +820,7 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
 
 
     // Now add lines
-    let pos=[],neg=[],total=0;
+    let pos=[],eg=[],total=0;
     if (state.linestodraw == globalParams.internal.gui_Lines[0] ||
         state.linestodraw == globalParams.internal.gui_Lines[2] ) {
         pos=globalParams.internal.conndata.createLinePairs(0,state.matrixthreshold);
@@ -844,8 +844,9 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     //        console.log('Drawing 3D',state.poscolor,state.negcolor);
 
     const ATLASHEADER=atlasutils.getCurrentAtlasHeader();
+    console.log('State=',JSON.stringify(state));
     let lparr = globalParams.internal.conndata.draw3DLines(globalParams.internal.parcellation,
-                                                           pos,neg,2.0,1.0,
+                                                           pos,neg,2.0,1.0,state.maxdegree,
                                                            ATLASHEADER);
     for (let i=0;i<=1;i++) {
         let lp=lparr[i];
