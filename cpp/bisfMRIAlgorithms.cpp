@@ -413,7 +413,7 @@ namespace bisfMRIAlgorithms {
                              std::string passType,float frequency,float sampleRate,int removeMean,int debug) {
 
 
-    std::cout << "Begin FILTER IMage TR=" << sampleRate << ", removeMean=" << removeMean << std::endl;
+    std::cout << "Begin FILTER Image TR=" << sampleRate << ", removeMean=" << removeMean << std::endl;
     
     int dim[5]; input_image->getDimensions(dim);
     Eigen::MatrixXf temp;
@@ -427,7 +427,7 @@ namespace bisfMRIAlgorithms {
 
     int ok=1;
     
-    //std::cout << "Dim=" << dim[0] << "," << dim[1] << "," << dim[2] << ", frames=" << dim[3] << " nv=" << numvoxels << std::endl;
+    std::cout << "Dim=" << dim[0] << "," << dim[1] << "," << dim[2] << ", frames=" << dim[3] << " nv=" << numvoxels << std::endl;
     
     for (int i=0;i<numvoxels;i++)
       {
@@ -462,9 +462,15 @@ namespace bisfMRIAlgorithms {
         //std::cout << "Output" << std::endl;
           
         for (int f=0;f<dim[3];f++) {
-          outdata[numvoxels*f+i]=output(f,0);
-          /*if (i==0)
-            std::cout <<  outdata[numvoxels*f+i] << std::endl;*/
+          float v=output(f,0);
+          if (std::isnan(v))
+            {
+              std::cerr << "Nan " << i << "," << f << std::endl;
+              v=0.0;
+            }
+          outdata[numvoxels*f+i]=v;
+          /*          if (i==0)
+                      std::cout <<  outdata[numvoxels*f+i] << std::endl;*/
         }
       }
     return ok;

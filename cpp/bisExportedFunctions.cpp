@@ -425,9 +425,9 @@ unsigned char* extractImageFrameWASM(unsigned char* input,
   int target_type=bisDataTypes::getTypeCodeFromName(params->getValue("datatype"),header[1]);
 
   switch (target_type)
-      {
-	bisvtkTemplateMacro( return extractImageFrameTemplate(input,params.get(),debug, static_cast<BIS_TT*>(0)));
-      }
+    {
+      bisvtkTemplateMacro( return extractImageFrameTemplate(input,params.get(),debug, static_cast<BIS_TT*>(0)));
+    }
   return 0;
 
 
@@ -884,7 +884,6 @@ unsigned char* butterworthFilterWASM(unsigned char* input_ptr,const char* jsonst
 // ------------------------
 // Butterworth Filter Image
 // ------------------------
-
 
 unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* jsonstring,int debug)
 {

@@ -374,9 +374,11 @@ class bisImage(bisBaseObject):
         try:
             out_image = nib.Nifti1Image(self.data_array, self.affine);
             # Preserve temporal spacing
-            out_image.header['pixdim'][4]=self.spacing[3]
-            out_image.header['pixdim'][5]=self.spacing[4]
-
+            try:
+                out_image.header['pixdim'][4]=self.spacing[3]
+                out_image.header['pixdim'][5]=self.spacing[4]
+            except:
+                print('')
             
             nib.save(out_image, fname)
             self.filename=fname;

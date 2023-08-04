@@ -55,7 +55,7 @@ def load_library(name=''):
         print('____ Recomputing name:',name);
 
     
-    print('___ Loading library from',name);
+#    print('___ Loading library from',name);
     m=ctypes.CDLL(name);
     if (m.uses_gpl()):
         print("____ Library Loaded from",name,"result=",m.test_wasm(),' (should be 1700)');
