@@ -1397,10 +1397,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let out="";
                 try {
                     const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
-                    out=new BisParcellation(ATLASHEADER).createParcellationFromImage(vol,atlasimage,description)+"\n";
+                    let m=new BisParcellation(ATLASHEADER);
+                    out=m.createParcellationFromImage(vol,atlasimage,description)+"\n";
                 } catch(e) {
                     console.log('Error=',e);
-                    bootbox.alert(e);
+                    bootbox.alert("Failed to import parcellation image\n"+e);
                     reject(e);
                     return;
                 }
@@ -2603,7 +2604,6 @@ class ConnectivityControlElement extends HTMLElement {
 
     loaddefaultatlas(externalmode) {
 
-        
         return new Promise( (resolve,reject) => {
 
             let prom=null;
