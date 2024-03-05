@@ -50,3 +50,4 @@ eigenvectorDenoiseImage
 extractImagePatches
 initializeCalciumStudy
 dualImageRegression
+computeImageIndexMap
