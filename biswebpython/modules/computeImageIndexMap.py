@@ -20,7 +20,7 @@ import biswebpython.core.bis_baseutils as bis_baseutils
 import biswebpython.core.bis_objects as bis_objects
 import numpy as np;
 
-class computeImageIndexMAP(bis_basemodule.baseModule):
+class computeImageIndexMap(bis_basemodule.baseModule):
 
     def __init__(self):
         super().__init__();
@@ -33,6 +33,7 @@ class computeImageIndexMAP(bis_basemodule.baseModule):
             "description": "Given an  objectmap compute the image index map (voxels > 0 indexed)",
             "author": "Xenios Papademetris and Xilin Shen",
             "version": "1.0",
+            "inputs" : [
                 {
                     "type": "image",
                     "name": "Objectmap Image",
@@ -40,7 +41,7 @@ class computeImageIndexMAP(bis_basemodule.baseModule):
                     "varname": "input",
                     "shortname" : "i",
                     "required": True,
-                },
+                }
             ],
             "outputs": bis_baseutils.getImageToImageOutputs('The indexmap image'),
             "params" : [ 
