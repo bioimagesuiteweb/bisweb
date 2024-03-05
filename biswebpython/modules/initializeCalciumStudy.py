@@ -120,13 +120,26 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
             imgl=page.convert(mode='F')
             v=np.array(imgl)
             channel=triggers[c][1]-1
-            if (channel>0):
+            flag=0
+#            if (usedframes[0]>5900 or ( usedframes[0]>15 and usedframes[0]<20)):
+#                print('Channel=',triggers[c][1],'c=',c,' channel=',channel,' usedrames=',usedframes);
+#                flag=1
+            
+            if (channel>=0):
                 movies[channel][:,:,0,usedframes[channel]] = np.array(imgl,dtype=np.uint16)
-                if (c%125==0 or c<4 or c>(expected_num_frames-4)):
-                    s='...\t added frame {:5d}/{:5d} to channel {:d} as new frame {:5d} based on trigger {:s}'.format(c+1,expected_num_frames,channel+1,usedframes[channel]+1,str(triggers[c]))
+            else:
+                print('....\t\t Skipping ',triggers[c][1] ,' < 0 c=',c)
+                
+            if (c%125==0 or c<4 or c>(expected_num_frames-4) or flag>0):
+                q='added';
+                if (channel<0):
+                    q='not '+q;
+                
+                s='...\t '+q+' frame {:5d}/{:5d} to channel {:d} as new frame {:5d} based on trigger {:s}'.format(c+1,expected_num_frames,channel+1,usedframes[channel]+1,str(triggers[c]))
                 print(s)
             c=c+1;
-            usedframes[channel]=usedframes[channel]+1
+            if (channel>=0):
+                usedframes[channel]=usedframes[channel]+1
             if (c>100 and DUMMY_MODE):
                 break
 
@@ -216,7 +229,10 @@ class initializeCalciumStudy(bis_basemodule.baseModule):
                 lt=len(triggers)
                 for k in range(0,lt):
                     v=triggers[k][1]-1;
-                    numframes[v]=numframes[v]+1;
+                    if (v>=0 and v<numchannels):
+                        numframes[v]=numframes[v]+1;
+                    else:
+                        print('........ ignoring part',part,' frame=',k,' as v=',v+1)
                 print('...\t processing', nm, 'cumulative numframes per channel=',numframes)
                 
 

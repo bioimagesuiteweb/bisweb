@@ -650,6 +650,12 @@
    },
    "parcellations": [
       {
+         "name": "Yale Allen 172",
+         "image": "allen_172.nii.gz",
+         "surface": "allen_172_surface_atlas.bin.gz",
+         "species": "mouse"
+      },
+      {
          "name": "Yale Allen Mouse Coarse",
          "image": "allen_coarse.nii.gz",
          "surface": "allen_coarse_surface_atlas.bin.gz",

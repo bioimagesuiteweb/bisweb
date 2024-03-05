@@ -493,10 +493,11 @@ class ConnMatrix {
      * @param {array} neglines -- array of  line pairs created by {@link ConnMatrix.createLinePairs}
      * @param {number} radius -- the sphere size for each node
      * @param {number} power -- the scale for each node
+     * @param {number} in_max_value -- if > 0 use this to normalize radius size, else compute it
      * @returns {Bis_3dCrosshairGeometry.preGeometry} out 
      */
-    draw3DLines(parc,poslines,neglines,radius,power,atlasinfo={}) {
-
+    draw3DLines(parc,poslines,neglines,radius,power,in_max_value=0.0,atlasinfo={}) {
+        
         radius=radius || 2.0;
         power =power  || 1.0;
 
@@ -578,6 +579,11 @@ class ConnMatrix {
         var poslst0 = [],neglst0= [],poslst1=[],neglst1=[];
 
         var maxp=0.25*this.maxsum;
+        console.log('Maxp=',maxp);
+        if (in_max_value>0.5)
+            maxp=0.25*in_max_value;
+
+        console.log('Maxp (2)=',maxp,in_max_value);
 
         for (i=0;i<lst.length;i++) {
             var nd0=parc.indexmap[lst[i]];

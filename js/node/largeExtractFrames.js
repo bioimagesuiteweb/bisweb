@@ -124,8 +124,6 @@ class LargeExtractFramesModule extends BaseModule {
 
         let dims=input.getDimensions();
 
-        if (endframe<0)
-            endframe=dims[3]-1;
         
         if (dims[4]<1)
             dims[4]=1;
@@ -137,6 +135,10 @@ class LargeExtractFramesModule extends BaseModule {
             this.beginframe=dims[3]-1;
 
         this.endframe=endframe;
+        if (this.endframe<-1) {
+            this.endframe=dims[3]+this.endframe;
+        }
+
         if (this.endframe<this.beginframe)
             this.endframe=this.beginframe;
         else if (this.endframe>=dims[3])
@@ -206,7 +208,7 @@ class LargeExtractFramesModule extends BaseModule {
                 };
             }
 
-            if (this.writeframe%5===0 || this.writeframe===this.numframes-1)
+            if (this.writeframe%50===0 || this.writeframe===this.numframes-1)
                 debug=true;
 
             if (debug)

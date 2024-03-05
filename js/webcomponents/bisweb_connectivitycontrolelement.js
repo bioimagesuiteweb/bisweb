@@ -198,6 +198,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             radius : 1.0,
             matrixthreshold : 0.1,
             filter : 'Sum',
+            maxdegree : 0,
             opacity : 0.7,
             mode3d : 'Uniform',
             display3d : 'Both',
@@ -273,6 +274,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.parameters.thickness = state.thickness;
         internal.parameters.radius = state.radius;
         internal.parameters.matrixthreshold = state.matrixthreshold;
+        internal.parameters.maxdegree = state.maxdegree;
         for (let ia=0;ia<internal.datgui_controllers.length;ia++)
             internal.datgui_controllers[ia].updateDisplay();
     };
@@ -705,6 +707,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             for (let i=0;i<internal.linestack.length;i++) {
                 ok=1;
+                console.log(JSON.stringify(internal.linestack[i],null,4));
                 if (!skip2d)
                     ok=connectvis.drawlines(internal.linestack[i]);
                 if (ok===0)
@@ -1394,10 +1397,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let out="";
                 try {
                     const ATLASHEADER=atlasutil.getCurrentAtlasHeader();
-                    out=new BisParcellation(ATLASHEADER).createParcellationFromImage(vol,atlasimage,description)+"\n";
+                    let m=new BisParcellation(ATLASHEADER);
+                    out=m.createParcellationFromImage(vol,atlasimage,description)+"\n";
                 } catch(e) {
                     console.log('Error=',e);
-                    bootbox.alert(e);
+                    bootbox.alert("Failed to import parcellation image\n"+e);
                     reject(e);
                     return;
                 }
@@ -1543,6 +1547,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         clist.push(adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold'));
         clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
+        let ec=adv.add(data,'maxdegree',0,100).name('Max Degree');
+        clist.push(ec);
+        ec.onFinishChange( () => { autoDrawLines();});
+        
+        
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 clist.push(adv.add(data,'matrixscaling').name('Matrix Scaling').onChange( () => {
@@ -1611,7 +1620,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         da3.onChange( () => {
             updateMeshesDisplay();
         });
-
         let da4=disp2.add(data,'radius',0.2,4.0).name("Radius (3D)");
         da4.onFinishChange( () => {   autoDrawLines();      });
 
@@ -2036,6 +2044,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.parameters.length = 50;
             internal.parameters.thickness=2;
             internal.parameters.radius=1.0;
+            internal.parameters.maxdegree=0.0;
             internal.parameters.poscolor= "#ff0000";
             internal.parameters.negcolor= "#00dddd";
             for (let ia=0;ia<internal.datgui_controllers.length;ia++)
@@ -2595,7 +2604,6 @@ class ConnectivityControlElement extends HTMLElement {
 
     loaddefaultatlas(externalmode) {
 
-        
         return new Promise( (resolve,reject) => {
 
             let prom=null;

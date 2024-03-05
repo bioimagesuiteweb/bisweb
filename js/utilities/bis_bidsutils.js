@@ -262,7 +262,7 @@ let parseBIDSLabel = (name, directory) => {
     }
 
     if (directory === 'anatomical' || directory === 'anat') {
-        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage') || name.includes('t1w')) { bidsLabel = 'T1w'; }
+        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mpr') || name.includes('t1w')) { bidsLabel = 'T1w'; }
         else if (name.includes('t2') && name.includes('weight')) { bidsLabel = 'T2w'; }
         else if (name.includes('t1') && name.includes('rho')) { bidsLabel = 'T1rho'; }
         else if (name.includes('t1') && name.includes('map')) { bidsLabel = 'T1map'; } 
