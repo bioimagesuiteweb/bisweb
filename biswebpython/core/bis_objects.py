@@ -263,6 +263,7 @@ class bisMatrix(bisBaseObject):
         with open(fname, 'wb') as fp:
             fp.write(total);
             print('++++ binary matrix saved in',fname,len(total));
+        self.filename=fname;
 
 
 # --------------------------------------

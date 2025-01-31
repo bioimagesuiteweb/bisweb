@@ -16,6 +16,7 @@ extractSlice
 flipImage
 gradientImage
 individualizedParcellation
+imageSpectralClustering
 linearRegistration
 morphologyFilter
 nonlinearRegistration

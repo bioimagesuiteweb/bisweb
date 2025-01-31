@@ -174,17 +174,21 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     for (let job of pipelineOptions.jobs) {
         for (let output of job.outputs) {
             pipelineOptions.variables.push({ 'name' : output.name, 'depends': output.depends});
-            variableSuffix[output.name]=output.suffix || '';
-            if (output.naming === undefined) {
-                if (output.suffix === undefined) {
-                    console.log(`Must specify either 'naming' or 'suffix' for variable ${output}`);
-                    return null;
-                }
-                variableNaming[output.name]=output.depends.join('__');
+            if (output.files) {
+                console.log('Ouptput',output.name, 'has files',output.files);
+                variableNaming[output.name]=output.files;
             } else {
-                variableNaming[output.name]=output.naming;
+                variableSuffix[output.name]=output.suffix || '';
+                if (output.naming === undefined) {
+                    if (output.suffix === undefined) {
+                        console.log(`Must specify either 'naming' or 'suffix' for variable ${output}`);
+                        return null;
+                    }
+                    variableNaming[output.name]=output.depends.join('__');
+                } else {
+                    variableNaming[output.name]=output.naming;
+                }
             }
-
         }
     }
     //console.log('variables=',JSON.stringify(pipelineOptions.variables,null,2));
@@ -311,12 +315,21 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                 let outputFilenames = [];
                 for (let i = 0; i < numOutputs; i++) {
                     
-                    let outname= variableNaming[variable.name]+variableSuffix[variable.name];
+
+                    let outname= "";
+                    if (Array.isArray(variableNaming[variable.name])) {
+                        //console.log('Array',i);
+                        variableNaming[variable.name]=variableNaming[variable.name];
+                        outname=variableNaming[variable.name][i];
+                    } else {
+                        outname=variableNaming[variable.name]+variableSuffix[variable.name];
+                        outname=outname.trim().replace(/ /g,'-');
+                    }
                     
-                    outname=outname.trim().replace(/ /g,'-');
+
                     //console.log('inputs used by job', inputsUsedByJob);
                     inputsUsedByJob.forEach( (input) => {
-
+                        //console.log('Input=',input);
                         if (listMatches[input.name]) {
                             //mark entry as a list
                             input.isList = true;
@@ -325,7 +338,8 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                             let basename = splitString[splitString.length - 1];
                             let matchString = new RegExp('%' + input.name + '%');
                             
-                            //need to trim off outname's .nii.gz to avoid having two
+                            //need to trim off outname's .nii.gz to avoid having
+                            //two
                             basename = outname.replace(matchString, basename);
                             splitString[splitString.length - 1] = basename;
                             outname = splitString.join('/');
