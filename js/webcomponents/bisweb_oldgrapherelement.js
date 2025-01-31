@@ -333,7 +333,7 @@ class OldGrapherModule extends HTMLElement {
             d_type = 'line';
         } else {
             let heading = "Volume of each Region";
-            let ylabel = 'Volume (mm^3)';
+            let ylabel = 'Volume (voxels)';
             if (showVolume === false) {
                 heading = "Average Intensity in each Region";
                 ylabel = 'Intensity';
