@@ -30,7 +30,7 @@
 require('../../config/bisweb_pathconfig.js');
 
 const program=require('commander');
-const bruker=require('bis_readbruker');
+const bruker=require('bis_asyncreadbruker');
 
       
 var help = function() {
@@ -49,9 +49,9 @@ program.version('1.0.0')
 let inpfilename=program.input || null;
 let outfilename =program.output || '';
 
-let out=bruker.readMultiple(inpfilename,outfilename,true,console.log,false);
-
-console.log(out);
+bruker.readMultiple(inpfilename,outfilename,true,console.log,false).then( (out) => { 
+    console.log(out);
+});
 
 
 

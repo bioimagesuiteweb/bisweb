@@ -12,7 +12,7 @@
  __Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
+ See the License for the specific language governing permissions andX
  limitations under the License.__
  
  ENDLICENSE */
@@ -32,44 +32,47 @@ const program=require('commander');
 const BisWebImage=require('bisweb_image');
 
 //
-var fixImages = async function(fname1, fname2) {
+var fixImages = async function(fnames, offset) {
 
-    const image1=new BisWebImage();
-    const image2=new BisWebImage();
-    try {
-
-        await image1.load(fname1);
-        await image2.load(fname2);
-    } catch(e) {
-        return Promise.reject(e);
+    if (fnames.length<2) {
+        return Promise.reject('Less than two images specified\n');
     }
 
-    let r1=image1.getIntensityRange();
-    let r2=image2.getIntensityRange();
+    
+    let images=[];
+    let range=[0,0];
+    for (let i=0;i<fnames.length;i++) {
+        images[i]=new BisWebImage();
+        try {
+            await images[i].load(fnames[i]);
+        } catch(e) {
+            return Promise.reject(e);
+        }
 
-    let m1=Math.max(Math.abs(r1[0]),Math.abs(r1[1]));
-    let m2=Math.max(Math.abs(r2[0]),Math.abs(r2[1]));
-    let m=Math.floor(Math.max(m1,m2)+1.0);
-    console.log('Ranges = ',r1,r2,' Max values = ', m1,m2, 'final = ',m);
-    image1.getImageData()[0]=m;
-    image2.getImageData()[0]=m;
+        let r=images[i].getIntensityRange();
 
-    let f1=fname1.substr(0,fname1.length-8)+'_fixed'+String(m)+'.nii.gz';
-    let f2=fname2.substr(0,fname1.length-8)+'_fixed'+String(m)+'.nii.gz';
-    try {
-        await image1.save(f1);
-        await image2.save(f2);
-        console.log('Saved in ',f1,'and', f2);
-    } catch(e) {
-        return Promise.reject(e);
+        if (r[0]<range[0])
+            range[0]=r[0];
+        if (r[1]>range[1])
+            range[1]=r[1];
+        console.log('++++ Range = ',r,' consolidated=',range)
     }
-        
+    
+    let m=Math.floor(Math.max(Math.abs(range[0]),Math.abs(range[1]))+1.0);
+    console.log('Ranges = ',range, 'final = ',m);
+    for (let i=0;i<images.length;i++) {
+        images[i].getImageData()[0]=m;
+        let f=fnames[i].substr(0,fnames[i].length-8)+'_fixed_'+String(m)+'.nii.gz';
+        try {
+            await images[i].save(f);
+            console.log('Saved in ',f);
+        } catch(e) {
+            return Promise.reject(e);
+        }
+    }
     
     return 'all set';
 };
-    
-    
-
 
 
 var help = function() {
@@ -77,21 +80,20 @@ var help = function() {
 };
 
 program.version('1.0.0')
-    .option('-i, --input <s>','filename of  image 1')
-    .option('-j, --second <s>','filename of image 2')
+    .option('-m, --offset <number>','offset')
     .on('--help',function() {
 	help();
     })
     .parse(process.argv);
 
+   
+   
+let m=parseInt(program.offset || 0 );
+let fnames=program.args;
 
-let fname1=program.input || null;
-let fname2 =program.second || null;
-let mode=program.mode;
+console.log('Reading ',fnames.join(','));
 
-console.log('Reading ',fname1,' and ', fname2,'\n --------------\n');
-
-fixImages(fname1,fname2).then( () => {
+fixImages(fnames,m).then( () => {
     console.log('done');
 }).catch( (e) => {
     console.log('Error ',e);

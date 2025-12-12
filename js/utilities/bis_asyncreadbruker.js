@@ -902,6 +902,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,inf
         console.log('In Read Multiple');
     
     try {
+        console.log('To write in ',outprefix);
         let p=await bisgenericio.isDirectory(outprefix);
         if (!p) {
             return [ false, ' cannot write to '+outprefix+'. It is not a directory\n'];
@@ -950,10 +951,22 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,inf
         let ifile=fnames[counter].substr(len,fnames[counter].length-len);
         if (counter===0) {
             let dirname = bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(fnames[0]))));
-            let visuname=bisgenericio.joinFilenames(dirname,"visu_pars");
-            let visu=await readParameterFile(visuname);
-            if (visu['VisuSubjectId'][0].length>2)
-                subjectname=visu['VisuSubjectId'][0].substr(1,visu['VisuSubjectId'][0].length-2);
+            try {
+                let visuname=bisgenericio.joinFilenames(dirname,"visu_pars");
+                let visu=await readParameterFile(visuname);
+                if (visu['VisuSubjectId'][0].length>2)
+                    subjectname=visu['VisuSubjectId'][0].substr(1,visu['VisuSubjectId'][0].length-2);
+            } catch(e) {
+                let visuname=bisgenericio.joinFilenames(dirname,"../subject");
+                try {
+                    let visu=await readParameterFile(visuname);
+                    subjectname=visu['SUBJECT_id'][0];
+                    subjectname=subjectname.substr(1,subjectname.length-2);
+                } catch(e) {
+                    console.log('Error2'+e);
+                    subjectname='None'
+                }
+            }
         }
 
         let d1=bisgenericio.getDirectoryName(ifile);
