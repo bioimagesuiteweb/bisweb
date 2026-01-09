@@ -204,7 +204,7 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     
     let data = {};
     debug = debug || false;
-
+    
     data.originalfilename=filename;
     data.forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient);
 
@@ -259,11 +259,20 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     if (debug)
         console.log('Now reading actual files',numgood);
 
+    let visu=0;
+    let usevisu=true;
     if (debug)
         console.log('Reading Parameter File',visuname);
-    let visu=await readParameterFile(visuname);
-    if (debug)
-        console.log('Reading Parameter File',methodname);
+    try {
+        if (debug)
+            console.log('Reading Parameter File',methodname);
+        visu=await readParameterFile(visuname);
+    } catch(e) {
+        let visuname=bisgenericio.joinFilenames(dirname,"../subject");
+        visu=await readParameterFile(visuname);
+        usevisu=false;
+    }
+        
     let method=await readParameterFile(methodname);
     let acqp=await readParameterFile(acqpname);
     data.orient=method['PVM_SPackArrSliceOrient'] || 'axial';
@@ -281,20 +290,26 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     
     data.method=method['Method'];
     data.patientpos=acqp['ACQ_patient_pos'];
-    data.byteorder=visu['VisuCoreByteOrder'];
-    data.wordtype=visu['VisuCoreWordType'];
-    data.dims=visu['VisuCoreSize'];
-    data.fov=visu['VisuCoreExtent'];
-    data.names=visu['VisuFGElemId'] || [ ];
-    if (data.names.length>1)
-        data.description=visu['VisuFGElemComment'];
-    else
-        data.names=['Not set'];
-    data.coreunits=visu['VisuCoreUnits'];
-    if (data.coreunits[0]==="<mm>")
+    if (usevisu) {
+        data.byteorder=visu['VisuCoreByteOrder'];
+        data.wordtype=visu['VisuCoreWordType'];
+        data.dims=visu['VisuCoreSize'];
+        data.fov=visu['VisuCoreExtent'];
+        data.names=visu['VisuFGElemId'] || [ ];
+        if (data.names.length>1)
+            data.description=visu['VisuFGElemComment'];
+        else
+            data.names=['Not set'];
+        data.coreunits=visu['VisuCoreUnits'];
+        if (data.coreunits[0]==="<mm>")
+            data.fovscale=1.0;
+        else
+            data.fovscale=10.0;
+    } else {
+        data.names=[];
         data.fovscale=1.0;
-    else
-        data.fovscale=10.0;
+    }
+        
     
     data.spa=[];
     data.twod=method['PVM_SpatDimEnum'];
@@ -342,8 +357,8 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
         } 
     }
 
-    data.offset=visu['VisuCoreDataOffs'];
-    data.slopes=visu['VisuCoreDataSlope'];
+    data.offset=visu['VisuCoreDataOffs'] || 0.0;
+    data.slopes=visu['VisuCoreDataSlope'] || 1.0;
     
     let index=data.method.indexOf(":");
     let index2=data.method.indexOf(">");
