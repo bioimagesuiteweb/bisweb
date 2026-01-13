@@ -28,5 +28,20 @@
         "ismni" : false,
         "correctstr" : "Must be RAS 118x90x160 (or 117x90x160) and 0.1x0.1x0.1 mm",
         "multiressurfaces" : false
+    },
+    "sigmarat" : {
+        "name" : "sigmarat",
+        "filename" : "sigmarat.json",
+        "dimensions" : [ 128,218,128 ],
+        "spacing" : [ 0.15,0.15,0.15 ],
+        "midlobe" : 100,
+        "halflobe" : 50,
+        "origin"  : [ 63,96,63 ],
+        "midoffset"  : 5.0,
+        "axisoffset" : [0,5.0,20.0],
+        "axissize" : [ 127.0,217.0, 127.0 ],
+        "ismni"  : false,
+        "correctstr" : "Must be RAS 128x218x128 and 0.15x0.15x0.15 mm",
+        "multiressurfaces" : false
     }
 }

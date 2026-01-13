@@ -61,6 +61,15 @@ module.exports = {
                                                callback(`${imagepath}/Symmetric_N162_0.10.nii.gz`,viewerno,'LPS');
                                            });
                 }
+
+                if (species==='all' || species==='rat') {
+                    webutil.createMenuItem(fmenu,'Load Sigma Rat Template (0.15mm, RAS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/SIGMA_stripped_rat_mri.nii.gz`,viewerno,'RAS');
+                                           }
+                                          )
+                }
                 resolve();
             }).catch( (e) => {
                 reject(e);
@@ -106,6 +115,15 @@ module.exports = {
                                            callback(`${imagepath}/N162_yaleallen_010.nii.gz`,viewerno,'LPS');
                                            });
                 }
+                
+                if (species==='all' || species==='rat') {
+                    webutil.createMenuItem(fmenu,'Load Sigma-Yale Regions (0.15mm, RAS)',
+                                           function() {
+                                               let imagepath=webutil.getWebPageImagePath();
+                                               callback(`${imagepath}/SIGMA_Invivo_atlas_regions.nii.gz`,viewerno,'RAS');
+                                           });
+                }
+
                 resolve();
             }).catch( (e) => {
                 reject(e);
