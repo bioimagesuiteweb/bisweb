@@ -40,7 +40,8 @@ let getTime = function() {
 // -------------------------------------------------------------------------------
 
 const electron = require('electron');
-require('@electron/remote/main').initialize();
+const remoteMain = require('@electron/remote/main');
+remoteMain.initialize();
 require('electron-debug')({showDevTools: false,
                            enabled : true});
 
@@ -272,11 +273,14 @@ const createWindow=function(index,fullURL) {
                                             webPreferences: {
                                                 nodeIntegration: false,
                                                 preload: preload,
-                                                contextIsolation: false,
-                                                enableRemoteModule : true,
+                                                contextIsolation: true,
+                                                sandbox: false,
                                             },
                                             autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});
+
+    // Enable @electron/remote for this window
+    remoteMain.enable(state.winlist[index].webContents);
     
     //state.winlist[index].setAutoHideMenuBar(true);
     state.winlist[index].setMenuBarVisibility(false);
@@ -318,8 +322,13 @@ var createConsole=function() {
                                      webPreferences: {
                                          nodeIntegration: false,
                                          preload: preload,
+                                         contextIsolation: true,
+                                         sandbox: false,
                                      },
                                      icon: __dirname+'/images/favicon.ico'});
+
+    // Enable @electron/remote for console window
+    remoteMain.enable(state.console.webContents);
     
     state.console.setAutoHideMenuBar(true);
     state.console.setMenuBarVisibility(false);
@@ -341,42 +350,44 @@ var createConsole=function() {
 
 };
 
-var trapOpenNewWindowEvent=function(index) {
+var setupWindowOpenHandler=function(index) {
 
-    console.log('Attaching',index);
-    
-    state.winlist[index].webContents.on('new-window',function(event,url/*,frameName,disposition,options*/) {
+    console.log('Setting up window open handler for window',index);
 
-        console.log('webcontents url=',url);
-        
-        event.preventDefault(); 
+    state.winlist[index].webContents.setWindowOpenHandler(({ url }) => {
+        console.log('webcontents setWindowOpenHandler url=',url);
+
         let lm=url.split("/"), fname=lm[lm.length-1], ismainwindow=false;
         if (fname==="index.html") {
             ismainwindow=true;
             if (state.winlist[0]!==null) {
                 state.winlist[0].show();
                 console.log('.... link was to index.html showing main window');
-                return;
+                return { action: 'deny' };
             }
         }
 
         if (url.indexOf('http://')===0 ||
-            url.indexOf('https://')===0 
+            url.indexOf('https://')===0
            ) {
             console.log(getTime()+' Electron opening ' + url + ' in browser.');
             shell.openExternal(url);
-            return;
+            return { action: 'deny' };
         }
 
-        
-        let index=state.winlist.length;
-        if (ismainwindow)
-            index=0;
 
-        console.log('....\n.... creating new window from webpage ... loading url=',index,url);
-        createWindow(index,url);
-        trapOpenNewWindowEvent(index);
-        
+        let newIndex=state.winlist.length;
+        if (ismainwindow)
+            newIndex=0;
+
+        console.log('....\n.... creating new window from webpage ... loading url=',newIndex,url);
+        // Use setTimeout to avoid creating window during handler
+        setTimeout(() => {
+            createWindow(newIndex,url);
+            setupWindowOpenHandler(newIndex);
+        }, 0);
+
+        return { action: 'deny' };
     });
 };
 
@@ -385,7 +396,7 @@ var createNewWindow = function(url) {
 
     console.log('....\n..... create new window',url);
     const index=createWindow(-2,url);
-    trapOpenNewWindowEvent(index);
+    setupWindowOpenHandler(index);
 };
 
 var createOrShowMainWindow = function(hide=false) {
@@ -395,7 +406,7 @@ var createOrShowMainWindow = function(hide=false) {
     }
     console.log('....\n..... create or show main window');
     createWindow(0);
-    trapOpenNewWindowEvent(0);
+    setupWindowOpenHandler(0);
     if (hide) {
         state.winlist[0].minimize();
     }
