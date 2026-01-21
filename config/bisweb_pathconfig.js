@@ -27,12 +27,10 @@ let minor=parseInt(s[1]);
 
 let ok=false;
 
-if (major === 10 && minor >= 11) {
-    ok=true;
-} else if (major <= 16) {
+if (major >= 18 && major <= 22) {
     ok=true;
 } else {
-    console.log(`----\n---- You are using an incompatible version of node (either newer than 10.11 or older than 17.0 ) (actual version=${v})\n`);
+    console.log(`----\n---- You are using an incompatible version of node (either newer than 18 or older than 22 ) (actual version=${v})\n`);
     process.exit(1);
 }
 

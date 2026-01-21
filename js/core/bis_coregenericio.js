@@ -75,7 +75,7 @@ var createBuffer = function (cdata) {
         return  Buffer.from(cdata);
     } 
 
-    return new Buffer(cdata);
+    return Buffer.from(cdata);
 
     /* jshint ignore:end */
 };
