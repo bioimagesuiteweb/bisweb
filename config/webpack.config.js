@@ -124,7 +124,6 @@ if (output === "bislib.js" || output ==="index.js") {
         },
         resolve: {
             fallback : {
-                "process": require.resolve("process/browser"),
                 "assert" : require.resolve("assert"),
                 "stream"  : require.resolve("stream-browserify"),
                 "buffer": require.resolve("buffer/"),
@@ -156,6 +155,7 @@ if (output === "bislib.js" || output ==="index.js") {
             poll: 1000
         },
         plugins : [
+            new webpack.ProvidePlugin({ process: 'process/browser' }),
             new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_CUSTOM(\.*)/, function(resource) {
                 resource.request = resource.request.replace(/__BISWEB_CUSTOM/, `${bisWebCustom}`);
             }),
