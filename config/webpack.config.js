@@ -124,6 +124,7 @@ if (output === "bislib.js" || output ==="index.js") {
         },
         resolve: {
             fallback : {
+                "process": require.resolve("process/browser"),
                 "assert" : require.resolve("assert"),
                 "stream"  : require.resolve("stream-browserify"),
                 "buffer": require.resolve("buffer/"),
@@ -191,9 +192,6 @@ if (output === "bislib.js" || output ==="index.js") {
     console.log(' ---------\n---------\n---------\n---------\n---------\n');
     
     module.exports = {
-        module: {
-            exprContextCritical: false,
-        },
         resolve: {
             extensions: [ '.js'],
             modules : [ path.resolve(mypath,'node_modules'),

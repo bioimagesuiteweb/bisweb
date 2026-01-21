@@ -106,6 +106,7 @@ cmake -G "${GENERATOR}" ${ARMARCH}\
       -DCMAKE_INSTALL_PREFIX=${BDIR}/install \
       -DBIS_USEGPL=${BISUSEGPL} -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DIGL_DIR=${BDIR}/igl \
+      -Wno-dev \
       ${SRCDIR}/cpp
 
 echo "_______________________________________________________________________"
