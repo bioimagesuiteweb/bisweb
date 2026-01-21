@@ -65,6 +65,8 @@
         "ws": "6.1.2"
     },
     "devDependencies": {
+        "assert": "^2.1.0",
+        "buffer": "^6.0.3",
         "del": "3.0.0",
         "electron-packager": "17.1.2",
         "eslint": "6.4.0",
@@ -84,6 +86,8 @@
         "jsdoc": "3.6.3",
         "mocha": "5.2.0",
         "modclean": "3.0.0-beta.1",
+        "readable-stream": "^4.7.0",
+        "stream-browserify": "^3.0.0",
         "temp": "0.8.3",
         "uglify-es": "3.3.9",
         "unzipper": "0.10.11",

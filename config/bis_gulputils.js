@@ -289,8 +289,8 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     if (debug)
         cmd+=' --stats detailed';
     
-    if (tmpout.indexOf('bislib')>=0)
-        cmd+=' --bisinternal '+internal+' --bisexternal '+external;
+//    if (tmpout.indexOf('bislib')>=0)
+//        cmd+=' --bisinternal '+internal+' --bisexternal '+external;
     
     if (watch!==0)
         cmd+=" --watch";

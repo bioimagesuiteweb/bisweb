@@ -115,8 +115,20 @@ console.log(`--------------------------- Running Webpack --> ${output} internal=
 
 
 if (output === "bislib.js" || output ==="index.js") {
-    module.exports = {
+
+    console.log(' ++++++++-\n++++++++-\n++++++++-\n++++++++-\n++++++++-\n');
+    
+    module.exports = { 
+        module: {
+            exprContextCritical: false,
+        },
         resolve: {
+            fallback : {
+                "assert" : require.resolve("assert"),
+                "stream"  : require.resolve("stream-browserify"),
+                "buffer": require.resolve("buffer/"),
+                "readable-stream": require.resolve("readable-stream")
+            },
             extensions: [ '.js'],
             modules : [ path.resolve(mypath,'node_modules'),
                         path.resolve(mypath,'lib/js'),
@@ -175,7 +187,13 @@ if (output === "bislib.js" || output ==="index.js") {
 
     
 } else {
+
+    console.log(' ---------\n---------\n---------\n---------\n---------\n');
+    
     module.exports = {
+        module: {
+            exprContextCritical: false,
+        },
         resolve: {
             extensions: [ '.js'],
             modules : [ path.resolve(mypath,'node_modules'),
