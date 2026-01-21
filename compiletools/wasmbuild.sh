@@ -113,6 +113,7 @@ cmake -G "${GENERATOR}" \
       -DBIS_USEGPL=${BISUSEGPL} -DBIS_GPL_DIR=${SRCDIR}/../gpl \
       -DIGL_DIR=${BDIR}/igl \
       -DBIS_USECPM=ON \
+      -Wno-dev \
       ${SRCDIR}/cpp
 
 echo "_______________________________________________________________________"

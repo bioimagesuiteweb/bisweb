@@ -116,6 +116,9 @@ console.log(`--------------------------- Running Webpack --> ${output} internal=
 
 if (output === "bislib.js" || output ==="index.js") {
     module.exports = {
+        module: {
+            exprContextCritical: false,
+        },
         resolve: {
             extensions: [ '.js'],
             modules : [ path.resolve(mypath,'node_modules'),
@@ -176,6 +179,9 @@ if (output === "bislib.js" || output ==="index.js") {
     
 } else {
     module.exports = {
+        module: {
+            exprContextCritical: false,
+        },
         resolve: {
             extensions: [ '.js'],
             modules : [ path.resolve(mypath,'node_modules'),
