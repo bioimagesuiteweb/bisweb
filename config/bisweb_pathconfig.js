@@ -23,7 +23,7 @@ let path=require('path');
 let v=process.versions.node;
 let s=v.split(".");
 let major=parseInt(s[0]);
-let minor=parseInt(s[1]);
+
 
 let ok=false;
 

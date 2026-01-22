@@ -1,4 +1,4 @@
-2/*  LICENSE
+/*  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
@@ -20,9 +20,9 @@
 const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
-const smoothreslice = require("bis_imagesmoothreslice.js");
+//const smoothreslice = require("bis_imagesmoothreslice.js");
 const BisWebImage = require("bisweb_image.js");
-const BisWebLinearTransformation = require('bisweb_lineartransformation');
+//const BisWebLinearTransformation = require('bisweb_lineartransformation');
 const BisWebTransformCollection = require('bisweb_transformationcollection');
 const largeImageUtil=require('largeImageUtil');
 
@@ -228,11 +228,11 @@ class LargeReslicingModule extends BaseModule {
         console.log('oooo Original dimensions:',this.resldimensions,' spacing:', this.reslspacing);
         for (let i=0;i<=2;i++) {
             this.resldimensions[i]=Math.round(this.resldimensions[i]/res);
-	    if (this.resldimensions[i]<1)
-		    this.resldimensions[i]=1;
-        
-        if (this.resldimensions[i]>1)
-            this.reslspacing[i]=this.reslspacing[i]*res;
+            if (this.resldimensions[i]<1)
+                this.resldimensions[i]=1;
+            
+            if (this.resldimensions[i]>1)
+                this.reslspacing[i]=this.reslspacing[i]*res;
         }
 
         let xform=this.inputs['xform'] || null;
@@ -279,10 +279,10 @@ class LargeReslicingModule extends BaseModule {
         
         let resliceW =null;
 
-	if (frame===0) {
-	    console.log('Output dimensions=',this.resldimensions, ' spa=', this.reslspacing, ' input=', frameImage.getDescription());
-	}
-	
+    if (frame===0) {
+        console.log('Output dimensions=',this.resldimensions, ' spa=', this.reslspacing, ' input=', frameImage.getDescription());
+    }
+    
         try {
             resliceW=biswrap.resliceImageWASM(frameImage, this.combinedXform, {
                 "interpolation": parseInt(this.vals.interpolation),

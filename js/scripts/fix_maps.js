@@ -32,7 +32,7 @@ const program=require('commander');
 const BisWebImage=require('bisweb_image');
 
 //
-var fixImages = async function(fnames, offset) {
+var fixImages = async function(fnames, offset=0) {
 
     if (fnames.length<2) {
         return Promise.reject('Less than two images specified\n');
@@ -55,7 +55,7 @@ var fixImages = async function(fnames, offset) {
             range[0]=r[0];
         if (r[1]>range[1])
             range[1]=r[1];
-        console.log('++++ Range = ',r,' consolidated=',range)
+        console.log('++++ Range = ',r,' consolidated=',range,offset);
     }
     
     let m=Math.floor(Math.max(Math.abs(range[0]),Math.abs(range[1]))+1.0);

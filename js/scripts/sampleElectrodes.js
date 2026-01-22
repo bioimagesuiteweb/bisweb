@@ -70,7 +70,7 @@ var mapElectrodes=async function() {
     // 3. Save it out
     await electrodegrid.save('mapped.mgrid');
     
-}
+};
 
 mapElectrodes().then( () => {
     console.log('Done');

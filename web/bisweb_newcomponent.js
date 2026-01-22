@@ -20,7 +20,7 @@ const bisweb=window.bioimagesuiteweb;
 
 const webutil=bisweb.webutil;
 const BisWebPanel = bisweb.biswebpanel;
-
+const $=window.jQuery;
 // -------------------------------------------------------------------------
 class NewComponent extends HTMLElement {
 

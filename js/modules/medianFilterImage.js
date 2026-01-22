@@ -20,7 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-const smreslice=require('bis_imagesmoothreslice');
+
 /**
  * Applies median smoothing to an image using a given radius to determine the filter
  */

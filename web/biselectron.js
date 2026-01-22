@@ -79,10 +79,10 @@ let v=process.versions.node;
 let s=v.split(".");
 let major=parseInt(s[0]);
 
-/*if (major>20) {
+if (major<12) {
     console.log(`----\n---- You are using a version of node older than 12.0 (actual version=${v}).\n`);
     process.exit(1);
-}*/
+}
 
 if (state.indev) {
     state.commandargs= process.argv.slice(3) || [];

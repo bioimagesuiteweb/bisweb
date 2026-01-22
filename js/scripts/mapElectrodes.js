@@ -5,7 +5,7 @@
 
 
 require('../../config/bisweb_pathconfig.js');
-const baseutils=require("baseutils");
+//const baseutils=require("baseutils");
 const BisWebTransformCollection = require('bisweb_transformationcollection');
 const BisWebElectrodeMultiGrid = require('bisweb_electrodemultigrid');
 const BisWebImage = require('bisweb_image.js');
@@ -68,8 +68,7 @@ var mapElectrodes=async function() {
 
     // 3. Save it out
     await electrodegrid.save('mapped.mgrid');
-    
-}
+};
 
 mapElectrodes().then( () => {
     console.log('Done');

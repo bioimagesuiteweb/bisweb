@@ -21,13 +21,10 @@ let v=process.versions.node;
 let n=parseFloat(v);
 let s=v.split(".");
 let major=parseInt(s[0]);
-let minor=parseInt(s[1]);
-
-let ok=false;
 
 
 if (major >= 14 && major <= 22) {
-    ok=true;
+    console.log(`Using node version =${v}`);
 } else {
     console.log(`----\n---- You are using an incompatible version of node (either newer than 14 or older than 22 ) (actual version=${v})\n`);
     process.exit(1);

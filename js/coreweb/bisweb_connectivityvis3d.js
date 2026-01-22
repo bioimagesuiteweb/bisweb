@@ -254,7 +254,7 @@ let createDualTexture=function(hue,hue2) {
     
     // Colormap texture
     lasttexturehue=hue;
-    lasttexthrehue2=hue2;
+    //let lasttexthrehue2=hue2;
     lasttexturemode='dual';
     let canvas = document.createElement( 'canvas' );
     canvas.width=256;
@@ -820,7 +820,7 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
 
 
     // Now add lines
-    let pos=[],eg=[],total=0;
+    let pos=[],total=0,neg=[];
     if (state.linestodraw == globalParams.internal.gui_Lines[0] ||
         state.linestodraw == globalParams.internal.gui_Lines[2] ) {
         pos=globalParams.internal.conndata.createLinePairs(0,state.matrixthreshold);

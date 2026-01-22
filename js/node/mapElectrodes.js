@@ -21,7 +21,7 @@
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const util=require("bis_util");
-const BisWebElectrodeMultiGrid = require('bisweb_electrodemultigrid');
+//const BisWebElectrodeMultiGrid = require('bisweb_electrodemultigrid');
 const genericio = require('bis_genericio');
 
 class MapElectrodesModule extends BaseModule {
@@ -111,7 +111,7 @@ class MapElectrodesModule extends BaseModule {
         let val=reference.getVoxel(ivox);
 
         if (debug)
-            console.log('vox=',vox,'--> ivox=',ivox, 'val=',val, ' thr=',thr)
+            console.log('vox=',vox,'--> ivox=',ivox, 'val=',val, ' thr=',thr);
 
         if (val>=thr)
             return [ val ,0.0 ];
@@ -187,7 +187,7 @@ class MapElectrodesModule extends BaseModule {
                     {
                         let elecnumber=0;
                         if (dimensions[0]===1) {
-                            elecnumber=`${dimensions[1]-1-ja+1},(${ia} ${ja})`
+                            elecnumber=`${dimensions[1]-1-ja+1},(${ia} ${ja})`;
                         } else if (dimensions[1]===1) {
                             elecnumber=`${dimensions[0]-1-ia+1},(${ia} ${ja})`;
                         } else {
@@ -202,7 +202,7 @@ class MapElectrodesModule extends BaseModule {
                             for (let j=0;j<=2;j++) {
                                 vox[j]=elec.position[j]/spa[j];
                             }
-                            if (ia+ja<1)
+                            if (ia+ja<1 && debug)
                                 console.log('Electrode=',elec.position,'-->',vox);
                             let val=this.findLabel(reference,vox,radius,threshold,( (ia===0) && (ja===0)));
                             if (val[0]<1)
