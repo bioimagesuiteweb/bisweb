@@ -40,7 +40,8 @@ let getTime = function() {
 // -------------------------------------------------------------------------------
 
 const electron = require('electron');
-require('@electron/remote/main').initialize();
+const remoteMain = require('@electron/remote/main');
+remoteMain.initialize();
 require('electron-debug')({showDevTools: false,
                            enabled : true});
 
@@ -273,11 +274,12 @@ const createWindow=function(index,fullURL) {
                                                 nodeIntegration: false,
                                                 preload: preload,
                                                 contextIsolation: false,
-                                                enableRemoteModule : true,
+                                                sandbox: false,
                                             },
                                             autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});
-    
+
+    remoteMain.enable(state.winlist[index].webContents);
     //state.winlist[index].setAutoHideMenuBar(true);
     state.winlist[index].setMenuBarVisibility(false);
     if (process.platform === 'darwin') 
