@@ -85,7 +85,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationName=webutil.getWebPageName();
         if (this.applicationName.lastIndexOf("2")===this.applicationName.length-1)
             this.applicationName=this.applicationName.substr(0,this.applicationName.length-1);
-        console.log("++++ App_name="+this.applicationName+' ('+this.applicationURL+')');
+
 
         // For dual tab apps
         this.tab1name=null;
@@ -513,7 +513,7 @@ class ViewerApplicationElement extends HTMLElement {
                                    });
         $(newdlg).attr('id',webutil.getuniqueid());
         this.componentDictionary['transferTool']='#'+$(newdlg).attr('id');
-        console.log('Comp=',this.componentDictionary);
+
         
         var bbar=webutil.createbuttonbar({ parent: newdlg.getWidget(),
                                            css : { 'margin-top' : '10px' ,
@@ -1744,7 +1744,7 @@ class ViewerApplicationElement extends HTMLElement {
             this.componentDictionary['landmarkControl']=landmarkcontrolid;
         
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
-        console.log('manag=',managerid);
+
         if (managerid)
             this.componentDictionary['moduleManager']=managerid;
 
