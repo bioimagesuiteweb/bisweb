@@ -17,7 +17,7 @@
 
 'use strict';
 
-const baseutils=require("baseutils");
+//const baseutils=require("baseutils");
 const BisWebImage = require('bisweb_image.js');
 const fs=require('fs');
 const zlib=require('zlib');
@@ -116,7 +116,7 @@ const readAndProcessFile = async (params) => {
     });
 
     let finished=false;
-    let processing=false;
+//    let processing=false;
 
     return new Promise( (resolve,reject) => {
         
@@ -235,7 +235,7 @@ const readAndProcessLargeImage = async (inputname,callbackObject,totalframes=-1,
     
     try {
         //console.log('Calling readAndProcessFile',params['inputname']);
-        let d=await readAndProcessFile(params);
+        await readAndProcessFile(params);
         //console.log('Calling readAndProcessFile',params['inputname'],d);
     } catch(e) {
         console.log('Failed',e);
@@ -274,7 +274,7 @@ const saveInitialImageHeader =  (tempImage,numframes=1) => {
     try {
         fd = fs.openSync(tempfname, 'w');
         let buf = bisgenericio.createBuffer(headerdata.data);
-        let l=fs.writeSync(fd, buf);
+        fs.writeSync(fd, buf);
     } catch(e) {
         return [ null,e ];
     }
@@ -287,7 +287,7 @@ const writeSubsequentFrame =(filehandle,imageFrame,last=false,debug=false) => {
     let rawdata=imageFrame.getRawData();
     try {
         let buf = bisgenericio.createBuffer(rawdata);
-        let l=fs.writeSync(filehandle['fd'],buf)
+        let l=fs.writeSync(filehandle['fd'],buf);
         filehandle['numbytes']+=l;
         if (debug)
             console.log('____ writing ',l,'bytes');
@@ -318,7 +318,7 @@ const compressFile= (infilename,outname,deleteold=true)  => {
                 resolve(true);
             else
                 reject(false);
-        })
+        });
     }
 
   
@@ -333,7 +333,7 @@ const compressFile= (infilename,outname,deleteold=true)  => {
             .on('error', (e) => {
                 console.log(e);
                 reject(false);
-            })
+            });
         
         w.on('finish', () => {
             rimraf.sync(infilename);

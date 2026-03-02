@@ -40,7 +40,8 @@ let getTime = function() {
 // -------------------------------------------------------------------------------
 
 const electron = require('electron');
-require('@electron/remote/main').initialize();
+const remoteMain = require('@electron/remote/main');
+remoteMain.initialize();
 require('electron-debug')({showDevTools: false,
                            enabled : true});
 
@@ -78,10 +79,10 @@ let v=process.versions.node;
 let s=v.split(".");
 let major=parseInt(s[0]);
 
-/*if (major>20) {
+if (major<12) {
     console.log(`----\n---- You are using a version of node older than 12.0 (actual version=${v}).\n`);
     process.exit(1);
-}*/
+}
 
 if (state.indev) {
     state.commandargs= process.argv.slice(3) || [];
@@ -273,11 +274,12 @@ const createWindow=function(index,fullURL) {
                                                 nodeIntegration: false,
                                                 preload: preload,
                                                 contextIsolation: false,
-                                                enableRemoteModule : true,
+                                                sandbox: false,
                                             },
                                             autoHideMenuBar : true,
                                             icon: __dirname+'/images/favicon.ico'});
-    
+
+    remoteMain.enable(state.winlist[index].webContents);
     //state.winlist[index].setAutoHideMenuBar(true);
     state.winlist[index].setMenuBarVisibility(false);
     if (process.platform === 'darwin') 

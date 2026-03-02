@@ -15,4 +15,3 @@ module.exports = {
 };
 
 
-global.fetch = require('node-fetch');

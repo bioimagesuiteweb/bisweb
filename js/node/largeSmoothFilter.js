@@ -144,7 +144,7 @@ class LargeSmoothFilterModule extends BaseModule {
             "inmm": super.parseBoolean(vals.inmm),
             "radiusfactor": parseFloat(vals.radiusfactor),
             "vtkboundary" : super.parseBoolean(vals.vtkboundary)
-        }
+        };
         this.debug=super.parseBoolean(vals.debug);        
 
         this.outputname=largeImageUtil.createOutputFilename(vals['output'],vals['input'],'sm','.nii.gz');

@@ -43,7 +43,7 @@ class ManualRegistrationModule extends BaseModule {
             "buttonName": "Apply",
             "shortname" : "mrg",
             "params": [ 
-		        {
+                {
                     "name": "Rotate First",
                     "description": "rotate first",
                     "priority": 5,
@@ -179,7 +179,7 @@ class ManualRegistrationModule extends BaseModule {
                     "default": false,
                     "varname": "usefullheaderxy"
                 },
-		        {
+                {
                     "name": "Do Reslice",
                     "description": "dummy option ignored",
                     "priority": 100,

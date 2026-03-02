@@ -357,7 +357,7 @@ class PreprocessfMRIModule extends BaseModule {
         console.log('PreprocessfMRI invoking with vals', JSON.stringify(vals));
 
         let input = this.inputs['input'];
-        let idata=input.getImageData();
+        //let idata=input.getImageData();
         let debug=vals['debug'];
         let current_output=input;
 

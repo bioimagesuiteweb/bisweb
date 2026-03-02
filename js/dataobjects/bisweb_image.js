@@ -189,7 +189,7 @@ class BisWebImage extends BisWebDataObject {
             }
         }
         
-		let newfname=obj.filename;
+        let newfname=obj.filename;
         self.setFilename(bisgenericio.getFixedLoadFileName(newfname));
         
         console.log('++++\t loaded image from '+newfname+'. Dim=',self.getDimensions(),self.getOrientationName()+' spa='+self.getSpacing() + ' type='+self.getDataType());
@@ -2234,12 +2234,12 @@ class BisWebImage extends BisWebDataObject {
             TX[ia]=coords[ia]/internal.spacing[ia];
             TX[ia]=util.range(TX[ia],0.0,internal.dimensions[ia]-1);
             X[ia][0]=Math.floor(TX[ia]);
-	        X[ia][1]=X[ia][0]+1;
-	        if (X[ia][1]>=internal.dimensions[ia])
-	            X[ia][1]=internal.dimensions[ia]-1;
+            X[ia][1]=X[ia][0]+1;
+            if (X[ia][1]>=internal.dimensions[ia])
+                X[ia][1]=internal.dimensions[ia]-1;
 
-	        W[ia][0]=X[ia][1]-TX[ia];
-	        W[ia][1]=1.0-W[ia][0];
+            W[ia][0]=X[ia][1]-TX[ia];
+            W[ia][1]=1.0-W[ia][0];
         }
 
         let B= [ [ 0,0],[0,0],[0,0 ] ];
@@ -2252,13 +2252,13 @@ class BisWebImage extends BisWebDataObject {
         let sum=0.0;
         for (let i=0;i<=1;i++) {
             for (let j=0;j<=1;j++) {
-	            for (let k=0;k<=1;k++) {
+                for (let k=0;k<=1;k++) {
                     let index=B[2][k]+B[1][j]+B[0][i];
                     let v=internal.imgdata[ index];
                     let w=W[2][k]*W[1][j]*W[0][i];
                     sum+=v*w;
                     //console.log('X=',[X[0][i],X[1][j],X[2][k]] ,'W=', [ W[0][i],W[1][j], W[2][k]],'index=',index,' W=',w,'v=',v,'sum=',sum);
-	            }
+                }
             }
         }
         return sum;

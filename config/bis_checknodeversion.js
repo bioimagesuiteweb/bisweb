@@ -21,18 +21,15 @@ let v=process.versions.node;
 let n=parseFloat(v);
 let s=v.split(".");
 let major=parseInt(s[0]);
-let minor=parseInt(s[1]);
 
-let ok=false;
 
-if (major === 10 && minor >= 11) {
-    ok=true;
-} else if (major <= 16) {
-    ok=true;
+if (major >= 14 && major <= 22) {
+    console.log(`Using node version =${v}`);
 } else {
-    console.log(`----\n---- You are using an incompatible version of node (either newer than 10.11 or older than 17.0 ) (actual version=${v})\n`);
+    console.log(`----\n---- You are using an incompatible version of node (either newer than 14 or older than 22 ) (actual version=${v})\n`);
     process.exit(1);
 }
+
 
 console.log(`....\n.... Using node.js version ${v} ( OK )\n`);
 console.log('.... This program is part of the tools from BioImage Suite Web. See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');

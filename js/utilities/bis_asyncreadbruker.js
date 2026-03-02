@@ -979,7 +979,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,inf
                     subjectname=subjectname.substr(1,subjectname.length-2);
                 } catch(e) {
                     console.log('Error2'+e);
-                    subjectname='None'
+                    subjectname='None';
                 }
             }
         }

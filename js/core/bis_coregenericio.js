@@ -75,7 +75,7 @@ var createBuffer = function (cdata) {
         return  Buffer.from(cdata);
     } 
 
-    return new Buffer(cdata);
+    return Buffer.from(cdata);
 
     /* jshint ignore:end */
 };
@@ -92,7 +92,7 @@ if (inelectron) {
     colors= window.BISELECTRON['colors'];
     environment = 'electron';
     createBuffer = function (cdata) {
-        return new window.BISELECTRON.Buffer(cdata);
+        return window.BISELECTRON.Buffer.from(cdata);
     };
 }
 

@@ -28,8 +28,8 @@ let webonlydependencies=appinfo.bioimagesuiteweb.webonly;
 
 const obj = {
     node: {
-	__filename: false,
-	__dirname: false,
+    __filename: false,
+    __dirname: false,
     },
     module: {
         exprContextCritical: false,
@@ -37,8 +37,9 @@ const obj = {
     
     mode : 'development',
     resolve: {
-	    extensions: [ '.js'],
-	    modules : [ path.resolve(mypath,'node_modules'),
+
+        extensions: [ '.js'],
+        modules : [ path.resolve(mypath,'node_modules'),
                     path.resolve(mypath,'lib/js'),
                     path.resolve(mypath,'js'),
                     path.resolve(mypath,'js/utilities'),

@@ -115,11 +115,18 @@ console.log(`--------------------------- Running Webpack --> ${output} internal=
 
 
 if (output === "bislib.js" || output ==="index.js") {
+
     module.exports = {
         module: {
             exprContextCritical: false,
         },
         resolve: {
+            fallback : {
+                "assert" : require.resolve("assert"),
+                "stream"  : require.resolve("stream-browserify"),
+                "buffer": require.resolve("buffer/"),
+                "readable-stream": require.resolve("readable-stream")
+            },
             extensions: [ '.js'],
             modules : [ path.resolve(mypath,'node_modules'),
                         path.resolve(mypath,'lib/js'),
@@ -146,6 +153,7 @@ if (output === "bislib.js" || output ==="index.js") {
             poll: 1000
         },
         plugins : [
+            new webpack.ProvidePlugin({ process: 'process/browser' }),
             new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_CUSTOM(\.*)/, function(resource) {
                 resource.request = resource.request.replace(/__BISWEB_CUSTOM/, `${bisWebCustom}`);
             }),
@@ -178,6 +186,9 @@ if (output === "bislib.js" || output ==="index.js") {
 
     
 } else {
+
+    console.log(' ---------\n---------\n---------\n---------\n---------\n');
+    
     module.exports = {
         module: {
             exprContextCritical: false,

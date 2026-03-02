@@ -68,7 +68,7 @@ module.exports = {
                                                let imagepath=webutil.getWebPageImagePath();
                                                callback(`${imagepath}/SIGMA_stripped_rat_mri.nii.gz`,viewerno,'RAS');
                                            }
-                                          )
+                                          );
                 }
                 resolve();
             }).catch( (e) => {

@@ -4,7 +4,7 @@ const BaseModule = require('basemodule.js');
 const bis_genericio = require('bis_genericio');
 const BisWebTextObject = require('bisweb_textobject.js');
 const path=bis_genericio.getpathmodule();
-const fs=bis_genericio.getfsmodule();
+//const fs=bis_genericio.getfsmodule();
 const baseutils=require("baseutils");
 
 
@@ -232,9 +232,7 @@ class CalciumPreprocessModule extends BaseModule {
         vals.odir=vals.odir || '';
         if (vals.odir.length<1) {
             console.log('_ No output directory specified, specify this using the --odir flag');
-            reject('');
-            return;
-            
+            return Promise.reject('');
         }
 
         let tmpdir='';
@@ -254,7 +252,7 @@ class CalciumPreprocessModule extends BaseModule {
      
 
         let nodejscommand=process.argv[0]+' '+process.argv[1];
-        console.log('Command=',nodejscommand)
+        console.log('Command=',nodejscommand);
 
         let pythoncommand='biswebpy';
 
@@ -313,7 +311,7 @@ class CalciumPreprocessModule extends BaseModule {
                 outnames.push(outname2);
                 outtext=outtext+outname2+' : '+outname+'\n\t'+nodejscommand+` largesmoothfilter -i ${outname}`;
                 outtext+=` -o ${outname2}`; 
-                outtext+=` --sigma ${vals['sigma']} --inmm ${vals['inmm']} --fwhmax ${vals['fwhmax']}`
+                outtext+=` --sigma ${vals['sigma']} --inmm ${vals['inmm']} --fwhmax ${vals['fwhmax']}`;
                 if (!debug) outtext+=` > ${outname2}.log 2>&1`;
                 outtext+=`\n\n`;
                 step1.push(outname2);
@@ -378,9 +376,9 @@ class CalciumPreprocessModule extends BaseModule {
             }
             if (dff) {
                 suffix=suffix+'_dff';
-            };
+            }
 
-
+            
 
             let outname4=f2.substr(0,ind4)+suffix+'.nii.gz';
             outnames.push(outname4);
@@ -397,7 +395,7 @@ class CalciumPreprocessModule extends BaseModule {
             outname5=path.join(vals.odir,path.basename(outname5));
             outnames.push(outname5);
             step3.push(outname5);
-            let maskname=this.inputs['mask'].getFilename();
+            //let maskname=this.inputs['mask'].getFilename();
 
             outtext+=outname5+' : '+outname4+'\n\t'+nodejscommand+` largemaskimage -i ${outname4} -m ${this.resampledmaskname} -o ${outname5}`;
             outtext+=` --dilation ${vals['dilation']}`;
@@ -406,7 +404,7 @@ class CalciumPreprocessModule extends BaseModule {
             
         }
 
-        console.log('outtext=',outtext)
+        console.log('outtext=',outtext);
 
         let makefile=path.join(vals.odir,'makefile');
 
@@ -420,13 +418,11 @@ class CalciumPreprocessModule extends BaseModule {
         outtext=top+outtext;
 
         await bis_genericio.write(makefile,outtext);
-        console.log('Makefile saved in ',makefile)
-
-
+        console.log('Makefile saved in ',makefile);
 
         return Promise.resolve('Done');
 
     }
-};
+}
 
 module.exports = CalciumPreprocessModule;

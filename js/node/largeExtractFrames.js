@@ -152,7 +152,7 @@ class LargeExtractFramesModule extends BaseModule {
         let f=this.beginframe;
         while (f<=this.endframe) {
             this.numframes+=1;
-            f+=this.increment
+            f+=this.increment;
         }
         this.endframe=this.beginframe+(this.numframes-1)*this.increment;
 
@@ -172,7 +172,7 @@ class LargeExtractFramesModule extends BaseModule {
 
     async processFrame(frame,frameImage) {
 
-        let output=null;
+        
         let debug=false;
 
         
@@ -212,7 +212,7 @@ class LargeExtractFramesModule extends BaseModule {
                 debug=true;
 
             if (debug)
-                console.log('ooooo processing frame',frame, 'looking for frames in ',this.beginframe,'to',this.endframe,'every',this.increment,' as ',this.writeframe)
+                console.log('ooooo processing frame',frame, 'looking for frames in ',this.beginframe,'to',this.endframe,'every',this.increment,' as ',this.writeframe);
             this.done=await largeImageUtil.writeOutput(this.writeframe,this.numframes,this.outputname,frameImage,this.fileHandleObject,debug);
             this.writeframe+=1;
             return this.done;

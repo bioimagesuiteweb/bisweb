@@ -1,4 +1,4 @@
-2/*  LICENSE
+/*  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
@@ -132,7 +132,7 @@ class LargeMaskImageModule extends BaseModule {
         await biswrap.initialize();
 
         this.dilated=this.mask;
-        let dilation=parseInt(vals.dilation)
+        let dilation=parseInt(vals.dilation);
     
         if (dilation>0) {
             let do3d=true;
@@ -140,7 +140,7 @@ class LargeMaskImageModule extends BaseModule {
                 do3d=false;
             }
             
-            console.log('+++++ Dilating mask by',dilation)
+            console.log('+++++ Dilating mask by',dilation);
             this.dilated=biswrap.morphologyOperationWASM(this.mask, {
                 "operation" : 'dilate',
                 "radius" : dilation,
@@ -175,10 +175,10 @@ class LargeMaskImageModule extends BaseModule {
         }
         
         
-	    if (frame===0) {
-	        console.log('.... Output dimensions=',this.resldimensions, ' spa=', this.reslspacing, ' input=', frameImage.getDescription());
-	    }
-	
+        if (frame===0) {
+            console.log('.... Output dimensions=',this.resldimensions, ' spa=', this.reslspacing, ' input=', frameImage.getDescription());
+        }
+    
         try {
             let fdata=frameImage.getImageData();
             let mdata=this.dilated.getImageData();
