@@ -35,7 +35,7 @@ class ThresholdImageModule extends BaseModule {
 
 
     createDescription() {
-        console.log('Hello THR2');
+
         
         return {
             "name": "Threshold",

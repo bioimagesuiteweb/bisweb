@@ -37,6 +37,7 @@ const obj = {
     
     mode : 'development',
     resolve: {
+
         extensions: [ '.js'],
         modules : [ path.resolve(mypath,'node_modules'),
                     path.resolve(mypath,'lib/js'),
