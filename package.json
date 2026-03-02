@@ -47,7 +47,7 @@
         "jquery": "3.4.1",
         "jsonlint": "1.6.3",
         "jstree": "3.3.7",
-        "jszip": "3.2.1",
+        "jszip": "3.8.0",
         "localforage": "1.7.3",
         "moment": "2.22.1",
         "node-fetch": "2.6.1",
