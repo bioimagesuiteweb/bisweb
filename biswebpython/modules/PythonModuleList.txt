@@ -45,6 +45,7 @@ rotateScaleImage
 dicom2nii
 patchReformatImage
 imageDistanceMatrix
+distMatrixClustering
 temporalImageDistanceMatrix
 computeImageEigenvectors
 eigenvectorDenoiseImage

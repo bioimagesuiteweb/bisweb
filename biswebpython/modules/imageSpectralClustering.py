@@ -1,37 +1,40 @@
 # LICENSE
-# 
+#
 # _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
-# 
+#
 # BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
-# 
+#
 # - you may not use this software except in compliance with the License.
 # - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-# 
+#
 # __Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.__
-# 
+#
 # ENDLICENSE
 
 import biswebpython.core.bis_basemodule as bis_basemodule
 import biswebpython.core.bis_baseutils as bis_baseutils
 import biswebpython.core.bis_objects as bis_objects
-from biswebpython.modules.extractImagePatches import *
-import os
+import numpy as np
+
+from biswebpython.modules.distMatrixClustering import distMatrixClustering
+from biswebpython.modules.extractImagePatches import extractImagePatches
+
 
 class imageSpectralClustering(bis_basemodule.baseModule):
 
     def __init__(self):
-        super().__init__();
-        self.name='imageDistanceMatrix';
-   
+        super().__init__()
+        self.name = 'imageSpectralClustering'
+
     def createDescription(self):
-        
+
         return {
-            "name": "compute spectral Imaging CLustering (Calls matlab code)",
-            "description": "Given an image and a mask compute the image distance matrix, the index map and a matlab script to run the clustering code",
+            "name": "compute spectral image clustering",
+            "description": "Compute an image distance matrix and cluster it directly in Python",
             "author": "Xenios Papademetris and Xilin Shen",
             "version": "1.0",
             "inputs": [
@@ -40,7 +43,7 @@ class imageSpectralClustering(bis_basemodule.baseModule):
                     "name": "Input Image",
                     "description": "The input (timeseries) image",
                     "varname": "input",
-                    "shortname" : "i",
+                    "shortname": "i",
                     "required": True
                 },
                 {
@@ -48,28 +51,46 @@ class imageSpectralClustering(bis_basemodule.baseModule):
                     "name": "Objectmap Image",
                     "description": "The objectmap/mask image",
                     "varname": "mask",
-                    "shortname" : "m",
+                    "shortname": "m",
                     "required": False
                 },
             ],
             "outputs": [
-                 {
-                    'type': 'matrix',
-                    'name': 'Output Matrix',
-                    'description': 'the output distance matrix', 
-                    'varname': 'output',
-                    'shortname': 'o',
-                    'required': True,
-                    'extension' : ".binmatr"
+                {
+                    "type": "image",
+                    "name": "Clustered Image",
+                    "description": "The clustered output image",
+                    "varname": "output",
+                    "shortname": "o",
+                    "required": True,
+                    "extension": ".nii.gz"
                 },
                 {
-                    'type': 'image',
-                    'name': 'IndexMap Image',
-                    'description': 'the output indexmap image', 
-                    'varname': 'indexmap',
-                    'shortname': 'x',
-                    'required': False,
-                    'extension' : ".nii.gz"
+                    "type": "matrix",
+                    "name": "Output Labels",
+                    "description": "Cluster labels as an N x 1 matrix",
+                    "varname": "labels",
+                    "shortname": "l",
+                    "required": False,
+                    "extension": ".binmatr"
+                },
+                {
+                    "type": "matrix",
+                    "name": "Output Distance Matrix",
+                    "description": "The computed sparse distance matrix",
+                    "varname": "distancematrix",
+                    "shortname": "d",
+                    "required": False,
+                    "extension": ".binmatr"
+                },
+                {
+                    "type": "image",
+                    "name": "IndexMap Image",
+                    "description": "The output indexmap image",
+                    "varname": "indexmap",
+                    "shortname": "x",
+                    "required": False,
+                    "extension": ".nii.gz"
                 }
             ],
             "params": [
@@ -109,7 +130,7 @@ class imageSpectralClustering(bis_basemodule.baseModule):
                 },
                 {
                     "name": "Numpatches",
-                    "description": "Number of patches to extract (default=0 i.e. use whole image as opposed to patches)",
+                    "description": "Number of patches to extract (default=0 uses the whole image)",
                     "type": "int",
                     "default": 0,
                     "lowbound": 0,
@@ -136,7 +157,7 @@ class imageSpectralClustering(bis_basemodule.baseModule):
                 },
                 {
                     "name": "Patchsize",
-                    "description": "Patch size (in voxels) (default=32) if using patches",
+                    "description": "Patch size (in voxels) if using patches",
                     "type": "int",
                     "default": 32,
                     "lowbound": 2,
@@ -145,146 +166,122 @@ class imageSpectralClustering(bis_basemodule.baseModule):
                 },
                 {
                     "name": "3d",
-                    "description": "if true 3d patches (default=false) if using patches",
+                    "description": "If true use 3d patches",
                     "priority": 1000,
                     "advanced": False,
                     "gui": "check",
                     "varname": "threed",
-                    "type": 'boolean',
+                    "type": "boolean",
                     "default": False,
                 },
                 {
-                    "name": "Matlab script",
-                    "description": "name of output matlab script",
-                    "type": "string",
-                    "default": None,
-                    "varname": "script"
+                    "name": "Sigma",
+                    "description": "Kernel scale override for clustering; <=0 uses the median distance",
+                    "type": "float",
+                    "default": -1.0,
+                    "lowbound": -1.0,
+                    "highbound": 100000.0,
+                    "varname": "sigma"
                 },
                 {
-                    "name": "Matlab cluster output image",
-                    "description": "name of matlab output cluster image. If None then script+.nii.gz",
-                    "type": "string",
-                    "default": None,
-                    "varname": "clusteroutput"
+                    "name": "Offset",
+                    "description": "Diagonal regularization for normalized cuts",
+                    "type": "float",
+                    "default": 0.5,
+                    "lowbound": 0.0,
+                    "highbound": 100.0,
+                    "varname": "offset"
                 },
                 {
-                    "name": "Matlab path",
-                    "description": "path to bisweb matlab library",
-                    "type": "string",
-                    "default": None,
-                    "varname": "matlabpath"
-                },      
-
+                    "name": "Max Iterations",
+                    "description": "Maximum eigensolver iterations",
+                    "type": "int",
+                    "default": 100,
+                    "lowbound": 1,
+                    "highbound": 10000,
+                    "varname": "maxiter"
+                },
                 {
-                    "name": "runmatlab",
-                    "description": "If true try to execute matlab",
-                    "varname": "runmatlab",
-                    "type": "boolean",
-                    "default": True
+                    "name": "Tolerance",
+                    "description": "Eigensolver tolerance",
+                    "type": "float",
+                    "default": 1e-6,
+                    "lowbound": 1e-12,
+                    "highbound": 1.0,
+                    "varname": "tolerance"
+                },
+                {
+                    "name": "Random Seed",
+                    "description": "Random seed for discretization initialization",
+                    "type": "int",
+                    "default": 0,
+                    "lowbound": 0,
+                    "highbound": 2147483647,
+                    "varname": "randomseed"
                 },
                 bis_baseutils.getDebugParam()
             ],
         }
 
+    def directInvokeAlgorithm(self, vals):
+        print('oooo invoking: imageSpectralClustering with vals', vals)
 
-    def saveOutputs(self,inputparameters={}):
-        f=super().saveOutputs(inputparameters);
-        if f==False:
-            return False;
-    
+        input_image = self.inputs['input']
+        mask_image = self.inputs['mask']
 
-        vals=self.innervalues;
-        if vals['script'] is None:
-            return true;
-            
-        
-        matlabpath=vals['matlabpath'];
-        clusteroutput=vals['clusteroutput'];
-
-        if matlabpath is None:
-            matlabpath=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))+'/matlab';
-            print('++++\t auto setting matlabpath to',matlabpath)
-        
-        if clusteroutput is None:
-            clusteroutput=vals['script']+".nii.gz";
-            print('++++\t auto setting clusteroutput to',clusteroutput)
-        else:
-            print('++++\t using clusteroutput as',clusteroutput);
-
-        out="addpath('"+matlabpath+"');\n";
-        out=out+"bispath();\n";
-        out=out+"dist=bis_matrix();\n"
-        out=out+"w=dist.loadbinary('"+self.outputs['output'].filename+"');\n";
-        out=out+"indexmap=bis_image('"+self.outputs['indexmap'].filename+"');\n";
-        out=out+"indexmap.print();";
-        out=out+"output=bis_distmatrixparcellation(w,indexmap,"+str(vals['numclusters'])+","+str(vals['smoothness'])+");\n"
-        out=out+"output.save('"+clusteroutput+"');\nexit\n";
-        try:
-        
-            with open(vals['script'], 'w') as fp:
-                fp.write(out);
-            print('++++\t Saved matlab script in',vals['script']);
-        except:
-            print("Failed to open",vals['script']);
-            return False;
-        
-        
-        cmd="matlab -nodisplay -nosplash -nodesktop -r \"run('"+vals['script']+"');exit;\"";
-        print('++++ to run matlab type:',cmd)
-        if vals['runmatlab']:
-            print(out);
-            os.system(cmd);
-
-        return True;       
-        
-
-
-    def directInvokeAlgorithm(self,vals):
-        print('oooo invoking: imageDistanceMatrix with vals', vals);
-
-
-        if (vals['numpatches']>0):
-            print('_____________________________________________');
+        if vals['numpatches'] > 0:
+            print('_____________________________________________')
             print('____ First extracting patches')
 
-            patchExtractor=extractImagePatches();
-            patchExtractor.execute({ 'input' : self.inputs['input'] },
-                            { 'numpatches' : vals['numpatches'],
-                              'patchsize'  : vals['patchsize'],
-                              'threed' : vals['threed'],
-                              'ordered' : False
-                              });
-            self.inputs['input']=patchExtractor.getOutputObject('output');
-            self.inputs['mask']=0;
-            print('_____________________________________________');
-        
-        
-        paramobj= {
-            'numthreads' : vals['numthreads'],
-            'sparsity' : vals['sparsity'],
-            'radius' : vals['radius'],
-            'useradius' : self.parseBoolean(vals['useradius'])
-            
-        };
+            patch_extractor = extractImagePatches()
+            patch_extractor.execute({'input': input_image},
+                                   {'numpatches': vals['numpatches'],
+                                    'patchsize': vals['patchsize'],
+                                    'threed': vals['threed'],
+                                    'ordered': False})
+            input_image = patch_extractor.getOutputObject('output')
+            mask_image = None
+            print('_____________________________________________')
 
-        out=bis_baseutils.getDynamicLibraryWrapper().computeImageDistanceMatrixWASM(self.inputs['input'],
-                                                                                    self.inputs['mask'],
-                                                                                    paramobj,
-                                                                                    self.parseBoolean(vals['debug']));
-        self.outputs['output']=bis_objects.bisMatrix();
-        self.outputs['output'].create(out);      
+        debug = self.parseBoolean(vals['debug'])
+        if mask_image is None:
+            dims = [int(input_image.dimensions[0]), int(input_image.dimensions[1]), int(input_image.dimensions[2])]
+            if dims[2] < 1:
+                dims[2] = 1
+            mask_data = np.ones(tuple(dims), dtype=np.int32)
+            mask_image = bis_objects.bisImage()
+            mask_image.create(mask_data, input_image.spacing, input_image.affine)
 
-        self.outputs['indexmap']=bis_baseutils.getDynamicLibraryWrapper().computeImageIndexMapWASM(self.inputs['mask'],
-                                                                                                    self.parseBoolean(vals['debug']));
+        paramobj = {
+            'numthreads': vals['numthreads'],
+            'sparsity': vals['sparsity'],
+            'radius': vals['radius'],
+            'useradius': self.parseBoolean(vals['useradius'])
+        }
 
-        # Propagate Orientation in this weird matrix to image thing
-        self.outputs['indexmap'].affine=self.inputs['mask'].affine;
-        
-        self.innervalues=vals;
+        dist = bis_baseutils.getDynamicLibraryWrapper().computeImageDistanceMatrixWASM(input_image,
+                                                                                       mask_image,
+                                                                                       paramobj,
+                                                                                       debug)
+        dist_obj = bis_objects.bisMatrix()
+        dist_obj.create(dist)
 
+        indexmap = bis_baseutils.getDynamicLibraryWrapper().computeImageIndexMapWASM(mask_image, debug)
+        indexmap.affine = mask_image.affine
 
+        cluster_module = distMatrixClustering()
+        cluster_module.execute({'input': dist_obj, 'indexmap': indexmap},
+                               {'numclusters': vals['numclusters'],
+                                'smoothness': vals['smoothness'],
+                                'sigma': vals['sigma'],
+                                'offset': vals['offset'],
+                                'maxiter': vals['maxiter'],
+                                'tolerance': vals['tolerance'],
+                                'randomseed': vals['randomseed'],
+                                'debug': vals['debug']})
+
+        self.outputs['output'] = cluster_module.getOutputObject('outputimage')
+        self.outputs['labels'] = cluster_module.getOutputObject('output')
+        self.outputs['distancematrix'] = dist_obj
+        self.outputs['indexmap'] = indexmap
         return True
-    
-
-
-
