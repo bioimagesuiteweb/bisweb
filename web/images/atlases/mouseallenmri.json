@@ -666,6 +666,12 @@
          "image": "allen_interm.nii.gz",
          "surface": "allen_interm_surface_atlas.bin.gz",
          "species": "mouse"
+      },
+      {
+          "name": "Yale Allen Mouse Fine",
+          "surface": "allen_interm_surface_atlas.bin.gz",
+          "image": "allen_fine.nii.gz",
+          "species": "mouse"
       }
    ],
    "groupdefinitions": [
