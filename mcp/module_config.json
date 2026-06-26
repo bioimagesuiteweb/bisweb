@@ -1,0 +1,274 @@
+{
+  "modules": {
+    "afniblurimage": {
+      "enable": false
+    },
+    "approximatefield": {
+      "enable": false
+    },
+    "backprojectimage": {
+      "enable": false
+    },
+    "bidsconversion": {
+      "enable": false
+    },
+    "binarythresholdimage": {
+      "enable": false
+    },
+    "bisserver": {
+      "enable": false
+    },
+    "blankimage": {
+      "enable": true
+    },
+    "butterworthfilter": {
+      "enable": false
+    },
+    "butterworthfilterimage": {
+      "enable": false
+    },
+    "calciumpreprocess": {
+      "enable": false
+    },
+    "changeimagespacing": {
+      "enable": false
+    },
+    "circleblankimage": {
+      "enable": false
+    },
+    "clusterthreshold": {
+      "enable": true
+    },
+    "combineimages": {
+      "enable": false
+    },
+    "computecorrelation": {
+      "enable": false
+    },
+    "computeglm": {
+      "enable": false
+    },
+    "computeroi": {
+      "enable": false
+    },
+    "computeroilarge": {
+      "enable": false
+    },
+    "computevolume": {
+      "enable": false
+    },
+    "concatenateimages": {
+      "enable": false
+    },
+    "cropimage": {
+      "enable": false
+    },
+    "defaceimage": {
+      "enable": true
+    },
+    "dicomconversion": {
+      "enable": false
+    },
+    "diffspect": {
+      "enable": false
+    },
+    "displacementfield": {
+      "enable": false
+    },
+    "driftcorrectimage": {
+      "enable": false
+    },
+    "extractframe": {
+      "enable": false
+    },
+    "extractslice": {
+      "enable": true
+    },
+    "flipimage": {
+      "enable": true
+    },
+    "gradientimage": {
+      "enable": false
+    },
+    "headerinfo": {
+      "enable": true
+    },
+    "individualizedparcellation": {
+      "enable": false
+    },
+    "infomodule": {
+      "enable": false
+    },
+    "inverttransformation": {
+      "enable": false
+    },
+    "jacobianimage": {
+      "enable": false
+    },
+    "joinmatrices": {
+      "enable": false
+    },
+    "largeextractframes": {
+      "enable": false
+    },
+    "largemaskimage": {
+      "enable": false
+    },
+    "largemedianfilter": {
+      "enable": false
+    },
+    "largemotioncorrection": {
+      "enable": false
+    },
+    "largemotionreslice": {
+      "enable": false
+    },
+    "largeresampleimage": {
+      "enable": false
+    },
+    "largereslice": {
+      "enable": false
+    },
+    "largesmoothfilter": {
+      "enable": false
+    },
+    "linearpointregistration": {
+      "enable": false
+    },
+    "linearregistration": {
+      "enable": false
+    },
+    "makechecksum": {
+      "enable": false
+    },
+    "makeconnmatrixfile": {
+      "enable": false
+    },
+    "manualregistration": {
+      "enable": false
+    },
+    "mapelectrodes": {
+      "enable": false
+    },
+    "maskimage": {
+      "enable": true
+    },
+    "medianfilterimage": {
+      "enable": true
+    },
+    "morphologyfilter": {
+      "enable": true
+    },
+    "motioncorrection": {
+      "enable": false
+    },
+    "motionreslice": {
+      "enable": false
+    },
+    "nonlinearpointregistration": {
+      "enable": false
+    },
+    "nonlinearregistration": {
+      "enable": false
+    },
+    "normalizeimage": {
+      "enable": true
+    },
+    "patchreformatimage": {
+      "enable": false
+    },
+    "permuteimage": {
+      "enable": false
+    },
+    "pipeline": {
+      "enable": false
+    },
+    "prepareregistration": {
+      "enable": false
+    },
+    "preprocessfmri": {
+      "enable": false
+    },
+    "preprocessoptical": {
+      "enable": false
+    },
+    "process4dimage": {
+      "enable": false
+    },
+    "projectaverageimage": {
+      "enable": false
+    },
+    "projectimage": {
+      "enable": false
+    },
+    "projectresliceimage": {
+      "enable": false
+    },
+    "projectreslicemask": {
+      "enable": false
+    },
+    "quantilenormalizeimage": {
+      "enable": true
+    },
+    "regressglobal": {
+      "enable": false
+    },
+    "regressiontests": {
+      "enable": false
+    },
+    "regressout": {
+      "enable": false
+    },
+    "regressoutimage": {
+      "enable": false
+    },
+    "regularizeobjectmap": {
+      "enable": false
+    },
+    "removematrixcols": {
+      "enable": false
+    },
+    "reorientimage": {
+      "enable": false
+    },
+    "resampleimage": {
+      "enable": true
+    },
+    "resliceimage": {
+      "enable": false
+    },
+    "seedcorrelation": {
+      "enable": false
+    },
+    "segmentimage": {
+      "enable": true
+    },
+    "shiftscaleimage": {
+      "enable": true
+    },
+    "slicebiascorrect": {
+      "enable": true
+    },
+    "smoothimage": {
+      "enable": true
+    },
+    "splitimageintoframes": {
+      "enable": false
+    },
+    "stackimages": {
+      "enable": false
+    },
+    "thresholdimage": {
+      "enable": true
+    },
+    "timeseriesnormalizeimage": {
+      "enable": true
+    },
+    "transformelectrodes": {
+      "enable": false
+    },
+    "transformsurface": {
+      "enable": false
+    }
+  }
+}

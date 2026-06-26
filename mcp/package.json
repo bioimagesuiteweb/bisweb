@@ -1,0 +1,13 @@
+{
+  "name": "bisweb-mcp",
+  "version": "1.0.0",
+  "description": "BioImage Suite Web MCP Server",
+  "main": "bisweb_mcp.js",
+  "scripts": {
+    "update-cache": "node update_cache.js",
+    "start": "node bisweb_mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
