@@ -1,0 +1,15 @@
+{
+    "multires": [
+        "output/right_gold.json",
+        "output/left_gold.json"
+    ],
+    "atlas": [
+        "output/right_gold.json",
+        "output/left_gold.json"
+    ],
+    "output": [
+        "output/lobes_fineallen_right_gold.json",
+        "output/lobes_fineallen_left_gold.json",
+        "output/allen_fine_surface_atlas_gold.bin.gz"
+    ]
+}

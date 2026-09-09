@@ -669,7 +669,7 @@
       },
       {
           "name": "Yale Allen Mouse Fine",
-          "surface": "allen_interm_surface_atlas.bin.gz",
+          "surface": "allen_fine_surface_atlas.bin.gz",
           "image": "allen_fine.nii.gz",
           "species": "mouse"
       }
