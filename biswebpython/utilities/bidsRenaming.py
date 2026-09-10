@@ -84,8 +84,11 @@ def anatBidsRename(bsj, oupath, exe = False):
                             conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
                             if not os.path.exists(conp):
                                 os.makedirs(conp)
-                            cmd_str = 'ln ' + bsj.root + '/' + s_nii[idx] + ' ' + conp + '/' + newname
-                            rv = os.system(cmd_str)
+                            try:
+                                os.link(bsj.root + '/' + s_nii[idx], conp + '/' + newname)
+                                rv = 0
+                            except OSError:
+                                rv = 1
                             if rv:
                                 errorm.append(['Rename failed: ' + bsj.root + '/' + s_nii[idx]])
 
@@ -100,8 +103,11 @@ def anatBidsRename(bsj, oupath, exe = False):
                     conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
                     if not os.path.exists(conp):
                         os.makedirs(conp)
-                    cmd_str = 'ln ' + bsj.root + '/' + splt_nii[st][0] + ' ' + conp + '/' + newname
-                    rv = os.system(cmd_str)
+                    try:
+                        os.link(bsj.root + '/' + splt_nii[st][0], conp + '/' + newname)
+                        rv = 0
+                    except OSError:
+                        rv = 1
                     if rv:
                         errorm.append(['Rename failed: ' + bsj.root + '/' + splt_nii[st][0]])
 
@@ -152,8 +158,11 @@ def anatBidsRename(bsj, oupath, exe = False):
                                 conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
                                 if not os.path.exists(conp):
                                     os.makedirs(conp)
-                                cmd_str = 'ln ' + bsj.root + '/' + s_jf[idx] + ' ' + conp + '/' + newname
-                                rv = os.system(cmd_str)
+                                try:
+                                    os.link(bsj.root + '/' + s_jf[idx], conp + '/' + newname)
+                                    rv = 0
+                                except OSError:
+                                    rv = 1
                                 if rv:
                                     errorm.append(['Rename failed: ' + bsj.root + '/' + s_jf[idx]])
                     except:
@@ -166,8 +175,11 @@ def anatBidsRename(bsj, oupath, exe = False):
                         conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
                         if not os.path.exists(conp):
                             os.makedirs(conp)
-                        cmd_str = 'ln ' + bsj.root + '/' + splt_jf[st][0] + ' ' + conp + '/' + newname
-                        rv = os.system(cmd_str)
+                        try:
+                            os.link(bsj.root + '/' + splt_jf[st][0], conp + '/' + newname)
+                            rv = 0
+                        except OSError:
+                            rv = 1
                         if rv:
                             errorm.append(['Rename failed: ' + bsj.root + '/' + splt_jf[st]][0])
 
@@ -261,8 +273,11 @@ def funcBidsRename(bsj, bidsDgr, oupath, exe = False):
                                 conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
                                 if not os.path.exists(conp):
                                     os.makedirs(conp)
-                                cmd_str = 'ln ' + bsj.root + '/' + nfile + ' ' + conp + '/' + newname
-                                rv = os.system(cmd_str)
+                                try:
+                                    os.link(bsj.root + '/' + nfile, conp + '/' + newname)
+                                    rv = 0
+                                except OSError:
+                                    rv = 1
                                 if rv:
                                     errorm.append(['Rename failed: ' + bsj.root + '/' + nfile])
 
@@ -280,8 +295,11 @@ def funcBidsRename(bsj, bidsDgr, oupath, exe = False):
                                             conp = oupath + bsj.subj + yy + bsj.ses + '/' + bsj.datatype
                                             if not os.path.exists(conp):
                                                 os.makedirs(conp)
-                                            cmd_str = 'ln ' + bsj.root + '/' + jfile + ' ' + conp + '/' + jnew
-                                            rv = os.system(cmd_str)
+                                            try:
+                                                os.link(bsj.root + '/' + jfile, conp + '/' + jnew)
+                                                rv = 0
+                                            except OSError:
+                                                rv = 1
                                             if rv:
                                                 errorm.append(['Rename failed: ' + bsj.root + '/' + jfile])
 
