@@ -106,4 +106,24 @@ describe('Connectivity surface VTK conversion and packing',function() {
         assert.ok(adaptive.points.length>0);
         assert.deepEqual(Array.from(new Set(adaptive.indices)),[ 0 ]);
     });
+
+    it('centers an even-factor grid so mirrored regions have mirrored surfaces',function() {
+        const dimensions=[ 8,7,7 ];
+        const data=new Int16Array(dimensions[0]*dimensions[1]*dimensions[2]);
+        data[1+dimensions[0]*(3+dimensions[1]*3)]=1;
+        data[6+dimensions[0]*(3+dimensions[1]*3)]=2;
+        const options={
+            sigma : [ 0,0,0 ],resampleFactor : 2,
+            adaptive : true,centeredResampling : true,
+        };
+        const right=extract.extractLabelRange(data,dimensions,[ 1,1,1 ],1,1,options);
+        const left=extract.extractLabelRange(data,dimensions,[ 1,1,1 ],2,2,options);
+        assert.equal(right.points.length,left.points.length);
+        assert.equal(right.triangles.length,left.triangles.length);
+        for (let point=0;point<right.points.length/3;point++) {
+            const x=right.points[point*3];
+            const mirrored=left.points.filter((value,index) => index%3===0 && Math.abs(value-(7-x))<1e-6);
+            assert.ok(mirrored.length>0);
+        }
+    });
 });

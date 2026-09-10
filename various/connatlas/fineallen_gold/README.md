@@ -86,6 +86,7 @@ cd /Users/xenios/bisweb/src
 node js/scripts/createconnectivitysurfacefromimage.js \
   --input web/images/allen_fine.nii.gz \
   --output /tmp/allen_fine_js.bin.gz \
+  --centered-resampling \
   --adaptive \
   --skip-nearest \
   --reference web/images/allen_fine_surface_atlas.bin.gz
@@ -93,7 +94,9 @@ node js/scripts/createconnectivitysurfacefromimage.js \
 
 Add `--vtk-prefix /tmp/allen_fine_js` to also write ASCII diagnostic files.
 The runtime extraction starts with sigma 1 voxel and resampling factor 2 for
-each ROI. With `--adaptive`, only an ROI that would disappear is retried with
+each ROI. `--centered-resampling` centers the factor-2 grid on the image so
+paired regions use the same sampling phase. With `--adaptive`, only an ROI
+that would disappear is retried with
 less smoothing and, when necessary, a denser sampling grid. `--skip-nearest`
 preserves each extracted component's known parcel label instead of allowing
 the historical nearest-point pass to erase very small parcels. Source and

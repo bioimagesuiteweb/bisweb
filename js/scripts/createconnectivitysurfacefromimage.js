@@ -52,6 +52,7 @@ program.version('1.0.0')
     .option('--left-offset <integer>','dense label offset for the left surface',parseInt,225)
     .option('--sigma <voxels>','Gaussian standard deviation in voxels',number,1.0)
     .option('--resample <factor>','output spacing relative to input spacing',number,2.0)
+    .option('--centered-resampling','center the sampling grid to preserve mirror symmetry')
     .option('--adaptive','reduce smoothing and resampling only for labels that would otherwise disappear')
     .option('--skip-nearest','keep each extracted component label without legacy smoothing/nearest mapping')
     .option('--native-orientation','use the stored voxel order instead of forcing the input to RAS')
@@ -70,6 +71,7 @@ async function main() {
     const extractionOptions={
         sigma : [ program.sigma,program.sigma,program.sigma ],
         resampleFactor : program.resample,
+        centeredResampling : program.centeredResampling || false,
         adaptive : program.adaptive || false,
         progress(label,item,usedOptions) {
             const fallback=usedOptions.resampleFactor!==program.resample || usedOptions.sigma[0]!==program.sigma;
@@ -102,6 +104,7 @@ async function main() {
         orientation : image.getOrientationName(),
         sigma : program.sigma,
         resampleFactor : program.resample,
+        centeredResampling : program.centeredResampling || false,
         adaptive : program.adaptive || false,
         legacyNearestMapping : !program.skipNearest,
         right : reportSurface(outputSurfaces[0]),

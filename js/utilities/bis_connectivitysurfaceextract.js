@@ -139,23 +139,28 @@ function createSmoothedLabelField(data,dimensions,label,bounds,options={}) {
     for (let axis=0;axis<3;axis++)
         field=convolveAxis(field,cropDimensions,kernels[axis],axis);
 
-    const globalOutputMax=dimensions.map((value) => Math.round((value-1)/factor));
-    const outputMin=cropMin.map((value) => Math.max(0,Math.floor(value/factor)-1));
-    const outputMax=cropMax.map((value,axis) => Math.min(globalOutputMax[axis],Math.ceil(value/factor)+1));
+    const globalOutputMax=dimensions.map((value) => options.centeredResampling ?
+        Math.floor((value-1)/factor) : Math.round((value-1)/factor));
+    const sampleOffset=dimensions.map((value,axis) => options.centeredResampling ?
+        0.5*((value-1)-globalOutputMax[axis]*factor) : 0.0);
+    const outputMin=cropMin.map((value,axis) =>
+        Math.max(0,Math.floor((value-sampleOffset[axis])/factor)-1));
+    const outputMax=cropMax.map((value,axis) =>
+        Math.min(globalOutputMax[axis],Math.ceil((value-sampleOffset[axis])/factor)+1));
     const outputDimensions=outputMin.map((value,axis) => outputMax[axis]-value+1);
     const output=new Float32Array(outputDimensions[0]*outputDimensions[1]*outputDimensions[2]);
     local=0;
     for (let z=0;z<outputDimensions[2];z++) {
         for (let y=0;y<outputDimensions[1];y++) {
             for (let x=0;x<outputDimensions[0];x++,local++) {
-                const sourceX=(x+outputMin[0])*factor-cropMin[0];
-                const sourceY=(y+outputMin[1])*factor-cropMin[1];
-                const sourceZ=(z+outputMin[2])*factor-cropMin[2];
+                const sourceX=(x+outputMin[0])*factor+sampleOffset[0]-cropMin[0];
+                const sourceY=(y+outputMin[1])*factor+sampleOffset[1]-cropMin[1];
+                const sourceZ=(z+outputMin[2])*factor+sampleOffset[2]-cropMin[2];
                 output[local]=sampleTrilinear(field,cropDimensions,sourceX,sourceY,sourceZ);
             }
         }
     }
-    return { data : output,dimensions : outputDimensions,gridOrigin : outputMin,factor };
+    return { data : output,dimensions : outputDimensions,gridOrigin : outputMin,factor,sampleOffset };
 }
 
 function marchingCubes(field,spacing,isovalue=50.0) {
@@ -206,7 +211,8 @@ function marchingCubes(field,spacing,isovalue=50.0) {
                         const a=corners[first],b=corners[second];
                         for (let axis=0;axis<3;axis++) {
                             const outputIndex=field.gridOrigin[axis]+[ x,y,z ][axis]+a[axis]+mu*(b[axis]-a[axis]);
-                            points.push(outputIndex*spacing[axis]*field.factor);
+                            const sampleOffset=field.sampleOffset ? field.sampleOffset[axis] : 0.0;
+                            points.push((outputIndex*field.factor+sampleOffset)*spacing[axis]);
                         }
                         vertex=points.length/3-1;
                         edgeVertices.set(key,vertex);
