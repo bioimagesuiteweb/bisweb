@@ -85,7 +85,12 @@ node js/scripts/createconnectivitysurfacefromimage.js \
 
 Add `--vtk-prefix /tmp/allen_fine_js` to also write ASCII diagnostic files.
 The defaults reproduce the Fine parameters: sigma 1 voxel, resampling factor
-3, source ranges 1:224 and 501:724, and dense output labels 1:448.
+3, contiguous source ranges 1:224 and 225:448, and dense output labels 1:448.
+
+The preserved legacy source image at
+`various/connatlas/fineallen/N162_finesc_symm_0.1.nii.gz` instead uses left
+labels 501:724. To generate directly from that historical input, add
+`--left-range 501:724`; the output labels remain 1:448.
 
 The JavaScript implementation reproduces the legacy extraction counts for
 every individual ROI (not just the totals): each hemisphere has 15,478 points
