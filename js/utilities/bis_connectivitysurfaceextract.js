@@ -256,12 +256,32 @@ function extractLabelRange(data,dimensions,spacing,firstLabel,lastLabel,options=
         const labelBounds=bounds[label-firstLabel];
         if (!labelBounds)
             continue;
-        const field=createSmoothedLabelField(data,dimensions,label,labelBounds,options);
-        const surface=marchingCubes(field,spacing,options.isovalue || 50.0);
+        const attempts=[ options ];
+        if (options.adaptive) {
+            const sigma=options.sigma || [ 1,1,1 ];
+            const factor=options.resampleFactor || 3.0;
+            attempts.push(
+                Object.assign({},options,{ sigma : sigma.map((value) => Math.min(value,0.6)) }),
+                Object.assign({},options,{ sigma : [ 0,0,0 ],resampleFactor : Math.min(factor,1.5) }),
+                Object.assign({},options,{ sigma : [ 0,0,0 ],resampleFactor : 1.0 }));
+        }
+        let surface=null,usedOptions=null;
+        const tried=new Set();
+        for (const attempt of attempts) {
+            const key=`${attempt.sigma || [ 1,1,1 ]}:${attempt.resampleFactor || 3.0}`;
+            if (tried.has(key))
+                continue;
+            tried.add(key);
+            const field=createSmoothedLabelField(data,dimensions,label,labelBounds,attempt);
+            surface=marchingCubes(field,spacing,attempt.isovalue || 50.0);
+            usedOptions=attempt;
+            if (surface.points.length>0)
+                break;
+        }
         if (surface.points.length>0)
             surfaces.push({ surface,index : label-firstLabel });
         if (options.progress)
-            options.progress(label,surface);
+            options.progress(label,surface,usedOptions);
     }
     return appendSurfaces(surfaces);
 }

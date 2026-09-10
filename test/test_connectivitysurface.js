@@ -91,4 +91,19 @@ describe('Connectivity surface VTK conversion and packing',function() {
         assert.deepEqual(Array.from(reparsed.triangles),Array.from(generated.triangles));
         assert.deepEqual(Array.from(reparsed.indices),Array.from(generated.indices));
     });
+
+    it('uses a denser unsmoothed fallback for a tiny off-grid region',function() {
+        const dimensions=[ 7,7,7 ];
+        const data=new Int16Array(dimensions[0]*dimensions[1]*dimensions[2]);
+        data[1+dimensions[0]*(1+dimensions[1])]=1;
+        const legacy=extract.extractLabelRange(data,dimensions,[ 1,1,1 ],1,1,{
+            sigma : [ 1,1,1 ],resampleFactor : 3,
+        });
+        const adaptive=extract.extractLabelRange(data,dimensions,[ 1,1,1 ],1,1,{
+            sigma : [ 1,1,1 ],resampleFactor : 3,adaptive : true,
+        });
+        assert.equal(legacy.points.length,0);
+        assert.ok(adaptive.points.length>0);
+        assert.deepEqual(Array.from(new Set(adaptive.indices)),[ 0 ]);
+    });
 });

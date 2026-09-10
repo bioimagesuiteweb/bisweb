@@ -35,7 +35,8 @@ The final reference file will be:
 
 `output/allen_fine_surface_atlas_gold.bin.gz`
 
-The validated reference has also been promoted into the connectivity viewer as:
+The historical LPS reference is retained for regression comparisons. The
+connectivity viewer instead uses the RAS, adaptive-resolution surface at:
 
 `../../../web/images/allen_fine_surface_atlas.bin.gz`
 
@@ -43,6 +44,11 @@ The two ASCII diagnostic surfaces will be:
 
 - `output/right_atlas.vtk`
 - `output/left_atlas.vtk`
+
+The current RAS, factor-2 adaptive runtime extraction is retained as:
+
+- `output/right_ras_adaptive2.vtk`
+- `output/left_ras_adaptive2.vtk`
 
 Expected final parcel numbering is dense:
 
@@ -80,20 +86,26 @@ cd /Users/xenios/bisweb/src
 node js/scripts/createconnectivitysurfacefromimage.js \
   --input web/images/allen_fine.nii.gz \
   --output /tmp/allen_fine_js.bin.gz \
+  --adaptive \
+  --skip-nearest \
   --reference web/images/allen_fine_surface_atlas.bin.gz
 ```
 
 Add `--vtk-prefix /tmp/allen_fine_js` to also write ASCII diagnostic files.
-The defaults reproduce the Fine parameters: sigma 1 voxel, resampling factor
-3, contiguous source ranges 1:224 and 225:448, and dense output labels 1:448.
+The runtime extraction starts with sigma 1 voxel and resampling factor 2 for
+each ROI. With `--adaptive`, only an ROI that would disappear is retried with
+less smoothing and, when necessary, a denser sampling grid. `--skip-nearest`
+preserves each extracted component's known parcel label instead of allowing
+the historical nearest-point pass to erase very small parcels. Source and
+output labels are both dense: right 1:224 and left 225:448.
 
 The preserved legacy source image at
 `various/connatlas/fineallen/N162_finesc_symm_0.1.nii.gz` instead uses left
-labels 501:724. To generate directly from that historical input, add
-`--left-range 501:724`; the output labels remain 1:448.
+labels 501:724 and is stored as LPS. To reproduce the historical extraction,
+add `--left-range 501:724 --resample 3 --native-orientation`; the output labels
+remain 1:448.
 
-The JavaScript implementation reproduces the legacy extraction counts for
-every individual ROI (not just the totals): each hemisphere has 15,478 points
-and 29,596 triangles. VTK and JavaScript discover the same mesh vertices in a
-different order, so the generated packed file is structurally equivalent but
-not byte-for-byte identical to the promoted legacy gold file.
+With the legacy settings, the JavaScript implementation reproduces the old
+per-ROI extraction counts. The RAS runtime surface deliberately differs: it
+uses factor 2 plus adaptive fallback so that all 224 regions per hemisphere
+remain represented.
