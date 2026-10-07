@@ -62,7 +62,7 @@
         "three": "0.113.0",
         "tmp": "0.0.33",
         "websocket-stream": "5.1.2",
-        "ws": "6.1.2"
+        "ws": "6.2.3"
     },
     "devDependencies": {
         "assert": "^2.1.0",
